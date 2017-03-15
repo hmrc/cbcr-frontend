@@ -14,14 +14,27 @@
  * limitations under the License.
  *@
 
-@(pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages)
+@import play.api.i18n.Messages.Implicits._
+@import play.api.Play.current
+@()(implicit request: Request[_], flash: Flash)
 
-@contentHeader = {
-  <h1>@heading</h1>
+@uk.gov.hmrc.cbcrfrontend.views.html.main_template(title = "Error cbcr-frontend", bodyClasses = None) {
+<h1 align="center" >Error Uploading XML File !</h1>
+
+<div class="form-group">
+</br>
+</br>
+
+    @flash.get("error").map { errorMsg =>
+
+    <div style="border: solid 2px red; padding: 1em; margin: 1em;">
+        @errorMsg
+    </div>
 }
-
-@mainContent = {
-  <p>@message</p>
+    </br>
+    </br>
+    <div align="center">
+        <a href="/cbcr-frontend/enter-CBCId">Try Again</a>
+    </div>
+</div>
 }
-
-@govuk_wrapper(appConfig = uk.gov.hmrc.cbcrfrontend.FrontendAppConfig, title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent)

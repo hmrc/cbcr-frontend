@@ -1,0 +1,6 @@
+cbc.title=Country By Country Reporting
+cbc.history.top.message=Your CBCID needs to be included in the sendingEntityIN field in the XML file
+cbc.button.fileupload.report=Upload Report
+cbc.button.fileupload=Upload
+cbc.entercbcid.label=CBC Id
+
