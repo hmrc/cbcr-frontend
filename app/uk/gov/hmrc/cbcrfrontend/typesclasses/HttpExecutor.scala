@@ -39,11 +39,15 @@ object GetBody {
     def apply(obj: UploadFile) = obj.body
   }
 
+  implicit object FileUploadCallbackResponseBody extends GetBody[FileUploadCallbackResponse, JsObject] {
+    def apply(obj: FileUploadCallbackResponse) = obj.body
+  }
+
 }
 
 case class CreateEnvelope(body: JsObject)
 case class UploadFile(envelopeId: EnvelopeId, fileId: FileId, fileName: String, contentType: String, body: Array[Byte])
-
+case class FileUploadCallbackResponse(body: JsObject)
 
 trait HttpExecutor[U, P, I] {
   def makeCall(
@@ -91,6 +95,22 @@ object HttpExecutor {
     }
   }
 
+
+  implicit object fileUploadCallbackResponse extends HttpExecutor[CbcrsUrl, FileUploadCallbackResponse, JsObject] {
+    def makeCall(
+                  cbcrsUrl: ServiceUrl[CbcrsUrl],
+                  obj: FileUploadCallbackResponse
+                )(
+                  implicit
+                  hc: HeaderCarrier,
+                  wts: Writes[JsObject],
+                  rds: HttpReads[HttpResponse],
+                  getBody: GetBody[FileUploadCallbackResponse, JsObject]
+                ): Future[HttpResponse] = {
+      WSHttp.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/saveFileUploadResponse?cbcId=CBCId1234", getBody(obj))
+    }
+
+  }
 
   def apply[U, P, I](
     url: ServiceUrl[U],

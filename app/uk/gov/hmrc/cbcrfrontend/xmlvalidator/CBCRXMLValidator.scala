@@ -30,7 +30,7 @@ object CBCRXMLValidator {
 
       val schemaLang = "http://www.w3.org/2001/XMLSchema"
       val validator = SchemaFactory.newInstance(schemaLang).
-        newSchema(new StreamSource(new File("schema/CbcXML_v1.0.xsd"))).newValidator()
+        newSchema(new StreamSource(new File("conf/schema/CbcXML_v1.0.xsd"))).newValidator()
 
       Validated.catchOnly[SAXParseException](
         validator.validate(new StreamSource(in))).map { _ =>

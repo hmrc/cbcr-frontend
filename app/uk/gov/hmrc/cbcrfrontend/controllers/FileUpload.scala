@@ -21,12 +21,13 @@ import uk.gov.hmrc.cbcrfrontend.services.FileUploadService
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.config.ServicesConfig
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsObject, JsValue}
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.xmlvalidator.CBCRXMLValidator
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import cats.implicits._
+import play.api.Logger
 
 import scala.concurrent.Future
 
@@ -80,10 +81,10 @@ trait FileUpload  extends FrontendController with ServicesConfig {
 
 
   val fileUploadCallback = Action.async(parse.json) { implicit request =>
-    implicit val fileUploadCallback: JsValue = request.body
+    implicit val callbackResponse: JsObject = request.body.as[JsObject]
 
-    println("Callback json: " + fileUploadCallback)
-    Future.successful(Ok("where do I go"))
+    Logger.debug("Callback json: " + callbackResponse)
+    fileUploadService.saveFileUploadCallbackResponse.fold(error => InternalServerError("Something went wrong"),  response => Ok(response))
   }
 
   val fileUploadProgress = Action.async { implicit request =>
