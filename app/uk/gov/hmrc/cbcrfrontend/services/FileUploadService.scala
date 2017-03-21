@@ -21,6 +21,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 import cats.implicits._
+import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.WSHttp
@@ -59,6 +60,8 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
     val bis = new BufferedInputStream(new FileInputStream(xmlFile))
     val xmlByteArray: Array[Byte] = Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
 
+    Logger.debug("Country by Country: Creating an envelope for file upload")
+
     for {
       envelopeId <- fromFutureOptA(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest("formTypeRef"))).map(fusConnector.extractEnvelopId))
       uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
@@ -74,6 +77,10 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
                              cbcrsUrl: ServiceUrl[CbcrsUrl],
                              envelopeId: String
                            ): ServiceResponse[String] = {
+
+
+    Logger.debug("Country by Country: Get file upload response")
+
 
     for {
     //      fileUploadResponse <- fromFutureA(HttpExecutor(cbcrsUrl, GetFileUploadResponse(envelopeId)))
@@ -92,6 +99,8 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
                                       ec: ExecutionContext,
                                       cbcrsUrl: ServiceUrl[CbcrsUrl]
                                     ): ServiceResponse[String] = {
+
+    Logger.debug("Country by Country: Save file upload response")
 
     for {
       saveResponse <- fromFutureA(HttpExecutor(cbcrsUrl, FileUploadCallbackResponse(callbackResponse)))

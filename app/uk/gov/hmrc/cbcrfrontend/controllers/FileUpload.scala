@@ -53,7 +53,7 @@ trait FileUpload  extends FrontendController with ServicesConfig {
 
     import java.io._
     import cats.syntax.either._
-
+    Logger.debug("Country by Country file upload started...")
     val validatedData = Either.fromOption(
       request.body.file("oecdcbcxml").map { _.ref.file },
       new FileNotFoundException("which file")
@@ -61,10 +61,12 @@ trait FileUpload  extends FrontendController with ServicesConfig {
 
     validatedData.fold (
       exception => {
-        println("Exception details: "+exception.getLocalizedMessage)
+        Logger.debug("Exception details: "+exception.getLocalizedMessage)
         Future(Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> exception.getLocalizedMessage))
       },
       file => {
+
+        Logger.debug("Country by Countryfile validated OK...")
 
         implicit val xml:File = file
         fileUploadService.createEnvelope.fold(
@@ -89,7 +91,7 @@ trait FileUpload  extends FrontendController with ServicesConfig {
 
   val fileUploadProgress = Action.async { implicit request =>
     val envelopeId = request.flash.get("ENVELOPEID")
-    println("Headers :"+envelopeId)
+    Logger.debug("Headers :"+envelopeId)
 
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadProgress(envelopeId.getOrElse("notfound"))))
   }
