@@ -46,7 +46,7 @@ class FileUploadServiceConnector() {
         "masSize" -> "30MB",
         "maxSizePerItem" -> "5MB"
       ),
-      "callbackUrl" -> "http://localhost:9001/cbcr/saveFileUploadResponse?cbcId=CBCId1234",
+      "callbackUrl" -> "http://www-dev.***REMOVED***/country-by-country-reporting/fileUploadCallback",
       "expiryDate" -> s"${envelopeExpiryDate(7)}",
       "metadata" -> Json.obj(
         "application" -> "Digital Forms Service",

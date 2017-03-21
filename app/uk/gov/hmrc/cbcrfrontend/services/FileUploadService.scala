@@ -37,10 +37,10 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
 
   implicit val xmlUploadCallbackFormat: Format[XMLUploadCallback] = (
     (JsPath \ "envelopeId").format[String] and
-    (JsPath \ "fileId").format[String] and
-    (JsPath \ "status").format[String]
+      (JsPath \ "fileId").format[String] and
+      (JsPath \ "status").format[String]
 
-  )(XMLUploadCallback.apply, unlift(XMLUploadCallback.unapply))
+    ) (XMLUploadCallback.apply, unlift(XMLUploadCallback.unapply))
 
 
   def createEnvelope(
@@ -68,22 +68,36 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
 
 
   def getFileUploadResponse(
-                      implicit
-                      hc: HeaderCarrier,
-                      ec: ExecutionContext,
-                      cbcrsUrl: ServiceUrl[CbcrsUrl],
-                      envelopeId: String
-                    ): ServiceResponse[String] = {
+                             implicit
+                             hc: HeaderCarrier,
+                             ec: ExecutionContext,
+                             cbcrsUrl: ServiceUrl[CbcrsUrl],
+                             envelopeId: String
+                           ): ServiceResponse[String] = {
 
     for {
-//      fileUploadResponse <- fromFutureA(HttpExecutor(cbcrsUrl, GetFileUploadResponse(envelopeId)))
+    //      fileUploadResponse <- fromFutureA(HttpExecutor(cbcrsUrl, GetFileUploadResponse(envelopeId)))
 
-      fileUploadResponse <- fromFutureA(WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/"+envelopeId+"?cbcId=CBCId1234"))
+      fileUploadResponse <- fromFutureA(WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/" + envelopeId + "?cbcId=CBCId1234"))
 
 
     } yield fileUploadResponse.body
   }
 
+
+  def saveFileUploadCallbackResponse(
+                                      implicit
+                                      hc: HeaderCarrier,
+                                      callbackResponse: JsObject,
+                                      ec: ExecutionContext,
+                                      cbcrsUrl: ServiceUrl[CbcrsUrl]
+                                    ): ServiceResponse[String] = {
+
+    for {
+      saveResponse <- fromFutureA(HttpExecutor(cbcrsUrl, FileUploadCallbackResponse(callbackResponse)))
+    } yield saveResponse.body
+
+  }
+
+
 }
-
-
