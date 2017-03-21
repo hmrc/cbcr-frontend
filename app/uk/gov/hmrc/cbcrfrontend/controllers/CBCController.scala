@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import play.api.Logger
 import play.api.mvc.Action
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -27,10 +28,15 @@ object CBCController extends CBCController
 trait CBCController  extends FrontendController with ServicesConfig {
 
   val enterCBCId = Action.async { implicit request =>
+    Logger.debug("Country by Country: Enter CBCID")
+
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.enterCBCId()))
   }
 
   val submitCBCId = Action.async { implicit request =>
+
+    Logger.debug("Country by Country: Submit CBCID")
+
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.cbcHistory()))
   }
 
