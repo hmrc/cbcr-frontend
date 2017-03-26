@@ -28,7 +28,9 @@ import uk.gov.hmrc.cbcrfrontend.xmlvalidator.CBCRXMLValidator
 import scala.concurrent.ExecutionContext.Implicits.global
 import cats.implicits._
 import play.api.Logger
-
+import uk.gov.hmrc.cbcrfrontend.views.html._
+import play.api.Play.current
+import play.api.i18n.Messages.Implicits._
 import scala.concurrent.Future
 
 
@@ -46,7 +48,9 @@ trait FileUpload  extends FrontendController with ServicesConfig {
 
 
   val chooseXMLFile = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.chooseFile()))
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.chooseFile(
+      includes.asideBusiness(), includes.phaseBannerBeta()
+    )))
   }
 
   val upload =  Action.async(parse.multipartFormData)  { implicit request =>
@@ -93,7 +97,9 @@ trait FileUpload  extends FrontendController with ServicesConfig {
     val envelopeId = request.flash.get("ENVELOPEID")
     Logger.debug("Headers :"+envelopeId)
 
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadProgress(envelopeId.getOrElse("notfound"))))
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadProgress(
+      includes.asideBusiness(), includes.phaseBannerBeta(),
+      envelopeId.getOrElse("notfound"))))
   }
 
   def getFileUploadResponse(eId: String) = Action.async { implicit request =>
@@ -105,9 +111,35 @@ trait FileUpload  extends FrontendController with ServicesConfig {
   }
 
   val successFileUpload = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadSuccess()))
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadSuccess(
+      includes.asideBusiness(), includes.phaseBannerBeta()
+    )))
   }
 
+
+  val contactInfoSubmitter = Action.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.contactInfoSubmitter(
+      includes.asideBusiness(), includes.phaseBannerBeta()
+    )))
+  }
+
+  val submitSummary = Action.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
+      includes.phaseBannerBeta()
+    )))
+  }
+
+  val submitSuccessReceipt = Action.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(
+      includes.asideBusiness(), includes.phaseBannerBeta()
+    )))
+  }
+
+  val filingHistory = Action.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.filingHistory(
+      includes.phaseBannerBeta()
+    )))
+  }
 
 /*  val helloFileUpload = Action.async { implicit request =>
 

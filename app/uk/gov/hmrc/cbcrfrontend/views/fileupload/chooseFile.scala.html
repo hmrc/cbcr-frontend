@@ -14,37 +14,58 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers.{form}
-@import play.api.i18n.Messages.Implicits._
-@import play.api.Play.current
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@()(implicit request: Request[_])
+@(asideBusiness: Html, phaseBannerBeta: Html)(
+implicit request: Request[_], messages: Messages)
 
-@uk.gov.hmrc.cbcrfrontend.views.html.main_template(title = "Country By Country", bodyClasses = None) {
-<div align="center">
-<h1>@Messages("cbc.title")</h1>
-
-</br>
-</br>
-
-<p>
-<div>
-    @form(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.upload(), 'enctype -> "multipart/form-data") {
-
-    <input id="file-input-nojs" type="file" name="oecdcbcxml" accept="application/xml">
-
-
-    <div class="form-group">
-        <button class="btn button" type="submit" id="upload-button">@Messages("cbc.button.fileupload")</button>
-    </div>
-    }
-
-
-</div>
-
-
-</p>
-</div>
-
+@sidebarContent = {
+@asideBusiness
 }
 
+@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@phaseBannerBeta
+
+<main id="content" role="main">
+
+    <div class="grid-row">
+        <div class="column-two-thirds">
+            <h1>
+                Check the report's XML
+            </h1>
+
+            <div class="indent-warning">
+                <p><strong>Your XML file needs to be in a set format before it can be uploaded. Choose the file below and we will check the formatting. </strong></p>
+            </div>
+            <details>
+                <summary class="[modifier class]">XML format checklist</summary>
+                <div>
+                    <ul class="bullets">
+                        <li>File name is unique</li>
+                        <li>File size is no bigger than 25MB</li>
+                        <li>XML is well formed  - <a href="#">view guidance</a></li>
+                        <li>Country by Country ID is contained in 'sendingEntityIN' field of XML  - <a href="http://www.oecd.org/tax/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-and-taxpayers.pdf">view guidance</a></li>
+                        <li>XML is formatted according to OECD schema  - <a href="http://www.oecd.org/tax/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-and-taxpayers.pdf">view guidance</a></li>
+                    </ul>
+                </div>
+            </details>
+
+            <div class="form-group">
+                <label class="form-label" for="file-input">Choose the file to upload.</label>
+                </label>
+                @form(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.upload(), 'enctype -> "multipart/form-data") {
+
+                <input type="file" id="file-input" class="upload-report-input" name ="oecdcbcxml" accept="application/xml" >
+                <div class="form-field form-field--submit">
+                    <input type="submit" class="button" value="Check for errors" />
+                </div>
+                }
+            </div>
+
+        </div>
+    </div>
+
+</main>
+}

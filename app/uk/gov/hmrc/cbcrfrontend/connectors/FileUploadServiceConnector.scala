@@ -46,7 +46,7 @@ class FileUploadServiceConnector() {
         "masSize" -> "30MB",
         "maxSizePerItem" -> "5MB"
       ),
-      "callbackUrl" -> "http://www-dev.tax.service.gov.uk/country-by-country-reporting/fileUploadCallback",
+      "callbackUrl" -> "http://localhost:9696/country-by-country-reporting/fileUploadCallback",
       "expiryDate" -> s"${envelopeExpiryDate(7)}",
       "metadata" -> Json.obj(
         "application" -> "Digital Forms Service",
