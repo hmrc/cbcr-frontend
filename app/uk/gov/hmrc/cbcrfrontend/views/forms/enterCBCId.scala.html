@@ -14,40 +14,53 @@
  * limitations under the License.
  *@
 
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import play.api.i18n.Messages.Implicits._
-@import play.api.Play.current
-@()(implicit request: Request[_])
-
-@uk.gov.hmrc.cbcrfrontend.views.html.main_template(title = "Country By Country", bodyClasses = None) {
-<div align="center">
-
-<h1>@Messages("cbc.title")</h1>
-
-</br>
-</br>
-</br>
-</br>
+@import uk.gov.hmrc.cbcrfrontend.views.html._
 
 
+@(asideCbc: Html, phaseBannerBeta: Html)(
+implicit request: Request[_], messages: Messages)
 
-<form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.submitCBCId" method="POST" >
-    <div class="form-group">
-        <p id="file-upload-desc">@Messages("cbc.entercbcid.label")</p>
+@sidebarContent = {
+@asideCbc
+}
+
+@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@phaseBannerBeta
+
+<main id="content" role="main">
+
+    <div class="grid-row">
+        <div class="column-two-thirds">
+
+            <h1>
+                Country by Country reporting
+            </h1>
+            <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile" method="POST" >
+
+                <fieldset>
+                    <div class="form-group">
+                        <label class="form-label-bold" for="full-name">Enter your ID</label>
+                        <p class="form-hint">This is the 15 digit ID you received when you registered,
+                            <br>for example: XACBC0000999999.
+                        </p>
+                        <input type="text" class="input--medium input--cleared"/>
+                    </div>
+                </fieldset>
+
+                <p>
+                <div class="form-field">
+                    <input class="button" type="submit" id="continue" value="Continue">
+                </div>
+                </p>
+            </form>
+
+            <h3>Don't have a Country by Country ID?</h3>
+            <a href="subscribe-first">Register online</a>
+        </div>
     </div>
-    <input  type="text" name="cbcId"/>
 
-    <br>
-
-    <p>
-    <div></div>
-    </p>
-
-
-
-    <button name="submit" value="submit">Submit</button>
-
-
-</form>
-</div>
-
+</main>
 }

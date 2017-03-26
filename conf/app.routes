@@ -5,16 +5,23 @@ POST       /fileUploadCallback      uk.gov.hmrc.cbcrfrontend.controllers.FileUpl
 GET        /enter-CBCId             uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 POST        /submit-CBCId           uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
 POST        /file-upload            uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.upload
-GET        /upload-report           uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
+POST        /upload-report           uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
 GET         /upload-progress        uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress
 GET         /getFileuploadResponse/:envelopeId  uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getFileUploadResponse(envelopeId: String)
 
 GET        /successFileUpload           uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.successFileUpload
 GET        /errorFileUpload           uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.errorFileUpload
 
+GET        /contactInfoSubmitter      uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.contactInfoSubmitter
+GET        /submitSummary       uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitSummary
+GET        /submitSuccessReceipt       uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitSuccessReceipt
+GET        /filingHistory       uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.filingHistory
 
 
 GET         /assets/*file                      controllers.Assets.versioned(path="/public", file: Asset)
+
+GET        /serviceHomepageUnsubscribed     uk.gov.hmrc.cbcrfrontend.controllers.ProtoController.serviceHomepageUnsubscribed
+
 
 
 

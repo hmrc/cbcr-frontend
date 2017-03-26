@@ -1,0 +1,98 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+
+@(phaseBannerBeta: Html)(
+implicit request: Request[_], messages: Messages)
+
+
+@main_template("Country by Country Reporting") {
+@phaseBannerBeta
+<main id="content" role="main">
+
+    <div class="grid-row">
+        <div class="column-full">
+            <h1>
+                Check your report details before you submit
+            </h1>
+            <table class="check-your-answers">
+                <thead>
+                <tr>
+                    <th colspan="2">
+                        <h2 class="heading-medium">
+                            Multinational Ltd<br/>
+                            CBC-1234567
+                        </h2>
+                    </th>
+                    <th>
+                    </th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr>
+                    <td>
+                        Reported by:
+                    </td>
+                    <td>
+                        Tina Taxfiler<br>
+                        Head of Tax<br>
+                        Tel: 01234 567 890<br>
+                        Email: tina.taxfiler@@bigmne.com
+                    </td>
+                    <td class="change-answer">
+                        <a href="#">
+                            Change <span class="visuallyhidden">Report XML file</span>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Report details:
+                    </td>
+                    <td>
+                        <div>
+                            @uk.gov.hmrc.cbcrfrontend.views.html.includes.xmlHeaderData()
+                        </div>
+                    </td>
+                    <td class="change-answer">
+                        <a href="#">
+                            Change <span class="visuallyhidden">Report XML file</span>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <h2 class="heading-medium">Confirm and submit</h2>
+            <p class="text">
+
+            </p>
+            <form>
+                <legend class="visually-hidden">Declaration</legend>
+                <div>
+                    <input id="cbc-report-submit-declaration" name="cbc-declaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
+                    <label for="cbc-report-submit-declaration">By submitting this report I am confirming that, to the best of my knowledge, the details I am providing are correct.</label>
+                </div>
+            </form>
+            <p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt">Submit report</a></p>
+
+        </div>
+    </div>
+</main>
+}
