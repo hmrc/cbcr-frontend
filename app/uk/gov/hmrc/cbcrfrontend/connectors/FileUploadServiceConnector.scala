@@ -46,7 +46,7 @@ class FileUploadServiceConnector() {
         "masSize" -> "30MB",
         "maxSizePerItem" -> "5MB"
       ),
-      "callbackUrl" -> "http://www-dev.tax.service.gov.uk/country-by-country-reporting/fileUploadCallback",
+      "callbackUrl" -> "https://www-dev.tax.service.gov.uk/country-by-country-reporting/fileUploadCallback",
       "expiryDate" -> s"${envelopeExpiryDate(7)}",
       "metadata" -> Json.obj(
         "application" -> "Digital Forms Service",
@@ -64,7 +64,7 @@ class FileUploadServiceConnector() {
         case otherwise => Left(InvalidState(s"EnvelopeId in $LOCATION header: $location not found"))
       }
       case None => Left(InvalidState(s"Header $LOCATION not found"))
-        
+
     }
   }
 

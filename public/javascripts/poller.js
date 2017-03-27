@@ -2,14 +2,14 @@
 
 function poll(envelopeId) {
    setTimeout(function() {
-      $.ajax({ url: "http://www-dev.tax.service.gov.uk/country-by-country-reporting/getFileuploadResponse/"+envelopeId, success: function(data){
+      $.ajax({ url: "https://www-dev.tax.service.gov.uk/country-by-country-reporting/getFileuploadResponse/"+envelopeId, success: function(data){
         var key = "status";
         var value = data[key];
         var eKey = "envelopeId"
         var eVal = data[eKey]
 
         if(eVal == envelopeId && value == 'AVAILABLE'){
-            window.location.href="http://www-dev.tax.service.gov.uk/country-by-country-reporting/successFileUpload";
+            window.location.href="https://www-dev.tax.service.gov.uk/country-by-country-reporting/successFileUpload";
         } else{
         //Setup the next poll recursively
         poll(envelopeId);
