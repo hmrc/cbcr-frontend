@@ -16,6 +16,10 @@ GET        /contactInfoSubmitter      uk.gov.hmrc.cbcrfrontend.controllers.FileU
 GET        /submitSummary       uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitSummary
 GET        /submitSuccessReceipt       uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitSuccessReceipt
 GET        /filingHistory       uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.filingHistory
+GET        /subscribeFirst       uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeFirst
+GET        /subscribeMatchFound       uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeMatchFound
+GET        /contactInfoSubscriber       uk.gov.hmrc.cbcrfrontend.controllers.Subscription.contactInfoSubscriber
+GET        /subscribeSuccessCbcId       uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeSuccessCbcId
 
 
 GET         /assets/*file                      controllers.Assets.versioned(path="/public", file: Asset)
