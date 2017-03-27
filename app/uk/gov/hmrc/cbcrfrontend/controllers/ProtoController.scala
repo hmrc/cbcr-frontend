@@ -29,7 +29,7 @@ object  ProtoController extends ProtoController
 trait ProtoController extends FrontendController {
   val serviceHomepageUnsubscribed = Action.async { implicit request =>
     Future.successful(Ok(proto.serviceHomepageUnsubscribed(
-      includes.asideBusiness(), includes.phaseBannerBeta()
+      includes.asideCbc(), includes.phaseBannerBeta()
     )))
   }
 }
