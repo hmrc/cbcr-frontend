@@ -24,13 +24,8 @@ implicit request: Request[_], messages: Messages)
 @sidebarContent = {
 @asideBusiness
 }
-
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
-<main id="content" role="main">
 
-<div class="grid-row">
-    <div class="column-two-thirds">
         <h1>
             About you
         </h1>
@@ -53,10 +48,7 @@ implicit request: Request[_], messages: Messages)
             <label class="form-label-bold" for="email">Email address</label>
             <p class="form-hint">We contact you if there are any technical questions about your report.</p>
             <input type="text" class="form-control" id="email">
-        </div>
-    </div>
-    <p><a class="button" href="/country-by-country-reporting/submitSummary">Confirm and continue</a></p>
-</div>
 
-</main>
+    <p><a class="button" href="/country-by-country-reporting/submitSummary">Confirm and continue</a></p>
+        </div>
 }

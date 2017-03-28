@@ -47,6 +47,7 @@ trait FileUpload  extends FrontendController with ServicesConfig {
 
 
 
+
   val chooseXMLFile = Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.chooseFile(
       includes.asideBusiness(), includes.phaseBannerBeta()
@@ -54,6 +55,10 @@ trait FileUpload  extends FrontendController with ServicesConfig {
   }
 
   val upload =  Action.async(parse.multipartFormData)  { implicit request =>
+
+    val protocol = if(request.secure) "https" else "http"
+    val hostName = request.host
+    implicit val protocolHostName = s"$protocol://$hostName"
 
     import java.io._
     import cats.syntax.either._
@@ -96,10 +101,13 @@ trait FileUpload  extends FrontendController with ServicesConfig {
   val fileUploadProgress = Action.async { implicit request =>
     val envelopeId = request.flash.get("ENVELOPEID")
     Logger.debug("Headers :"+envelopeId)
+    val protocol = if(request.secure) "https" else "http"
+    val hostName = request.host
+    val protocolHostName = s"$protocol://$hostName"
 
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadProgress(
       includes.asideBusiness(), includes.phaseBannerBeta(),
-      envelopeId.getOrElse("notfound"))))
+      envelopeId.getOrElse("notfound"), protocolHostName)))
   }
 
   def getFileUploadResponse(eId: String) = Action.async { implicit request =>
