@@ -32,7 +32,7 @@ class FileUploadServiceConnector() {
   val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
 
 
-  def envelopeRequest(formTypeRef: String): JsObject = {
+  def envelopeRequest(formTypeRef: String, protocolHostName: String): JsObject = {
 
     def envelopeExpiryDate(numberOfDays: Int) = LocalDateTime.now.plusDays(numberOfDays).format(formatter)
 
@@ -46,7 +46,7 @@ class FileUploadServiceConnector() {
         "masSize" -> "30MB",
         "maxSizePerItem" -> "5MB"
       ),
-      "callbackUrl" -> "http://localhost:9696/country-by-country-reporting/fileUploadCallback",
+      "callbackUrl" -> s"$protocolHostName/country-by-country-reporting/fileUploadCallback",
       "expiryDate" -> s"${envelopeExpiryDate(7)}",
       "metadata" -> Json.obj(
         "application" -> "Digital Forms Service",

@@ -31,7 +31,7 @@ object CBCController extends CBCController
 trait CBCController  extends FrontendController with ServicesConfig {
 
   val enterCBCId = Action.async { implicit request =>
-    Logger.debug("Country by Country: Enter CBCID")
+    Logger.debug("Country by Country: Enter CBCID: "+request.secure)
 
     Future.successful(Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta())))
   }
