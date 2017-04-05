@@ -105,7 +105,6 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
   val fileUploadCallback = Action.async {  implicit request =>
 
     Logger.debug("fileUploadCallback called:")
-
     request.body.asJson match {
       case Some(body) => {
         Logger.debug("Callback json: " + body)
@@ -170,12 +169,4 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
     )))
   }
 
-/*  val helloFileUpload = Action.async { implicit request =>
-
-  fileUploadService.createEnvelope.fold(
-    error => error.toResult,
-    response => Ok(response)
-  )
-}
-*/
 }

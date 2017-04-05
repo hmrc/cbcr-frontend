@@ -18,10 +18,9 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.EitherT
 import cats.syntax.either._
-import play.api.Logger
 import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.connectors.DESConnector
-import uk.gov.hmrc.cbcrfrontend.exceptions.InvalidState
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.{FindBusinessDataResponse, Utr}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,10 +32,9 @@ class ETMPService(val connector: DESConnector) {
   /**
     * Lookup the provided UTR and return business information
     */
-  def lookup(utr: Utr): EitherT[Future,InvalidState,FindBusinessDataResponse] = {
+  def lookup(utr: Utr): EitherT[Future,UnexpectedState,FindBusinessDataResponse] =
     EitherT(connector.lookup(utr.value).map { response =>
-      Json.parse(response.body).validate[FindBusinessDataResponse].asEither.leftMap(_ => InvalidState(response.body))
+      Json.parse(response.body).validate[FindBusinessDataResponse].asEither.leftMap(_ => UnexpectedState(response.body))
     })
-  }
 
 }
