@@ -16,20 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.exceptions
 
-import play.api.mvc.Results.Ok
-import play.api.libs.json.{ Json, JsPath, JsValue }
+import play.api.libs.json.{JsValue, Json, OFormat}
 
-sealed trait UnexpectedState extends Product with Serializable {
+case class UnexpectedState(errorMsg: String, json: Option[JsValue] = None)
 
-  private def toMessage(msg: String) = Json.obj("error" -> msg)
-
-  private def jsonResponse: JsValue = this match {
-    case InvalidState(errorMsg) => toMessage(errorMsg)
-    case InvalidStateWithJson(errorMsg, json) => toMessage(errorMsg) + ("json" -> json)
-  }
-
-  def toResult = Ok(jsonResponse)
+object UnexpectedState{
+  implicit val invalidStateFormat: OFormat[UnexpectedState] = Json.format[UnexpectedState]
 }
-
-case class InvalidState(errorMsg: String) extends UnexpectedState
-case class InvalidStateWithJson(errorMsg: String, json: JsValue) extends UnexpectedState

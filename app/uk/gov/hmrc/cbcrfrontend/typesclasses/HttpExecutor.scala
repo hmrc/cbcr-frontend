@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.typesclasses
 import akka.util.ByteString
 import play.api.libs.json.{JsObject, JsValue, Json, Writes}
 import uk.gov.hmrc.cbcrfrontend.{FileUploadFrontEndWS, WSHttp}
-import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
+import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId, SubscriptionData}
 
 import scala.concurrent.ExecutionContext
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpReads, HttpResponse}

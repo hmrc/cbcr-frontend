@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.connectors
 
 import org.scalatest.{EitherValues, FlatSpec, Matchers}
-import uk.gov.hmrc.cbcrfrontend.exceptions.InvalidState
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.EnvelopeId
 import uk.gov.hmrc.play.http.HttpResponse
 
@@ -30,7 +30,7 @@ class FileUploadServiceConnectorSpec extends FlatSpec with Matchers with EitherV
 
     val res = new FileUploadServiceConnector().extractEnvelopId(responseFromFus)
 
-    res.left.value should be(InvalidState("Header Location not found"))
+    res.left.value should be(UnexpectedState("Header Location not found"))
 
   }
 
@@ -40,7 +40,7 @@ class FileUploadServiceConnectorSpec extends FlatSpec with Matchers with EitherV
 
     val res = new FileUploadServiceConnector().extractEnvelopId(responseFromFus)
 
-    res.left.value should be(InvalidState("EnvelopeId in Location header: invalid-location not found"))
+    res.left.value should be(UnexpectedState("EnvelopeId in Location header: invalid-location not found"))
 
   }
 

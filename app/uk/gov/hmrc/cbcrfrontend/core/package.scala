@@ -56,7 +56,7 @@ package object core {
   def fromFutureOptionA[A](fo: Future[Option[A]])(invalid: => UnexpectedState)(implicit ec: ExecutionContext): ServiceResponse[A] = {
     val futureA = fo.map {
       case Some(a) => Right(a)
-      case None => Left(invalid)
+      case None    => Left(invalid)
     }
     EitherT[Future, UnexpectedState, A](futureA)
   }

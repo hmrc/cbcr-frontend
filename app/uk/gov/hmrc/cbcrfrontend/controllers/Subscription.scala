@@ -18,6 +18,10 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 
 import cats.instances.future._
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
+
+import cats.instances.future._
 import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
@@ -29,7 +33,17 @@ import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.DESConnector
 import uk.gov.hmrc.cbcrfrontend.model.{FindBusinessDataResponse, KnownFacts, OrganisationResponse, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.{ETMPService, KnownFactsCheckService}
+import play.api.Play.current
+import play.api.data.Form
+import play.api.data.Forms._
+import play.api.i18n.Messages.Implicits._
+import play.api.mvc.{Action, AnyContent}
+import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.model.{CbcId, SubscriptionData}
+import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
@@ -38,9 +52,36 @@ import scala.util.matching.Regex
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class Subscription @Inject()(val sec: SecuredActions, val connector:DESConnector)(implicit ec:ExecutionContext) extends FrontendController with ServicesConfig {
+class Subscription @Inject()(val sec: SecuredActions, val subscriptionDataService: SubscriptionDataService, val connector:DESConnector)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+
+  //TODO: Find out genuine CBCID specs
+  def generateCBCId(): CbcId = CbcId(UUID.randomUUID().toString)
 
   val knownFactsService:KnownFactsCheckService = new KnownFactsCheckService(new ETMPService(connector))
+
+  val subscriptionDataForm: Form[SubscriptionData] = Form(
+    mapping(
+      "name"        -> nonEmptyText,
+      "role"        -> nonEmptyText,
+      "phoneNumber" -> nonEmptyText,
+      "email"       -> email.verifying(EmailAddress.isValid(_))
+    )((name: String, role: String, phoneNumber:String, email: String) =>
+      SubscriptionData(name, role, phoneNumber, EmailAddress(email), generateCBCId())
+    )(sc => Some((sc.name,sc.role,sc.phoneNumber, sc.email.value)))
+  )
+
+
+  val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+    Logger.debug("Country by Country: Generate CBCid and Store Data")
+
+    subscriptionDataForm.bindFromRequest.fold(
+      (errors: Form[SubscriptionData]) => Future.successful(BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(),includes.phaseBannerBeta(),errors))),
+      (data: SubscriptionData)         => subscriptionDataService.saveSubscriptionData(data).fold(
+        (state: UnexpectedState) => InternalServerError(state.errorMsg),
+        (id: String)             => Redirect(routes.Subscription.subscribeSuccessCbcId(data.cbcId.id))
+      )
+    )
+  }
 
   val postCodeRegexp: Regex = """^[A-Za-z]{1,2}[0-9]{1,2}\s*[A-Za-z]?[0-9][A-Za-z]{2}$""".r
 
@@ -67,30 +108,31 @@ class Subscription @Inject()(val sec: SecuredActions, val connector:DESConnector
     Future.successful(Ok(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm)))
   }
 
-  val checkKnownFacts = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+  val checkKnownFacts = sec.AsyncAuthenticatedAction { authContext =>
+    implicit request =>
 
-    knownFactsForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(
-        BadRequest(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors))
-      ),
-      knownFacts => knownFactsService.checkKnownFacts(knownFacts).cata(
-        NotFound(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true)),
-        (s: FindBusinessDataResponse) =>
-          Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), s.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value))
+      knownFactsForm.bindFromRequest.fold(
+        formWithErrors => Future.successful(
+          BadRequest(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors))
+        ),
+        knownFacts => knownFactsService.checkKnownFacts(knownFacts).cata(
+          NotFound(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true)),
+          (s: FindBusinessDataResponse) =>
+            Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), s.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value))
+        )
       )
-    )
   }
 
   val contactInfoSubscriber = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscriber View")
 
-    Future.successful(Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta())))
+    Future.successful(Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm)))
   }
 
-  val subscribeSuccessCbcId = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+  def subscribeSuccessCbcId(cbcId:String) = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscribe Success CbcId View")
 
-    Future.successful(Ok(subscription.subscribeSuccessCbcId(includes.asideBusiness(), includes.phaseBannerBeta())))
+    Future.successful(Ok(subscription.subscribeSuccessCbcId(includes.asideBusiness(), includes.phaseBannerBeta(),cbcId,request.session.get("companyName"))))
   }
 
 
