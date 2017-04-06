@@ -62,7 +62,7 @@ trait Subscription extends FrontendController with ServicesConfig {
   val knownFactsForm = Form(
     mapping(
       "utr" -> nonEmptyText.verifying(utrConstraint),
-      "postcode" -> nonEmptyText.verifying(postCodeConstraint)
+      "postCode" -> nonEmptyText.verifying(postCodeConstraint)
     )(KnownFacts.apply)(KnownFacts.unapply)
   )
 
@@ -72,7 +72,7 @@ trait Subscription extends FrontendController with ServicesConfig {
     Future.successful(Ok(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm)))
   }
 
-  def checkKnownFacts = Action.async { implicit request =>
+  val checkKnownFacts = Action.async { implicit request =>
 
     knownFactsForm.bindFromRequest.fold(
       formWithErrors => Future.successful(
