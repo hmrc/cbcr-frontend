@@ -26,7 +26,7 @@ implicit request: Request[_], messages: Messages)
 @asideCbc
 }
 @utrErrors = @{knownFactsForm.error("utr").isDefined}
-@postCodeErrors = @{knownFactsForm.error("postcode").isDefined}
+@postCodeErrors = @{knownFactsForm.error("postCode").isDefined}
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
@@ -71,7 +71,7 @@ implicit request: Request[_], messages: Messages)
                   <label> UK Postcode </label>
 
                       <input class="@{ if(postCodeErrors){ "input--medium error-field" } else {"form-control--block"} }"
-                      type="text" name="postcode" id="postcode" value="@if(!postCodeErrors)@{knownFactsForm.data.get("postcode")}"/>
+                      type="text" name="postCode" id="postCode" value="@if(!postCodeErrors)@{knownFactsForm.data.get("postCode")}"/>
               </div>
           </fieldset>
 
