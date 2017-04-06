@@ -91,11 +91,9 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
             Logger.debug("Country by Country file validated OK...")
 
             implicit val xml: File = file
-            fileUploadService.createEnvelope.fold(
-              error => Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> "error uploading file"),
-              envelopeId => {
-                Redirect(routes.FileUpload.fileUploadProgress).flashing("ENVELOPEID" -> envelopeId)
-              }
+            fileUploadService.createEnvelopeAndUpload.fold(
+              error      => Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> "error uploading file"),
+              envelopeId => Redirect(routes.FileUpload.fileUploadProgress).flashing("ENVELOPEID" -> envelopeId)
             )
           }
         )
@@ -103,8 +101,6 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
       case _ => Future(Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> "Input received is not Multipart Upload"))
     }
   }
-
-  /*
 
   val fileUploadCallback = Action.async {  implicit request =>
 
@@ -121,7 +117,6 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
 
 
   }
-  */
 
   val fileUploadProgress = Action.async { implicit request =>
     val envelopeId = request.flash.get("ENVELOPEID")
