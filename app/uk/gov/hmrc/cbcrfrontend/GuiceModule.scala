@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.controllers
+package uk.gov.hmrc.cbcrfrontend
 
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import play.api.mvc._
-import scala.concurrent.Future
-import play.api.Play.current
-import play.api.i18n.Messages.Implicits._
-import uk.gov.hmrc.cbcrfrontend.views.html._
+import com.google.inject.AbstractModule
+import uk.gov.hmrc.cbcrfrontend.auth.{SecuredActions, SecuredActionsImpl}
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
-
-object  ProtoController extends ProtoController
-
-trait ProtoController extends FrontendController {
-  val serviceHomepageUnsubscribed = Action.async { implicit request =>
-    Future.successful(Ok(proto.serviceHomepageUnsubscribed(
-      includes.asideCbc(), includes.phaseBannerBeta()
-    )))
+class GuiceModule extends AbstractModule with ServicesConfig {
+  override def configure(): Unit = {
+    bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
+    bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
   }
 }

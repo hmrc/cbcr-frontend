@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, envelopeId: String, protocolHostName: String)(
+@(asideBusiness: Html, phaseBannerBeta: Html, envelopeId: String, protocolHostName: String, assetsLocationPrefix: String)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -40,7 +40,7 @@ implicit request: Request[_], messages: Messages)
    </h1>
    <body onload="poll('@envelopeId', '@protocolHostName')" >
 
-   <img alt="loading..." src="http://localhost:9032//assets/2.241.0/images/loading.gif" />
+   <img alt="loading..." src="/images/loading.gif" />
    </body>
    <br>
    <br>
