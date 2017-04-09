@@ -24,6 +24,10 @@ trait AppConfig {
   val analyticsHost: String
   val reportAProblemPartialUrl: String
   val reportAProblemNonJSUrl: String
+  def governmentGatewaySignInUrl: String
+  def cbcrFrontendBaseUrl: String
+  def assetsPrefix: String
+
   val betaFeedbackUrlNoAuth: String
 
 }
@@ -39,6 +43,14 @@ object FrontendAppConfig extends AppConfig with ServicesConfig {
   override lazy val analyticsHost = loadConfig(s"google-analytics.host")
   override lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   override lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
+  override lazy val assetsPrefix = loadConfig(s"assets.url") + loadConfig(s"assets.version")
+
+  override lazy val governmentGatewaySignInUrl = loadConfig("government-gateway-sign-in-url")
+  //  override lazy val governmentGatewaySignInUrl = "http://localhost:9025/gg/sign-in"
+
+  // this will be empty in non-local environments
+  override lazy val cbcrFrontendBaseUrl = loadConfig("cbcr-frontend-base-url")
+
   override lazy val betaFeedbackUrlNoAuth = s"$contactHost/contact/beta-feedback-unauthenticated?service=$contactFormServiceIdentifier"
 
 }

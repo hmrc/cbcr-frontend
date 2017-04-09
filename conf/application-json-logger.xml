@@ -4,6 +4,7 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="uk.gov.hmrc.play.logging.JsonEncoder"/>
     </appender>
+    <logger name="org.asynchttpclient" level="ERROR" />
 
     <logger name="uk.gov" level="WARN"/>
 

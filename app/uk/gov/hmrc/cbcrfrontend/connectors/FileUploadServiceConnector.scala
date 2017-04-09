@@ -46,10 +46,10 @@ class FileUploadServiceConnector() {
         "masSize" -> "30MB",
         "maxSizePerItem" -> "5MB"
       ),
-      "callbackUrl" -> s"$protocolHostName/country-by-country-reporting/fileUploadCallback",
+      "callbackUrl" -> "http://localhost:9797/cbcr/saveFileUploadResponse?cbcId=123456",
       "expiryDate" -> s"${envelopeExpiryDate(7)}",
       "metadata" -> Json.obj(
-        "application" -> "Digital Forms Service",
+        "application" -> "Country By Country Reporting Service",
         "formTypeRef" -> s"$formTypeRef"
       )
     )

@@ -39,7 +39,7 @@
         <appender-ref ref="ACCESS_LOG_FILE" />
     </logger>
 
-    <logger name="com.ning.http.client.providers.netty" additivity="false">
+    <logger name="com.ning.http.client.providers.netty" additivity="false" level="ERROR" >
         <appender-ref ref="STDOUT_IGNORE_NETTY" />
     </logger>
 
@@ -52,6 +52,9 @@
     <logger name="connector" level="TRACE">
         <appender-ref ref="STDOUT"/>
     </logger>
+
+    <logger name="play.core.netty" level="INFO"/>
+
 
     <root level="DEBUG">
         <appender-ref ref="FILE"/>
