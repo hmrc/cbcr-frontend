@@ -16,27 +16,25 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.util.UUID
-
 import cats.data.EitherT
 import cats.syntax.either._
+import play.api.Logger
 import play.api.libs.json.Json
-import uk.gov.hmrc.cbcrfrontend.connectors.ETMPConnector
+import uk.gov.hmrc.cbcrfrontend.connectors.DESConnector
 import uk.gov.hmrc.cbcrfrontend.exceptions.InvalidState
-import uk.gov.hmrc.cbcrfrontend.model.{FindBusinessData, FindBusinessDataResponse}
+import uk.gov.hmrc.cbcrfrontend.model.{FindBusinessDataResponse, Utr}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-class ETMPService(val connector: ETMPConnector) {
+class ETMPService(val connector: DESConnector) {
 
   /**
     * Lookup the provided UTR and return business information
     */
-  def lookup(utr: String): EitherT[Future,InvalidState,FindBusinessDataResponse] =  {
-    val query = FindBusinessData(UUID.randomUUID().toString,utr,false,false,None,None)
-    EitherT(connector.lookup(query,utr).map{ response =>
+  def lookup(utr: Utr): EitherT[Future,InvalidState,FindBusinessDataResponse] = {
+    EitherT(connector.lookup(utr.value).map { response =>
       Json.parse(response.body).validate[FindBusinessDataResponse].asEither.leftMap(_ => InvalidState(response.body))
     })
   }

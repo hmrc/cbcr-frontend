@@ -33,35 +33,16 @@ object EtmpAddress {
   implicit val formats = Json.format[EtmpAddress]
 }
 
-
-
 case class Individual(firstName: String, lastName: String, dateOfBirth: Option[String])
 
 object Individual {
   implicit val formats = Json.format[Individual]
 }
 
-case class Organisation(organisationName: String, organisationType: String)
-
-object Organisation {
-  implicit val formats = Json.format[Organisation]
-}
-
 case class OrganisationResponse(organisationName: String, isAGroup: Option[Boolean], organisationType: Option[String])
 
 object OrganisationResponse {
   implicit val formats = Json.format[OrganisationResponse]
-}
-
-case class FindBusinessData(acknowledgementReference: String,
-                            utr: String,
-                            requiresNameMatch: Boolean = false,
-                            isAnAgent: Boolean = false,
-                            individual: Option[Individual],
-                            organisation: Option[Organisation])
-
-object FindBusinessData {
-  implicit val formats = Json.format[FindBusinessData]
 }
 
 case class FindBusinessDataResponse(isAnIndividual: Boolean,

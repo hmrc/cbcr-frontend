@@ -25,7 +25,7 @@ import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import uk.gov.hmrc.cbcrfrontend.model.{KnownFacts, OrganisationResponse}
+import uk.gov.hmrc.cbcrfrontend.model.{KnownFacts, OrganisationResponse, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.KnownFactsCheckService
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -86,15 +86,15 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the postcode is invalid" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(KnownFacts("1234567890","NOTAPOSTCODE"))))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(KnownFacts(Utr("1234567890"),"NOTAPOSTCODE"))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the utr is invalid" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(KnownFacts("IAMNOTAUTR","SW4 6NR"))))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(KnownFacts(Utr("IAMNOTAUTR"),"SW4 6NR"))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 200 when the utr and postcode are valid" in {
-      val kf = KnownFacts("1234567890","SW46NR")
+      val kf = KnownFacts(Utr("7000000002"),"SW46NR")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(kfcs.checkKnownFacts(kf)) thenReturn OptionT[Future,OrganisationResponse](Future.successful(Some(OrganisationResponse("name",None,None))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
