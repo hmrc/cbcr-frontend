@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend
 
+import javax.inject.Singleton
+
 import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector => Auditing}
 import uk.gov.hmrc.play.config.{AppName, RunMode, ServicesConfig}
@@ -31,7 +33,6 @@ import play.api.http.HttpVerbs.{POST => POST_VERB}
 import uk.gov.hmrc.play.http.hooks.HttpHook
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-
 import scala.concurrent.Future
 
 
@@ -43,7 +44,8 @@ object WSHttp extends WSGet with WSPut with WSPost with WSDelete with AppName wi
   override val hooks = NoneRequired
 }
 
-object FrontendAuthConnector extends AuthConnector with ServicesConfig {
+@Singleton
+class FrontendAuthConnector extends AuthConnector with ServicesConfig {
   val serviceUrl = baseUrl("auth")
   lazy val http = WSHttp
 }

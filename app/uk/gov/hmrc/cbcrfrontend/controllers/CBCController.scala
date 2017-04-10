@@ -20,17 +20,26 @@ import play.api.Logger
 import play.api.mvc.Action
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.cbcrfrontend.views.html._
 
 import scala.concurrent.Future
+import play.api.Play.current
+import play.api.i18n.Messages.Implicits._
+import play.api.mvc._
+import javax.inject.{Inject, Singleton}
 
-object CBCController extends CBCController
+import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 
-trait CBCController  extends FrontendController with ServicesConfig {
 
-  val enterCBCId = Action.async { implicit request =>
-    Logger.debug("Country by Country: Enter CBCID")
+//object CBCController extends CBCController
+@Singleton
+class CBCController @Inject()(val sec: SecuredActions)  extends FrontendController with ServicesConfig {
 
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.enterCBCId()))
+
+  val enterCBCId = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+    Logger.debug("Country by Country: Enter CBCID: "+request.secure)
+
+    Future.successful(Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta())))
   }
 
   val submitCBCId = Action.async { implicit request =>

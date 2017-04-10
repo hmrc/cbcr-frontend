@@ -16,9 +16,7 @@
 
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
-@import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-
 
 @(asideCbc: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
@@ -29,36 +27,42 @@ implicit request: Request[_], messages: Messages)
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
-
 <main id="content" role="main">
 
     <div class="grid-row">
         <div class="column-two-thirds">
 
             <h1>
-                Country by Country reporting
+                Confirm your business details
             </h1>
-            <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile" method="POST" >
 
-                <fieldset>
-                    <div class="form-group">
-                        <label class="form-label-bold" for="full-name">Enter your ID</label>
-                        <p class="form-hint">This is the 15 digit ID you received when you registered,
-                            <br>for example: XACBC0000999999.
-                        </p>
-                        <input type="text" class="input--medium input--cleared"/>
-                    </div>
-                </fieldset>
-                @csrf_token()
-                <p>
-                <div class="form-field">
-                    <input class="button" type="submit" id="continue" value="Continue">
-                </div>
-                </p>
-            </form>
+            <table class="form-group">
+                <thead>
+                <tr>
+                    <th colspan="2">Business details</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Name</td>
+                    <td>Multinational Ltd</td>
+                </tr>
+                <tr>
+                    <td>Postcode</td>
+                    <td>BN3 2ED</td>
+                </tr>
+                <tr>
+                    <td>UTR</td>
+                    <td>CT-1234567890</td>
+                </tr>
+                </tbody>
+            </table>
 
-            <h3>Don't have a Country by Country ID?</h3>
-            <a href="/country-by-country-reporting/subscribeFirst">Register online</a>
+            <p>
+                <a class="button" href="/country-by-country-reporting/contactInfoSubscriber" role="button">Continue</a>
+            </p>
+            <a href="/country-by-country-reporting/subscribeFirst">back</a>
+
         </div>
     </div>
 

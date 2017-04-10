@@ -16,9 +16,7 @@
 
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
-@import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-
 
 @(asideCbc: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
@@ -29,38 +27,38 @@ implicit request: Request[_], messages: Messages)
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
-
 <main id="content" role="main">
 
     <div class="grid-row">
         <div class="column-two-thirds">
-
             <h1>
-                Country by Country reporting
+                About you
             </h1>
-            <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile" method="POST" >
-
+            <p>We need your details, in case we need to contact you about your Country by Country registration.</p>
+            <div class="form-group">
                 <fieldset>
-                    <div class="form-group">
-                        <label class="form-label-bold" for="full-name">Enter your ID</label>
-                        <p class="form-hint">This is the 15 digit ID you received when you registered,
-                            <br>for example: XACBC0000999999.
-                        </p>
-                        <input type="text" class="input--medium input--cleared"/>
+
+                    <div class="form-field form-field--tall">
+                        <div class="form-group">
+                            <label class="form-label" for="full-name">Full name</label>
+                            <input type="text" class="form-control" id="full-name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="role">Position in the company</label>
+                            <p class="form-hint">For example: director, company secretary, agent</p>
+                            <input type="text" class="form-control" id="role">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email address</label>
+                            <input type="text" class="form-control" id="email">
+                        </div>
                     </div>
                 </fieldset>
-                @csrf_token()
                 <p>
-                <div class="form-field">
-                    <input class="button" type="submit" id="continue" value="Continue">
-                </div>
+                    <a class="button" href="/country-by-country-reporting/subscribeSuccessCbcId">Continue</a>
                 </p>
-            </form>
-
-            <h3>Don't have a Country by Country ID?</h3>
-            <a href="/country-by-country-reporting/subscribeFirst">Register online</a>
+            </div>
         </div>
     </div>
-
 </main>
 }

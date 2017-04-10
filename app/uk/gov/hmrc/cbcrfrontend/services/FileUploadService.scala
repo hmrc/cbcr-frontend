@@ -50,6 +50,8 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
                       ec: ExecutionContext,
                       fusUrl: ServiceUrl[FusUrl],
                       fusFeUrl: ServiceUrl[FusFeUrl],
+                      cbcrsUrl: ServiceUrl[CbcrsUrl],
+                      protocolHostName: String,
                       xmlFile: java.io.File
                     ): ServiceResponse[String] = {
 
@@ -63,7 +65,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
     Logger.debug("Country by Country: Creating an envelope for file upload")
 
     for {
-      envelopeId <- fromFutureOptA(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest("formTypeRef"))).map(fusConnector.extractEnvelopId))
+      envelopeId <- fromFutureOptA(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest("formTypeRef", protocolHostName, cbcrsUrl.url))).map(fusConnector.extractEnvelopId))
       uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
         UploadFile(envelopeId, FileId(s"xml-$fileId"), s"$fileNamePrefix-metadata.xml ", " application/xml; charset=UTF-8", xmlByteArray)))
     } yield envelopeId.value

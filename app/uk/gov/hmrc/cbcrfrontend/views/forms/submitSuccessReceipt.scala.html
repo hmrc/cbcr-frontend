@@ -27,34 +27,30 @@ implicit request: Request[_], messages: Messages)
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
-
 <main id="content" role="main">
 
- <div class="grid-row">
-  <div class="column-two-thirds">
-   <h1>
-    File has been checked
-   </h1>
-
-   <h2>File meta</h2>
-   <table>
-    <tbody>
-    <th scope="row">Filename:</th>
-    <th scope="row">multinational_ltd-cbc-report-filename-01-ok.xml</th>
-    <tr>
-     <td>File size</td>
-     <td>3200KB</td>
-    </tr>
-    </tbody>
-   </table>
-
-   <p>The file you uploaded has no errors.</p>
-   <p>We need to collect some additional information before you can submit your report.</p>
-
-   <p><a class="button" href="/country-by-country-reporting/contactInfoSubmitter">Continue</a></p>
-   <p><a class="link" href="/country-by-country-reporting/enter-CBCId">Back</a></p>
-
-  </div>
- </div>
+    <div class="grid-row">
+        <div class="column-two-thirds">
+            <section>
+                <div class="govuk-box-highlight">
+                    <h1>Country by Country report submitted</h1>
+                    <p>
+                        Your reference number is: <br>
+                        <strong class="heading-medium">H25-RS42-2VP</strong>
+                    </p>
+                </div>
+            </section>
+            <button onclick="myFunction()" class="toggle__button">Print this page</button>
+            <br>
+            <h2 class="heading-medium">What happens next</h2>
+            <ul class="bullets">
+                <li>You should print this page and keep a digital record for compliance purposes.</li>
+                <li>You may submit revisions to your report, if needed. </li>
+            </ul>
+            <p>
+                <a class="button" href="/country-by-country-reporting/filingHistory">Close</a>
+            </p>
+        </div>
+    </div>
 </main>
 }
