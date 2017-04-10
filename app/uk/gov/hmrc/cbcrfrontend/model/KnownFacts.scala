@@ -18,7 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.Json
 
-case class KnownFacts(utr:String, postCode:String)
+case class KnownFacts(utr:Utr, postCode:String)
 object KnownFacts {
   implicit val kfFormat = Json.format[KnownFacts]
 }

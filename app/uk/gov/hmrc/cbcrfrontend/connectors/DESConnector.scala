@@ -34,19 +34,18 @@
 
   import play.api.Logger
   import play.api.http.Status._
-  import play.api.libs.json.{JsValue, Json}
-  import uk.gov.hmrc.cbcrfrontend.model.FindBusinessData
+  import play.api.libs.json.{JsObject, JsValue, Json}
   import uk.gov.hmrc.cbcrfrontend.{FrontendGlobal, WSHttp}
   import uk.gov.hmrc.play.audit.AuditExtensions._
   import uk.gov.hmrc.play.audit.model.{Audit, DataEvent}
   import uk.gov.hmrc.play.config.ServicesConfig
-  import uk.gov.hmrc.play.http.{HeaderCarrier, _}
   import uk.gov.hmrc.play.http.logging.Authorization
+  import uk.gov.hmrc.play.http.{HeaderCarrier, _}
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.Future
 
-  trait ETMPConnector extends ServicesConfig with RawResponseReads {
+  trait DESConnector extends ServicesConfig with RawResponseReads {
 
     def serviceUrl: String
 
@@ -60,13 +59,18 @@
 
     def audit = new Audit("known-fact-checking", FrontendGlobal.auditConnector)
 
-    def lookup(lookupData: FindBusinessData, utr: String): Future[HttpResponse] = {
+    val lookupData: JsObject = Json.obj(
+      "regime" -> "ITSA",
+      "requiresNameMatch" -> false,
+      "isAnAgent" -> false
+    )
+
+    def lookup(utr: String): Future[HttpResponse] = {
       implicit val hc: HeaderCarrier = createHeaderCarrier
-      http.POST[JsValue, HttpResponse](s"$serviceUrl/$orgLookupURI/$utr", Json.toJson(lookupData)).map { response =>
+      http.POST[JsValue, HttpResponse](s"$serviceUrl/$orgLookupURI/utr/$utr", Json.toJson(lookupData)).map { response =>
         response.status match {
-          case OK        =>
-          case status    =>
-            Logger.warn(s"[EtmpConnector][lookup] - status: $status")
+          case status  if status != OK   =>
+            Logger.warn(s"[DESConnector][lookup] - status: $status")
             doFailedAudit("lookupFailed", lookupData.toString, response.body)
         }
         response
@@ -86,7 +90,7 @@
     }
   }
 
-  object ETMPConnector extends ETMPConnector {
+  object DESConnector extends DESConnector {
     val serviceUrl: String = baseUrl("etmp-hod")
     val orgLookupURI: String = "registration/organisation"
     val urlHeaderEnvironment: String = config("etmp-hod").getString("environment").getOrElse("")
