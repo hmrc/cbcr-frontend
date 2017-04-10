@@ -21,12 +21,13 @@ import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.test.FakeRequest
+import uk.gov.hmrc.cbcrfrontend.controllers.auth._
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
 
 
-class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest {
+class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector {
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]
@@ -83,6 +84,12 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
 
 
   def fileUploadController(implicit messagesApi: MessagesApi) = {
-    new FileUpload {}
+
+    val authCon = authConnector(TestUsers.cbcrUser)
+    val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
+
+    new FileUpload(securedActions) {}
   }
+
+
 }
