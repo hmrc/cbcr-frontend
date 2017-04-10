@@ -19,11 +19,13 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+import play.api.Logger
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.cbcrfrontend.core.Opt
 import uk.gov.hmrc.cbcrfrontend.exceptions.InvalidState
-import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId}
+import uk.gov.hmrc.cbcrfrontend.model.EnvelopeId
+import uk.gov.hmrc.cbcrfrontend.typesclasses.CbcrsUrl
 import uk.gov.hmrc.play.http.HttpResponse
 
 class FileUploadServiceConnector() {
@@ -32,7 +34,9 @@ class FileUploadServiceConnector() {
   val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
 
 
-  def envelopeRequest(formTypeRef: String, protocolHostName: String): JsObject = {
+  def envelopeRequest(formTypeRef: String, protocolHostName: String, cbcrsUrl: String): JsObject = {
+
+    Logger.debug("CBCR URL: "+cbcrsUrl)
 
     def envelopeExpiryDate(numberOfDays: Int) = LocalDateTime.now.plusDays(numberOfDays).format(formatter)
 
@@ -46,7 +50,7 @@ class FileUploadServiceConnector() {
         "masSize" -> "30MB",
         "maxSizePerItem" -> "5MB"
       ),
-      "callbackUrl" -> "http://localhost:9797/cbcr/saveFileUploadResponse?cbcId=123456",
+      "callbackUrl" -> s"$cbcrsUrl/cbcr/saveFileUploadResponse?cbcId=123456",
       "expiryDate" -> s"${envelopeExpiryDate(7)}",
       "metadata" -> Json.obj(
         "application" -> "Country By Country Reporting Service",
