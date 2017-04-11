@@ -22,12 +22,12 @@ import play.api.libs.json.Json
   * Created by max on 05/04/17.
   */
 
-case class EtmpAddress(addressLine1: String,
-                       addressLine2: String,
+case class EtmpAddress(addressLine1: Option[String],
+                       addressLine2: Option[String],
                        addressLine3: Option[String],
                        addressLine4: Option[String],
                        postalCode: Option[String],
-                       countryCode: String)
+                       countryCode: Option[String])
 
 object EtmpAddress {
   implicit val formats = Json.format[EtmpAddress]
@@ -45,10 +45,9 @@ object OrganisationResponse {
   implicit val formats = Json.format[OrganisationResponse]
 }
 
-case class FindBusinessDataResponse(isAnIndividual: Boolean,
+case class FindBusinessDataResponse(isAnASAgent: Boolean,
                                     agentReferenceNumber: Option[String],
                                     sapNumber: Option[String],
-                                    safeId: String,
                                     address: EtmpAddress,
                                     organisation: Option[OrganisationResponse] = None,
                                     individual: Option[Individual] = None)
