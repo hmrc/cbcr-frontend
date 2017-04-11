@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+
 import cats.instances.future._
 import play.api.Logger
 import play.api.Play.current
@@ -24,6 +25,7 @@ import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.Messages.Implicits._
 import play.api.mvc.Action
+import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.DESConnector
 import uk.gov.hmrc.cbcrfrontend.model.{KnownFacts, OrganisationResponse, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.{ETMPService, KnownFactsCheckService}
@@ -31,18 +33,15 @@ import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.matching.Regex
 
-object Subscription extends Subscription {
-  val connector = DESConnector
-  val businessMatchService = new ETMPService(connector)
-  val knownFactsService = new KnownFactsCheckService(businessMatchService)
-}
+import javax.inject.{Inject, Singleton}
 
-trait Subscription extends FrontendController with ServicesConfig {
+@Singleton
+class Subscription @Inject()(val sec: SecuredActions, val connector:DESConnector)(implicit ec:ExecutionContext) extends FrontendController with ServicesConfig {
 
-  val knownFactsService:KnownFactsCheckService
+  val knownFactsService:KnownFactsCheckService = new KnownFactsCheckService(new ETMPService(connector))
 
   val postCodeRegexp: Regex = """^[A-Za-z]{1,2}[0-9]{1,2}\s*[A-Za-z]?[0-9][A-Za-z]{2}$""".r
 
@@ -64,40 +63,41 @@ trait Subscription extends FrontendController with ServicesConfig {
     )((u,p) => KnownFacts(Utr(u),p))((facts: KnownFacts) => Some(facts.utr.value -> facts.postCode))
   )
 
-  val subscribeFirst = Action.async{ implicit request =>
+  val subscribeFirst = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
     Logger.debug("Country by Country: Subscribe First")
-
     Future.successful(Ok(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm)))
   }
 
-  val checkKnownFacts = Action.async { implicit request =>
+  val checkKnownFacts = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
 
     knownFactsForm.bindFromRequest.fold(
       formWithErrors => Future.successful(
         BadRequest(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors))
       ),
       knownFacts => knownFactsService.checkKnownFacts(knownFacts).cata(
-        Ok(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true)),
-        (s: OrganisationResponse) => Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta()))
+        NotFound(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true)),
+        (s: OrganisationResponse) =>
+          Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), s.organisationName, knownFacts.postCode, knownFacts.utr.value))
       )
     )
   }
 
 
-  val subscribeMatchFound = Action.async { implicit request =>
+  def subscribeMatchFound() = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
     Logger.debug("Country by Country: Subscribe Match Found view")
 
-    Future.successful(Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta())))
+    Future.successful(Ok)
+//    Future.successful(Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), name, kf.postCode, kf.utr.value)))
   }
 
 
-  val contactInfoSubscriber = Action.async { implicit request =>
+  val contactInfoSubscriber = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscriber View")
 
     Future.successful(Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta())))
   }
 
-  val subscribeSuccessCbcId = Action.async { implicit request =>
+  val subscribeSuccessCbcId = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscribe Success CbcId View")
 
     Future.successful(Ok(subscription.subscribeSuccessCbcId(includes.asideBusiness(), includes.phaseBannerBeta())))

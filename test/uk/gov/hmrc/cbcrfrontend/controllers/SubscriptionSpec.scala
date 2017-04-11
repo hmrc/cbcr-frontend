@@ -25,8 +25,11 @@ import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import uk.gov.hmrc.cbcrfrontend.model.{KnownFacts, OrganisationResponse, Utr}
+import uk.gov.hmrc.cbcrfrontend.connectors.DESConnector
+import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.KnownFactsCheckService
+import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -44,17 +47,15 @@ GET        /subscribeSuccessCbcId       uk.gov.hmrc.cbcrfrontend.controllers.Sub
   *
   *
   */
-class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar{
+class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector{
 
-  val kfcs = mock[KnownFactsCheckService]
+  val dc = mock[DESConnector]
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]
 
 
-  val controller = new Subscription {
-    val knownFactsService: KnownFactsCheckService = kfcs
-  }
+  val controller = subscriptionController
 
   "GET /subscribeFirst" should {
     "return 200" in {
@@ -93,14 +94,29 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(KnownFacts(Utr("IAMNOTAUTR"),"SW4 6NR"))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
+    "return 404 when the utr and postcode are valid but the postcode doesn't match" in {
+      val kf = KnownFacts(Utr("7000000002"),"SW46NR")
+      val response = FindBusinessDataResponse(false,None,None,"safeid",EtmpAddress("","",None,None,Some("SW46NS"),""))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
+      when(dc.lookup(kf.utr.value)) thenReturn Future.successful(HttpResponse(Status.OK,Some(Json.toJson(response))))
+      status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
+    }
     "return 200 when the utr and postcode are valid" in {
       val kf = KnownFacts(Utr("7000000002"),"SW46NR")
+      val response = FindBusinessDataResponse(false,None,None,"safeid",EtmpAddress("","",None,None,Some("SW46NR"),""), Some(OrganisationResponse("FooCorp", None, None)))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
-      when(kfcs.checkKnownFacts(kf)) thenReturn OptionT[Future,OrganisationResponse](Future.successful(Some(OrganisationResponse("name",None,None))))
+      when(dc.lookup(kf.utr.value)) thenReturn Future.successful(HttpResponse(Status.OK,Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
 
 
+  def subscriptionController(implicit messagesApi: MessagesApi) = {
+
+    val authCon = authConnector(TestUsers.cbcrUser)
+    val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
+
+    new Subscription(securedActions, dc) {}
+  }
 
 }
