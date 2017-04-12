@@ -68,6 +68,7 @@ class FileUploadServiceConnector() {
         case otherwise => Left(InvalidState(s"EnvelopeId in $LOCATION header: $location not found"))
       }
       case None => Left(InvalidState(s"Header $LOCATION not found"))
+
     }
   }
 
