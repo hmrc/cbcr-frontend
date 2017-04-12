@@ -67,7 +67,9 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
     for {
       envelopeId <- fromFutureOptA(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest("formTypeRef", protocolHostName, cbcrsUrl.url))).map(fusConnector.extractEnvelopId))
       uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
-        UploadFile(envelopeId, FileId(s"xml-$fileId"), s"$fileNamePrefix-metadata.xml ", " application/xml; charset=UTF-8", xmlByteArray)))
+        UploadFile(envelopeId, FileId(s"xml-$fileId"), s"$fileNamePrefix-cbcr.xml ", " application/xml; charset=UTF-8", xmlByteArray)))
+      _          <- fromFutureA    (HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "dfs", "DMS")))
+
     } yield envelopeId.value
   }
 

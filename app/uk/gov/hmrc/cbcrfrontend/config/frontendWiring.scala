@@ -23,7 +23,7 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector => Auditing}
 import uk.gov.hmrc.play.config.{AppName, RunMode, ServicesConfig}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.ws.{WSDelete, WSGet, WSPost, WSPut}
-import play.api.mvc.MultipartFormData.FilePart
+import play.api.mvc.MultipartFormData.{DataPart, FilePart}
 import uk.gov.hmrc.play.http.ws._
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpReads, HttpResponse}
@@ -64,6 +64,7 @@ object FileUploadFrontEndWS extends WSPost with AppName {
                       rds: HttpReads[HttpResponse]
                     ): Future[HttpResponse] = {
     val source = Source(FilePart(fileName, fileName, Some(contentType), Source.single(body)) :: Nil)
+
     withTracing(POST_VERB, url) {
       val httpResponse = buildRequest(url).withHeaders(headers: _*).post(source).map(new WSHttpResponse(_))
       //executeHooks(url, POST_VERB, Option(Json.stringify(wts.writes(body))), httpResponse)
