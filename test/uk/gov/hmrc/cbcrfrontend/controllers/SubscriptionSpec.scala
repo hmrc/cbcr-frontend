@@ -83,14 +83,14 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     }
     "return 404 when the utr and postcode are valid but the postcode doesn't match" in {
       val kf = KnownFacts(Utr("7000000002"), "SW46NR")
-      val response = FindBusinessDataResponse(false, None, None, "safeid", EtmpAddress(None, None, None, None, Some("SW46NS"), None))
+      val response = FindBusinessDataResponse(false, None, None, Some("safeid"), EtmpAddress(None, None, None, None, Some("SW46NS"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(dc.lookup(kf.utr.value)) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
     "return 200 when the utr and postcode are valid" in {
       val kf = KnownFacts(Utr("7000000002"), "SW46NR")
-      val response = FindBusinessDataResponse(false, None, None, "safeid", EtmpAddress(None, None, None, None, Some("SW46NR"), None), Some(OrganisationResponse("FooCorp", None, None)))
+      val response = FindBusinessDataResponse(false, None, None, Some("safeid"), EtmpAddress(None, None, None, None, Some("SW46NR"), None), Some(OrganisationResponse("FooCorp", None, None)))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(dc.lookup(kf.utr.value)) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
