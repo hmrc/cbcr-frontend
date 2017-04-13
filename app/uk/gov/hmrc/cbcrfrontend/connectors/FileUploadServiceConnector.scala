@@ -23,7 +23,7 @@ import play.api.Logger
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.cbcrfrontend.core.Opt
-import uk.gov.hmrc.cbcrfrontend.exceptions.InvalidState
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.EnvelopeId
 import uk.gov.hmrc.cbcrfrontend.typesclasses.CbcrsUrl
 import uk.gov.hmrc.play.http.HttpResponse
@@ -65,9 +65,9 @@ class FileUploadServiceConnector() {
     resp.header(LOCATION) match {
       case Some(location) => location match {
         case EnvelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
-        case otherwise => Left(InvalidState(s"EnvelopeId in $LOCATION header: $location not found"))
+        case otherwise => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
       }
-      case None => Left(InvalidState(s"Header $LOCATION not found"))
+      case None => Left(UnexpectedState(s"Header $LOCATION not found"))
     }
   }
 
