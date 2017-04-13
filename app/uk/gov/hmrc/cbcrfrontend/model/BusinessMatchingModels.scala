@@ -18,10 +18,6 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.Json
 
-/**
-  * Created by max on 05/04/17.
-  */
-
 case class EtmpAddress(addressLine1: Option[String],
                        addressLine2: Option[String],
                        addressLine3: Option[String],
@@ -48,6 +44,7 @@ object OrganisationResponse {
 case class FindBusinessDataResponse(isAnASAgent: Boolean,
                                     agentReferenceNumber: Option[String],
                                     sapNumber: Option[String],
+                                    safeId: String,
                                     address: EtmpAddress,
                                     organisation: Option[OrganisationResponse] = None,
                                     individual: Option[Individual] = None)

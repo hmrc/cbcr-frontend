@@ -18,29 +18,29 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.OptionT
 import cats.instances.future._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Logger
-import uk.gov.hmrc.cbcrfrontend.model.{KnownFacts, OrganisationResponse}
+import uk.gov.hmrc.cbcrfrontend.model.{FindBusinessDataResponse, KnownFacts, OrganisationResponse}
 
 import scala.concurrent.Future
 
 /**
-  * Created by max on 06/04/17.
+  * Use the provided ETMPService to query a UTR
+  * Optionally return the [[uk.gov.hmrc.cbcrfrontend.model.FindBusinessDataResponse]] depending on whether it contains
+  * the same postcode as the provided [[KnownFacts]]
   */
 class KnownFactsCheckService(bls:ETMPService) {
 
   private def sanitisePostCode(s:String) : String = s.toLowerCase.replaceAll("\\s", "")
 
-  def checkKnownFacts(kf:KnownFacts) : OptionT[Future,OrganisationResponse] = {
+  def checkKnownFacts(kf:KnownFacts) : OptionT[Future,FindBusinessDataResponse] = {
     val response = bls.lookup(kf.utr)
     response.leftMap(e => Logger.warn(s"Match request failed: ${e.errorMsg}"))
     response.toOption.subflatMap{ r =>
-      val pcMatch = r.address.postalCode.exists(pc => sanitisePostCode(pc) == sanitisePostCode(kf.postCode))
-      if(pcMatch) {
-        r.organisation
-      } else {
-        None
-      }
+      val postCodeMatches = r.address.postalCode.exists(pc => sanitisePostCode(pc) == sanitisePostCode(kf.postCode))
+      if(postCodeMatches) Some(r)
+      else None
     }
   }
 

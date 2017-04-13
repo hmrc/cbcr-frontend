@@ -19,7 +19,6 @@ GET        /filingHistory               @uk.gov.hmrc.cbcrfrontend.controllers.Fi
 
 POST       /checkKnownFacts             @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.checkKnownFacts
 GET        /subscribeFirst              @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeFirst
-GET        /subscribeMatchFound         @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeMatchFound
 GET        /contactInfoSubscriber       @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.contactInfoSubscriber
 GET        /subscribeSuccessCbcId       @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeSuccessCbcId
 
