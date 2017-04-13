@@ -27,7 +27,7 @@ import play.api.i18n.Messages.Implicits._
 import play.api.mvc.Action
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.DESConnector
-import uk.gov.hmrc.cbcrfrontend.model.{KnownFacts, OrganisationResponse, Utr}
+import uk.gov.hmrc.cbcrfrontend.model.{FindBusinessDataResponse, KnownFacts, OrganisationResponse, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.{ETMPService, KnownFactsCheckService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -35,7 +35,6 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.matching.Regex
-
 import javax.inject.{Inject, Singleton}
 
 @Singleton
@@ -76,20 +75,11 @@ class Subscription @Inject()(val sec: SecuredActions, val connector:DESConnector
       ),
       knownFacts => knownFactsService.checkKnownFacts(knownFacts).cata(
         NotFound(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true)),
-        (s: OrganisationResponse) =>
-          Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), s.organisationName, knownFacts.postCode, knownFacts.utr.value))
+        (s: FindBusinessDataResponse) =>
+          Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), s.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value))
       )
     )
   }
-
-
-  def subscribeMatchFound() = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
-    Logger.debug("Country by Country: Subscribe Match Found view")
-
-    Future.successful(Ok)
-//    Future.successful(Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), name, kf.postCode, kf.utr.value)))
-  }
-
 
   val contactInfoSubscriber = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscriber View")

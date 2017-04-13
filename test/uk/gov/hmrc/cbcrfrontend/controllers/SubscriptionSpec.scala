@@ -63,12 +63,6 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       status(controller.subscribeFirst(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
-  "GET /subscribeMatchFound" should {
-    "return 200" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/subscribeMatchFound"))
-      status(controller.subscribeMatchFound(fakeRequestSubscribe)) shouldBe Status.OK
-    }
-  }
   "GET /contactInfoSubscriber" should {
     "return 200" in {
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/contactInfoSubscriber"))
@@ -96,14 +90,14 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     }
     "return 404 when the utr and postcode are valid but the postcode doesn't match" in {
       val kf = KnownFacts(Utr("7000000002"),"SW46NR")
-      val response = FindBusinessDataResponse(false,None,None,"safeid",EtmpAddress("","",None,None,Some("SW46NS"),""))
+      val response = FindBusinessDataResponse(false,None,None,"safeid",EtmpAddress(None,None,None,None,Some("SW46NS"),None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(dc.lookup(kf.utr.value)) thenReturn Future.successful(HttpResponse(Status.OK,Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
     "return 200 when the utr and postcode are valid" in {
       val kf = KnownFacts(Utr("7000000002"),"SW46NR")
-      val response = FindBusinessDataResponse(false,None,None,"safeid",EtmpAddress("","",None,None,Some("SW46NR"),""), Some(OrganisationResponse("FooCorp", None, None)))
+      val response = FindBusinessDataResponse(false,None,None,"safeid",EtmpAddress(None,None,None,None,Some("SW46NR"),None), Some(OrganisationResponse("FooCorp", None, None)))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(dc.lookup(kf.utr.value)) thenReturn Future.successful(HttpResponse(Status.OK,Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
