@@ -34,19 +34,6 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/**
-  * Created by max on 06/04/17.
-  *
-  *
-POST       /checkKnownFacts             uk.gov.hmrc.cbcrfrontend.controllers.Subscription.checkKnownFacts
-GET        /subscribeFirst              uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeFirst
-GET        /subscribeMatchFound         uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeMatchFound
-GET        /contactInfoSubscriber       uk.gov.hmrc.cbcrfrontend.controllers.Subscription.contactInfoSubscriber
-GET        /subscribeSuccessCbcId       uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeSuccessCbcId
-  *
-  *
-  *
-  */
 class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector{
 
   val dc = mock[DESConnector]
