@@ -44,7 +44,7 @@ object OrganisationResponse {
 case class FindBusinessDataResponse(isAnASAgent: Boolean,
                                     agentReferenceNumber: Option[String],
                                     sapNumber: Option[String],
-                                    safeId: String,
+                                    safeId: Option[String],
                                     address: EtmpAddress,
                                     organisation: Option[OrganisationResponse] = None,
                                     individual: Option[Individual] = None)
