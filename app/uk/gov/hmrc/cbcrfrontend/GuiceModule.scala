@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend
 import com.google.inject.AbstractModule
 import uk.gov.hmrc.cbcrfrontend.auth.{SecuredActions, SecuredActionsImpl}
 import uk.gov.hmrc.cbcrfrontend.connectors.{DESConnector, DESConnectorImpl}
+import uk.gov.hmrc.cbcrfrontend.services.{SubscriptionDataService, SubscriptionDataServiceImpl}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
@@ -27,5 +28,6 @@ class GuiceModule extends AbstractModule with ServicesConfig {
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
     bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
     bind(classOf[DESConnector]).to(classOf[DESConnectorImpl])
+    bind(classOf[SubscriptionDataService]).to(classOf[SubscriptionDataServiceImpl])
   }
 }
