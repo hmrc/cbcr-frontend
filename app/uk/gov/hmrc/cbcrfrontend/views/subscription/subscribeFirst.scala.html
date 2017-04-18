@@ -17,13 +17,16 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.model.KnownFacts
 
-@(asideCbc: Html, phaseBannerBeta: Html)(
+@(asideCbc: Html, phaseBannerBeta: Html, knownFactsForm:Form[KnownFacts], noMatchingBusiness:Boolean = false)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideCbc
 }
+@utrErrors = @{knownFactsForm.error("utr").isDefined}
+@postCodeErrors = @{knownFactsForm.error("postCode").isDefined}
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
@@ -35,26 +38,47 @@ implicit request: Request[_], messages: Messages)
     Register for a Country by Country ID
    </h1>
 
-   <p>Enter the UK details for the registered business that's going to file with HMRC.</p>
-   <fieldset>
-    <div class="form-field form-field--tall">
-     <label>
-      Unique Tax Reference (UTR)
-      <span class="form-hint">This should be either a Corportation Tax or a Self Assessment UTR</span>
-      <input class="form-control--block" type="text" value=""/>
-     </label>
-    </div>
-    <div class="form-field form-field--tall">
-     <label>
-      UK postcode
-      <input class="form-control--block" type="text" value=""/>
-     </label>
-    </div>
-   </fieldset>
+   <p>Enter your organisation's tax details</p>
+      @if(noMatchingBusiness){
+              <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
+                  <h2 id="error-summary-heading" class="h3-heading">We cannot find the registered business using these details</h2>
+                  <ul>
+                      <li role="tooltip">The UTR or postcode you entered may be wrong</li>
+                      <li role="tooltip">The UTR and postcode may not correspond to one another</li>
+                      <li role="tooltip">The Business may not be registered with HMRC</li>
+                  </ul>
+              </div>
+      }
 
-   <p>
-    <a class="button" href="/country-by-country-reporting/subscribeMatchFound" role="button">Continue</a>
-   </p>
+      @form(action=uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.checkKnownFacts()) {
+          <fieldset>
+              <div class="form-field form-field--tall @if(utrErrors){form-field--error }">
+                 @if(utrErrors){ <span class="error-notification">This should be a 10 digit number</span> }
+
+                  <label> Unique Tax Reference (UTR)</label>
+                  @if(utrErrors) {
+                      <span class="form-hint">This should be either a Corportation Tax or a Self Assessment UTR</span>
+                  }
+
+                  <input class="@{ if(utrErrors){ "input--medium error-field" } else { "form-control--block" } }"
+                  type="text" name="utr" id="utr" value="@if(!utrErrors)@{knownFactsForm.data.get("utr")}"/>
+              </div>
+
+              <div class="form-field  @if(postCodeErrors){form-field--error } else { form-field--tall } ">
+                  @if(postCodeErrors){ <span class="error-notification">Enter a valid UK postcode</span> }
+
+                  <label> UK Postcode </label>
+
+                      <input class="@{ if(postCodeErrors){ "input--medium error-field" } else {"form-control--block"} }"
+                      type="text" name="postCode" id="postCode" value="@if(!postCodeErrors)@{knownFactsForm.data.get("postCode")}"/>
+              </div>
+          </fieldset>
+
+          <p>
+              <button type="submit" role="button">Continue</button>
+          </p>
+
+      }
 
   </div>
  </div>

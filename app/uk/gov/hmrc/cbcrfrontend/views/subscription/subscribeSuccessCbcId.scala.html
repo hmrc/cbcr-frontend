@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@(asideBusiness: Html, phaseBannerBeta: Html, cbcId:String, companyName:Option[String])(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -31,10 +31,10 @@ implicit request: Request[_], messages: Messages)
         <div class="column-two-thirds">
             <section>
                 <div class="govuk-box-highlight">
-                    <h1>Registration complete</h1>
+                    <h1>Registration complete for @companyName</h1>
                     <p>
                         Your Country by Country ID is: <br>
-                        <strong class="heading-medium">XACBC0000999999</strong>
+                        <strong class="heading-medium">@cbcId</strong>
                     </p>
                 </div>
             </section>

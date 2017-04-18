@@ -91,11 +91,9 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
             Logger.debug("Country by Country file validated OK...")
 
             implicit val xml: File = file
-            fileUploadService.createEnvelope.fold(
-              error => Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> "error uploading file"),
-              envelopeId => {
-                Redirect(routes.FileUpload.fileUploadProgress).flashing("ENVELOPEID" -> envelopeId)
-              }
+            fileUploadService.createEnvelopeAndUpload.fold(
+              error      => Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> "error uploading file"),
+              envelopeId => Redirect(routes.FileUpload.fileUploadProgress).flashing("ENVELOPEID" -> envelopeId)
             )
           }
         )
@@ -104,12 +102,9 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
     }
   }
 
-  /*
-
   val fileUploadCallback = Action.async {  implicit request =>
 
     Logger.debug("fileUploadCallback called:")
-
     request.body.asJson match {
       case Some(body) => {
         Logger.debug("Callback json: " + body)
@@ -121,7 +116,6 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
 
 
   }
-  */
 
   val fileUploadProgress = Action.async { implicit request =>
     val envelopeId = request.flash.get("ENVELOPEID")
@@ -193,12 +187,4 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
     )))
   }
 
-/*  val helloFileUpload = Action.async { implicit request =>
-
-  fileUploadService.createEnvelope.fold(
-    error => error.toResult,
-    response => Ok(response)
-  )
-}
-*/
 }

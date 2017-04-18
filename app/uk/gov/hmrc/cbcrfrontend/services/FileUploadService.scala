@@ -44,7 +44,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
     ) (XMLUploadCallback.apply, unlift(XMLUploadCallback.unapply))
 
 
-  def createEnvelope(
+  def createEnvelopeAndUpload(
                       implicit
                       hc: HeaderCarrier,
                       ec: ExecutionContext,

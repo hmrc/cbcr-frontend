@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideCbc: Html, phaseBannerBeta: Html)(
+@(asideCbc: Html, phaseBannerBeta: Html, name:String, postCode:String, utr:String)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -45,15 +45,15 @@ implicit request: Request[_], messages: Messages)
                 <tbody>
                 <tr>
                     <td>Name</td>
-                    <td>Multinational Ltd</td>
+                    <td>@name</td>
                 </tr>
                 <tr>
                     <td>Postcode</td>
-                    <td>BN3 2ED</td>
+                    <td>@postCode</td>
                 </tr>
                 <tr>
                     <td>UTR</td>
-                    <td>CT-1234567890</td>
+                    <td>@utr</td>
                 </tr>
                 </tbody>
             </table>

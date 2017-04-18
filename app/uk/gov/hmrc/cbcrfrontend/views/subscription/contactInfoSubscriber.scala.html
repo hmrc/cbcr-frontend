@@ -17,13 +17,20 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import helper._
+@import tags._
 
-@(asideCbc: Html, phaseBannerBeta: Html)(
+@(asideCbc: Html, phaseBannerBeta: Html, form:Form[_])(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideCbc
 }
+
+@nameErrors = @{form.error("name").isDefined}
+@phoneNumberErrors = @{form.error("phoneNumber").isDefined}
+@emailErrors = @{form.error("email").isDefined}
+@roleErrors = @{form.error("role").isDefined}
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
@@ -32,34 +39,19 @@ implicit request: Request[_], messages: Messages)
             <h1>
                 Enter your contact details
             </h1>
-            <p>This will help us contact you, if needed, regarding a Country by Country report submission. </p>
-            <form>
-                <div class="form-group">
-                    <fieldset>
-                        <legend class="visuallyhidden">Enter your contact details</legend>
-                        <div class="form-field form-field--tall">
-                            <div class="form-group">
-                                <label class="form-label" for="full-name">Full name</label>
-                                <input type="text" class="form-control" id="full-name">
-                            </div>
-                            <div class="form-group">
-                                <label for="role" class="form-label">Job title/role</label>
-                                <input type="text" class="form-control" id="role">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="phone">Phone number</label>
-                                <input type="text" class="form-control" id="phone">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="email">Email address</label>
-                                <input type="text" class="form-control" id="email">
-                            </div>
-                        </div>
-                    </fieldset>
-                    <a class="button" href="/country-by-country-reporting/subscribeSuccessCbcId" role="button">Continue</a>
+            <p>This will help us contact you, if needed, regarding a Country by Country report submission.</p>
+            <div class="form-group">
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.submitSubscriptionData()){
+                @formFieldDisplay(nameErrors,"name", Some("Please enter your full name"),"Full Name", form)
+                @formFieldDisplay(roleErrors,"role", Some("Please enter your Job title/role"),"Job title/role", form)
+                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some("Please enter a valid phone number"),"Phone number", form)
+                @formFieldDisplay(emailErrors,"email", Some("Please enter a valid email address"),"Email address", form)
+                @CSRF.formField
+                <div class="form-field">
+                    <button role="button" type="submit" id="continue">Continue</button>
                 </div>
-            </form>
-
+            }
+            </div>
         </div>
     </div>
 }
