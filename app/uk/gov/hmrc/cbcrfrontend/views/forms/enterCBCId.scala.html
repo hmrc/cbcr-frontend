@@ -30,19 +30,16 @@ implicit request: Request[_], messages: Messages)
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
 
-<main id="content" role="main">
-
     <div class="grid-row">
         <div class="column-two-thirds">
 
             <h1>
-                Country by Country reporting
+                Enter your Country by Country ID
             </h1>
             <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile" method="POST" >
 
                 <fieldset>
                     <div class="form-group">
-                        <label class="form-label-bold" for="full-name">Enter your ID</label>
                         <p class="form-hint">This is the 15 digit ID you received when you registered,
                             <br>for example: XACBC0000999999.
                         </p>
@@ -62,5 +59,4 @@ implicit request: Request[_], messages: Messages)
         </div>
     </div>
 
-</main>
 }

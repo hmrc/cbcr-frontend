@@ -27,35 +27,32 @@ implicit request: Request[_], messages: Messages)
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
-<main id="content" role="main">
-
     <div class="grid-row">
         <div class="column-two-thirds">
             <section>
                 <div class="govuk-box-highlight">
-                    <h1>Registration complete for Multinational Ltd</h1>
+                    <h1>Registration complete</h1>
                     <p>
                         Your Country by Country ID is: <br>
                         <strong class="heading-medium">XACBC0000999999</strong>
                     </p>
                 </div>
             </section>
-            <button onclick="myFunction()" class="toggle__button">Print this page</button>
+            <button onclick="myFunction()" class="toggle__button" style="padding:0;">Print this page</button>
+            <p>Print or save this screen and keep your ID safe. You 'll need it each time you want to submit a report.</p>
             <br>
-            <br>
-            <h2 class="heading-medium">What happens next</h2>
-            <ul class="bullets">
-                <li>Print or save this screen and keep your ID safe</li>
-                <li>Use this ID every time you need to submit a report</li>
-                <li>List your ID in the XML schema, where instructed.</li>
+            <h2 class="heading-medium">What happens next?</h2>
+            <ul>
+                <li>Create your report using the <a href="#">correct report format</a> </li>
+                <li>List your ID in the <a href="#">required field</a> of your report</li>
+                <li>Submit your report using HMRC's online service</li>
             </ul>
             <p>
-                <a class="button" href="/country-by-country-reporting/enter-CBCId">Close</a>
+                <a class="button" href="/">Sign out</a>
             </p>
             <hr>
-            <p><a href="https://www.gov.uk/service-manual/user-centred-design/resources/patterns/feedback-pages.html">What did you think of this service?</a> (takes 30 seconds)</p>
+            <p><a href="https://www.gov.uk/service-manual/user-centred-design/resources/patterns/feedback-pages.html">What did you think of this service?</a></p>
         </div>
 
     </div>
-</main>
 }

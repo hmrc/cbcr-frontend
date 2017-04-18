@@ -26,42 +26,43 @@ implicit request: Request[_], messages: Messages)
 @main_template("Country by Country Reporting") {
 @phaseBannerBeta
 
-<main id="content" role="main">
+<div class="grid-row">
 
-    <div class="grid-row">
-        <div class="column-full">
+<section class="subsection grid-row">
+    <div class="column-full">
 
-            <h1>
-                Filing History
-            </h1>
-            <p>
-                <a class="button" href="/country-by-country-reporting/enter-CBCId">Submit Report</a>
-            </p>
-            <section>
-                <table class="[modifier class]">
-                    <thead>
-                    <tr>
-                        <th>Reporting period</th>
-                        <th>Date Submitted</th>
-                        <th>Message reference ID</th>
-                        <th>Size</th>
-                        <th>Reference no.</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td class="heading-24">2017-03-31</td>
-                        <td>2017-10-02 16:52:30</td>
-                        <td><a class="link" href="submit-summary-view">GB-2017-multinational_ltd-cbc-report-messagerefid-01</a></td>
-                        <td>3200KB</td>
-                        <td><a class="link" href="submit-success-receipt">H25-RS42-2VP</a></td>
-                    </tr>
-                    </tbody>
-                </table>
-            </section>
-        </div>
+        <h1>
+            Filing History for Multinational Ltd
+        </h1>
+        <p>
+            <a class="button" href="submit-upload-choose-file">Submit Report</a>
+        </p>
     </div>
-
-</main>
+</section>
+<section class="subsection grid-row">
+    <div class="column-full">
+        <table class="[modifier class]">
+            <thead>
+            <tr>
+                <th>Reporting period</th>
+                <th>Date Submitted</th>
+                <th>Message reference ID</th>
+                <th>Size</th>
+                <th>Reference no.</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="heading-24">2017-03-31</td>
+                <td>2017-10-02 16:52:30</td>
+                <td><a class="link" href="submit-summary-view">GB-2017-multinational_ltd-cbc-report-messagerefid-01</a></td>
+                <td>3200KB</td>
+                <td><a class="link" href="submit-success-receipt">H25-RS42-2VP</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+</div>
 
 }

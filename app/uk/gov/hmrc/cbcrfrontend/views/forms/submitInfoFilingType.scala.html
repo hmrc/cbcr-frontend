@@ -28,9 +28,6 @@ implicit request: Request[_], messages: Messages)
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
 
-
-<main id="content" role="main">
-
     <div class="grid-row">
         <div class="column-two-thirds">
             <form action="/v1-2/submit-info-ultimate-parent-entity" method="get" class="form">
@@ -68,7 +65,5 @@ implicit request: Request[_], messages: Messages)
         </div>
     </div>
 
-    </div>
-</main>
 
 }
