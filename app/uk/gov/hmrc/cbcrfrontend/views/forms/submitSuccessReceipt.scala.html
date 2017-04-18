@@ -27,30 +27,31 @@ implicit request: Request[_], messages: Messages)
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
-<main id="content" role="main">
 
     <div class="grid-row">
         <div class="column-two-thirds">
             <section>
                 <div class="govuk-box-highlight">
-                    <h1>Country by Country report submitted</h1>
+                    <h1>Report has been submitted </h1>
                     <p>
-                        Your reference number is: <br>
+                        Your confirmation number is: <br>
                         <strong class="heading-medium">H25-RS42-2VP</strong>
                     </p>
                 </div>
             </section>
+            <p>Your report was submitted on 31/12/2017 at 13.42.</p>
+
             <button onclick="myFunction()" class="toggle__button">Print this page</button>
             <br>
             <h2 class="heading-medium">What happens next</h2>
             <ul class="bullets">
-                <li>You should print this page and keep a digital record for compliance purposes.</li>
-                <li>You may submit revisions to your report, if needed. </li>
+                <li>Your report will now be checked</li>
+                <li>We'll contact you if there are any issues with the report</li>
+                <li>We'll email a confirmation when your report has been approved</li>
             </ul>
             <p>
                 <a class="button" href="/country-by-country-reporting/filingHistory">Close</a>
             </p>
         </div>
     </div>
-</main>
 }

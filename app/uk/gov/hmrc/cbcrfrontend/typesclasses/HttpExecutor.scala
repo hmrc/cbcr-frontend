@@ -43,11 +43,20 @@ object GetBody {
     def apply(obj: FileUploadCallbackResponse) = obj.body
   }
 
+  implicit object routeEnvelopeBody extends GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest] {
+    def apply(obj: RouteEnvelopeRequest) = obj
+  }
+
 }
 
 case class CreateEnvelope(body: JsObject)
 case class UploadFile(envelopeId: EnvelopeId, fileId: FileId, fileName: String, contentType: String, body: Array[Byte])
 case class FileUploadCallbackResponse(body: JsObject)
+case class RouteEnvelopeRequest(envelopeId: EnvelopeId, application: String, destination: String)
+
+object RouteEnvelopeRequest {
+  implicit val format = Json.format[RouteEnvelopeRequest]
+}
 
 trait HttpExecutor[U, P, I] {
   def makeCall(
@@ -110,6 +119,21 @@ object HttpExecutor {
       WSHttp.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/saveFileUploadResponse?cbcId=CBCId1234", getBody(obj))
     }
 
+  }
+
+  implicit object routeRequest extends HttpExecutor[FusUrl, RouteEnvelopeRequest, RouteEnvelopeRequest] {
+    def makeCall(
+                  fusUrl: ServiceUrl[FusUrl],
+                  obj: RouteEnvelopeRequest
+                )(
+                  implicit
+                  hc: HeaderCarrier,
+                  wts: Writes[RouteEnvelopeRequest],
+                  rds: HttpReads[HttpResponse],
+                  getBody: GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest]
+                ): Future[HttpResponse] = {
+      WSHttp.POST[RouteEnvelopeRequest, HttpResponse](s"${fusUrl.url}/file-routing/requests", getBody(obj))
+    }
   }
 
   def apply[U, P, I](

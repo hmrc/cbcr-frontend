@@ -61,13 +61,20 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
     val fileId = UUID.randomUUID.toString
     val bis = new BufferedInputStream(new FileInputStream(xmlFile))
     val xmlByteArray: Array[Byte] = Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
+    val metadataFileId = UUID.randomUUID.toString
+
 
     Logger.debug("Country by Country: Creating an envelope for file upload")
 
     for {
       envelopeId <- fromFutureOptA(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest("formTypeRef", protocolHostName, cbcrsUrl.url))).map(fusConnector.extractEnvelopId))
       uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
-        UploadFile(envelopeId, FileId(s"xml-$fileId"), s"$fileNamePrefix-metadata.xml ", " application/xml; charset=UTF-8", xmlByteArray)))
+        UploadFile(envelopeId, FileId(s"xml-$fileId"), s"$fileNamePrefix-cbcr.xml ", " application/xml; charset=UTF-8", xmlByteArray)))
+      uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
+        UploadFile(envelopeId, FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", mockedMetadata)))
+
+      _          <- fromFutureA    (HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "dfs", "DMS")))
+
     } yield envelopeId.value
   }
 
@@ -110,5 +117,10 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
 
   }
 
+  def mockedMetadata = {
+    val bis = new BufferedInputStream(new FileInputStream("docs/metadata.json"))
+    Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
+
+  }
 
 }

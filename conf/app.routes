@@ -9,8 +9,13 @@ GET        /getFileuploadResponse/:envelopeId  @uk.gov.hmrc.cbcrfrontend.control
 POST       /file-upload                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.upload
 POST       /upload-report               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
 GET        /upload-progress             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress
-
 GET        /successFileUpload           @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.successFileUpload
+
+GET        /submitInfoFilingType        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoFilingType
+GET        /submitInfoUltimateParentEntity      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoUltimateParentEntity
+GET        /submitInfoFilingCapacity    @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoFilingCapacity
+
+
 GET        /errorFileUpload             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.errorFileUpload
 GET        /contactInfoSubmitter        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.contactInfoSubmitter
 GET        /submitSummary               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitSummary

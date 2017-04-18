@@ -145,6 +145,24 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
   }
 
 
+  val submitInfoFilingType = Action.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
+      includes.asideBusiness(), includes.phaseBannerBeta()
+    )))
+  }
+
+  val submitInfoUltimateParentEntity = Action.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
+      includes.asideBusiness(), includes.phaseBannerBeta()
+    )))
+  }
+
+  val submitInfoFilingCapacity = Action.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
+      includes.asideBusiness(), includes.phaseBannerBeta()
+    )))
+  }
+
   val contactInfoSubmitter = Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.contactInfoSubmitter(
       includes.asideBusiness(), includes.phaseBannerBeta()
