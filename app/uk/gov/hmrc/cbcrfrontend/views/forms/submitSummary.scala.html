@@ -29,15 +29,14 @@ implicit request: Request[_], messages: Messages)
     <div class="grid-row">
         <div class="column-full">
             <h1>
-                Check your report details before you submit
+                Check your report details
             </h1>
             <table class="check-your-answers">
                 <thead>
                 <tr>
                     <th colspan="2">
                         <h2 class="heading-medium">
-                            Multinational Ltd<br/>
-                            CBC-1234567
+                            Your submission details
                         </h2>
                     </th>
                     <th>
@@ -48,17 +47,70 @@ implicit request: Request[_], messages: Messages)
                 <tbody>
                 <tr>
                     <td>
-                        Reported by:
+                        Registered MNE:
                     </td>
                     <td>
-                        Tina Taxfiler<br>
-                        Head of Tax<br>
-                        Tel: 01234 567 890<br>
-                        Email: tina.taxfiler@@bigmne.com
+                        Multinational Ltd<br />
+                        Postcode: W1 1AA<br />
+                        UTR: 123456789<br />
+                        CbCID: XACBC0000999999
+                    </td>
+                    <td>
+                    </td>
+                <tr>
+                <tr>
+                    <td>
+                        Filing type:
+                    </td>
+                    <td>
+                        Primary
                     </td>
                     <td class="change-answer">
                         <a href="#">
-                            Change <span class="visuallyhidden">Report XML file</span>
+                            Change <span class="visuallyhidden">filing type</span>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Ultimate parent entity:
+                    </td>
+                    <td>
+                        Multinational Ltd<br />
+                    </td>
+                    <td class="change-answer">
+                        <a href="#">
+                            Change <span class="visuallyhidden">Ultimate parent entity</span>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Filed by:
+                    </td>
+                    <td>
+                        Tina Taxfiler<br />
+                        Multinational Ltd<br />
+                        Senior Tax agent<br />
+                        Tel: 01234 567 890<br />
+                        Email: tina.taxfiler@@multinational.com
+                    </td>
+                    <td class="change-answer">
+                        <a href="#">
+                            Change <span class="visuallyhidden">Filed by</span>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Filing capacity:
+                    </td>
+                    <td>
+                        MNE user
+                    </td>
+                    <td class="change-answer">
+                        <a href="#">
+                            Change <span class="visuallyhidden">Filing capacity</span>
                         </a>
                     </td>
                 </tr>
@@ -68,13 +120,10 @@ implicit request: Request[_], messages: Messages)
                     </td>
                     <td>
                         <div>
-                            @uk.gov.hmrc.cbcrfrontend.views.html.includes.xmlHeaderData()
+                            {% include "includes/v1-1/xml-header-data.html" %}
                         </div>
                     </td>
                     <td class="change-answer">
-                        <a href="#">
-                            Change <span class="visuallyhidden">Report XML file</span>
-                        </a>
                     </td>
                 </tr>
                 </tbody>
@@ -85,14 +134,16 @@ implicit request: Request[_], messages: Messages)
             </p>
             <form>
                 <legend class="visually-hidden">Declaration</legend>
-                <div>
+                <div class="multiple-choice">
                     <input id="cbc-report-submit-declaration" name="cbc-declaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
-                    <label for="cbc-report-submit-declaration">By submitting this report I am confirming that, to the best of my knowledge, the details I am providing are correct.</label>
+                    <label for="cbc-report-submit-declaration">I confirm that the information in this report is true and complete, to the best of my knowledge.</label>
                 </div>
             </form>
-            <p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt">Submit report</a></p>
+            <p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt">Submit</a></p>
 
         </div>
     </div>
+
 </main>
 }
+<p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt">Submit report</a></p>
