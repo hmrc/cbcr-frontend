@@ -76,9 +76,9 @@
 
   @Singleton
   class DESConnectorImpl extends DESConnector {
-    val serviceUrl: String = baseUrl("etmp-hod")
-    val orgLookupURI: String = "registration/organisation"
-    val urlHeaderEnvironment: String = config("etmp-hod").getString("environment").getOrElse("")
-    val urlHeaderAuthorization: String = s"Bearer ${config("etmp-hod").getString("authorization-token").getOrElse("")}"
-    val http = WSHttp
+    lazy val serviceUrl: String = baseUrl("etmp-hod")
+    lazy val orgLookupURI: String = "registration/organisation"
+    lazy val urlHeaderEnvironment: String = config("etmp-hod").getString("environment").getOrElse("")
+    lazy val urlHeaderAuthorization: String = s"Bearer ${config("etmp-hod").getString("authorization-token").getOrElse("")}"
+    lazy val http = WSHttp
   }

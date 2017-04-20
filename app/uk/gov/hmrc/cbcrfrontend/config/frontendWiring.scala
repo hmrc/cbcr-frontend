@@ -46,7 +46,7 @@ object WSHttp extends WSGet with WSPut with WSPost with WSDelete with AppName wi
 
 @Singleton
 class FrontendAuthConnector extends AuthConnector with ServicesConfig {
-  val serviceUrl = baseUrl("auth")
+  lazy val serviceUrl = baseUrl("auth")
   lazy val http = WSHttp
 }
 
