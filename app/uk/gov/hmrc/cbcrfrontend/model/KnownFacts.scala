@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.exceptions
+package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.{JsValue, Json, OFormat}
+import play.api.libs.json.Json
 
-case class UnexpectedState(errorMsg: String, json: Option[JsValue] = None)
-
-object UnexpectedState{
-  implicit val invalidStateFormat: OFormat[UnexpectedState] = Json.format[UnexpectedState]
+case class KnownFacts(utr:Utr, postCode:String)
+object KnownFacts {
+  implicit val kfFormat = Json.format[KnownFacts]
 }
+

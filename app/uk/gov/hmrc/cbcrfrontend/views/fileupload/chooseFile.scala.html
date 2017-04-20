@@ -28,16 +28,14 @@ implicit request: Request[_], messages: Messages)
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
 
-<main id="content" role="main">
-
     <div class="grid-row">
         <div class="column-two-thirds">
             <h1>
-                Check the report's XML
+                Upload your report
             </h1>
 
             <div class="indent-warning">
-                <p><strong>Your XML file needs to be in a set format before it can be uploaded. Choose the file below and we will check the formatting. </strong></p>
+                <p><strong>Your report needs to be in a set XML format before it can be submitted. Upload your report to check that the format is correct. </strong></p>
             </div>
             <details>
                 <summary class="[modifier class]">XML format checklist</summary>
@@ -53,8 +51,8 @@ implicit request: Request[_], messages: Messages)
             </details>
 
             <div class="form-group">
-                <label class="form-label" for="file-input">Choose the file to upload.</label>
-                </label>
+                <label class="form-label" for="file-input">Choose the file to upload. You will submit your report later.</label>
+
                 @form(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.upload(), 'enctype -> "multipart/form-data") {
 
                 <input type="file" id="file-input" class="upload-report-input" name ="oecdcbcxml" accept="application/xml" >
@@ -67,5 +65,4 @@ implicit request: Request[_], messages: Messages)
         </div>
     </div>
 
-</main>
 }

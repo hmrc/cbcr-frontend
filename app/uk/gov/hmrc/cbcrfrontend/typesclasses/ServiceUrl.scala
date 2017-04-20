@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.typesclasses
 trait FusUrl
 trait FusFeUrl
 trait CbcrsUrl
+trait CbcrSubUrl
 
 trait ServiceUrl[T] {
   def url: String
