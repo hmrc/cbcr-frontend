@@ -21,6 +21,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 import cats.implicits._
+import play.Play
 import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -118,7 +119,8 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
   }
 
   def mockedMetadata = {
-    val bis = new BufferedInputStream(new FileInputStream("conf/docs/metadata.json"))
+    val bis = Play.application.resourceAsStream("docs/metadata.json")
+    //val bis = new BufferedInputStream(new FileInputStream("docs/metadata.json"))
     Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
 
   }
