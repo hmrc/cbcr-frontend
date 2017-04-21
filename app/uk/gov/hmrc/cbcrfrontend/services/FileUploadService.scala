@@ -118,7 +118,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
   }
 
   def mockedMetadata = {
-    val bis = new BufferedInputStream(new FileInputStream("docs/metadata.json"))
+    val bis = new BufferedInputStream(new FileInputStream("conf/docs/metadata.json"))
     Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
 
   }
