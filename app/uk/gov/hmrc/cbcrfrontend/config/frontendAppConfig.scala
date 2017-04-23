@@ -27,6 +27,7 @@ trait AppConfig {
   def governmentGatewaySignInUrl: String
   def cbcrFrontendBaseUrl: String
   def assetsPrefix: String
+  val cbcrFrontendHost: String
 
   val betaFeedbackUrlNoAuth: String
 
@@ -44,6 +45,7 @@ object FrontendAppConfig extends AppConfig with ServicesConfig {
   override lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   override lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
   override lazy val assetsPrefix = loadConfig(s"assets.url") + loadConfig(s"assets.version")
+  override lazy val cbcrFrontendHost = loadConfig(s"cbcr-frontend.host")
 
   override lazy val governmentGatewaySignInUrl = loadConfig("government-gateway-sign-in-url")
   //  override lazy val governmentGatewaySignInUrl = "http://localhost:9025/gg/sign-in"

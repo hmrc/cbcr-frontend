@@ -121,7 +121,7 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
     val envelopeId = request.flash.get("ENVELOPEID")
     Logger.debug("Headers :"+envelopeId)
     val protocol = if(request.secure) "https" else "http"
-    val hostName = request.host
+    val hostName = FrontendAppConfig.cbcrFrontendHost
     val protocolHostName = s"$protocol://$hostName"
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
 
