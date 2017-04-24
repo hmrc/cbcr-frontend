@@ -16,26 +16,33 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.data.OptionT
+import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Logger
+import play.api.libs.json.Json
+import uk.gov.hmrc.cbcrfrontend.connectors.KnownFactsConnector
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.{FindBusinessDataResponse, KnownFacts, OrganisationResponse}
+import cats.syntax.either._
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
 /**
-  * Use the provided ETMPService to query a UTR
+  * Use the provided DESConnector to query a UTR
   * Optionally return the [[uk.gov.hmrc.cbcrfrontend.model.FindBusinessDataResponse]] depending on whether it contains
   * the same postcode as the provided [[KnownFacts]]
   */
-class KnownFactsCheckService(bls:ETMPService) {
+class KnownFactsService(dc:KnownFactsConnector) {
 
   private def sanitisePostCode(s:String) : String = s.toLowerCase.replaceAll("\\s", "")
 
-  def checkKnownFacts(kf:KnownFacts) : OptionT[Future,FindBusinessDataResponse] = {
-    val response = bls.lookup(kf.utr)
+  def checkKnownFacts(kf:KnownFacts)(implicit hc:HeaderCarrier) : OptionT[Future,FindBusinessDataResponse] = {
+    val response = EitherT(dc.lookup(kf.utr.value).map { response =>
+      Json.parse(response.body).validate[FindBusinessDataResponse].asEither.leftMap(_ => UnexpectedState(response.body))
+    })
     response.leftMap(e => Logger.warn(s"Match request failed: ${e.errorMsg}"))
     response.toOption.subflatMap{ r =>
       val postCodeMatches = r.address.postalCode.exists(pc => sanitisePostCode(pc) == sanitisePostCode(kf.postCode))
