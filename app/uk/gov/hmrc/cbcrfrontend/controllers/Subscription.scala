@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 
-import cats.instances.future._
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
@@ -28,20 +27,12 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.Messages.Implicits._
-import play.api.mvc.Action
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.DESConnector
-import uk.gov.hmrc.cbcrfrontend.model.{FindBusinessDataResponse, KnownFacts, OrganisationResponse, Utr}
-import uk.gov.hmrc.cbcrfrontend.services.{ETMPService, KnownFactsCheckService}
-import play.api.Play.current
-import play.api.data.Form
-import play.api.data.Forms._
-import play.api.i18n.Messages.Implicits._
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.connectors.KnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{CbcId, SubscriptionData}
-import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.services.{KnownFactsService, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -49,15 +40,14 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.matching.Regex
-import javax.inject.{Inject, Singleton}
 
 @Singleton
-class Subscription @Inject()(val sec: SecuredActions, val subscriptionDataService: SubscriptionDataService, val connector:DESConnector)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+class Subscription @Inject()(val sec: SecuredActions, val subscriptionDataService: SubscriptionDataService, val connector:KnownFactsConnector)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
   //TODO: Find out genuine CBCID specs
   def generateCBCId(): CbcId = CbcId(UUID.randomUUID().toString)
 
-  val knownFactsService:KnownFactsCheckService = new KnownFactsCheckService(new ETMPService(connector))
+  lazy val knownFactsService:KnownFactsService = new KnownFactsService(connector)
 
   val subscriptionDataForm: Form[SubscriptionData] = Form(
     mapping(
