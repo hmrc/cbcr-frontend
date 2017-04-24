@@ -36,7 +36,7 @@ import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import cats.instances.future._
 import org.mockito.Matchers
-import uk.gov.hmrc.cbcrfrontend.connectors.DESConnector
+import uk.gov.hmrc.cbcrfrontend.connectors.KnownFactsConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -48,7 +48,7 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
   val subService = mock[SubscriptionDataService]
 
-  val dc = mock[DESConnector]
+  val dc = mock[KnownFactsConnector]
 
   val controller = new Subscription(securedActions, subService,dc)
 
@@ -85,14 +85,14 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       val kf = KnownFacts(Utr("7000000002"), "SW46NR")
       val response = FindBusinessDataResponse(false, None, None, Some("safeid"), EtmpAddress(None, None, None, None, Some("SW46NS"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
-      when(dc.lookup(kf.utr.value)) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
+      when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
     "return 200 when the utr and postcode are valid" in {
       val kf = KnownFacts(Utr("7000000002"), "SW46NR")
       val response = FindBusinessDataResponse(false, None, None, Some("safeid"), EtmpAddress(None, None, None, None, Some("SW46NR"), None), Some(OrganisationResponse("FooCorp", None, None)))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
-      when(dc.lookup(kf.utr.value)) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
+      when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }

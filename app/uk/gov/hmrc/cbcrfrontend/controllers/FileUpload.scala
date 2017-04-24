@@ -51,8 +51,6 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
   implicit val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
-
-
   val chooseXMLFile = sec.AsyncAuthenticatedAction { authContext => implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.chooseFile(
       includes.asideBusiness(), includes.phaseBannerBeta()
