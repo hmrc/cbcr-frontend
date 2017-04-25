@@ -118,14 +118,12 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
   val fileUploadProgress = Action.async { implicit request =>
     val envelopeId = request.flash.get("ENVELOPEID")
     Logger.debug("Headers :"+envelopeId)
-    val protocol = if(request.secure) "https" else "http"
     val hostName = FrontendAppConfig.cbcrFrontendHost
-    val protocolHostName = s"$protocol://$hostName"
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
 
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadProgress(
       includes.asideBusiness(), includes.phaseBannerBeta(),
-      envelopeId.getOrElse("notfound"), protocolHostName,assetsLocationPrefix)))
+      envelopeId.getOrElse("notfound"), hostName,assetsLocationPrefix)))
   }
 
   def getFileUploadResponse(eId: String) = Action.async { implicit request =>
