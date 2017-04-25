@@ -6,9 +6,9 @@ GET        /enter-CBCId                 @uk.gov.hmrc.cbcrfrontend.controllers.CB
 POST       /submit-CBCId                @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
 
 GET        /getFileuploadResponse/:envelopeId  @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getFileUploadResponse(envelopeId: String)
-POST       /file-upload                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.upload
+#POST       /file-upload/:envelopeId/:fileId                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.upload(envelopeId: String, fileId: String)
 POST       /upload-report               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
-GET        /upload-progress             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress
+GET        /upload-progress/:envelopeId/:fileId              @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress(envelopeId: String, fileId: String)
 GET        /successFileUpload           @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.successFileUpload
 
 GET        /submitInfoFilingType        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoFilingType

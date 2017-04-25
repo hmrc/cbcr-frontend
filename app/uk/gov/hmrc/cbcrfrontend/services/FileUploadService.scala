@@ -37,12 +37,12 @@ import scala.concurrent.ExecutionContext
 
 class FileUploadService(fusConnector: FileUploadServiceConnector) {
 
-  implicit val xmlUploadCallbackFormat: Format[XMLUploadCallback] = (
+  implicit val xmlUploadCallbackFormat: Format[FileUploadUCallbackResponse] = (
     (JsPath \ "envelopeId").format[String] and
       (JsPath \ "fileId").format[String] and
       (JsPath \ "status").format[String]
 
-    ) (XMLUploadCallback.apply, unlift(XMLUploadCallback.unapply))
+    ) (FileUploadUCallbackResponse.apply, unlift(FileUploadUCallbackResponse.unapply))
 
 
   def createEnvelopeAndUpload(
@@ -69,10 +69,10 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
 
     for {
       envelopeId <- fromFutureOptA(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest("formTypeRef", protocolHostName, cbcrsUrl.url))).map(fusConnector.extractEnvelopId))
-      uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
-        UploadFile(envelopeId, FileId(s"xml-$fileId"), s"$fileNamePrefix-cbcr.xml ", " application/xml; charset=UTF-8", xmlByteArray)))
-      uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
-        UploadFile(envelopeId, FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", mockedMetadata)))
+//      uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
+//        UploadFile(envelopeId, FileId(s"xml-$fileId"), s"$fileNamePrefix-cbcr.xml ", " application/xml; charset=UTF-8", xmlByteArray)))
+//      uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
+//        UploadFile(envelopeId, FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", mockedMetadata)))
 
       _          <- fromFutureA    (HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "dfs", "DMS")))
 

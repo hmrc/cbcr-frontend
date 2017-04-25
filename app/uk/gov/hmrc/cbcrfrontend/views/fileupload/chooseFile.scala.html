@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@(fileUploadUrl: String, envelopeId: String, fileId: String,  asideBusiness: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -53,11 +53,13 @@ implicit request: Request[_], messages: Messages)
             <div class="form-group">
                 <label class="form-label" for="file-input">Choose the file to upload. You will submit your report later.</label>
 
-                @form(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.upload(), 'enctype -> "multipart/form-data") {
+                @form(action = fileUploadUrl, 'enctype -> "multipart/form-data", "CSRF-token" -> "nocheck") {
 
                 <input type="file" id="file-input" class="upload-report-input" name ="oecdcbcxml" accept="application/xml" >
                 <div class="form-field form-field--submit">
                     <input type="submit" class="button" value="Check for errors" />
+                    <p><a class="button" onclick="document.forms[0].submit();return false;" href="/country-by-country-reporting/upload-progress/"@envelopeId"/"@fileId>Check for errors</a></p>
+
                 </div>
                 }
             </div>

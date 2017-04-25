@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.util.UUID
 import javax.inject.Inject
 
 import play.api.mvc._
@@ -54,11 +55,21 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
 
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction { authContext => implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.chooseFile(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
+
+    fileUploadService.createEnvelopeAndUpload.fold(
+      error      => Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> "error uploading file"),
+      envelopeId => {
+        val fileId = UUID.randomUUID.toString
+        val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
+
+        Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.chooseFile(url,
+          includes.asideBusiness(), includes.phaseBannerBeta()
+        ))
+      }
+    )
   }
 
+/*
   val upload =  sec.AsyncAuthenticatedAction { authContext => implicit request =>
 
     request.body.asMultipartFormData match {
@@ -101,6 +112,8 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
       case _ => Future(Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> "Input received is not Multipart Upload"))
     }
   }
+*/
+
 
   val fileUploadCallback = Action.async {  implicit request =>
 
@@ -117,8 +130,8 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
 
   }
 
-  val fileUploadProgress = Action.async { implicit request =>
-    val envelopeId = request.flash.get("ENVELOPEID")
+  def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
+    //val envelopeId = request.flash.get("ENVELOPEID")
     Logger.debug("Headers :"+envelopeId)
     val protocol = if(request.secure) "https" else "http"
     val hostName = FrontendAppConfig.cbcrFrontendHost
@@ -127,12 +140,18 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
 
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadProgress(
       includes.asideBusiness(), includes.phaseBannerBeta(),
-      envelopeId.getOrElse("notfound"), protocolHostName,assetsLocationPrefix)))
+      envelopeId, fileId, protocolHostName,assetsLocationPrefix)))
   }
 
   def getFileUploadResponse(eId: String) = Action.async { implicit request =>
     implicit val envelopeId = eId
-    fileUploadService.getFileUploadResponse.fold(error => InternalServerError("Something went wrong"),  response => Ok(response))
+    fileUploadService.getFileUploadResponse.fold(error => InternalServerError("Something went wrong"),  response => {
+      response match {
+        case response.isEmpty => false
+        case _ =>
+      }
+      Ok(response)
+    })
   }
   val errorFileUpload = Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.errors.fileUploadError()))

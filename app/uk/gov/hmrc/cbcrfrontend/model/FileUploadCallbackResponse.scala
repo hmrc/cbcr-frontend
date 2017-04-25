@@ -16,4 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-case class XMLUploadCallback(envelopeId: String, fileId: String, status: String)
+import play.api.libs.json.Json
+
+case class FileUploadUCallbackResponse(envelopeId: String, fileId: String, status: String)
+
+object FileUploadUCallbackResponse {
+  implicit val formats = Json.format[]
+}
