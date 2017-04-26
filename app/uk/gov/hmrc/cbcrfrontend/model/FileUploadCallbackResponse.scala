@@ -16,10 +16,19 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.functional.syntax.unlift
+import play.api.libs.json.{Format, JsPath}
+import play.api.libs.functional.syntax._
 
-case class FileUploadUCallbackResponse(envelopeId: String, fileId: String, status: String)
 
-object FileUploadUCallbackResponse {
-  implicit val formats = Json.format[]
+case class FileUploadCallbackResponse(envelopeId: String, fileId: String, status: String)
+
+object FileUploadCallbackResponse {
+  implicit val fileUploadCallbackFormat: Format[FileUploadCallbackResponse] = (
+    (JsPath \ "envelopeId").format[String] and
+      (JsPath \ "fileId").format[String] and
+      (JsPath \ "status").format[String]
+
+    ) (FileUploadCallbackResponse.apply, unlift(FileUploadCallbackResponse.unapply))
+
 }

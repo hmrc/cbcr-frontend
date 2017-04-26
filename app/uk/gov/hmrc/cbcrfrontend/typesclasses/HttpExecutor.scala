@@ -52,6 +52,7 @@ object GetBody {
 case class CreateEnvelope(body: JsObject)
 case class UploadFile(envelopeId: EnvelopeId, fileId: FileId, fileName: String, contentType: String, body: Array[Byte])
 case class FileUploadCallbackResponse(body: JsObject)
+case class GetFile(envelopeId: String, fileId: String)
 case class RouteEnvelopeRequest(envelopeId: EnvelopeId, application: String, destination: String)
 
 object RouteEnvelopeRequest {
@@ -120,6 +121,7 @@ object HttpExecutor {
     }
 
   }
+
 
   implicit object routeRequest extends HttpExecutor[FusUrl, RouteEnvelopeRequest, RouteEnvelopeRequest] {
     def makeCall(

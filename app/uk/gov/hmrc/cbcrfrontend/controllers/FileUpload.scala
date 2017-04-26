@@ -40,6 +40,7 @@ import uk.gov.hmrc.cbcrfrontend.{AppConfig, FrontendAppConfig}
 import javax.inject.{Inject, Singleton}
 
 import play.api.libs.Files.TemporaryFile
+import uk.gov.hmrc.cbcrfrontend.model.FileUploadCallbackResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -62,7 +63,7 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
         val fileId = UUID.randomUUID.toString
         val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
 
-        Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.chooseFile(url,
+        Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.chooseFile(url, envelopeId, fileId,
           includes.asideBusiness(), includes.phaseBannerBeta()
         ))
       }
@@ -114,7 +115,7 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
   }
 */
 
-
+/*
   val fileUploadCallback = Action.async {  implicit request =>
 
     Logger.debug("fileUploadCallback called:")
@@ -129,28 +130,39 @@ class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContex
 
 
   }
+*/
+
 
   def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
-    //val envelopeId = request.flash.get("ENVELOPEID")
-    Logger.debug("Headers :"+envelopeId)
-    val protocol = if(request.secure) "https" else "http"
+
+    Logger.debug(s"Uploading . . . file with fileId: $fileId in the Envelope with envelopeId: $envelopeId")
+
     val hostName = FrontendAppConfig.cbcrFrontendHost
-    val protocolHostName = s"$protocol://$hostName"
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
 
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadProgress(
       includes.asideBusiness(), includes.phaseBannerBeta(),
-      envelopeId, fileId, protocolHostName,assetsLocationPrefix)))
+      envelopeId, fileId, hostName, assetsLocationPrefix)))
   }
 
   def getFileUploadResponse(eId: String) = Action.async { implicit request =>
     implicit val envelopeId = eId
+
     fileUploadService.getFileUploadResponse.fold(error => InternalServerError("Something went wrong"),  response => {
-      response match {
-        case response.isEmpty => false
-        case _ =>
+      response.isEmpty match {
+        case true => NoContent
+        case _ => {
+          Json.toJson(response).validate[FileUploadCallbackResponse] match {
+            case r: JsSuccess[FileUploadCallbackResponse] => {
+              val fileUploadCallbackResponse = r.get
+              if(fileUploadCallbackResponse.envelopeId == envelopeId &&
+                fileUploadCallbackResponse.status == "AVAILABLE")
+                Accepted else NoContent
+            }
+            case e: JsError => Ok(uk.gov.hmrc.cbcrfrontend.views.html.errors.fileUploadError()).flashing(("error", s"Invalid response received in fileupload callback: $e"))
+          }
+        }
       }
-      Ok(response)
     })
   }
   val errorFileUpload = Action.async { implicit request =>

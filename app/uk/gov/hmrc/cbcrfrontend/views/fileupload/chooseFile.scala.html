@@ -50,18 +50,17 @@ implicit request: Request[_], messages: Messages)
                 </div>
             </details>
 
-            <div class="form-group">
+            <div    class="form-group">
                 <label class="form-label" for="file-input">Choose the file to upload. You will submit your report later.</label>
 
-                @form(action = fileUploadUrl, 'enctype -> "multipart/form-data", "CSRF-token" -> "nocheck") {
+                <form action = '@fileUploadUrl' method="post" enctype="multipart/form-data" >
 
                 <input type="file" id="file-input" class="upload-report-input" name ="oecdcbcxml" accept="application/xml" >
                 <div class="form-field form-field--submit">
-                    <input type="submit" class="button" value="Check for errors" />
-                    <p><a class="button" onclick="document.forms[0].submit();return false;" href="/country-by-country-reporting/upload-progress/"@envelopeId"/"@fileId>Check for errors</a></p>
+                    <p><a class="button" onclick="document.forms[0].submit(); return true;" href='/country-by-country-reporting/upload-progress/@envelopeId/@fileId'>Check for errors</a></p>
 
                 </div>
-                }
+                </form>
             </div>
 
         </div>

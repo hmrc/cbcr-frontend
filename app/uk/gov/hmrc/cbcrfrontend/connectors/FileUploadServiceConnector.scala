@@ -34,7 +34,7 @@ class FileUploadServiceConnector() {
   val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
 
 
-  def envelopeRequest(formTypeRef: String, protocolHostName: String, cbcrsUrl: String): JsObject = {
+  def envelopeRequest(formTypeRef: String, cbcrsUrl: String): JsObject = {
 
     Logger.debug("CBCR URL: "+cbcrsUrl)
 
