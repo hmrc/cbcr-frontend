@@ -73,14 +73,6 @@ class Subscription @Inject()(val sec: SecuredActions, val subscriptionDataServic
     )
   }
 
-  val postCodeRegexp: Regex = """^[A-Za-z]{1,2}[0-9]{1,2}\s*[A-Za-z]?[0-9][A-Za-z]{2}$""".r
-
-  val postCodeConstraint: Constraint[String] = Constraint("constraints.postcodecheck") {
-    case postCodeRegexp() => Valid
-    case _                => Invalid(ValidationError("Post Code is not valid"))
-
-  }
-
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
     case _                       => Invalid(ValidationError("UTR is not valid"))
@@ -89,7 +81,7 @@ class Subscription @Inject()(val sec: SecuredActions, val subscriptionDataServic
   val knownFactsForm = Form(
     mapping(
       "utr" -> nonEmptyText.verifying(utrConstraint),
-      "postCode" -> nonEmptyText.verifying(postCodeConstraint)
+      "postCode" -> nonEmptyText
     )((u,p) => KnownFacts(Utr(u),p))((facts: KnownFacts) => Some(facts.utr.value -> facts.postCode))
   )
 
