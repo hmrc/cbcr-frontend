@@ -28,6 +28,59 @@ implicit request: Request[_], messages: Messages)
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
 
+<script src='@routes.Assets.versioned("javascripts/jquery-3.1.1.min.js")' ></script>
+
+<script language="JavaScript">
+
+
+$(document).ready(function () {
+
+    $("#submitFileUpload").click(function (event) {
+
+        //stop submit the form, we will post it manually.
+        event.preventDefault();
+
+        // Get form
+        var form = $('#fileUploadForm')[0];
+
+		// Create an FormData object
+        var data = new FormData(form);
+
+		// disabled the submit button
+        $("#btnSubmit").prop("disabled", true);
+
+        $.ajax({
+            type: "POST",
+            enctype: 'multipart/form-data',
+            url: '@fileUploadUrl',
+            headers: {'CSRF-Token': 'nocheck'},
+            data: data,
+            processData: false,
+            contentType: false,
+            cache: false,
+            timeout: 600000,
+            success: function (data) {
+
+                $("#result").text(data);
+                console.log("SUCCESS : ", data);
+                $("#submitFileUpload").prop("disabled", false);
+
+            },
+            error: function (e) {
+
+                $("#result").text(e.responseText);
+                console.log("ERROR : ", e);
+                $("#submitFileUpload").prop("disabled", false);
+
+            }
+        });
+
+    });
+
+});
+
+
+</script>
     <div class="grid-row">
         <div class="column-two-thirds">
             <h1>
@@ -53,11 +106,11 @@ implicit request: Request[_], messages: Messages)
             <div    class="form-group">
                 <label class="form-label" for="file-input">Choose the file to upload. You will submit your report later.</label>
 
-                <form action = '@fileUploadUrl' method="post" enctype="multipart/form-data" >
+                <form id ="fileUploadForm" method="post" enctype="multipart/form-data" id="fileUploadForm" >
 
                 <input type="file" id="file-input" class="upload-report-input" name ="oecdcbcxml" accept="application/xml" >
                 <div class="form-field form-field--submit">
-                    <p><a class="button" onclick="document.forms[0].submit(); return true;" href='/country-by-country-reporting/upload-progress/@envelopeId/@fileId'>Check for errors</a></p>
+                    <p><a class="button" id ="submitFileUpload" onclick="doUploadPost();" href='/country-by-country-reporting/upload-progress/@envelopeId/@fileId'>Check for errors</a></p>
 
                 </div>
                 </form>
