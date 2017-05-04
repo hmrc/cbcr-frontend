@@ -54,12 +54,12 @@ class GGConnector @Inject() (http:HttpPost,config:Configuration){
   private def createAddFactsBody(kf:CBCKnownFacts) = Json.obj(
     "facts" -> Json.arr(
       Json.obj(
-        "type" -> "UTR",
-        "value" -> kf.utr.utr
-      ),
-      Json.obj(
         "type" -> "cbcId",
         "value" -> kf.cBCId.value
+      ),
+      Json.obj(
+        "type" -> "UTR",
+        "value" -> kf.utr.utr
       )
     )
   )
@@ -68,7 +68,7 @@ class GGConnector @Inject() (http:HttpPost,config:Configuration){
     "portalId" -> portalId,
     "serviceName" -> serviceId,
     "friendlyName" -> serviceName,
-    "knownFacts" -> Json.arr(kf.utr,kf.cBCId)
+    "knownFacts" -> Json.arr(kf.cBCId.value,kf.utr.utr)
   )
 
   def addKnownFacts(kf:CBCKnownFacts)(implicit hc:HeaderCarrier): Future[HttpResponse] =
