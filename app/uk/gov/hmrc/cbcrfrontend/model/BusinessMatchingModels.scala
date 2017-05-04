@@ -29,27 +29,17 @@ object EtmpAddress {
   implicit val formats = Json.format[EtmpAddress]
 }
 
-case class Individual(firstName: String, lastName: String, dateOfBirth: Option[String])
-
-object Individual {
-  implicit val formats = Json.format[Individual]
-}
-
-case class OrganisationResponse(organisationName: String, isAGroup: Option[Boolean], organisationType: Option[String])
+case class OrganisationResponse(organisationName: String)
 
 object OrganisationResponse {
   implicit val formats = Json.format[OrganisationResponse]
 }
 
-case class FindBusinessDataResponse(isAnASAgent: Boolean,
-                                    agentReferenceNumber: Option[String],
-                                    sapNumber: Option[String],
-                                    safeId: Option[String],
-                                    address: EtmpAddress,
-                                    organisation: Option[OrganisationResponse] = None,
-                                    individual: Option[Individual] = None)
+case class BusinessPartnerRecord(safeId: Option[String],
+                                 organisation: Option[OrganisationResponse],
+                                 address: EtmpAddress)
 
-object FindBusinessDataResponse {
-  implicit val format = Json.format[FindBusinessDataResponse]
+object BusinessPartnerRecord {
+  implicit val format = Json.format[BusinessPartnerRecord]
 }
 
