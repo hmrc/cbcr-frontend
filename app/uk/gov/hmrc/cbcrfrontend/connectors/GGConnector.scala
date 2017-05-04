@@ -58,7 +58,7 @@ class GGConnector @Inject() (http:HttpPost,config:Configuration){
         "value" -> kf.utr.utr
       ),
       Json.obj(
-        "type" -> "HMRC-CBC-ORG",
+        "type" -> "cbcId",
         "value" -> kf.cBCId.value
       )
     )
