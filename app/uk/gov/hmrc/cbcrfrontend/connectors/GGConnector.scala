@@ -51,7 +51,7 @@ class GGConnector @Inject() (http:HttpPost,config:Configuration){
   val serviceId: String   = conf.get[String]("enrol.serviceId").value
   val serviceName: String = conf.get[String]("enrol.serviceName").value
 
-  private def createAdminBody(kf:CBCKnownFacts) = Json.obj(
+  private def createAddFactsBody(kf:CBCKnownFacts) = Json.obj(
     "facts" -> Json.arr(
       Json.obj(
         "type" -> "UTR",
@@ -64,19 +64,17 @@ class GGConnector @Inject() (http:HttpPost,config:Configuration){
     )
   )
 
-  private def createBody(kf:CBCKnownFacts) = Json.obj(
+  private def createEnrolBody(kf:CBCKnownFacts) = Json.obj(
     "portalId" -> portalId,
     "serviceName" -> serviceId,
     "friendlyName" -> serviceName,
-    "knownFacts" -> Json.arr(kf.cBCId,kf.utr)
+    "knownFacts" -> Json.arr(kf.utr,kf.cBCId)
   )
 
   def addKnownFacts(kf:CBCKnownFacts)(implicit hc:HeaderCarrier): Future[HttpResponse] =
-    http.POST(ggUrl,createBody(kf))
+    http.POST(ggAdminUrl,createAddFactsBody(kf))
 
   def enrolCBC(kf:CBCKnownFacts)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.POST(ggAdminUrl,createAdminBody(kf))
-
-
+    http.POST(ggUrl,createEnrolBody(kf))
 
 }
