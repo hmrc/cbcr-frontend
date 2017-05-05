@@ -30,7 +30,6 @@ implicit request: Request[_], messages: Messages)
 @nameErrors = @{form.error("name").isDefined}
 @phoneNumberErrors = @{form.error("phoneNumber").isDefined}
 @emailErrors = @{form.error("email").isDefined}
-@roleErrors = @{form.error("role").isDefined}
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
@@ -43,7 +42,6 @@ implicit request: Request[_], messages: Messages)
             <div class="form-group">
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.submitSubscriptionData()){
                 @formFieldDisplay(nameErrors,"name", Some("Please enter your full name"),"Full Name", form)
-                @formFieldDisplay(roleErrors,"role", Some("Please enter your Job title/role"),"Job title/role", form)
                 @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some("Please enter a valid phone number"),"Phone number", form)
                 @formFieldDisplay(emailErrors,"email", Some("Please enter a valid email address"),"Email address", form)
                 @CSRF.formField
