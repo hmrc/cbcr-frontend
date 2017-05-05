@@ -73,9 +73,12 @@ class Subscription @Inject()(val sec: SecuredActions,
             oId match {
               case Some(id) =>
 
+                // THIS IS STUBBED DATA - we will be using Keystore to retrieve this info
+                /***********************/
                 val bpr = BusinessPartnerRecord(None, None, EtmpAddress(None, None, None, None, None, None))
                 val details = SubscriptionDetails(bpr, data, id)
                 val utr = Utr("1234567890")
+                /**********************/
 
                 val result = for {
                   _ <- subscriptionDataService.saveSubscriptionData(details)
