@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
@@ -5,8 +21,12 @@ import javax.inject.{Inject, Singleton}
 import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
-import uk.gov.hmrc.http.cache.client.SessionCache
-import uk.gov.hmrc.play.http.{HttpDelete, HttpGet, HttpPut}
+import play.api.libs.json.{Reads, Writes}
+import uk.gov.hmrc.cbcrfrontend.KeyStoreKeys
+import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpDelete, HttpGet, HttpPut}
+
+import scala.concurrent.Future
 
 @Singleton
 class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with HttpPut with HttpDelete) extends SessionCache{
@@ -22,5 +42,10 @@ class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with
   }yield s"$protocol://$host:$port").value
 
   override def domain: String = conf.get[String]("domain").value
+
+  def save[K <: KeyStoreKeys, T:Writes](key:K, body:T)(implicit hc:HeaderCarrier): Future[CacheMap] =
+    cache(key.toString,body)
+
+  def read[T:Reads](key:KeyStoreKeys)(implicit hc:HeaderCarrier) = fetchAndGetEntry(key.toString)
 
 }
