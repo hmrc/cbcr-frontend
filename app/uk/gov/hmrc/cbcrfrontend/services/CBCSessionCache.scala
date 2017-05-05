@@ -17,12 +17,11 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
-
+import scala.reflect.runtime.universe._
 import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
 import play.api.libs.json.{Reads, Writes}
-import uk.gov.hmrc.cbcrfrontend.KeyStoreKeys
 import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpDelete, HttpGet, HttpPut}
 
@@ -43,9 +42,8 @@ class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with
 
   override def domain: String = conf.get[String]("domain").value
 
-  def save[K <: KeyStoreKeys, T:Writes](key:K, body:T)(implicit hc:HeaderCarrier): Future[CacheMap] =
-    cache(key.toString,body)
+  def save[T:Writes](body:T)(implicit hc:HeaderCarrier, t:TypeTag[T]): Future[CacheMap] = cache(typeOf[T].toString,body)
 
-  def read[T:Reads](key:KeyStoreKeys)(implicit hc:HeaderCarrier) = fetchAndGetEntry(key.toString)
+  def read[T:Reads](implicit hc:HeaderCarrier, t:TypeTag[T]) = fetchAndGetEntry(typeOf[T].toString)
 
 }

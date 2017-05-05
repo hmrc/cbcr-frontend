@@ -79,15 +79,15 @@ class Subscription @Inject()(val sec: SecuredActions,
 
                 val result = for {
                   bpr <- EitherT[Future,UnexpectedState,BusinessPartnerRecord](
-                    session.read[BusinessPartnerRecord](BPRKey).map(_.toRight(UnexpectedState("BPR record not found")))
+                    session.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
                   )
                   utr <- EitherT[Future,UnexpectedState,Utr](
-                    session.read[Utr](UTRKey).map(_.toRight(UnexpectedState("UTR record not found")))
+                    session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
                   )
                   _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id))
                   _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
-                  _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(CBCIdKey, id))
-                  _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(SubscriberContactKey, data))
+                  _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(id))
+                  _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(data))
                 } yield id
 
                 result.fold(
@@ -132,8 +132,8 @@ class Subscription @Inject()(val sec: SecuredActions,
           bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
             NotFound(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true))
           )
-          _ <- EitherT.right[Future,Result,CacheMap](session.save(BPRKey, bpr))
-          _ <- EitherT.right[Future,Result,CacheMap](session.save(UTRKey, knownFacts.utr))
+          _ <- EitherT.right[Future,Result,CacheMap](session.save(bpr))
+          _ <- EitherT.right[Future,Result,CacheMap](session.save(knownFacts.utr))
         } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value))
           ).merge
         }
