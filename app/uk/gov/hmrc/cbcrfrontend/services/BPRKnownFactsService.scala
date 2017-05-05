@@ -22,26 +22,26 @@ import cats.instances.future._
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Logger
 import play.api.libs.json.Json
-import uk.gov.hmrc.cbcrfrontend.connectors.KnownFactsConnector
+import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{FindBusinessDataResponse, KnownFacts, OrganisationResponse}
+import uk.gov.hmrc.cbcrfrontend.model.{BusinessPartnerRecord, BPRKnownFacts, OrganisationResponse}
 import cats.syntax.either._
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
 /**
-  * Use the provided DESConnector to query a UTR
-  * Optionally return the [[uk.gov.hmrc.cbcrfrontend.model.FindBusinessDataResponse]] depending on whether it contains
-  * the same postcode as the provided [[KnownFacts]]
+  * Use the provided KnownFactsConnector to query a UTR
+  * Optionally return the [[uk.gov.hmrc.cbcrfrontend.model.BusinessPartnerRecord]] depending on whether it contains
+  * the same postcode as the provided [[BPRKnownFacts]]
   */
-class KnownFactsService(dc:KnownFactsConnector) {
+class BPRKnownFactsService(dc:BPRKnownFactsConnector) {
 
   private def sanitisePostCode(s:String) : String = s.toLowerCase.replaceAll("\\s", "")
 
-  def checkKnownFacts(kf:KnownFacts)(implicit hc:HeaderCarrier) : OptionT[Future,FindBusinessDataResponse] = {
+  def checkBPRKnownFacts(kf:BPRKnownFacts)(implicit hc:HeaderCarrier) : OptionT[Future,BusinessPartnerRecord] = {
     val response = EitherT(dc.lookup(kf.utr.value).map { response =>
-      Json.parse(response.body).validate[FindBusinessDataResponse].asEither.leftMap(_ => UnexpectedState(response.body))
+      Json.parse(response.body).validate[BusinessPartnerRecord].asEither.leftMap(_ => UnexpectedState(response.body))
     })
     response.leftMap(e => Logger.warn(s"Match request failed: ${e.errorMsg}"))
     response.toOption.subflatMap{ r =>

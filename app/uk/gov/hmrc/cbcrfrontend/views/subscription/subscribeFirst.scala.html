@@ -17,9 +17,9 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.model.KnownFacts
+@import uk.gov.hmrc.cbcrfrontend.model.BPRKnownFacts
 
-@(asideCbc: Html, phaseBannerBeta: Html, knownFactsForm:Form[KnownFacts], noMatchingBusiness:Boolean = false)(
+@(asideCbc: Html, phaseBannerBeta: Html, knownFactsForm:Form[BPRKnownFacts], noMatchingBusiness:Boolean = false)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {

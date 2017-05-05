@@ -31,7 +31,6 @@ import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 
 
-//object CBCController extends CBCController
 @Singleton
 class CBCController @Inject()(val sec: SecuredActions)  extends FrontendController with ServicesConfig {
 

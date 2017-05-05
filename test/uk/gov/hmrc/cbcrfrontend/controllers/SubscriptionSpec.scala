@@ -29,14 +29,14 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
+import uk.gov.hmrc.cbcrfrontend.services.{CBCIdService, CBCKnownFactsService, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import cats.instances.future._
 import org.mockito.Matchers
-import uk.gov.hmrc.cbcrfrontend.connectors.KnownFactsConnector
+import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -48,9 +48,11 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
   val subService = mock[SubscriptionDataService]
 
-  val dc = mock[KnownFactsConnector]
+  val dc = mock[BPRKnownFactsConnector]
+  val cbcId = mock[CBCIdService]
+  val cbcKF = mock[CBCKnownFactsService]
 
-  val controller = new Subscription(securedActions, subService,dc)
+  val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF)
 
   implicit val hc = HeaderCarrier()
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
@@ -74,23 +76,23 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the postcode is invalid" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(KnownFacts(Utr("1234567890"), "NOTAPOSTCODE"))))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(BPRKnownFacts(Utr("1234567890"), "NOTAPOSTCODE"))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the utr is invalid" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(KnownFacts(Utr("IAMNOTAUTR"), "SW4 6NR"))))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(BPRKnownFacts(Utr("IAMNOTAUTR"), "SW4 6NR"))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 404 when the utr and postcode are valid but the postcode doesn't match" in {
-      val kf = KnownFacts(Utr("7000000002"), "SW46NR")
-      val response = FindBusinessDataResponse(false, None, None, Some("safeid"), EtmpAddress(None, None, None, None, Some("SW46NS"), None))
+      val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
+      val response = BusinessPartnerRecord(Some("safeid"), Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NS"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
     "return 200 when the utr and postcode are valid" in {
-      val kf = KnownFacts(Utr("7000000002"), "SW46NR")
-      val response = FindBusinessDataResponse(false, None, None, Some("safeid"), EtmpAddress(None, None, None, None, Some("SW46NR"), None), Some(OrganisationResponse("FooCorp", None, None)))
+      val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
+      val response = BusinessPartnerRecord(Some("safeid"), Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
@@ -105,17 +107,7 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     "return 400 when the name is missing" in {
       val data = Json.obj(
         "phoneNumber" -> "12345678",
-        "email" -> "blagh@blagh.com",
-        "role" -> "MD"
-      )
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
-      status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
-    }
-    "return 400 when the role is missing" in {
-      val data = Json.obj(
-        "phoneNumber" -> "12345678",
-        "email" -> "blagh@blagh.com",
-        "name" -> "Dave"
+        "email" -> "blagh@blagh.com"
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
@@ -123,7 +115,6 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     "return 400 when the email is missing" in {
       val data = Json.obj(
         "phoneNumber" -> "12345678",
-        "role" -> "MD",
         "name" -> "Dave"
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
@@ -132,7 +123,6 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     "return 400 when the email is invalid" in {
       val data = Json.obj(
         "phoneNumber" -> "12345678",
-        "role" -> "MD",
         "name" -> "Dave",
         "email" -> "THISISNOTANEMAIL"
       )
@@ -141,7 +131,6 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     }
     "return 400 when the phone number is missing" in {
       val data = Json.obj(
-        "role" -> "MD",
         "name" -> "Dave",
         "email" -> "blagh@blagh.com"
       )
@@ -150,15 +139,33 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     }
 
     "return 500 when the SubscriptionDataService errors" in {
-      val sData = SubscriptionData("Dave","MD","0207456789",EmailAddress("Bob@bob.com"),CbcId("somecbcid"))
+      val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
-      when(subService.saveSubscriptionData(any(classOf[SubscriptionData]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("oops")))
+      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("oops")))
+      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(None)
+      status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+    "return 500 when the getCbcId call errors out" in {
+      val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("oops")))
+      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(None)
+      status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+    "return 500 when the addKnownFactsToGG call errors" in {
+      val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("oops")))
+      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
+      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.left[Future,UnexpectedState,Unit](UnexpectedState("oops"))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
     }
     "return 303 (see_other) when all params are present and valid and the SubscriptionDataService returns Ok" in {
-      val sData = SubscriptionData("Dave","MD","0207456789",EmailAddress("Bob@bob.com"),CbcId("somecbcid"))
+      val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
-      when(subService.saveSubscriptionData(any(classOf[SubscriptionData]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,UnexpectedState,String]("done")
+      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,UnexpectedState,String]("done")
+      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
+      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,UnexpectedState,Unit](())
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
     }
   }

@@ -17,8 +17,9 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.model.CBCId
 
-@(asideBusiness: Html, phaseBannerBeta: Html, cbcId:String, companyName:Option[String])(
+@(asideBusiness: Html, phaseBannerBeta: Html, cbcId:CBCId, companyName:Option[String])(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -34,7 +35,7 @@ implicit request: Request[_], messages: Messages)
                     <h1>Registration complete for @companyName</h1>
                     <p>
                         Your Country by Country ID is: <br>
-                        <strong class="heading-medium">@cbcId</strong>
+                        <strong class="heading-medium">@cbcId.value</strong>
                     </p>
                 </div>
             </section>

@@ -21,7 +21,7 @@ import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.SubscriptionData
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriberContact, SubscriptionDetails}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
@@ -33,7 +33,8 @@ import uk.gov.hmrc.play.config.ServicesConfig
 
 trait SubscriptionDataService {
   implicit def url:ServiceUrl[CbcrsUrl]
-  def saveSubscriptionData(data: SubscriptionData)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String]
+  def saveSubscriptionData(data: SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String]
+  def clearSubscriptionData(id: CBCId)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]]
 }
 
 @Singleton
@@ -41,10 +42,10 @@ class SubscriptionDataServiceImpl extends SubscriptionDataService with ServicesC
 
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
-  def saveSubscriptionData(data:SubscriptionData)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
+  def saveSubscriptionData(data:SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/saveSubscriptionData"
     EitherT[Future,UnexpectedState, String](
-      WSHttp.POST[SubscriptionData,HttpResponse](fullUrl,data).map { response =>
+      WSHttp.POST[SubscriptionDetails,HttpResponse](fullUrl,data).map { response =>
         response.status match {
           case Status.OK => Right[UnexpectedState,String](response.body)
           case _         => Left[UnexpectedState,String](UnexpectedState(response.body))
@@ -55,4 +56,19 @@ class SubscriptionDataServiceImpl extends SubscriptionDataService with ServicesC
     )
   }
 
+  def clearSubscriptionData(id: CBCId)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]] = {
+    val fullUrl = url.url + s"/cbcr/clearSubscriptionData"
+    EitherT[Future,UnexpectedState, Option[String]](
+      WSHttp.POST[CBCId,HttpResponse](fullUrl,id).map { response =>
+        response.status match {
+          case Status.OK        => Right[UnexpectedState,Option[String]](Some(response.body))
+          case Status.NOT_FOUND => Right[UnexpectedState,Option[String]](None)
+          case _                => Left[UnexpectedState,Option[String]](UnexpectedState(response.body))
+        }
+      }.recover{
+        case NonFatal(t) => Left[UnexpectedState,Option[String]](UnexpectedState(t.getMessage))
+      }
+    )
+
+  }
 }
