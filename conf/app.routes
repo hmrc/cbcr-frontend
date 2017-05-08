@@ -4,7 +4,7 @@
 GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
 
-GET        /getFileuploadResponse/:envelopeId/:fileId     @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getFileUploadResponse(envelopeId: String, fileId: String)
+GET        /fileUploadResponse/:envelopeId/:fileId     @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
 POST       /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
 POST       /file-upload/:envelopeId/:fileId               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.upload(envelopeId: String, fileId: String)
 GET        /successFileUpload                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.successFileUpload(fileName: String, fileSize: String)

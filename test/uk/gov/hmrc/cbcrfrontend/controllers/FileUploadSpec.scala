@@ -85,9 +85,9 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
     }
   }
 
-  val fakeRequestGetFileUploadResponse = addToken(FakeRequest("GET", "/getFileuploadResponse/envelopeId/fileId"))
+  val fakeRequestGetFileUploadResponse = addToken(FakeRequest("GET", "/fileUploadResponse/envelopeId/fileId"))
 
-  "GET /getFileuploadResponse/envelopeId/fileId" should {
+  "GET /fileUploadResponse/envelopeId/fileId" should {
     "return 202" in {
       val controller = fileUploadController
       val file = mock[File]
@@ -101,13 +101,13 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
         (Some(FileMetadata("9f34660e-edab-4b23-a957-f434d0469c6d", "AVAILABLE", "oecd-2017-05-07T23:18:43.849-cbcr.xml", "application/xml; charset=UTF-8", 4772, "017-05-07T22:18:44Z"
         ,Json.toJson("{}"), "/file-upload/envelopes/d842d9bc-c920-4e21-ae8d-2c57efab5fc6/files/9f34660e-edab-4b23-a957-f434d0469c6d/content"))))
 
-      val result = controller.getFileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
+      val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
       status(result) shouldBe Status.ACCEPTED
 
     }
   }
 
-  "GET /getFileuploadResponse/envelopeId/fileId" should {
+  "GET /fileUploadResponse/envelopeId/fileId" should {
     "return 406" in {
       val controller = fileUploadController
       val file = mock[File]
@@ -118,26 +118,26 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
       when(schemaValidator.validate(file)) thenReturn Validated.Invalid(new SAXParseException("Parse Exception", null))
       when(fuService.deleteEnvelope(anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, String]("FileDeleted"))
 
-      val result = controller.getFileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
+      val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
       status(result) shouldBe Status.NOT_ACCEPTABLE
 
     }
   }
 
-  "GET /getFileuploadResponse/envelopeId/fileId" should {
+  "GET /fileUploadResponse/envelopeId/fileId" should {
     "return 204" in {
       val controller = fileUploadController
 
       when(fuService.getFileUploadResponse(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileUploadCallbackResponse]]
         (None))
-      val result = (controller.getFileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)).futureValue
+      val result = (controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)).futureValue
       status(result) shouldBe Status.NO_CONTENT
 
     }
   }
 
 
-  "GET /getFileuploadResponse/envelopeId/fileId" should {
+  "GET /fileUploadResponse/envelopeId/fileId" should {
     "return 500" in {
       val controller = fileUploadController
 
@@ -145,25 +145,12 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
         (Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE"))))
       when(fuService.getFile(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.left[Future, UnexpectedState, File](UnexpectedState("Problem getting file")))
 
-      val result = controller.getFileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
+      val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
 
     }
   }
-  /*
-  val fakeRequestUploadProgress = addToken(FakeRequest("GET", "/upload-progress"))
 
-  "GET /upload-progress" should {
-    "return 200" in {
-      val controller = fileUploadController
-
-      val result = controller.fileUploadProgress(fakeRequestUploadProgress).futureValue
-      status(result) shouldBe Status.OK
-
-    }
-  }
-
-*/
 
   val fakeRequestSuccessFileUpload = addToken(FakeRequest("GET", "/successFileUpload"))
 

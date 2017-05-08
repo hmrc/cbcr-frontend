@@ -2,7 +2,7 @@
 
 function poll(envelopeId, fileId, protocolHostName) {
    setTimeout(function() {
-      $.ajax({ url: protocolHostName+"/country-by-country-reporting/getFileuploadResponse/"+envelopeId+"/"+fileId,
+      $.ajax({ url: protocolHostName+"/country-by-country-reporting/fileUploadResponse/"+envelopeId+"/"+fileId,
       success: function(data, statusText, xhr){
           if(xhr.status == 202) {
             var fileDetails = JSON.parse(xhr.responseText);

@@ -102,7 +102,7 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
   }
 
 
-  def getFileUploadResponse(envelopeId: String, fileId: String) = Action.async { implicit request =>
+  def fileUploadResponse(envelopeId: String, fileId: String) = Action.async { implicit request =>
 
     val result: EitherT[Future, Result, Result] = for {
       response <- fileUploadService.getFileUploadResponse(envelopeId,fileId).leftMap(_ => NoContent)
