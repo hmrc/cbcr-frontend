@@ -16,22 +16,28 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import java.net.URL
-import javax.inject.{Inject, Singleton}
+import javax.inject.Singleton
+import javax.inject.Inject
 
-import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
-import uk.gov.hmrc.play.config.ServicesConfig
+import com.typesafe.config.Config
+import play.api.Configuration
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpResponse}
+import configs.syntax._
+import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.Future
 
 @Singleton
-class KnownFactsConnector @Inject()(http:HttpGet) extends ServicesConfig{
+class CBCIdConnector @Inject() (http:HttpGet,config:Configuration) extends ServicesConfig{
 
-  implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+  val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
-  def lookup(utr:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(generateUrl(url.url,utr).toString)
+  val url: String = (for {
+    proto <- conf.get[String]("protocol")
+    host  <- conf.get[String]("host")
+    port  <- conf.get[Int]("port")
+  } yield s"$proto://$host:$port").value
 
-  private def generateUrl(baseUrl:String,utr:String) : URL = new URL(s"$baseUrl/cbcr/getBusinessPartnerRecord/$utr")
+  def getId()(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(url+ "/cbcr/getCBCId")
 
 }
