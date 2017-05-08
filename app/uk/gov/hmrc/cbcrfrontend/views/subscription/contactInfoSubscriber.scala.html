@@ -37,15 +37,15 @@ implicit request: Request[_], messages: Messages)
     <div class="grid-row">
         <div class="column-two-thirds">
             <h1>
-                Enter your contact details
+                @Messages("contactInfoSubscriber.mainHeading")
             </h1>
-            <p>This will help us contact you, if needed, regarding a Country by Country report submission.</p>
+            <p>@Messages("contactInfoSubscriber.subHeading")</p>
             <div class="form-group">
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.submitSubscriptionData()){
-                @formFieldDisplay(nameErrors,"name", Some("Please enter your full name"),"Full Name", form)
-                @formFieldDisplay(roleErrors,"role", Some("Please enter your Job title/role"),"Job title/role", form)
-                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some("Please enter a valid phone number"),"Phone number", form)
-                @formFieldDisplay(emailErrors,"email", Some("Please enter a valid email address"),"Email address", form)
+                @formFieldDisplay(nameErrors,"name", Some("Please enter your full name"),Messages("contactInfoSubscriber.fullNameLabel"), form)
+                @formFieldDisplay(roleErrors,"role", Some("Please enter your Job title/role"),Messages("contactInfoSubscriber.jobTitleLabel"), form)
+                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some("Please enter a valid phone number"),Messages("contactInfoSubscriber.phoneNumberLabel"), form)
+                @formFieldDisplay(emailErrors,"email", Some("Please enter a valid email address"),Messages("contactInfoSubscriber.emailAddressLabel"), form)
                 @CSRF.formField
                 <div class="form-field">
                     <button role="button" type="submit" id="continue">Continue</button>

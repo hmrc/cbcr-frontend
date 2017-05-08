@@ -4,3 +4,29 @@ cbc.button.fileupload.report=Upload Report
 cbc.button.fileupload=Upload
 cbc.entercbcid.label=CBC Id
 
+form.controls.continue=Continue
+
+subscribeFirst.mainHeading=Register for a Country by Country ID
+subscribeFirst.formHeading=Enter your organisation''s tax details
+subscribeFirst.noMatchingBusiness.heading=We cannot find the registered business using these details
+subscribeFirst.noMatchingBusiness.suggestion1=The UTR or postcode you entered may be wrong
+subscribeFirst.noMatchingBusiness.suggestion2=The UTR and postcode may not correspond to one another
+subscribeFirst.noMatchingBusiness.suggestion3=The Business may not be registered with HMRC
+subscribeFirst.utrErrors.errorNotification=This should be a 10 digit number
+subscribeFirst.utrLabel=Unique Tax Reference (UTR)
+subscribeFirst.utrErrors.formHint=This should be either a Corportation Tax or a Self Assessment UTR
+subscribeFirst.postcodeErrors.errorNotification=Enter a valid UK postcode
+subscribeFirst.postcodeLabel=UK Postcode
+
+subscribeMatchFound.mainHeading=Confirm your business details
+subscribeMatchFound.businessDetails.heading=Business details
+subscribeMatchFound.businessDetails.name=Name
+subscribeMatchFound.businessDetails.postcode=Postcode
+subscribeMatchFound.businessDetails.utr=UTR
+
+contactInfoSubscriber.mainHeading=Enter your contact details
+contactInfoSubscriber.subHeading=This will help us contact you, if needed, regarding a Country by Country report submission.
+contactInfoSubscriber.fullNameLabel=Full Name
+contactInfoSubscriber.jobTitleLabel=Job title/role
+contactInfoSubscriber.phoneNumberLabel=Phone number
+contactInfoSubscriber.emailAddressLabel=Email address
