@@ -33,29 +33,25 @@ implicit request: Request[_], messages: Messages)
     <div class="grid-row">
         <div class="column-two-thirds">
 
-            <h1>
-                Enter your Country by Country ID
-            </h1>
+            <h1>@Messages("enterCBCId.mainHeading")</h1>
             <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile" method="POST" >
 
                 <fieldset>
                     <div class="form-group">
-                        <p class="form-hint">This is the 15 digit ID you received when you registered,
-                            <br>for example: XACBC0000999999.
-                        </p>
+                        <p class="form-hint">@Messages("enterCBCId.formHint")</p>
                         <input type="text" class="input--medium input--cleared"/>
                     </div>
                 </fieldset>
                 @csrf_token()
-                <p>
+
                 <div class="form-field">
-                    <input class="button" type="submit" id="continue" value="Continue">
+                    <input class="button" type="submit" id="continue" value="@Messages("form.controls.continue")">
                 </div>
-                </p>
+
             </form>
 
-            <h3>Don't have a Country by Country ID?</h3>
-            <a href="/country-by-country-reporting/subscribeFirst">Register online</a>
+            <h3>@Messages("enterCBCId.dontHaveAnID.heading")</h3>
+            <a href="@Messages("enterCBCId.dontHaveAnID.link.url")">@Messages("enterCBCId.dontHaveAnID.link.text")</a>
         </div>
     </div>
 
