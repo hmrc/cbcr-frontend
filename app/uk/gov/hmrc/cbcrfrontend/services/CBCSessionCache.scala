@@ -43,9 +43,9 @@ class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with
   override def domain: String = conf.get[String]("domain").value
 
   def save[T:Writes:TypeTag](body:T)(implicit hc:HeaderCarrier): Future[CacheMap] =
-    cache(typeOf[T].toString,body)
+    cache(typeOf[T].toString.split('.').last,body)
 
   def read[T:Reads:TypeTag](implicit hc:HeaderCarrier): Future[Option[T]] =
-    fetchAndGetEntry(typeOf[T].toString)
+    fetchAndGetEntry(typeOf[T].toString.split(',').last)
 
 }
