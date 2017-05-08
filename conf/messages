@@ -6,6 +6,13 @@ cbc.entercbcid.label=CBC Id
 
 form.controls.continue=Continue
 
+enterCBCId.mainHeading=Enter your Country by Country ID
+enterCBCId.formHint=This is the 15 digit ID you received when you registered, for example: XACBC0000999999.
+enterCBCId.dontHaveAnID.heading=Don''t have a Country by Country ID?
+enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
+enterCBCId.dontHaveAnID.link.text=Register online
+
+
 subscribeFirst.mainHeading=Register for a Country by Country ID
 subscribeFirst.formHeading=Enter your organisation''s tax details
 subscribeFirst.noMatchingBusiness.heading=We cannot find the registered business using these details
@@ -27,6 +34,10 @@ subscribeMatchFound.businessDetails.utr=UTR
 contactInfoSubscriber.mainHeading=Enter your contact details
 contactInfoSubscriber.subHeading=This will help us contact you, if needed, regarding a Country by Country report submission.
 contactInfoSubscriber.fullNameLabel=Full Name
+contactInfoSubscriber.fullNameError=Please enter your full name
 contactInfoSubscriber.jobTitleLabel=Job title/role
+contactInfoSubscriber.jobTitleError=Please enter your Job title/role
 contactInfoSubscriber.phoneNumberLabel=Phone number
+contactInfoSubscriber.phoneNumberError=Please enter a valid phone number
 contactInfoSubscriber.emailAddressLabel=Email address
+contactInfoSubscriber.emailAddressError=Please enter a valid phone number
