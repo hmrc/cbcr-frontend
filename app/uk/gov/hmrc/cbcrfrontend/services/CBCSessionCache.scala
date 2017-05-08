@@ -38,12 +38,14 @@ class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with
     protocol <- conf.get[String]("protocol")
     host     <- conf.get[String]("host")
     port     <- conf.get[Int]("port")
-  }yield s"$protocol://$host:$port").value
+  } yield s"$protocol://$host:$port").value
 
   override def domain: String = conf.get[String]("domain").value
 
-  def save[T:Writes](body:T)(implicit hc:HeaderCarrier, t:TypeTag[T]): Future[CacheMap] = cache(typeOf[T].toString,body)
+  def save[T:Writes:TypeTag](body:T)(implicit hc:HeaderCarrier): Future[CacheMap] =
+    cache(typeOf[T].toString,body)
 
-  def read[T:Reads](implicit hc:HeaderCarrier, t:TypeTag[T]) = fetchAndGetEntry(typeOf[T].toString)
+  def read[T:Reads:TypeTag](implicit hc:HeaderCarrier): Future[Option[T]] =
+    fetchAndGetEntry(typeOf[T].toString)
 
 }
