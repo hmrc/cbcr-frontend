@@ -30,7 +30,6 @@ implicit request: Request[_], messages: Messages)
 @nameErrors = @{form.error("name").isDefined}
 @phoneNumberErrors = @{form.error("phoneNumber").isDefined}
 @emailErrors = @{form.error("email").isDefined}
-@roleErrors = @{form.error("role").isDefined}
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
