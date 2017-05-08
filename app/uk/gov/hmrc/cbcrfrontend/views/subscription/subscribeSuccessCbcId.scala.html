@@ -31,15 +31,15 @@ implicit request: Request[_], messages: Messages)
     <div class="grid-row">
         <div class="column-two-thirds">
             <section>
-                <div class="govuk-box-highlight">
-                    <h1>Registration complete for @companyName</h1>
-                    <p>
+                <div class="transaction-banner--complete">
+                    <span class="transaction-banner__heading h1-heading">Registration complete for @companyName</span>
+                    <p class="transaction-banner__heading">
                         Your Country by Country ID is: <br>
                         <strong class="heading-medium">@cbcId.value</strong>
                     </p>
                 </div>
             </section>
-            <button onclick="myFunction()" class="toggle__button" style="padding:0;">Print this page</button>
+            <button onclick="window.print()" class="toggle__button" style="padding:0;">Print this page</button>
             <p>Print or save this screen and keep your ID safe. You 'll need it each time you want to submit a report.</p>
             <br>
             <h2 class="heading-medium">What happens next?</h2>
