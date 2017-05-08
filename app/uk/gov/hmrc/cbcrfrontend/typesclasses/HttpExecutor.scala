@@ -39,8 +39,8 @@ object GetBody {
     def apply(obj: UploadFile) = obj.body
   }
 
-  implicit object FileUploadCallbackResponseBody extends GetBody[FileUploadCallbackResponse, JsObject] {
-    def apply(obj: FileUploadCallbackResponse) = obj.body
+  implicit object FileUploadCallbackResponseBody extends GetBody[FUCallbackResponse, JsObject] {
+    def apply(obj: FUCallbackResponse) = obj.body
   }
 
   implicit object routeEnvelopeBody extends GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest] {
@@ -51,7 +51,7 @@ object GetBody {
 
 case class CreateEnvelope(body: JsObject)
 case class UploadFile(envelopeId: EnvelopeId, fileId: FileId, fileName: String, contentType: String, body: Array[Byte])
-case class FileUploadCallbackResponse(body: JsObject)
+case class FUCallbackResponse(body: JsObject)
 case class GetFile(envelopeId: String, fileId: String)
 case class RouteEnvelopeRequest(envelopeId: EnvelopeId, application: String, destination: String)
 
@@ -106,16 +106,16 @@ object HttpExecutor {
   }
 
 
-  implicit object fileUploadCallbackResponse extends HttpExecutor[CbcrsUrl, FileUploadCallbackResponse, JsObject] {
+  implicit object fileUploadCallbackResponse extends HttpExecutor[CbcrsUrl, FUCallbackResponse, JsObject] {
     def makeCall(
                   cbcrsUrl: ServiceUrl[CbcrsUrl],
-                  obj: FileUploadCallbackResponse
+                  obj: FUCallbackResponse
                 )(
                   implicit
                   hc: HeaderCarrier,
                   wts: Writes[JsObject],
                   rds: HttpReads[HttpResponse],
-                  getBody: GetBody[FileUploadCallbackResponse, JsObject]
+                  getBody: GetBody[FUCallbackResponse, JsObject]
                 ): Future[HttpResponse] = {
       WSHttp.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/saveFileUploadResponse?cbcId=CBCId1234", getBody(obj))
     }
