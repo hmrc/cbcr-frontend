@@ -16,17 +16,19 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
+import java.io.{File, FileInputStream}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import play.api.Logger
 import play.api.http.HeaderNames.LOCATION
-import play.api.libs.json.{JsObject, Json}
-import uk.gov.hmrc.cbcrfrontend.core.Opt
+import play.api.libs.json._
+import uk.gov.hmrc.cbcrfrontend.core.ResponseExtract
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.EnvelopeId
-import uk.gov.hmrc.cbcrfrontend.typesclasses.CbcrsUrl
+import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, FileUploadCallbackResponse}
 import uk.gov.hmrc.play.http.HttpResponse
+
+import scala.xml.Source
 
 class FileUploadServiceConnector() {
 
@@ -34,7 +36,7 @@ class FileUploadServiceConnector() {
   val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
 
 
-  def envelopeRequest(formTypeRef: String, protocolHostName: String, cbcrsUrl: String): JsObject = {
+  def envelopeRequest(formTypeRef: String, cbcrsUrl: String): JsObject = {
 
     Logger.debug("CBCR URL: "+cbcrsUrl)
 
@@ -61,7 +63,7 @@ class FileUploadServiceConnector() {
 
   def extractEnvelopId(
                         resp: HttpResponse
-                      ): Opt[EnvelopeId] = {
+                      ): ResponseExtract[EnvelopeId] = {
     resp.header(LOCATION) match {
       case Some(location) => location match {
         case EnvelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
@@ -71,5 +73,60 @@ class FileUploadServiceConnector() {
     }
   }
 
+  def extractFileUploadMessage(resp: HttpResponse): ResponseExtract[String] = {
+      resp.status match {
+        case 200 => Right(resp.body)
+        case _ => Left(UnexpectedState("Problems uploading the file"))
+      }
+  }
 
+  def extractFileUploadResponseMessage(resp: HttpResponse): ResponseExtract[Option[FileUploadCallbackResponse]] = {
+    resp.status match {
+      case 200 => {
+        val callbackResponse =  resp.json.validate[FileUploadCallbackResponse]
+        callbackResponse match {
+          case s: JsSuccess[FileUploadCallbackResponse] => Right(Some(s.get))
+          case e: JsError => Left(UnexpectedState("Problems extracting File Upload response message "+e.errors))
+        }
+      }
+      case 404 => Right(None)
+      case _ => Left(UnexpectedState("Problems getting File Upload response message"))
+    }
+  }
+
+  def extractFile(resp: HttpResponse): ResponseExtract[File] = {
+    resp.status match {
+      case 200 => {
+        //Logger.debug("The XML: "+resp.body)
+
+        val inputStream = Source.fromString(resp.body).getCharacterStream
+        val xmlFile = File.createTempFile("xml", "xml")
+        val fos = new java.io.FileOutputStream(xmlFile)
+
+        fos.write(
+          Stream.continually(inputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
+        )
+        fos.close()
+        Right(xmlFile)
+      }
+      case _ => Left(UnexpectedState("Problems getting the File "))
+    }
+  }
+
+  def extractEnvelopeDeleteMessage(resp: HttpResponse): ResponseExtract[String] = {
+    resp.status match {
+      case 200 => Right(resp.body)
+      case _ => Left(UnexpectedState("Problems deleting the envelope"))
+    }
+  }
+
+  def extractFileMetadata(resp: HttpResponse): ResponseExtract[Option[FileMetadata]] = {
+    resp.status match {
+      case 200 => {
+        Logger.debug("FileMetaData: "+resp.json)
+        Right(resp.json.asOpt[FileMetadata])
+      }
+      case _ => Left(UnexpectedState("Problems getting File Metadata"))
+    }
+  }
 }

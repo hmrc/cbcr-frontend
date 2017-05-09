@@ -16,25 +16,31 @@
 
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
-@()(implicit request: Request[_], flash: Flash)
-
-@uk.gov.hmrc.cbcrfrontend.views.html.main_template(title = "Error cbcr-frontend", bodyClasses = None) {
-<h1 align="center" >Error Uploading XML File !</h1>
-
-<div class="form-group">
-</br>
-</br>
-
-    @flash.get("error").map { errorMsg =>
-
-    <div style="border: solid 2px red; padding: 1em; margin: 1em;">
-        @errorMsg
-    </div>
+@(asideBusiness: Html, errorMessage: String)(implicit request: Request[_])
+@sidebarContent = {
+@asideBusiness
 }
-    </br>
-    </br>
-    <div align="center">
-        <a href="/country-by-country-reporting/enter-CBCId">Try Again</a>
+@uk.gov.hmrc.cbcrfrontend.views.html.main_template(title = "Error cbcr-frontend", bodyClasses = None) {
+
+    <div class="grid-row">
+        <div class="column-two-thirds">
+            <h1>
+                Your report's format contains errors
+            </h1>
+            <p>Give the following error message(s) to your XML report provider so that they can correct them.</p>
+
+            <div class="flash error-summary error-summary--show"
+                 id="error-summary-display"
+                 role="alert"
+                 aria-labelledby="error-summary-heading"
+                 tabindex="-1">
+                <h2 id="error-summary-heading" class="h3-heading">File upload error message</h2>
+                <textarea readonly="readonly" class="" name="example_textarea_input" id="example" cols="40" rows="6">@errorMessage</textarea>
+            </div>
+            <p><a href="#">View formatting guidance</a></p>
+            <a class="button" href="enter-CBCId">Close</a>
+        </div>
     </div>
-</div>
+
+
 }
