@@ -22,8 +22,8 @@ import java.time.format.DateTimeFormatter
 
 import play.api.Logger
 import play.api.http.HeaderNames.LOCATION
-import play.api.libs.json.{JsObject, JsValue, Json}
-import uk.gov.hmrc.cbcrfrontend.core.Opt
+import play.api.libs.json._
+import uk.gov.hmrc.cbcrfrontend.core.ResponseExtract
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, FileUploadCallbackResponse}
 import uk.gov.hmrc.play.http.HttpResponse
@@ -63,7 +63,7 @@ class FileUploadServiceConnector() {
 
   def extractEnvelopId(
                         resp: HttpResponse
-                      ): Opt[EnvelopeId] = {
+                      ): ResponseExtract[EnvelopeId] = {
     resp.header(LOCATION) match {
       case Some(location) => location match {
         case EnvelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
@@ -73,22 +73,28 @@ class FileUploadServiceConnector() {
     }
   }
 
-  def extractFileUploadMessage(resp: HttpResponse): Opt[String] = {
+  def extractFileUploadMessage(resp: HttpResponse): ResponseExtract[String] = {
       resp.status match {
         case 200 => Right(resp.body)
         case _ => Left(UnexpectedState("Problems uploading the file"))
       }
   }
 
-  def extractFileUploadResponseMessage(resp: HttpResponse): Opt[Option[FileUploadCallbackResponse]] = {
+  def extractFileUploadResponseMessage(resp: HttpResponse): ResponseExtract[Option[FileUploadCallbackResponse]] = {
     resp.status match {
-      case 200 => Right(Some(resp.json.as[FileUploadCallbackResponse]))
+      case 200 => {
+        val callbackResponse =  resp.json.validate[FileUploadCallbackResponse]
+        callbackResponse match {
+          case s: JsSuccess[FileUploadCallbackResponse] => Right(Some(s.get))
+          case e: JsError => Left(UnexpectedState("Problems extracting File Upload response message "+e.errors))
+        }
+      }
       case 404 => Right(None)
       case _ => Left(UnexpectedState("Problems getting File Upload response message"))
     }
   }
 
-  def extractFile(resp: HttpResponse): Opt[File] = {
+  def extractFile(resp: HttpResponse): ResponseExtract[File] = {
     resp.status match {
       case 200 => {
         //Logger.debug("The XML: "+resp.body)
@@ -107,14 +113,14 @@ class FileUploadServiceConnector() {
     }
   }
 
-  def extractEnvelopeDeleteMessage(resp: HttpResponse): Opt[String] = {
+  def extractEnvelopeDeleteMessage(resp: HttpResponse): ResponseExtract[String] = {
     resp.status match {
       case 200 => Right(resp.body)
       case _ => Left(UnexpectedState("Problems deleting the envelope"))
     }
   }
 
-  def extractFileMetadata(resp: HttpResponse): Opt[Option[FileMetadata]] = {
+  def extractFileMetadata(resp: HttpResponse): ResponseExtract[Option[FileMetadata]] = {
     resp.status match {
       case 200 => {
         Logger.debug("FileMetaData: "+resp.json)

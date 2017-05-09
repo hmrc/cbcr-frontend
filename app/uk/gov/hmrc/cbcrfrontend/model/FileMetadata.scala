@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.functional.syntax.unlift
-import play.api.libs.json.{Format, JsPath, JsValue}
-import play.api.libs.functional.syntax._
+import play.api.libs.json.{JsValue, Json}
 
 
 case class FileMetadata(
@@ -32,16 +30,5 @@ case class FileMetadata(
                          href: String)
 
 object FileMetadata {
-
-  implicit val fileMetadataFormat: Format[FileMetadata] = (
-    (JsPath \ "id").format[String] and
-    (JsPath \ "status").format[String] and
-    (JsPath \ "name").format[String] and
-    (JsPath \ "contentType").format[String] and
-    (JsPath \ "length").format[BigDecimal] and
-    (JsPath \ "created").format[String] and
-    (JsPath \ "metadata").format[JsValue] and
-    (JsPath \ "href").format[String]
-    ) (FileMetadata.apply, unlift(FileMetadata.unapply))
-
+  implicit val fileMetadataFormat = Json.format[FileMetadata]
 }
