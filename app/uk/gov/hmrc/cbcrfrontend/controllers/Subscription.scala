@@ -20,6 +20,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import javax.inject.{Inject, Singleton}
 
 import cats.data.OptionT
+import cats.data.EitherT
 import cats.instances.all._
 import cats.syntax.all._
 import play.api.Logger
@@ -33,11 +34,13 @@ import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, GGConnector}
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.{BPRKnownFactsService, CBCIdService, CBCKnownFactsService, SubscriptionDataService}
+import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.http.cache.client.CacheMap
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -46,7 +49,8 @@ class Subscription @Inject()(val sec: SecuredActions,
                              val subscriptionDataService: SubscriptionDataService,
                              val connector:BPRKnownFactsConnector,
                              val cbcIdService:CBCIdService,
-                             val kfService:CBCKnownFactsService)
+                             val kfService:CBCKnownFactsService,
+                             val session:CBCSessionCache)
                             (implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
   lazy val knownFactsService:BPRKnownFactsService = new BPRKnownFactsService(connector)
@@ -73,16 +77,17 @@ class Subscription @Inject()(val sec: SecuredActions,
             oId match {
               case Some(id) =>
 
-                // THIS IS STUBBED DATA - we will be using Keystore to retrieve this info
-                /***********************/
-                val bpr = BusinessPartnerRecord(None, None, EtmpAddress(None, None, None, None, None, None))
-                val details = SubscriptionDetails(bpr, data, id)
-                val utr = Utr("1234567890")
-                /**********************/
-
                 val result = for {
-                  _ <- subscriptionDataService.saveSubscriptionData(details)
+                  bpr <- EitherT[Future,UnexpectedState,BusinessPartnerRecord](
+                    session.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
+                  )
+                  utr <- EitherT[Future,UnexpectedState,Utr](
+                    session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
+                  )
+                  _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id))
                   _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
+                  _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(id))
+                  _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(data))
                 } yield id
 
                 result.fold(
@@ -123,11 +128,15 @@ class Subscription @Inject()(val sec: SecuredActions,
         formWithErrors => Future.successful(
           BadRequest(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors))
         ),
-        knownFacts => knownFactsService.checkBPRKnownFacts(knownFacts).cata(
-          NotFound(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true)),
-          (s: BusinessPartnerRecord) =>
-            Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), s.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value))
-        )
+        knownFacts => { (for {
+          bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
+            NotFound(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true))
+          )
+          _ <- EitherT.right[Future,Result,CacheMap](session.save(bpr))
+          _ <- EitherT.right[Future,Result,CacheMap](session.save(knownFacts.utr))
+        } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value))
+          ).merge
+        }
       )
   }
 
