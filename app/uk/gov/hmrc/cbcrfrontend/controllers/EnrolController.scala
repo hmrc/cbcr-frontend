@@ -37,16 +37,15 @@ import scala.xml.Elem
   * Created by max on 10/05/17.
   */
 @Singleton
-class DeEnrolController @Inject() (val sec: SecuredActions, val config:Configuration, ws:WSClient, auth:AuthConnector) extends FrontendController {
+class EnrolController @Inject()(val sec: SecuredActions, val config:Configuration, ws:WSClient, auth:AuthConnector) extends FrontendController {
 
   val conf = config.underlying.get[Config]("microservice.services.gg-proxy").value
 
   val url: String = (for {
-    proto   <- conf.get[String]("protocol")
     host    <- conf.get[String]("host")
     port    <- conf.get[Int]("port")
     service <- conf.get[String]("url")
-  } yield s"$proto://$host:$port/$service").value
+  } yield s"http://$host:$port/$service").value
 
   private def createBody(kf:CBCKnownFacts): Elem =
     <GsoDeenrolPrincipalXmlInput xmlns="urn:GSO-System-Services:external:1.65:GsoDeenrolPrincipalXmlInput">
