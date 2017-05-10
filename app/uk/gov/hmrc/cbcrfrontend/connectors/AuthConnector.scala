@@ -16,21 +16,20 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import javax.inject.Singleton
 import javax.inject.Inject
 
 import com.typesafe.config.Config
-import play.api.Configuration
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpResponse}
+import play.api.{Configuration, Logger}
+import play.api.libs.json.JsValue
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet}
 import configs.syntax._
-import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-@Singleton
-class CBCIdConnector @Inject() (http:HttpGet,config:Configuration) {
 
-  val conf = config.underlying.get[Config]("microservice.services.cbcr").value
+class AuthConnector @Inject() (httpGet: HttpGet, config:Configuration)(implicit ec:ExecutionContext) {
+
+  val conf = config.underlying.get[Config]("microservice.services.auth").value
 
   val url: String = (for {
     proto <- conf.get[String]("protocol")
@@ -38,6 +37,15 @@ class CBCIdConnector @Inject() (http:HttpGet,config:Configuration) {
     port  <- conf.get[Int]("port")
   } yield s"$proto://$host:$port").value
 
-  def getId()(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(url+ "/cbcr/getCBCId")
+  def getEnrolments(implicit hc:HeaderCarrier): Future[JsValue] = for {
+    authRecord    <- httpGet.GET[JsValue](url + "/auth/authority")
+    _ = Logger.error("AUTHRECORD: " + authRecord)
+    enrolmentsUri <- Future{(authRecord \ "enrolments").get}
+    _ = Logger.error("ENROLMENTSURI: " + enrolmentsUri)
+    enrolments    <- httpGet.GET[JsValue](url + "/auth" + enrolmentsUri.toString())
+  } yield enrolments
+
+
+
 
 }
