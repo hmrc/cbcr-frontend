@@ -50,7 +50,7 @@ class EnrolController @Inject()(val sec: SecuredActions, val config:Configuratio
   private def createBody(kf:CBCKnownFacts): Elem =
     <GsoDeenrolPrincipalXmlInput xmlns="urn:GSO-System-Services:external:1.65:GsoDeenrolPrincipalXmlInput">
       <DirectEnrolment>
-        <ServiceName>MOSW2</ServiceName>
+        <ServiceName>HMRC-CBC-ORG</ServiceName>
         <Identifiers>
           <Identifier IdentifierType="cbcId">{kf.cBCId.value}</Identifier>
           <Identifier IdentifierType="UTR">{kf.utr.value}</Identifier>
