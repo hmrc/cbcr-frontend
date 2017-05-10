@@ -33,21 +33,23 @@ implicit request: Request[_], messages: Messages)
         <div class="column-two-thirds">
             <form>
                 <h1>
-                    Who is the ultimate parent entity you are submitting for?
+                    @Messages("submitInfoUltimateParentEntity.mainHeading")
                 </h1>
                 <fieldset>
                     <legend class="visuallyhidden">Ultimate parent entity name</legend>
 
                     <div class="form-field form-field--tall">
                         <div class="form-group">
-                            <label class="form-label" for="ultimate-parent-entity">Name of ultimate parent entity (UPE)</label>
+                            <label class="form-label" for="ultimate-parent-entity">
+                                @Messages("submitInfoUltimateParentEntity.upe.label")
+                            </label>
                             <input type="text" class="form-control" id="ultimate-parent-entity">
                         </div>
                     </div>
                 </fieldset>
             </form>
             <p>
-            <p><a class="button" href="/country-by-country-reporting/submitInfoFilingCapacity">Continue</a></p>
+            <p><a class="button" href="/country-by-country-reporting/submitInfoFilingCapacity">@Messages("form.controls.continue")</a></p>
             </p>
         </div>
     </div>

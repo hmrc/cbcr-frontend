@@ -33,39 +33,38 @@ implicit request: Request[_], messages: Messages)
         <div class="column-two-thirds">
             <form>
                 <h1>
-                    Under what capacity are you filing?
+                    @Messages("submitInfoFilingCapacity.mainHeading")
                 </h1>
 
                 <div class="form-group">
                     <fieldset>
                         <legend class="visuallyhidden">
-                            What is your filing capacity?
+                            @Messages("submitInfoFilingCapacity.mainHeading")
                         </legend>
 
                         <label for="filing-capacity-1" class="block-label block-label selection-button-radio">
                             <input id="filing-capacity-1" name="filing-capacity" type="radio" value="mne">
-                            <span class="heading-small">MNE user</span><br />
-                            <span class="form-hint">You work directly for the ultimate parent entity or it's UK filing subsidiary</span>
+                            <span class="heading-small">@Messages("submitInfoFilingCapacity.mneUser.label")</span><br />
+                            <span class="form-hint">@Messages("submitInfoFilingCapacity.mneUser.hint")</span>
                         </label>
 
                         <label for="filing-capacity-2" class="block-label block-label selection-button-radio">
                             <input id="filing-capacity-2" name="filing-capacity" type="radio" value="648-agent">
-                            <span class="heading-small">Authorised agent</span><br />
-                            <span class="form-hint">You have 64-8 authorisation to submit on behalf of the ultimate parent entity</span>
+                            <span class="heading-small">@Messages("submitInfoFilingCapacity.agent.label")</span><br />
+                            <span class="form-hint">@Messages("submitInfoFilingCapacity.agent.hint")</span>
                         </label>
 
                         <label for="filing-capacity-3" class="block-label block-label selection-button-radio">
                             <input id="filing-capacity-3" name="filing-capacity" type="radio" value="representative">
-                            <span class="heading-small">Representative</span><br />
-                            <span class="form-hint">You have been asked to submit on behalf of the ultimate parent entity without 64-8 authorisation</span>
+                            <span class="heading-small">@Messages("submitInfoFilingCapacity.representative.label")</span><br />
+                            <span class="form-hint">@Messages("submitInfoFilingCapacity.representative.hint")</span>
                         </label>
 
                     </fieldset>
                 </div>
             </form>
             <p>
-            <p><a class="button" href="/country-by-country-reporting/contactInfoSubmitter">Continue</a></p>
-            </p>
+            <p><a class="button" href="/country-by-country-reporting/contactInfoSubmitter">@Messages("form.controls.continue")</a></p>
         </div>
     </div>
 

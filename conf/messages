@@ -1,5 +1,4 @@
-cbc.title=Country By Country Reporting
-cbc.history.top.message=Your CBCID needs to be included in the sendingEntityIN field in the XML file
+
 cbc.button.fileupload.report=Upload Report
 cbc.button.fileupload=Upload
 cbc.entercbcid.label=CBC Id
@@ -12,18 +11,17 @@ enterCBCId.dontHaveAnID.heading=Don''t have a Country by Country ID?
 enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
 enterCBCId.dontHaveAnID.link.text=Register online
 
-
 subscribeFirst.mainHeading=Register for a Country by Country ID
 subscribeFirst.formHeading=Enter your organisation''s tax details
 subscribeFirst.noMatchingBusiness.heading=We cannot find the registered business using these details
 subscribeFirst.noMatchingBusiness.suggestion1=The UTR or postcode you entered may be wrong
 subscribeFirst.noMatchingBusiness.suggestion2=The UTR and postcode may not correspond to one another
 subscribeFirst.noMatchingBusiness.suggestion3=The Business may not be registered with HMRC
-subscribeFirst.utrErrors.errorNotification=This should be a 10 digit number
-subscribeFirst.utrLabel=Unique Tax Reference (UTR)
-subscribeFirst.utrErrors.formHint=This should be either a Corportation Tax or a Self Assessment UTR
-subscribeFirst.postcodeErrors.errorNotification=Enter a valid UK postcode
-subscribeFirst.postcodeLabel=UK Postcode
+subscribeFirst.utr.errors.errorNotification=This should be a 10 digit number
+subscribeFirst.utr.label=Unique Tax Reference (UTR)
+subscribeFirst.utr.errors.formHint=This should be either a Corportation Tax or a Self Assessment UTR
+subscribeFirst.postcode.errors.errorNotification=Enter a valid UK postcode
+subscribeFirst.postcode.label=UK Postcode
 
 subscribeMatchFound.mainHeading=Confirm your business details
 subscribeMatchFound.businessDetails.heading=Business details
@@ -31,13 +29,76 @@ subscribeMatchFound.businessDetails.name=Name
 subscribeMatchFound.businessDetails.postcode=Postcode
 subscribeMatchFound.businessDetails.utr=UTR
 
+subscribeSuccessCbcId.mainHeading=Registration complete for
+
 contactInfoSubscriber.mainHeading=Enter your contact details
 contactInfoSubscriber.subHeading=This will help us contact you, if needed, regarding a Country by Country report submission.
-contactInfoSubscriber.fullNameLabel=Full Name
-contactInfoSubscriber.fullNameError=Please enter your full name
-contactInfoSubscriber.jobTitleLabel=Job title/role
-contactInfoSubscriber.jobTitleError=Please enter your Job title/role
-contactInfoSubscriber.phoneNumberLabel=Phone number
-contactInfoSubscriber.phoneNumberError=Please enter a valid phone number
-contactInfoSubscriber.emailAddressLabel=Email address
-contactInfoSubscriber.emailAddressError=Please enter a valid phone number
+contactInfoSubscriber.fullName.label=Full Name
+contactInfoSubscriber.fullName.error=Please enter your full name
+contactInfoSubscriber.jobTitle.label=Job title/role
+contactInfoSubscriber.jobTitle.error=Please enter your Job title/role
+contactInfoSubscriber.phoneNumber.label=Phone number
+contactInfoSubscriber.phoneNumber.error=Please enter a valid phone number
+contactInfoSubscriber.emailAddress.label=Email address
+contactInfoSubscriber.emailAddress.error=Please enter a valid phone number
+
+cbcHistory.mainHeading=Country By Country Reporting
+cbcHistory.top.message=Your CBCID needs to be included in the sendingEntityIN field in the XML file
+
+contactInfoSubmitter.mainHeading=Enter your contact details
+contactInfoSubmitter.fullName.label=Full name
+contactInfoSubmitter.business.label=Agency or business you work for
+contactInfoSubmitter.role.label=Job title/role
+contactInfoSubmitter.phone.label=Contact phone number
+contactInfoSubmitter.email.label=Contact email address
+
+filingHistory.mainHeading=Filing History for Multinational Ltd
+filingHistory.submit=Submit Report
+filingHistory.report.reportingPeriod=Reporting period
+filingHistory.report.dateSubmitted=Date Submitted
+filingHistory.report.messageReference=Message reference ID
+filingHistory.report.size=Size
+filingHistory.report.referenceNo=Reference no.
+
+submitInfoFilingCapacity.mainHeading=Under what capacity are you filing?
+submitInfoFilingCapacity.mneUser.label=MNE user
+submitInfoFilingCapacity.mneUser.hint=You work directly for the ultimate parent entity or it's UK filing subsidiary
+submitInfoFilingCapacity.agent.label=Authorised agent
+submitInfoFilingCapacity.agent.hint=You have 64-8 authorisation to submit on behalf of the ultimate parent entity
+submitInfoFilingCapacity.representative.label=Representative
+submitInfoFilingCapacity.representative.hint=You have been asked to submit on behalf of the ultimate parent entity without 64-8 authorisation
+
+submitInfoFilingType.mainHeading=What type of CbC filing are you submitting?
+submitInfoFilingType.primaryFiling.label=Primary filing
+submitInfoFilingType.primaryFiling.hint=Reporting is global for an MNE headquartered in the UK
+submitInfoFilingType.voluntaryFiling.label=Voluntary filing
+submitInfoFilingType.voluntaryFiling.hint=Reporting is global for a non-UK MNE via a UK subsidiary company
+submitInfoFilingType.localFiling.label=Local filing
+submitInfoFilingType.localFiling.hint=Reporting is local only for the UK subsidiary of a non-UK MNE
+
+submitInfoUltimateParentEntity.mainHeading=Who is the ultimate parent entity you are submitting for?
+submitInfoUltimateParentEntity.upe.label=Name of ultimate parent entity (UPE)
+
+submitSuccessReceipt.mainHeading=Report has been submitted
+submitSuccessReceipt.confirmationNumberLabel=Your confirmation number is:
+submitSuccessReceipt.submissionDateLabel=Your report was submitted on
+submitSuccessReceipt.print=Print this page
+submitSuccessReceipt.whatNext.heading=What happens next
+submitSuccessReceipt.whatNext.item1=Your report will now be checked
+submitSuccessReceipt.whatNext.item2=We''ll contact you if there are any issues with the report
+submitSuccessReceipt.whatNext.item3=We'll email a confirmation when your report has been approved
+submitSuccessReceipt.close=Close
+
+submitSummary.mainHeading=Check your report details
+submitSummary.secondaryHeading=Your submission details
+submitSummary.table.registeredMNE=Registered MNE:
+submitSummary.table.filingType=Filing type:
+submitSummary.table.ultimateParent=Ultimate parent entity:
+submitSummary.table.filedBy=Filed by:
+submitSummary.table.filingCapacity=Filing capacity:
+submitSummary.table.reportDetails=Report details
+submitSummary.confirmSubmit=Confirm and submit
+submitSummary.declaration.heading=Declaration
+submitSummary.declaration.text=I confirm that the information in this report is true and complete, to the best of my knowledge.
+submitSummary.submit=Submit
+submitSummary.submitReport=Submit report

@@ -32,27 +32,25 @@ implicit request: Request[_], messages: Messages)
         <div class="column-two-thirds">
             <section>
                 <div class="transaction-banner--complete">
-                    <span class="transaction-banner__heading h1-heading">Registration complete for @companyName</span>
+                    <span class="transaction-banner__heading h1-heading">@Messages("subscribeSuccessCbcId.mainHeading") @companyName</span>
                     <p class="transaction-banner__heading">
-                        Your Country by Country ID is: <br>
+                        @Messages("subscribeSuccessCbcId.subHeading")<br>
                         <strong class="heading-medium">@cbcId.value</strong>
                     </p>
                 </div>
             </section>
-            <button onclick="window.print()" class="toggle__button" style="padding:0;">Print this page</button>
-            <p>Print or save this screen and keep your ID safe. You 'll need it each time you want to submit a report.</p>
-            <br>
-            <h2 class="heading-medium">What happens next?</h2>
+            <button onclick="window.print()" class="toggle__button" style="padding:0;">@Messages("subscribeSuccessCbcId.printThisButton")</button>
+            <p>@Messages("subscribeSuccessCbcId.printThis")</p>
+
+            <h2 class="heading-medium">@Messages("subscribeSuccessCbcId.whatNext")</h2>
             <ul>
                 <li>Create your report using the <a href="#">correct report format</a> </li>
                 <li>List your ID in the <a href="#">required field</a> of your report</li>
                 <li>Submit your report using HMRC's online service</li>
             </ul>
             <p>
-                <a class="button" href="/">Sign out</a>
+                <a class="button" href="/">@Messages("form.controls.signOut)</a>
             </p>
-            <hr>
-            <p><a href="https://www.gov.uk/service-manual/user-centred-design/resources/patterns/feedback-pages.html">What did you think of this service?</a></p>
         </div>
 
     </div>
