@@ -52,7 +52,9 @@ class SubscriptionDataService extends ServicesConfig{
           case _         => Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(response.body))
         }
       }.recover{
-        case NonFatal(t) => Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
+        case NonFatal(t) =>
+          Logger.error("GET future failed")
+          Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
       }
     )
 
