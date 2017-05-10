@@ -62,10 +62,14 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
       },
       id => CBCId(id) match {
         case Some(cbcId) => subDataService.retrieveSubscriptionData(cbcId).fold(
-          error   => InternalServerError(error.errorMsg),
-          details => details.fold(
-            BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(),form,true))
-            )(_ => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile()))
+          error   => {
+            Logger.info("subDataService errored: $error")
+            InternalServerError(error.errorMsg)
+          },
+          details => details.fold {
+            Logger.info("subDataService returned NONE")
+            BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), form, true))
+            }(_ => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile()))
         )
         case None => Future.successful(InternalServerError)
       }
