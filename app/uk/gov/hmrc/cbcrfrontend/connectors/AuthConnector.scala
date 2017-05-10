@@ -41,7 +41,7 @@ class AuthConnector @Inject() (httpGet: HttpGet, config:Configuration)(implicit 
     _ = Logger.error("AUTHRECORD: " + authRecord)
     enrolmentsUri <- Future{(authRecord \ "enrolments").get}
     _ = Logger.error("ENROLMENTSURI: " + enrolmentsUri)
-    enrolments    <- httpGet.GET[JsValue](url + "/auth" + enrolmentsUri.toString())
+    enrolments    <- httpGet.GET[JsValue](url + enrolmentsUri.toString().replaceAll("\"",""))
   } yield enrolments
 
 
