@@ -85,7 +85,7 @@ class Subscription @Inject()(val sec: SecuredActions,
                     session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
                   )
                   _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id))
-                  _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
+//                  _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
                   _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(id))
                   _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(data))
                 } yield id
