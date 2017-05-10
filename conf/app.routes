@@ -27,8 +27,8 @@ GET        /contactInfoSubscriber                         @uk.gov.hmrc.cbcrfront
 GET        /subscribeSuccessCbcId/:cbcId                  @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeSuccessCbcId(cbcId:String)
 POST       /submitSubscriptionData                        @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.submitSubscriptionData
 
-GET        /deEnrol/:cbcId/:utr                           @uk.gov.hmrc.cbcrfrontend.controllers.DeEnrolController.deEnrol(cbcId,utr)
-GET        /enrolments                                     @uk.gov.hmrc.cbcrfrontend.controllers.DeEnrolController.getEnrolments
+GET        /deEnrol/:cbcId/:utr                           @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.deEnrol(cbcId,utr)
+GET        /enrolments                                    @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.getEnrolments
 
 GET        /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 
