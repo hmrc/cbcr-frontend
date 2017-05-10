@@ -29,6 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import javax.inject.Singleton
 
+import play.api.Logger
 import uk.gov.hmrc.play.config.ServicesConfig
 @Singleton
 class SubscriptionDataService extends ServicesConfig{
@@ -39,6 +40,8 @@ class SubscriptionDataService extends ServicesConfig{
     val fullUrl = url.url + s"/cbcr/retrieveSubscriptionData/$id"
     EitherT[Future,UnexpectedState, Option[SubscriptionDetails]](
       WSHttp.GET[HttpResponse](fullUrl).map { response =>
+        Logger.info(s"RESPONSE: $response")
+        Logger.info(s"RESPONSE_STATUS: ${response.status}")
         response.status match {
           case Status.NOT_FOUND => Right[UnexpectedState,Option[SubscriptionDetails]](None)
           case Status.OK =>
