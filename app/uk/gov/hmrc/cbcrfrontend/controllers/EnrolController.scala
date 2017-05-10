@@ -67,14 +67,11 @@ class EnrolController @Inject()(val sec: SecuredActions, val config:Configuratio
   def deEnrol(cbcId:String,utr:String) = sec.AsyncAuthenticatedAction { authContext => implicit request =>
     createKF(cbcId,utr) match {
       case None     => Future.successful(BadRequest)
-      case Some(kf) => ws.url(url).post(createBody(kf)).map { response =>
+      case Some(kf) => WSHttp.POSTString(url,createBody(kf).toString(),Seq("Content-Type" -> "application/xml")).map { response =>
         Logger.error(response.toString)
-        response.status match {
-          case OK => Ok
-          case NOT_FOUND => NotFound
-          case BAD_REQUEST => BadRequest
-          case _ => InternalServerError
-        }
+        Ok
+      }.recover{
+        case NonFatal(e) => InternalServerError(e.getMessage)
       }
     }
   }
