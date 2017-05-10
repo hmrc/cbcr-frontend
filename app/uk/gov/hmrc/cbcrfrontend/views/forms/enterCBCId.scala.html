@@ -40,7 +40,7 @@ implicit request: Request[_], messages: Messages)
 
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.submitCBCId()){
             <fieldset>
-                <div class="form-group @if(errors){form-field--error}">
+                <div class="form-group @if(errors || noMatch){form-field--error}">
                     <p class="form-hint">@Messages("enterCBCId.formHint")</p>
                     @if(form.error("cbcId").isDefined){
                     <span class="error-notification">Please enter a valid CBCId</span>
