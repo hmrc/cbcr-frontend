@@ -27,6 +27,7 @@ import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, CBCKnownFacts, Utr}
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.{BadRequestException, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.cbcrfrontend.connectors.AuthConnector
 import configs.syntax._
 
 import scala.concurrent.Future
@@ -36,7 +37,7 @@ import scala.xml.Elem
   * Created by max on 10/05/17.
   */
 @Singleton
-class DeEnrolController @Inject() (val sec: SecuredActions, val config:Configuration, ws:WSClient) extends FrontendController {
+class DeEnrolController @Inject() (val sec: SecuredActions, val config:Configuration, ws:WSClient, auth:AuthConnector) extends FrontendController {
 
   val conf = config.underlying.get[Config]("microservice.services.gg-proxy").value
 
@@ -77,6 +78,10 @@ class DeEnrolController @Inject() (val sec: SecuredActions, val config:Configura
         }
       }
     }
+  }
+
+  def getEnrolments = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+    auth.getEnrolments.map(Ok(_))
   }
 
 }
