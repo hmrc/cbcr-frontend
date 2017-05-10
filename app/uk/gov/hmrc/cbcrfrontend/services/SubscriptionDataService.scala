@@ -30,18 +30,30 @@ import scala.util.control.NonFatal
 import javax.inject.Singleton
 
 import uk.gov.hmrc.play.config.ServicesConfig
-
-trait SubscriptionDataService {
-  implicit def url:ServiceUrl[CbcrsUrl]
-  def saveSubscriptionData(data: SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String]
-  def clearSubscriptionData(id: CBCId)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]]
-}
-
 @Singleton
-class SubscriptionDataServiceImpl extends SubscriptionDataService with ServicesConfig{
+class SubscriptionDataService extends ServicesConfig{
 
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
+  def retrieveSubscriptionData(id:CBCId)(implicit hc: HeaderCarrier, ec: ExecutionContext):ServiceResponse[Option[SubscriptionDetails]] = {
+    val fullUrl = url.url + s"/cbcr/retrieveSubscriptionData/$id"
+    EitherT[Future,UnexpectedState, Option[SubscriptionDetails]](
+      WSHttp.GET[HttpResponse](fullUrl).map { response =>
+        response.status match {
+          case Status.NOT_FOUND => Right[UnexpectedState,Option[SubscriptionDetails]](None)
+          case Status.OK =>
+            response.json.validate[SubscriptionDetails].fold(
+              errors  => Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
+              details => Right[UnexpectedState,Option[SubscriptionDetails]](Some(details))
+            )
+          case _         => Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(response.body))
+        }
+      }.recover{
+        case NonFatal(t) => Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
+      }
+    )
+
+  }
   def saveSubscriptionData(data:SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/saveSubscriptionData"
     EitherT[Future,UnexpectedState, String](
