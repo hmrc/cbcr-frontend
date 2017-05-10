@@ -32,10 +32,9 @@ class AuthConnector @Inject() (httpGet: HttpGet, config:Configuration)(implicit 
   val conf = config.underlying.get[Config]("microservice.services.auth").value
 
   val url: String = (for {
-    proto <- conf.get[String]("protocol")
     host  <- conf.get[String]("host")
     port  <- conf.get[Int]("port")
-  } yield s"$proto://$host:$port").value
+  } yield s"http://$host:$port").value
 
   def getEnrolments(implicit hc:HeaderCarrier): Future[JsValue] = for {
     authRecord    <- httpGet.GET[JsValue](url + "/auth/authority")
