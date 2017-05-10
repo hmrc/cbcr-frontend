@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import cats.data.EitherT
+import cats.instances.future._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
@@ -24,33 +26,59 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
+import org.mockito.Mockito._
+import org.mockito.Matchers._
+import org.scalatest.mock.MockitoSugar
+import play.api.libs.json.Json
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
+import uk.gov.hmrc.emailaddress.EmailAddress
 
 
-class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector {
+class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector with MockitoSugar{
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]
+
+  val subDataS = mock[SubscriptionDataService]
+  val id: CBCId = CBCId("XGCBC0000000001").getOrElse(fail("unable to create cbcid"))
+  val subDetails = SubscriptionDetails(
+    BusinessPartnerRecord(None,None,EtmpAddress(None,None,None,None,None,None)),
+    SubscriberContact("lkajsdf","lkasjdf",EmailAddress("max@max.com")),
+    id
+  )
 
   val fakeRequestEnterCBCId = addToken(FakeRequest("GET", "/enter-CBCId"))
 
   "GET /enter-CBCId" should {
     "return 200" in {
       val controller = cbcController
-
       val result = controller.enterCBCId(fakeRequestEnterCBCId).futureValue
       status(result) shouldBe Status.OK
     }
   }
 
-  val fakeRequestSubmitCBCId = addToken(FakeRequest("GET", "/enter-CBCId"))
+  val fakeRequestSubmitCBCId = addToken(FakeRequest("POST", "/enter-CBCId"))
 
   "GET /submitCBCId" should {
-    "return 200" in {
+    "return 403 if it was not a valid CBCId" in {
       val controller = cbcController
-
-      val result = controller.submitCBCId(fakeRequestSubmitCBCId).futureValue
-      status(result) shouldBe Status.OK
+      val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> "NOTAVALIDID")))
+      status(result) shouldBe Status.BAD_REQUEST
+    }
+    "return 403 if the CBCId has not been registered" in {
+      val controller = cbcController
+      when(subDataS.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,UnexpectedState,Option[SubscriptionDetails]](None)
+      val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
+      status(result) shouldBe Status.BAD_REQUEST
+    }
+    "return a redirect if successful" in {
+      val controller = cbcController
+      when(subDataS.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,UnexpectedState,Option[SubscriptionDetails]](Some(subDetails))
+      val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
+      status(result) shouldBe Status.SEE_OTHER
     }
   }
 
@@ -59,6 +87,6 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
     val authCon = authConnector(TestUsers.cbcrUser)
     val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
 
-    new CBCController(securedActions) {}
+    new CBCController(securedActions, subDataS) {}
   }
 }
