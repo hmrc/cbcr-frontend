@@ -29,14 +29,14 @@ implicit request: Request[_], messages: Messages)
     <div class="grid-row">
         <div class="column-full">
             <h1>
-                Check your report details
+                @Messages("submitSummary.mainHeading")
             </h1>
             <table class="check-your-answers">
                 <thead>
                 <tr>
                     <th colspan="2">
                         <h2 class="heading-medium">
-                            Your submission details
+                        @Messages("submitSummary.secondaryHeading")
                         </h2>
                     </th>
                     <th>
@@ -46,9 +46,9 @@ implicit request: Request[_], messages: Messages)
 
                 <tbody>
                 <tr>
-                    <td>
-                        Registered MNE:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.registeredMNE")
+                    </th>
                     <td>
                         Multinational Ltd<br />
                         Postcode: W1 1AA<br />
@@ -59,9 +59,9 @@ implicit request: Request[_], messages: Messages)
                     </td>
                 <tr>
                 <tr>
-                    <td>
-                        Filing type:
-                    </td>
+                    <th>
+                    @Messages("submitSummary.table.filingType")
+                    </th>
                     <td>
                         Primary
                     </td>
@@ -72,9 +72,9 @@ implicit request: Request[_], messages: Messages)
                     </td>
                 </tr>
                 <tr>
-                    <td>
-                        Ultimate parent entity:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.registeredMNE")
+                    </th>
                     <td>
                         Multinational Ltd<br />
                     </td>
@@ -85,9 +85,9 @@ implicit request: Request[_], messages: Messages)
                     </td>
                 </tr>
                 <tr>
-                    <td>
-                        Filed by:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.filedBy")
+                    </th>
                     <td>
                         Tina Taxfiler<br />
                         Multinational Ltd<br />
@@ -102,9 +102,9 @@ implicit request: Request[_], messages: Messages)
                     </td>
                 </tr>
                 <tr>
-                    <td>
-                        Filing capacity:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.filingCapacity")
+                    </th>
                     <td>
                         MNE user
                     </td>
@@ -115,9 +115,9 @@ implicit request: Request[_], messages: Messages)
                     </td>
                 </tr>
                 <tr>
-                    <td>
-                        Report details:
-                    </td>
+                    <th>
+                    @Messages("submitSummary.table.reportDetails")
+                    </th>
                     <td>
                         <div>
                             {% include "includes/v1-1/xml-header-data.html" %}
@@ -128,22 +128,22 @@ implicit request: Request[_], messages: Messages)
                 </tr>
                 </tbody>
             </table>
-            <h2 class="heading-medium">Confirm and submit</h2>
+            <h2 class="heading-medium">@Messages("submitSummary.confirmSubmit")</h2>
             <p class="text">
 
             </p>
             <form>
-                <legend class="visually-hidden">Declaration</legend>
+                <legend class="visually-hidden">@Messages("submitSummary.declaration.heading")</legend>
                 <div class="multiple-choice">
                     <input id="cbc-report-submit-declaration" name="cbc-declaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
-                    <label for="cbc-report-submit-declaration">I confirm that the information in this report is true and complete, to the best of my knowledge.</label>
+                    <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
                 </div>
             </form>
-            <p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt">Submit</a></p>
+            <p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt">@Messages("submitSummary.submit")</a></p>
 
         </div>
     </div>
 
 </main>
 }
-<p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt">Submit report</a></p>
+<p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt">@Messages("submitSummary.submitReport")</a></p>

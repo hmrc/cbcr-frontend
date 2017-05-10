@@ -53,11 +53,11 @@ implicit request: Request[_], messages: Messages)
       @form(action=uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.checkKnownFacts()) {
           <fieldset>
               <div class="form-field form-field--tall @if(utrErrors){form-field--error }">
-                 @if(utrErrors){ <span class="error-notification">@Messages("subscribeFirst.utrErrors.errorNotification")</span> }
+                 @if(utrErrors){ <span class="error-notification">@Messages("subscribeFirst.utr.errors.errorNotification")</span> }
 
-                  <label>@Messages("subscribeFirst.utrLabel")</label>
+                  <label>@Messages("subscribeFirst.utr.label")</label>
                   @if(utrErrors) {
-                      <span class="form-hint">@Messages("subscribeFirst.utrErrors.formHint")</span>
+                      <span class="form-hint">@Messages("subscribeFirst.utr.errors.formHint")</span>
                   }
 
                   <input class="@{ if(utrErrors){ "input--medium error-field" } else { "form-control--block" } }"
@@ -65,9 +65,9 @@ implicit request: Request[_], messages: Messages)
               </div>
 
               <div class="form-field  @if(postCodeErrors){form-field--error } else { form-field--tall } ">
-                  @if(postCodeErrors){ <span class="error-notification">@Messages("subscribeFirst.postcodeErrors.errorNotification")</span> }
+                  @if(postCodeErrors){ <span class="error-notification">@Messages("subscribeFirst.postcode.errors.errorNotification")</span> }
 
-                  <label>@Messages("subscribeFirst.postcodeLabel")</label>
+                  <label>@Messages("subscribeFirst.postcode.label")</label>
 
                       <input class="@{ if(postCodeErrors){ "input--medium error-field" } else {"form-control--block"} }"
                       type="text" name="postCode" id="postCode" value="@if(!postCodeErrors)@{knownFactsForm.data.get("postCode")}"/>
