@@ -45,8 +45,7 @@ class FileUploadServiceConnector() {
     Json.obj(
       "constraints" -> Json.obj(
         "contentTypes" -> Json.arr(
-          "application/xml",
-          "image/jpeg"
+          "application/xml"
         ),
         "maxItems" -> 5,
         "masSize" -> "30MB",

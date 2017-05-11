@@ -4,26 +4,23 @@
 GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
 
-GET        /fileUploadResponse/:envelopeId/:fileId     @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
+GET        /fileUploadResponse/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
 POST       /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
 POST       /file-upload/:envelopeId/:fileId               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.upload(envelopeId: String, fileId: String)
 GET        /successFileUpload                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.successFileUpload(fileName: String, fileSize: String)
-
-GET        /submitInfoFilingType                          @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoFilingType
-GET        /submitInfoUltimateParentEntity                @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoUltimateParentEntity
-GET        /submitInfoFilingCapacity                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoFilingCapacity
-
-
 GET        /errorFileUpload                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.errorFileUpload(errorMessage: String)
-GET        /contactInfoSubmitter                          @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.contactInfoSubmitter
-GET        /submitSummary                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitSummary
-GET        /submitSuccessReceipt                          @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitSuccessReceipt
-GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.filingHistory
+
+GET        /submitInfoFilingType                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitInfoFilingType
+GET        /submitInfoUltimateParentEntity                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitInfoUltimateParentEntity
+GET        /submitInfoFilingCapacity                      @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitInfoFilingCapacity
+GET        /contactInfoSubmitter                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.contactInfoSubmitter
+GET        /submitSummary                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSummary
+GET        /submitSuccessReceipt                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt
+GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingHistory
 
 POST       /checkKnownFacts                               @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.checkKnownFacts
 GET        /subscribeFirst                                @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeFirst
 GET        /contactInfoSubscriber                         @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.contactInfoSubscriber
-
 GET        /subscribeSuccessCbcId/:cbcId                  @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeSuccessCbcId(cbcId:String)
 POST       /submitSubscriptionData                        @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.submitSubscriptionData
 

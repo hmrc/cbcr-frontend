@@ -33,7 +33,6 @@ import uk.gov.hmrc.cbcrfrontend.xmlvalidator.CBCRXMLValidator
 import scala.concurrent.ExecutionContext.Implicits.global
 import cats.implicits._
 import play.api.Logger
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
@@ -140,49 +139,6 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
   def successFileUpload(fileName: String, fileSize: String) = Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadSuccess(
       fileName, fileSize, includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-
-  val submitInfoFilingType = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-  val submitInfoUltimateParentEntity = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-  val submitInfoFilingCapacity = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-  val contactInfoSubmitter = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.contactInfoSubmitter(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-  val submitSummary = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-      includes.phaseBannerBeta()
-    )))
-  }
-
-  val submitSuccessReceipt = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-  val filingHistory = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.filingHistory(
-      includes.phaseBannerBeta()
     )))
   }
 

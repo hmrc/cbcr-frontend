@@ -38,4 +38,10 @@ import scala.concurrent.Future
 package object controllers {
   type AsyncUserRequest = AuthContext => Request[AnyContent] => Future[Result]
   type UserRequest = AuthContext => Request[AnyContent] => Result
+
+  object FilingTypes {
+    val primary = "PRIMARY"
+    val voluntary = "VOLUNTARY"
+    val local = "LOCAL"
+  }
 }

@@ -66,7 +66,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
 
     fromFutureOptA(HttpExecutor(fusFeUrl,
       UploadFile(EnvelopeId(envelopeId),
-        FileId(fileId), s"$fileNamePrefix-cbcr.xml ", " application/xml; charset=UTF-8", xmlByteArray)).map(fusConnector.extractFileUploadMessage))
+        FileId(fileId), s"$fileNamePrefix-cbcr.xml ", "application/xml;charset=UTF-8", xmlByteArray)).map(fusConnector.extractFileUploadMessage))
 
   }
 

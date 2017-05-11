@@ -29,10 +29,11 @@ import play.api.mvc._
 import javax.inject.{Inject, Singleton}
 
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 
 
 @Singleton
-class CBCController @Inject()(val sec: SecuredActions)  extends FrontendController with ServicesConfig {
+class CBCController @Inject()(val sec: SecuredActions, val session:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
 
   val enterCBCId = sec.AsyncAuthenticatedAction { authContext => implicit request =>
