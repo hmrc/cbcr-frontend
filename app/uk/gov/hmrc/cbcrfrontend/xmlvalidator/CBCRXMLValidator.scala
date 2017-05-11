@@ -39,3 +39,5 @@ class CBCRXMLValidator {
   }
 
 }
+
+object CBCRXMLValidator extends CBCRXMLValidator
