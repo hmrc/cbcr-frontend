@@ -22,19 +22,18 @@
 <h1 align="center" >Error Uploading XML File !</h1>
 
 <div class="form-group">
-</br>
-</br>
+
 
     @flash.get("error").map { errorMsg =>
 
-    <div style="border: solid 2px red; padding: 1em; margin: 1em;">
+    <div style="border: solid 2px red; padding: 1em; margin: 1em;" id="flash-error">
         @errorMsg
     </div>
 }
     </br>
     </br>
     <div align="center">
-        <a href="/country-by-country-reporting/enter-CBCId">Try Again</a>
+        <a href="/country-by-country-reporting/enter-CBCId" id="btn-tryAgain">Try Again</a>
     </div>
 </div>
 }
