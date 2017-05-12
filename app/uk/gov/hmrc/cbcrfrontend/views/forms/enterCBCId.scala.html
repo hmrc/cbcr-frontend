@@ -39,19 +39,19 @@ implicit request: Request[_], messages: Messages)
                 <fieldset>
                     <div class="form-group">
                         <p class="form-hint">@Messages("enterCBCId.formHint")</p>
-                        <input type="text" class="input--medium input--cleared"/>
+                        <input type="text" class="input--medium input--cleared" id="txt-cbcID"/>
                     </div>
                 </fieldset>
                 @csrf_token()
 
                 <div class="form-field">
-                    <input class="button" type="submit" id="continue" value="@Messages("form.controls.continue")">
+                    <input class="button" type="submit" id="continue" value="@Messages("form.controls.continue")" id="btn-submit">
                 </div>
 
             </form>
 
             <h3>@Messages("enterCBCId.dontHaveAnID.heading")</h3>
-            <a href="@Messages("enterCBCId.dontHaveAnID.link.url")">@Messages("enterCBCId.dontHaveAnID.link.text")</a>
+            <a href="@Messages("enterCBCId.dontHaveAnID.link.url")" id="link-noID">@Messages("enterCBCId.dontHaveAnID.link.text")</a>
         </div>
     </div>
 
