@@ -10,7 +10,8 @@ POST       /file-upload/:envelopeId/:fileId               @uk.gov.hmrc.cbcrfront
 GET        /successFileUpload                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.successFileUpload(fileName: String, fileSize: String)
 GET        /errorFileUpload                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.errorFileUpload(errorMessage: String)
 
-GET        /submitInfoFilingType                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitInfoFilingType
+GET        /filingType                                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingType
+POST       /submitInfoFilingType                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingType
 GET        /submitInfoUltimateParentEntity                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitInfoUltimateParentEntity
 GET        /submitInfoFilingCapacity                      @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitInfoFilingCapacity
 GET        /contactInfoSubmitter                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.contactInfoSubmitter

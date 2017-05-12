@@ -20,19 +20,23 @@
 @import helper._
 @import uk.gov.hmrc.cbcrfrontend.controllers.FilingTypes
 
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideBusiness
 }
 
+@filingTypeErrors = @{form.error("filingType").isDefined}
+
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
-
+@filingTypeErrors
     <div class="grid-row">
         <div class="column-two-thirds">
-            <form action="/v1-2/submit-info-ultimate-parent-entity" method="get" class="form">
+
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitInfoFilingType()){
+
                 <h1>
                     What type of CbC filing are you submitting?
                 </h1>
@@ -60,10 +64,16 @@ implicit request: Request[_], messages: Messages)
                     </fieldset>
                 </div>
                 <div class="form-group">
-                    <p><a class="button" href="/country-by-country-reporting/submitInfoUltimateParentEntity">Continue</a></p>
-                </div>
-            </form>
 
+                    <div class="form-field form-field--submit">
+                        @csrf_token()
+                        <button class="btn button" type="submit" id="upload-button">@Messages("cbc.button.continue")</button>
+                    </div>
+                    <!--
+                    <p><a class="button" href="/country-by-country-reporting/submitInfoUltimateParentEntity">Continue</a></p>
+                    -->
+                </div>
+            }
         </div>
     </div>
 

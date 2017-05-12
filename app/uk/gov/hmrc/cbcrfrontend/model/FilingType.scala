@@ -16,5 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
+import play.api.libs.json.Json
+
 
 case class FilingType(filingType: String)
+
+object FilingType {
+  implicit val format = Json.format[FilingType]
+}
