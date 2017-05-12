@@ -35,7 +35,7 @@ object OrganisationResponse {
   implicit val formats = Json.format[OrganisationResponse]
 }
 
-case class BusinessPartnerRecord(safeId: Option[String],
+case class BusinessPartnerRecord(safeId: String,
                                  organisation: Option[OrganisationResponse],
                                  address: EtmpAddress)
 
