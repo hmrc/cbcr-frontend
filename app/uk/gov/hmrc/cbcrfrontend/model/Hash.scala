@@ -16,18 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json._
+import play.api.libs.json.Json
 
-case class FileId(value: String) extends AnyVal {
-  override def toString = value
+case class Hash(value:String)
+object Hash{
+  implicit val format = Json.format[Hash]
 }
-object FileId {
-  implicit val fileIdFormat = new Format[FileId] {
-    override def reads(json: JsValue): JsResult[FileId] = json.asOpt[String] match {
-      case Some(s) => JsSuccess(FileId(s))
-      case None => JsError(s"Could not parse fileId: $json")
-    }
 
-    override def writes(o: FileId): JsValue = JsString(o.value)
-  }
-}
