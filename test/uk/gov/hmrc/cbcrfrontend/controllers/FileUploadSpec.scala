@@ -38,7 +38,7 @@ import cats.instances.future._
 import org.xml.sax.{Locator, SAXParseException}
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
-import uk.gov.hmrc.cbcrfrontend.xmlvalidator.CBCRXMLValidator
+import uk.gov.hmrc.cbcrfrontend.xmlvalidator.{CBCRXMLValidator, XmlErorHandler}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import cats.data.Validated
 import org.scalacheck.Prop.Exception
@@ -115,7 +115,7 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
       when(fuService.getFileUploadResponse(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileUploadCallbackResponse]]
         (Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE"))))
       when(fuService.getFile(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, File](file))
-      when(schemaValidator.validate(file)) thenReturn Validated.Invalid(new SAXParseException("Parse Exception", null))
+      when(schemaValidator.validate(file)) thenReturn Validated.Invalid(XmlErorHandler)
       when(fuService.deleteEnvelope(anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, String]("FileDeleted"))
 
       val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)

@@ -19,24 +19,55 @@ package uk.gov.hmrc.cbcrfrontend.xmlvalidator
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
 import java.io.File
-import org.xml.sax.SAXParseException
 
+import org.xml.sax.{ErrorHandler, SAXParseException}
 import cats.data.Validated
+
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 
 class CBCRXMLValidator {
 
-  def validate(in: File): Validated[SAXParseException,File] = {
+  def validate(in: File): Validated[XmlErorHandler.type, File] = {
 
-      val schemaLang = "http://www.w3.org/2001/XMLSchema"
-      val validator = SchemaFactory.newInstance(schemaLang).
-        newSchema(new StreamSource(new File("conf/schema/CbcXML_v1.0.xsd"))).newValidator()
+    val schemaLang = "http://www.w3.org/2001/XMLSchema"
+    val validatorFactory = SchemaFactory.newInstance(schemaLang)
+    val validator = validatorFactory.newSchema(new StreamSource(new File("conf/schema/CbcXML_v1.0.xsd"))).newValidator()
+    val xmlErrorHandler = XmlErorHandler
+    validator.setErrorHandler(xmlErrorHandler)
 
-      Validated.catchOnly[SAXParseException](
-        validator.validate(new StreamSource(in))).map { _ =>
-        in
-      }
+    validator.validate(new StreamSource(in))
+
+    if(xmlErrorHandler.hasErrors) Validated.Invalid(xmlErrorHandler)
+    else Validated.Valid(in)
+
   }
+
+}
+
+object XmlErorHandler extends ErrorHandler {
+
+  def hasErrors: Boolean = errorsCollection.nonEmpty
+  def hasWarnings: Boolean = warningsCollection.nonEmpty
+
+  private var errorsListBuffer: ListBuffer[String] = new ListBuffer[String]()
+  private var warningsListBuffer: ListBuffer[String] = new ListBuffer[String]()
+
+  def errorsCollection: List[String] = errorsListBuffer.toList
+  def  warningsCollection: List[String] = warningsListBuffer.toList
+
+
+  private def addNewError(exception: SAXParseException) = {
+    errorsListBuffer += s"Error at position ${exception.getLineNumber}:${exception.getColumnNumber} ${exception.getMessage}"
+  }
+
+  override def fatalError(exception: SAXParseException): Unit = addNewError(exception)
+
+  override def error(exception: SAXParseException): Unit = addNewError(exception)
+
+  override def warning(exception: SAXParseException): Unit =
+    warningsListBuffer += s"Warning at position ${exception.getLineNumber}:${exception.getColumnNumber} ${exception.getMessage}"
 
 }
 

@@ -115,7 +115,7 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
       _ <- EitherT.fromEither[Future](schemaValidator.validate(file).toEither).leftMap {
         e => {
           fileUploadService.deleteEnvelope(envelopeId).leftMap(_ => InternalServerError:Result)
-          NotAcceptable(e.getLocalizedMessage):Result
+          NotAcceptable(e.errorsCollection.mkString("\n")):Result
         }
       }
       fileMetadata <- fileUploadService.getFileMetaData(envelopeId,fileId).leftMap(_ => InternalServerError:Result)
