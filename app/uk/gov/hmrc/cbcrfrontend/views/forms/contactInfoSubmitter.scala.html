@@ -27,38 +27,35 @@ implicit request: Request[_], messages: Messages)
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
 
-<h1>
-    Enter your contact details
-</h1>
+<h1>@Messages("contactInfoSubmitter.mainHeading")</h1>
 
 <form>
     <fieldset>
-        <legend class="visuallyhidden">Enter your contact details</legend>
+        <legend class="visuallyhidden">@Messages("contactInfoSubmitter.mainHeading")</legend>
         <div class="form-group">
             <div class="form-field form-field--tall">
                 <div class="form-group">
-                    <label for="full-name" class="form-label">Full name</label>
+                    <label for="full-name" class="form-label">@Messages("contactInfoSubmitter.fullName.label")</label>
                     <input type="text" class="form-control" id="full-name">
                 </div>
                 <div class="form-group">
-                    <label for="role" class="form-label">Agency or business you work for
-                    </label>
+                    <label for="role" class="form-label">@Messages("contactInfoSubmitter.business.labe")</label>
 
                     <input type="text" class="form-control" id="role">
                 </div>
                 <div class="form-group">
-                    <label for="role" class="form-label">Job title/role</label>
+                    <label for="role" class="form-label">@Messages("contactInfoSubmitter.role.label")</label>
                     <input type="text" class="form-control" id="role">
                 </div>
                 <div class="form-group">
-                    <label for="phone" class="form-label">Contact phone number</label>
+                    <label for="phone" class="form-label">@Messages("contactInfoSubmitter.phone.label")</label>
                     <input type="text" class="form-control" id="phone">
                 </div>
                 <div class="form-group">
-                    <label for="email" class="form-label">Contact email address</label>
+                    <label for="email" class="form-label">@Messages("contactInfoSubmitter.email.label")</label>
                     <input type="text" class="form-control" id="email">
                 </div>
-                <p><a class="button" href="/country-by-country-reporting/submitSummary">Continue</a></p>
+                <p><a class="button" href="/country-by-country-reporting/submitSummary">@Messages("form.controls.continue")</a></p>
             </div>
         </div>
     </fieldset>

@@ -35,17 +35,17 @@ implicit request: Request[_], messages: Messages)
   <div class="column-two-thirds">
 
    <h1>
-    Register for a Country by Country ID
+    @Messages("subscribeFirst.mainHeading")
    </h1>
 
-   <p>Enter your organisation's tax details</p>
+   <p>@Messages("subscribeFirst.formHeading")</p>
       @if(noMatchingBusiness){
               <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                  <h2 id="error-summary-heading" class="h3-heading">We cannot find the registered business using these details</h2>
+                  <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")s</h2>
                   <ul>
-                      <li role="tooltip">The UTR or postcode you entered may be wrong</li>
-                      <li role="tooltip">The UTR and postcode may not correspond to one another</li>
-                      <li role="tooltip">The Business may not be registered with HMRC</li>
+                      <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion1")</li>
+                      <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion2")</li>
+                      <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion3")</li>
                   </ul>
               </div>
       }
@@ -53,11 +53,11 @@ implicit request: Request[_], messages: Messages)
       @form(action=uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.checkKnownFacts()) {
           <fieldset>
               <div class="form-field form-field--tall @if(utrErrors){form-field--error }">
-                 @if(utrErrors){ <span class="error-notification">This should be a 10 digit number</span> }
+                 @if(utrErrors){ <span class="error-notification">@Messages("subscribeFirst.utr.errors.errorNotification")</span> }
 
-                  <label> Unique Tax Reference (UTR)</label>
+                  <label>@Messages("subscribeFirst.utr.label")</label>
                   @if(utrErrors) {
-                      <span class="form-hint">This should be either a Corportation Tax or a Self Assessment UTR</span>
+                      <span class="form-hint">@Messages("subscribeFirst.utr.errors.formHint")</span>
                   }
 
                   <input class="@{ if(utrErrors){ "input--medium error-field" } else { "form-control--block" } }"
@@ -65,9 +65,9 @@ implicit request: Request[_], messages: Messages)
               </div>
 
               <div class="form-field  @if(postCodeErrors){form-field--error } else { form-field--tall } ">
-                  @if(postCodeErrors){ <span class="error-notification">Enter a valid UK postcode</span> }
+                  @if(postCodeErrors){ <span class="error-notification">@Messages("subscribeFirst.postcode.errors.errorNotification")</span> }
 
-                  <label> UK Postcode </label>
+                  <label>@Messages("subscribeFirst.postcode.label")</label>
 
                       <input class="@{ if(postCodeErrors){ "input--medium error-field" } else {"form-control--block"} }"
                       type="text" name="postCode" id="postCode" value="@if(!postCodeErrors)@{knownFactsForm.data.get("postCode")}"/>
@@ -75,7 +75,7 @@ implicit request: Request[_], messages: Messages)
           </fieldset>
 
           <p>
-              <button type="submit" role="button">Continue</button>
+              <button type="submit" role="button">@Messages("form.controls.continue")</button>
           </p>
 
       }
