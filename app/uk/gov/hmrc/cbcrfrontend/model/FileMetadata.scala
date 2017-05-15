@@ -16,4 +16,19 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-case class XMLUploadCallback(envelopeId: String, fileId: String, status: String)
+import play.api.libs.json.{JsValue, Json}
+
+
+case class FileMetadata(
+                         id: String,
+                         status: String,
+                         name: String,
+                         contentType: String,
+                         length: BigDecimal,
+                         created: String,
+                         metadata: JsValue,
+                         href: String)
+
+object FileMetadata {
+  implicit val fileMetadataFormat = Json.format[FileMetadata]
+}

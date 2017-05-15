@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,30 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import play.api.i18n.Messages.Implicits._
-@import play.api.Play.current
-@()(implicit request: Request[_])
+package uk.gov.hmrc.cbcrfrontend.model
 
-@uk.gov.hmrc.cbcrfrontend.views.html.main_template(title = "Country By Country", bodyClasses = None) {
-<div align="center">
+import play.api.libs.json.Json
 
-<h1>@Messages("cbcHistory.mainHeading")</h1>
 
-</br>
-</br>
+case class FileUploadCallbackResponse(envelopeId: String, fileId: String, status: String)
 
-<p>
-<div id="message">
-@Messages("cbcHistory.top.message")
-</div>
-</p>
-
-</br>
-</br>
-<div class="form-group">
-    <a id="btn-fileUpload" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile()">@Messages("cbc.button.fileupload")</a>
-</div>
-</div>
+object FileUploadCallbackResponse {
+  implicit val fileUploadCallbackFormat = Json.format[FileUploadCallbackResponse]
 }

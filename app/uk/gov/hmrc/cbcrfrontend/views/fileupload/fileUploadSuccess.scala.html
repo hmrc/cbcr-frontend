@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@(fileName: String,fileSize: String, asideBusiness: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -36,18 +36,18 @@ implicit request: Request[_], messages: Messages)
     Your report's format is correct
    </h1>
 
-   <table>
+   <table id="table-successReport">
     <tbody>
     <th scope="row">Filename</th>
-    <th scope="row">GB-2017-multinational_ltd-cbc-report-messagerefid-01.xml</th>
+    <th scope="row">@fileName</th>
     <tr>
      <td>Size</td>
-     <td>3200KB</td>
+     <td>@fileSize KB</td>
     </tr>
     </tbody>
    </table>
 
-   <p><a class="button" href="/country-by-country-reporting/submitInfoFilingType">Continue</a></p>
+   <p><a class="button" href="/country-by-country-reporting/submitInfoFilingType" id="btn-continue">Continue</a></p>
 
   </div>
  </div>
