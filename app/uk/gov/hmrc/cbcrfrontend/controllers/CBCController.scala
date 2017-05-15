@@ -40,67 +40,68 @@ import play.api.i18n.Messages.Implicits._
 import play.api.mvc._
 import javax.inject.{Inject, Singleton}
 
+import cats.data.EitherT
 import play.api.data.Form
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriptionDetails}
 import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
+import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 
 
 @Singleton
-class CBCController @Inject()(val sec: SecuredActions, val auth:FrontendAuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
-class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService)  extends FrontendController with ServicesConfig {
+class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService)(implicit val auth:FrontendAuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
 
-  val form : Form[String] = Form(
+  val cbcIdForm : Form[String] = Form(
     single(
       "cbcId" -> nonEmptyText.verifying("Please enter a valid CBCId",{s => CBCId(s).isDefined})
     )
   )
 
   val enterCBCId = sec.AsyncAuthenticatedAction { authContext => implicit request =>
-
-    auth.getUserDetails[AffinityGroup](authContext).map { ag =>
-
-      val group: Option[UserType] = ag.affinityGroup.toLowerCase.trim match {
-        case "agent"        => Some(Agent)
-        case "organisation" => Some(Organisation)
-        case _              => None
-      }
-
-      group.fold[Result]{
-        Logger.error(s"Invalid Affinity group $ag for user ${authContext.user}")
+    getUserType(authContext).fold[Result](
+      error => {
+        Logger.error(error.errorMsg)
         InternalServerError
-      }{
-        userType =>
-          Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType))
-
-      }
-
-
-    }
-  }
-
-  val submitCBCId = Action.async { implicit request =>
-
-    form.bindFromRequest().fold(
-      errors =>{
-        Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(),errors)))
       },
-      id => CBCId(id) match {
-        case Some(cbcId) => subDataService.retrieveSubscriptionData(cbcId).fold(
-          error   => {
-            InternalServerError(error.errorMsg)
-          },
-          details => details.fold {
-            BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), form, true))
-            }(_ => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile()))
-        )
-        case None => Future.successful(InternalServerError)
-      }
+      userType =>
+        Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm))
+
     )
 
   }
 
+  val submitCBCId = sec.AsyncAuthenticatedAction { authContext =>
+    implicit request =>
+      getUserType(authContext).leftMap(errors => InternalServerError(errors.errorMsg)).flatMap(userType =>
+        cbcIdForm.bindFromRequest().fold[EitherT[Future,Result,Result]](
+          errors => EitherT.left(Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, errors)))),
+          id => {
+            val result: EitherT[Future, UnexpectedState, Option[SubscriptionDetails]] = for {
+              id <- EitherT.fromOption[Future](CBCId(id), UnexpectedState(s"CBCId $id is Invalid"))
+              sd <- subDataService.retrieveSubscriptionData(id)
+            } yield sd
 
+            result.bimap(
+              error => {
+                InternalServerError(error.errorMsg)
+              },
+              details => details.fold {
+                BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, true))
+              }(_ => {
+                userType match {
+                  case Agent => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.enterKnownFacts())
+                  case Organisation => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
+                }
+              })
+            )
+
+          }
+        )
+      ).merge
+  }
 }
+
 

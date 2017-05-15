@@ -67,7 +67,7 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
  "GET /subscribeFirst" should {
     "return 200" in {
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/subscribeFirst"))
-      status(controller.subscribeFirst(fakeRequestSubscribe)) shouldBe Status.OK
+      status(controller.enterKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
   "GET /contactInfoSubscriber" should {
