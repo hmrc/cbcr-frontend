@@ -16,8 +16,16 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import javax.inject.{Inject, Singleton}
+
 import play.api.Logger
+import play.api.Play.current
+import play.api.i18n.Messages.Implicits._
 import play.api.mvc.Action
+import uk.gov.hmrc.cbcrfrontend.FrontendAuthConnector
+import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.model.AffinityGroup
+import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -38,6 +46,7 @@ import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
 
 
 @Singleton
+class CBCController @Inject()(val sec: SecuredActions, val auth:FrontendAuthConnector)  extends FrontendController with ServicesConfig {
 class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService)  extends FrontendController with ServicesConfig {
 
 
@@ -48,6 +57,9 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
   )
 
   val enterCBCId = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+
+    val x = auth.getUserDetails[AffinityGroup](authContext)
+
     Logger.debug("Country by Country: Enter CBCID: "+request.secure)
 
     Future.successful(Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), form)))
