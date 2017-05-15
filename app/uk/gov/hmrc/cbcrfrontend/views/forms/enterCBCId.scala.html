@@ -20,9 +20,10 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
+@import uk.gov.hmrc.cbcrfrontend.model._
 
 
-@(asideCbc: Html, phaseBannerBeta: Html, form:Form[_], noMatch:Boolean = false)(
+@(asideCbc: Html, phaseBannerBeta: Html, userType:UserType, form:Form[_], noMatch:Boolean = false)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -53,9 +54,12 @@ implicit request: Request[_], messages: Messages)
 
                 <input class="button" type="submit" id="continue" value="@Messages("form.controls.continue")" id="btn-submit">
             }
-
-            <h3>@Messages("enterCBCId.dontHaveAnID.heading")</h3>
-            <a href="@Messages("enterCBCId.dontHaveAnID.link.url")" id="link-noID">@Messages("enterCBCId.dontHaveAnID.link.text")</a>
+            @{userType match {
+                case Agent =>
+                case Organisation =>
+                    <h3>Don't have a Country by Country ID?</h3>
+                    <a href="/country-by-country-reporting/subscribeFirst">Register online</a>
+            }}
         </div>
     </div>
 
