@@ -24,9 +24,9 @@ import org.xml.sax.SAXParseException
 import cats.data.Validated
 
 
-object CBCRXMLValidator {
+class CBCRXMLValidator {
 
-  def apply(in: File): Validated[SAXParseException,File] = {
+  def validate(in: File): Validated[SAXParseException,File] = {
 
       val schemaLang = "http://www.w3.org/2001/XMLSchema"
       val validator = SchemaFactory.newInstance(schemaLang).

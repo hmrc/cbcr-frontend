@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, envelopeId: String, protocolHostName: String, assetsLocationPrefix: String)(
+@(asideBusiness: Html, phaseBannerBeta: Html, envelopeId: String, fileId: String, hostName: String, assetsLocationPrefix: String)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -31,14 +31,14 @@ implicit request: Request[_], messages: Messages)
 <script src='@routes.Assets.versioned("javascripts/jquery-3.1.1.min.js")' ></script>
 <script src='@routes.Assets.versioned("javascripts/poller.js")' type="text/javascript"></script>
 
-<main id="content" role="main" id="">
+<main id="content" role="main">
 
  <div class="grid-row">
   <div class="column-two-thirds">
    <h1>
     Checking report...
    </h1>
-   <body onload="poll('@envelopeId', '@protocolHostName')" >
+   <body onload="poll('@envelopeId', '@fileId', '@hostName')" >
 
    <img alt="loading..." src="@assetsLocationPrefix/images/loading.gif" />
    </body>

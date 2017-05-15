@@ -25,6 +25,7 @@ object FrontendBuild extends Build with MicroService {
     "uk.gov.hmrc" %% "emailaddress" % "2.1.0",
     "org.typelevel" %% "cats" % "0.9.0",
     "org.typelevel" %% "cats-core" % "0.9.0",
+    "uk.gov.hmrc" %% "http-caching-client" % "6.2.0",
     "com.github.kxbmap" %% "configs" % "0.4.4"
 
   )
