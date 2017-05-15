@@ -24,19 +24,22 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.{CBCIdService, CBCKnownFactsService, SubscriptionDataService}
+import uk.gov.hmrc.cbcrfrontend.services.{CBCIdService, CBCKnownFactsService, CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import cats.instances.future._
 import org.mockito.Matchers
+import org.mockito.Matchers.{eq => EQ}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
+import uk.gov.hmrc.http.cache.client.CacheMap
+import scala.reflect.runtime.universe._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,11 +54,15 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   val dc = mock[BPRKnownFactsConnector]
   val cbcId = mock[CBCIdService]
   val cbcKF = mock[CBCKnownFactsService]
+  val cache = mock[CBCSessionCache]
 
-  val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF)
+  val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,cache)
 
   implicit val hc = HeaderCarrier()
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
+
+  implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
+  implicit val utrTag = implicitly[TypeTag[Utr]]
 
  "GET /subscribeFirst" should {
     "return 200" in {
@@ -95,6 +102,8 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       val response = BusinessPartnerRecord(Some("safeid"), Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
+      when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
@@ -148,7 +157,6 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     "return 500 when the getCbcId call errors out" in {
       val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
-      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("oops")))
       when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(None)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
     }
@@ -158,6 +166,8 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("oops")))
       when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
       when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.left[Future,UnexpectedState,Unit](UnexpectedState("oops"))
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord(None,None,EtmpAddress(None,None,None,None,None,None))))
+      when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
     }
     "return 303 (see_other) when all params are present and valid and the SubscriptionDataService returns Ok" in {

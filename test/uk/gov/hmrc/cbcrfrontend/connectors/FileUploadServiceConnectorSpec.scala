@@ -16,14 +16,19 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
+import java.io.File
+
 import org.scalatest.{EitherValues, FlatSpec, Matchers}
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.EnvelopeId
 import uk.gov.hmrc.play.http.HttpResponse
 
+import scala.io.Source
+
 
 class FileUploadServiceConnectorSpec extends FlatSpec with Matchers with EitherValues {
 
+  /*
   "createEnvelope" should "return invalid state when response is missing Location header" in {
 
     val responseFromFus = HttpResponse(201, responseHeaders = Map.empty[String, List[String]])
@@ -51,6 +56,19 @@ class FileUploadServiceConnectorSpec extends FlatSpec with Matchers with EitherV
     val res = new FileUploadServiceConnector().extractEnvelopId(responseFromFus)
 
     res.right.value should be(EnvelopeId("123"))
+
+  }
+*/
+
+  it should "convert the string response into XML file" in {
+
+    val responseFromFus = HttpResponse(200, responseString = Some("This is a xml file"))
+
+    val res = new FileUploadServiceConnector().extractFile(responseFromFus)
+
+    val fileContents = Source.fromFile(res.right.value).getLines.mkString
+    fileContents shouldBe "This is a xml file"
+
 
   }
 

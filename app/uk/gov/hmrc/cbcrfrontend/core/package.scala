@@ -39,9 +39,9 @@ import scala.concurrent.{ ExecutionContext, Future }
 package object core {
 
   type ServiceResponse[A] = EitherT[Future, UnexpectedState, A]
-  type Opt[A] = Either[UnexpectedState, A]
+  type ResponseExtract[A] = Either[UnexpectedState, A]
 
-  def fromFutureOptA[A](fa: Future[Opt[A]]): ServiceResponse[A] = {
+  def fromFutureOptA[A](fa: Future[ResponseExtract[A]]): ServiceResponse[A] = {
     EitherT[Future, UnexpectedState, A](fa)
   }
 
@@ -49,7 +49,7 @@ package object core {
     EitherT[Future, UnexpectedState, A](fa.map(Right(_)))
   }
 
-  def fromOptA[A](oa: Opt[A])(implicit ec: ExecutionContext): ServiceResponse[A] = {
+  def fromOptA[A](oa: ResponseExtract[A])(implicit ec: ExecutionContext): ServiceResponse[A] = {
     EitherT[Future, UnexpectedState, A](Future.successful(oa))
   }
 
