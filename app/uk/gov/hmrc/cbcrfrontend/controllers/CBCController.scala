@@ -21,6 +21,9 @@ import play.api.mvc.Action
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import play.api.data.Form
+import play.api.data.Forms._
+import cats.instances.future._
 
 import scala.concurrent.Future
 import play.api.Play.current
@@ -28,24 +31,47 @@ import play.api.i18n.Messages.Implicits._
 import play.api.mvc._
 import javax.inject.{Inject, Singleton}
 
+import play.api.data.Form
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriptionDetails}
+import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
 
 
 @Singleton
-class CBCController @Inject()(val sec: SecuredActions)  extends FrontendController with ServicesConfig {
+class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService)  extends FrontendController with ServicesConfig {
 
+
+  val form : Form[String] = Form(
+    single(
+      "cbcId" -> nonEmptyText.verifying("Please enter a valid CBCId",{s => CBCId(s).isDefined})
+    )
+  )
 
   val enterCBCId = sec.AsyncAuthenticatedAction { authContext => implicit request =>
     Logger.debug("Country by Country: Enter CBCID: "+request.secure)
 
-    Future.successful(Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta())))
+    Future.successful(Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), form)))
   }
 
   val submitCBCId = Action.async { implicit request =>
 
-    Logger.debug("Country by Country: Submit CBCID")
+    form.bindFromRequest().fold(
+      errors =>{
+        Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(),errors)))
+      },
+      id => CBCId(id) match {
+        case Some(cbcId) => subDataService.retrieveSubscriptionData(cbcId).fold(
+          error   => {
+            InternalServerError(error.errorMsg)
+          },
+          details => details.fold {
+            BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), form, true))
+            }(_ => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile()))
+        )
+        case None => Future.successful(InternalServerError)
+      }
+    )
 
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.cbcHistory()))
   }
 
 
