@@ -17,10 +17,12 @@
 package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.Json
+import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.emailaddress.PlayJsonFormats._
+
+case class SubmitterInfo(fullName: String, agencyBusinessName: String, jobRole: String, contactPhone: String, email:EmailAddress)
 
 
-case class FilingType(filingType: String)
-
-object  FilingType {
-  implicit val format = Json.format[FilingType]
+object SubmitterInfo {
+  implicit val format = Json.format[SubmitterInfo]
 }

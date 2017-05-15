@@ -128,7 +128,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
 
   for {
         uploaded    <- fromFutureOptA(HttpExecutor(fusFeUrl, UploadFile(envelopeId,
-          FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", mockedMetadata)).map(fusConnector.extractFileUploadMessage))
+          FileId(s"json-$metadataFileId"), "metadata.json ", "application/json; charset=UTF-8", mockedMetadata)).map(fusConnector.extractFileUploadMessage))
         resourceUrl <- fromFutureA(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "DMS")))
   } yield resourceUrl.body
 }

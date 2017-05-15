@@ -44,4 +44,10 @@ package object controllers {
     val voluntary = "VOLUNTARY"
     val local = "LOCAL"
   }
+
+  object FilingUserCapacity {
+    val mneUser = "MNE_USER"
+    val authorisedAgent = "AUTHORISED_AGENT"
+    val representative = "REPRESENTATIVE"
+  }
 }

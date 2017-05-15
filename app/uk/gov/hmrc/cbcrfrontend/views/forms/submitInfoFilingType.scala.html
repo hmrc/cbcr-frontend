@@ -31,11 +31,16 @@ implicit request: Request[_], messages: Messages)
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
-@filingTypeErrors
+@if(filingTypeErrors){
+    <div class="form-field form-field--tall @if(filingTypeErrors){form-field--error }">
+    <span class="error-notification">Please select the Filing type</span>
+    </div>
+}
+
     <div class="grid-row">
         <div class="column-two-thirds">
 
-            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitInfoFilingType()){
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitFilingType()){
 
                 <h1>
                     What type of CbC filing are you submitting?
@@ -69,10 +74,7 @@ implicit request: Request[_], messages: Messages)
                         @csrf_token()
                         <button class="btn button" type="submit" id="upload-button">@Messages("cbc.button.continue")</button>
                     </div>
-                    <!--
-                    <p><a class="button" href="/country-by-country-reporting/submitInfoUltimateParentEntity">Continue</a></p>
-                    -->
-                </div>
+               </div>
             }
         </div>
     </div>

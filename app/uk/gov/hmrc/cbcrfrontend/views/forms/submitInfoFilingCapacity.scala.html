@@ -17,21 +17,29 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@import uk.gov.hmrc.cbcrfrontend.controllers.FilingUserCapacity
+@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideBusiness
 }
 
+
+@filingUserCapacityErrors = @{form.error("filingCapacity").isDefined}
+
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
 
+@if(filingUserCapacityErrors){
+<div class="form-field form-field--tall @if(filingUserCapacityErrors){form-field--error }">
+    <span class="error-notification">Please select the Filing Capacity</span>
+</div>
+}
 
     <div class="grid-row">
         <div class="column-two-thirds">
-            <form>
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitFilingCapacity()){
                 <h1>
                     Under what capacity are you filing?
                 </h1>
@@ -43,29 +51,32 @@ implicit request: Request[_], messages: Messages)
                         </legend>
 
                         <label for="filing-capacity-1" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-1" name="filing-capacity" type="radio" value="mne">
+                            <input id="filing-capacity-1" name="filingCapacity" type="radio" value="@FilingUserCapacity.mneUser">
                             <span class="heading-small">MNE user</span><br />
                             <span class="form-hint">You work directly for the ultimate parent entity or it's UK filing subsidiary</span>
                         </label>
 
                         <label for="filing-capacity-2" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-2" name="filing-capacity" type="radio" value="648-agent">
+                            <input id="filing-capacity-2" name="filingCapacity" type="radio" value="@FilingUserCapacity.authorisedAgent">
                             <span class="heading-small">Authorised agent</span><br />
                             <span class="form-hint">You have 64-8 authorisation to submit on behalf of the ultimate parent entity</span>
                         </label>
 
                         <label for="filing-capacity-3" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-3" name="filing-capacity" type="radio" value="representative">
+                            <input id="filing-capacity-3" name="filingCapacity" type="radio" value="@FilingUserCapacity.representative">
                             <span class="heading-small">Representative</span><br />
                             <span class="form-hint">You have been asked to submit on behalf of the ultimate parent entity without 64-8 authorisation</span>
                         </label>
 
                     </fieldset>
                 </div>
-            </form>
-            <p>
-            <p><a class="button" href="/country-by-country-reporting/contactInfoSubmitter">Continue</a></p>
-            </p>
+            <div class="form-group">
+                <div class="form-field form-field--submit">
+                    @csrf_token()
+                    <button class="btn button" type="submit" id="upload-button">@Messages("cbc.button.continue")</button>
+                </div>
+            </div>
+            }
         </div>
     </div>
 

@@ -19,8 +19,8 @@ package uk.gov.hmrc.cbcrfrontend.model
 import play.api.libs.json.Json
 
 
-case class FilingType(filingType: String)
+case class UltimateParentEntity(ultimateParentEntity: String)
 
-object  FilingType {
-  implicit val format = Json.format[FilingType]
+object UltimateParentEntity {
+  implicit val format = Json.format[UltimateParentEntity]
 }

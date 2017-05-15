@@ -1,0 +1,60 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import helper._
+@import tags._
+
+@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(
+implicit request: Request[_], messages: Messages)
+
+@sidebarContent = {
+@asideBusiness
+}
+
+@fullNameErrors = @{form.error("fullName").isDefined}
+@agencyBusinessNameErrors = @{form.error("agencyBusinessName").isDefined}
+@jobRoleErrors = @{form.error("jobRole").isDefined}
+
+@contactPhoneErrors = @{form.error("contactPhone").isDefined}
+@emailErrors = @{form.error("email").isDefined}
+
+@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@phaseBannerBeta
+
+<h1>
+    Enter your contact details
+</h1>
+
+<div class="form-group">
+    @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitSubmitterInfo()){
+    @formFieldDisplay(fullNameErrors,"fullName", Some("Please enter your full name"),"Full Name", form)
+    @formFieldDisplay(agencyBusinessNameErrors,"agencyBusinessName", Some("Please enter your Agency or Business name"),"Agency or business you work for", form)
+    @formFieldDisplay(jobRoleErrors,"jobRole", Some("Please enter your Job Role"),"Job Role", form)
+    @formFieldDisplay(contactPhoneErrors,"contactPhone", Some("Please enter a valid phone number"),"Contact Phone", form)
+    @formFieldDisplay(emailErrors,"email", Some("Please enter a valid email address"),"Email address", form)
+    @CSRF.formField
+    <div class="form-field">
+        <button role="button" type="submit" id="continue">Continue</button>
+    </div>
+    }
+</div>
+
+}
+
+

@@ -24,15 +24,14 @@ import uk.gov.hmrc.cbcrfrontend.views.html.includes
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import play.api.i18n.Messages.Implicits._
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import uk.gov.hmrc.cbcrfrontend.model.FilingType
+import uk.gov.hmrc.cbcrfrontend.model.{FilingCapacity, FilingType, SubmitterInfo, UltimateParentEntity}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
+import uk.gov.hmrc.emailaddress.EmailAddress
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /*
  * Copyright 2017 HM Revenue & Customs
@@ -53,49 +52,101 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache) (implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
 
 
+  val filingTypeForm: Form[FilingType] = Form(
+    mapping("filingType" -> nonEmptyText
+    )((filingType: String) => FilingType(filingType)) (ft => Some(ft.filingType))
+  )
 
+  val ultimateParentEntityForm: Form[UltimateParentEntity] = Form(
+    mapping("ultimateParentEntity" -> nonEmptyText
+    )((ultimateParentEntity: String) => UltimateParentEntity(ultimateParentEntity)) (upe => Some(upe.ultimateParentEntity))
+  )
 
-  val filingType = Action.async { implicit request =>
+  val filingCapacityForm: Form[FilingCapacity] = Form(
+    mapping("filingCapacity" -> nonEmptyText
+    )((filingCapacity: String) => FilingCapacity(filingCapacity)) (ft => Some(ft.filingCapacity))
+  )
+
+  val submitterInfoForm: Form[SubmitterInfo] = Form(
+    mapping(
+      "fullName"        -> nonEmptyText,
+      "agencyBusinessName" -> nonEmptyText,
+      "jobRole"        -> nonEmptyText,
+      "contactPhone" -> nonEmptyText,
+      "email"       -> email.verifying(EmailAddress.isValid(_))
+    )((fullName: String, agencyBusinessName:String, jobRole:String, contactPhone:String, email: String) =>
+      SubmitterInfo(fullName, agencyBusinessName, jobRole, contactPhone, EmailAddress(email))
+    )(si => Some((si.fullName,si.agencyBusinessName,si.jobRole, si.contactPhone, si.email.value)))
+  )
+
+  val filingType = sec.AsyncAuthenticatedAction { authContext => implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
-      includes.asideBusiness(), includes.phaseBannerBeta()
+      includes.asideBusiness(), includes.phaseBannerBeta(), filingTypeForm
     )))
   }
 
-  val submitFilingType = Action.async { implicit request =>
-
-    val filingTypeForm: Form[FilingType] = Form(
-      mapping("filingType" -> nonEmptyText
-      )((filingType: String) => FilingType(filingType)) (ft => Some(ft.filingType))
-    )
+  val submitFilingType = sec.AsyncAuthenticatedAction { authContext => implicit request =>
 
     filingTypeForm.bindFromRequest.fold(
-      errors => Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
-        includes.asideBusiness(), includes.phaseBannerBeta()))),
+      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
+        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
         session.save(success)
         Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
-          includes.asideBusiness(), includes.phaseBannerBeta()
+          includes.asideBusiness(), includes.phaseBannerBeta(), ultimateParentEntityForm
         )))
       }
     )
   }
 
-  val submitInfoUltimateParentEntity = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
+
+
+  val submitUltimateParentEntity = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+
+    ultimateParentEntityForm.bindFromRequest.fold(
+      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
+        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
+      success => {
+        session.save(success)
+        Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
+          includes.asideBusiness(), includes.phaseBannerBeta(),filingCapacityForm
+        )))
+      }
+    )
+
   }
 
-  val submitInfoFilingCapacity = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
+
+
+  val submitFilingCapacity = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+
+    filingCapacityForm.bindFromRequest.fold(
+      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
+        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
+      success => {
+        session.save(success)
+        Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
+          includes.asideBusiness(), includes.phaseBannerBeta(),submitterInfoForm
+        )))
+      }
+    )
   }
 
-  val contactInfoSubmitter = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.contactInfoSubmitter(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
+  val submitSubmitterInfo = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+
+    submitterInfoForm.bindFromRequest.fold(
+      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
+        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
+      ))),
+      success => {
+        session.save(success)
+        Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
+          includes.phaseBannerBeta()
+        )))
+
+      }
+
+    )
   }
 
   val submitSummary = Action.async { implicit request =>
