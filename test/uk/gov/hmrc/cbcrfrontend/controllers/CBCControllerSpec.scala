@@ -17,20 +17,23 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
+import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext
 
 
-class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector {
+class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with  MockitoSugar with CSRFTest with FakeAuthConnector {
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]
+  val cache = mock[CBCSessionCache]
 
   val fakeRequestEnterCBCId = addToken(FakeRequest("GET", "/enter-CBCId"))
 
@@ -59,6 +62,6 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
     val authCon = authConnector(TestUsers.cbcrUser)
     val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
 
-    new CBCController(securedActions) {}
+    new CBCController(securedActions, cache) {}
   }
 }
