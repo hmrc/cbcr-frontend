@@ -36,21 +36,21 @@ implicit request: Request[_], messages: Messages)
         <div class="column-two-thirds">
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitUltimateParentEntity()){
                 <h1>
-                    Who is the ultimate parent entity you are submitting for?
+                    @Messages("submitInfoUltimateParentEntity.mainHeading")
                 </h1>
                 <fieldset>
                     <legend class="visuallyhidden">Ultimate parent entity name</legend>
 
                     <div class="form-field form-field--tall">
                         <div class="form-group">
-                            @formFieldDisplay(ultimateParentEntityErrors,"ultimateParentEntity", Some("Please enter the name of Ultimate Parent Entity (UPE)"),"Name of ultimate parent entity (UPE)", form)
+                            @formFieldDisplay(ultimateParentEntityErrors,"ultimateParentEntity", Some("Please enter the name of Ultimate Parent Entity (UPE)"),@Messages("submitInfoUltimateParentEntity.upe.label"), form)
                             @CSRF.formField
                         </div>
                     </div>
                 </fieldset>
 
             <div class="form-field">
-                <button role="button" type="submit" id="continue">Continue</button>
+                <button role="button" type="submit" id="continue">@Messages("form.controls.continue</button>
             </div>
             }
         </div>

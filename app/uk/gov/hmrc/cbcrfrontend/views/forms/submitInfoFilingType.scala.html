@@ -43,28 +43,28 @@ implicit request: Request[_], messages: Messages)
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitFilingType()){
 
                 <h1>
-                    What type of CbC filing are you submitting?
+                    @Messages("submitInfoFilingType.mainHeading")
                 </h1>
                 <div class="form-group">
                     <fieldset>
-                        <legend class="visuallyhidden">What is your filing type?</legend>
+                        <legend class="visuallyhidden">@Messages("submitInfoFilingType.mainHeading")</legend>
 
                         <label for="filing-type-1" class="block-label block-label selection-button-radio">
                             <input id="filing-type-1" name="filingType" type="radio" value="@FilingTypes.primary">
-                            <span class="heading-small">Primary filing</span><br />
-                            <span class="form-hint form-hint--small">Reporting is global for an MNE headquartered in the UK</span>
+                            <span class="heading-small">@Messages("submitInfoFilingType.primaryFiling.label")</span><br />
+                            <span class="form-hint form-hint--small">@Messages("submitInfoFilingType.primaryFiling.hint")</span>
                         </label>
 
                         <label for="filing-type-2" class="block-label block-label selection-button-radio">
                             <input id="filing-type-2" name="filingType" type="radio" value="@FilingTypes.voluntary">
-                            <span class="heading-small">Voluntary filing</span><br />
-                            <span class="form-hint form-hint--small">Reporting is global for a non-UK MNE via a UK subsidiary company</span>
+                            <span class="heading-small">@Messages("submitInfoFilingType.voluntaryFiling.label")</span><br />
+                            <span class="form-hint form-hint--small">@Messages("submitInfoFilingType.voluntaryFiling.hint")</span>
                         </label>
 
                         <label for="filing-type-3" class="block-label block-label selection-button-radio">
                             <input id="filing-type-3" name="filingType" type="radio" value="@FilingTypes.local">
-                            <span class="heading-small">Local filing</span><br />
-                            <span class="form-hint form-hint--small">Reporting is local only for the UK subsidiary of a non-UK MNE</span>
+                            <span class="heading-small">@Messages("submitInfoFilingType.localFiling.label")</span><br />
+                            <span class="form-hint form-hint--small">@Messages("submitInfoFilingType.localFiling.hint")</span>
                         </label>
                     </fieldset>
                 </div>
@@ -72,7 +72,7 @@ implicit request: Request[_], messages: Messages)
 
                     <div class="form-field form-field--submit">
                         @csrf_token()
-                        <button class="btn button" type="submit" id="upload-button">@Messages("cbc.button.continue")</button>
+                        <button class="btn button" type="submit" id="upload-button">@Messages("form.controls.continue")</button>
                     </div>
                </div>
             }

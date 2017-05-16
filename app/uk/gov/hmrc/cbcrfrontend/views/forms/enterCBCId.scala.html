@@ -18,44 +18,44 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import helper._
+@import tags._
 
 
-@(asideCbc: Html, phaseBannerBeta: Html)(
+@(asideCbc: Html, phaseBannerBeta: Html, form:Form[_], noMatch:Boolean = false)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideCbc
 }
 
+@errors = @{form.error("cbcId").isDefined}
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
 
     <div class="grid-row">
         <div class="column-two-thirds">
 
-            <h1>
-                Enter your Country by Country ID
-            </h1>
-            <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile" method="POST" >
+            <h1>@Messages("enterCBCId.mainHeading")</h1>
 
-                <fieldset>
-                    <div class="form-group">
-                        <p class="form-hint">This is the 15 digit ID you received when you registered,
-                            <br>for example: XACBC0000999999.
-                        </p>
-                        <input type="text" class="input--medium input--cleared"/>
-                    </div>
-                </fieldset>
-                @csrf_token()
-                <p>
-                <div class="form-field">
-                    <input class="button" type="submit" id="continue" value="Continue">
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.submitCBCId()){
+            <fieldset>
+                <div class="form-group @if(errors || noMatch){form-field--error}">
+                    <p class="form-hint">@Messages("enterCBCId.formHint")</p>
+                    @if(form.error("cbcId").isDefined){
+                    <span class="error-notification">Please enter a valid CBCId</span>
+                    }
+                    @if(noMatch){ <span class="error-notification">The CbC ID does not match one that has been registered</span> }
+                    <input type="text" class="input--medium input--cleared" id="txt-cbcID"/>
                 </div>
-                </p>
-            </form>
+            </fieldset>
+            @csrf_token()
 
-            <h3>Don't have a Country by Country ID?</h3>
-            <a href="/country-by-country-reporting/subscribeFirst">Register online</a>
+                <input class="button" type="submit" id="continue" value="@Messages("form.controls.continue")" id="btn-submit">
+            }
+
+            <h3>@Messages("enterCBCId.dontHaveAnID.heading")</h3>
+            <a href="@Messages("enterCBCId.dontHaveAnID.link.url")" id="link-noID">@Messages("enterCBCId.dontHaveAnID.link.text")</a>
         </div>
     </div>
 

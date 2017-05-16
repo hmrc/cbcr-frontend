@@ -31,11 +31,9 @@ implicit request: Request[_], messages: Messages)
 <section class="subsection grid-row">
     <div class="column-full">
 
-        <h1>
-            Filing History for Multinational Ltd
-        </h1>
+        <h1>@Messages("filingHistory.mainHeading")</h1>
         <p>
-            <a class="button" href="submit-upload-choose-file">Submit Report</a>
+            <a class="button" href="submit-upload-choose-file" id="btn-chooseFile">@Messages("filingHistory.submit")</a>
         </p>
     </div>
 </section>
@@ -44,20 +42,21 @@ implicit request: Request[_], messages: Messages)
         <table class="[modifier class]">
             <thead>
             <tr>
-                <th>Reporting period</th>
-                <th>Date Submitted</th>
-                <th>Message reference ID</th>
-                <th>Size</th>
-                <th>Reference no.</th>
+                <th>@Messages("filingHistory.report.reportingPeriod")</th>
+                <th>@Messages("filingHistory.report.dateSubmitted")</th>
+                <th>@Messages("filingHistory.report.messageReference")</th>
+                <th>@Messages("filingHistory.report.size")</th>
+                <th>@Messages("filingHistory.report.referenceNo")</th>
             </tr>
             </thead>
             <tbody>
             <tr>
+                <!-- not moving this to messages as it looks like dummy data -->
                 <td class="heading-24">2017-03-31</td>
                 <td>2017-10-02 16:52:30</td>
                 <td><a class="link" href="submit-summary-view">GB-2017-multinational_ltd-cbc-report-messagerefid-01</a></td>
                 <td>3200KB</td>
-                <td><a class="link" href="submit-success-receipt">H25-RS42-2VP</a></td>
+                <td><a class="link" href="submit-success-receipt" >H25-RS42-2VP</a></td>
             </tr>
             </tbody>
         </table>

@@ -24,24 +24,36 @@ import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriberContact, SubscriptionDetails}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.http.NotFoundException
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import javax.inject.Singleton
 
+import play.api.Logger
 import uk.gov.hmrc.play.config.ServicesConfig
-
-trait SubscriptionDataService {
-  implicit def url:ServiceUrl[CbcrsUrl]
-  def saveSubscriptionData(data: SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String]
-  def clearSubscriptionData(id: CBCId)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]]
-}
-
 @Singleton
-class SubscriptionDataServiceImpl extends SubscriptionDataService with ServicesConfig{
+class SubscriptionDataService extends ServicesConfig{
 
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
+  def retrieveSubscriptionData(id:CBCId)(implicit hc: HeaderCarrier, ec: ExecutionContext):ServiceResponse[Option[SubscriptionDetails]] = {
+    val fullUrl = url.url + s"/cbcr/retrieveSubscriptionData/$id"
+    EitherT[Future,UnexpectedState, Option[SubscriptionDetails]](
+      WSHttp.GET[HttpResponse](fullUrl).map { response =>
+        response.json.validate[SubscriptionDetails].fold(
+          errors  => Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
+          details => Right[UnexpectedState,Option[SubscriptionDetails]](Some(details))
+        )
+      }.recover{
+        case _:NotFoundException => Right[UnexpectedState,Option[SubscriptionDetails]](None)
+        case NonFatal(t) =>
+          Logger.error("GET future failed")
+          Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
+      }
+    )
+
+  }
   def saveSubscriptionData(data:SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/saveSubscriptionData"
     EitherT[Future,UnexpectedState, String](
