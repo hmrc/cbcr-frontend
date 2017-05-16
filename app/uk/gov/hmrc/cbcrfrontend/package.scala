@@ -23,18 +23,20 @@ import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.{AffinityGroup, Agent, Organisation, UserType}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.frontend.auth.AuthContext
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
 
 package object cbcrfrontend {
 
-  def getUserType(ac:AuthContext)(implicit cache:CBCSessionCache, sec:FrontendAuthConnector, hc:HeaderCarrier, ec:ExecutionContext): ServiceResponse[UserType] = {
-    def affinityGroupToUserType(a:AffinityGroup): Either[UnexpectedState,UserType] = a.affinityGroup.toLowerCase.trim match {
-      case "agent"        => Right(Agent)
-      case "organisation" => Right(Organisation)
-      case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
-    }
+  def affinityGroupToUserType(a:AffinityGroup): Either[UnexpectedState,UserType] = a.affinityGroup.toLowerCase.trim match {
+    case "agent"        => Right(Agent)
+    case "organisation" => Right(Organisation)
+    case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
+  }
+
+  def getUserType(ac:AuthContext)(implicit cache:CBCSessionCache, sec:AuthConnector, hc:HeaderCarrier, ec:ExecutionContext): ServiceResponse[UserType] = {
 
     EitherT(OptionT(cache.read[AffinityGroup])
       .getOrElseF {

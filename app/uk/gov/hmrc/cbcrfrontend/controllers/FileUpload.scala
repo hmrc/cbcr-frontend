@@ -54,7 +54,7 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
   implicit val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
-  val chooseXMLFile = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+  val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     fileUploadService.createEnvelope.fold(
       error => InternalServerError("Envelope creation failed: "+error.errorMsg),
@@ -66,7 +66,7 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
       })
   }
 
-  def upload(envelopeId: String, fileId: String) =  sec.AsyncAuthenticatedAction { authContext => implicit request =>
+  def upload(envelopeId: String, fileId: String) =  sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     request.body.asMultipartFormData match {
 

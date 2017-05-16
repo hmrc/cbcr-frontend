@@ -18,36 +18,24 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
+import cats.data.EitherT
+import cats.instances.future._
 import play.api.Logger
 import play.api.Play.current
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.i18n.Messages.Implicits._
-import play.api.mvc.{Action, Result}
-import uk.gov.hmrc.cbcrfrontend.FrontendAuthConnector
+import play.api.mvc.Result
+import uk.gov.hmrc.cbcrfrontend.{FrontendAuthConnector, _}
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.model.{AffinityGroup, Agent, Organisation, UserType}
-import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.model.{Agent, CBCId, Organisation, SubscriptionDetails}
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend.views.html._
-import play.api.data.Form
-import play.api.data.Forms._
-import cats.instances.future._
 
 import scala.concurrent.Future
-import play.api.Play.current
-import play.api.i18n.Messages.Implicits._
-import play.api.mvc._
-import javax.inject.{Inject, Singleton}
-
-import cats.data.EitherT
-import play.api.data.Form
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriptionDetails}
-import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
-import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 
 
 @Singleton
@@ -60,7 +48,7 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
     )
   )
 
-  val enterCBCId = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+  val enterCBCId = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
     getUserType(authContext).fold[Result](
       error => {
         Logger.error(error.errorMsg)
@@ -73,7 +61,7 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
 
   }
 
-  val submitCBCId = sec.AsyncAuthenticatedAction { authContext =>
+  val submitCBCId = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
       getUserType(authContext).leftMap(errors => InternalServerError(errors.errorMsg)).flatMap(userType =>
         cbcIdForm.bindFromRequest().fold[EitherT[Future,Result,Result]](
