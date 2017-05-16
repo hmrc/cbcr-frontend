@@ -43,16 +43,17 @@ implicit request: Request[_], messages: Messages)
 
                     <div class="form-field form-field--tall">
                         <div class="form-group">
-                            @formFieldDisplay(ultimateParentEntityErrors,"ultimateParentEntity", Some("Please enter the name of Ultimate Parent Entity (UPE)"),@Messages("submitInfoUltimateParentEntity.upe.label"), form)
+                            @formFieldDisplay(ultimateParentEntityErrors,"ultimateParentEntity", Some("Please enter the name of Ultimate Parent Entity (UPE)"),Messages("submitInfoUltimateParentEntity.upe.label"), form)
                             @CSRF.formField
                         </div>
                     </div>
                 </fieldset>
 
             <div class="form-field">
-                <button role="button" type="submit" id="continue">@Messages("form.controls.continue</button>
+                <button role="button" type="submit" id="continue">@Messages("form.controls.continue")</button>
             </div>
             }
         </div>
     </div>
 }
+

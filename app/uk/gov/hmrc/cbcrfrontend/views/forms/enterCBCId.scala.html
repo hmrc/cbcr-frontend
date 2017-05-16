@@ -46,7 +46,7 @@ implicit request: Request[_], messages: Messages)
                     <span class="error-notification">Please enter a valid CBCId</span>
                     }
                     @if(noMatch){ <span class="error-notification">The CbC ID does not match one that has been registered</span> }
-                    <input type="text" class="input--medium input--cleared" id="txt-cbcID"/>
+                    <input name="cbcId" type="text" class="input--medium input--cleared" id="txt-cbcID"/>
                 </div>
             </fieldset>
             @csrf_token()

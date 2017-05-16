@@ -51,14 +51,12 @@ implicit request: Request[_], messages: Messages)
             </details>
 
             <div    class="form-group">
-                <label class="form-label" for="file-input">Choose the file to upload. You will submit your report later.</label>
+                <label class="form-label" for="input-file">Choose the file to upload. You will submit your report later.</label>
                 <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" >
 
-                <input type="file" id="file-input" name ="oecdcbcxml" class="upload-report-input" accept="application/xml" >
                 <input type="file" id="input-file" class="upload-report-input" name ="oecdcbcxml" accept="application/xml" >
                 <div class="form-field form-field--submit">
                     @csrf_token()
-                    <input type="submit" class="button" value="Check for errors" id="btn-checkForErrors"/>
                 <button class="btn button" type="submit" id="upload-button">@Messages("cbc.button.fileupload")</button>
                 </div>
                 </form>
