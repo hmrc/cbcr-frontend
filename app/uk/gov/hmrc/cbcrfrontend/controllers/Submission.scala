@@ -17,7 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
-
+import cats.instances.all._
+import cats.data.EitherT
 import play.api.mvc.Action
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.views.html.includes
@@ -27,9 +28,11 @@ import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.{FilingCapacity, FilingType, SubmitterInfo, UltimateParentEntity}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.cache.client.CacheMap
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -91,10 +94,12 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
-        session.save(success)
-        Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
-          includes.asideBusiness(), includes.phaseBannerBeta(), ultimateParentEntityForm
-        )))
+        EitherT.right[Future,UnexpectedState,CacheMap](session.save(success)).fold(
+          error =>  InternalServerError(error.errorMsg),
+          _     =>  Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
+            includes.asideBusiness(), includes.phaseBannerBeta(), ultimateParentEntityForm
+          ))
+        )
       }
     )
   }
@@ -107,15 +112,15 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
-        session.save(success)
-        Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
-          includes.asideBusiness(), includes.phaseBannerBeta(),filingCapacityForm
-        )))
+        EitherT.right[Future,UnexpectedState,CacheMap](session.save(success)).fold(
+          error =>  InternalServerError(error.errorMsg),
+          _     =>  Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
+            includes.asideBusiness(), includes.phaseBannerBeta(),filingCapacityForm
+          ))
+        )
       }
     )
-
   }
-
 
 
   val submitFilingCapacity = sec.AsyncAuthenticatedAction { authContext => implicit request =>
@@ -124,10 +129,12 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
-        session.save(success)
-        Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
-          includes.asideBusiness(), includes.phaseBannerBeta(),submitterInfoForm
-        )))
+        EitherT.right[Future,UnexpectedState,CacheMap](session.save(success)).fold(
+          error =>  InternalServerError(error.errorMsg),
+          _     =>  Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
+            includes.asideBusiness(), includes.phaseBannerBeta(),submitterInfoForm
+          ))
+        )
       }
     )
   }
@@ -139,13 +146,13 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
       ))),
       success => {
-        session.save(success)
-        Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-          includes.phaseBannerBeta()
-        )))
-
+        EitherT.right[Future,UnexpectedState,CacheMap](session.save(success)).fold(
+          error =>  InternalServerError(error.errorMsg),
+          _     =>  Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
+            includes.phaseBannerBeta()
+          ))
+        )
       }
-
     )
   }
 

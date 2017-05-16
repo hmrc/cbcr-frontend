@@ -17,7 +17,7 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.controllers.FilingUserCapacity
+@import uk.gov.hmrc.cbcrfrontend.controllers._
 @(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(
 implicit request: Request[_], messages: Messages)
 
@@ -51,19 +51,19 @@ implicit request: Request[_], messages: Messages)
                         </legend>
 
                         <label for="filing-capacity-1" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-1" name="filingCapacity" type="radio" value="@FilingUserCapacity.mneUser">
+                            <input id="filing-capacity-1" name="filingCapacity" type="radio" value="@MNE_USER.toString">
                             <span class="heading-small">@Messages("submitInfoFilingCapacity.mneUser.label")</span><br />
                             <span class="form-hint">@Messages("submitInfoFilingCapacity.mneUser.hint")</span>
                         </label>
 
                         <label for="filing-capacity-2" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-2" name="filingCapacity" type="radio" value="@FilingUserCapacity.authorisedAgent">
+                            <input id="filing-capacity-2" name="filingCapacity" type="radio" value="@AUTHORISED_AGENT.toString">
                             <span class="heading-small">@Messages("submitInfoFilingCapacity.agent.label")</span><br />
                             <span class="form-hint">@Messages("submitInfoFilingCapacity.agent.hint")</span>
                         </label>
 
                         <label for="filing-capacity-3" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-3" name="filingCapacity" type="radio" value="@FilingUserCapacity.representative">
+                            <input id="filing-capacity-3" name="filingCapacity" type="radio" value="@REPRESENTATIVE.toString">
                             <span class="heading-small">@Messages("submitInfoFilingCapacity.representative.label")</span><br />
                             <span class="form-hint">@Messages("submitInfoFilingCapacity.representative.hint")</span>
                         </label>

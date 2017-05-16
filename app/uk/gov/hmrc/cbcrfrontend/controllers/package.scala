@@ -39,15 +39,13 @@ package object controllers {
   type AsyncUserRequest = AuthContext => Request[AnyContent] => Future[Result]
   type UserRequest = AuthContext => Request[AnyContent] => Result
 
-  object FilingTypes {
-    val primary = "PRIMARY"
-    val voluntary = "VOLUNTARY"
-    val local = "LOCAL"
-  }
+  sealed trait FilingTypes
+  case object PRIMARY extends FilingTypes
+  case object VOLUNTARY extends FilingTypes
+  case object LOCAL extends FilingTypes
 
-  object FilingUserCapacity {
-    val mneUser = "MNE_USER"
-    val authorisedAgent = "AUTHORISED_AGENT"
-    val representative = "REPRESENTATIVE"
-  }
+  sealed trait FilingUserCapacity
+  case object MNE_USER extends FilingUserCapacity
+  case object AUTHORISED_AGENT extends FilingUserCapacity
+  case object REPRESENTATIVE extends FilingUserCapacity
 }

@@ -88,7 +88,7 @@ class FileUploadServiceConnector() {
           case e: JsError => Left(UnexpectedState("Problems extracting File Upload response message "+e.errors))
         }
       }
-      case 404 => Right(None)
+      case 204 => Right(None)
       case _ => Left(UnexpectedState("Problems getting File Upload response message"))
     }
   }
