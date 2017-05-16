@@ -49,9 +49,11 @@ class Subscription @Inject()(val sec: SecuredActions,
                              val subscriptionDataService: SubscriptionDataService,
                              val connector:BPRKnownFactsConnector,
                              val cbcIdService:CBCIdService,
-                             val kfService:CBCKnownFactsService,
-                             val session:CBCSessionCache)
-                            (implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+                             val kfService:CBCKnownFactsService)
+                            (implicit ec: ExecutionContext,
+                             val feAuthConnector:FrontendAuthConnector,
+                             val session:CBCSessionCache) extends FrontendController with ServicesConfig {
+
 
   lazy val knownFactsService:BPRKnownFactsService = new BPRKnownFactsService(connector)
 
@@ -66,7 +68,7 @@ class Subscription @Inject()(val sec: SecuredActions,
   )
 
 
-  val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction { authContext =>
+  val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request =>
       Logger.debug("Country by Country: Generate CBCId and Store Data")
 
@@ -116,37 +118,44 @@ class Subscription @Inject()(val sec: SecuredActions,
     )((u,p) => BPRKnownFacts(Utr(u),p))((facts: BPRKnownFacts) => Some(facts.utr.value -> facts.postCode))
   )
 
-  val subscribeFirst = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+  val enterKnownFacts = sec.AsyncAuthenticatedAction(){ authContext =>implicit request =>
     Logger.debug("Country by Country: Subscribe First")
-    Future.successful(Ok(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm)))
+    getUserType(authContext).map{
+      case Agent => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
+      case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false,Organisation))
+    }.leftMap(
+      errors => InternalServerError(errors.errorMsg)
+    ).merge
   }
 
-  val checkKnownFacts = sec.AsyncAuthenticatedAction { authContext =>
+  val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
 
-      knownFactsForm.bindFromRequest.fold(
-        formWithErrors => Future.successful(
-          BadRequest(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors))
-        ),
-        knownFacts => { (for {
-          bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
-            NotFound(subscription.subscribeFirst(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true))
-          )
-          _ <- EitherT.right[Future,Result,CacheMap](session.save(bpr))
-          _ <- EitherT.right[Future,Result,CacheMap](session.save(knownFacts.utr))
-        } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value))
-          ).merge
-        }
-      )
+      getUserType(authContext).leftMap(errors => InternalServerError(errors.errorMsg)).flatMap { userType =>
+
+        knownFactsForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
+          formWithErrors => EitherT.left(Future.successful(
+            BadRequest(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))
+          )),
+          knownFacts =>  for {
+            bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
+              NotFound(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
+            )
+            _ <- EitherT.right[Future, Result, CacheMap](session.save(bpr))
+            _ <- EitherT.right[Future, Result, CacheMap](session.save(knownFacts.utr))
+          } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value,userType))
+
+        )
+      }.merge
   }
 
-  val contactInfoSubscriber = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+  val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscriber View")
 
     Future.successful(Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm)))
   }
 
-  def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+  def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscribe Success CbcId View")
     CBCId(id).fold[Future[Result]](
       Future.successful(BadRequest)
