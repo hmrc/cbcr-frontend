@@ -115,7 +115,7 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
       when(fuService.getFileUploadResponse(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileUploadCallbackResponse]]
         (Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE"))))
       when(fuService.getFile(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, File](file))
-      when(schemaValidator.validate(file)) thenReturn Validated.Invalid(XmlErorHandler)
+      when(schemaValidator.validate(file)) thenReturn Validated.Invalid(new XmlErorHandler)
       when(fuService.deleteEnvelope(anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, String]("FileDeleted"))
 
       val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)

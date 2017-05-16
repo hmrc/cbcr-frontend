@@ -29,12 +29,13 @@ import scala.collection.mutable.ListBuffer
 
 class CBCRXMLValidator {
 
-  def validate(in: File): Validated[XmlErorHandler.type, File] = {
+  val schemaLang = "http://www.w3.org/2001/XMLSchema"
 
-    val schemaLang = "http://www.w3.org/2001/XMLSchema"
+  def validate(in: File): Validated[XmlErorHandler, File] = {
+    
     val validatorFactory = SchemaFactory.newInstance(schemaLang)
     val validator = validatorFactory.newSchema(new StreamSource(new File("conf/schema/CbcXML_v1.0.xsd"))).newValidator()
-    val xmlErrorHandler = XmlErorHandler
+    val xmlErrorHandler = new XmlErorHandler
     validator.setErrorHandler(xmlErrorHandler)
 
     validator.validate(new StreamSource(in))
@@ -46,7 +47,7 @@ class CBCRXMLValidator {
 
 }
 
-object XmlErorHandler extends ErrorHandler {
+class XmlErorHandler extends ErrorHandler {
 
   def hasErrors: Boolean = errorsCollection.nonEmpty
   def hasWarnings: Boolean = warningsCollection.nonEmpty
