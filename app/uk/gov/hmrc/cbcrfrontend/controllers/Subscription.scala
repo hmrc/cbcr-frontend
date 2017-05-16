@@ -68,7 +68,7 @@ class Subscription @Inject()(val sec: SecuredActions,
   )
 
 
-  val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction { authContext =>
+  val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request =>
       Logger.debug("Country by Country: Generate CBCId and Store Data")
 
@@ -118,7 +118,7 @@ class Subscription @Inject()(val sec: SecuredActions,
     )((u,p) => BPRKnownFacts(Utr(u),p))((facts: BPRKnownFacts) => Some(facts.utr.value -> facts.postCode))
   )
 
-  val enterKnownFacts = sec.AsyncAuthenticatedAction{ authContext =>implicit request =>
+  val enterKnownFacts = sec.AsyncAuthenticatedAction(){ authContext =>implicit request =>
     Logger.debug("Country by Country: Subscribe First")
     getUserType(authContext).map{
       case Agent => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
@@ -128,7 +128,7 @@ class Subscription @Inject()(val sec: SecuredActions,
     ).merge
   }
 
-  val checkKnownFacts = sec.AsyncAuthenticatedAction { authContext =>
+  val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
 
       getUserType(authContext).leftMap(errors => InternalServerError(errors.errorMsg)).flatMap { userType =>
@@ -149,13 +149,13 @@ class Subscription @Inject()(val sec: SecuredActions,
       }.merge
   }
 
-  val contactInfoSubscriber = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+  val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscriber View")
 
     Future.successful(Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm)))
   }
 
-  def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+  def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscribe Success CbcId View")
     CBCId(id).fold[Future[Result]](
       Future.successful(BadRequest)
