@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers.auth
 import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.controllers.{AsyncUserRequest, UserRequest}
+import uk.gov.hmrc.cbcrfrontend.model.UserType
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
@@ -28,7 +29,8 @@ class SecuredActionsTest(authContext: AuthContext, val authConnector: AuthConnec
   def AuthenticatedAction(r: UserRequest): Action[AnyContent] = Action {
     r(authContext)
   }
-  def AsyncAuthenticatedAction(r: AsyncUserRequest): Action[AnyContent] = Action.async {
+  def AsyncAuthenticatedAction(u:Option[UserType])(r: AsyncUserRequest): Action[AnyContent] = Action.async {
     r(authContext)
   }
+
 }
