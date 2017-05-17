@@ -78,7 +78,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
                              cbcrsUrl: ServiceUrl[CbcrsUrl]
                            ): ServiceResponse[Option[FileUploadCallbackResponse]] = {
     Logger.debug("Country by Country: Get file upload response")
-   fromFutureOptA((WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/" + envelopeId + "?cbcId=CBCId1234"))
+   fromFutureOptA(WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/" + envelopeId)
      .map(fusConnector.extractFileUploadResponseMessage))
   }
 
@@ -89,7 +89,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
                    fusUrl: ServiceUrl[FusUrl]
                    ): ServiceResponse[File] = {
 
-      fromFutureOptA(WSHttp.GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/${envelopeId}/files/${fileId}/content").map(fusConnector.extractFile))
+      fromFutureOptA(WSHttp.GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").map(fusConnector.extractFile))
   }
 
 
@@ -100,7 +100,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
     fusUrl: ServiceUrl[FusUrl]
   ): ServiceResponse[String] = {
 
-    fromFutureOptA(WSHttp.DELETE[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/${envelopeId}").map(fusConnector.extractEnvelopeDeleteMessage))
+    fromFutureOptA(WSHttp.DELETE[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId").map(fusConnector.extractEnvelopeDeleteMessage))
   }
 
 
@@ -111,7 +111,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
     fusUrl: ServiceUrl[FusUrl]
   ): ServiceResponse[Option[FileMetadata]] = {
 
-    fromFutureOptA(WSHttp.GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/${envelopeId}/files/${fileId}/metadata").map(fusConnector.extractFileMetadata))
+    fromFutureOptA(WSHttp.GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata").map(fusConnector.extractFileMetadata))
   }
 
 

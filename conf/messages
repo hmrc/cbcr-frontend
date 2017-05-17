@@ -13,6 +13,7 @@ enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
 enterCBCId.dontHaveAnID.link.text=Register online
 
 subscribeFirst.mainHeading=Register for a Country by Country ID
+subscribeFirst.agentHeading=Verify your client Organisations Details
 subscribeFirst.formHeading=Enter your organisation''s tax details
 subscribeFirst.noMatchingBusiness.heading=We cannot find the registered business using these details
 subscribeFirst.noMatchingBusiness.suggestion1=The UTR or postcode you entered may be wrong

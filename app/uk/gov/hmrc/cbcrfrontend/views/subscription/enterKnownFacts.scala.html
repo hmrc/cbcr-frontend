@@ -17,9 +17,9 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.model.BPRKnownFacts
+@import uk.gov.hmrc.cbcrfrontend.model._
 
-@(asideCbc: Html, phaseBannerBeta: Html, knownFactsForm:Form[BPRKnownFacts], noMatchingBusiness:Boolean = false)(
+@(asideCbc: Html, phaseBannerBeta: Html, knownFactsForm:Form[BPRKnownFacts], noMatchingBusiness:Boolean = false, userType:UserType)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -34,11 +34,13 @@ implicit request: Request[_], messages: Messages)
  <div class="grid-row">
   <div class="column-two-thirds">
 
-   <h1>
-    @Messages("subscribeFirst.mainHeading")
-   </h1>
+      @userType match {
+      case Agent        => { <h1>@Messages("subscribeFirst.agentHeading")</h1> }
+      case Organisation => { <h1>@Messages("subscribeFirst.mainHeading")</h1> }
+      }
 
    <p>@Messages("subscribeFirst.formHeading")</p>
+
       @if(noMatchingBusiness){
               <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
                   <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")s</h2>
