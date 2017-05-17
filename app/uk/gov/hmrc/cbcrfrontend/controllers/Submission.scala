@@ -17,8 +17,12 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
+
 import cats.instances.all._
-import cats.data.EitherT
+import cats.syntax.all._
+
+import cats.data.{EitherT, ValidatedNel}
+import play.api.Logger
 import play.api.mvc.Action
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.views.html.includes
@@ -29,12 +33,16 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{FilingCapacity, FilingType, SubmitterInfo, UltimateParentEntity}
-import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
+import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.cbcrfrontend._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 /*
  * Copyright 2017 HM Revenue & Customs
@@ -52,8 +60,34 @@ import scala.concurrent.{ExecutionContext, Future}
  * limitations under the License.
  */
 @Singleton
-class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache) (implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
+class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,val fus:FileUploadService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
 
+  implicit lazy val fusUrl   = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
+  implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
+  implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+
+
+  def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    generateMetadataFile(authContext.user.userId,cache).flatMap {
+      _.fold(
+        errors => {
+          Logger.error(errors.toList.mkString(", "))
+          Future.successful(InternalServerError(errors.toList.mkString(", ")))
+        },
+        data   => fus.uploadMetadataAndRoute(data).fold(
+          errors => {
+            Logger.error(errors.errorMsg)
+            InternalServerError
+          },
+          _      => Redirect(routes.Submission.submitSuccessReceipt())
+        )
+      )
+    }.recover{
+      case NonFatal(e) =>
+        Logger.error(e.getMessage,e)
+        InternalServerError
+    }
+  }
 
   val filingTypeForm: Form[FilingType] = Form(
     mapping("filingType" -> nonEmptyText
@@ -77,8 +111,9 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
       "jobRole"        -> nonEmptyText,
       "contactPhone" -> nonEmptyText,
       "email"       -> email.verifying(EmailAddress.isValid(_))
-    )((fullName: String, agencyBusinessName:String, jobRole:String, contactPhone:String, email: String) =>
-      SubmitterInfo(fullName, agencyBusinessName, jobRole, contactPhone, EmailAddress(email))
+    )((fullName: String, agencyBusinessName:String, jobRole:String, contactPhone:String, email: String) => {
+      SubmitterInfo(fullName, agencyBusinessName, jobRole, contactPhone, EmailAddress(email),None)
+    }
     )(si => Some((si.fullName,si.agencyBusinessName,si.jobRole, si.contactPhone, si.email.value)))
   )
 
@@ -94,9 +129,8 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
-        EitherT.right[Future,UnexpectedState,CacheMap](session.save(success)).fold(
-          error =>  InternalServerError(error.errorMsg),
-          _     =>  Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
+        cache.save(success).map(_ =>
+          Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
             includes.asideBusiness(), includes.phaseBannerBeta(), ultimateParentEntityForm
           ))
         )
@@ -112,9 +146,8 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
-        EitherT.right[Future,UnexpectedState,CacheMap](session.save(success)).fold(
-          error =>  InternalServerError(error.errorMsg),
-          _     =>  Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
+        cache.save(success).map(_ =>
+          Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
             includes.asideBusiness(), includes.phaseBannerBeta(),filingCapacityForm
           ))
         )
@@ -128,14 +161,11 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
     filingCapacityForm.bindFromRequest.fold(
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
-      success => {
-        EitherT.right[Future,UnexpectedState,CacheMap](session.save(success)).fold(
-          error =>  InternalServerError(error.errorMsg),
-          _     =>  Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
-            includes.asideBusiness(), includes.phaseBannerBeta(),submitterInfoForm
-          ))
-        )
-      }
+      success => cache.save(success).map(_ =>
+        Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
+          includes.asideBusiness(), includes.phaseBannerBeta(),submitterInfoForm
+        ))
+      )
     )
   }
 
@@ -145,14 +175,10 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
       ))),
-      success => {
-        EitherT.right[Future,UnexpectedState,CacheMap](session.save(success)).fold(
-          error =>  InternalServerError(error.errorMsg),
-          _     =>  Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-            includes.phaseBannerBeta()
-          ))
-        )
-      }
+      success => for {
+        ag <- cache.read[AffinityGroup]
+        _  <- cache.save(success.copy(affinityGroup = ag))
+      } yield Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(includes.phaseBannerBeta()))
     )
   }
 

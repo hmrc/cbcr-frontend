@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json, Writes}
 import uk.gov.hmrc.emailaddress.EmailAddress
 
 /**
@@ -40,26 +40,45 @@ case class SubmissionInfo(gwCredId:String,
                           ofdsRegime:String,
                           utr:Utr,
                           filingType:FilingType,
-                          ultimateParentEntity:UPE,
+                          ultimateParentEntity:UltimateParentEntity,
                           filingCapacity:FilingCapacity)
 object SubmissionInfo{
   implicit val format = Json.format[SubmissionInfo]
-}
-
-case class SubmitterInfo(fullName:String,
-                         agencyBusinessName:String,
-                         jobRole:String,
-                         contactPhone:String,
-                         email:EmailAddress)
-
-object SubmitterInfo{
-  import uk.gov.hmrc.emailaddress.PlayJsonFormats._
-  implicit val format = Json.format[SubmitterInfo]
 }
 
 case class SubmissionMetaData(submissionInfo:SubmissionInfo,
                               submitterInfo:SubmitterInfo,
                               fileInfo:FileInfo)
 object SubmissionMetaData {
-  implicit val format = Json.format[SubmissionMetaData]
+  implicit val writes = new Writes[SubmissionMetaData] {
+    override def writes(o: SubmissionMetaData): JsValue = Json.obj(
+      "fileInfo" -> Json.obj(
+        "id" -> o.fileInfo.id,
+        "envelopeId" -> o.fileInfo.envelopeId,
+        "status" -> o.fileInfo.status,
+        "name" -> o.fileInfo.name,
+        "contentType" -> o.fileInfo.contentType,
+        "length" -> o.fileInfo.length,
+        "created" -> o.fileInfo.created
+      ),
+      "submissionInfo" -> Json.obj(
+        "gwGredId" -> o.submissionInfo.gwCredId,
+        "cbcId" -> o.submissionInfo.cbcId,
+        "bpSafeId" -> o.submissionInfo.bpSafeId,
+        "hash" -> o.submissionInfo.hash.value,
+        "ofdsRegime" -> o.submissionInfo.ofdsRegime,
+        "utr" -> o.submissionInfo.utr.value,
+        "filingType" -> o.submissionInfo.filingType.filingType,
+        "ultimateParentEntity" -> o.submissionInfo.ultimateParentEntity.ultimateParentEntity,
+        "filingCapacity" -> o.submissionInfo.filingCapacity.filingCapacity
+      ),
+      "submitterInfo" -> Json.obj(
+        "fullName" -> o.submitterInfo.fullName,
+        "agencyBusinessName" -> o.submitterInfo.agencyBusinessName,
+        "jobRole" -> o.submitterInfo.jobRole,
+        "email" -> o.submitterInfo.email.value,
+        "affinityGroup" -> o.submitterInfo.affinityGroup.map(_.affinityGroup)
+      )
+    )
+  }
 }

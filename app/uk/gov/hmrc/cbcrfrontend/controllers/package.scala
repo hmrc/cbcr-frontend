@@ -38,14 +38,4 @@ import scala.concurrent.Future
 package object controllers {
   type AsyncUserRequest = AuthContext => Request[AnyContent] => Future[Result]
   type UserRequest = AuthContext => Request[AnyContent] => Result
-
-  sealed trait FilingTypes
-  case object PRIMARY extends FilingTypes
-  case object VOLUNTARY extends FilingTypes
-  case object LOCAL extends FilingTypes
-
-  sealed trait FilingUserCapacity
-  case object MNE_USER extends FilingUserCapacity
-  case object AUTHORISED_AGENT extends FilingUserCapacity
-  case object REPRESENTATIVE extends FilingUserCapacity
 }
