@@ -26,20 +26,21 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages.Implicits._
 import play.api.mvc.Result
-import uk.gov.hmrc.cbcrfrontend.{FrontendAuthConnector, _}
+import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.{Agent, CBCId, Organisation, SubscriptionDetails}
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
 
 @Singleton
-class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService)(implicit val auth:FrontendAuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
+class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
 
   val cbcIdForm : Form[String] = Form(

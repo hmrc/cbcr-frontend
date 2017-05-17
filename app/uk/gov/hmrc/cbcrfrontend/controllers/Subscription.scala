@@ -41,6 +41,7 @@ import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,7 +52,7 @@ class Subscription @Inject()(val sec: SecuredActions,
                              val cbcIdService:CBCIdService,
                              val kfService:CBCKnownFactsService)
                             (implicit ec: ExecutionContext,
-                             val feAuthConnector:FrontendAuthConnector,
+                             val authConnector:AuthConnector,
                              val session:CBCSessionCache) extends FrontendController with ServicesConfig {
 
 
