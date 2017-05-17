@@ -29,10 +29,11 @@ import play.api.mvc._
 import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
-import uk.gov.hmrc.cbcrfrontend.model.FileId
+import uk.gov.hmrc.cbcrfrontend.model.{FileId, Hash}
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.cbcrfrontend.sha256Hash
 import uk.gov.hmrc.cbcrfrontend.xmlvalidator.CBCRXMLValidator
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -48,6 +49,7 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
   implicit val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
   implicit val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
@@ -82,13 +84,14 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
         )
 
         xmlFile.fold(
-          error => Future(InternalServerError),
+          _    => Future(InternalServerError),
           file => {
+            cache.save(Hash(sha256Hash(file)))
             val hostName = FrontendAppConfig.cbcrFrontendHost
             val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
             fileUploadService.uploadFile(file, envelopeId, fileId).fold(
-              error => InternalServerError,
-              success => Ok(fileupload.fileUploadProgress(
+              _ => InternalServerError,
+              _ => Ok(fileupload.fileUploadProgress(
                 includes.asideBusiness(), includes.phaseBannerBeta(),
                 envelopeId, fileId, hostName,assetsLocationPrefix))
             )

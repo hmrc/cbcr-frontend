@@ -30,11 +30,12 @@ import scala.concurrent.{ExecutionContext, Future}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 
@@ -46,9 +47,10 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
   val subDataS = mock[SubscriptionDataService]
   val id: CBCId = CBCId("XGCBC0000000001").getOrElse(fail("unable to create cbcid"))
   val subDetails = SubscriptionDetails(
-    BusinessPartnerRecord(None,None,EtmpAddress(None,None,None,None,None,None)),
+    BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None)),
     SubscriberContact("lkajsdf","lkasjdf",EmailAddress("max@max.com")),
-    id
+    id,
+    Utr("utr")
   )
 
   implicit val hc = HeaderCarrier()
@@ -91,6 +93,7 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
     val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
     implicit val cache = mock[CBCSessionCache]
     when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
+    when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
 
     new CBCController(securedActions, subDataS)
   }

@@ -16,10 +16,15 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json._
 
 case class FilingCapacity(filingCapacity: String)
 
 object FilingCapacity {
   implicit val format = Json.format[FilingCapacity]
 }
+
+sealed trait FilingUserCapacity
+case object MNE_USER extends FilingUserCapacity
+case object AUTHORISED_AGENT extends FilingUserCapacity
+case object REPRESENTATIVE extends FilingUserCapacity

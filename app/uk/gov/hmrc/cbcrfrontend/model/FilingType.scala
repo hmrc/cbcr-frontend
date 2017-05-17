@@ -16,20 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json._
 
-/**
-  * Created by max on 11/05/17.
-  */
-case class FilingType(value:String) extends AnyVal
+case class FilingType(filingType:String) extends AnyVal
 object FilingType{
   implicit val format = Json.format[FilingType]
 }
-case class UPE(value:String) extends AnyVal
-object UPE {
-  implicit val format = Json.format[UPE]
-}
-case class FilingCapacity(value:String) extends AnyVal
-object FilingCapacity{
-  implicit val format = Json.format[FilingCapacity]
-}
+sealed trait FilingTypes
+case object PRIMARY extends FilingTypes
+case object VOLUNTARY extends FilingTypes
+case object LOCAL extends FilingTypes

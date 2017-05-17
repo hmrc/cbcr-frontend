@@ -80,7 +80,7 @@ object SubscriberContact {
   implicit val subscriptionFormat :Format[SubscriberContact] = Json.format[SubscriberContact]
 }
 
-case class SubscriptionDetails(businessPartnerRecord: BusinessPartnerRecord, subscriberContact: SubscriberContact, cbcId:CBCId)
+case class SubscriptionDetails(businessPartnerRecord: BusinessPartnerRecord, subscriberContact: SubscriberContact, cbcId:CBCId, utr:Utr)
 object SubscriptionDetails{
   implicit val subscriptionDetailsFormat: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
 

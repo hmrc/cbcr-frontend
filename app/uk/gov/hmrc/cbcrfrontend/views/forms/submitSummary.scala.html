@@ -132,7 +132,7 @@ implicit request: Request[_], messages: Messages)
             <p class="text">
 
             </p>
-            @form(action=uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmitController.confirm()) {
+            @form(action=uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.confirm()) {
                 <legend class="visually-hidden">@Messages("submitSummary.declaration.heading")</legend>
                 <div class="multiple-choice">
                     <input id="cbc-report-submit-declaration" name="cbc-declaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">

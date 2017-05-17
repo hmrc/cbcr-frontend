@@ -87,8 +87,8 @@ class Subscription @Inject()(val sec: SecuredActions,
                   utr <- EitherT[Future,UnexpectedState,Utr](
                     session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
                   )
-                  _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id))
-//                  _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
+                  _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id, utr))
+                  _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
                   _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(id))
                   _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(data))
                 } yield id
@@ -112,7 +112,7 @@ class Subscription @Inject()(val sec: SecuredActions,
     case _                       => Invalid(ValidationError("UTR is not valid"))
   }
 
-  val knownFactsForm = Form(
+ val knownFactsForm = Form(
     mapping(
       "utr" -> nonEmptyText.verifying(utrConstraint),
       "postCode" -> nonEmptyText
@@ -123,7 +123,7 @@ class Subscription @Inject()(val sec: SecuredActions,
     Logger.debug("Country by Country: Subscribe First")
     getUserType(authContext).map{
       case Agent => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
-      case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false,Organisation))
+      case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = false,Organisation))
     }.leftMap(
       errors => InternalServerError(errors.errorMsg)
     ).merge

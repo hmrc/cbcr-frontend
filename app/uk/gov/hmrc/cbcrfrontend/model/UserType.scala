@@ -16,11 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
-
-/**
-  * Created by max on 15/05/17.
-  */
+import play.api.libs.json._
 
 sealed trait UserType extends Product with Serializable
 case object Organisation extends UserType

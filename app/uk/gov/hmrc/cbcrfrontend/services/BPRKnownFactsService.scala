@@ -40,15 +40,16 @@ class BPRKnownFactsService(dc:BPRKnownFactsConnector) {
   private def sanitisePostCode(s:String) : String = s.toLowerCase.replaceAll("\\s", "")
 
   def checkBPRKnownFacts(kf:BPRKnownFacts)(implicit hc:HeaderCarrier) : OptionT[Future,BusinessPartnerRecord] = {
-    val response = EitherT(dc.lookup(kf.utr.value).map { response =>
-      Json.parse(response.body).validate[BusinessPartnerRecord].asEither.leftMap(_ => UnexpectedState(response.body))
-    })
-    response.leftMap(e => Logger.warn(s"Match request failed: ${e.errorMsg}"))
-    response.toOption.subflatMap{ r =>
-      val postCodeMatches = r.address.postalCode.exists(pc => sanitisePostCode(pc) == sanitisePostCode(kf.postCode))
+    val response = dc.lookup(kf.utr.value).map { response =>
+      Json.parse(response.body).validate[BusinessPartnerRecord].get
+    }
+    OptionT(response.map{ r =>
+      val postCodeMatches = r.address.postalCode.exists{ pc =>
+        sanitisePostCode(pc) == sanitisePostCode(kf.postCode)
+      }
       if(postCodeMatches) Some(r)
       else None
-    }
+    })
   }
 
 }
