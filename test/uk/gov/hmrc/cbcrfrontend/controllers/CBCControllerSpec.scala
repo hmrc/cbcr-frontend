@@ -33,8 +33,9 @@ import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 
 class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector with MockitoSugar{
@@ -49,6 +50,8 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
     SubscriberContact("lkajsdf","lkasjdf",EmailAddress("max@max.com")),
     id
   )
+
+  implicit val hc = HeaderCarrier()
 
   val fakeRequestEnterCBCId = addToken(FakeRequest("GET", "/enter-CBCId"))
 
@@ -84,9 +87,11 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
 
   def cbcController(implicit messagesApi: MessagesApi) = {
 
-    val authCon = authConnector(TestUsers.cbcrUser)
+    implicit val authCon = authConnector(TestUsers.cbcrUser)
     val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
+    implicit val cache = mock[CBCSessionCache]
+    when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
 
-    new CBCController(securedActions, subDataS) {}
+    new CBCController(securedActions, subDataS)
   }
 }
