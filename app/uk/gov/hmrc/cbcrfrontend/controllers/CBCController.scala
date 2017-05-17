@@ -16,64 +16,81 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import play.api.Logger
-import play.api.mvc.Action
-import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend.views.html._
-import play.api.data.Form
-import play.api.data.Forms._
-import cats.instances.future._
-
-import scala.concurrent.Future
-import play.api.Play.current
-import play.api.i18n.Messages.Implicits._
-import play.api.mvc._
 import javax.inject.{Inject, Singleton}
 
+import cats.data.EitherT
+import cats.instances.future._
+import play.api.Logger
+import play.api.Play.current
 import play.api.data.Form
+import play.api.data.Forms._
+import play.api.i18n.Messages.Implicits._
+import play.api.mvc.Result
+import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriptionDetails}
-import uk.gov.hmrc.cbcrfrontend.services.SubscriptionDataService
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.model.{Agent, CBCId, Organisation, SubscriptionDetails}
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
+import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.play.frontend.controller.FrontendController
+
+import scala.concurrent.Future
 
 
 @Singleton
-class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService)  extends FrontendController with ServicesConfig {
+class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
 
-  val form : Form[String] = Form(
+  val cbcIdForm : Form[String] = Form(
     single(
       "cbcId" -> nonEmptyText.verifying("Please enter a valid CBCId",{s => CBCId(s).isDefined})
     )
   )
 
-  val enterCBCId = sec.AsyncAuthenticatedAction { authContext => implicit request =>
-    Logger.debug("Country by Country: Enter CBCID: "+request.secure)
-
-    Future.successful(Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), form)))
-  }
-
-  val submitCBCId = Action.async { implicit request =>
-
-    form.bindFromRequest().fold(
-      errors =>{
-        Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(),errors)))
+  val enterCBCId = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
+    getUserType(authContext).fold[Result](
+      error => {
+        Logger.error(error.errorMsg)
+        InternalServerError
       },
-      id => CBCId(id) match {
-        case Some(cbcId) => subDataService.retrieveSubscriptionData(cbcId).fold(
-          error   => {
-            InternalServerError(error.errorMsg)
-          },
-          details => details.fold {
-            BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), form, true))
-            }(_ => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile()))
-        )
-        case None => Future.successful(InternalServerError)
-      }
+      userType =>
+        Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm))
+
     )
 
   }
 
+  val submitCBCId = sec.AsyncAuthenticatedAction() { authContext =>
+    implicit request =>
+      getUserType(authContext).leftMap(errors => InternalServerError(errors.errorMsg)).flatMap(userType =>
+        cbcIdForm.bindFromRequest().fold[EitherT[Future,Result,Result]](
+          errors => EitherT.left(Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, errors)))),
+          id => {
+            val result: EitherT[Future, UnexpectedState, Option[SubscriptionDetails]] = for {
+              id <- EitherT.fromOption[Future](CBCId(id), UnexpectedState(s"CBCId $id is Invalid"))
+              sd <- subDataService.retrieveSubscriptionData(id)
+            } yield sd
 
+            result.bimap(
+              error => {
+                InternalServerError(error.errorMsg)
+              },
+              details => details.fold {
+                BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, true))
+              }(_ => {
+                userType match {
+                  case Agent => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.enterKnownFacts())
+                  case Organisation => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
+                }
+              })
+            )
+
+          }
+        )
+      ).merge
+  }
 }
+
 
