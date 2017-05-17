@@ -47,16 +47,17 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]
-  val authCon = authConnector(TestUsers.cbcrUser)
+  implicit val authCon = authConnector(TestUsers.cbcrUser)
   val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
   val subService = mock[SubscriptionDataService]
 
   val dc = mock[BPRKnownFactsConnector]
   val cbcId = mock[CBCIdService]
   val cbcKF = mock[CBCKnownFactsService]
-  val cache = mock[CBCSessionCache]
+  implicit val cache = mock[CBCSessionCache]
+  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
 
-  val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,cache)
+  val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF)
 
   implicit val hc = HeaderCarrier()
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
@@ -64,10 +65,11 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
   implicit val utrTag = implicitly[TypeTag[Utr]]
 
+
  "GET /subscribeFirst" should {
     "return 200" in {
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/subscribeFirst"))
-      status(controller.subscribeFirst(fakeRequestSubscribe)) shouldBe Status.OK
+      status(controller.enterKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
   "GET /contactInfoSubscriber" should {
