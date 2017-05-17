@@ -15,7 +15,8 @@
     "agencyBusinessName": "ABCCorp",
     "jobRole": "TaxFiler",
     "contactPhone": "07777776666",
-    "email": "abc@abc.com"
+    "email": "abc@abc.com",
+    "affinityGroup" : "Agent"
   },
   "fileInfo": {
     "id": "xml-1c31344f-1cbf-4315-be09-f97b537b584e",
