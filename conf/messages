@@ -1,6 +1,7 @@
 
 cbc.button.fileupload.report=Upload Report
 cbc.button.fileupload=Upload
+cbc.button.continue=Continue
 cbc.entercbcid.label=CBC Id
 
 form.controls.continue=Continue

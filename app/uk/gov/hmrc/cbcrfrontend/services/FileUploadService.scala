@@ -66,7 +66,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
 
     fromFutureOptA(HttpExecutor(fusFeUrl,
       UploadFile(EnvelopeId(envelopeId),
-        FileId(fileId), s"$fileNamePrefix-cbcr.xml ", " application/xml; charset=UTF-8", xmlByteArray)).map(fusConnector.extractFileUploadMessage))
+        FileId(fileId), s"$fileNamePrefix-cbcr.xml ", "application/xml;charset=UTF-8", xmlByteArray)).map(fusConnector.extractFileUploadMessage))
 
   }
 
@@ -128,7 +128,7 @@ class FileUploadService(fusConnector: FileUploadServiceConnector) {
 
   for {
         uploaded    <- fromFutureOptA(HttpExecutor(fusFeUrl, UploadFile(envelopeId,
-          FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", mockedMetadata)).map(fusConnector.extractFileUploadMessage))
+          FileId(s"json-$metadataFileId"), "metadata.json ", "application/json; charset=UTF-8", mockedMetadata)).map(fusConnector.extractFileUploadMessage))
         resourceUrl <- fromFutureA(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "DMS")))
   } yield resourceUrl.body
 }
