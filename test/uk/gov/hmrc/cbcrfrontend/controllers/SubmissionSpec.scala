@@ -16,20 +16,23 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import org.mockito.Matchers._
+import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
-import uk.gov.hmrc.cbcrfrontend.model.{FilingCapacity, FilingType, SubmitterInfo, UltimateParentEntity}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 
 class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
@@ -55,6 +58,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     "return 200 when the data exists" in {
       val filingType = FilingType("PRIMARY")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitFilingType").withJsonBody(Json.toJson(filingType)))
+      when(cache.save[FilingType](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitFilingType(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
@@ -70,6 +74,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     "return 200 when the data exists" in {
       val ultimateParentEntity  = UltimateParentEntity("UlitmateParentEntity")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.toJson(ultimateParentEntity)))
+      when(cache.save[UltimateParentEntity](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitUltimateParentEntity(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
@@ -85,6 +90,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     "return 200 when the data exists" in {
       val filingCapacity = FilingCapacity("MNE_USER")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitFilingCapacity").withJsonBody(Json.toJson(filingCapacity)))
+      when(cache.save[FilingCapacity](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitFilingCapacity(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
@@ -177,6 +183,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     "return 200 when all of the data exists & valid" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "jobRole", "07923456708", EmailAddress("abc@xyz.com"))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      when(cache.save[SubmitterInfo](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
