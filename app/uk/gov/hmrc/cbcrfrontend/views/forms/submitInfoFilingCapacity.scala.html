@@ -17,21 +17,29 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@import uk.gov.hmrc.cbcrfrontend.controllers._
+@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideBusiness
 }
 
+
+@filingUserCapacityErrors = @{form.error("filingCapacity").isDefined}
+
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @phaseBannerBeta
 
+@if(filingUserCapacityErrors){
+<div class="form-field form-field--tall @if(filingUserCapacityErrors){form-field--error }">
+    <span class="error-notification">Please select the Filing Capacity</span>
+</div>
+}
 
     <div class="grid-row">
         <div class="column-two-thirds">
-            <form>
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitFilingCapacity()){
                 <h1>
                     @Messages("submitInfoFilingCapacity.mainHeading")
                 </h1>
@@ -43,28 +51,32 @@ implicit request: Request[_], messages: Messages)
                         </legend>
 
                         <label for="filing-capacity-1" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-1" name="filing-capacity" type="radio" value="mne">
+                            <input id="filing-capacity-1" name="filingCapacity" type="radio" value="@MNE_USER.toString">
                             <span class="heading-small">@Messages("submitInfoFilingCapacity.mneUser.label")</span><br />
                             <span class="form-hint">@Messages("submitInfoFilingCapacity.mneUser.hint")</span>
                         </label>
 
                         <label for="filing-capacity-2" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-2" name="filing-capacity" type="radio" value="648-agent">
+                            <input id="filing-capacity-2" name="filingCapacity" type="radio" value="@AUTHORISED_AGENT.toString">
                             <span class="heading-small">@Messages("submitInfoFilingCapacity.agent.label")</span><br />
                             <span class="form-hint">@Messages("submitInfoFilingCapacity.agent.hint")</span>
                         </label>
 
                         <label for="filing-capacity-3" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-3" name="filing-capacity" type="radio" value="representative">
+                            <input id="filing-capacity-3" name="filingCapacity" type="radio" value="@REPRESENTATIVE.toString">
                             <span class="heading-small">@Messages("submitInfoFilingCapacity.representative.label")</span><br />
                             <span class="form-hint">@Messages("submitInfoFilingCapacity.representative.hint")</span>
                         </label>
 
                     </fieldset>
                 </div>
-            </form>
-            <p>
-            <p><a class="button" href="/country-by-country-reporting/contactInfoSubmitter" id="btn-continue">@Messages("form.controls.continue")</a></p>
+            <div class="form-group">
+                <div class="form-field form-field--submit">
+                    @csrf_token()
+                    <button class="btn button" type="submit" id="upload-button">@Messages("form.controls.continue")</button>
+                </div>
+            </div>
+            }
         </div>
     </div>
 
