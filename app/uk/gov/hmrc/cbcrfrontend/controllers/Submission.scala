@@ -82,13 +82,13 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
     )(si => Some((si.fullName,si.agencyBusinessName,si.jobRole, si.contactPhone, si.email.value)))
   )
 
-  val filingType = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+  val filingType = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
       includes.asideBusiness(), includes.phaseBannerBeta(), filingTypeForm
     )))
   }
 
-  val submitFilingType = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+  val submitFilingType = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     filingTypeForm.bindFromRequest.fold(
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
@@ -106,7 +106,7 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
 
 
 
-  val submitUltimateParentEntity = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+  val submitUltimateParentEntity = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     ultimateParentEntityForm.bindFromRequest.fold(
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
@@ -123,7 +123,7 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
   }
 
 
-  val submitFilingCapacity = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+  val submitFilingCapacity = sec.AsyncAuthenticatedAction(None) { authContext => implicit request =>
 
     filingCapacityForm.bindFromRequest.fold(
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
@@ -139,7 +139,7 @@ class Submission @Inject()(val sec: SecuredActions, val session:CBCSessionCache)
     )
   }
 
-  val submitSubmitterInfo = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+  val submitSubmitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     submitterInfoForm.bindFromRequest.fold(
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
