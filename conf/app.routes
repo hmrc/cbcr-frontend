@@ -14,10 +14,11 @@ GET        /filingType                                    @uk.gov.hmrc.cbcrfront
 POST       /submitFilingType                              @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingType
 POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUltimateParentEntity
 POST       /submitFilingCapacity                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingCapacity
-POST        /submitSubmitterInfo                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo
+POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo
 GET        /submitSummary                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSummary
 GET        /submitSuccessReceipt                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt
 GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingHistory
+POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.Submission.confirm
 
 POST       /checkKnownFacts                               @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.checkKnownFacts
 GET        /enterKnownFacts                               @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts

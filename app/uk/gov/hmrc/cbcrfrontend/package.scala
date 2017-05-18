@@ -16,17 +16,23 @@
 
 package uk.gov.hmrc
 
-import cats.data.{EitherT, OptionT}
+import java.io.File
+import java.nio.file.Files
+import scala.reflect.runtime.universe._
+
+import cats.data.{EitherT, OptionT, ValidatedNel}
 import cats.instances.future._
+import cats.syntax.option._
+import cats.syntax.cartesian._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{AffinityGroup, Agent, Organisation, UserType}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HeaderCarrier
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 package object cbcrfrontend {
 
@@ -36,8 +42,7 @@ package object cbcrfrontend {
     case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
   }
 
-  def getUserType(ac:AuthContext)(implicit cache:CBCSessionCache, sec:AuthConnector, hc:HeaderCarrier, ec:ExecutionContext): ServiceResponse[UserType] = {
-
+  def getUserType(ac:AuthContext)(implicit cache:CBCSessionCache, sec:AuthConnector, hc:HeaderCarrier, ec:ExecutionContext): ServiceResponse[UserType] =
     EitherT(OptionT(cache.read[AffinityGroup])
       .getOrElseF {
         sec.getUserDetails[AffinityGroup](ac)
@@ -47,6 +52,51 @@ package object cbcrfrontend {
       .map(affinityGroupToUserType)
     )
 
+ def sha256Hash(file:File) : String =
+    String.format("%064x", new java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file.toPath))))
+
+
+  def generateMetadataFile(gatewayId:String, cache:CBCSessionCache)(implicit hc:HeaderCarrier, ec:ExecutionContext): Future[ValidatedNel[String,SubmissionMetaData]] = {
+
+    def errors[T:TypeTag](v:Option[T]) : ValidatedNel[String,T] =
+      v.toValidNel(s"Could not find data for ${typeOf[T].toString} in cache")
+
+    for {
+      bpr <- cache.read[BusinessPartnerRecord]
+      utr <- cache.read[Utr]
+      hash <- cache.read[Hash]
+      cbcId <- cache.read[CBCId]
+      fileId <- cache.read[FileId]
+      envelopeId <- cache.read[EnvelopeId]
+      submitterInfo <- cache.read[SubmitterInfo]
+      filingType <- cache.read[FilingType]
+      upe <- cache.read[UltimateParentEntity]
+      filingCapacity <- cache.read[FilingCapacity]
+      fileMetadata <- cache.read[FileMetadata]
+    } yield {
+      (errors(bpr) |@| errors(utr) |@| errors(hash) |@| errors(cbcId) |@| errors(fileId) |@|
+        errors(envelopeId) |@| errors(submitterInfo) |@| errors(filingType) |@|
+        errors(upe) |@| errors(filingCapacity) |@| errors(fileMetadata)
+        ).map { (record, utr, hash,id, fileId, envelopeId, info, filingType, upe, capacity, metadata) =>
+
+        SubmissionMetaData(
+          SubmissionInfo(
+            gwCredId = gatewayId,
+            cbcId = id,
+            bpSafeId = record.safeId,
+            hash = hash,
+            ofdsRegime = "cbc",
+            utr = utr,
+            filingType = filingType,
+            ultimateParentEntity = upe,
+            filingCapacity = capacity
+          ),
+          info,
+          FileInfo(fileId, envelopeId, metadata.status, metadata.name, metadata.contentType, metadata.length, metadata.created)
+        )
+      }
+    }
   }
+
 
 }

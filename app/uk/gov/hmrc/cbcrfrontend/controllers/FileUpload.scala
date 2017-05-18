@@ -16,52 +16,52 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.io.File
 import java.util.UUID
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 
-import play.api.mvc._
-import uk.gov.hmrc.cbcrfrontend.services.FileUploadService
-import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.config.ServicesConfig
-import play.api.libs.json.JsObject
-import play.api.libs.json._
-import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
-import uk.gov.hmrc.cbcrfrontend.xmlvalidator.CBCRXMLValidator
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import cats.data.EitherT
 import cats.implicits._
 import play.api.Logger
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
+import play.api.libs.json._
+import play.api.mvc._
+import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.{AppConfig, FrontendAppConfig}
-import javax.inject.{Inject, Singleton}
-
-import cats.data.EitherT
+import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
+import uk.gov.hmrc.cbcrfrontend.model.{FileId, Hash}
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
+import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.cbcrfrontend.sha256Hash
+import uk.gov.hmrc.cbcrfrontend.xmlvalidator.CBCRXMLValidator
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.controller.FrontendController
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
-class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUploadServiceConnector, val schemaValidator: CBCRXMLValidator)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUploadServiceConnector, val schemaValidator: CBCRXMLValidator, val cache:CBCSessionCache)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
   lazy val fileUploadService = new FileUploadService(fusConnector)
   implicit val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
   implicit val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
+
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     fileUploadService.createEnvelope.fold(
       error => InternalServerError("Envelope creation failed: "+error.errorMsg),
       envelopeId => {
-      val fileId = UUID.randomUUID.toString
-      val fileUploadCreateEnvelopeUrl = "/country-by-country-reporting/file-upload/"+envelopeId.value+"/"+fileId
+        cache.save(envelopeId)
+        val fileId = UUID.randomUUID.toString
+        cache.save(FileId(fileId))
+        val fileUploadCreateEnvelopeUrl = "/country-by-country-reporting/file-upload/"+envelopeId.value+"/"+fileId
 
-      Ok(fileupload.chooseFile(fileUploadCreateEnvelopeUrl, includes.asideBusiness(), includes.phaseBannerBeta()))
+        Ok(fileupload.chooseFile(fileUploadCreateEnvelopeUrl, includes.asideBusiness(), includes.phaseBannerBeta()))
       })
   }
 
@@ -72,6 +72,7 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
       case Some(body) => {
 
         import java.io._
+
         import cats.syntax.either._
         Logger.debug("Country by Country file upload started...")
 
@@ -83,13 +84,14 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
         )
 
         xmlFile.fold(
-          error => Future(InternalServerError),
+          _    => Future(InternalServerError),
           file => {
+            cache.save(Hash(sha256Hash(file)))
             val hostName = FrontendAppConfig.cbcrFrontendHost
             val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
             fileUploadService.uploadFile(file, envelopeId, fileId).fold(
-              error => InternalServerError,
-              success => Ok(fileupload.fileUploadProgress(
+              _ => InternalServerError,
+              _ => Ok(fileupload.fileUploadProgress(
                 includes.asideBusiness(), includes.phaseBannerBeta(),
                 envelopeId, fileId, hostName,assetsLocationPrefix))
             )
@@ -118,6 +120,7 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
         }
       }
       fileMetadata <- fileUploadService.getFileMetaData(envelopeId,fileId).leftMap(_ => InternalServerError:Result)
+      _ = fileMetadata.map(cache.save(_))
 
     } yield Accepted(
       if (fileMetadata.isDefined) {
