@@ -32,7 +32,7 @@ import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.cbcrfrontend.core.fromFutureOptA
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, FileUploadCallbackResponse}
-import uk.gov.hmrc.cbcrfrontend.services.FileUploadService
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import cats.instances.future._
 import org.xml.sax.{Locator, SAXParseException}
@@ -53,6 +53,7 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
   val fusConnector = mock[FileUploadServiceConnector]
   val fuService = mock[FileUploadService]
   val schemaValidator = mock[CBCRXMLValidator]
+  val cache = mock[CBCSessionCache]
 
   implicit val hc = HeaderCarrier()
   implicit val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload"}
@@ -184,7 +185,7 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
 
     val authCon = authConnector(TestUsers.cbcrUser)
     val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
-    new FileUpload(securedActions, fusConnector, schemaValidator) {
+    new FileUpload(securedActions, fusConnector, schemaValidator,cache) {
      override lazy val fileUploadService = fuService
     }
   }

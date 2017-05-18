@@ -51,7 +51,7 @@ class FileUploadServiceConnector() {
         "masSize" -> "30MB",
         "maxSizePerItem" -> "5MB"
       ),
-      "callbackUrl" -> s"$cbcrsUrl/cbcr/saveFileUploadResponse?cbcId=123456",
+      "callbackUrl" -> s"$cbcrsUrl/cbcr/saveFileUploadResponse",
       "expiryDate" -> s"${envelopeExpiryDate(7)}",
       "metadata" -> Json.obj(
         "application" -> "Country By Country Reporting Service",
@@ -60,13 +60,11 @@ class FileUploadServiceConnector() {
     )
   }
 
-  def extractEnvelopId(
-                        resp: HttpResponse
-                      ): ResponseExtract[EnvelopeId] = {
+  def extractEnvelopId(resp: HttpResponse): ResponseExtract[EnvelopeId] = {
     resp.header(LOCATION) match {
       case Some(location) => location match {
         case EnvelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
-        case otherwise => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
+        case _                               => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
       }
       case None => Left(UnexpectedState(s"Header $LOCATION not found"))
     }

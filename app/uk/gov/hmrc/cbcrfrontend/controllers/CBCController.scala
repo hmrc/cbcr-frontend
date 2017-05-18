@@ -64,29 +64,30 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
 
   val submitCBCId = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
-      getUserType(authContext).leftMap(errors => InternalServerError(errors.errorMsg)).flatMap(userType =>
-        cbcIdForm.bindFromRequest().fold[EitherT[Future,Result,Result]](
-          errors => EitherT.left(Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, errors)))),
+      getUserType(authContext).leftMap(errors => InternalServerError(errors.errorMsg)).semiflatMap(userType =>
+        cbcIdForm.bindFromRequest().fold[Future[Result]](
+          errors => Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, errors))),
           id => {
             val result: EitherT[Future, UnexpectedState, Option[SubscriptionDetails]] = for {
               id <- EitherT.fromOption[Future](CBCId(id), UnexpectedState(s"CBCId $id is Invalid"))
               sd <- subDataService.retrieveSubscriptionData(id)
             } yield sd
 
-            result.bimap(
-              error => {
-                InternalServerError(error.errorMsg)
-              },
-              details => details.fold {
-                BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, true))
-              }(_ => {
-                userType match {
+            result.value.flatMap(_.fold(
+              (error: UnexpectedState) => Future.successful(InternalServerError(error.errorMsg)),
+              (details: Option[SubscriptionDetails]) => details.fold {
+                Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, true)))
+              }(submissionDetails => {
+                for {
+                  _ <- cache.save(submissionDetails.utr)
+                  _ <- cache.save(submissionDetails.businessPartnerRecord)
+                  _ <- cache.save(submissionDetails.cbcId)
+                } yield userType match {
                   case Agent => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.enterKnownFacts())
                   case Organisation => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
                 }
               })
-            )
-
+            ))
           }
         )
       ).merge

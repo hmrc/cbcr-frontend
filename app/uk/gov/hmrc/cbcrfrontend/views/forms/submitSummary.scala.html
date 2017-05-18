@@ -132,14 +132,16 @@ implicit request: Request[_], messages: Messages)
             <p class="text">
 
             </p>
-            <form>
+            @form(action=uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.confirm()) {
                 <legend class="visually-hidden">@Messages("submitSummary.declaration.heading")</legend>
                 <div class="multiple-choice">
                     <input id="cbc-report-submit-declaration" name="cbc-declaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
                     <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
                 </div>
-            </form>
-            <p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt" id="btn-submitSummary">@Messages("submitSummary.submit")</a></p>
+                <p>
+                    <button type="submit" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
+                </p>
+            }
 
         </div>
     </div>
