@@ -21,13 +21,12 @@ import javax.inject.{Inject, Singleton}
 
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpResponse, NotFoundException}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpResponse}
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
+import scala.concurrent.Future
 
 @Singleton
-class BPRKnownFactsConnector @Inject()(http:HttpGet)(implicit ec:ExecutionContext) extends ServicesConfig{
+class BPRKnownFactsConnector @Inject()(http:HttpGet) extends ServicesConfig{
 
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
