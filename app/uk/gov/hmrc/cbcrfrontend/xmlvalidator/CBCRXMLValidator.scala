@@ -60,7 +60,7 @@ class XmlErorHandler extends ErrorHandler {
 
 
   private def addNewError(exception: SAXParseException) = {
-    errorsListBuffer += s"Error at position ${exception.getLineNumber}:${exception.getColumnNumber} ${exception.getMessage}"
+    errorsListBuffer += s"Error at line number: ${exception.getLineNumber}, ${exception.getMessage}"
   }
 
   override def fatalError(exception: SAXParseException): Unit = addNewError(exception)

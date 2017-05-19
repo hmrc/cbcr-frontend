@@ -41,7 +41,7 @@ class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
     val errorsMap = errors.map{spe => (s"${spe.getLineNumber.toString}:${spe.getColumnNumber}" , spe)}.toMap
 
     for(i <- 0 until errors.size) {
-      val message = s"Error at position ${errors(i).getLineNumber}:${errors(i).getColumnNumber} ${errors(i).getMessage}"
+      val message = s"Error at line number: ${errors(i).getLineNumber}, ${errors(i).getMessage}"
       assert(message == xmlErorHandler.errorsCollection(i))
     }
 
