@@ -121,7 +121,7 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
       _ <- EitherT.right(HttpExecutor(fusFeUrl, UploadFile(envelopeId,
         FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", Json.toJson(metaData).toString().getBytes)
       ))
-      resourceUrl <- EitherT.right(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "DMS")))
+      resourceUrl <- EitherT.right(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")))
     } yield resourceUrl.body
   }
 
