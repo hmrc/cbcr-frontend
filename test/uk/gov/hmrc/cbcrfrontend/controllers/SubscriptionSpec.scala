@@ -66,9 +66,9 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   implicit val utrTag = implicitly[TypeTag[Utr]]
 
 
- "GET /subscribeFirst" should {
+ "GET /enterKnownFacts" should {
     "return 200" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/subscribeFirst"))
+      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/enterKnownFacts"))
       status(controller.enterKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
