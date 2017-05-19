@@ -16,18 +16,14 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.data.{EitherT, OptionT}
+import cats.data.OptionT
 import cats.instances.future._
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.Logger
 import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{BusinessPartnerRecord, BPRKnownFacts, OrganisationResponse}
-import cats.syntax.either._
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, BusinessPartnerRecord}
+import uk.gov.hmrc.play.http.{HeaderCarrier, NotFoundException}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -40,16 +36,18 @@ class BPRKnownFactsService(dc:BPRKnownFactsConnector) {
   private def sanitisePostCode(s:String) : String = s.toLowerCase.replaceAll("\\s", "")
 
   def checkBPRKnownFacts(kf:BPRKnownFacts)(implicit hc:HeaderCarrier) : OptionT[Future,BusinessPartnerRecord] = {
-    val response = dc.lookup(kf.utr.value).map { response =>
-      Json.parse(response.body).validate[BusinessPartnerRecord].get
-    }
-    OptionT(response.map{ r =>
+    val response = OptionT(dc.lookup(kf.utr.value).map { response =>
+      Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
+    }.recover{
+      case _:NotFoundException=> None
+    })
+    response.subflatMap{ r =>
       val postCodeMatches = r.address.postalCode.exists{ pc =>
         sanitisePostCode(pc) == sanitisePostCode(kf.postCode)
       }
       if(postCodeMatches) Some(r)
       else None
-    })
+    }
   }
 
 }
