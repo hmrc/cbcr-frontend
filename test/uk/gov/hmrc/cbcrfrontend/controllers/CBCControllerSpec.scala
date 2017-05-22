@@ -26,7 +26,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
@@ -37,6 +37,7 @@ import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataServi
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.http.HeaderCarrier
+import scala.concurrent.duration._
 
 
 class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector with MockitoSugar{
@@ -60,7 +61,7 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
   "GET /enter-CBCId" should {
     "return 200" in {
       val controller = cbcController
-      val result = controller.enterCBCId(fakeRequestEnterCBCId).futureValue
+      val result = Await.result(controller.enterCBCId(fakeRequestEnterCBCId), 5.second)
       status(result) shouldBe Status.OK
     }
   }
