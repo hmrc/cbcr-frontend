@@ -46,15 +46,19 @@ class EnrolController @Inject()(val sec: SecuredActions, val config:Configuratio
   } yield s"http://$host:$port/$service").value
 
   private def createBody(kf:CBCKnownFacts): Elem =
-    <GsoAdminDeEnrolPrincipalXmlInput xmlns="urn:GSO-SystemServices:external:2.10:GsoAdminDeEnrolPrincipalXmlInput">
-      <PortalIdentifier>Default</PortalIdentifier>
-      <ServiceName>HMRC-CBC-ORG</ServiceName>
-      <Identifiers>
-        <Identifier IdentifierType="cbcId">{kf.cBCId.value}</Identifier>
-        <Identifier IdentifierType="UTR">{kf.utr.value}</Identifier>
-      </Identifiers>
-      <KeepAgentAllocations>false</KeepAgentAllocations>
-    </GsoAdminDeEnrolPrincipalXmlInput>
+    <GsoAdminDeassignEnrolmentXmlInput
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns="urn:GSO-System-Services:external:2.40:GsoAdminDeassignEnrolmentXmlInput">
+      <DirectEnrolment>
+        <ServiceName>HMRC-CBC-ORG</ServiceName>
+        <Identifiers>
+          <Identifier IdentifierType="cbcId">{kf.cBCId.value}</Identifier>
+          <Identifier IdentifierType="UTR">{kf.utr.value}</Identifier>
+        </Identifiers>
+      </DirectEnrolment>
+    </GsoAdminDeassignEnrolmentXmlInput>
+
 
   private def createKF(cbcId:String,utr:String): Option[CBCKnownFacts] = for {
     id <- CBCId(cbcId)
