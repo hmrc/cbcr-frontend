@@ -53,7 +53,7 @@ implicit request: Request[_], messages: Messages)
             </fieldset>
             @csrf_token()
 
-                <input class="button" type="submit" id="continue" value="@Messages("form.controls.continue")" id="btn-submit">
+                <input class="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">
             }
             @{userType match {
                 case Agent =>

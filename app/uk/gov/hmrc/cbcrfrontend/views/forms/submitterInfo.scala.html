@@ -45,6 +45,7 @@ implicit request: Request[_], messages: Messages)
     @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitSubmitterInfo()){
     @formFieldDisplay(fullNameErrors,"fullName", Some("Please enter your full name"),"Full Name", form)
     @formFieldDisplay(agencyBusinessNameErrors,"agencyBusinessName", Some("Please enter your Agency or Business name"),"Agency or business you work for", form)
+    @formFieldDisplay(jobRoleErrors,"jobRole", Some("Please enter your Job Role"),"Job Role", form)
     @formFieldDisplay(contactPhoneErrors,"contactPhone", Some("Please enter a valid phone number"),"Contact Phone", form)
     @formFieldDisplay(emailErrors,"email", Some("Please enter a valid email address"),"Email address", form)
     @CSRF.formField
