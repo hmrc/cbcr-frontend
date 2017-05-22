@@ -43,14 +43,6 @@ class FileUploadServiceConnector() {
     def envelopeExpiryDate(numberOfDays: Int) = LocalDateTime.now.plusDays(numberOfDays).format(formatter)
 
     Json.obj(
-      "constraints" -> Json.obj(
-        "contentTypes" -> Json.arr(
-          "application/xml"
-        ),
-        "maxItems" -> 5,
-        "masSize" -> "30MB",
-        "maxSizePerItem" -> "5MB"
-      ),
       "callbackUrl" -> s"$cbcrsUrl/cbcr/saveFileUploadResponse",
       "expiryDate" -> s"${envelopeExpiryDate(7)}",
       "metadata" -> Json.obj(
