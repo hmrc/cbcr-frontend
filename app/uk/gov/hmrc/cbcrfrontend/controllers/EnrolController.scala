@@ -19,16 +19,14 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import javax.inject.{Inject, Singleton}
 
 import com.typesafe.config.Config
-import play.api.{Configuration, Logger}
+import configs.syntax._
 import play.api.libs.ws.WSClient
-import play.api.mvc.Result
+import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, CBCKnownFacts, Utr}
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http.{BadRequestException, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.cbcrfrontend.connectors.AuthConnector
-import configs.syntax._
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, CBCKnownFacts, Organisation, Utr}
+import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -48,23 +46,22 @@ class EnrolController @Inject()(val sec: SecuredActions, val config:Configuratio
   } yield s"http://$host:$port/$service").value
 
   private def createBody(kf:CBCKnownFacts): Elem =
-    <GsoDeenrolPrincipalXmlInput xmlns="urn:GSO-System-Services:external:1.65:GsoDeenrolPrincipalXmlInput">
-      <DirectEnrolment>
-        <ServiceName>HMRC-CBC-ORG</ServiceName>
-        <Identifiers>
-          <Identifier IdentifierType="cbcId">{kf.cBCId.value}</Identifier>
-          <Identifier IdentifierType="UTR">{kf.utr.value}</Identifier>
-        </Identifiers>
-      </DirectEnrolment>
+    <GsoAdminDeEnrolPrincipalXmlInput xmlns="urn:GSO-SystemServices:external:2.10:GsoAdminDeEnrolPrincipalXmlInput">
+      <PortalIdentifier>Default</PortalIdentifier>
+      <ServiceName>HMRC-CBC-ORG</ServiceName>
+      <Identifiers>
+        <Identifier IdentifierType="cbcId">{kf.cBCId.value}</Identifier>
+        <Identifier IdentifierType="UTR">{kf.utr.value}</Identifier>
+      </Identifiers>
       <KeepAgentAllocations>false</KeepAgentAllocations>
-    </GsoDeenrolPrincipalXmlInput>
+    </GsoAdminDeEnrolPrincipalXmlInput>
 
   private def createKF(cbcId:String,utr:String): Option[CBCKnownFacts] = for {
     id <- CBCId(cbcId)
     u  <- if(Utr(utr).isValid){ Some(Utr(utr)) } else { None }
   } yield CBCKnownFacts(u,id)
 
-  def deEnrol(cbcId:String,utr:String) = sec.AsyncAuthenticatedAction { authContext => implicit request =>
+  def deEnrol(cbcId:String,utr:String) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
     createKF(cbcId,utr) match {
       case None     => Future.successful(BadRequest)
       case Some(kf) => WSHttp.POSTString(url,createBody(kf).toString(),Seq("Content-Type" -> "application/xml")).map { response =>
@@ -76,7 +73,7 @@ class EnrolController @Inject()(val sec: SecuredActions, val config:Configuratio
     }
   }
 
-  def getEnrolments = sec.AsyncAuthenticatedAction{ authContext => implicit request =>
+  def getEnrolments = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
     auth.getEnrolments.map(Ok(_))
   }
 
