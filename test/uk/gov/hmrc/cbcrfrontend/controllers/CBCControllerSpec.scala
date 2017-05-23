@@ -60,7 +60,7 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
   "GET /enter-CBCId" should {
     "return 200" in {
       val controller = cbcController
-      val result = controller.enterCBCId(fakeRequestEnterCBCId).futureValue
+      val result = controller.enterCBCId(fakeRequestEnterCBCId)
       status(result) shouldBe Status.OK
     }
   }
