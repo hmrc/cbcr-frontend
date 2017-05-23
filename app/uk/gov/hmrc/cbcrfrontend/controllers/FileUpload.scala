@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
@@ -59,9 +60,19 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
         cache.save(envelopeId)
         val fileId = UUID.randomUUID.toString
         cache.save(FileId(fileId))
-        val fileUploadCreateEnvelopeUrl = "/country-by-country-reporting/file-upload/"+envelopeId.value+"/"+fileId
+        val fileName = s"oecd-${LocalDateTime.now}-cbcr.xml"
+        val hostName = FrontendAppConfig.cbcrFrontendHost
 
-        Ok(fileupload.chooseFile(fileUploadCreateEnvelopeUrl, includes.asideBusiness(), includes.phaseBannerBeta()))
+        val fileUploadSuccessRedirectUrl = s"$hostName/country-by-country-reporting/fileUploadProgress/$envelopeId/$fileId"
+        val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/errorFileUpload"
+
+        val fileUploadUrl = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
+          s"redirect-success-url=$fileUploadSuccessRedirectUrl&" +
+          s"redirect-error-url=$fileUploadErrorRedirectUrl"
+
+       // val fileUploadUrl = "/country-by-country-reporting/file-upload/"+envelopeId.value+"/"+fileId
+
+        Ok(fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
       })
   }
 
@@ -103,6 +114,14 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
   }
 
 
+  def fileUploadProgress(envelopeId: String, fileId: String) =  Action.async { implicit request =>
+
+    val hostName = FrontendAppConfig.cbcrFrontendHost
+    val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
+    Future.successful(Ok(fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
+        envelopeId, fileId, hostName,assetsLocationPrefix)))
+  }
+
   def fileUploadResponse(envelopeId: String, fileId: String) = Action.async { implicit request =>
 
     val result: EitherT[Future, Result, Result] = for {
@@ -119,13 +138,14 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
           NotAcceptable(e.errorsCollection.mkString("\n")):Result
         }
       }
+      _ = cache.save(Hash(sha256Hash(file)))
+
       fileMetadata <- fileUploadService.getFileMetaData(envelopeId,fileId).leftMap(_ => InternalServerError:Result)
       _ = fileMetadata.map(cache.save(_))
 
     } yield Accepted(
       if (fileMetadata.isDefined) {
         val fileSize = (fileMetadata.get.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-
         Json.obj(("fileName", fileMetadata.get.name), ("size", fileSize))
       } else Json.obj(("fileName", "Not Found"), ("size", "Not Found"))
 

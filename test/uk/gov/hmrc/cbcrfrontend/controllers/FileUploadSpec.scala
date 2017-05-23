@@ -31,17 +31,18 @@ import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.cbcrfrontend.core.fromFutureOptA
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, FileUploadCallbackResponse}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import cats.instances.future._
 import org.xml.sax.{Locator, SAXParseException}
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.xmlvalidator.{CBCRXMLValidator, XmlErorHandler}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import cats.data.Validated
 import org.scalacheck.Prop.Exception
+import uk.gov.hmrc.http.cache.client.CacheMap
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -91,13 +92,14 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
   "GET /fileUploadResponse/envelopeId/fileId" should {
     "return 202" in {
       val controller = fileUploadController
-      val file = mock[File]
+      val file = File.createTempFile("test","test")
 
       when(fuService.getFileUploadResponse(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileUploadCallbackResponse]]
         (Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE"))))
       when(fuService.getFile(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, File](file))
       when(schemaValidator.validate(file)) thenReturn Validated.Valid(file)
       when(fuService.deleteEnvelope(anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, String]("FileDeleted"))
+      when(cache.save[Hash](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(fuService.getFileMetaData(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileMetadata]]
         (Some(FileMetadata("9f34660e-edab-4b23-a957-f434d0469c6d", "AVAILABLE", "oecd-2017-05-07T23:18:43.849-cbcr.xml", "application/xml; charset=UTF-8", 4772, "017-05-07T22:18:44Z"
         ,Json.toJson("{}"), "/file-upload/envelopes/d842d9bc-c920-4e21-ae8d-2c57efab5fc6/files/9f34660e-edab-4b23-a957-f434d0469c6d/content"))))
@@ -111,7 +113,7 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
   "GET /fileUploadResponse/envelopeId/fileId" should {
     "return 406" in {
       val controller = fileUploadController
-      val file = mock[File]
+      val file = File.createTempFile("test","test")
 
       when(fuService.getFileUploadResponse(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileUploadCallbackResponse]]
         (Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE"))))
@@ -185,7 +187,7 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
 
     val authCon = authConnector(TestUsers.cbcrUser)
     val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
-    new FileUpload(securedActions, fusConnector, schemaValidator,cache) {
+    new FileUpload(securedActions, fusConnector, schemaValidator, cache) {
      override lazy val fileUploadService = fuService
     }
   }
