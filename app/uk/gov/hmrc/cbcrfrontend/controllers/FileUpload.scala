@@ -66,7 +66,7 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
         val fileUploadSuccessRedirectUrl = s"$hostName/country-by-country-reporting/fileUploadProgress/$envelopeId/$fileId"
         val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/errorFileUpload"
 
-        val fileUploadUrl = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
+        val fileUploadUrl = s"$fileUploadFrontendHost/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
           s"redirect-success-url=$fileUploadSuccessRedirectUrl&" +
           s"redirect-error-url=$fileUploadErrorRedirectUrl"
 
