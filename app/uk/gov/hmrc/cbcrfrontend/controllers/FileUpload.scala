@@ -62,7 +62,7 @@ class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUpload
         cache.save(FileId(fileId))
         val fileName = s"oecd-${LocalDateTime.now}-cbcr.xml"
         val hostName = FrontendAppConfig.cbcrFrontendHost
-
+        val fileUploadFrontendHost = FrontendAppConfig.fileUploadFrontendHost
         val fileUploadSuccessRedirectUrl = s"$hostName/country-by-country-reporting/fileUploadProgress/$envelopeId/$fileId"
         val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/errorFileUpload"
 
