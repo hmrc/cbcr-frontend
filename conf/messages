@@ -32,6 +32,10 @@ subscribeMatchFound.businessDetails.postcode=Postcode
 subscribeMatchFound.businessDetails.utr=UTR
 
 subscribeSuccessCbcId.mainHeading=Registration complete for
+subscribeSuccessCbcId.subHeading=Your Country by Country ID is:
+subscribeSuccessCbcId.printThisButton=Print this page
+subscribeSuccessCbcId.printThis=Print or save this screen and keep your ID safe. You 'll need it each time you want to submit a report.
+subscribeSuccessCbcId.whatNext=What happens next?
 
 contactInfoSubscriber.mainHeading=Enter your contact details
 contactInfoSubscriber.subHeading=This will help us contact you, if needed, regarding a Country by Country report submission.
@@ -43,6 +47,7 @@ contactInfoSubscriber.phoneNumber.label=Phone number
 contactInfoSubscriber.phoneNumber.error=Please enter a valid phone number
 contactInfoSubscriber.emailAddress.label=Email address
 contactInfoSubscriber.emailAddress.error=Please enter a valid phone number
+
 
 cbcHistory.mainHeading=Country By Country Reporting
 cbcHistory.top.message=Your CBCID needs to be included in the sendingEntityIN field in the XML file
