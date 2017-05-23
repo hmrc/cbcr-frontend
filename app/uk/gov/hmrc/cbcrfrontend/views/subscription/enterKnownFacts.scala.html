@@ -42,7 +42,7 @@ implicit request: Request[_], messages: Messages)
 
       @if(errors){
               <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                  <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")s</h2>
+                  <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>
                   <ul>
                       <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion1")</li>
                       <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion2")</li>
