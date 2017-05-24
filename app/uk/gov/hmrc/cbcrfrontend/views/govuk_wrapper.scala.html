@@ -69,7 +69,13 @@
       includeGridWrapper = false,
       serviceInfoContent = Some(serviceInfoContent))
 }
+@betaBanner = {
+    @uiLayouts.betaBanner(false, appConfig.betaFeedbackUrlNoAuth, appConfig.betaFeedbackUrlNoAuth, true, false)
+}
 
+@serviceInfoContent = {
+    @uiLayouts.serviceInfo(betaBanner, false, Option.empty, false )
+}
 @mainContentHeader = {
     @if(contentHeader.isDefined) {
         @uiLayouts.main_content_header(contentHeader = contentHeader.get)
@@ -84,7 +90,7 @@
       mainClass = mainClass,
       mainDataAttributes = mainDataAttributes,
       mainContentHeader = mainContentHeader,
-      serviceInfo = serviceInfo,
+      serviceInfo = serviceInfoContent,
       getHelpForm = getHelpForm,
       sidebar = sidebar)
 }
