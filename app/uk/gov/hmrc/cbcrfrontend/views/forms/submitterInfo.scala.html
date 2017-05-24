@@ -35,7 +35,6 @@ implicit request: Request[_], messages: Messages)
 @emailErrors = @{form.error("email").isDefined}
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
 
 <h1>
     Enter your contact details

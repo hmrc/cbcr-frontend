@@ -29,7 +29,6 @@ implicit request: Request[_], messages: Messages)
 @filingUserCapacityErrors = @{form.error("filingCapacity").isDefined}
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
 
 @if(filingUserCapacityErrors){
 <div class="form-field form-field--tall @if(filingUserCapacityErrors){form-field--error }">
