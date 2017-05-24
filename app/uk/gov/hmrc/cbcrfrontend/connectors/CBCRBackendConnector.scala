@@ -21,14 +21,14 @@ import javax.inject.Inject
 
 import com.typesafe.config.Config
 import play.api.Configuration
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpResponse}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPut, HttpResponse}
 import configs.syntax._
-import uk.gov.hmrc.play.config.ServicesConfig
+import play.api.libs.json.JsNull
 
 import scala.concurrent.Future
 
 @Singleton
-class CBCIdConnector @Inject() (http:HttpGet,config:Configuration) {
+class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut, config:Configuration) {
 
   val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
@@ -39,5 +39,13 @@ class CBCIdConnector @Inject() (http:HttpGet,config:Configuration) {
   } yield s"$proto://$host:$port").value
 
   def getId()(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(url+ "/cbcr/getCBCId")
+
+  def messageRefIdExists(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.GET(url + s"/cbcr/messageRefId/$id")
+
+  def saveMessageRefId(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.PUT(url + s"/cbcr/messageRefId/$id",JsNull)
+
+
 
 }
