@@ -54,6 +54,30 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
 
+  def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    generateMetadataFile(authContext.user.userId,cache).flatMap {
+      _.fold(
+        errors => {
+          Logger.error(errors.toList.mkString(", "))
+          Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
+        },
+        data   => fus.uploadMetadataAndRoute(data).fold(
+          errors => {
+            Logger.error(errors.errorMsg)
+            InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+          },
+          _      =>{
+
+            Redirect(routes.Submission.submitSuccessReceipt())
+          }
+        )
+      )
+    }.recover{
+      case NonFatal(e) =>
+        Logger.error(e.getMessage,e)
+        InternalServerError(FrontendGlobal.internalServerErrorTemplate)    }
+  }
+
   val filingTypeForm: Form[FilingType] = Form(
     mapping("filingType" -> nonEmptyText
     )((filingType: String) => FilingType(filingType)) (ft => Some(ft.filingType))

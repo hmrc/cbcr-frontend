@@ -16,181 +16,145 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.io.File
+import java.io.{File, IOException}
 
 import cats.data.{EitherT, Validated}
+import cats.instances.future._
+import org.mockito.Matchers.{eq => EQ,_}
+import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
+import play.api.libs.Files
+import play.api.libs.Files.TemporaryFile
+import play.api.libs.json.{JsNull, JsValue, Json}
+import play.api.mvc.MultipartFormData.FilePart
+import play.api.mvc.{AnyContentAsEmpty, MultipartFormData}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.auth._
-import uk.gov.hmrc.play.test.UnitSpec
-import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.scalatest.mock.MockitoSugar
-import uk.gov.hmrc.cbcrfrontend.core.fromFutureOptA
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
+import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
-import cats.instances.future._
-import org.xml.sax.{Locator, SAXParseException}
-import play.api.libs.json.{JsObject, JsValue, Json}
-import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
-import uk.gov.hmrc.cbcrfrontend.xmlvalidator.{CBCRXMLValidator, XmlErorHandler}
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
-import cats.data.Validated
-import org.scalacheck.Prop.Exception
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.{ExecutionContext, Future}
 
 
 class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
 
-  implicit val ec = app.injector.instanceOf[ExecutionContext]
-  implicit val messagesApi = app.injector.instanceOf[MessagesApi]
-  val fusConnector = mock[FileUploadServiceConnector]
-  val fuService = mock[FileUploadService]
-  val schemaValidator = mock[CBCRXMLValidator]
-  val cache = mock[CBCSessionCache]
+  implicit val ec: ExecutionContext                    = app.injector.instanceOf[ExecutionContext]
+  implicit val messagesApi: MessagesApi                = app.injector.instanceOf[MessagesApi]
+  implicit val authCon                                 = authConnector(TestUsers.cbcrUser)
+  val securedActions: SecuredActionsTest               = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
+
+  val fuService: FileUploadService                     = mock[FileUploadService]
+  val schemaValidator: CBCRXMLValidator                = mock[CBCRXMLValidator]
+  val businessRulesValidator: CBCBusinessRuleValidator = mock[CBCBusinessRuleValidator]
+  val cache: CBCSessionCache                           = mock[CBCSessionCache]
 
   implicit val hc = HeaderCarrier()
   implicit val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload"}
   implicit val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
 
-  val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
+  def right[A](a:Future[A]) : ServiceResponse[A] = EitherT.right[Future,UnexpectedState, A](a)
+  def left[A](s:String) : ServiceResponse[A] = EitherT.left[Future,UnexpectedState, A](UnexpectedState(s))
+  def pure[A](a:A) : ServiceResponse[A] = EitherT.pure[Future,UnexpectedState, A](a)
 
+  val md = FileMetadata("","","","",1.0,"",JsNull,"")
+
+  val controller = new FileUpload(securedActions, schemaValidator, businessRulesValidator,cache,fuService)
+
+
+  val file = Files.TemporaryFile("","")
 
   "GET /upload-report" should {
-    "return 200" in {
-      val controller = fileUploadController
-
-      when(fuService.createEnvelope(anyObject(), anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, EnvelopeId](Future.successful(EnvelopeId("someEnvelopeId"))))
+    val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
+    "return 200 when the envelope is created successfully" in {
+      when(fuService.createEnvelope(any(), any(), any(), any())) thenReturn pure(EnvelopeId("someEnvelopeId"))
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty))
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
-
     }
-  }
-
-
-  "GET /upload-report" should {
-    "return 500" in {
-      val controller = fileUploadController
-
-      when(fuService.createEnvelope(anyObject(), anyObject(), anyObject(), anyObject())) thenReturn (EitherT.left[Future, UnexpectedState, EnvelopeId](Future.successful(UnexpectedState("server error"))))
+    "return 500 when the is an error creating the envelope" in {
+      when(fuService.createEnvelope(any(), any(), any(), any())) thenReturn left[EnvelopeId]("server error")
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-
     }
   }
 
-  val fakeRequestGetFileUploadResponse = addToken(FakeRequest("GET", "/fileUploadResponse/envelopeId/fileId"))
-
   "GET /fileUploadResponse/envelopeId/fileId" should {
-    "return 202" in {
-      val controller = fileUploadController
-      val file = File.createTempFile("test","test")
-
-      when(fuService.getFileUploadResponse(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileUploadCallbackResponse]]
-        (Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE"))))
-      when(fuService.getFile(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, File](file))
-      when(schemaValidator.validate(file)) thenReturn Validated.Valid(file)
-      when(fuService.deleteEnvelope(anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, String]("FileDeleted"))
-      when(cache.save[Hash](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(fuService.getFileMetaData(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileMetadata]]
-        (Some(FileMetadata("9f34660e-edab-4b23-a957-f434d0469c6d", "AVAILABLE", "oecd-2017-05-07T23:18:43.849-cbcr.xml", "application/xml; charset=UTF-8", 4772, "017-05-07T22:18:44Z"
-        ,Json.toJson("{}"), "/file-upload/envelopes/d842d9bc-c920-4e21-ae8d-2c57efab5fc6/files/9f34660e-edab-4b23-a957-f434d0469c6d/content"))))
-
+    val fakeRequestGetFileUploadResponse  = addToken(FakeRequest("GET", "/fileUploadResponse/envelopeId/fileId"))
+    "return 202 when the file is available" in {
+      when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right(Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE")):Option[FileUploadCallbackResponse])
       val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
       status(result) shouldBe Status.ACCEPTED
-
     }
-  }
-
-  "GET /fileUploadResponse/envelopeId/fileId" should {
-    "return 406" in {
-      val controller = fileUploadController
-      val file = File.createTempFile("test","test")
-
-      when(fuService.getFileUploadResponse(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileUploadCallbackResponse]]
-        (Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE"))))
-      when(fuService.getFile(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, File](file))
-      when(schemaValidator.validate(file)) thenReturn Validated.Invalid(new XmlErorHandler)
-      when(fuService.deleteEnvelope(anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, String]("FileDeleted"))
-
-      val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
-      status(result) shouldBe Status.NOT_ACCEPTABLE
-
-    }
-  }
-
-  "GET /fileUploadResponse/envelopeId/fileId" should {
-    "return 204" in {
-      val controller = fileUploadController
-
-      when(fuService.getFileUploadResponse(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileUploadCallbackResponse]]
-        (None))
-      val result = (controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)).futureValue
+    "return 204 when the FUS hasn't updated the backend yet" in {
+      when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](None)
+      val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse).futureValue
       status(result) shouldBe Status.NO_CONTENT
-
+    }
+    "return 204 when the file is not yet available" in {
+      when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED")):Option[FileUploadCallbackResponse])
+      val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse).futureValue
+      status(result) shouldBe Status.NO_CONTENT
     }
   }
 
 
-  "GET /fileUploadResponse/envelopeId/fileId" should {
-    "return 500" in {
-      val controller = fileUploadController
-
-      when(fuService.getFileUploadResponse(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.right[Future, UnexpectedState, Option[FileUploadCallbackResponse]]
-        (Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE"))))
-      when(fuService.getFile(anyString, anyString)(anyObject(), anyObject(), anyObject())) thenReturn (EitherT.left[Future, UnexpectedState, File](UnexpectedState("Problem getting file")))
-
-      val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
-      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-
-    }
-  }
-
-
-  val fakeRequestSuccessFileUpload = addToken(FakeRequest("GET", "/successFileUpload"))
-
-  "GET /successFileUpload" should {
-    "return 200" in {
-      val controller = fileUploadController
-
-      val result = controller.successFileUpload("fileName", "fileSize")(fakeRequestSuccessFileUpload).futureValue
+  "GET /fileUploadProgress/envelopeId/fileId" should {
+    "return a 200" in {
+      val request = addToken(FakeRequest("GET", "fileUploadProgress/envelopeId/fileId"))
+      val result = controller.fileUploadProgress("test","test")(request)
       status(result) shouldBe Status.OK
-
     }
   }
 
-  val fakeRequestErrorFileUpload = addToken(FakeRequest("GET", "/errorFileUpload"))
-
-  "GET /errorFileUpload" should {
-    "return 200" in {
-      val controller = fileUploadController
-
-      val result = controller.errorFileUpload("errorMessage")(fakeRequestErrorFileUpload).futureValue
-      status(result) shouldBe Status.OK
-
+  "GET /fileUploadReady/envelopeId/fileId" should {
+    "return a 500" when {
+      "the call to get the file metadata fails" in{
+        val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](None)
+        when(fuService.deleteEnvelope(EQ("test"))(any(),any(),any())) thenReturn right("yeah")
+        val result = controller.fileValidate("test","test")(request)
+        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+      }
+      "the call to cache.save fails" in {
+        val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
+        when(cache.save(any())(any(),any(),any())) thenReturn Future.failed(new Exception("bad"))
+        when(fuService.deleteEnvelope(EQ("test"))(any(),any(),any())) thenReturn right("yeah")
+        val result = controller.fileValidate("test","test")(request)
+        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+      }
+      "the call to get the file fails" in {
+        val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
+        when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache",Map.empty))
+        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn left[File]("oops")
+        when(fuService.deleteEnvelope(EQ("test"))(any(),any(),any())) thenReturn right("yeah")
+        val result = controller.fileValidate("test","test")(request)
+        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+      }
+    }
+    "return a 200" when {
+      "all the calls succeed" in {
+        val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
+        when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache",Map.empty))
+        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn right(file.file)
+        val result = controller.fileValidate("test","test")(request)
+        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+      }
     }
   }
-
-
-
-
-
-  def fileUploadController(implicit messagesApi: MessagesApi) = {
-
-    val authCon = authConnector(TestUsers.cbcrUser)
-    val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
-    new FileUpload(securedActions, fusConnector, schemaValidator, cache) {
-     override lazy val fileUploadService = fuService
-    }
-  }
-
 
 }

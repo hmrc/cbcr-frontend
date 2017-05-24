@@ -96,11 +96,12 @@ class Subscription @Inject()(val sec: SecuredActions,
                 result.fold(
                   error => {
                     subscriptionDataService.clearSubscriptionData(id)
-                    InternalServerError(error.errorMsg)
+                    Logger.error(error.errorMsg)
+                    InternalServerError(FrontendGlobal.internalServerErrorTemplate)
                   },
                   cbcId => Redirect(routes.Subscription.subscribeSuccessCbcId(cbcId.value))
                 )
-              case None => Future.successful(InternalServerError("Could not generate CBCId"))
+              case None => Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
             }
           }
         }
@@ -124,15 +125,19 @@ class Subscription @Inject()(val sec: SecuredActions,
     getUserType(authContext).map{
       case Agent => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
       case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = false,Organisation))
-    }.leftMap(
-      errors => InternalServerError(errors.errorMsg)
-    ).merge
+    }.leftMap { errors =>
+      Logger.error(errors.errorMsg)
+      InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+    }.merge
   }
 
   val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
 
-      getUserType(authContext).leftMap(errors => InternalServerError(errors.errorMsg)).flatMap { userType =>
+      getUserType(authContext).leftMap{ errors =>
+        Logger.error(errors.errorMsg)
+        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+      }.flatMap { userType =>
 
         knownFactsForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
           formWithErrors => EitherT.left(Future.successful(
@@ -159,7 +164,7 @@ class Subscription @Inject()(val sec: SecuredActions,
   def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscribe Success CbcId View")
     CBCId(id).fold[Future[Result]](
-      Future.successful(BadRequest)
+      Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
     )((cbcId: CBCId) =>
     Future.successful(Ok(subscription.subscribeSuccessCbcId(includes.asideBusiness(), includes.phaseBannerBeta(),cbcId,request.session.get("companyName"))))
     )
