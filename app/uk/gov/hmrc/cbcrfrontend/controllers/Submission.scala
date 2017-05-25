@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.io.File
 import javax.inject.{Inject, Singleton}
 
+import cats.data.{EitherT, OptionT, ValidatedNel}
 import cats.instances.all._
 import cats.syntax.all._
-
-import cats.data.{EitherT, ValidatedNel}
 import play.api.Logger
-import play.api.mvc.Action
+import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.views.html.includes
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -40,25 +40,11 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.cbcrfrontend._
-
+import uk.gov.hmrc.cbcrfrontend.model._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
-/*
- * Copyright 2017 HM Revenue & Customs
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 @Singleton
 class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,val fus:FileUploadService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
 
@@ -66,7 +52,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
-
+/*
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     generateMetadataFile(authContext.user.userId,cache).flatMap {
       _.fold(
@@ -88,6 +74,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         InternalServerError
     }
   }
+*/
 
   val filingTypeForm: Form[FilingType] = Form(
     mapping("filingType" -> nonEmptyText
@@ -115,6 +102,12 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       SubmitterInfo(fullName, agencyBusinessName, jobRole, contactPhone, EmailAddress(email),None)
     }
     )(si => Some((si.fullName,si.agencyBusinessName,si.jobRole, si.contactPhone, si.email.value)))
+  )
+
+  val summarySubmitForm : Form[Boolean] = Form(
+    single(
+      "cbc-declaration" -> boolean.verifying("Please tick the declaration",d => d == true)
+    )
   )
 
   val filingType = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
@@ -178,15 +171,63 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       success => for {
         ag <- cache.read[AffinityGroup]
         _  <- cache.save(success.copy(affinityGroup = ag))
-      } yield Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(includes.phaseBannerBeta()))
+      } yield Redirect(routes.Submission.submitSummary())
     )
   }
 
-  val submitSummary = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-      includes.phaseBannerBeta()
-    )))
+  val submitSummary = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
+
+    generateMetadataFile(authContext.user.userId,cache).flatMap { md =>
+      md.fold(
+        errors => {
+          Logger.error(errors.toList.mkString(", "))
+          Future.successful(InternalServerError(errors.toList.mkString(", ")))
+        },
+        submissionMetaData => (for {
+          file <- fus.getFile(submissionMetaData.fileInfo.envelopeId.value, submissionMetaData.fileInfo.id.value)
+          keyXMLFileInfo <- EitherT.right[Future,UnexpectedState, KeyXMLFileInfo](Future.successful(getKeyXMLFileInfo(file)))
+          bpr  <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
+          summaryData <- EitherT.right[Future,UnexpectedState, SummaryData](Future.successful(SummaryData(bpr,submissionMetaData, keyXMLFileInfo)))
+          _    <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save[SummaryData](summaryData))
+        } yield (summaryData)).fold(
+            (error: UnexpectedState) => {
+              Logger.error(s"Error getting file: ${error.errorMsg}")
+              InternalServerError
+            },
+          summaryData => {
+            Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
+              includes.phaseBannerBeta(), summaryData, summarySubmitForm))
+          }
+        )
+      )
+
+    }.recover{
+      case NonFatal(e) =>
+        Logger.error(e.getMessage,e)
+        InternalServerError
+    }
   }
+
+
+  def confirm = sec.AsyncAuthenticatedAction() { authContext =>
+    implicit request =>
+
+      OptionT(cache.read[SummaryData]).toRight(UnexpectedState("BPR not found in cache")).fold(
+        errors => InternalServerError,
+        summaryData => {
+          summarySubmitForm.bindFromRequest.fold(
+            formWithErrors => BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
+              includes.phaseBannerBeta(), summaryData, summarySubmitForm)),
+            success => {
+              fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+              Redirect(routes.Submission.submitSuccessReceipt())
+            }
+          )
+        }
+      )
+  }
+
 
   val submitSuccessReceipt = Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(
