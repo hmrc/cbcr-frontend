@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.io.File
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT, ValidatedNel}
@@ -41,12 +40,14 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.xmlextractor.XmlExtractor
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 
 @Singleton
-class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,val fus:FileUploadService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
+class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,val fus:FileUploadService, val xmlExtractor: XmlExtractor)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
 
   implicit lazy val fusUrl   = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
@@ -106,7 +107,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
   val summarySubmitForm : Form[Boolean] = Form(
     single(
-      "cbc-declaration" -> boolean.verifying("Please tick the declaration",d => d == true)
+      "cbcDeclaration" -> boolean.verifying(d => d == true)
     )
   )
 
@@ -186,7 +187,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         },
         submissionMetaData => (for {
           file <- fus.getFile(submissionMetaData.fileInfo.envelopeId.value, submissionMetaData.fileInfo.id.value)
-          keyXMLFileInfo <- EitherT.right[Future,UnexpectedState, KeyXMLFileInfo](Future.successful(getKeyXMLFileInfo(file)))
+          keyXMLFileInfo <- EitherT.fromEither[Future](xmlExtractor.getKeyXMLFileInfo(file).toEither).leftMap(_ => UnexpectedState("Problems extracting xml"))
           bpr  <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
           summaryData <- EitherT.right[Future,UnexpectedState, SummaryData](Future.successful(SummaryData(bpr,submissionMetaData, keyXMLFileInfo)))
           _    <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save[SummaryData](summaryData))
@@ -213,21 +214,20 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
   def confirm = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
 
-      OptionT(cache.read[SummaryData]).toRight(UnexpectedState("BPR not found in cache")).fold(
+      OptionT(cache.read[SummaryData]).toRight(UnexpectedState("Summary Data not found in cache")).fold(
         errors => InternalServerError,
         summaryData => {
           summarySubmitForm.bindFromRequest.fold(
             formWithErrors => BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-              includes.phaseBannerBeta(), summaryData, summarySubmitForm)),
-            success => {
-              fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
-              Redirect(routes.Submission.submitSuccessReceipt())
+              includes.phaseBannerBeta(), summaryData, formWithErrors)),
+            _ => {
+                fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+                Redirect(routes.Submission.submitSuccessReceipt())
             }
           )
         }
       )
   }
-
 
   val submitSuccessReceipt = Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(

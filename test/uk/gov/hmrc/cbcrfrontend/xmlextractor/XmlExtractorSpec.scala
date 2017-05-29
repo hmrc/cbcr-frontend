@@ -14,18 +14,25 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc
+package uk.gov.hmrc.cbcrfrontend.xmlextractor
 
 import java.io.File
 
-import org.scalatest.{FlatSpec, Matchers}
-import uk.gov.hmrc.cbcrfrontend.model.KeyXMLFileInfo
+import org.scalatest.Matchers
+import uk.gov.hmrc.play.test.UnitSpec
+
+class XmlExtractorSpec extends UnitSpec  with Matchers {
 
 
-class CbcrFrontendPackageSpec extends FlatSpec with Matchers {
+  "The XmlExtractorSpec" should {
 
-  it should "return KeyXMLInfo from the input XML file"  in {
-    val keyXMLInfo = cbcrfrontend.getKeyXMLFileInfo(new File(s"test/resources/cbcr-valid.xml"))
-    keyXMLInfo should be (KeyXMLFileInfo("String_MessageRefId", "2016-03-31", "2016-11-01T15:00:00"))
+    "return KeyXMLInfo from the input XML file" in {
+        XmlExtractor.getKeyXMLFileInfo(new File(s"test/resources/cbcr-valid.xml")).isValid
+   }
+
+    "fail if the input XML file is invalid" in {
+      XmlExtractor.getKeyXMLFileInfo(File.createTempFile("test", "test")).isInvalid
+    }
+
   }
 }

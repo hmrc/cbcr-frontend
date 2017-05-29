@@ -31,7 +31,9 @@ import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HeaderCarrier
+
 import scala.concurrent.{ExecutionContext, Future}
+
 
 package object cbcrfrontend {
 
@@ -97,14 +99,5 @@ package object cbcrfrontend {
     }
   }
 
-  import scala.xml.XML
 
-  def getKeyXMLFileInfo(file: File): KeyXMLFileInfo = {
-
-      val xmlFile = XML.loadFile(file)
-      KeyXMLFileInfo(
-        (xmlFile \ "MessageSpec" \ "MessageRefId").text,
-        (xmlFile \ "MessageSpec" \ "ReportingPeriod").text,
-        (xmlFile \ "MessageSpec" \ "Timestamp").text)
-    }
 }
