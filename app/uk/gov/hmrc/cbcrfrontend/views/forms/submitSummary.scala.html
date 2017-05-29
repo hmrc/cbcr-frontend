@@ -23,6 +23,7 @@
 @(phaseBannerBeta: Html, summaryData: SummaryData, form:Form[_])(
 implicit request: Request[_], messages: Messages)
 
+@cbcDeclarationErrors = @{form.error("cbcDeclaration").isDefined}
 
 @main_template("Country by Country Reporting") {
 <main id="content" role="main">
@@ -154,9 +155,18 @@ implicit request: Request[_], messages: Messages)
 
             </p>
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.confirm()) {
-                <legend class="visually-hidden">@Messages("submitSummary.declaration.heading")</legend>
-                <div class="multiple-choice">
-                    <input id="cbc-report-submit-declaration" name="cbc-declaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
+            @CSRF.formField
+
+            <legend class="visually-hidden">@Messages("submitSummary.declaration.heading")</legend>
+            @if(form.error("cbcDeclaration").isDefined){
+            <div class="form-field--error">
+            <span class="error-notification">Please tick the declaration</span>
+            </div>
+            }
+
+            <div class="multiple-choice">
+                    <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
+
                     <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
                 </div>
                 <p>
