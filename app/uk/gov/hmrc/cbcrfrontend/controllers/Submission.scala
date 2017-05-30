@@ -53,29 +53,6 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
-/*
-  def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    generateMetadataFile(authContext.user.userId,cache).flatMap {
-      _.fold(
-        errors => {
-          Logger.error(errors.toList.mkString(", "))
-          Future.successful(InternalServerError(errors.toList.mkString(", ")))
-        },
-        data   => fus.uploadMetadataAndRoute(data).fold(
-          errors => {
-            Logger.error(errors.errorMsg)
-            InternalServerError
-          },
-          _      => Redirect(routes.Submission.submitSuccessReceipt())
-        )
-      )
-    }.recover{
-      case NonFatal(e) =>
-        Logger.error(e.getMessage,e)
-        InternalServerError
-    }
-  }
-*/
 
   val filingTypeForm: Form[FilingType] = Form(
     mapping("filingType" -> nonEmptyText,
@@ -211,27 +188,6 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         InternalServerError
     }
   }
-
-/*
-  def confirm = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request =>
-
-      OptionT(cache.read[SummaryData]).toRight(UnexpectedState("Summary Data not found in cache")).fold(
-        errors => InternalServerError,
-        summaryData => {
-          summarySubmitForm.bindFromRequest.fold(
-            formWithErrors => BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-              includes.phaseBannerBeta(), summaryData, formWithErrors)),
-            _ => {
-                fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
-                Redirect(routes.Submission.submitSuccessReceipt())
-            }
-          )
-        }
-      )
-  }
-  */
-
 
   def confirm = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
