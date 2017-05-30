@@ -78,8 +78,9 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 */
 
   val filingTypeForm: Form[FilingType] = Form(
-    mapping("filingType" -> nonEmptyText
-    )((filingType: String) => FilingType(filingType)) (ft => Some(ft.filingType))
+    mapping("filingType" -> nonEmptyText,
+            "filingTypeText" -> nonEmptyText
+    )((filingType: String, filingTypeText: String) => FilingType(filingType, filingTypeText)) (ft => Some((ft.filingType, ft.filingTypeText)))
   )
 
   val ultimateParentEntityForm: Form[UltimateParentEntity] = Form(
@@ -88,8 +89,9 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
   )
 
   val filingCapacityForm: Form[FilingCapacity] = Form(
-    mapping("filingCapacity" -> nonEmptyText
-    )((filingCapacity: String) => FilingCapacity(filingCapacity)) (ft => Some(ft.filingCapacity))
+    mapping("filingCapacity" -> nonEmptyText,
+            "filingCapacityText" -> nonEmptyText
+    )((filingCapacity: String, filingCapacityText: String) => FilingCapacity(filingCapacity, filingCapacityText)) (ft => Some((ft.filingCapacity, ft.filingCapacityText)))
   )
 
   val submitterInfoForm: Form[SubmitterInfo] = Form(

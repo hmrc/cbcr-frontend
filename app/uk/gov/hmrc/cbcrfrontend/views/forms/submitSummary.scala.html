@@ -65,13 +65,9 @@ implicit request: Request[_], messages: Messages)
                         Filing type:
                     </td>
                     <td>
-                        @summaryData.submissionMetaData.submissionInfo.filingType.filingType
+                        @summaryData.submissionMetaData.submissionInfo.filingType.filingTypeText
                     </td>
-                    <td class="change-answer">
-                        <a href="submit-info-filing-type">
-                            Change <span class="visuallyhidden">filing type</span>
-                        </a>
-                    </td>
+
                 </tr>
                 <tr>
                     <td>
@@ -80,11 +76,7 @@ implicit request: Request[_], messages: Messages)
                     <td>
                         @summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity<br />
                     </td>
-                    <td class="change-answer">
-                        <a href="submit-info-ultimate-parent-entity">
-                            Change <span class="visuallyhidden">Ultimate parent entity</span>
-                        </a>
-                    </td>
+
                 </tr>
                 <tr>
                     <td>
@@ -97,24 +89,16 @@ implicit request: Request[_], messages: Messages)
                         Tel: @summaryData.submissionMetaData.submitterInfo.contactPhone<br />
                         Email: @summaryData.submissionMetaData.submitterInfo.email.value
                     </td>
-                    <td class="change-answer">
-                        <a href="submit-info-contact">
-                            Change <span class="visuallyhidden">Filed by</span>
-                        </a>
-                    </td>
+
                 </tr>
                 <tr>
                     <td>
                         Filing capacity:
                     </td>
                     <td>
-                        @summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity
+                        @summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacityText
                     </td>
-                    <td class="change-answer">
-                        <a href="submit-info-filing-capacity">
-                            Change <span class="visuallyhidden">Filing capacity</span>
-                        </a>
-                    </td>
+
                 </tr>
                 <tr>
                     <td>
@@ -142,11 +126,7 @@ implicit request: Request[_], messages: Messages)
                             </p>
                       </div>
                     </td>
-                    <td class="change-answer">
-                        <a href="#">
-                            Change <span class="visuallyhidden">Filing capacity</span>
-                        </a>
-                    </td>
+
                 </tr>
                 </tbody>
             </table>
@@ -157,18 +137,23 @@ implicit request: Request[_], messages: Messages)
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.confirm()) {
             @CSRF.formField
 
-            <legend class="visually-hidden">@Messages("submitSummary.declaration.heading")</legend>
             @if(form.error("cbcDeclaration").isDefined){
             <div class="form-field--error">
-            <span class="error-notification">Please tick the declaration</span>
-            </div>
-            }
+            <span class="error-notification">@Messages("submitSummary.declaration.error.text")</span>
 
-            <div class="multiple-choice">
+                <div class="multiple-choice">
                     <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
-
                     <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
                 </div>
+            </div>
+            } else {
+                <div class="multiple-choice">
+                    <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
+                    <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
+                </div>
+            }
+
+
                 <p>
                     <button type="submit" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
                 </p>

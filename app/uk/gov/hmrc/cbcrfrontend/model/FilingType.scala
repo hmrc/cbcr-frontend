@@ -18,7 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json._
 
-case class FilingType(filingType:String) extends AnyVal
+case class FilingType(filingType:String, filingTypeText: String)
 object FilingType{
   implicit val format = Json.format[FilingType]
 }
