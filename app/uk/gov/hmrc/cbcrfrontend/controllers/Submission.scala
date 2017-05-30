@@ -212,7 +212,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
     }
   }
 
-
+/*
   def confirm = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
 
@@ -230,6 +230,27 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         }
       )
   }
+  */
+
+
+  def confirm = sec.AsyncAuthenticatedAction() { authContext =>
+    implicit request =>
+
+      OptionT(cache.read[SummaryData]).toRight(UnexpectedState("Summary Data not found in cache")).leftMap(error => InternalServerError(error.errorMsg)).flatMap {
+        summaryData => {
+          summarySubmitForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
+            formWithErrors => EitherT.left(Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
+              includes.phaseBannerBeta(), summaryData, formWithErrors)))),
+            _ =>
+              for {
+                _ <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData).leftMap(error => InternalServerError(error.errorMsg): Result)
+              } yield Redirect(routes.Submission.submitSuccessReceipt())
+          )
+        }
+      }.merge
+  }
+
+
 
   val submitSuccessReceipt = Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(
