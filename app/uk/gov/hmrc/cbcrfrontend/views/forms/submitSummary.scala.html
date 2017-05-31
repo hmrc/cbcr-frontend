@@ -65,7 +65,9 @@ implicit request: Request[_], messages: Messages)
                         Filing type:
                     </td>
                     <td>
-                        @summaryData.submissionMetaData.submissionInfo.filingType.filingTypeText
+                        @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == PRIMARY.toString) {@Messages("submitInfoFilingType.primaryFiling.label")}
+                        @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == VOLUNTARY.toString) { @Messages("submitInfoFilingType.voluntaryFiling.label")}
+                        @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == LOCAL.toString) {@Messages("submitInfoFilingType.localFiling.label")}
                     </td>
 
                 </tr>
@@ -96,7 +98,8 @@ implicit request: Request[_], messages: Messages)
                         Filing capacity:
                     </td>
                     <td>
-                        @summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacityText
+                        @if(summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity == MNE_AGENT.toString) {@Messages("submitInfoFilingCapacity.mneUserAgent.label")}
+                        @if(summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity == REPRESENTATIVE.toString) { @Messages("submitInfoFilingCapacity.representative.label")}
                     </td>
 
                 </tr>
