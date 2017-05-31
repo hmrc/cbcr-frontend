@@ -52,13 +52,11 @@ implicit request: Request[_], messages: Messages)
                         <label for="filing-capacity-1" class="block-label block-label selection-button-radio">
                             <input id="filing-capacity-1" name="filingCapacity" type="radio" value="@MNE_AGENT.toString">
                             <span>@Messages("submitInfoFilingCapacity.mneUserAgent.label")</span><br />
-                            <input id="filing-capacity-text-1" name="filingCapacityText" type="hidden" value="@Messages("submitInfoFilingCapacity.mneUserAgent.label")">
                         </label>
 
                         <label for="filing-capacity-3" class="block-label block-label selection-button-radio">
                             <input id="filing-capacity-3" name="filingCapacity" type="radio" value="@REPRESENTATIVE.toString">
                             <span>@Messages("submitInfoFilingCapacity.representative.label")</span><br />
-                            <input id="filing-capacity-text-3" name="filingCapacityText" type="hidden" value="@Messages("submitInfoFilingCapacity.representative.label")">
                         </label>
 
                     </fieldset>

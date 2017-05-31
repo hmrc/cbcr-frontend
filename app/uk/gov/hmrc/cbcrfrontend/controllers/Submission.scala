@@ -55,9 +55,8 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
 
   val filingTypeForm: Form[FilingType] = Form(
-    mapping("filingType" -> nonEmptyText,
-            "filingTypeText" -> nonEmptyText
-    )((filingType: String, filingTypeText: String) => FilingType(filingType, filingTypeText)) (ft => Some((ft.filingType, ft.filingTypeText)))
+    mapping("filingType" -> nonEmptyText
+    )((filingType: String) => FilingType(filingType)) (ft => Some(ft.filingType))
   )
 
   val ultimateParentEntityForm: Form[UltimateParentEntity] = Form(
@@ -66,9 +65,8 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
   )
 
   val filingCapacityForm: Form[FilingCapacity] = Form(
-    mapping("filingCapacity" -> nonEmptyText,
-            "filingCapacityText" -> nonEmptyText
-    )((filingCapacity: String, filingCapacityText: String) => FilingCapacity(filingCapacity, filingCapacityText)) (ft => Some((ft.filingCapacity, ft.filingCapacityText)))
+    mapping("filingCapacity" -> nonEmptyText
+    )((filingCapacity: String) => FilingCapacity(filingCapacity)) (ft => Some(ft.filingCapacity))
   )
 
   val submitterInfoForm: Form[SubmitterInfo] = Form(
@@ -168,7 +166,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
           file <- fus.getFile(submissionMetaData.fileInfo.envelopeId.value, submissionMetaData.fileInfo.id.value)
           keyXMLFileInfo <- EitherT.fromEither[Future](xmlExtractor.getKeyXMLFileInfo(file).toEither).leftMap(_ => UnexpectedState("Problems extracting xml"))
           bpr  <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
-          summaryData <- EitherT.right[Future,UnexpectedState, SummaryData](Future.successful(SummaryData(bpr,submissionMetaData, keyXMLFileInfo)))
+          summaryData = SummaryData(bpr,submissionMetaData, keyXMLFileInfo)
           _    <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save[SummaryData](summaryData))
         } yield (summaryData)).fold(
             (error: UnexpectedState) => {
