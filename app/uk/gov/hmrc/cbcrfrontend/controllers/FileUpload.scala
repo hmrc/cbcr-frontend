@@ -67,7 +67,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
       _              <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(envelopeId))
       fileId          = UUID.randomUUID.toString
       _              <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(FileId(fileId)))
-      successRedirect = s"$hostName/country-by-country-reporting/fileUploadProgress/$envelopeId/$fileId"
+      successRedirect = s"$hostName/country-by-country-reporting/file-upload-progress/$envelopeId/$fileId"
       fileUploadUrl   = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
         s"redirect-success-url=$successRedirect&" +
         s"redirect-error-url=$fileUploadErrorRedirectUrl"

@@ -5,9 +5,9 @@ GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfront
 GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
 
-GET        /fileUploadReady/:envelopeId/:fileId           @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileValidate(envelopeId: String, fileId:String)
-GET        /fileUploadProgress/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress(envelopeId: String, fileId: String)
-GET        /fileUploadResponse/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
+GET        /file-upload-ready/:envelopeId/:fileId           @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileValidate(envelopeId: String, fileId:String)
+GET        /file-upload-progress/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress(envelopeId: String, fileId: String)
+GET        /file-upload-response/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
 GET        /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
 GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getBusinessRuleErrors
 GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getXmlSchemaErrors
