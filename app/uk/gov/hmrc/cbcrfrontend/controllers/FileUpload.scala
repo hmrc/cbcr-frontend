@@ -16,153 +16,165 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.io.{File, PrintWriter}
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
-import cats.data.EitherT
-import cats.implicits._
+import cats.data._
+import cats.instances.all._
+import cats.syntax.all._
 import play.api.Logger
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
-import play.api.libs.json._
+import play.api.libs.Files
 import play.api.mvc._
-import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
-import uk.gov.hmrc.cbcrfrontend.model.{FileId, Hash}
-import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.services.{CBCBusinessRuleValidator, CBCRXMLValidator, CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html._
-import uk.gov.hmrc.cbcrfrontend.sha256Hash
-import uk.gov.hmrc.cbcrfrontend.xmlvalidator.CBCRXMLValidator
+import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, FrontendGlobal, sha256Hash}
+import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 
 @Singleton
-class FileUpload @Inject()(val sec: SecuredActions, val fusConnector: FileUploadServiceConnector, val schemaValidator: CBCRXMLValidator, val cache:CBCSessionCache)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+class FileUpload @Inject()(val sec: SecuredActions,
+                           val schemaValidator: CBCRXMLValidator,
+                           val businessRuleValidator: CBCBusinessRuleValidator,
+                           val cache:CBCSessionCache,
+                           val fileUploadService:FileUploadService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
-  lazy val fileUploadService = new FileUploadService(fusConnector)
-  implicit val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
-  implicit val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
-  implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+  implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
+  implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend") }
+  implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr") }
 
+  lazy val hostName = FrontendAppConfig.cbcrFrontendHost
+  lazy val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/technical-difficulties"
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    fileUploadService.createEnvelope.fold(
-      error => InternalServerError("Envelope creation failed: "+error.errorMsg),
-      envelopeId => {
-        cache.save(envelopeId)
-        val fileId = UUID.randomUUID.toString
-        cache.save(FileId(fileId))
-        val fileName = s"oecd-${LocalDateTime.now}-cbcr.xml"
-        val hostName = FrontendAppConfig.cbcrFrontendHost
-        val fileUploadFrontendHost = FrontendAppConfig.fileUploadFrontendHost
-        val fileUploadSuccessRedirectUrl = s"$hostName/country-by-country-reporting/fileUploadProgress/$envelopeId/$fileId"
-        val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/errorFileUpload"
+    val result = for {
+      envelopeId     <- fileUploadService.createEnvelope
+      _              <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(envelopeId))
+      fileId          = UUID.randomUUID.toString
+      _              <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(FileId(fileId)))
+      successRedirect = s"$hostName/country-by-country-reporting/file-upload-progress/$envelopeId/$fileId"
+      fileUploadUrl   = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
+        s"redirect-success-url=$successRedirect&" +
+        s"redirect-error-url=$fileUploadErrorRedirectUrl"
+      fileName        = s"oecd-${LocalDateTime.now}-cbcr.xml"
+    } yield Ok(fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
 
-        val fileUploadUrl = s"$fileUploadFrontendHost/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
-          s"redirect-success-url=$fileUploadSuccessRedirectUrl&" +
-          s"redirect-error-url=$fileUploadErrorRedirectUrl"
 
-       // val fileUploadUrl = "/country-by-country-reporting/file-upload/"+envelopeId.value+"/"+fileId
+    result.leftMap { error =>
+      Logger.error(error.errorMsg)
+      InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+    }.merge
 
-        Ok(fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
-      })
   }
 
-  def upload(envelopeId: String, fileId: String) =  sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    request.body.asMultipartFormData match {
-
-      case Some(body) => {
-
-        import java.io._
-
-        import cats.syntax.either._
-        Logger.debug("Country by Country file upload started...")
-
-        val xmlFile = Either.fromOption(
-          body.file("oecdcbcxml").map {
-            _.ref.file
-          },
-          new FileNotFoundException("File to be uploaded not found")
-        )
-
-        xmlFile.fold(
-          _    => Future(InternalServerError),
-          file => {
-            cache.save(Hash(sha256Hash(file)))
-            val hostName = FrontendAppConfig.cbcrFrontendHost
-            val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
-            fileUploadService.uploadFile(file, envelopeId, fileId).fold(
-              _ => InternalServerError,
-              _ => Ok(fileupload.fileUploadProgress(
-                includes.asideBusiness(), includes.phaseBannerBeta(),
-                envelopeId, fileId, hostName,assetsLocationPrefix))
-            )
-          }
-        )
-      }
-      case _ => Future(InternalServerError)
-    }
-  }
-
-
-  def fileUploadProgress(envelopeId: String, fileId: String) =  Action.async { implicit request =>
+  def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
 
     val hostName = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
     Future.successful(Ok(fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
-        envelopeId, fileId, hostName,assetsLocationPrefix)))
+      envelopeId, fileId, hostName, assetsLocationPrefix)))
   }
 
-  def fileUploadResponse(envelopeId: String, fileId: String) = Action.async { implicit request =>
 
-    val result: EitherT[Future, Result, Result] = for {
-      response <- fileUploadService.getFileUploadResponse(envelopeId,fileId).leftMap(_ => NoContent)
-      _        <- if(response.exists(r => r.envelopeId == envelopeId && r.status == "AVAILABLE")) {
-        EitherT.pure[Future,Result,Unit]((  ))
-      } else {
-        EitherT.left[Future,Result,Unit](Future.successful(NoContent))
-      }
-      file   <- fileUploadService.getFile(envelopeId,fileId).leftMap(_ => InternalServerError:Result)
-      _ <- EitherT.fromEither[Future](schemaValidator.validate(file).toEither).leftMap {
-        e => {
-          fileUploadService.deleteEnvelope(envelopeId).leftMap(_ => InternalServerError:Result)
-          NotAcceptable(e.errorsCollection.mkString("\n")):Result
-        }
-      }
-      _ = cache.save(Hash(sha256Hash(file)))
-
-      fileMetadata <- fileUploadService.getFileMetaData(envelopeId,fileId).leftMap(_ => InternalServerError:Result)
-      _ = fileMetadata.map(cache.save(_))
-
-    } yield Accepted(
-      if (fileMetadata.isDefined) {
-        val fileSize = (fileMetadata.get.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-        Json.obj(("fileName", fileMetadata.get.name), ("size", fileSize))
-      } else Json.obj(("fileName", "Not Found"), ("size", "Not Found"))
-
+  def fileUploadResponseToResult(response: Option[FileUploadCallbackResponse], envelopeId: String): EitherT[Future, Result, Unit] =
+    EitherT.cond[Future](
+      response.exists(r => r.envelopeId == envelopeId && r.status == "AVAILABLE"),
+      (),
+      NoContent
     )
 
-    result.merge
+
+  def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
+
+
+    val result: ServiceResponse[(Option[NonEmptyList[BusinessRuleErrors]], Option[NonEmptyList[XMLErrors]], FileMetadata)] = for {
+      metadata    <- fileUploadService.getFileMetaData(envelopeId, fileId).subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
+      _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(metadata))
+      f           <- fileUploadService.getFile(envelopeId, fileId)
+      schemaVal    = schemaValidator.validateSchema(f).leftMap(XMLErrors.errorHandlerToXmlErrors).toValidatedNel
+      businessVal  = businessRuleValidator.validateBusinessRules(f)
+      _            = businessVal.flatMap(_.map(xmlInfo => cache.save(xmlInfo)).sequence)
+      errors      <- EitherT.right(businessVal.map(_.swap.toOption -> schemaVal.swap.toOption))
+      _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(Hash(sha256Hash(f))))
+    } yield Tuple3(errors._1, errors._2, metadata)
+
+    result.fold(
+      error => {
+        fileUploadService.deleteEnvelope(envelopeId).fold(
+          _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate),
+          _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+        ).map(s => {
+          Logger.error(error.errorMsg)
+          s
+        })
+      },
+      validationErrors => {
+        val (bErrors, sErrors, md) = validationErrors
+        val length: BigDecimal     = (md.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+
+        bErrors.foreach(e => cache.save(AllBusinessRuleErrors(e.toList)))
+        sErrors.foreach(e => cache.save(e.head))
+
+        Future.successful(Ok(fileupload.fileUploadResult(md.name, length, sErrors.isDefined, bErrors.isDefined, includes.asideBusiness(), includes.phaseBannerBeta())))
+      }
+    ).flatten.recover{
+      case NonFatal(e) =>
+        Logger.error(e.getMessage)
+        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+    }
+
 
   }
 
-  def errorFileUpload(errorMessage: String) = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.errors.fileUploadError(includes.asideBusiness(), errorMessage)))
+  private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
+    val b = Files.TemporaryFile(name, ".txt")
+    val writer = new PrintWriter(b.file)
+    writer.write(e.map(_.show).mkString("\n"))
+    writer.flush()
+    writer.close()
+    b.file
   }
 
-  def successFileUpload(fileName: String, fileSize: String) = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadSuccess(
-      fileName, fileSize, includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
+  def getBusinessRuleErrors = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    OptionT(cache.read[AllBusinessRuleErrors]).map(x => errorsToFile(x.errors,"BusinessRuleErrors")
+    ).fold(
+      NoContent
+    )((file: File) =>
+      Ok.sendFile(content = file,inline = false, onClose = () => file.delete())
+    )
   }
+
+  def getXmlSchemaErrors = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    OptionT(cache.read[XMLErrors]).map(x => errorsToFile(List(x),"XMLSchemaErrors")
+    ).fold(
+      NoContent
+    )((file: File) =>
+      Ok.sendFile(content = file,inline = false, onClose = () => file.delete())
+    )
+  }
+
+
+  def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    (for {
+      response <- fileUploadService.getFileUploadResponse(envelopeId,fileId).leftMap(_ => NoContent)
+      _        <- fileUploadResponseToResult(response,envelopeId)
+    } yield Accepted).merge
+  }
+
 
 }

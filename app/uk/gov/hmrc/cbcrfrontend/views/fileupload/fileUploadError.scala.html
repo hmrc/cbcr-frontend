@@ -16,11 +16,12 @@
 
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
+@import uk.gov.hmrc.cbcrfrontend.views.html._
 @(asideBusiness: Html, errorMessage: String)(implicit request: Request[_])
 @sidebarContent = {
 @asideBusiness
 }
-@uk.gov.hmrc.cbcrfrontend.views.html.main_template(title = "Error cbcr-frontend", bodyClasses = None) {
+@main_template(title = "Error cbcr-frontend", bodyClasses = None) {
 
     <div class="grid-row">
         <div class="column-two-thirds">
