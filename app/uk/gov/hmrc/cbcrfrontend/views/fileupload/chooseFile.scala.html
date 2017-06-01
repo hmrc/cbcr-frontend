@@ -33,20 +33,16 @@ implicit request: Request[_], messages: Messages)
             </h1>
 
             <div class="indent-warning">
-                <p><strong>Your report needs to be in a set XML format before it can be submitted. Upload your report to check that the format is correct. </strong></p>
+                <p><strong>Your report must be a valid XML file using the current OECD Country by Country XML schema.</strong></p>
             </div>
-            <details>
-                <summary class="[modifier class]">XML format checklist</summary>
-                <div>
-                    <ul class="bullets">
-                        <li>File name is unique</li>
-                        <li>File size is no bigger than 25MB</li>
-                        <li>XML is well formed  - <a href="#">view guidance</a></li>
-                        <li>Country by Country ID is contained in 'sendingEntityIN' field of XML  - <a href="http://www.oecd.org/tax/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-and-taxpayers.pdf">view guidance</a></li>
-                        <li>XML is formatted according to OECD schema  - <a href="http://www.oecd.org/tax/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-and-taxpayers.pdf">view guidance</a></li>
-                    </ul>
-                </div>
-            </details>
+            <p>After you've uploaded your report, we'll check that it conforms with the XML schema and HMRC guidelines.</p>
+            <p>Please check that:</p>
+            <div>          <ul class="bullets">
+                <li>the file size is no bigger than 25MB</li>
+                <li>it's not a Zip file</li>
+            </ul></div>
+
+            </br>
 
             <div    class="form-group">
                 <label class="form-label" for="input-file">Choose the file to upload. You will submit your report later.</label>

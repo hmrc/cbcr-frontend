@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.model
+package uk.gov.hmrc.cbcrfrontend.xmlextractor
 
-import play.api.libs.json._
+import java.io.File
 
-case class FilingType(filingType:String)
-object FilingType{
-  implicit val format = Json.format[FilingType]
+import org.scalatest.Matchers
+import uk.gov.hmrc.play.test.UnitSpec
+
+class XmlExtractorSpec extends UnitSpec  with Matchers {
+
+
+  "The XmlExtractorSpec" should {
+
+    "return KeyXMLInfo from the input XML file" in {
+        XmlExtractor.getKeyXMLFileInfo(new File(s"test/resources/cbcr-valid.xml")).isValid
+   }
+
+    "fail if the input XML file is invalid" in {
+      XmlExtractor.getKeyXMLFileInfo(File.createTempFile("test", "test")).isInvalid
+    }
+
+  }
 }
-sealed trait FilingTypes
-case object PRIMARY extends FilingTypes
-case object VOLUNTARY extends FilingTypes
-case object LOCAL extends FilingTypes

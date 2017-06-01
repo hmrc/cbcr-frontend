@@ -50,21 +50,13 @@ implicit request: Request[_], messages: Messages)
                         </legend>
 
                         <label for="filing-capacity-1" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-1" name="filingCapacity" type="radio" value="@MNE_USER.toString">
-                            <span class="heading-small">@Messages("submitInfoFilingCapacity.mneUser.label")</span><br />
-                            <span class="form-hint">@Messages("submitInfoFilingCapacity.mneUser.hint")</span>
-                        </label>
-
-                        <label for="filing-capacity-2" class="block-label block-label selection-button-radio">
-                            <input id="filing-capacity-2" name="filingCapacity" type="radio" value="@AUTHORISED_AGENT.toString">
-                            <span class="heading-small">@Messages("submitInfoFilingCapacity.agent.label")</span><br />
-                            <span class="form-hint">@Messages("submitInfoFilingCapacity.agent.hint")</span>
+                            <input id="filing-capacity-1" name="filingCapacity" type="radio" value="@MNE_AGENT.toString">
+                            <span>@Messages("submitInfoFilingCapacity.mneUserAgent.label")</span><br />
                         </label>
 
                         <label for="filing-capacity-3" class="block-label block-label selection-button-radio">
                             <input id="filing-capacity-3" name="filingCapacity" type="radio" value="@REPRESENTATIVE.toString">
-                            <span class="heading-small">@Messages("submitInfoFilingCapacity.representative.label")</span><br />
-                            <span class="form-hint">@Messages("submitInfoFilingCapacity.representative.hint")</span>
+                            <span>@Messages("submitInfoFilingCapacity.representative.label")</span><br />
                         </label>
 
                     </fieldset>

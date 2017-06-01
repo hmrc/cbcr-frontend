@@ -25,6 +25,5 @@ object FilingCapacity {
 }
 
 sealed trait FilingUserCapacity
-case object MNE_USER extends FilingUserCapacity
-case object AUTHORISED_AGENT extends FilingUserCapacity
+case object MNE_AGENT extends FilingUserCapacity
 case object REPRESENTATIVE extends FilingUserCapacity

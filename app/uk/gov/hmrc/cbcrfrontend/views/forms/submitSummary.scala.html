@@ -17,10 +17,13 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.model._
+@import helper._
 
-@(phaseBannerBeta: Html)(
+@(phaseBannerBeta: Html, summaryData: SummaryData, form:Form[_])(
 implicit request: Request[_], messages: Messages)
 
+@cbcDeclarationErrors = @{form.error("cbcDeclaration").isDefined}
 
 @main_template("Country by Country Reporting") {
 <main id="content" role="main">
@@ -35,7 +38,7 @@ implicit request: Request[_], messages: Messages)
                 <tr>
                     <th colspan="2">
                         <h2 class="heading-medium">
-                        @Messages("submitSummary.secondaryHeading")
+                            Your submission details
                         </h2>
                     </th>
                     <th>
@@ -45,85 +48,88 @@ implicit request: Request[_], messages: Messages)
 
                 <tbody>
                 <tr>
-                    <th>
-                        @Messages("submitSummary.table.registeredMNE")
-                    </th>
                     <td>
-                        Multinational Ltd<br />
-                        Postcode: W1 1AA<br />
-                        UTR: 123456789<br />
-                        CbCID: XACBC0000999999
+                        Registered multinational enterprise:
+                    </td>
+                    <td>
+                        @{ if(summaryData.businessPartnerRecord.organisation.isDefined) summaryData.businessPartnerRecord.organisation.get.organisationName}<br />
+                        Postcode: @summaryData.businessPartnerRecord.address.postalCode.getOrElse("")<br />
+                        UTR: @summaryData.submissionMetaData.submissionInfo.utr.utr<br />
+                        CbCID: @summaryData.submissionMetaData.submissionInfo.cbcId.value
                     </td>
                     <td>
                     </td>
+
                 <tr>
-                <tr>
-                    <th>
-                    @Messages("submitSummary.table.filingType")
-                    </th>
                     <td>
-                        Primary
+                        Filing type:
                     </td>
-                    <td class="change-answer">
-                        <a href="#">
-                            Change <span class="visuallyhidden">filing type</span>
-                        </a>
+                    <td>
+                        @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == PRIMARY.toString) {@Messages("submitInfoFilingType.primaryFiling.label")}
+                        @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == VOLUNTARY.toString) { @Messages("submitInfoFilingType.voluntaryFiling.label")}
+                        @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == LOCAL.toString) {@Messages("submitInfoFilingType.localFiling.label")}
                     </td>
+
                 </tr>
                 <tr>
-                    <th>
-                        @Messages("submitSummary.table.registeredMNE")
-                    </th>
                     <td>
-                        Multinational Ltd<br />
+                        Ultimate parent entity:
                     </td>
-                    <td class="change-answer">
-                        <a href="#">
-                            Change <span class="visuallyhidden">Ultimate parent entity</span>
-                        </a>
+                    <td>
+                        @summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity<br />
                     </td>
+
                 </tr>
                 <tr>
-                    <th>
-                        @Messages("submitSummary.table.filedBy")
-                    </th>
                     <td>
-                        Tina Taxfiler<br />
-                        Multinational Ltd<br />
-                        Senior Tax agent<br />
-                        Tel: 01234 567 890<br />
-                        Email: tina.taxfiler@@multinational.com
+                        Filed by:
                     </td>
-                    <td class="change-answer">
-                        <a href="#">
-                            Change <span class="visuallyhidden">Filed by</span>
-                        </a>
+                    <td>
+                        @summaryData.submissionMetaData.submitterInfo.fullName<br />
+                        @summaryData.submissionMetaData.submitterInfo.agencyBusinessName<br />
+                        @summaryData.submissionMetaData.submitterInfo.jobRole<br />
+                        Tel: @summaryData.submissionMetaData.submitterInfo.contactPhone<br />
+                        Email: @summaryData.submissionMetaData.submitterInfo.email.value
                     </td>
+
                 </tr>
                 <tr>
-                    <th>
-                        @Messages("submitSummary.table.filingCapacity")
-                    </th>
                     <td>
-                        MNE user
+                        Filing capacity:
                     </td>
-                    <td class="change-answer">
-                        <a href="#">
-                            Change <span class="visuallyhidden">Filing capacity</span>
-                        </a>
+                    <td>
+                        @if(summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity == MNE_AGENT.toString) {@Messages("submitInfoFilingCapacity.mneUserAgent.label")}
+                        @if(summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity == REPRESENTATIVE.toString) { @Messages("submitInfoFilingCapacity.representative.label")}
                     </td>
+
                 </tr>
                 <tr>
-                    <th>
-                    @Messages("submitSummary.table.reportDetails")
-                    </th>
+                    <td>
+                        Report details:
+                    </td>
                     <td>
                         <div>
-                            {% include "includes/v1-1/xml-header-data.html" %}
-                        </div>
+                            <p><span class="faded-text faded-text--small">File name:</span><br />
+                                @summaryData.submissionMetaData.fileInfo.name
+                            </p>
+                            <p><span class="faded-text faded-text--small">File size:</span><br />
+                                @summaryData.submissionMetaData.fileInfo.length KB
+                            </p>
+                            <hr>
+                            <h3>Key information from report XML</h3>
+
+                            <p><span class="faded-text faded-text--small">MessageRefID:</span><br />
+                                @summaryData.keyXMLFileInfo.messageRefID
+                            </p>
+                            <p><span class="faded-text faded-text--small">ReportingPeriod:</span><br />
+                                @summaryData.keyXMLFileInfo.reportingPeriod
+                            </p>
+                            <p><span class="faded-text faded-text--small">TimeStamp:</span><br />
+                                @summaryData.keyXMLFileInfo.timeStamp
+                            </p>
+                      </div>
                     </td>
-                    <td class="change-answer">
-                    </td>
+
                 </tr>
                 </tbody>
             </table>
@@ -131,12 +137,26 @@ implicit request: Request[_], messages: Messages)
             <p class="text">
 
             </p>
-            @form(action=uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.confirm()) {
-                <legend class="visually-hidden">@Messages("submitSummary.declaration.heading")</legend>
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.confirm()) {
+            @CSRF.formField
+
+            @if(form.error("cbcDeclaration").isDefined){
+            <div class="form-field--error">
+            <span class="error-notification">@Messages("submitSummary.declaration.error.text")</span>
+
                 <div class="multiple-choice">
-                    <input id="cbc-report-submit-declaration" name="cbc-declaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
+                    <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
                     <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
                 </div>
+            </div>
+            } else {
+                <div class="multiple-choice">
+                    <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
+                    <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
+                </div>
+            }
+
+
                 <p>
                     <button type="submit" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
                 </p>

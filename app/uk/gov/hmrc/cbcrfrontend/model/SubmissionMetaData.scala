@@ -62,7 +62,7 @@ object SubmissionMetaData {
         "created" -> o.fileInfo.created
       ),
       "submissionInfo" -> Json.obj(
-        "gwGredId" -> o.submissionInfo.gwCredId,
+        "gwCredId" -> o.submissionInfo.gwCredId,
         "cbcId" -> o.submissionInfo.cbcId,
         "bpSafeId" -> o.submissionInfo.bpSafeId,
         "hash" -> o.submissionInfo.hash.value,
