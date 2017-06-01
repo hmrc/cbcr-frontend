@@ -1,15 +1,16 @@
 # microservice specific routes
 
 
+GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.technicalDifficulties
 GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
 
-GET        /fileUploadProgress/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress(envelopeId: String, fileId: String)
-GET        /fileUploadResponse/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
+GET        /file-upload-ready/:envelopeId/:fileId           @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileValidate(envelopeId: String, fileId:String)
+GET        /file-upload-progress/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress(envelopeId: String, fileId: String)
+GET        /file-upload-response/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
 GET        /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
-POST       /file-upload/:envelopeId/:fileId               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.upload(envelopeId: String, fileId: String)
-GET        /successFileUpload                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.successFileUpload(fileName: String, fileSize: String)
-GET        /errorFileUpload                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.errorFileUpload(errorMessage: String)
+GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getBusinessRuleErrors
+GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getXmlSchemaErrors
 
 GET        /filingType                                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingType
 POST       /submitFilingType                              @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingType
@@ -30,7 +31,7 @@ POST       /submitSubscriptionData                        @uk.gov.hmrc.cbcrfront
 GET        /deEnrol                                       @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.deEnrol
 GET        /enrolments                                    @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.getEnrolments
 
-GET        /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET        /assets/*file                                  controllers.Assets.versioned(path="/public", file: Asset)
 
 
 

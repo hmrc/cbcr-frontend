@@ -25,7 +25,7 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages.Implicits._
-import play.api.mvc.Result
+import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
@@ -49,11 +49,15 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
     )
   )
 
+  val technicalDifficulties = Action{ implicit request =>
+    InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+  }
+
   val enterCBCId = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
     getUserType(authContext).fold[Result](
       error => {
         Logger.error(error.errorMsg)
-        InternalServerError
+        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
       },
       userType =>
         Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm))
@@ -64,7 +68,10 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
 
   val submitCBCId = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
-      getUserType(authContext).leftMap(errors => InternalServerError(errors.errorMsg)).semiflatMap(userType =>
+      getUserType(authContext).leftMap{errors =>
+        Logger.error(errors.errorMsg)
+        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+      }.semiflatMap(userType =>
         cbcIdForm.bindFromRequest().fold[Future[Result]](
           errors => Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, errors))),
           id => {
@@ -74,7 +81,10 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
             } yield sd
 
             result.value.flatMap(_.fold(
-              (error: UnexpectedState) => Future.successful(InternalServerError(error.errorMsg)),
+              (error: UnexpectedState)               => {
+                Logger.error(error.errorMsg)
+                Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
+              },
               (details: Option[SubscriptionDetails]) => details.fold {
                 Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, true)))
               }(submissionDetails => {

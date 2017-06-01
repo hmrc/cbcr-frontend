@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.xmlvalidator
+package uk.gov.hmrc.cbcrfrontend.services
 
+import java.io.File
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
-import java.io.File
 
-import org.xml.sax.{ErrorHandler, SAXParseException}
 import cats.data.Validated
+import org.xml.sax.{ErrorHandler, SAXParseException}
 
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 
@@ -31,11 +30,11 @@ class CBCRXMLValidator {
 
   val schemaLang = "http://www.w3.org/2001/XMLSchema"
 
-  def validate(in: File): Validated[XmlErorHandler, File] = {
-    
+  def validateSchema(in: File): Validated[XmlErrorHandler, File] = {
+
     val validatorFactory = SchemaFactory.newInstance(schemaLang)
     val validator = validatorFactory.newSchema(new StreamSource(new File("conf/schema/CbcXML_v1.0.xsd"))).newValidator()
-    val xmlErrorHandler = new XmlErorHandler
+    val xmlErrorHandler = new XmlErrorHandler
     validator.setErrorHandler(xmlErrorHandler)
 
     validator.validate(new StreamSource(in))
@@ -47,7 +46,7 @@ class CBCRXMLValidator {
 
 }
 
-class XmlErorHandler extends ErrorHandler {
+class XmlErrorHandler extends ErrorHandler {
 
   def hasErrors: Boolean = errorsCollection.nonEmpty
   def hasWarnings: Boolean = warningsCollection.nonEmpty
@@ -56,7 +55,7 @@ class XmlErorHandler extends ErrorHandler {
   private var warningsListBuffer: ListBuffer[String] = new ListBuffer[String]()
 
   def errorsCollection: List[String] = errorsListBuffer.toList
-  def  warningsCollection: List[String] = warningsListBuffer.toList
+  def warningsCollection: List[String] = warningsListBuffer.toList
 
 
   private def addNewError(exception: SAXParseException) = {
@@ -68,8 +67,9 @@ class XmlErorHandler extends ErrorHandler {
   override def error(exception: SAXParseException): Unit = addNewError(exception)
 
   override def warning(exception: SAXParseException): Unit =
-    warningsListBuffer += s"Warning at position ${exception.getLineNumber}:${exception.getColumnNumber} ${exception.getMessage}"
+    warningsListBuffer += s"Warning at line number: ${exception.getLineNumber}, ${exception.getMessage}"
 
 }
 
 object CBCRXMLValidator extends CBCRXMLValidator
+

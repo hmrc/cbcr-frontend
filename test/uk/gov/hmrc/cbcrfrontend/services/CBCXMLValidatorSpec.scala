@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.xmlvalidator
+package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.File
 
@@ -43,11 +43,11 @@ class CBCXMLValidatorSpec extends FlatSpec with Matchers {
   }
 
   "An Xml Validator" should "not return any error for a valid file" in {
-    CBCRXMLValidator.validate(validXmlFile).isValid shouldBe true
+    CBCRXMLValidator.validateSchema(validXmlFile).isValid shouldBe true
   }
 
   it should "return an error if the file is invalid and a single error" in {
-    val validate = CBCRXMLValidator.validate(invalidXmlFile)
+    val validate = CBCRXMLValidator.validateSchema(invalidXmlFile)
     validate.isValid shouldBe false
     validate.toEither.isLeft shouldBe true
     validate.toEither.fold(a => {
@@ -57,7 +57,7 @@ class CBCXMLValidatorSpec extends FlatSpec with Matchers {
   }
 
   it should "return multiple errors if the file is invalid and has multiple errors" in {
-    val validate = CBCRXMLValidator.validate(invalidMultipleXmlFile)
+    val validate = CBCRXMLValidator.validateSchema(invalidMultipleXmlFile)
     validate.isValid shouldBe false
     validate.toEither.isLeft shouldBe true
     validate.toEither.fold(a => {

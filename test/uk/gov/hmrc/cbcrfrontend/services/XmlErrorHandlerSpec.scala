@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.xmlvalidator
+package uk.gov.hmrc.cbcrfrontend.services
 
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -30,7 +30,7 @@ class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
 
 
   "An XmlErrorHandler" should "report multiple errors and multiple warnings" in {
-    val xmlErorHandler =  new XmlErorHandler
+    val xmlErorHandler =  new XmlErrorHandler
 
     errors.foreach(spe => xmlErorHandler.error(spe))
     warnings.foreach(spe => xmlErorHandler.warning(spe))
@@ -40,7 +40,7 @@ class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
 
     val errorsMap = errors.map{spe => (s"${spe.getLineNumber.toString}:${spe.getColumnNumber}" , spe)}.toMap
 
-    for(i <- 0 until errors.size) {
+    for(i <- errors.indices) {
       val message = s"Error at line number: ${errors(i).getLineNumber}, ${errors(i).getMessage}"
       assert(message == xmlErorHandler.errorsCollection(i))
     }
@@ -48,8 +48,8 @@ class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
     xmlErorHandler.hasWarnings shouldBe true
     xmlErorHandler.warningsCollection.size shouldBe warnings.size
 
-    for(i <- 0 until warnings.size) {
-      val message = s"Warning at position ${warnings(i).getLineNumber}:${warnings(i).getColumnNumber} ${warnings(i).getMessage}"
+    for(i <- warnings.indices) {
+      val message = s"Warning at line number: ${warnings(i).getLineNumber}, ${warnings(i).getMessage}"
       assert(message == xmlErorHandler.warningsCollection(i))
     }
 
