@@ -40,57 +40,50 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.xmlextractor.XmlExtractor
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 
 @Singleton
-class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,val fus:FileUploadService, val xmlExtractor: XmlExtractor)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
+class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,val fus:FileUploadService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
 
   implicit lazy val fusUrl   = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
-
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    generateMetadataFile(authContext.user.userId,cache).flatMap {
-      _.fold(
-        errors => {
-          Logger.error(errors.toList.mkString(", "))
-          Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
-        },
-        data   => fus.uploadMetadataAndRoute(data).fold(
-          errors => {
-            Logger.error(errors.errorMsg)
-            InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-          },
-          _      =>{
 
-            Redirect(routes.Submission.submitSuccessReceipt())
-          }
+    OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {
+      summaryData => {
+        summarySubmitForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
+          formWithErrors => EitherT.left(Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
+            includes.phaseBannerBeta(), summaryData, formWithErrors)))),
+          _              => fus.uploadMetadataAndRoute(summaryData.submissionMetaData).bimap(
+            errors => {
+              Logger.error(errors.errorMsg)
+              InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+            },
+            _      => Redirect(routes.Submission.submitSuccessReceipt())
+          )
         )
-      )
-    }.recover{
-      case NonFatal(e) =>
-        Logger.error(e.getMessage,e)
-        InternalServerError(FrontendGlobal.internalServerErrorTemplate)    }
+      }
+    }.merge
   }
 
   val filingTypeForm: Form[FilingType] = Form(
     mapping("filingType" -> nonEmptyText
-    )((filingType: String) => FilingType(filingType)) (ft => Some(ft.filingType))
+    )(FilingType.apply)(FilingType.unapply)
   )
 
   val ultimateParentEntityForm: Form[UltimateParentEntity] = Form(
     mapping("ultimateParentEntity" -> nonEmptyText
-    )((ultimateParentEntity: String) => UltimateParentEntity(ultimateParentEntity)) (upe => Some(upe.ultimateParentEntity))
+    )(UltimateParentEntity.apply)(UltimateParentEntity.unapply)
   )
 
   val filingCapacityForm: Form[FilingCapacity] = Form(
     mapping("filingCapacity" -> nonEmptyText
-    )((filingCapacity: String) => FilingCapacity(filingCapacity)) (ft => Some(ft.filingCapacity))
+    )(FilingCapacity.apply)(FilingCapacity.unapply)
   )
 
   val submitterInfoForm: Form[SubmitterInfo] = Form(
@@ -108,7 +101,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
   val summarySubmitForm : Form[Boolean] = Form(
     single(
-      "cbcDeclaration" -> boolean.verifying(d => d == true)
+      "cbcDeclaration" -> boolean.verifying(d => d)
     )
   )
 
@@ -184,18 +177,17 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       md.fold(
         errors => {
           Logger.error(errors.toList.mkString(", "))
-          Future.successful(InternalServerError(errors.toList.mkString(", ")))
+          Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
         },
         submissionMetaData => (for {
-          file <- fus.getFile(submissionMetaData.fileInfo.envelopeId.value, submissionMetaData.fileInfo.id.value)
-          keyXMLFileInfo <- EitherT.fromEither[Future](xmlExtractor.getKeyXMLFileInfo(file).toEither).leftMap(_ => UnexpectedState("Problems extracting xml"))
-          bpr  <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
+          keyXMLFileInfo <- OptionT(cache.read[KeyXMLFileInfo]).toRight(UnexpectedState("KeyXMLFileInfo not found in cache"))
+          bpr            <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
           summaryData = SummaryData(bpr,submissionMetaData, keyXMLFileInfo)
-          _    <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save[SummaryData](summaryData))
-        } yield (summaryData)).fold(
+          _              <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save[SummaryData](summaryData))
+        } yield summaryData).fold(
             (error: UnexpectedState) => {
-              Logger.error(s"Error getting file: ${error.errorMsg}")
-              InternalServerError
+              Logger.error(error.errorMsg)
+              InternalServerError(FrontendGlobal.internalServerErrorTemplate)
             },
           summaryData => {
             Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
@@ -209,23 +201,6 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         Logger.error(e.getMessage,e)
         InternalServerError
     }
-  }
-
-  def confirm = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request =>
-
-      OptionT(cache.read[SummaryData]).toRight(UnexpectedState("Summary Data not found in cache")).leftMap(error => InternalServerError(error.errorMsg)).flatMap {
-        summaryData => {
-          summarySubmitForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
-            formWithErrors => EitherT.left(Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-              includes.phaseBannerBeta(), summaryData, formWithErrors)))),
-            _ =>
-              for {
-                _ <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData).leftMap(error => InternalServerError(error.errorMsg): Result)
-              } yield Redirect(routes.Submission.submitSuccessReceipt())
-          )
-        }
-      }.merge
   }
 
 

@@ -41,7 +41,6 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.xmlextractor.XmlExtractor
 
 
 class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
@@ -52,7 +51,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
   val cache = mock[CBCSessionCache]
   val fus  = mock[FileUploadService]
-  val xmlExtractor = mock[XmlExtractor]
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload"}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
@@ -61,7 +59,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val bpr = BusinessPartnerRecord("safeId",None, EtmpAddress(None,None,None,None,None,None))
   
   implicit val hc = HeaderCarrier()
-  val controller = new Submission(securedActions, cache, fus, xmlExtractor)
+  val controller = new Submission(securedActions, cache, fus)
 
 
   "POST /submitFilingType" should {
@@ -288,8 +286,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "return 200 if everything succeeds" in {
 
         val file = mock[File]
-        val keyInfo = mock[KeyXMLFileInfo]
 
+        when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh")))
         when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.successful(Some(bpr))
         when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("utr")))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId.create(1).toOption)
@@ -301,7 +299,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[UltimateParentEntity](EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(Some(UltimateParentEntity("yeah")))
         when(cache.read[FilingCapacity](EQ(FilingCapacity.format),any(),any())) thenReturn Future.successful(Some(FilingCapacity("Filing capacity")))
         when(cache.read[FileMetadata](EQ(FileMetadata.fileMetadataFormat),any(),any())) thenReturn Future.successful(Some(FileMetadata("asdf","lkjasdf","lkj","lkj",10,"lkjasdf",JsNull,"")))
-        when(xmlExtractor.getKeyXMLFileInfo(file)) thenReturn Validated.Valid(keyInfo)
         when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, UnexpectedState, File](Future.successful(Right(file)))
         when(cache.save[SummaryData](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
 
@@ -310,8 +307,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       }
     }
 
-    "The submission controller" should {
-      "provide an action '/confirm' and return 400 when the there is no data" in {
+    "provide an action '/confirm'" which {
+      "returns 400 when the there is no data" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
 
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
@@ -319,7 +316,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.BAD_REQUEST
       }
 
-      "provide an action '/confirm' and return 303 when the there is data" in {
+      "returns 303 when the there is data" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
 
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.parse("{\"cbcDeclaration\": \"true\"}")))
