@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json._
+import play.api.libs.json.Json
 
-case class FilingType(filingType:String)
-object FilingType{
-  implicit val format = Json.format[FilingType]
+case class SummaryData(businessPartnerRecord: BusinessPartnerRecord, submissionMetaData: SubmissionMetaData, keyXMLFileInfo: KeyXMLFileInfo)
+
+object SummaryData {
+  implicit val submissionMetaDataFormat = Json.format[SubmissionMetaData]
+  implicit val format = Json.format[SummaryData]
 }
-sealed trait FilingTypes
-case object PRIMARY extends FilingTypes
-case object VOLUNTARY extends FilingTypes
-case object LOCAL extends FilingTypes
+
+
+

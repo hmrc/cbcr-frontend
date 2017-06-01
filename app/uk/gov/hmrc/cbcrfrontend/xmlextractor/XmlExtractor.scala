@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.model
+package uk.gov.hmrc.cbcrfrontend.xmlextractor
 
-import play.api.libs.json._
+import java.io.File
 
-case class FilingType(filingType:String)
-object FilingType{
-  implicit val format = Json.format[FilingType]
+import cats.data.Validated
+import uk.gov.hmrc.cbcrfrontend.model.KeyXMLFileInfo
+
+class XmlExtractor {
+  import scala.xml.XML
+  def getKeyXMLFileInfo(file: File): Validated[Exception, KeyXMLFileInfo] = {
+
+    Validated.catchOnly[Exception] {
+
+    val xmlFile = XML.loadFile(file)
+    KeyXMLFileInfo(
+      (xmlFile \ "MessageSpec" \ "MessageRefId").text,
+      (xmlFile \ "MessageSpec" \ "ReportingPeriod").text,
+      (xmlFile \ "MessageSpec" \ "Timestamp").text)
+
+    }
+  }
 }
-sealed trait FilingTypes
-case object PRIMARY extends FilingTypes
-case object VOLUNTARY extends FilingTypes
-case object LOCAL extends FilingTypes
+
+object XmlExtractor extends XmlExtractor

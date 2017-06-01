@@ -18,8 +18,8 @@ package uk.gov.hmrc
 
 import java.io.File
 import java.nio.file.Files
-import scala.reflect.runtime.universe._
 
+import scala.reflect.runtime.universe._
 import cats.data.{EitherT, OptionT, ValidatedNel}
 import cats.instances.future._
 import cats.syntax.option._
@@ -34,15 +34,16 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
+
 package object cbcrfrontend {
 
-  def affinityGroupToUserType(a:AffinityGroup): Either[UnexpectedState,UserType] = a.affinityGroup.toLowerCase.trim match {
-    case "agent"        => Right(Agent)
+  def affinityGroupToUserType(a: AffinityGroup): Either[UnexpectedState, UserType] = a.affinityGroup.toLowerCase.trim match {
+    case "agent" => Right(Agent)
     case "organisation" => Right(Organisation)
-    case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
+    case other => Left(UnexpectedState(s"Unknown affinity group: $other"))
   }
 
-  def getUserType(ac:AuthContext)(implicit cache:CBCSessionCache, sec:AuthConnector, hc:HeaderCarrier, ec:ExecutionContext): ServiceResponse[UserType] =
+  def getUserType(ac: AuthContext)(implicit cache: CBCSessionCache, sec: AuthConnector, hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[UserType] =
     EitherT(OptionT(cache.read[AffinityGroup])
       .getOrElseF {
         sec.getUserDetails[AffinityGroup](ac)
@@ -52,13 +53,13 @@ package object cbcrfrontend {
       .map(affinityGroupToUserType)
     )
 
- def sha256Hash(file:File) : String =
+  def sha256Hash(file: File): String =
     String.format("%064x", new java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file.toPath))))
 
 
-  def generateMetadataFile(gatewayId:String, cache:CBCSessionCache)(implicit hc:HeaderCarrier, ec:ExecutionContext): Future[ValidatedNel[String,SubmissionMetaData]] = {
+  def generateMetadataFile(gatewayId: String, cache: CBCSessionCache)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[ValidatedNel[String, SubmissionMetaData]] = {
 
-    def errors[T:TypeTag](v:Option[T]) : ValidatedNel[String,T] =
+    def errors[T: TypeTag](v: Option[T]): ValidatedNel[String, T] =
       v.toValidNel(s"Could not find data for ${typeOf[T].toString} in cache")
 
     for {
@@ -77,7 +78,7 @@ package object cbcrfrontend {
       (errors(bpr) |@| errors(utr) |@| errors(hash) |@| errors(cbcId) |@| errors(fileId) |@|
         errors(envelopeId) |@| errors(submitterInfo) |@| errors(filingType) |@|
         errors(upe) |@| errors(filingCapacity) |@| errors(fileMetadata)
-        ).map { (record, utr, hash,id, fileId, envelopeId, info, filingType, upe, capacity, metadata) =>
+        ).map { (record, utr, hash, id, fileId, envelopeId, info, filingType, upe, capacity, metadata) =>
 
         SubmissionMetaData(
           SubmissionInfo(

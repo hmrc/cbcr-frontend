@@ -49,20 +49,17 @@ implicit request: Request[_], messages: Messages)
 
                         <label for="filing-type-1" class="block-label block-label selection-button-radio">
                             <input id="filing-type-1" name="filingType" type="radio" value="@PRIMARY.toString">
-                            <span class="heading-small">@Messages("submitInfoFilingType.primaryFiling.label")</span><br />
-                            <span class="form-hint form-hint--small">@Messages("submitInfoFilingType.primaryFiling.hint")</span>
+                            <span>@Messages("submitInfoFilingType.primaryFiling.label")</span><br />
                         </label>
 
                         <label for="filing-type-2" class="block-label block-label selection-button-radio">
                             <input id="filing-type-2" name="filingType" type="radio" value="@VOLUNTARY.toString">
-                            <span class="heading-small">@Messages("submitInfoFilingType.voluntaryFiling.label")</span><br />
-                            <span class="form-hint form-hint--small">@Messages("submitInfoFilingType.voluntaryFiling.hint")</span>
+                            <span>@Messages("submitInfoFilingType.voluntaryFiling.label")</span><br />
                         </label>
 
                         <label for="filing-type-3" class="block-label block-label selection-button-radio">
                             <input id="filing-type-3" name="filingType" type="radio" value="@LOCAL.toString">
-                            <span class="heading-small">@Messages("submitInfoFilingType.localFiling.label")</span><br />
-                            <span class="form-hint form-hint--small">@Messages("submitInfoFilingType.localFiling.hint")</span>
+                            <span>@Messages("submitInfoFilingType.localFiling.label")</span><br />
                         </label>
                     </fieldset>
                 </div>

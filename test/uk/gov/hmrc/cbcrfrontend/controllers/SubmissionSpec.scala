@@ -16,7 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import cats.data.EitherT
+import java.io.File
+
+import cats.data.{EitherT, Validated}
 import org.mockito.Matchers._
 import org.mockito.Mockito.when
 import play.api.libs.json.{JsNull, JsValue, Json}
@@ -28,7 +30,7 @@ import play.api.i18n.MessagesApi
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.{FileId, KeyXMLFileInfo, _}
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.emailaddress.EmailAddress
@@ -39,6 +41,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.cbcrfrontend.xmlextractor.XmlExtractor
 
 
 class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
@@ -49,6 +52,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
   val cache = mock[CBCSessionCache]
   val fus  = mock[FileUploadService]
+  val xmlExtractor = mock[XmlExtractor]
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload"}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
@@ -57,7 +61,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val bpr = BusinessPartnerRecord("safeId",None, EtmpAddress(None,None,None,None,None,None))
   
   implicit val hc = HeaderCarrier()
-  val controller = new Submission(securedActions, cache,fus)
+  val controller = new Submission(securedActions, cache, fus, xmlExtractor)
 
 
   "POST /submitFilingType" should {
@@ -101,7 +105,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
   "POST /submitFilingCapacity" should {
     "return 200 when the data exists" in {
-      val filingCapacity = FilingCapacity("MNE_USER")
+      val filingCapacity = FilingCapacity("MNE_AGENT")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitFilingCapacity").withJsonBody(Json.toJson(filingCapacity)))
       when(cache.save[FilingCapacity](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitFilingCapacity(fakeRequestSubscribe)) shouldBe Status.OK
@@ -193,13 +197,13 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   }
 
   "POST /submitSubmitterInfo" should {
-    "return 200 when all of the data exists & valid" in {
+    "return 303 when all of the data exists & valid" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
 
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
       when(cache.save[SubmitterInfo](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.OK
+      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.SEE_OTHER
     }
   }
   "The submission controller" should {
@@ -259,27 +263,32 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         )
       }
     }
-    "provide a 'confirm' Action that" should {
-      val fakeRequestConfirm= addToken(FakeRequest("GET", "/confirm"))
+    "provide a 'submitSummary' Action that" should {
+      val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSummary"))
       "return 500 if generating the metadata fails" in {
         when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.failed(new Exception("argh"))
-        status(Await.result(controller.confirm(fakeRequestConfirm), 10.second)) shouldBe Status.INTERNAL_SERVER_ERROR
+        status(Await.result(controller.submitSummary(fakeRequestSubmitSummary), 10.second)) shouldBe Status.INTERNAL_SERVER_ERROR
         when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.successful(Some(bpr))
 
         when(cache.read[UltimateParentEntity]) thenReturn Future.successful(None)
-        status(controller.confirm(fakeRequestConfirm)) shouldBe Status.INTERNAL_SERVER_ERROR
+        status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
         when(cache.read[UltimateParentEntity]) thenReturn Future.successful(Some(UltimateParentEntity("yeah")))
 
       }
-      "return 500 if the fileUploadService fails" in {
-        when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,UnexpectedState, String](Future.successful(Left(UnexpectedState("Some error"))))
-        status(controller.confirm(fakeRequestConfirm)) shouldBe Status.INTERNAL_SERVER_ERROR
 
-        when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,UnexpectedState, String](Future.failed(new Exception("Something else went wrong!")))
-        status(controller.confirm(fakeRequestConfirm)) shouldBe Status.INTERNAL_SERVER_ERROR
+    "return 500 if the fileUploadService fails" in {
+      when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, UnexpectedState, File](Future.successful(Left(UnexpectedState("Some error"))))
+      status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
 
-      }
-      "return 303 if everything succeeds" in {
+      when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, UnexpectedState, File](Future.failed(new Exception("Something else went wrong!")))
+      status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
+
+    }
+
+      "return 200 if everything succeeds" in {
+
+        val file = mock[File]
+        val keyInfo = mock[KeyXMLFileInfo]
 
         when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.successful(Some(bpr))
         when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("utr")))
@@ -292,11 +301,63 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[UltimateParentEntity](EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(Some(UltimateParentEntity("yeah")))
         when(cache.read[FilingCapacity](EQ(FilingCapacity.format),any(),any())) thenReturn Future.successful(Some(FilingCapacity("Filing capacity")))
         when(cache.read[FileMetadata](EQ(FileMetadata.fileMetadataFormat),any(),any())) thenReturn Future.successful(Some(FileMetadata("asdf","lkjasdf","lkj","lkj",10,"lkjasdf",JsNull,"")))
+        when(xmlExtractor.getKeyXMLFileInfo(file)) thenReturn Validated.Valid(keyInfo)
+        when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, UnexpectedState, File](Future.successful(Right(file)))
+        when(cache.save[SummaryData](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
 
-        when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,UnexpectedState, String](Future.successful(Right("yeah")))
-        status(controller.confirm(fakeRequestConfirm)) shouldBe Status.SEE_OTHER
+        status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.OK
 
       }
     }
+
+    "The submission controller" should {
+      "provide an action '/confirm' and return 400 when the there is no data" in {
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+
+        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
+        when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
+        status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.BAD_REQUEST
+      }
+
+      "provide an action '/confirm' and return 303 when the there is data" in {
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+
+        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.parse("{\"cbcDeclaration\": \"true\"}")))
+
+        when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
+        when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,UnexpectedState, String](Future.successful(Right("routed")))
+
+        status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
+      }
+    }
+  }
+
+  private def submissionData = {
+    val fileInfo = FileInfo( FileId("id") ,
+      EnvelopeId("envelopeId"),
+      "status",
+      "name",
+      "contentType",
+      BigDecimal(0.0),
+      "created"
+    )
+    val submissionInfo =   SubmissionInfo(
+     "gwGredId",
+     CBCId("XVCBC0000000056").get,
+     "bpSafeId",
+     Hash("hash"),
+     "ofdsRegime",
+     Utr("utr"),
+     FilingType("filingType"),
+     UltimateParentEntity("ultimateParentEntity"),
+     FilingCapacity("filingCapacity")
+   )
+    val submitterInfo = SubmitterInfo("fullName", "agencyBusinessName", "contactPhone", "jobRole", EmailAddress("abc@abc.com"), None)
+    SubmissionMetaData(submissionInfo, submitterInfo, fileInfo)
+
+  }
+
+  private def keyXMLInfo = {
+    KeyXMLFileInfo("messageRefID", "2012-04-01", "2012-04-01T00:00")
   }
 }
