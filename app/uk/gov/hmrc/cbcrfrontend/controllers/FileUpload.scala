@@ -108,6 +108,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
       f           <- fileUploadService.getFile(envelopeId, fileId)
       schemaVal    = schemaValidator.validateSchema(f).leftMap(XMLErrors.errorHandlerToXmlErrors).toValidatedNel
       businessVal  = businessRuleValidator.validateBusinessRules(f)
+      _            = businessVal.flatMap(_.map(xmlInfo => cache.save(xmlInfo)).sequence)
       errors      <- EitherT.right(businessVal.map(_.swap.toOption -> schemaVal.swap.toOption))
       _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(Hash(sha256Hash(f))))
     } yield Tuple3(errors._1, errors._2, metadata)

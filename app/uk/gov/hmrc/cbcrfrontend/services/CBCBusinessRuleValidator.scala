@@ -45,7 +45,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
   private val messageRefIDRegex = ("""GB(\d{4})\w{2}(""" + cbcRegex + """)CBC40[1,2](""" + dateRegex + """)\w{1,56}""").r
 
 
-  def validateBusinessRules(in:File)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,Unit]] = {
+  def validateBusinessRules(in:File)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,KeyXMLFileInfo]] = {
     val x = new XMLEventReader(scala.io.Source.fromFile(in))
     messageRefIDCheck(x.toStream)
   }
@@ -64,12 +64,12 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
     if(findElementText("SendingEntityIN",in).contains(cbcId)) { ().valid}
     else MessageRefIDCBCIdMismatch.invalid
 
-  private def validateReportingPeriod(in:Stream[XMLEvent], year:String) : Validated[MessageRefIDError,Unit] = {
-    Logger.error(s"year: $year")
+  private def validateReportingPeriod(in:Stream[XMLEvent], year:String) : Validated[MessageRefIDError,String] = {
     val rp = findElementText("ReportingPeriod",in)
-    Logger.error(s"rp: $rp")
-    if (rp.exists(_.startsWith(year))) ().valid
-    else MessageRefIDReportingPeriodMismatch.invalid
+    rp.fold[Validated[MessageRefIDError,String]](MessageRefIDReportingPeriodMismatch.invalid){date =>
+      if(date.startsWith(year)) { date.valid }
+      else { MessageRefIDReportingPeriodMismatch.invalid }
+    }
   }
 
   private def validateDateStamp(dateTime:String) : Validated[MessageRefIDError,Unit] =
@@ -83,20 +83,22 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
       if(result) MessageRefIDDuplicate.invalid else ().valid
     )
 
-  private def messageRefIDCheck(in:Stream[XMLEvent])(implicit hc:HeaderCarrier) : Future[ValidatedNel[MessageRefIDError, Unit]] = {
-    findElementText("MessageRefId",in) .fold[Future[ValidatedNel[MessageRefIDError, Unit]]](
-      MessageRefIDMissing.invalidNel[Unit].pure[Future])(
+  private def messageRefIDCheck(in:Stream[XMLEvent])(implicit hc:HeaderCarrier) : Future[ValidatedNel[MessageRefIDError, KeyXMLFileInfo]] = {
+    findElementText("MessageRefId",in) .fold[Future[ValidatedNel[MessageRefIDError, KeyXMLFileInfo]]](
+      MessageRefIDMissing.invalidNel[KeyXMLFileInfo].pure[Future])(
       {
         case invalidMsgRefId if invalidMsgRefId.equalsIgnoreCase("null") || invalidMsgRefId.isEmpty =>
-          MessageRefIDMissing.invalidNel[Unit].pure[Future]
+          MessageRefIDMissing.invalidNel[KeyXMLFileInfo].pure[Future]
         case msgRefId@messageRefIDRegex(reportingPeriod, cbcId, date) =>
           isADuplicate(msgRefId).map(dup =>
             (dup.toValidatedNel |@|
               validateCBCId(in, cbcId).toValidatedNel |@|
               validateReportingPeriod(in, reportingPeriod).toValidatedNel |@|
-              validateDateStamp(date).toValidatedNel ).map((_, _, _, _) => ())
+              validateDateStamp(date).toValidatedNel |@|
+              findElementText("Timestamp",in).toValidNel(MessageRefIDTimestampError)
+              ).map((_, _, rp, _, ts) => KeyXMLFileInfo(msgRefId,rp,ts))
           )
-        case _ => MessageRefIDFormatError.invalidNel[Unit].pure[Future]
+        case _ => MessageRefIDFormatError.invalidNel[KeyXMLFileInfo].pure[Future]
       }
 
     )

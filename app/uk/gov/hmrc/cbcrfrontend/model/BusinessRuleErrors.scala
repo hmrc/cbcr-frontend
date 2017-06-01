@@ -73,7 +73,7 @@ object MessageRefIDError {
     case MessageRefIDFormatError             => "MessageRefID must match defined format"
     case MessageRefIDDuplicate               => "ErrorCode: 50009 - The referenced file has a duplicate MessageRefID value that was received on a previous file"
     case MessageRefIDReportingPeriodMismatch => "The ReportingPeriod element of the MessageRefId does not match the Year of the Reporting Period field in the XML"
-    case MessageRefIDTimestampError          => "The XML Creation Time stamp element  is not a valid UTC date time"
+    case MessageRefIDTimestampError          => "The XML Creation Time stamp element is not a valid UTC date time"
   }
 }
 
