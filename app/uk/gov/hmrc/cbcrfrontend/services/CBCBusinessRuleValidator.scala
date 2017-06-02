@@ -81,9 +81,6 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
   private def validateTestDataPresent(in:Stream[XMLEvent]) : Validated[BusinessRuleErrors,Unit] =
     if(findElementText("DocTypeIndic",Some("OECD1[123]"),in).isDefined) TestDataError.invalid
     else ().valid
-//    Either.cond(in.collectFirst{
-//      case EvElemStart(_, ci"DocTypeIndic", _, _) #:: EvText(ci"OECD1[123]") #:: _ => true
-//    }.isDefined,(),TestDataError).toValidated
 
   // MessageRefIDChecks
   private def validateCBCId(in:Stream[XMLEvent], cbcId:String) : Validated[MessageRefIDError,Unit] =
