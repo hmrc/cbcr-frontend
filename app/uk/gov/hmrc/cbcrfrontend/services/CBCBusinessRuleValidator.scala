@@ -25,6 +25,7 @@ import cats.syntax.all._
 import cats.instances.all._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import play.api.Logger
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.HeaderCarrier
 
@@ -48,9 +49,12 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
   def validateBusinessRules(in:File, cBCId: CBCId)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,KeyXMLFileInfo]] = {
     val stream = new XMLEventReader(scala.io.Source.fromFile(in)).toStream
     messageRefIDCheck(stream).map{ messageRefIdVal  =>
-      val otherRules = (validateTestDataPresent(stream).toValidatedNel |@|
-        validateReceivingCountry(stream).toValidatedNel |@|
-        validateSendingEntity(stream,cBCId).toValidatedNel).map((_,_,_) => ())
+      val otherRules = (
+          validateTestDataPresent(stream).toValidatedNel |@|
+          validateReceivingCountry(stream).toValidatedNel |@|
+          validateSendingEntity(stream,cBCId).toValidatedNel |@|
+          validateFileName(in,stream).toValidatedNel
+        ).map((_,_,_,_) => ())
 
       otherRules *> messageRefIdVal
 
@@ -66,6 +70,11 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
           text.forall(t => refId.toLowerCase.matches("(?i)"+t.toLowerCase))            => Some(refId)
       case _ #:: t                                                                     => findElementText(tagName,text,t)
     }
+  }
+
+  private def validateFileName(file:File,in:Stream[XMLEvent]) : Validated[BusinessRuleErrors,Unit] = {
+    val withoutExtension = file.getName.split("""\.""").headOption
+    findElementText("MessageRefId", withoutExtension, in).fold[Validated[BusinessRuleErrors, Unit]](FileNameError.invalid)(_ => ().valid)
   }
 
   private def validateSendingEntity(in:Stream[XMLEvent],cbcId:CBCId) : Validated[BusinessRuleErrors,Unit] =
