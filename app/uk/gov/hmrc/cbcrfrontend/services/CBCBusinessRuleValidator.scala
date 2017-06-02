@@ -25,13 +25,13 @@ import cats.syntax.all._
 import cats.instances.all._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import play.api.Logger
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.pull._
+import uk.gov.hmrc.cbcrfrontend._
 
 
 @Singleton
@@ -45,27 +45,50 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
   private val messageRefIDRegex = ("""GB(\d{4})\w{2}(""" + cbcRegex + """)CBC40[1,2](""" + dateRegex + """)\w{1,56}""").r
 
 
-  def validateBusinessRules(in:File)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,KeyXMLFileInfo]] = {
-    val x = new XMLEventReader(scala.io.Source.fromFile(in))
-    messageRefIDCheck(x.toStream)
-  }
+  def validateBusinessRules(in:File, cBCId: CBCId)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,KeyXMLFileInfo]] = {
+    val stream = new XMLEventReader(scala.io.Source.fromFile(in)).toStream
+    messageRefIDCheck(stream).map{ messageRefIdVal  =>
+      val otherRules = (validateTestDataPresent(stream).toValidatedNel |@|
+        validateReceivingCountry(stream).toValidatedNel |@|
+        validateSendingEntity(stream,cBCId).toValidatedNel).map((_,_,_) => ())
 
-  @tailrec
-  private def findElementText(text:String,input:Stream[XMLEvent]) : Option[String] = {
-    input match {
-      case Stream.Empty                                          => None
-      case EvElemStart(_, `text`, _, _) #:: EvText(refId) #:: _  => Some(refId)
-      case _ #:: t                                               => findElementText(text,t)
+      otherRules *> messageRefIdVal
+
     }
   }
 
+  @tailrec
+  private def findElementText(tagName:String,text:Option[String],input:Stream[XMLEvent]) : Option[String] = {
+    input match {
+      case Stream.Empty                                                                => None
+      case EvElemStart(_, value, _, _) #:: EvText(refId) #:: _
+        if value.equalsIgnoreCase(tagName) &&
+          text.forall(t => refId.toLowerCase.matches("(?i)"+t.toLowerCase))            => Some(refId)
+      case _ #:: t                                                                     => findElementText(tagName,text,t)
+    }
+  }
+
+  private def validateSendingEntity(in:Stream[XMLEvent],cbcId:CBCId) : Validated[BusinessRuleErrors,Unit] =
+    findElementText("SendingEntityIN",None,in).fold[Validated[SendingEntityError.type,Unit]](SendingEntityError.invalid){s =>
+      if(s.equalsIgnoreCase(cbcId.value)){ ().valid } else { SendingEntityError.invalid }
+    }
+
+  private def validateReceivingCountry(in:Stream[XMLEvent]) : Validated[BusinessRuleErrors,Unit] =
+    findElementText("ReceivingCountry",None,in).fold[Validated[ReceivingCountryError.type,Unit]](ReceivingCountryError.invalid){r =>
+      if(r.equalsIgnoreCase("GB")){ ().valid } else { ReceivingCountryError.invalid }
+    }
+
+  private def validateTestDataPresent(in:Stream[XMLEvent]) : Validated[BusinessRuleErrors,Unit] =
+    if(findElementText("DocTypeIndic",Some("OECD1[123]"),in).isDefined) TestDataError.invalid
+    else ().valid
+
   // MessageRefIDChecks
   private def validateCBCId(in:Stream[XMLEvent], cbcId:String) : Validated[MessageRefIDError,Unit] =
-    if(findElementText("SendingEntityIN",in).contains(cbcId)) { ().valid}
+    if(findElementText("SendingEntityIN",None,in).contains(cbcId)) { ().valid}
     else MessageRefIDCBCIdMismatch.invalid
 
   private def validateReportingPeriod(in:Stream[XMLEvent], year:String) : Validated[MessageRefIDError,String] = {
-    val rp = findElementText("ReportingPeriod",in)
+    val rp = findElementText("ReportingPeriod",None,in)
     rp.fold[Validated[MessageRefIDError,String]](MessageRefIDReportingPeriodMismatch.invalid){date =>
       if(date.startsWith(year)) { date.valid }
       else { MessageRefIDReportingPeriodMismatch.invalid }
@@ -84,7 +107,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
     )
 
   private def messageRefIDCheck(in:Stream[XMLEvent])(implicit hc:HeaderCarrier) : Future[ValidatedNel[MessageRefIDError, KeyXMLFileInfo]] = {
-    findElementText("MessageRefId",in) .fold[Future[ValidatedNel[MessageRefIDError, KeyXMLFileInfo]]](
+    findElementText("MessageRefId",None,in) .fold[Future[ValidatedNel[MessageRefIDError, KeyXMLFileInfo]]](
       MessageRefIDMissing.invalidNel[KeyXMLFileInfo].pure[Future])(
       {
         case invalidMsgRefId if invalidMsgRefId.equalsIgnoreCase("null") || invalidMsgRefId.isEmpty =>
@@ -95,7 +118,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
               validateCBCId(in, cbcId).toValidatedNel |@|
               validateReportingPeriod(in, reportingPeriod).toValidatedNel |@|
               validateDateStamp(date).toValidatedNel |@|
-              findElementText("Timestamp",in).toValidNel(MessageRefIDTimestampError)
+              findElementText("Timestamp",None,in).toValidNel(MessageRefIDTimestampError)
               ).map((_, _, rp, _, ts) => KeyXMLFileInfo(msgRefId,rp,ts))
           )
         case _ => MessageRefIDFormatError.invalidNel[KeyXMLFileInfo].pure[Future]
