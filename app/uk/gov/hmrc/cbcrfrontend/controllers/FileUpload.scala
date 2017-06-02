@@ -107,7 +107,8 @@ class FileUpload @Inject()(val sec: SecuredActions,
       _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(metadata))
       f           <- fileUploadService.getFile(envelopeId, fileId)
       schemaVal    = schemaValidator.validateSchema(f).leftMap(XMLErrors.errorHandlerToXmlErrors).toValidatedNel
-      businessVal  = businessRuleValidator.validateBusinessRules(f)
+      cbcId       <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("Unable to find CBCId in cache"))
+      businessVal  = businessRuleValidator.validateBusinessRules(f,cbcId)
       _            = businessVal.flatMap(_.map(xmlInfo => cache.save(xmlInfo)).sequence)
       errors      <- EitherT.right(businessVal.map(_.swap.toOption -> schemaVal.swap.toOption))
       _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(Hash(sha256Hash(f))))

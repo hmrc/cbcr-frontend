@@ -25,6 +25,10 @@ sealed trait ValidationErrors
 case class XMLErrors(errors:List[String]) extends ValidationErrors
 sealed trait BusinessRuleErrors extends ValidationErrors
 
+case object TestDataError extends BusinessRuleErrors
+case object SendingEntityError extends BusinessRuleErrors
+case object ReceivingCountryError extends BusinessRuleErrors
+
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
 case object MessageRefIDFormatError extends  MessageRefIDError
@@ -35,20 +39,34 @@ case object MessageRefIDTimestampError extends MessageRefIDError
 
 object ValidationErrors {
   implicit val validationErrorShows: Show[ValidationErrors] = Show.show[ValidationErrors]{
-    case x:XMLErrors             => x.show
+    case x:XMLErrors          => x.show
     case x:BusinessRuleErrors => x.show
   }
 }
 object BusinessRuleErrors {
   implicit val format = new Format[BusinessRuleErrors] {
     override def writes(o: BusinessRuleErrors): JsValue = o match {
-      case m:MessageRefIDError => Json.toJson[MessageRefIDError](m)(MessageRefIDError.format)
+      case m:MessageRefIDError   => Json.toJson[MessageRefIDError](m)(MessageRefIDError.format)
+      case TestDataError         => JsString(TestDataError.toString)
+      case SendingEntityError    => JsString(SendingEntityError.toString)
+      case ReceivingCountryError => JsString(ReceivingCountryError.toString)
     }
 
-    override def reads(json: JsValue): JsResult[BusinessRuleErrors] = Json.fromJson[MessageRefIDError](json)
+    override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
+      Json.fromJson[MessageRefIDError](json).orElse[BusinessRuleErrors]{
+        json.asOpt[String].map(_.toLowerCase.trim) match {
+          case Some("testdataerror")         => JsSuccess(TestDataError)
+          case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
+          case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
+          case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
+        }
+      }
   }
   implicit val eShows: Show[BusinessRuleErrors] =  Show.show[BusinessRuleErrors]{
     case m:MessageRefIDError => m.show
+    case TestDataError         =>  "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD11OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
+    case SendingEntityError    => "The SendingEntityIN field must match your CBCId"
+    case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
   }
 }
 
@@ -80,7 +98,9 @@ object MessageRefIDError {
 object XMLErrors {
   implicit val format = Json.format[XMLErrors]
   def errorHandlerToXmlErrors(x:XmlErrorHandler) : XMLErrors = XMLErrors(x.errorsCollection ++ x.warningsCollection)
-  implicit val xmlShows: Show[XMLErrors] = Show.show[XMLErrors](e => "ErrorCode: 50007 - The referenced file failed validation against the CbC XML Schema\n\n" + e.errors.mkString("\n"))
+  implicit val xmlShows: Show[XMLErrors] = Show.show[XMLErrors](e =>
+    "ErrorCode: 50007 - The referenced file failed validation against the CbC XML Schema\n\n" + e.errors.mkString("\n")
+  )
 }
 
 case class AllBusinessRuleErrors(errors:List[BusinessRuleErrors])
