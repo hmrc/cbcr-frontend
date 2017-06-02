@@ -32,6 +32,7 @@ import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
 import uk.gov.hmrc.play.filters.MicroserviceFilterSupport
 import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
+import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 
 
 object FrontendGlobal
@@ -50,7 +51,14 @@ object FrontendGlobal
     uk.gov.hmrc.cbcrfrontend.views.html.error_template(pageTitle, heading, message)
 
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"microservice.metrics")
+
+  override def filters =
+    if(CbcrSwitches.whitelistDisabled.enabled) // safe default to be on unless we switch it off
+      super.filters
+    else WhitelistFilter +: super.filters
+
 }
+
 
 object ControllerConfiguration extends ControllerConfig {
   lazy val controllerConfigs = Play.current.configuration.underlying.as[Config]("controllers")
@@ -70,3 +78,4 @@ object AuditFilter extends FrontendAuditFilter with RunMode with AppName with Mi
 
   override def controllerNeedsAuditing(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsAuditing
 }
+
