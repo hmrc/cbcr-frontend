@@ -18,20 +18,23 @@ package uk.gov.hmrc.cbcrfrontend
 
 import javax.inject.Singleton
 
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.Source
+import akka.stream.{ActorMaterializer, Materializer}
+import akka.util.ByteString
+import play.api.Logger
+import play.api.http.HttpVerbs.{POST => POST_VERB}
+import play.api.mvc.MultipartFormData.FilePart
+import play.api.mvc.Results.{Forbidden, NotImplemented, Redirect}
+import play.api.mvc.{Call, Filter, RequestHeader, Result}
 import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector => Auditing}
 import uk.gov.hmrc.play.config.{AppName, RunMode, ServicesConfig}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.http.ws.{WSDelete, WSGet, WSPost, WSPut}
-import play.api.mvc.MultipartFormData.{DataPart, FilePart}
-import uk.gov.hmrc.play.http.ws._
-import uk.gov.hmrc.play.audit.http.HttpAuditing
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpReads, HttpResponse}
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import play.api.http.HttpVerbs.{POST => POST_VERB}
 import uk.gov.hmrc.play.http.hooks.HttpHook
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import uk.gov.hmrc.play.http.ws.{WSDelete, WSGet, WSPost, WSPut, _}
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpReads, HttpResponse}
 
 import scala.concurrent.Future
 
@@ -71,6 +74,51 @@ object FileUploadFrontEndWS extends WSPost with AppName {
       mapErrors(POST_VERB, url, httpResponse).map(rds.read(POST_VERB, url, _))
     }
   }
+
   override val hooks: Seq[HttpHook] = Seq.empty[HttpHook]
+
+}
+
+object WhitelistFilter extends Filter
+  with RunMode {
+
+  implicit val system = ActorSystem("wlf")
+
+  implicit def mat: Materializer = ActorMaterializer()
+
+  def whitelist: Seq[String] = FrontendAppConfig.whitelist
+
+
+  def excludedPaths: Seq[Call] = {
+    FrontendAppConfig.whitelistExcluded.map { path =>
+      Call("GET", path)
+    }
+  }
+
+  val trueClient = "True-Client-IP"
+
+  private def toCall(rh: RequestHeader): Call = Call(rh.method, rh.uri)
+
+  def apply
+  (f: (RequestHeader) => Future[Result])
+  (rh: RequestHeader): Future[Result] =
+    if (excludedPaths contains toCall(rh)) {
+      f(rh)
+    } else {
+      rh.headers.get(trueClient) map {
+        ip =>
+          if (whitelist.contains(ip)) {
+            Logger.debug(s"Whitelist allowing request ${rh.method} ${rh.uri} from ${ip}")
+            f(rh)
+          }
+          else {
+            Logger.warn(s"Request for ${rh.method} ${rh.uri} was blocked by Whitelist from ${ip}")
+            Future.successful(NotImplemented)
+          }
+      } getOrElse Future.successful({
+        Logger.warn(s"No ${trueClient} http header found, request for ${rh.method} ${rh.uri} was blocked by Whitelist")
+        NotImplemented
+      })
+    }
 
 }
