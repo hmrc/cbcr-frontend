@@ -138,9 +138,26 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           errors => errors.head shouldBe ReceivingCountryError,
           _      => fail("No TestDataError generated")
         )
-
       }
 
+      "Filename does not match MessageRefId" in {
+        val validFile = new File("test/resources/cbcr-valid.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile,cbcId), 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe FileNameError,
+          _      => fail("No FileNameError generated")
+        )
+      }
+    }
+    "return the KeyXmlInfo when everything is fine" in {
+      val validFile = new File("test/resources/GB2016RGXVCBC0000000056CBC40120170311T090000X.xml")
+      val result = Await.result(validator.validateBusinessRules(validFile,cbcId), 5.seconds)
+
+      result.fold(
+        errors => fail(s"Error were generated: $errors"),
+        _      => ()
+      )
     }
   }
 
