@@ -41,10 +41,10 @@ class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut, config:Configura
   def getId()(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(url+ "/cbcr/getCBCId")
 
   def messageRefIdExists(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.GET(url + s"/cbcr/messageRefId/$id")
+    http.GET(url + s"/cbcr/message-ref-id/$id")
 
   def saveMessageRefId(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/cbcr/messageRefId/$id",JsNull)
+    http.PUT(url + s"/cbcr/message-ref-id/$id",JsNull)
 
 
 
