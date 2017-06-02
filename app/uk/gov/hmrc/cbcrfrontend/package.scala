@@ -56,6 +56,9 @@ package object cbcrfrontend {
   def sha256Hash(file: File): String =
     String.format("%064x", new java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file.toPath))))
 
+  implicit class CaseInsensitiveRegex(sc: StringContext) {
+    def ci = ( "(?i)" + sc.parts.mkString ).r
+  }
 
   def generateMetadataFile(gatewayId: String, cache: CBCSessionCache)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[ValidatedNel[String, SubmissionMetaData]] = {
 
