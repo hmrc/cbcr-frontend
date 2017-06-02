@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.model
 import cats.Show
 import cats.syntax.show._
-import play.api.Logger
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
 
@@ -25,6 +24,7 @@ sealed trait ValidationErrors
 case class XMLErrors(errors:List[String]) extends ValidationErrors
 sealed trait BusinessRuleErrors extends ValidationErrors
 
+case object FileNameError extends BusinessRuleErrors
 case object TestDataError extends BusinessRuleErrors
 case object SendingEntityError extends BusinessRuleErrors
 case object ReceivingCountryError extends BusinessRuleErrors
@@ -50,11 +50,13 @@ object BusinessRuleErrors {
       case TestDataError         => JsString(TestDataError.toString)
       case SendingEntityError    => JsString(SendingEntityError.toString)
       case ReceivingCountryError => JsString(ReceivingCountryError.toString)
+      case FileNameError         => JsString(FileNameError.toString)
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
       Json.fromJson[MessageRefIDError](json).orElse[BusinessRuleErrors]{
         json.asOpt[String].map(_.toLowerCase.trim) match {
+          case Some("filenameerror")         => JsSuccess(FileNameError)
           case Some("testdataerror")         => JsSuccess(TestDataError)
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
           case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
@@ -67,6 +69,7 @@ object BusinessRuleErrors {
     case TestDataError         =>  "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD11OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
     case SendingEntityError    => "The SendingEntityIN field must match your CBCId"
     case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
+    case FileNameError         => "MessageRefID must match filename"
   }
 }
 
