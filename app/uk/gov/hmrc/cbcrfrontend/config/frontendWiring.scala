@@ -107,11 +107,18 @@ object WhitelistFilter extends Filter
     } else {
       rh.headers.get(trueClient) map {
         ip =>
-          if (whitelist.contains(ip))
+          if (whitelist.contains(ip)) {
+            Logger.debug(s"Whitelist allowing request ${rh.method} ${rh.uri} from ${ip}")
             f(rh)
-          else
+          }
+          else {
+            Logger.warn(s"Request for ${rh.method} ${rh.uri} was blocked by Whitelist from ${ip}")
             Future.successful(NotImplemented)
-      } getOrElse Future.successful(NotImplemented)
+          }
+      } getOrElse Future.successful({
+        Logger.warn(s"No ${trueClient} http header found, request for ${rh.method} ${rh.uri} was blocked by Whitelist")
+        NotImplemented
+      })
     }
 
 }
