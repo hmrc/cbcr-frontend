@@ -27,6 +27,7 @@ class CBCXMLValidatorSpec extends FlatSpec with Matchers {
   val validXmlFile: File = loadFile("cbcr-valid.xml")
   val invalidXmlFile: File = loadFile("cbcr-invalid.xml")
   val invalidMultipleXmlFile: File = loadFile("cbcr-invalid-multiple-errors.xml")
+  val fatal:File = loadFile("fatal.xml")
 
   val ERROR_MESSAGE = "cvc-datatype-valid.1.2.1: '2016-11-01 15:00' is not a valid value for 'dateTime'."
 
@@ -64,6 +65,13 @@ class CBCXMLValidatorSpec extends FlatSpec with Matchers {
       assert(a.hasErrors)
       assert(a.errorsCollection.size == 40)
     }, f => f.deleteOnExit())
+  }
+
+  it should "not throw errors if the validator encounters a fatal error" in {
+    CBCRXMLValidator.validateSchema(fatal).fold(
+      (xmlErrors: XmlErrorHandler) => println("At least I didn't throw an exception"),
+      (file: File) => fail("Should have failed!")
+    )
   }
 
 

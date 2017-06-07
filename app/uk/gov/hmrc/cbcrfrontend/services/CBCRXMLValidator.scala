@@ -37,10 +37,15 @@ class CBCRXMLValidator {
     val xmlErrorHandler = new XmlErrorHandler
     validator.setErrorHandler(xmlErrorHandler)
 
-    validator.validate(new StreamSource(in))
+    try {
+      validator.validate(new StreamSource(in))
 
-    if(xmlErrorHandler.hasErrors) Validated.Invalid(xmlErrorHandler)
-    else Validated.Valid(in)
+      if(xmlErrorHandler.hasErrors) Validated.Invalid(xmlErrorHandler)
+      else Validated.Valid(in)
+
+    } catch {
+      case _:SAXParseException => Validated.Invalid(xmlErrorHandler)
+    }
 
   }
 
