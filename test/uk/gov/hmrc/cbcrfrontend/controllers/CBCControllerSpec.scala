@@ -88,6 +88,17 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
     }
   }
 
+  val fakeRequestSignOut = addToken(FakeRequest("GET", "/signOut"))
+
+  "GET /signOut" should {
+    "return 303" in {
+      val controller = cbcController
+      val result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
+      status(result) shouldBe Status.SEE_OTHER
+    }
+  }
+
+
   def cbcController(implicit messagesApi: MessagesApi) = {
 
     implicit val authCon = authConnector(TestUsers.cbcrUser)
