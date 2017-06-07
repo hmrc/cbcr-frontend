@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT, ValidatedNel}
@@ -64,7 +66,10 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
               Logger.error(errors.errorMsg)
               InternalServerError(FrontendGlobal.internalServerErrorTemplate)
             },
-            _      => Redirect(routes.Submission.submitSuccessReceipt())
+            _      => {
+              val submissionDateTime = LocalDateTime.now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH.MM."))
+              Redirect(routes.Submission.submitSuccessReceipt(submissionDateTime, summaryData.submissionMetaData.submissionInfo.hash.value))
+            }
           )
         )
       }
@@ -205,9 +210,9 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
 
 
-  val submitSuccessReceipt = Action.async { implicit request =>
+  def submitSuccessReceipt(submissionDateTime: String, hash: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(
-      includes.asideBusiness(), includes.phaseBannerBeta()
+      includes.asideBusiness(), includes.phaseBannerBeta(), submissionDateTime: String, hash: String
     )))
   }
 

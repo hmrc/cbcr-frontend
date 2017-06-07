@@ -15,10 +15,10 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@(asideBusiness: Html, phaseBannerBeta: Html, submissionDateTime: String, hash: String)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -32,24 +32,22 @@ implicit request: Request[_], messages: Messages)
             <section>
                 <div class="govuk-box-highlight">
                     <h1>@Messages("submitSuccessReceipt.mainHeading")</h1>
-                    <p>
-                        @Messages("submitSuccessReceipt.confirmationNumberLabel")<br>
-                        <strong class="heading-medium">H25-RS42-2VP</strong>
-                    </p>
                 </div>
             </section>
-            <p>@Messages("submitSuccessReceipt.submissionDateLabel") 31/12/2017 at 13.42.</p>
+            <p>@Messages("submitSuccessReceipt.submissionDateLabel") @submissionDateTime</p>
+            @Messages("submitSuccessReceipt.hash.text")
+            @hash
+            <p>
+               @Messages("submitSuccessReceipt.print.text")
+            </p>
 
             <button onclick="window.print()" class="toggle__button">@Messages("submitSuccessReceipt.print")</button>
             <br>
-            <h2 class="heading-medium">@Messages("submitSuccessReceipt.whatNext.heading")</h2>
-            <ul class="bullets">
-                <li>@Messages("submitSuccessReceipt.whatNext.item1")</li>
-                <li>@Messages("submitSuccessReceipt.whatNext.item2")</li>
-                <li>@Messages("submitSuccessReceipt.whatNext.item3")</li>
-            </ul>
+            <h3>@Messages("submitSuccessReceipt.whatNext.heading")</h3>
+                <p>@Messages("submitSuccessReceipt.whatNext.text")</p>
+
             <p>
-                <a class="button" href="/country-by-country-reporting/filingHistory" id="btn-close">@Messages("submitSuccessReceipt.close")</a>
+                <a class="button" href="signOut" id="btn-close">@Messages("submitSuccessReceipt.close")</a>
             </p>
         </div>
     </div>

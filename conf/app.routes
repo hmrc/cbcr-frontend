@@ -5,10 +5,11 @@ GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfront
 GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
+GET        /signOut                                       @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.signOut
 
-GET        /file-upload-ready/:envelopeId/:fileId           @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileValidate(envelopeId: String, fileId:String)
-GET        /file-upload-progress/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress(envelopeId: String, fileId: String)
-GET        /file-upload-response/:envelopeId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
+GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileValidate(envelopeId: String, fileId:String)
+GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress(envelopeId: String, fileId: String)
+GET        /file-upload-response/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
 GET        /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
 GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getBusinessRuleErrors
 GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getXmlSchemaErrors
@@ -19,7 +20,7 @@ POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfront
 POST       /submitFilingCapacity                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingCapacity
 POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo
 GET        /submitSummary                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSummary
-GET        /submitSuccessReceipt                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt
+GET        /submitSuccessReceipt                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt(submissionDateTime: String, hash: String)
 GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingHistory
 POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.Submission.confirm
 
