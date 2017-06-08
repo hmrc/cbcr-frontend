@@ -48,6 +48,7 @@ implicit request: Request[_], messages: Messages)
                       <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion2")</li>
                       <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion3")</li>
                   </ul>
+                  <p>@Messages("subscribeFirst.noMatchingBusiness.suggestion4")</p>
               </div>
       }
 
@@ -56,6 +57,7 @@ implicit request: Request[_], messages: Messages)
               <div class="form-field form-field--tall">
 
                   <label>@Messages("subscribeFirst.utr.label")</label>
+                  <span class="form-hint">@Messages("subscribeFirst.utr.hint")</span>
                   <input class="form-control--block" type="text" name="utr" id="utr" />
 
               </div>
