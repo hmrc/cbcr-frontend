@@ -105,7 +105,7 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
 
   val signOut = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request => {
-      val continue = s"?continue=${uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.enterCBCId().absoluteURL}/enter-CBCId"
+      val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.enterCBCId().url}/enter-CBCId"
       Future.successful(Redirect(s"${FrontendAppConfig.cbcrFrontendHost}/gg/sign-out$continue"))
     }
   }
