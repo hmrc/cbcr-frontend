@@ -75,8 +75,8 @@ filingHistory.report.size=Size
 filingHistory.report.referenceNo=Reference no.
 
 submitInfoFilingCapacity.mainHeading=In what capacity are you submitting a Country by Country report?
-submitInfoFilingCapacity.mneUserAgent.label=I'm either an employee of the multinational enterprise, or an agent with 64/8 authorisation to submit a report on it's behalf
-submitInfoFilingCapacity.representative.label=I'm neither an employee of the multinational enterprise nor an agent with 64/8 authorisation, but I do have permission to report on its behalf
+submitInfoFilingCapacity.mneUserAgent.label=I''m either an employee of the multinational enterprise, or an agent with 64/8 authorisation to submit a report on it's behalf
+submitInfoFilingCapacity.representative.label=I''m neither an employee of the multinational enterprise nor an agent with 64/8 authorisation, but I do have permission to report on its behalf
 submitInfoFilingCapacity.representative.hint=You have been asked to submit on behalf of the ultimate parent entity without 64-8 authorisation
 
 submitInfoFilingType.mainHeading=What type of Country by Country report are you submitting?
@@ -96,6 +96,20 @@ submitSuccessReceipt.whatNext.item1=Your report will now be checked
 submitSuccessReceipt.whatNext.item2=We''ll contact you if there are any issues with the report
 submitSuccessReceipt.whatNext.item3=We'll email a confirmation when your report has been approved
 submitSuccessReceipt.close=Close
+
+fileUploadProgress.mainHeading=Checking XML Schema…
+fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
+
+fileUploadResult.mainHeading.ok=Your report''s format is correct
+fileUploadResult.mainHeading.error=There are errors in your XML report
+fileUploadResult.error.data=There are data errors in the XML report. Please download the following error summary and make sure the issues are resolved before resubmitting.
+fileUploadResult.error.data.download=Data error report
+fileUploadResult.error.xml=There are errors in the XML report. Please download the following error summary and send it to your XML provider to correct them before resubmitting.
+fileUploadResult.error.xml.download=XML error report
+fileUploadResult.viewGuidance=View formatting guidance
+fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been submitted
+
+
 
 submitSummary.mainHeading=Check your report details
 submitSummary.secondaryHeading=Your submission details
@@ -119,9 +133,7 @@ uploadReport.wellCheck=After you''ve uploaded your report, we''ll check that it 
 uploadReport.inputField.label=Choose the file you want to upload:
 uploadReport.afterInputField=Make sure you check this is the correct file before uploading it.
 uploadReport.uploadButton=Upload
-
-checkUpload.mainHeading=Checking xml schema…
-checkUpload.message=This screen will change once the file has been successfully checked and uploaded.
+        
 
 uploadResult.mainHeading.ok=Your report''s format is correct
 uploadResult.mainHeading.error=There are errors in your XML report

@@ -46,23 +46,18 @@ implicit request: Request[_], messages: Messages)
 
             @if(schemaErrors) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>Your report contains XML Schema errors.</p>
-                <br>
-                <p>Download the error report and send it to your XML report provider so they can correct the file.</p>
-                <br>
+                <p>@Messages("fileUploadResult.error.xml")</p>
+
                 <div class="notice">
-                    <a href="../../get-xml-schema-errors">Download XML error report</a>
+                    <a href="../../get-xml-schema-errors">@Messages("fileUploadResult.error.xml.download")</a>
                 </div>
                 <br>
             </div>
             } @if(busErrors){
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>Your report contains data errors. </p>
-                <br>
-                <p>Download the data error report and make sure all the issues are resolved.</p>
-                <br>
+                <p>@Messages("fileUploadResult.error.data")</p>
                 <div class="notice">
-                    <a href="../../get-business-rule-errors">Download Data error report</a>
+                    <a href="../../get-business-rule-errors">@Messages("fileUploadResult.error.data.download")</a>
                 </div>
                 <br>
             </div>
@@ -78,7 +73,7 @@ implicit request: Request[_], messages: Messages)
                 </tr>
                 </tbody>
             </table>
-
+            <p>@Messages("fileUploadResult.notYetSubmitted")</p>
             <p><a class="button" href="../../filingType" id="btn-continue">@Messages("form.controls.continue")</a></p>
             } else {
             <p><a href="#">@Messages("uploadResult.viewFormattingGuidance")</a></p>

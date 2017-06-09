@@ -34,15 +34,15 @@ implicit request: Request[_], messages: Messages)
  <div class="grid-row">
   <div class="column-two-thirds">
    <h1>
-    @Messages("checkUpload.mainHeading")
+    @Messages("fileUploadProgress.mainHeading")
    </h1>
    <body onload="poll('@envelopeId', '@fileId', '@hostName')" >
 
    <img alt="loading..." src="@assetsLocationPrefix/images/loading.gif" />
    </body>
-   <br>
-   <br>
-   <p>@Messages("checkUpload.mainHeading") </p>
+
+   <p>@Messages("fileUploadProgress.message")</p>
+  
 
   </div>
  </div>
