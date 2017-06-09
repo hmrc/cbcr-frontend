@@ -34,7 +34,7 @@ implicit request: Request[_], messages: Messages)
  <div class="grid-row">
   <div class="column-two-thirds">
    <h1>
-    Checking report...
+    @Messages("checkUpload.mainHeading")
    </h1>
    <body onload="poll('@envelopeId', '@fileId', '@hostName')" >
 
@@ -42,7 +42,7 @@ implicit request: Request[_], messages: Messages)
    </body>
    <br>
    <br>
-   <p>This screen will change once the file has been successfully checked and uploaded.</p>
+   <p>@Messages("checkUpload.mainHeading") </p>
 
   </div>
  </div>

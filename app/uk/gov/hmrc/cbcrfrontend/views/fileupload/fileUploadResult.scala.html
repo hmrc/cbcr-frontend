@@ -38,9 +38,9 @@ implicit request: Request[_], messages: Messages)
         <div class="column-two-thirds">
             <h1>
                 @if(!errors){
-                Your report's format is correct
+                    @Messages("uploadResult.mainHeading.ok")
                 } else {
-                There are errors in your XML report
+                    @Messages("uploadResult.mainHeading.error")
                 }
             </h1>
 
@@ -70,19 +70,19 @@ implicit request: Request[_], messages: Messages)
             @if(!errors){
             <table id="table-successReport">
                 <tbody>
-                <th scope="row">Filename</th>
+                <th scope="row">@Messages("uploadResult.fileName")</th>
                 <th scope="row">@fileName</th>
                 <tr>
-                    <td>Size</td>
+                    <td>@Messages("uploadResult.fileSize")</td>
                     <td>@fileSize KB</td>
                 </tr>
                 </tbody>
             </table>
 
-            <p><a class="button" href="../../filingType" id="btn-continue">Continue</a></p>
+            <p><a class="button" href="../../filingType" id="btn-continue">@Messages("form.controls.continue")</a></p>
             } else {
-            <p><a href="#">View formatting guidance</a></p>
-            <a class="button" href="service-landing-page">Sign out</a>
+            <p><a href="#">@Messages("uploadResult.viewFormattingGuidance')</a></p>
+            <a class="button" href="service-landing-page">@Messages("form.controls.signOut")</a>
             }
 
         </div>

@@ -29,29 +29,24 @@ implicit request: Request[_], messages: Messages)
     <div class="grid-row">
         <div class="column-two-thirds">
             <h1>
-                Upload your report
+            @Messages("uploadReport.mainHeading")
             </h1>
 
             <div class="indent-warning">
-                <p><strong>Your report must be a valid XML file using the current OECD Country by Country XML schema.</strong></p>
+                <p><strong>@Messages("uploadReport.warning")</strong></p>
             </div>
-            <p>After you've uploaded your report, we'll check that it conforms with the XML schema and HMRC guidelines.</p>
-            <p>Please check that:</p>
-            <div>          <ul class="bullets">
-                <li>the file size is no bigger than 25MB</li>
-                <li>it's not a Zip file</li>
-            </ul></div>
-
-            </br>
+            <p>@Messages("uploadReport.checkSize")</p>
+            <p>@Messages("uploadReport.wellCheck")</p>
 
             <div    class="form-group">
-                <label class="form-label" for="input-file">Choose the file to upload. You will submit your report later.</label>
+                <label class="form-label" for="input-file">@Messages("uploadReport.wellCheck")</label>
                 <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" >
 
                 <input type="file" id="input-file" class="upload-report-input" name ="@fileName" accept="application/xml" >
+                    <p>@Messages("uploadReport.afterInputField")</p>
                 <div class="form-field form-field--submit">
                     @csrf_token()
-                <button class="btn button" type="submit" id="upload-button">@Messages("cbc.button.fileupload")</button>
+                <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
                 </div>
                 </form>
             </div>
