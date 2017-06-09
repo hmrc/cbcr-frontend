@@ -13,6 +13,8 @@ function poll(envelopeId, fileId, protocolHostName) {
       },
       error: function(xhr,status,error){
         var errMsg = xhr.responseText;
+        console.log("Error status: " + status);
+        console.log("Error message: " + errMsg);
         window.location.href= protocolHostName+"/country-by-country-reporting/technical-difficulties";
       }
 
