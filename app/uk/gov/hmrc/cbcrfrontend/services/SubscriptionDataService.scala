@@ -21,7 +21,7 @@ import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriberContact, SubscriptionDetails}
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriberContact, SubscriptionDetails, Utr}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.http.NotFoundException
@@ -37,6 +37,18 @@ class SubscriptionDataService extends ServicesConfig{
 
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
+  def alreadySubscribed(utr:Utr)(implicit hc: HeaderCarrier, ec: ExecutionContext):ServiceResponse[Boolean] = {
+    val fullUrl = url.url + s"/cbcr/utr-already-subscribed/${utr.utr}"
+    EitherT[Future,UnexpectedState, Boolean](
+      WSHttp.GET[HttpResponse](fullUrl).map(_ => Right[UnexpectedState,Boolean](true)).recover{
+        case _:NotFoundException => Right[UnexpectedState,Boolean](false)
+        case NonFatal(t)         =>
+          Logger.error("GET future failed", t)
+          Left[UnexpectedState,Boolean](UnexpectedState(t.getMessage))
+      }
+    )
+  }
+
   def retrieveSubscriptionData(id:CBCId)(implicit hc: HeaderCarrier, ec: ExecutionContext):ServiceResponse[Option[SubscriptionDetails]] = {
     val fullUrl = url.url + s"/cbcr/retrieveSubscriptionData/$id"
     EitherT[Future,UnexpectedState, Option[SubscriptionDetails]](
@@ -48,7 +60,7 @@ class SubscriptionDataService extends ServicesConfig{
       }.recover{
         case _:NotFoundException => Right[UnexpectedState,Option[SubscriptionDetails]](None)
         case NonFatal(t) =>
-          Logger.error("GET future failed")
+          Logger.error("GET future failed", t)
           Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
       }
     )
