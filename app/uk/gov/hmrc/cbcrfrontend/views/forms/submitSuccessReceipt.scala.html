@@ -29,27 +29,26 @@ implicit request: Request[_], messages: Messages)
 
     <div class="grid-row">
         <div class="column-two-thirds">
-            <section>
-                <div class="govuk-box-highlight">
-                    <h1>@Messages("submitSuccessReceipt.mainHeading")</h1>
-                    <p>
+
+                <div class="transaction-banner--complete">
+                    <section></section>
+                    <span class="transaction-banner__heading h1-heading">@Messages("submitSuccessReceipt.mainHeading")</span>
+                    <p class="transaction-banner__heading">
                         @Messages("submitSuccessReceipt.confirmationNumberLabel")<br>
                         <strong class="heading-medium">H25-RS42-2VP</strong>
                     </p>
                 </div>
-            </section>
-            <p>@Messages("submitSuccessReceipt.submissionDateLabel") 31/12/2017 at 13.42.</p>
 
+            <p>@Messages("submitSuccessReceipt.submissionDateLabel") 31/12/2017 at 13.42.</p>
+            <p>@Messages("submitSuccessReceipt.digiSig") <br />6753c4e3bf192b0f9881ceb2d822a75e1b618269fbd1b444112d35a10b1987f6</p>
+            <p>@Messages("submitSuccessReceipt.printInfo")</p>
             <button onclick="window.print()" class="toggle__button">@Messages("submitSuccessReceipt.print")</button>
             <br>
             <h2 class="heading-medium">@Messages("submitSuccessReceipt.whatNext.heading")</h2>
-            <ul class="bullets">
-                <li>@Messages("submitSuccessReceipt.whatNext.item1")</li>
-                <li>@Messages("submitSuccessReceipt.whatNext.item2")</li>
-                <li>@Messages("submitSuccessReceipt.whatNext.item3")</li>
+            @Messages("submitSuccessReceipt.whatNext.info")
             </ul>
             <p>
-                <a class="button" href="/country-by-country-reporting/filingHistory" id="btn-close">@Messages("submitSuccessReceipt.close")</a>
+                <a class="button" href="/country-by-country-reporting/filingHistory" id="btn-close">@Messages("form.controls.signOut")</a>
             </p>
         </div>
     </div>

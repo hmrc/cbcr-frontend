@@ -62,7 +62,7 @@ implicit request: Request[_], messages: Messages)
 
                 <tr>
                     <td>
-                        Filing type:
+                        Report type:
                     </td>
                     <td>
                         @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == PRIMARY.toString) {@Messages("submitInfoFilingType.primaryFiling.label")}
@@ -82,7 +82,7 @@ implicit request: Request[_], messages: Messages)
                 </tr>
                 <tr>
                     <td>
-                        Filed by:
+                        Submitted by:
                     </td>
                     <td>
                         @summaryData.submissionMetaData.submitterInfo.fullName<br />
@@ -95,7 +95,7 @@ implicit request: Request[_], messages: Messages)
                 </tr>
                 <tr>
                     <td>
-                        Filing capacity:
+                        Submitter type:
                     </td>
                     <td>
                         @if(summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity == MNE_AGENT.toString) {@Messages("submitInfoFilingCapacity.mneUserAgent.label")}

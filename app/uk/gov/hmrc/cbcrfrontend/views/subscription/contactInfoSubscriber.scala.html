@@ -41,9 +41,9 @@ implicit request: Request[_], messages: Messages)
             <p>@Messages("contactInfoSubscriber.subHeading")</p>
             <div class="form-group">
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.submitSubscriptionData()){
-                @formFieldDisplay(nameErrors,"name", Some(Messages("contactInfoSubscriber.fullName.error")),Messages("contactInfoSubscriber.fullName.label"), form)
-                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages("contactInfoSubscriber.phoneNumber.error")),Messages("contactInfoSubscriber.phoneNumber.label"), form)
-                @formFieldDisplay(emailErrors,"email", Some(Messages("contactInfoSubscriber.emailAddress.error")),Messages("contactInfoSubscriber.emailAddress.label"), form)
+                @formFieldDisplay(nameErrors,"name", Some(Messages("contactInfoSubscriber.fullName.error")),Messages("contactInfoSubscriber.fullName.label"), form, Option(Messages("contactInfoSubscriber.fullName.hint")))
+                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages("contactInfoSubscriber.phoneNumber.error")),Messages("contactInfoSubscriber.phoneNumber.label"), form, Option(Messages("contactInfoSubscriber.phoneNumber.hint")))
+                @formFieldDisplay(emailErrors,"email", Some(Messages("contactInfoSubscriber.emailAddress.error")),Messages("contactInfoSubscriber.emailAddress.label"), form, Option(Messages("contactInfoSubscriber.emailAdress.hint")))
                 @CSRF.formField
                 <div class="form-field">
                     <button role="button" type="submit" id="continue">Continue</button>
