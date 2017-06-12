@@ -38,9 +38,7 @@ class AuthConnector @Inject() (httpGet: HttpGet, config:Configuration)(implicit 
 
   def getEnrolments(implicit hc:HeaderCarrier): Future[JsValue] = for {
     authRecord    <- httpGet.GET[JsValue](url + "/auth/authority")
-    _ = Logger.error("AUTHRECORD: " + authRecord)
     enrolmentsUri <- Future{(authRecord \ "enrolments").get}
-    _ = Logger.error("ENROLMENTSURI: " + enrolmentsUri)
     enrolments    <- httpGet.GET[JsValue](url + enrolmentsUri.toString().replaceAll("\"",""))
   } yield enrolments
 
