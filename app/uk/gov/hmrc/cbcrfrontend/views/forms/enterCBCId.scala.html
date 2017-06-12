@@ -44,7 +44,10 @@ implicit request: Request[_], messages: Messages)
                         <span class="error-notification">Please enter a valid CBCId</span>
                     }
                     @if(noMatch){ <span class="error-notification">The CbC ID does not match one that has been registered</span> }
-                    <p class="form-hint">@Messages("enterCBCId.formHint")</p>
+                    <label for="txt-cbcID">
+                        <div class="form-hint">@Messages("enterCBCId.formHint")</div>
+                        <div>@Messages("enterCBCId.formHintWhereYouGotIt")</div>
+                    </label>
 
                     <input type="text" class="@{if(form.error("cbcId").isDefined || noMatch){ "input--medium input--cleared form-control error-field" } else {"input--medium input--cleared form-control"} }" name="cbcId" id="txt-cbcID"/>
                 </div>
@@ -56,8 +59,13 @@ implicit request: Request[_], messages: Messages)
             @{userType match {
                 case Agent =>
                 case Organisation =>
-                    <h3>Don't have a Country by Country ID?</h3>
-                    <a href="/country-by-country-reporting/enterKnownFacts">Register online</a>
+                    <div class="reminder" style="margin-top:30px">
+                        <div class="label">Temporary content - remove for beta</div>
+                        <h3 style="padding-left:1em">Don't have a Country by Country ID?</h3>
+                        <a href="/country-by-country-reporting/enterKnownFacts">Register online</a>
+                    </div>
+
+
             }}
         </div>
     </div>
