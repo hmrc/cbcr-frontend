@@ -101,7 +101,6 @@ class FileUpload @Inject()(val sec: SecuredActions,
 
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
 
-
     val result: ServiceResponse[(Option[NonEmptyList[BusinessRuleErrors]], Option[NonEmptyList[XMLErrors]], FileMetadata)] = for {
       metadata    <- fileUploadService.getFileMetaData(envelopeId, fileId).subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
       _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(metadata))
@@ -135,7 +134,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
       }
     ).flatten.recover{
       case NonFatal(e) =>
-        Logger.error(e.getMessage)
+        Logger.error(e.getMessage,e)
         InternalServerError(FrontendGlobal.internalServerErrorTemplate)
     }
 
@@ -173,6 +172,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
   def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     (for {
       response <- fileUploadService.getFileUploadResponse(envelopeId,fileId).leftMap(_ => NoContent)
+      _ = Logger.info(s"FileUploadResponse: $response")
       _        <- fileUploadResponseToResult(response,envelopeId)
     } yield Accepted).merge
   }

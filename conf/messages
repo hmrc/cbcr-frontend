@@ -44,9 +44,10 @@ subscribeSuccessCbcId.printThis3=Sign out now, and then sign back in again when 
 contactInfoSubscriber.mainHeading=Enter your organisation''s Country by Country contact details
 contactInfoSubscriber.subHeading=Enter the name of the person we should contact if there are any questions about the information contained in the Country by Country report.
 contactInfoSubscriber.fullName.label=Full name
-contactInfoSubscriber.fullName.error=Please enter your full name
+contactInfoSubscriber.fullName.error=Please enter your Full name
 contactInfoSubscriber.fullName.hint=The person we should contact
 contactInfoSubscriber.jobTitle.label=Job title/role
+contactInfoSubscriber.jobTitle.hint=The person we should contact
 contactInfoSubscriber.jobTitle.error=Please enter your Job title/role
 contactInfoSubscriber.phoneNumber.label=Phone number
 contactInfoSubscriber.phoneNumber.hint=The phone number of the person we should contact
@@ -97,9 +98,22 @@ submitSuccessReceipt.submissionDateLabel=Your report was received on
 submitSuccessReceipt.digiSig=You can use the following digital signature as a receipt for the report you submitted: 
 submitSuccessReceipt.printInfo=Print or save this screen to keep a record of your report.
 submitSuccessReceipt.print=Print this page
+submitSuccessReceipt.print.text=Print or save this screen to keep a record of your report.
 submitSuccessReceipt.whatNext.heading=What happens next
 submitSuccessReceipt.whatNext.info=We''ll check the information in your report. If there are no issues with it, there''s nothing more for you to do. If there are issues with your report, we''ll contact you.
-submitSuccessReceipt.close=Close
+fileUploadProgress.mainHeading=Checking XML Schema…
+fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
+
+fileUploadResult.mainHeading.ok=Your report''s format is correct
+fileUploadResult.mainHeading.error=There are errors in your XML report
+fileUploadResult.error.data=There are data errors in the XML report. Please download the following error summary and make sure the issues are resolved before resubmitting.
+fileUploadResult.error.data.download=Data error report
+fileUploadResult.error.xml=There are errors in the XML report. Please download the following error summary and send it to your XML provider to correct them before resubmitting.
+fileUploadResult.error.xml.download=XML error report
+fileUploadResult.viewGuidance=View formatting guidance
+fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been submitted
+
+
 
 fileUploadProgress.mainHeading=Checking XML Schema…
 fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
