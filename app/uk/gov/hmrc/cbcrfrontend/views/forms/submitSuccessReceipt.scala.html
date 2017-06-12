@@ -29,20 +29,17 @@ implicit request: Request[_], messages: Messages)
 
     <div class="grid-row">
         <div class="column-two-thirds">
-
+            <section>
                 <div class="transaction-banner--complete">
-                    <section></section>
+
                     <span class="transaction-banner__heading h1-heading">@Messages("submitSuccessReceipt.mainHeading")</span>
                     <p class="transaction-banner__heading">
                 </div>
-            @Messages("submitSuccessReceipt.hash.text")
-            @hash
-            <p>
-               @Messages("submitSuccessReceipt.print.text")
-            </p>
-
+            </section>
             <p>@Messages("submitSuccessReceipt.submissionDateLabel") 31/12/2017 at 13.42.</p>
-            <p>@Messages("submitSuccessReceipt.digiSig") <br />6753c4e3bf192b0f9881ceb2d822a75e1b618269fbd1b444112d35a10b1987f6</p>
+            @Messages("submitSuccessReceipt.digiSig")
+            @hash
+
             <p>@Messages("submitSuccessReceipt.printInfo")</p>
             <button onclick="window.print()" class="toggle__button">@Messages("submitSuccessReceipt.print")</button>
             <br>

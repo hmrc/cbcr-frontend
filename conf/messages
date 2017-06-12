@@ -12,6 +12,9 @@ enterCBCId.formHintWhereYouGotIt=Country by Country ID
 enterCBCId.dontHaveAnID.heading=Don''t have a Country by Country ID?
 enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
 enterCBCId.dontHaveAnID.link.text=Register online
+enterCBCId.errorSummary.header=This Country by Country ID is invalid. This could be because:
+enterCBCId.errorSummary.reason1=It doesn''t match any that have been registered
+enterCBCId.errorSummary.reason2=You''ve entered it wrongly 
 
 subscribeFirst.mainHeading=Register for a Country by Country ID
 subscribeFirst.agentHeading=Verify your client Organisations Details
@@ -131,12 +134,12 @@ fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been s
 
 submitSummary.mainHeading=Check your report details
 submitSummary.secondaryHeading=Your submission details
-submitSummary.table.registeredMNE=Registered MNE:
-submitSummary.table.filingType=Filing type:
+submitSummary.table.registeredMNE=Registered multinational enterprise:
+submitSummary.table.filingType=Report type:
 submitSummary.table.ultimateParent=Ultimate parent entity:
-submitSummary.table.filedBy=Filed by:
-submitSummary.table.filingCapacity=Filing capacity:
-submitSummary.table.reportDetails=Report details
+submitSummary.table.filedBy=Submitted by:
+submitSummary.table.filingCapacity=Submitter type:
+submitSummary.table.reportDetails=Report details:
 submitSummary.confirmSubmit=Confirm and submit
 submitSummary.declaration.heading=Declaration
 submitSummary.declaration.text=The business has confirmed this is the correct report to be submitted.
@@ -162,10 +165,15 @@ uploadResult.viewFormattingGuidance=View formatting guidance
 submitterInfo.mainHeading=Enter your contact details
 submitterInfo.info=We''ll contact you if there''s a problem with the Country by Country report you''re submitting.
 submitterInfo.fullName=Full name
+submitterInfo.fullName.error=Please enter your full name
 submitterInfo.employer=Employer
+submitterInfo.employer.error=Please enter your employer's name
 submitterInfo.jobTitle=Job title/role
+submitterInfo.jobTitle.error=Please enter your job title/role
 submitterInfo.phoneNumber=Contact phone number
+submitterInfo.phoneNumber.error=Please enter a valid phone number
 submitterInfo.emailAddress=Contact email address
+submitterInfo.emailAddress.error=Please enter a valid email address
 
 
 

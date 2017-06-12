@@ -38,7 +38,7 @@ implicit request: Request[_], messages: Messages)
                 <tr>
                     <th colspan="2">
                         <h2 class="heading-medium">
-                            Your submission details
+                            @Messages("submitSummary.secondaryHeading")
                         </h2>
                     </th>
                     <th>
@@ -48,9 +48,9 @@ implicit request: Request[_], messages: Messages)
 
                 <tbody>
                 <tr>
-                    <td>
-                        Registered multinational enterprise:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.registeredMNE")
+                    </th>
                     <td>
                         @{ if(summaryData.businessPartnerRecord.organisation.isDefined) summaryData.businessPartnerRecord.organisation.get.organisationName}<br />
                         Postcode: @summaryData.businessPartnerRecord.address.postalCode.getOrElse("")<br />
@@ -61,9 +61,9 @@ implicit request: Request[_], messages: Messages)
                     </td>
 
                 <tr>
-                    <td>
-                        Report type:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.filingType")
+                    </th>
                     <td>
                         @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == PRIMARY.toString) {@Messages("submitInfoFilingType.primaryFiling.label")}
                         @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == VOLUNTARY.toString) { @Messages("submitInfoFilingType.voluntaryFiling.label")}
@@ -72,18 +72,18 @@ implicit request: Request[_], messages: Messages)
 
                 </tr>
                 <tr>
-                    <td>
-                        Ultimate parent entity:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.ultimateParent")
+                    </th>
                     <td>
                         @summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity<br />
                     </td>
 
                 </tr>
                 <tr>
-                    <td>
-                        Submitted by:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.filedBy")
+                    </th>
                     <td>
                         @summaryData.submissionMetaData.submitterInfo.fullName<br />
                         @summaryData.submissionMetaData.submitterInfo.agencyBusinessName<br />
@@ -94,9 +94,9 @@ implicit request: Request[_], messages: Messages)
 
                 </tr>
                 <tr>
-                    <td>
-                        Submitter type:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.filingCapacity")
+                    </th>
                     <td>
                         @if(summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity == MNE_AGENT.toString) {@Messages("submitInfoFilingCapacity.mneUserAgent.label")}
                         @if(summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity == REPRESENTATIVE.toString) { @Messages("submitInfoFilingCapacity.representative.label")}
@@ -104,9 +104,9 @@ implicit request: Request[_], messages: Messages)
 
                 </tr>
                 <tr>
-                    <td>
-                        Report details:
-                    </td>
+                    <th>
+                        @Messages("submitSummary.table.reportDetails")
+                    </th>
                     <td>
                         <div>
                             <p><span class="faded-text faded-text--small">File name:</span><br />

@@ -42,10 +42,10 @@ implicit request: Request[_], messages: Messages)
                 role="alert"
                 aria-labelledby="error-summary-heading"
                 tabindex="-1">
-                    <h2 id="error-summary-heading" class="h3-heading">This Country by Country ID is invalid. This could be because:</h2>
+                    <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCBCId.errorSummary.header")</h2>
                     <ul>
-                        <li role="tooltip">It doesn't match any that have been registered</li>
-                        <li role="tooltip">You've entered it wrongly</li>
+                        <li role="tooltip">@Messages("enterCBCId.errorSummary.reason1")</li>
+                        <li role="tooltip">@Messages("enterCBCId.errorSummary.reason1")</li>
                     </ul>
                 </div>
             }
