@@ -40,8 +40,7 @@ case class SubmissionInfo(gwCredId:String,
                           ofdsRegime:String,
                           utr:Utr,
                           filingType:FilingType,
-                          ultimateParentEntity:UltimateParentEntity,
-                          filingCapacity:FilingCapacity)
+                          ultimateParentEntity:UltimateParentEntity)
 object SubmissionInfo{
   implicit val format = Json.format[SubmissionInfo]
 }
@@ -69,8 +68,7 @@ object SubmissionMetaData {
         "ofdsRegime" -> o.submissionInfo.ofdsRegime,
         "utr" -> o.submissionInfo.utr.value,
         "filingType" -> o.submissionInfo.filingType.filingType,
-        "ultimateParentEntity" -> o.submissionInfo.ultimateParentEntity.ultimateParentEntity,
-        "filingCapacity" -> o.submissionInfo.filingCapacity.filingCapacity
+        "ultimateParentEntity" -> o.submissionInfo.ultimateParentEntity.ultimateParentEntity
       ),
       "submitterInfo" -> Json.obj(
         "fullName" -> o.submitterInfo.fullName,

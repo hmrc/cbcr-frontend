@@ -86,11 +86,6 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
     )(UltimateParentEntity.apply)(UltimateParentEntity.unapply)
   )
 
-  val filingCapacityForm: Form[FilingCapacity] = Form(
-    mapping("filingCapacity" -> nonEmptyText
-    )(FilingCapacity.apply)(FilingCapacity.unapply)
-  )
-
   val submitterInfoForm: Form[SubmitterInfo] = Form(
     mapping(
       "fullName"        -> nonEmptyText,
@@ -146,25 +141,11 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
         cache.save(success).map(_ =>
-          Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
-            includes.asideBusiness(), includes.phaseBannerBeta(),filingCapacityForm
+          Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
+            includes.asideBusiness(), includes.phaseBannerBeta(),submitterInfoForm
           ))
         )
       }
-    )
-  }
-
-
-  val submitFilingCapacity = sec.AsyncAuthenticatedAction(None) { authContext => implicit request =>
-
-    filingCapacityForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
-        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
-      success => cache.save(success).map(_ =>
-        Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
-          includes.asideBusiness(), includes.phaseBannerBeta(),submitterInfoForm
-        ))
-      )
     )
   }
 
