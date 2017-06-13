@@ -23,6 +23,7 @@ import play.api.{Configuration, Logger}
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet}
 import configs.syntax._
+import uk.gov.hmrc.cbcrfrontend.model.Enrolment
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -36,12 +37,10 @@ class AuthConnector @Inject() (httpGet: HttpGet, config:Configuration)(implicit 
     port  <- conf.get[Int]("port")
   } yield s"http://$host:$port").value
 
-  def getEnrolments(implicit hc:HeaderCarrier): Future[JsValue] = for {
+  def getEnrolments(implicit hc:HeaderCarrier): Future[List[Enrolment]] = for {
     authRecord    <- httpGet.GET[JsValue](url + "/auth/authority")
-    _ = Logger.error("AUTHRECORD: " + authRecord)
     enrolmentsUri <- Future{(authRecord \ "enrolments").get}
-    _ = Logger.error("ENROLMENTSURI: " + enrolmentsUri)
-    enrolments    <- httpGet.GET[JsValue](url + enrolmentsUri.toString().replaceAll("\"",""))
+    enrolments    <- httpGet.GET[List[Enrolment]](url + enrolmentsUri.toString().replaceAll("\"",""))
   } yield enrolments
 
 

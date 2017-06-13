@@ -19,10 +19,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.OptionT
-import cats.data.EitherT
+import cats.data.{EitherT, OptionT}
 import cats.instances.all._
-import cats.syntax.all._
 import play.api.Logger
 import play.api.Play._
 import play.api.data.Form
@@ -30,18 +28,18 @@ import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.Messages.Implicits._
 import play.api.mvc.{Action, AnyContent, Result}
+import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, GGConnector}
+import uk.gov.hmrc.cbcrfrontend.connectors.{AuthConnector, BPRKnownFactsConnector}
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.http.cache.client.CacheMap
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector => PlayAuthConnector}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,9 +48,10 @@ class Subscription @Inject()(val sec: SecuredActions,
                              val subscriptionDataService: SubscriptionDataService,
                              val connector:BPRKnownFactsConnector,
                              val cbcIdService:CBCIdService,
-                             val kfService:CBCKnownFactsService)
+                             val kfService:CBCKnownFactsService,
+                             val authConnector:AuthConnector)
                             (implicit ec: ExecutionContext,
-                             val authConnector:AuthConnector,
+                             val playAuth:PlayAuthConnector,
                              val session:CBCSessionCache) extends FrontendController with ServicesConfig {
 
 
@@ -81,33 +80,31 @@ class Subscription @Inject()(val sec: SecuredActions,
       subscriptionDataForm.bindFromRequest.fold(
         errors => Future.successful(BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors))),
         data => {
-          cbcIdService.getCbcId.flatMap { oId =>
-            oId match {
-              case Some(id) =>
+          cbcIdService.getCbcId.flatMap {
+            case Some(id) =>
 
-                val result = for {
-                  bpr <- EitherT[Future,UnexpectedState,BusinessPartnerRecord](
-                    session.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
-                  )
-                  utr <- EitherT[Future,UnexpectedState,Utr](
-                    session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
-                  )
-                  _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id, utr))
-                  _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
-                  _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(id))
-                  _ <- EitherT.right[Future,UnexpectedState,CacheMap](session.save(data))
-                } yield id
-
-                result.fold(
-                  error => {
-                    subscriptionDataService.clearSubscriptionData(id)
-                    Logger.error(error.errorMsg)
-                    InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-                  },
-                  cbcId => Redirect(routes.Subscription.reconfirmEmail)
+              val result = for {
+                bpr <- EitherT[Future, UnexpectedState, BusinessPartnerRecord](
+                  session.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
                 )
-              case None => Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
-            }
+                utr <- EitherT[Future, UnexpectedState, Utr](
+                  session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
+                )
+                _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id, utr))
+                _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
+                _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(id))
+                _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(data))
+              } yield id
+
+              result.fold(
+                error => {
+                  subscriptionDataService.clearSubscriptionData(id)
+                  Logger.error(error.errorMsg)
+                  InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+                },
+                cbcId => Redirect(routes.Subscription.reconfirmEmail)
+              )
+            case None => Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
           }
         }
       )
@@ -153,17 +150,22 @@ class Subscription @Inject()(val sec: SecuredActions,
       "utr" -> nonEmptyText.verifying(utrConstraint),
       "postCode" -> nonEmptyText
     )((u,p) => BPRKnownFacts(Utr(u),p))((facts: BPRKnownFacts) => Some(facts.utr.value -> facts.postCode))
-  )
+ )
 
-  val enterKnownFacts = sec.AsyncAuthenticatedAction(){ authContext =>implicit request =>
-    Logger.debug("Country by Country: Subscribe First")
-    getUserType(authContext).map{
-      case Agent => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
-      case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = false,Organisation))
-    }.leftMap { errors =>
-      Logger.error(errors.errorMsg)
-      InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-    }.merge
+  val enterKnownFacts = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
+    authConnector.getEnrolments.flatMap{enrolments =>
+      if(enrolments.exists(_.key == "HMRC-CBC-ORG")) {
+        Future.successful(NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(),includes.phaseBannerBeta())))
+      } else {
+        getUserType(authContext).map{
+          case Agent => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
+          case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = false,Organisation))
+        }.leftMap { errors =>
+          Logger.error(errors.errorMsg)
+          InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+        }.merge
+      }
+    }
   }
 
   val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext =>
@@ -182,6 +184,14 @@ class Subscription @Inject()(val sec: SecuredActions,
             bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
               NotFound(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
             )
+            alreadySubscribed <- subscriptionDataService.alreadySubscribed(knownFacts.utr).leftMap { error =>
+              Logger.error(error.errorMsg)
+              InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+            }
+            _ <- EitherT.cond[Future]( userType match {
+              case Organisation => !alreadySubscribed
+              case Agent        => alreadySubscribed
+            },(), NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
             _ <- EitherT.right[Future, Result, CacheMap](session.save(bpr))
             _ <- EitherT.right[Future, Result, CacheMap](session.save(knownFacts.utr))
           } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value,userType))

@@ -18,13 +18,18 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.http.HttpGet
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpReads, HttpResponse}
+
+import scala.concurrent.Future
 
 
 trait FakeAuthConnector {
   def authConnector(user: AuthContext): AuthConnector = new AuthConnector {
     def http: HttpGet = ???
     val serviceUrl: String = "test-service-url"
+
+    override def getEnrolments[T](authContext: AuthContext)(implicit hc: HeaderCarrier, reads: HttpReads[T]): Future[T] =
+      Future.successful(reads.read("yeah","something",HttpResponse(200)))
 
   }
 }

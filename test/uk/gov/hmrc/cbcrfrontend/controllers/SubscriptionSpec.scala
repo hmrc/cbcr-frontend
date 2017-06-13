@@ -37,10 +37,10 @@ import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import cats.instances.future._
 import org.mockito.Matchers
 import org.mockito.Matchers.{eq => EQ}
-import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
+import uk.gov.hmrc.cbcrfrontend.connectors.{AuthConnector, BPRKnownFactsConnector}
 import uk.gov.hmrc.http.cache.client.CacheMap
-import scala.reflect.runtime.universe._
 
+import scala.reflect.runtime.universe._
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
@@ -54,10 +54,11 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   val dc = mock[BPRKnownFactsConnector]
   val cbcId = mock[CBCIdService]
   val cbcKF = mock[CBCKnownFactsService]
+  val auth  = mock[AuthConnector]
   implicit val cache = mock[CBCSessionCache]
   when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
 
-  val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF)
+  val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
 
   implicit val hc = HeaderCarrier()
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
@@ -66,9 +67,16 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   implicit val utrTag = implicitly[TypeTag[Utr]]
 
 
- "GET /enterKnownFacts" should {
-    "return 200" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/enterKnownFacts"))
+ "GET /known-facts-check" should {
+   "return 406 if we have already subscribed" in {
+     when(auth.getEnrolments(any())) thenReturn List(Enrolment("HMRC-CBC-ORG",List.empty))
+     val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
+     status(controller.enterKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
+
+   }
+    "return 200 if we havent already subscribed" in {
+      when(auth.getEnrolments(any())) thenReturn List.empty
+      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.enterKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
@@ -99,13 +107,38 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
-    "return 200 when the utr and postcode are valid" in {
+    "return 406 when we have already used that utr and we are an Organisation"  in {
+      when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,UnexpectedState,Boolean](true)
+      status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
+    }
+    "return 200 when we have already used that utr and we are an Agent"  in {
+      when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent")))
+      val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
+      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
+      when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
+      when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,UnexpectedState,Boolean](true)
+      status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
+    }
+
+    "return 200 when the utr and postcode are valid" in {
+      val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
+      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
+      when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
+      when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
+      when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,UnexpectedState,Boolean](false)
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }

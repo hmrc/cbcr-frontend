@@ -17,34 +17,34 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import helper._
+@import tags._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, envelopeId: String, fileId: String, hostName: String, assetsLocationPrefix: String)(
+@(asideCbc: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
-@asideBusiness
+@asideCbc
 }
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-<script src='@routes.Assets.versioned("javascripts/jquery-3.1.1.min.js")' ></script>
-<script src='@routes.Assets.versioned("javascripts/poller.js")' type="text/javascript"></script>
+<div class="grid-row">
+    <div class="column-two-thirds">
+        <h1>
+            Register for Country by Country reporting
+        </h1>
 
-<main id="content" role="main">
+        <div class="flash error-summary error-summary--show"
+             id="error-summary-display"
+             role="alert"
+             aria-labelledby="error-summary-heading"
+             tabindex="-1">
+            <p>This multinational enterprise has already been registered.  </p>
+            <p>If this isn't correct, <a href="contact-hmrc-dummy-page">contact HMRC.</a></p>
 
- <div class="grid-row">
-  <div class="column-two-thirds">
-   <h1>
-    @Messages("fileUploadProgress.mainHeading")
-   </h1>
-   <body onload="poll('@envelopeId', '@fileId', '@hostName')" >
+        </div>
 
-   <img alt="loading..." src="@assetsLocationPrefix/images/loading.gif" />
-   </body>
-
-   <p>@Messages("fileUploadProgress.message")</p>
-  
-
-  </div>
- </div>
-</main>
+        <a class="button" href="service-landing-page">Sign out</a>
+    </div>
+</div>
 }

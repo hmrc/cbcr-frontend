@@ -48,7 +48,7 @@ implicit request: Request[_], messages: Messages)
                         <legend class="visuallyhidden">
                             @Messages("submitInfoFilingCapacity.mainHeading")
                         </legend>
-
+                        <p>@Messages("submitInfoFilingCapacity.info")</p>
                         <label for="filing-capacity-1" class="block-label block-label selection-button-radio">
                             <input id="filing-capacity-1" name="filingCapacity" type="radio" value="@MNE_AGENT.toString">
                             <span>@Messages("submitInfoFilingCapacity.mneUserAgent.label")</span><br />

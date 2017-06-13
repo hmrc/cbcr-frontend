@@ -15,6 +15,7 @@ GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfront
 GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getXmlSchemaErrors
 
 GET        /filingType                                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingType
+GET        /known-facts-check                             @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
 POST       /submitFilingType                              @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingType
 POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUltimateParentEntity
 POST       /submitFilingCapacity                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingCapacity
@@ -28,7 +29,7 @@ GET        /filingHistory                                 @uk.gov.hmrc.cbcrfront
 POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.Submission.confirm
 
 POST       /checkKnownFacts                               @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.checkKnownFacts
-GET        /enterKnownFacts                               @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
+GET        /register-for-cbcid                            @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
 GET        /contactInfoSubscriber                         @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.contactInfoSubscriber
 GET        /subscribeSuccessCbcId/:cbcId                  @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeSuccessCbcId(cbcId:String)
 GET        /subscriberReconfirmEmail                      @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.reconfirmEmail

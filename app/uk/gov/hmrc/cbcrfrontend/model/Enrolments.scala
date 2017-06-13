@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-<section>
+package uk.gov.hmrc.cbcrfrontend.model
 
-</section>
+import play.api.libs.json.Json
+
+
+/**
+  * Created by max on 12/06/17.
+  */
+case class Identifier(key:String,value:String)
+object Identifier{
+  implicit val format = Json.format[Identifier]
+}
+
+case class Enrolment(key:String, identifiers:List[Identifier])
+object Enrolment{
+  implicit val format = Json.format[Enrolment]
+}
