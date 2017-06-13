@@ -64,88 +64,88 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
   "POST /submitFilingType" should {
     "return 400 when the there is no data" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitFilingType"))
-      status(controller.submitFilingType(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitFilingType"))
+      status(controller.submitFilingType(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
   "POST /submitFilingType" should {
     "return 200 when the data exists" in {
       val filingType = FilingType("PRIMARY")
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitFilingType").withJsonBody(Json.toJson(filingType)))
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitFilingType").withJsonBody(Json.toJson(filingType)))
       when(cache.save[FilingType](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      status(controller.submitFilingType(fakeRequestSubscribe)) shouldBe Status.OK
+      status(controller.submitFilingType(fakeRequestSubmit)) shouldBe Status.OK
     }
   }
 
   "POST /submitUltimateParentEntity " should {
     "return 400 when the there is no data" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitUltimateParentEntity "))
-      status(controller.submitFilingType(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity "))
+      status(controller.submitFilingType(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
   "POST /submitUltimateParentEntity " should {
     "return 200 when the data exists" in {
       val ultimateParentEntity  = UltimateParentEntity("UlitmateParentEntity")
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.toJson(ultimateParentEntity)))
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.toJson(ultimateParentEntity)))
       when(cache.save[UltimateParentEntity](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      status(controller.submitUltimateParentEntity(fakeRequestSubscribe)) shouldBe Status.OK
+      status(controller.submitUltimateParentEntity(fakeRequestSubmit)) shouldBe Status.OK
     }
   }
 
   "POST /submitFilingCapacity" should {
     "return 400 when the there is no data" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitFilingCapacity"))
-      status(controller.submitFilingCapacity(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitFilingCapacity"))
+      status(controller.submitFilingCapacity(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
   "POST /submitFilingCapacity" should {
     "return 200 when the data exists" in {
       val filingCapacity = FilingCapacity("MNE_AGENT")
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitFilingCapacity").withJsonBody(Json.toJson(filingCapacity)))
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitFilingCapacity").withJsonBody(Json.toJson(filingCapacity)))
       when(cache.save[FilingCapacity](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      status(controller.submitFilingCapacity(fakeRequestSubscribe)) shouldBe Status.OK
+      status(controller.submitFilingCapacity(fakeRequestSubmit)) shouldBe Status.OK
     }
   }
 
   "POST /submitSubmitterInfo" should {
     "return 400 when the there is no data at all" in {
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo"))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo"))
+      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
   "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Fullname" in {
       val submitterInfo = SubmitterInfo("", "AAgency", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
   "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but AgencyOrBusinessname" in {
       val submitterInfo = SubmitterInfo("Fullname", "", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
   "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but JobRole" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "", "07923456708", EmailAddress("abc@xyz.com"),None)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
   "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Contact Phone" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "jobRole", "", EmailAddress("abc@xyz.com"),None)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
@@ -159,8 +159,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         "contactPhone" -> "07923456708",
         "email" -> ""
       )
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
@@ -175,8 +175,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         "email" -> "abc.xyz"
       )
 
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
@@ -189,21 +189,64 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         "contactPhone" -> "",
         "email" -> ""
       )
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
   }
 
   "POST /submitSubmitterInfo" should {
     "return 303 when all of the data exists & valid" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
 
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
       when(cache.save[SubmitterInfo](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      status(controller.submitSubmitterInfo(fakeRequestSubscribe)) shouldBe Status.SEE_OTHER
+      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
     }
   }
+
+
+  "GET /reconfirmEmail" should {
+    "return 200" in {
+
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/reconfirmEmail"))
+      when(cache.read[SubmitterInfo] (EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(Some(SubmitterInfo("name","agency","MD","0123123123",EmailAddress("max@max.com"), Some(AffinityGroup("Organisation")))))
+      status(controller.reconfirmEmail(fakeRequestSubmit)) shouldBe Status.OK
+    }
+  }
+
+  "POST /reconfirmEmailSubmit" should {
+    "return 400 when the Email Address is empty" in {
+
+      val reconfirmEmail = Json.obj("reconfirmEmail" -> "")
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
+      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
+    }
+  }
+
+
+  "POST /reconfirmEmailSubmit" should {
+    "return 400 when Email Address is in Invalid format" in {
+      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc.xyz")
+
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
+      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
+    }
+  }
+
+  "POST /reconfirmEmailSubmit" should {
+    "return 303 when Email Address is valid" in {
+
+      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
+      when(cache.read[SubmitterInfo] (EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(Some(SubmitterInfo("name","agency","MD","0123123123",EmailAddress("max@max.com"), Some(AffinityGroup("Organisation")))))
+      when(cache.save[SubmitterInfo](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+
+      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
+    }
+  }
+
+
   "The submission controller" should {
      "provide a method to generate the metadata that"  should {
       "return a list of errors for each of the missing cache values" in {
