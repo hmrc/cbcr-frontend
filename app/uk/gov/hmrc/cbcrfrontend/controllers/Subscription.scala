@@ -153,7 +153,10 @@ class Subscription @Inject()(val sec: SecuredActions,
               Logger.error(error.errorMsg)
               InternalServerError(FrontendGlobal.internalServerErrorTemplate)
             }
-            _ <- EitherT.cond[Future](!alreadySubscribed,(), NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
+            _ <- EitherT.cond[Future]( userType match {
+              case Organisation => !alreadySubscribed
+              case Agent        => alreadySubscribed
+            },(), NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
             _ <- EitherT.right[Future, Result, CacheMap](session.save(bpr))
             _ <- EitherT.right[Future, Result, CacheMap](session.save(knownFacts.utr))
           } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value,userType))
