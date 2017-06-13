@@ -180,5 +180,15 @@ class Subscription @Inject()(val sec: SecuredActions,
     )
   }
 
+  def clearSubscriptionData(u:Utr) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
+    subscriptionDataService.clearSubscriptionData(u).fold(
+      error  => InternalServerError(error.errorMsg),
+      {
+        case Some(_) => Ok
+        case None    => NoContent
+      }
+    )
+  }
+
 
 }
