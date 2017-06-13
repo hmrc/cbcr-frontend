@@ -22,15 +22,13 @@ import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
 import play.api.libs.ws.WSClient
+import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.{AuthConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.model.Organisation
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.util.control.NonFatal
-/**
-  * Created by max on 10/05/17.
-  */
 @Singleton
 class EnrolController @Inject()(val sec: SecuredActions, val config:Configuration, ws:WSClient, auth:AuthConnector, enrolConnector: TaxEnrolmentsConnector) extends FrontendController {
 
@@ -51,7 +49,7 @@ class EnrolController @Inject()(val sec: SecuredActions, val config:Configuratio
   }
 
   def getEnrolments = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
-    auth.getEnrolments.map(Ok(_))
+    auth.getEnrolments.map(e => Ok(Json.toJson(e)))
   }
 
 }
