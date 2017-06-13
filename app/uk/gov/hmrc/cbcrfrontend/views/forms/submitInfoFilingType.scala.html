@@ -31,7 +31,7 @@ implicit request: Request[_], messages: Messages)
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 @if(filingTypeErrors){
     <div class="form-field form-field--tall @if(filingTypeErrors){form-field--error }">
-    <span class="error-notification">Please select the Filing type</span>
+    <span class="error-notification">Please select the submission type</span>
     </div>
 }
 
