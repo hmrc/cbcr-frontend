@@ -66,7 +66,11 @@ object FeatureSwitch {
 
 object CbcrSwitches {
   private val WHITELIST_DISABLED = "whiteListDisabled"
+  private val CLEAR_SUBSCRIPTION_DATA_ROUTE = "clearSubscriptionData"
   def whitelistDisabled = {
     FeatureSwitch.forName(WHITELIST_DISABLED)
+  }
+  def clearSubscriptionDataRoute = {
+    FeatureSwitch.forName(CLEAR_SUBSCRIPTION_DATA_ROUTE)
   }
 }

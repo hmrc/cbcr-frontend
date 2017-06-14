@@ -37,7 +37,10 @@ import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import cats.instances.future._
 import org.mockito.Matchers
 import org.mockito.Matchers.{eq => EQ}
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.cbcrfrontend.connectors.{AuthConnector, BPRKnownFactsConnector}
+import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.http.cache.client.CacheMap
 
 import scala.reflect.runtime.universe._
@@ -65,6 +68,7 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
 
   implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
   implicit val utrTag = implicitly[TypeTag[Utr]]
+
 
 
  "GET /known-facts-check" should {
@@ -213,5 +217,38 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,UnexpectedState,Unit](())
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
     }
+  }
+
+  "DELETE to clear-subscription-data/utr" should {
+    "work correctly when enabled and" when {
+      System.setProperty(CbcrSwitches.clearSubscriptionDataRoute.name, "true")
+      "return a 200 if data was successfully cleared" in {
+        val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
+        val u: Utr = Utr("7000000002")
+        when(subService.clearSubscriptionData(any())(any(), any())) thenReturn EitherT.pure[Future, UnexpectedState, Option[String]](Some("done"))
+        status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.OK
+      }
+      "return a 204 if data was no data to clear" in {
+        val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
+        val u: Utr = Utr("7000000002")
+        when(subService.clearSubscriptionData(any())(any(), any())) thenReturn EitherT.pure[Future, UnexpectedState, Option[String]](None)
+        status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.NO_CONTENT
+      }
+      "return a 500 if something goes wrong" in {
+        val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
+        val u: Utr = Utr("7000000002")
+        when(subService.clearSubscriptionData(any())(any(), any())) thenReturn EitherT.left[Future, UnexpectedState, Option[String]](UnexpectedState("oops"))
+        status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.INTERNAL_SERVER_ERROR
+      }
+    }
+
+    "return 501 when feature-disabled" in {
+      System.setProperty(CbcrSwitches.clearSubscriptionDataRoute.name, "false")
+      val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
+      val u: Utr = Utr("7000000002")
+      status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.NOT_IMPLEMENTED
+
+    }
+
   }
 }

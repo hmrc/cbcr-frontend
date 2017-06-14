@@ -43,6 +43,9 @@ package object cbcrfrontend {
     case other => Left(UnexpectedState(s"Unknown affinity group: $other"))
   }
 
+  implicit def utrToLeft(u:Utr): Either[Utr, CBCId] = Left[Utr,CBCId](u)
+  implicit def cbcToRight(c:CBCId): Either[Utr, CBCId] = Right[Utr,CBCId](c)
+
   def getUserType(ac: AuthContext)(implicit cache: CBCSessionCache, sec: AuthConnector, hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[UserType] =
     EitherT(OptionT(cache.read[AffinityGroup])
       .getOrElseF {
