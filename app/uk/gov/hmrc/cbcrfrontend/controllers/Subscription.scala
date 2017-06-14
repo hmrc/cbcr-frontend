@@ -21,8 +21,7 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
 import cats.instances.all._
-import com.typesafe.config.Config
-import play.api.{Configuration, Logger}
+import play.api.Logger
 import play.api.Play._
 import play.api.data.Form
 import play.api.data.Forms._
@@ -41,7 +40,7 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector => PlayAuthConnector}
-import configs.syntax._
+import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -54,12 +53,7 @@ class Subscription @Inject()(val sec: SecuredActions,
                              val authConnector:AuthConnector)
                             (implicit ec: ExecutionContext,
                              val playAuth:PlayAuthConnector,
-                             val session:CBCSessionCache,
-                             val playConfig:Configuration) extends FrontendController with ServicesConfig {
-
-
-  // Feature toggle for the clear-subscription-data route
-  val clearSubscriptionData: Boolean = playConfig.underlying.get[Boolean]("features.clearSubscriptionData").valueOrElse(false)
+                             val session:CBCSessionCache) extends FrontendController with ServicesConfig {
 
   lazy val knownFactsService:BPRKnownFactsService = new BPRKnownFactsService(connector)
 
@@ -187,17 +181,16 @@ class Subscription @Inject()(val sec: SecuredActions,
   }
 
   def clearSubscriptionData(u:Utr) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
-    if(!clearSubscriptionData) {
-      Future.successful(NotImplemented)
-    } else {
+    if(CbcrSwitches.clearSubscriptionDataRoute.enabled) {
       subscriptionDataService.clearSubscriptionData(u).fold(
         error => InternalServerError(error.errorMsg), {
           case Some(_) => Ok
           case None => NoContent
         }
       )
+    } else {
+      Future.successful(NotImplemented)
     }
   }
-
 
 }
