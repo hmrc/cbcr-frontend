@@ -17,6 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.{Reads, Writes}
+import play.api.mvc.PathBindable
 import uk.gov.hmrc.domain.{Modulus11Check, SimpleObjectReads, SimpleObjectWrites, TaxIdentifier}
 
 /**
@@ -39,6 +40,16 @@ case class Utr(utr: String) extends TaxIdentifier {
 }
 
 object Utr {
+  implicit val pathFormat = new PathBindable[Utr] {
+    override def bind(key: String, value: String): Either[String, Utr] =
+      if(Utr(value).isValid){
+        Right(Utr(value))
+      } else {
+        Left(s"Invalid Utr: $value")
+      }
+    override def unbind(key: String, value: Utr): String = value.value
+  }
+
   private val utrPattern = "^[0-9]{10}$".r
 
   implicit val utrFormat: Writes[Utr] = new SimpleObjectWrites[Utr](_.value)

@@ -214,4 +214,26 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
     }
   }
+
+  "DELETE to clear-subscription-data/utr" should {
+    "return a 200 if data was successfully cleared" in {
+      val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
+      val u:Utr = Utr("7000000002")
+      when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,UnexpectedState,Option[String]](Some("done"))
+      status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.OK
+    }
+    "return a 204 if data was no data to clear" in {
+      val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
+      val u:Utr = Utr("7000000002")
+      when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,UnexpectedState,Option[String]](None)
+      status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.NO_CONTENT
+    }
+    "return a 500 if something goes wrong" in {
+      val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
+      val u:Utr = Utr("7000000002")
+      when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.left[Future,UnexpectedState,Option[String]](UnexpectedState("oops"))
+      status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+
+  }
 }
