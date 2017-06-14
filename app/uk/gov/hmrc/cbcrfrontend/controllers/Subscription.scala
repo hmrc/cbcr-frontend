@@ -31,7 +31,7 @@ import play.api.i18n.Messages.Implicits._
 import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.{AuthConnector, BPRKnownFactsConnector}
+import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
@@ -51,7 +51,7 @@ class Subscription @Inject()(val sec: SecuredActions,
                              val connector:BPRKnownFactsConnector,
                              val cbcIdService:CBCIdService,
                              val kfService:CBCKnownFactsService,
-                             val authConnector:AuthConnector)
+                             val authConnector:EnrolmentsConnector)
                             (implicit ec: ExecutionContext,
                              val playAuth:PlayAuthConnector,
                              val session:CBCSessionCache) extends FrontendController with ServicesConfig {

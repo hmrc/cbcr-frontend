@@ -62,7 +62,7 @@ class FileUploadServiceConnector() {
   def extractFileUploadMessage(resp: HttpResponse): CBCErrorOr[String] = {
       resp.status match {
         case 200 => Right(resp.body)
-        case _ => Left(UnexpectedState("Problems uploading the file"))
+        case   _ => Left(UnexpectedState("Problems uploading the file"))
       }
   }
 

@@ -24,13 +24,13 @@ import play.api.Configuration
 import play.api.libs.ws.WSClient
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.{AuthConnector, TaxEnrolmentsConnector}
+import uk.gov.hmrc.cbcrfrontend.connectors.{EnrolmentsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.model.Organisation
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.util.control.NonFatal
 @Singleton
-class EnrolController @Inject()(val sec: SecuredActions, val config:Configuration, ws:WSClient, auth:AuthConnector, enrolConnector: TaxEnrolmentsConnector) extends FrontendController {
+class EnrolController @Inject()(val sec: SecuredActions, val config:Configuration, ws:WSClient, auth:EnrolmentsConnector, enrolConnector: TaxEnrolmentsConnector) extends FrontendController {
 
   val conf = config.underlying.get[Config]("microservice.services.gg-proxy").value
 
