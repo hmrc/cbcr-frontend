@@ -31,6 +31,7 @@ import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
@@ -105,9 +106,11 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
     implicit val authCon = authConnector(TestUsers.cbcrUser)
     val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
     implicit val cache = mock[CBCSessionCache]
+    implicit val enrol = mock[EnrolmentsConnector]
     when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
     when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
+    when(enrol.getEnrolments(any())) thenReturn Future.successful(List.empty)
 
-    new CBCController(securedActions, subDataS)
+    new CBCController(securedActions, subDataS, enrol)
   }
 }
