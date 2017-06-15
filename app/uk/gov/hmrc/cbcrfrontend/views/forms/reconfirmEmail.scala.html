@@ -20,7 +20,7 @@
 @import helper._
 @import tags._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_], submissionContext: Option[String] = None)(
+@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_], submissionContext: Option[Boolean] = None)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
