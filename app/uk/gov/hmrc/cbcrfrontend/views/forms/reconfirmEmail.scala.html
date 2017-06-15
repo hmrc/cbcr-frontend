@@ -20,13 +20,12 @@
 @import helper._
 @import tags._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_], submissionContext: Option[Boolean] = None)(
+@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_], submissionContext: Boolean = false)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideBusiness
 }
-@contextForm = @{submissionContext.isDefined}
 
 @emailErrors = @{form.error("reconfirmEmail").isDefined}
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
@@ -43,7 +42,7 @@ implicit request: Request[_], messages: Messages)
     <fieldset>
         <legend class="visuallyhidden">Enter your contact details</legend>
         <div class="form-field form-field--tall">
-            @if(contextForm) { <form action ="/country-by-country-reporting/reconfirmEmailSubmit" method ="POST"> } else {<form action ="/country-by-country-reporting/subscriberReconfirmEmailSubmit" method ="POST">}
+            @if(submissionContext) { <form action ="/country-by-country-reporting/reconfirmEmailSubmit" method ="POST"> } else {<form action ="/country-by-country-reporting/subscriberReconfirmEmailSubmit" method ="POST">}
             @formFieldDisplay(emailErrors,"reconfirmEmail", Some(Messages("contactInfoSubmitter.reconfirm.email.invalid")), Messages("contactInfoSubmitter.reconfirm.email.label"), form)
         @CSRF.formField
         </div>
