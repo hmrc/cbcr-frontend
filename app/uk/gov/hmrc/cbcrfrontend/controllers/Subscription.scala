@@ -40,6 +40,7 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector => PlayAuthConnector}
+import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -53,7 +54,6 @@ class Subscription @Inject()(val sec: SecuredActions,
                             (implicit ec: ExecutionContext,
                              val playAuth:PlayAuthConnector,
                              val session:CBCSessionCache) extends FrontendController with ServicesConfig {
-
 
   lazy val knownFactsService:BPRKnownFactsService = new BPRKnownFactsService(connector)
 
@@ -91,7 +91,7 @@ class Subscription @Inject()(val sec: SecuredActions,
                   session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
                 )
                 _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id, utr))
-               // _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
+                _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
                 _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(id))
                 _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(data))
               } yield id
@@ -214,6 +214,19 @@ class Subscription @Inject()(val sec: SecuredActions,
     )((cbcId: CBCId) =>
     Future.successful(Ok(subscription.subscribeSuccessCbcId(includes.asideBusiness(), includes.phaseBannerBeta(),cbcId,request.session.get("companyName"))))
     )
+  }
+
+  def clearSubscriptionData(u:Utr) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
+    if(CbcrSwitches.clearSubscriptionDataRoute.enabled) {
+      subscriptionDataService.clearSubscriptionData(u).fold(
+        error => InternalServerError(error.errorMsg), {
+          case Some(_) => Ok
+          case None => NoContent
+        }
+      )
+    } else {
+      Future.successful(NotImplemented)
+    }
   }
 
 }
