@@ -59,7 +59,7 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   val cbcKF = mock[CBCKnownFactsService]
   val auth  = mock[AuthConnector]
   implicit val cache = mock[CBCSessionCache]
-  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
+  when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
 
   val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
 
@@ -70,15 +70,21 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   implicit val utrTag = implicitly[TypeTag[Utr]]
 
 
+  val cbcid = CBCId.create(1).getOrElse(fail("Could not generate cbcid"))
+
 
  "GET /known-facts-check" should {
    "return 406 if we have already subscribed" in {
+     val subService = mock[SubscriptionDataService]
+     val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
      when(auth.getEnrolments(any())) thenReturn List(Enrolment("HMRC-CBC-ORG",List.empty))
      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
      status(controller.enterKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
 
    }
     "return 200 if we havent already subscribed" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       when(auth.getEnrolments(any())) thenReturn List.empty
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.enterKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
@@ -86,6 +92,8 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   }
   "GET /contactInfoSubscriber" should {
     "return 200" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/contactInfoSubscriber"))
       status(controller.contactInfoSubscriber(fakeRequestSubscribe)) shouldBe Status.OK
     }
@@ -93,18 +101,26 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
 
   "POST /checkKnownFacts" should {
     "return 400 when KnownFacts are missing" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts"))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the postcode is invalid" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(BPRKnownFacts(Utr("1234567890"), "NOTAPOSTCODE"))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the utr is invalid" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(BPRKnownFacts(Utr("IAMNOTAUTR"), "SW4 6NR"))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 404 when the utr and postcode are valid but the postcode doesn't match" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NS"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
@@ -112,7 +128,9 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
     "return 406 when we have already used that utr and we are an Organisation"  in {
-      when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
+      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
@@ -123,7 +141,9 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
     }
     "return 200 when we have already used that utr and we are an Agent"  in {
-      when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent")))
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
+      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent")))
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
@@ -135,10 +155,12 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     }
 
     "return 200 when the utr and postcode are valid" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
-      when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
+      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
       when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -149,10 +171,14 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
 
   "POST /submitSubscriptionData" should {
     "return 400 when the there is no data" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData"))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the name is missing" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "email" -> "blagh@blagh.com"
@@ -161,6 +187,8 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the email is missing" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "name" -> "Dave"
@@ -169,6 +197,8 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the email is invalid" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "name" -> "Dave",
@@ -178,6 +208,8 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the phone number is missing" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val data = Json.obj(
         "name" -> "Dave",
         "email" -> "blagh@blagh.com"
@@ -187,19 +219,30 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     }
 
     "return 500 when the SubscriptionDataService errors" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
-      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("oops")))
-      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(None)
+      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(Some(cbcid))
+      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("return 500 when the SubscriptionDataService errors")))
+      when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,UnexpectedState,Option[String]](None)
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None))))
+      when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("700000002")))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
+      verify(subService).clearSubscriptionData(any())(any(),any())
     }
     "return 500 when the getCbcId call errors out" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(None)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
+      verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
     }
     "return 500 when the addKnownFactsToGG call errors" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("oops")))
@@ -207,15 +250,20 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.left[Future,UnexpectedState,Unit](UnexpectedState("oops"))
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None))))
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
+      when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,UnexpectedState,Option[String]](None)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
+      verify(subService).clearSubscriptionData(any())(any(),any())
     }
     "return 303 (see_other) when all params are present and valid and the SubscriptionDataService returns Ok" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,UnexpectedState,String]("done")
       when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
       when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,UnexpectedState,Unit](())
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
+      verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
     }
   }
 
