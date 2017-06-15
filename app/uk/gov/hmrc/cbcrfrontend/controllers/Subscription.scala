@@ -21,6 +21,7 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
+import cats.syntax.all._
 import play.api.Logger
 import play.api.Play._
 import play.api.data.Form
@@ -96,14 +97,21 @@ class Subscription @Inject()(val sec: SecuredActions,
                 _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(data))
               } yield id
 
-              result.fold(
+
+              result.fold[Future[Result]](
                 error => {
-                  subscriptionDataService.clearSubscriptionData(id)
                   Logger.error(error.errorMsg)
-                  InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+                  subscriptionDataService.clearSubscriptionData(id).fold(
+                    error => {
+                      Logger.error(error.errorMsg)
+                      InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+                    },
+                    _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+                  )
                 },
-                cbcId => Redirect(routes.Subscription.reconfirmEmail)
-              )
+                _ => Future.successful(Redirect(routes.Subscription.reconfirmEmail
+              ).flatten
+
             case None => Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
           }
         }
