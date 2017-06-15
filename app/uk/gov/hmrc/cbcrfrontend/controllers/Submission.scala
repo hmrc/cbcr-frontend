@@ -104,6 +104,12 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
     )(si => Some((si.fullName,si.agencyBusinessName,si.jobRole, si.contactPhone, si.email.value)))
   )
 
+  val reconfirmEmailForm : Form[EmailAddress] = Form(
+    mapping(
+      "reconfirmEmail" -> email.verifying(EmailAddress.isValid(_))
+    )(EmailAddress.apply)(EmailAddress.unapply)
+  )
+
   val summarySubmitForm : Form[Boolean] = Form(
     single(
       "cbcDeclaration" -> boolean.verifying(d => d)
@@ -171,8 +177,38 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       success => for {
         ag <- cache.read[AffinityGroup]
         _  <- cache.save(success.copy(affinityGroup = ag))
-      } yield Redirect(routes.Submission.submitSummary())
+      } yield Redirect(routes.Submission.reconfirmEmail())
     )
+  }
+
+
+  val reconfirmEmail = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
+    OptionT(cache.read[SubmitterInfo]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).fold (
+      error => error,
+      submitterInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideBusiness(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(submitterInfo.email), true))
+    )
+  }
+
+
+  val reconfirmEmailSubmit = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
+    reconfirmEmailForm.bindFromRequest.fold (
+      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(
+        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors, true
+      ))),
+      success => (for {
+        submitterInfo <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))
+        saved         <- EitherT.right[Future, UnexpectedState, CacheMap](cache.save[SubmitterInfo](submitterInfo.copy(email = success)))
+      } yield saved).fold(
+        error => {
+          Logger.error(error.errorMsg)
+          InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+        },
+        _ => Redirect(routes.Submission.submitSummary())
+      )
+    )
+
   }
 
   val submitSummary = sec.AsyncAuthenticatedAction() { authContext => implicit request =>

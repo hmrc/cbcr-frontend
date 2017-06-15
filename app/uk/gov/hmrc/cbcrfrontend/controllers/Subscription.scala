@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.EitherT
+import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import play.api.Logger
 import play.api.Play._
@@ -67,6 +67,11 @@ class Subscription @Inject()(val sec: SecuredActions,
     )(sc => Some((sc.name,sc.phoneNumber, sc.email.value)))
   )
 
+  val reconfirmEmailForm : Form[EmailAddress] = Form(
+    mapping(
+      "reconfirmEmail" -> email.verifying(EmailAddress.isValid(_))
+    )(EmailAddress.apply)(EmailAddress.unapply)
+  )
 
   val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request =>
@@ -97,13 +102,43 @@ class Subscription @Inject()(val sec: SecuredActions,
                   Logger.error(error.errorMsg)
                   InternalServerError(FrontendGlobal.internalServerErrorTemplate)
                 },
-                cbcId => Redirect(routes.Subscription.subscribeSuccessCbcId(cbcId.value))
+                cbcId => Redirect(routes.Subscription.reconfirmEmail)
               )
             case None => Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
           }
         }
       )
   }
+
+
+  val reconfirmEmail = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
+    OptionT(session.read[SubscriberContact]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).fold (
+      error => error,
+      subscriberContactInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
+    )
+  }
+
+
+  val reconfirmEmailSubmit = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
+    reconfirmEmailForm.bindFromRequest.fold(
+
+      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(
+        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
+      ))),
+      success => (for {
+        subscriberContact <- OptionT(session.read[SubscriberContact]).toRight(UnexpectedState("SubscriberContact not found in the cache"))
+        cbcId             <- OptionT(session.read[CBCId]).toRight(UnexpectedState("CBCId not found in the cache"))
+        _                 <- EitherT.right[Future, UnexpectedState, CacheMap](session.save[SubscriberContact](subscriberContact.copy(email = success)))
+
+      } yield cbcId).fold(
+        _     => InternalServerError(FrontendGlobal.internalServerErrorTemplate),
+        cbcId => Redirect(routes.Subscription.subscribeSuccessCbcId(cbcId.value))
+      )
+    )
+  }
+
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
@@ -170,6 +205,7 @@ class Subscription @Inject()(val sec: SecuredActions,
 
     Future.successful(Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm)))
   }
+
 
   def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     Logger.debug("Country by Country: Contact Info Subscribe Success CbcId View")
