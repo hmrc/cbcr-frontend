@@ -109,7 +109,7 @@ class Subscription @Inject()(val sec: SecuredActions,
                     _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
                   )
                 },
-                _ => Future.successful(Redirect(routes.Subscription.reconfirmEmail
+                _ => Future.successful(Redirect(routes.Subscription.reconfirmEmail()))
               ).flatten
 
             case None => Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
