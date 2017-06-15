@@ -20,15 +20,17 @@
 @import helper._
 @import tags._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(
+@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_], submissionContext: Option[String] = None)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideBusiness
 }
+@contextForm = @{submissionContext.isDefined}
 
 @emailErrors = @{form.error("reconfirmEmail").isDefined}
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+
 
 <div class="grid-row">
     <div class="column-two-thirds">
@@ -41,8 +43,8 @@ implicit request: Request[_], messages: Messages)
     <fieldset>
         <legend class="visuallyhidden">Enter your contact details</legend>
         <div class="form-field form-field--tall">
-        @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.reconfirmEmailSubmit()){
-        @formFieldDisplay(emailErrors,"reconfirmEmail", Some(Messages("contactInfoSubmitter.reconfirm.email.invalid")), Messages("contactInfoSubmitter.reconfirm.email.label"), form)
+            @if(contextForm) { <form action ="/country-by-country-reporting/reconfirmEmailSubmit" method ="POST"> } else {<form action ="/country-by-country-reporting/subscriberReconfirmEmailSubmit" method ="POST">}
+            @formFieldDisplay(emailErrors,"reconfirmEmail", Some(Messages("contactInfoSubmitter.reconfirm.email.invalid")), Messages("contactInfoSubmitter.reconfirm.email.label"), form)
         @CSRF.formField
         </div>
     </fieldset>
@@ -50,7 +52,7 @@ implicit request: Request[_], messages: Messages)
         <button role="button" type="submit" id="btn-continue">@Messages("contactInfoSubmitter.reconfirm.email.submit")</button>
     </div>
         <p>@Messages("contactInfoSubmitter.reconfirm.email.wrong")</p>
-        }
+      </form>
 </div>
 </div>
 </div>

@@ -91,7 +91,7 @@ class Subscription @Inject()(val sec: SecuredActions,
                   session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
                 )
                 _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id, utr))
-                _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
+               // _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
                 _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(id))
                 _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(data))
               } yield id
@@ -115,7 +115,7 @@ class Subscription @Inject()(val sec: SecuredActions,
 
     OptionT(session.read[SubscriberContact]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).fold (
       error => error,
-      subscriberContactInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.subscription.subscriberReconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
+      subscriberContactInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
     )
   }
 
@@ -124,7 +124,7 @@ class Subscription @Inject()(val sec: SecuredActions,
 
     reconfirmEmailForm.bindFromRequest.fold(
 
-      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.subscription.subscriberReconfirmEmail(
+      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
       ))),
       success => (for {
