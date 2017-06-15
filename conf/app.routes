@@ -20,6 +20,9 @@ POST       /submitFilingType                              @uk.gov.hmrc.cbcrfront
 POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUltimateParentEntity
 POST       /submitFilingCapacity                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingCapacity
 POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo
+GET        /reconfirmEmail                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmail
+POST       /reconfirmEmailSubmit                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmailSubmit
+
 GET        /submitSummary                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSummary
 GET        /submitSuccessReceipt                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt(submissionDateTime: String, hash: String)
 GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingHistory
@@ -29,6 +32,9 @@ POST       /checkKnownFacts                               @uk.gov.hmrc.cbcrfront
 GET        /register-for-cbcid                            @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
 GET        /contactInfoSubscriber                         @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.contactInfoSubscriber
 GET        /subscribeSuccessCbcId/:cbcId                  @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeSuccessCbcId(cbcId:String)
+GET        /subscriberReconfirmEmail                      @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.reconfirmEmail
+POST       /subscriberReconfirmEmailSubmit                @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.reconfirmEmailSubmit
+
 POST       /submitSubscriptionData                        @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.submitSubscriptionData
 DELETE     /clear-subscription-data/:utr                  @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.clearSubscriptionData(utr:uk.gov.hmrc.cbcrfrontend.model.Utr)
 
