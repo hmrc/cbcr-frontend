@@ -19,7 +19,12 @@ package uk.gov.hmrc.cbcrfrontend.model
 import play.api.libs.json.Json
 
 
-case class KeyXMLFileInfo(messageRefID: String, reportingPeriod: String, timeStamp: String)
+case class KeyXMLFileInfo(messageRefID: String,
+                          reportingPeriod: String,
+                          timeStamp: String,
+                          reportingRole: ReportingRole,
+                          tin: Utr,
+                          name:String)
 
 object KeyXMLFileInfo {
   implicit val format = Json.format[KeyXMLFileInfo]

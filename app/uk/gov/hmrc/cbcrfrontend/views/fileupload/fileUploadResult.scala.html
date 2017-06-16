@@ -17,9 +17,13 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.model.ReportingRole
+@import uk.gov.hmrc.cbcrfrontend.model.CBC701
+@import uk.gov.hmrc.cbcrfrontend.model.CBC702
+@import uk.gov.hmrc.cbcrfrontend.model.CBC703
 @import java.nio.file._
 
-@(fileName: String, fileSize: BigDecimal, schemaErrors: Boolean , busErrors :Boolean, asideBusiness: Html, phaseBannerBeta: Html)(
+@(fileName: String, fileSize: BigDecimal, schemaErrors: Boolean , busErrors :Boolean, asideBusiness: Html, phaseBannerBeta: Html, reportingRole:Option[ReportingRole])(
 implicit request: Request[_], messages: Messages)
 
 @errors = @{schemaErrors || busErrors}
@@ -74,7 +78,12 @@ implicit request: Request[_], messages: Messages)
                 </tbody>
             </table>
             <p>@Messages("fileUploadResult.notYetSubmitted")</p>
-            <p><a class="button" href="../../filingType" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                @{reportingRole match {
+                    case Some(CBC701) => <p><a class="button" href="../../submitter-info" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    case Some(CBC702) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    case Some(CBC703) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    case None         => <p></p>
+                }}
             } else {
             <p><a href="#">@Messages("uploadResult.viewFormattingGuidance")</a></p>
             <a class="button" href="signOut">@Messages("form.controls.signOut")</a>

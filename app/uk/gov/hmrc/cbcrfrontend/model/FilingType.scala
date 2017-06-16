@@ -17,12 +17,26 @@
 package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json._
+import cats.syntax.show._
 
-case class FilingType(filingType:String)
+case class FilingType(value:ReportingRole)
 object FilingType{
-  implicit val format = Json.format[FilingType]
+  implicit val format = new Format[FilingType] {
+    override def writes(o: FilingType): JsValue = Json.obj("filingType"-> o.value.show)
+
+    override def reads(json: JsValue): JsResult[FilingType] = {
+      val value = for {
+        obj <- json.asOpt[JsObject]
+        ft  <- obj.value.get("filingType")
+        v   <- ft.asOpt[String]
+      } yield v
+
+      value match {
+        case Some("PRIMARY")   => JsSuccess(FilingType(CBC701))
+        case Some("VOLUNTARY") => JsSuccess(FilingType(CBC702))
+        case Some("LOCAL")     => JsSuccess(FilingType(CBC703))
+        case _                 => JsError(s"Unable to parse $json as FilingType")
+      }
+    }
+  }
 }
-sealed trait FilingTypes
-case object PRIMARY extends FilingTypes
-case object VOLUNTARY extends FilingTypes
-case object LOCAL extends FilingTypes
