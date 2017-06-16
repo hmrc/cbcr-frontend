@@ -27,6 +27,7 @@ implicit request: Request[_], messages: Messages)
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
     <div class="grid-row">
+        <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-two-thirds">
             <h1>
             @Messages("uploadReport.mainHeading")
@@ -37,21 +38,26 @@ implicit request: Request[_], messages: Messages)
             </div>
             <p>@Messages("uploadReport.checkSize")</p>
             <p>@Messages("uploadReport.wellCheck")</p>
+            <div class="form-group">
+                <div class="form-field-group">
+                    <label class="form-label" for="input-file">@Messages("uploadReport.inputField.label")</label>
 
-            <div    class="form-group">
-                <label class="form-label" for="input-file">@Messages("uploadReport.inputField.label")</label>
-                <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" >
+                    <span id="@fileName-error-message" class="error-notification" role="alert" data-input-name="@fileName">
 
-                <input type="file" id="input-file" class="upload-report-input" name ="@fileName" accept="application/xml" >
+                    </span>
+                    <input type="file" id="input-file" class="upload-report-input" name ="@fileName" accept="application/xml" required
+                data-msg-required="@Messages("uploadReport.error")">
                     <p>@Messages("uploadReport.afterInputField")</p>
-                <div class="form-field form-field--submit">
+                </div>
+                    <div class="form-field form-field--submit">
                     @csrf_token()
                 <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
                 </div>
-                </form>
+
             </div>
 
-        </div>
+            </div>
+        </form>
     </div>
 
 }
