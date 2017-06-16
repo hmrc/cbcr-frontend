@@ -28,6 +28,9 @@ case object FileNameError extends BusinessRuleErrors
 case object TestDataError extends BusinessRuleErrors
 case object SendingEntityError extends BusinessRuleErrors
 case object ReceivingCountryError extends BusinessRuleErrors
+case class InvalidXMLError(error:String) extends BusinessRuleErrors {
+  override def toString: String = s"InvalidXMLError: $error"
+}
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -51,6 +54,7 @@ object BusinessRuleErrors {
       case SendingEntityError    => JsString(SendingEntityError.toString)
       case ReceivingCountryError => JsString(ReceivingCountryError.toString)
       case FileNameError         => JsString(FileNameError.toString)
+      case m:InvalidXMLError       => JsString(m.toString)
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
@@ -60,16 +64,19 @@ object BusinessRuleErrors {
           case Some("testdataerror")         => JsSuccess(TestDataError)
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
           case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
+          case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
+            JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
         }
       }
   }
   implicit val eShows: Show[BusinessRuleErrors] =  Show.show[BusinessRuleErrors]{
     case m:MessageRefIDError => m.show
-    case TestDataError         =>  "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD11OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
+    case TestDataError         => "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD11OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
     case SendingEntityError    => "The SendingEntityIN field must match your CBCId"
     case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
     case FileNameError         => "MessageRefID must match filename"
+    case i:InvalidXMLError     => i.toString
   }
 }
 
