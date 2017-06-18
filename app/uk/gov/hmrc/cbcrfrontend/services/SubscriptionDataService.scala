@@ -32,25 +32,20 @@ import javax.inject.Singleton
 
 import play.api.Logger
 import uk.gov.hmrc.play.config.ServicesConfig
+import cats.instances.future._
 @Singleton
 class SubscriptionDataService extends ServicesConfig{
 
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
-  def alreadySubscribed(utr:Utr)(implicit hc: HeaderCarrier, ec: ExecutionContext):ServiceResponse[Boolean] = {
-    val fullUrl = url.url + s"/cbcr/utr-already-subscribed/${utr.utr}"
-    EitherT[Future,UnexpectedState, Boolean](
-      WSHttp.GET[HttpResponse](fullUrl).map(_ => Right[UnexpectedState,Boolean](true)).recover{
-        case _:NotFoundException => Right[UnexpectedState,Boolean](false)
-        case NonFatal(t)         =>
-          Logger.error("GET future failed", t)
-          Left[UnexpectedState,Boolean](UnexpectedState(t.getMessage))
-      }
-    )
-  }
+  def alreadySubscribed(utr:Utr)(implicit hc: HeaderCarrier, ec: ExecutionContext):ServiceResponse[Boolean] =
+    retrieveSubscriptionData(Left(utr)).map(_.isDefined)
 
-  def retrieveSubscriptionData(id:CBCId)(implicit hc: HeaderCarrier, ec: ExecutionContext):ServiceResponse[Option[SubscriptionDetails]] = {
-    val fullUrl = url.url + s"/cbcr/retrieveSubscriptionData/$id"
+  def retrieveSubscriptionData(id:Either[Utr,CBCId])(implicit hc: HeaderCarrier, ec: ExecutionContext):ServiceResponse[Option[SubscriptionDetails]] = {
+    val fullUrl = id.fold(
+      utr => url.url + s"/cbcr/subscription-data/utr/${utr.utr}",
+      id  => url.url + s"/cbcr/subscription-data/cbc-id/$id"
+    )
     EitherT[Future,UnexpectedState, Option[SubscriptionDetails]](
       WSHttp.GET[HttpResponse](fullUrl).map { response =>
         response.json.validate[SubscriptionDetails].fold(
@@ -80,19 +75,28 @@ class SubscriptionDataService extends ServicesConfig{
     )
   }
 
-  def clearSubscriptionData(id: CBCId)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]] = {
+  def clearSubscriptionData(id: Either[Utr,CBCId])(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]] = {
+
     val fullUrl = url.url + s"/cbcr/clearSubscriptionData"
-    EitherT[Future,UnexpectedState, Option[String]](
-      WSHttp.POST[CBCId,HttpResponse](fullUrl,id).map { response =>
-        response.status match {
-          case Status.OK        => Right[UnexpectedState,Option[String]](Some(response.body))
-          case Status.NOT_FOUND => Right[UnexpectedState,Option[String]](None)
-          case _                => Left[UnexpectedState,Option[String]](UnexpectedState(response.body))
-        }
-      }.recover{
-        case NonFatal(t) => Left[UnexpectedState,Option[String]](UnexpectedState(t.getMessage))
-      }
-    )
+
+    for {
+      cbc    <- id.fold(
+        utr => retrieveSubscriptionData(Left(utr)).map(_.map(_.cbcId)),
+        id  => EitherT.pure[Future,UnexpectedState,Option[CBCId]](Some(id))
+      )
+      result <- cbc.fold(EitherT.pure[Future,UnexpectedState,Option[String]](None))(id =>
+        EitherT[Future, UnexpectedState, Option[String]](
+          WSHttp.POST[CBCId, HttpResponse](fullUrl, id).map { response =>
+            response.status match {
+              case Status.OK        => Right[UnexpectedState, Option[String]](Some(response.body))
+              case Status.NOT_FOUND => Right[UnexpectedState, Option[String]](None)
+              case _ => Left[UnexpectedState, Option[String]](UnexpectedState(response.body))
+            }
+          }.recover {
+            case NonFatal(t) => Left[UnexpectedState, Option[String]](UnexpectedState(t.getMessage))
+          }
+        ))
+    } yield result
 
   }
 }

@@ -58,12 +58,12 @@ contactInfoSubscriber.phoneNumber.error=Please enter a valid phone number
 contactInfoSubscriber.emailAddress.label=Email address
 contactInfoSubscriber.emailAdress.hint=The email address of the person we should contact
 contactInfoSubscriber.emailAddress.error=Please enter a valid email address
+
 contactInfoSubscriber.reconfirm.email.mainHeading=Is this your correct email address?
 contactInfoSubscriber.reconfirm.email.label=Email address
 contactInfoSubscriber.reconfirm.email.submit=Yes, this is correct
 contactInfoSubscriber.reconfirm.email.wrong=If the email is wrong, you can change it on this page
 contactInfoSubscriber.reconfirm.email.invalid=Please enter a valid email address
-
 cbcHistory.mainHeading=Country By Country Reporting
 cbcHistory.top.message=Your CBCID needs to be included in the sendingEntityIN field in the XML file
 

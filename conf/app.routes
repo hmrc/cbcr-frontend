@@ -35,6 +35,7 @@ GET        /subscriberReconfirmEmail                      @uk.gov.hmrc.cbcrfront
 POST       /subscriberReconfirmEmailSubmit                @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.reconfirmEmailSubmit
 
 POST       /submitSubscriptionData                        @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.submitSubscriptionData
+DELETE     /clear-subscription-data/:utr                  @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.clearSubscriptionData(utr:uk.gov.hmrc.cbcrfrontend.model.Utr)
 
 GET        /deEnrol                                       @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.deEnrol
 GET        /enrolments                                    @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.getEnrolments

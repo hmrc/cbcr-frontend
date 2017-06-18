@@ -167,7 +167,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
     OptionT(cache.read[SubmitterInfo]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).fold (
       error => error,
-      submitterInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideBusiness(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(submitterInfo.email)))
+      submitterInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideBusiness(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(submitterInfo.email), true))
     )
   }
 
@@ -176,7 +176,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
     reconfirmEmailForm.bindFromRequest.fold (
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(
-        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
+        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors, true
       ))),
       success => (for {
         submitterInfo <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))

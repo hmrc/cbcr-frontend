@@ -21,6 +21,7 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
+import cats.syntax.all._
 import play.api.Logger
 import play.api.Play._
 import play.api.data.Form
@@ -40,6 +41,7 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector => PlayAuthConnector}
+import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -53,7 +55,6 @@ class Subscription @Inject()(val sec: SecuredActions,
                             (implicit ec: ExecutionContext,
                              val playAuth:PlayAuthConnector,
                              val session:CBCSessionCache) extends FrontendController with ServicesConfig {
-
 
   lazy val knownFactsService:BPRKnownFactsService = new BPRKnownFactsService(connector)
 
@@ -96,14 +97,21 @@ class Subscription @Inject()(val sec: SecuredActions,
                 _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(data))
               } yield id
 
-              result.fold(
+
+              result.fold[Future[Result]](
                 error => {
-                  subscriptionDataService.clearSubscriptionData(id)
                   Logger.error(error.errorMsg)
-                  InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+                  subscriptionDataService.clearSubscriptionData(id).fold(
+                    error => {
+                      Logger.error(error.errorMsg)
+                      InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+                    },
+                    _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+                  )
                 },
-                cbcId => Redirect(routes.Subscription.reconfirmEmail)
-              )
+                _ => Future.successful(Redirect(routes.Subscription.reconfirmEmail()))
+              ).flatten
+
             case None => Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
           }
         }
@@ -115,7 +123,7 @@ class Subscription @Inject()(val sec: SecuredActions,
 
     OptionT(session.read[SubscriberContact]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).fold (
       error => error,
-      subscriberContactInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.subscription.subscriberReconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
+      subscriberContactInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
     )
   }
 
@@ -124,7 +132,7 @@ class Subscription @Inject()(val sec: SecuredActions,
 
     reconfirmEmailForm.bindFromRequest.fold(
 
-      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.subscription.subscriberReconfirmEmail(
+      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
       ))),
       success => (for {
@@ -214,6 +222,19 @@ class Subscription @Inject()(val sec: SecuredActions,
     )((cbcId: CBCId) =>
     Future.successful(Ok(subscription.subscribeSuccessCbcId(includes.asideBusiness(), includes.phaseBannerBeta(),cbcId,request.session.get("companyName"))))
     )
+  }
+
+  def clearSubscriptionData(u:Utr) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
+    if(CbcrSwitches.clearSubscriptionDataRoute.enabled) {
+      subscriptionDataService.clearSubscriptionData(u).fold(
+        error => InternalServerError(error.errorMsg), {
+          case Some(_) => Ok
+          case None => NoContent
+        }
+      )
+    } else {
+      Future.successful(NotImplemented)
+    }
   }
 
 }
