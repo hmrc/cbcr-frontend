@@ -164,6 +164,7 @@ uploadReport.wellCheck=After you''ve uploaded your report, we''ll check that it 
 uploadReport.inputField.label=Choose the file you want to upload:
 uploadReport.afterInputField=Make sure you check this is the correct file before uploading it.
 uploadReport.uploadButton=Upload
+uploadReport.error=You must select a file
 
 
 uploadResult.mainHeading.ok=Your report''s format is correct
