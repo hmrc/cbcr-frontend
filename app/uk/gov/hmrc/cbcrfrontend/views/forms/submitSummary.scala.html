@@ -26,8 +26,6 @@ implicit request: Request[_], messages: Messages)
 @cbcDeclarationErrors = @{form.error("cbcDeclaration").isDefined}
 
 @main_template("Country by Country Reporting") {
-<main id="content" role="main">
-
     <div class="grid-row">
         <div class="column-full">
             <h1>
@@ -65,9 +63,11 @@ implicit request: Request[_], messages: Messages)
                         @Messages("submitSummary.table.filingType")
                     </th>
                     <td>
-                        @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == PRIMARY.toString) {@Messages("submitInfoFilingType.primaryFiling.label")}
-                        @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == VOLUNTARY.toString) { @Messages("submitInfoFilingType.voluntaryFiling.label")}
-                        @if(summaryData.submissionMetaData.submissionInfo.filingType.filingType == LOCAL.toString) {@Messages("submitInfoFilingType.localFiling.label")}
+                        @summaryData.submissionMetaData.submissionInfo.filingType.value match {
+                            case CBC701 => { @Messages("submitInfoFilingType.primaryFiling.label") }
+                            case CBC702 => { @Messages("submitInfoFilingType.voluntaryFiling.label") }
+                            case CBC703 => { @Messages("submitInfoFilingType.localFiling.label") }
+                        }
                     </td>
 
                 </tr>
@@ -154,7 +154,4 @@ implicit request: Request[_], messages: Messages)
 
         </div>
     </div>
-
-</main>
 }
-<p><a class="button" href="/country-by-country-reporting/submitSuccessReceipt" id="btn-submitReport">@Messages("submitSummary.submitReport")</a></p>

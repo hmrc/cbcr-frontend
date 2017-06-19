@@ -76,15 +76,17 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
     }.merge
   }
 
-  val filingTypeForm: Form[FilingType] = Form(
-    mapping("filingType" -> nonEmptyText
-    )(FilingType.apply)(FilingType.unapply)
+  val utrForm:Form[Utr] = Form(
+    mapping(
+      "utr" -> nonEmptyText.verifying(s => Utr(s).isValid)
+    )(Utr.apply)(Utr.unapply)
   )
 
   val ultimateParentEntityForm: Form[UltimateParentEntity] = Form(
     mapping("ultimateParentEntity" -> nonEmptyText
     )(UltimateParentEntity.apply)(UltimateParentEntity.unapply)
   )
+
 
   val submitterInfoForm: Form[SubmitterInfo] = Form(
     mapping(
@@ -111,28 +113,11 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
     )
   )
 
-  val filingType = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
-      includes.asideBusiness(), includes.phaseBannerBeta(), filingTypeForm
+  val upe = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
+      includes.asideBusiness(), includes.phaseBannerBeta(), ultimateParentEntityForm
     )))
   }
-
-  val submitFilingType = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    filingTypeForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
-        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
-      success => {
-        cache.save(success).map(_ =>
-          Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
-            includes.asideBusiness(), includes.phaseBannerBeta(), ultimateParentEntityForm
-          ))
-        )
-      }
-    )
-  }
-
-
 
   val submitUltimateParentEntity = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
@@ -140,17 +125,70 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
-        cache.save(success).map(_ =>
-          Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
-            includes.asideBusiness(), includes.phaseBannerBeta(),submitterInfoForm
-          ))
-        )
+        val result = for {
+          _       <- OptionT.liftF(cache.save(success))
+          xmlInfo <- OptionT(cache.read[KeyXMLFileInfo])
+        } yield xmlInfo.reportingRole
+
+        result.cata({
+          Logger.error("Unable to find KeyXMLFileInfo in cache")
+          InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+        },{
+          case CBC701 =>
+            Logger.error("ReportingRole was CBC701 - we should never be here")
+            InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+          case CBC702 =>
+            Redirect(routes.Submission.utr())
+          case CBC703 =>
+            Redirect(routes.Submission.submitterInfo())
+        })
       }
     )
   }
 
-  val submitSubmitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
+  val utr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    Future.successful(Ok(views.html.forms.utrCheck( includes.phaseBannerBeta(),utrForm )))
+  }
+
+  val submitUtr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
+    utrForm.bindFromRequest.fold[Future[Result]](
+      (formWithErrors: Form[Utr]) => Future.successful(BadRequest(views.html.forms.utrCheck(includes.phaseBannerBeta(),formWithErrors))),
+      (utr: Utr)                  => cache.save(utr).map(_ => Redirect(routes.Submission.submitterInfo()))
+    )
+
+  }
+
+
+  val submitterInfo = sec.AsyncAuthenticatedAction() { authContext =>
+    implicit request =>
+      OptionT(cache.read[KeyXMLFileInfo]).map(kXml => kXml.reportingRole match {
+
+        case CBC701 =>
+          for {
+            _ <- cache.save(kXml.tin)
+            _ <- cache.save(FilingType(CBC701))
+            _ <- cache.save(UltimateParentEntity(kXml.name))
+          } yield ()
+
+        case CBC702 =>
+          cache.save(FilingType(CBC702))
+
+        case CBC703 =>
+          for {
+            _ <- cache.save(kXml.tin)
+            _ <- cache.save(FilingType(CBC703))
+          } yield ()
+
+      }).cata({
+        Logger.error("Unable to read KeyXMLFileInfo from cache")
+        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+      },_ => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(includes.asideBusiness(), includes.phaseBannerBeta(), submitterInfoForm))
+      )
+  }
+
+  val submitSubmitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     submitterInfoForm.bindFromRequest.fold(
       formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
@@ -224,8 +262,6 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         InternalServerError
     }
   }
-
-
 
   def submitSuccessReceipt(submissionDateTime: String, hash: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(

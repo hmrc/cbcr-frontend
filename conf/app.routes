@@ -14,19 +14,20 @@ GET        /upload-report                                 @uk.gov.hmrc.cbcrfront
 GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getBusinessRuleErrors
 GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getXmlSchemaErrors
 
-GET        /filingType                                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingType
-GET        /known-facts-check                             @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
-POST       /submitFilingType                              @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingType
 POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUltimateParentEntity
 POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo
-GET        /reconfirmEmail                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmail
 POST       /reconfirmEmailSubmit                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmailSubmit
-
+POST       /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUtr
+GET        /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.utr
+GET        /submitter-info                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitterInfo
+GET        /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.Submission.upe
+GET        /reconfirmEmail                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmail
 GET        /submitSummary                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSummary
 GET        /submitSuccessReceipt                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt(submissionDateTime: String, hash: String)
 GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingHistory
 POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.Submission.confirm
 
+GET        /known-facts-check                             @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
 POST       /checkKnownFacts                               @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.checkKnownFacts
 GET        /register-for-cbcid                            @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
 GET        /contactInfoSubscriber                         @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.contactInfoSubscriber

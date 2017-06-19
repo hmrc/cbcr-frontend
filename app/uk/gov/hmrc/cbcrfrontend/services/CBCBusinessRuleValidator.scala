@@ -50,15 +50,34 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
     val stream = new XMLEventReader(scala.io.Source.fromFile(in)).toStream
     messageRefIDCheck(stream).map{ messageRefIdVal  =>
       val otherRules = (
-          validateTestDataPresent(stream).toValidatedNel |@|
+        validateTestDataPresent(stream).toValidatedNel |@|
           validateReceivingCountry(stream).toValidatedNel |@|
           validateSendingEntity(stream,cBCId).toValidatedNel |@|
-          validateFileName(in,fileName, stream).toValidatedNel
-        ).map((_,_,_,_) => ())
+          validateFileName(in,fileName, stream).toValidatedNel |@|
+          validateReportingRole(stream).toValidatedNel |@|
+          validateTIN(stream).toValidatedNel |@|
+          findElementText("Name",None,stream).toValidNel(InvalidXMLError("No ReportingEntity.Entity.Name field found"))
+        ).map((_, _, _, _, reportingRole, tin, name) => (reportingRole, tin, name))
 
-      otherRules *> messageRefIdVal
+      (otherRules |@| messageRefIdVal).map((values, roleToInfo) => roleToInfo.tupled(values))
 
     }
+  }
+
+  def validateTIN(in:Stream[XMLEvent]) : Validated[BusinessRuleErrors, Utr] =
+    findElementText("TIN",None,in).flatMap { t =>
+      if(Utr(t).isValid){ Some(Utr(t)) }
+      else { None }
+    }.toValid(InvalidXMLError("ReportingEntity.Entity.TIN field not found or invalid"))
+
+  def validateReportingRole(in:Stream[XMLEvent]): Validated[BusinessRuleErrors, ReportingRole] =
+    findElementText("ReportingRole",None,in).flatMap(stringToReportingRole).toValid(InvalidXMLError("ReportingEntity.ReportingRole not found or invalid"))
+
+  def stringToReportingRole(s:String):Option[ReportingRole] = s.toLowerCase.trim match {
+    case "cbc701" => Some(CBC701)
+    case "cbc702" => Some(CBC702)
+    case "cbc703" => Some(CBC703)
+    case _        => None
   }
 
   @tailrec
@@ -73,10 +92,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
   }
 
   private def validateFileName(file:File,fileName:String, in:Stream[XMLEvent]) : Validated[BusinessRuleErrors,Unit] = {
-    Logger.error(s"File: $file")
-    Logger.error(s"Filename: $fileName")
     val stripped = fileName.split("""\.""").headOption
-    Logger.error(s"Stripped: $stripped")
     findElementText("MessageRefId", stripped, in).fold[Validated[BusinessRuleErrors, Unit]](FileNameError.invalid)(_ => ().valid)
   }
 
@@ -118,12 +134,12 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
       if(result) MessageRefIDDuplicate.invalid else ().valid
     )
 
-  private def messageRefIDCheck(in:Stream[XMLEvent])(implicit hc:HeaderCarrier) : Future[ValidatedNel[MessageRefIDError, KeyXMLFileInfo]] = {
-    findElementText("MessageRefId",None,in) .fold[Future[ValidatedNel[MessageRefIDError, KeyXMLFileInfo]]](
-      MessageRefIDMissing.invalidNel[KeyXMLFileInfo].pure[Future])(
+  private def messageRefIDCheck(in:Stream[XMLEvent])(implicit hc:HeaderCarrier) : Future[ValidatedNel[MessageRefIDError, (ReportingRole, Utr, String) => KeyXMLFileInfo]] = {
+    findElementText("MessageRefId",None,in) .fold[Future[ValidatedNel[MessageRefIDError, (ReportingRole,Utr,String) => KeyXMLFileInfo]]](
+      MessageRefIDMissing.invalidNel.pure[Future])(
       {
         case invalidMsgRefId if invalidMsgRefId.equalsIgnoreCase("null") || invalidMsgRefId.isEmpty =>
-          MessageRefIDMissing.invalidNel[KeyXMLFileInfo].pure[Future]
+          MessageRefIDMissing.invalidNel.pure[Future]
         case msgRefId@messageRefIDRegex(reportingPeriod, cbcId, date) =>
           isADuplicate(msgRefId).map(dup =>
             (dup.toValidatedNel |@|
@@ -131,9 +147,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
               validateReportingPeriod(in, reportingPeriod).toValidatedNel |@|
               validateDateStamp(date).toValidatedNel |@|
               findElementText("Timestamp",None,in).toValidNel(MessageRefIDTimestampError)
-              ).map((_, _, rp, _, ts) => KeyXMLFileInfo(msgRefId,rp,ts))
+              ).map((_, _, rp, _, ts) => (r:ReportingRole, u:Utr, s:String) => KeyXMLFileInfo(msgRefId,rp,ts,r,u,s))
           )
-        case _ => MessageRefIDFormatError.invalidNel[KeyXMLFileInfo].pure[Future]
+        case _ => MessageRefIDFormatError.invalidNel.pure[Future]
       }
 
     )
