@@ -95,16 +95,6 @@ implicit request: Request[_], messages: Messages)
                 </tr>
                 <tr>
                     <th>
-                        @Messages("submitSummary.table.filingCapacity")
-                    </th>
-                    <td>
-                        @if(summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity == MNE_AGENT.toString) {@Messages("submitInfoFilingCapacity.mneUserAgent.label")}
-                        @if(summaryData.submissionMetaData.submissionInfo.filingCapacity.filingCapacity == REPRESENTATIVE.toString) { @Messages("submitInfoFilingCapacity.representative.label")}
-                    </td>
-
-                </tr>
-                <tr>
-                    <th>
                         @Messages("submitSummary.table.reportDetails")
                     </th>
                     <td>

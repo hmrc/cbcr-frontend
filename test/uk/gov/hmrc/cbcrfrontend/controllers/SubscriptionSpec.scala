@@ -296,11 +296,11 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     }
   }
 
-  "POST /reconfirmEmailSubmit" should {
+  "POST /subscriberReconfirmEmailSubmit" should {
     "return 303 when Email Address is valid" in {
 
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("name", "0123123123", EmailAddress("max@max.com"))))
       when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
       when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -342,4 +342,5 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
     }
 
   }
+
 }
