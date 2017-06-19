@@ -74,13 +74,12 @@ package object cbcrfrontend {
       submitterInfo <- cache.read[SubmitterInfo]
       filingType <- cache.read[FilingType]
       upe <- cache.read[UltimateParentEntity]
-      filingCapacity <- cache.read[FilingCapacity]
       fileMetadata <- cache.read[FileMetadata]
     } yield {
       (errors(bpr) |@| errors(utr) |@| errors(hash) |@| errors(cbcId) |@| errors(fileId) |@|
         errors(envelopeId) |@| errors(submitterInfo) |@| errors(filingType) |@|
-        errors(upe) |@| errors(filingCapacity) |@| errors(fileMetadata)
-        ).map { (record, utr, hash, id, fileId, envelopeId, info, filingType, upe, capacity, metadata) =>
+        errors(upe) |@| errors(fileMetadata)
+        ).map { (record, utr, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
 
         SubmissionMetaData(
           SubmissionInfo(
@@ -91,8 +90,7 @@ package object cbcrfrontend {
             ofdsRegime = "cbc",
             utr = utr,
             filingType = filingType,
-            ultimateParentEntity = upe,
-            filingCapacity = capacity
+            ultimateParentEntity = upe
           ),
           info,
           FileInfo(fileId, envelopeId, metadata.status, metadata.name, metadata.contentType, metadata.length, metadata.created)

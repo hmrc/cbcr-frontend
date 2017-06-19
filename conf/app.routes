@@ -18,7 +18,6 @@ GET        /filingType                                    @uk.gov.hmrc.cbcrfront
 GET        /known-facts-check                             @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
 POST       /submitFilingType                              @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingType
 POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUltimateParentEntity
-POST       /submitFilingCapacity                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitFilingCapacity
 POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo
 GET        /reconfirmEmail                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmail
 POST       /reconfirmEmailSubmit                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmailSubmit
