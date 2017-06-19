@@ -36,7 +36,7 @@ class FileUploadServiceConnector() {
   val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
 
 
-  def envelopeRequest(formTypeRef: String, cbcrsUrl: String): JsObject = {
+  def envelopeRequest(cbcrsUrl: String): JsObject = {
 
     Logger.debug("CBCR URL: "+cbcrsUrl)
 
@@ -46,9 +46,9 @@ class FileUploadServiceConnector() {
       "callbackUrl" -> s"$cbcrsUrl/cbcr/saveFileUploadResponse",
       "expiryDate" -> s"${envelopeExpiryDate(7)}",
       "metadata" -> Json.obj(
-        "application" -> "Country By Country Reporting Service",
-        "formTypeRef" -> s"$formTypeRef"
-      )
+        "application" -> "Country By Country Reporting Service"
+      ),
+      "constraints" -> 	Json.obj("maxSize"-> "50MB")
     )
   }
 
