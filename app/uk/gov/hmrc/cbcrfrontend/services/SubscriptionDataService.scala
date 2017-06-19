@@ -20,8 +20,8 @@ import cats.data.EitherT
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriberContact, SubscriptionDetails, Utr}
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriptionDetails, Utr}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.http.NotFoundException
@@ -46,31 +46,31 @@ class SubscriptionDataService extends ServicesConfig{
       utr => url.url + s"/cbcr/subscription-data/utr/${utr.utr}",
       id  => url.url + s"/cbcr/subscription-data/cbc-id/$id"
     )
-    EitherT[Future,UnexpectedState, Option[SubscriptionDetails]](
+    EitherT[Future,CBCErrors, Option[SubscriptionDetails]](
       WSHttp.GET[HttpResponse](fullUrl).map { response =>
         response.json.validate[SubscriptionDetails].fold(
-          errors  => Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
-          details => Right[UnexpectedState,Option[SubscriptionDetails]](Some(details))
+          errors  => Left[CBCErrors,Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
+          details => Right[CBCErrors,Option[SubscriptionDetails]](Some(details))
         )
       }.recover{
-        case _:NotFoundException => Right[UnexpectedState,Option[SubscriptionDetails]](None)
+        case _:NotFoundException => Right[CBCErrors,Option[SubscriptionDetails]](None)
         case NonFatal(t) =>
           Logger.error("GET future failed", t)
-          Left[UnexpectedState,Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
+          Left[CBCErrors,Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
       }
     )
 
   }
   def saveSubscriptionData(data:SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/saveSubscriptionData"
-    EitherT[Future,UnexpectedState, String](
+    EitherT[Future,CBCErrors, String](
       WSHttp.POST[SubscriptionDetails,HttpResponse](fullUrl,data).map { response =>
         response.status match {
-          case Status.OK => Right[UnexpectedState,String](response.body)
-          case _         => Left[UnexpectedState,String](UnexpectedState(response.body))
+          case Status.OK => Right[CBCErrors,String](response.body)
+          case _         => Left[CBCErrors,String](UnexpectedState(response.body))
         }
       }.recover{
-        case NonFatal(t) => Left[UnexpectedState,String](UnexpectedState(t.getMessage))
+        case NonFatal(t) => Left[CBCErrors,String](UnexpectedState(t.getMessage))
       }
     )
   }
@@ -82,18 +82,18 @@ class SubscriptionDataService extends ServicesConfig{
     for {
       cbc    <- id.fold(
         utr => retrieveSubscriptionData(Left(utr)).map(_.map(_.cbcId)),
-        id  => EitherT.pure[Future,UnexpectedState,Option[CBCId]](Some(id))
+        id  => EitherT.pure[Future,CBCErrors,Option[CBCId]](Some(id))
       )
-      result <- cbc.fold(EitherT.pure[Future,UnexpectedState,Option[String]](None))(id =>
-        EitherT[Future, UnexpectedState, Option[String]](
+      result <- cbc.fold(EitherT.pure[Future,CBCErrors,Option[String]](None))(id =>
+        EitherT[Future, CBCErrors, Option[String]](
           WSHttp.POST[CBCId, HttpResponse](fullUrl, id).map { response =>
             response.status match {
-              case Status.OK        => Right[UnexpectedState, Option[String]](Some(response.body))
-              case Status.NOT_FOUND => Right[UnexpectedState, Option[String]](None)
-              case _ => Left[UnexpectedState, Option[String]](UnexpectedState(response.body))
+              case Status.OK        => Right[CBCErrors, Option[String]](Some(response.body))
+              case Status.NOT_FOUND => Right[CBCErrors, Option[String]](None)
+              case _ => Left[CBCErrors, Option[String]](UnexpectedState(response.body))
             }
           }.recover {
-            case NonFatal(t) => Left[UnexpectedState, Option[String]](UnexpectedState(t.getMessage))
+            case NonFatal(t) => Left[CBCErrors, Option[String]](UnexpectedState(t.getMessage))
           }
         ))
     } yield result

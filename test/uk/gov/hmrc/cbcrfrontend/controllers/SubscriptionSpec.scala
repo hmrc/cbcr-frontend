@@ -27,7 +27,7 @@ import play.api.i18n.MessagesApi
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCIdService, CBCKnownFactsService, CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
@@ -137,7 +137,7 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,UnexpectedState,Boolean](true)
+      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](true)
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
     }
     "return 200 when we have already used that utr and we are an Agent"  in {
@@ -150,7 +150,7 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,UnexpectedState,Boolean](true)
+      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](true)
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
 
@@ -164,7 +164,7 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       when(dc.lookup(anyObject[String])(anyObject[HeaderCarrier])) thenReturn Future.successful(HttpResponse(Status.OK, Some(Json.toJson(response))))
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,UnexpectedState,Boolean](false)
+      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](false)
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
@@ -224,8 +224,8 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(Some(cbcid))
-      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("return 500 when the SubscriptionDataService errors")))
-      when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,UnexpectedState,Option[String]](None)
+      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,CBCErrors, String](Future.successful(UnexpectedState("return 500 when the SubscriptionDataService errors")))
+      when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[String]](None)
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None))))
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("700000002")))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -245,12 +245,12 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
-      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,UnexpectedState,String](Future.successful(UnexpectedState("oops")))
+      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,CBCErrors, String](Future.successful(UnexpectedState("oops")))
       when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
-      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.left[Future,UnexpectedState,Unit](UnexpectedState("oops"))
+      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.left[Future,CBCErrors, Unit](UnexpectedState("oops"))
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None))))
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
-      when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,UnexpectedState,Option[String]](None)
+      when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[String]](None)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(subService).clearSubscriptionData(any())(any(),any())
     }
@@ -259,9 +259,9 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       val controller = new Subscription(securedActions, subService,dc,cbcId,cbcKF,auth)
       val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
-      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,UnexpectedState,String]("done")
+      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,CBCErrors, String]("done")
       when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
-      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,UnexpectedState,Unit](())
+      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,CBCErrors, Unit](())
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
       verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
     }
@@ -316,19 +316,19 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       "return a 200 if data was successfully cleared" in {
         val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
         val u: Utr = Utr("7000000002")
-        when(subService.clearSubscriptionData(any())(any(), any())) thenReturn EitherT.pure[Future, UnexpectedState, Option[String]](Some("done"))
+        when(subService.clearSubscriptionData(any())(any(), any())) thenReturn EitherT.pure[Future, CBCErrors,Option[String]](Some("done"))
         status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.OK
       }
       "return a 204 if data was no data to clear" in {
         val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
         val u: Utr = Utr("7000000002")
-        when(subService.clearSubscriptionData(any())(any(), any())) thenReturn EitherT.pure[Future, UnexpectedState, Option[String]](None)
+        when(subService.clearSubscriptionData(any())(any(), any())) thenReturn EitherT.pure[Future, CBCErrors,Option[String]](None)
         status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.NO_CONTENT
       }
       "return a 500 if something goes wrong" in {
         val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
         val u: Utr = Utr("7000000002")
-        when(subService.clearSubscriptionData(any())(any(), any())) thenReturn EitherT.left[Future, UnexpectedState, Option[String]](UnexpectedState("oops"))
+        when(subService.clearSubscriptionData(any())(any(), any())) thenReturn EitherT.left[Future, CBCErrors,Option[String]](UnexpectedState("oops"))
         status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.INTERNAL_SERVER_ERROR
       }
     }
