@@ -19,8 +19,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.io.File
 
 import cats.data.{EitherT, Validated}
+import org.mockito.Mockito._
 import org.mockito.Matchers._
-import org.mockito.Mockito.when
 import play.api.libs.json.{JsNull, JsValue, Json}
 import org.mockito.Matchers.{eq => EQ, _}
 import org.scalatest.mock.MockitoSugar
@@ -90,46 +90,70 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
   }
 
+  "GET /submitter-info" should {
+    "return a 200" in {
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC701, Utr("7000000002"),"Bob Corp")))
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
+    }
+    "use the UTR, UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
+      val cache = mock[CBCSessionCache]
+      val controller = new Submission(securedActions, cache, fus)
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC701, Utr("7000000002"),"Bob Corp")))
+      status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
+      verify(cache).save(any())(EQ(Utr.utrFormat),any(),any())
+      verify(cache).save(any())(EQ(FilingType.format),any(),any())
+      verify(cache).save(any())(EQ(UltimateParentEntity.format),any(),any())
+    }
+    "use the Filing type form the xml when the ReportingRole is CBC702" in {
+      val cache = mock[CBCSessionCache]
+      val controller = new Submission(securedActions, cache, fus)
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC702, Utr("7000000002"),"Bob Corp")))
+      status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
+      verify(cache).save(any())(EQ(FilingType.format),any(),any())
+    }
+    "use the UTR and Filing type form the xml when the ReportingRole is CBC703" in {
+      val cache = mock[CBCSessionCache]
+      val controller = new Submission(securedActions, cache, fus)
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC703, Utr("7000000002"),"Bob Corp")))
+      status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
+      verify(cache).save(any())(EQ(Utr.utrFormat),any(),any())
+      verify(cache).save(any())(EQ(FilingType.format),any(),any())
+    }
+  }
+
   "POST /submitSubmitterInfo" should {
     "return 400 when the there is no data at all" in {
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo"))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Fullname" in {
       val submitterInfo = SubmitterInfo("", "AAgency", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but AgencyOrBusinessname" in {
       val submitterInfo = SubmitterInfo("Fullname", "", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but JobRole" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "", "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Contact Phone" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "jobRole", "", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Email Address" in {
 
       val submitterInfo = Json.obj(
@@ -142,10 +166,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Email Address is in Invalid format" in {
       val submitterInfo = Json.obj(
         "fullName" ->"Fullname",
@@ -158,9 +178,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the empty fields of data exists" in {
       val submitterInfo = Json.obj(
         "fullName" ->"",
@@ -172,9 +189,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 303 when all of the data exists & valid" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
@@ -202,19 +216,12 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-
-  "POST /reconfirmEmailSubmit" should {
     "return 400 when Email Address is in Invalid format" in {
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc.xyz")
 
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /reconfirmEmailSubmit" should {
     "return 303 when Email Address is valid" in {
 
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
