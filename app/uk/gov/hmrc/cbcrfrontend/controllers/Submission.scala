@@ -87,6 +87,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
     )(UltimateParentEntity.apply)(UltimateParentEntity.unapply)
   )
 
+
   val submitterInfoForm: Form[SubmitterInfo] = Form(
     mapping(
       "fullName"        -> nonEmptyText,
@@ -117,8 +118,6 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       includes.asideBusiness(), includes.phaseBannerBeta(), ultimateParentEntityForm
     )))
   }
-
-
 
   val submitUltimateParentEntity = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
@@ -188,7 +187,6 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       },_ => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(includes.asideBusiness(), includes.phaseBannerBeta(), submitterInfoForm))
       )
   }
-
 
   val submitSubmitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     submitterInfoForm.bindFromRequest.fold(
