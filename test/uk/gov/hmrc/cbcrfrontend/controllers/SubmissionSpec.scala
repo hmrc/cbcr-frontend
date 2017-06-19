@@ -29,7 +29,7 @@ import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model.{FileId, KeyXMLFileInfo, _}
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
@@ -303,10 +303,10 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       }
 
     "return 500 if the fileUploadService fails" in {
-      when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, UnexpectedState, File](Future.successful(Left(UnexpectedState("Some error"))))
+      when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, CBCErrors,File](Future.successful(Left(UnexpectedState("Some error"))))
       status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
 
-      when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, UnexpectedState, File](Future.failed(new Exception("Something else went wrong!")))
+      when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, CBCErrors,File](Future.failed(new Exception("Something else went wrong!")))
       status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
 
     }
@@ -326,7 +326,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[FilingType](EQ(FilingType.format),any(),any())) thenReturn Future.successful(Some(FilingType(CBC701)))
         when(cache.read[UltimateParentEntity](EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(Some(UltimateParentEntity("yeah")))
         when(cache.read[FileMetadata](EQ(FileMetadata.fileMetadataFormat),any(),any())) thenReturn Future.successful(Some(FileMetadata("asdf","lkjasdf","lkj","lkj",10,"lkjasdf",JsNull,"")))
-        when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, UnexpectedState, File](Future.successful(Right(file)))
+        when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, CBCErrors,File](Future.successful(Right(file)))
         when(cache.save[SummaryData](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
 
         status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.OK
@@ -349,7 +349,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.parse("{\"cbcDeclaration\": \"true\"}")))
 
         when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
-        when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,UnexpectedState, String](Future.successful(Right("routed")))
+        when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,CBCErrors,String](Future.successful(Right("routed")))
 
         status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
       }
