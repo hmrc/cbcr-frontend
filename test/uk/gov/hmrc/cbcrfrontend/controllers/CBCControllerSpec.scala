@@ -31,12 +31,13 @@ import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.{JsValue, Json}
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.http.HeaderCarrier
+
 import scala.concurrent.duration._
 
 
@@ -76,13 +77,13 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
     }
     "return 403 if the CBCId has not been registered" in {
       val controller = cbcController
-      when(subDataS.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,UnexpectedState,Option[SubscriptionDetails]](None)
+      when(subDataS.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](None)
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.BAD_REQUEST
     }
     "return a redirect if successful" in {
       val controller = cbcController
-      when(subDataS.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,UnexpectedState,Option[SubscriptionDetails]](Some(subDetails))
+      when(subDataS.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.SEE_OTHER
     }

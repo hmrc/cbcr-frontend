@@ -45,7 +45,7 @@ implicit request: Request[_], messages: Messages)
                     <span id="@fileName-error-message" class="error-notification" role="alert" data-input-name="@fileName">
 
                     </span>
-                    <input type="file" id="input-file" class="upload-report-input" name ="@fileName" accept="application/xml" required
+                    <input type="file" id="input-file" class="upload-report-input" name ="@fileName" accept=".xml" required
                 data-msg-required="@Messages("uploadReport.error")">
                     <p>@Messages("uploadReport.afterInputField")</p>
                 </div>

@@ -23,7 +23,7 @@ import cats.instances.future._
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.GGConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model.CBCKnownFacts
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
@@ -32,7 +32,7 @@ import scala.concurrent.ExecutionContext
 @Singleton
 class CBCKnownFactsService @Inject() (connector:GGConnector)(implicit ec:ExecutionContext) {
 
-  private def httpResponseToEither(res:HttpResponse) : Either[UnexpectedState,String] =
+  private def httpResponseToEither(res:HttpResponse) : Either[CBCErrors,String] =
     Either.cond(res.status == Status.OK, res.body, UnexpectedState(res.body))
 
   private def addKnownFacts(kf:CBCKnownFacts)(implicit hc:HeaderCarrier) : ServiceResponse[String] =
