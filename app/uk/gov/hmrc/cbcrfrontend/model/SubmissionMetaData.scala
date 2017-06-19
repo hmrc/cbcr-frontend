@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.{JsValue, Json, Writes}
 import uk.gov.hmrc.emailaddress.EmailAddress
+import cats.syntax.show._
 
 /**
   * Created by max on 11/05/17.
@@ -67,7 +68,7 @@ object SubmissionMetaData {
         "hash" -> o.submissionInfo.hash.value,
         "ofdsRegime" -> o.submissionInfo.ofdsRegime,
         "utr" -> o.submissionInfo.utr.value,
-        "filingType" -> o.submissionInfo.filingType.filingType,
+        "filingType" -> o.submissionInfo.filingType.value.show,
         "ultimateParentEntity" -> o.submissionInfo.ultimateParentEntity.ultimateParentEntity
       ),
       "submitterInfo" -> Json.obj(

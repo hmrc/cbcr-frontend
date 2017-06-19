@@ -19,8 +19,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.io.File
 
 import cats.data.{EitherT, Validated}
+import org.mockito.Mockito._
 import org.mockito.Matchers._
-import org.mockito.Mockito.when
 import play.api.libs.json.{JsNull, JsValue, Json}
 import org.mockito.Matchers.{eq => EQ, _}
 import org.scalatest.mock.MockitoSugar
@@ -62,35 +62,70 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val controller = new Submission(securedActions, cache, fus)
 
 
-  "POST /submitFilingType" should {
-    "return 400 when the there is no data" in {
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitFilingType"))
-      status(controller.submitFilingType(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
-    }
-  }
-
-  "POST /submitFilingType" should {
-    "return 200 when the data exists" in {
-      val filingType = FilingType("PRIMARY")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitFilingType").withJsonBody(Json.toJson(filingType)))
-      when(cache.save[FilingType](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      status(controller.submitFilingType(fakeRequestSubmit)) shouldBe Status.OK
-    }
-  }
-
   "POST /submitUltimateParentEntity " should {
-    "return 400 when the there is no data" in {
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity "))
-      status(controller.submitFilingType(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
-    }
-  }
-
-  "POST /submitUltimateParentEntity " should {
-    "return 200 when the data exists" in {
+    "return 303 and point to the submitters details" when {
       val ultimateParentEntity  = UltimateParentEntity("UlitmateParentEntity")
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.toJson(ultimateParentEntity)))
       when(cache.save[UltimateParentEntity](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      status(controller.submitUltimateParentEntity(fakeRequestSubmit)) shouldBe Status.OK
+      "the reporting role is CBC702" in {
+        when(cache.read(EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingRole = CBC702)))
+        val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
+        result.header.headers("Location") should endWith("/utr")
+        status(result) shouldBe Status.SEE_OTHER
+      }
+      "the reporting role is CBC703" in {
+        when(cache.read(EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingRole = CBC703)))
+        val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
+        result.header.headers("Location") should endWith("/submitter-info")
+        status(result) shouldBe Status.SEE_OTHER
+      }
+    }
+    "return 500 when the reportingrole is CBC701 as this should never happen" in {
+      val ultimateParentEntity  = UltimateParentEntity("UlitmateParentEntity")
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.toJson(ultimateParentEntity)))
+      when(cache.save[UltimateParentEntity](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.read(EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingRole = CBC701)))
+      val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+  }
+
+  "GET /submitter-info" should {
+    "return a 200" in {
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC701, Utr("7000000002"),"Bob Corp")))
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
+    }
+    "use the UTR, UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
+      val cache = mock[CBCSessionCache]
+      val controller = new Submission(securedActions, cache, fus)
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC701, Utr("7000000002"),"Bob Corp")))
+      status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
+      verify(cache).save(any())(EQ(Utr.utrFormat),any(),any())
+      verify(cache).save(any())(EQ(FilingType.format),any(),any())
+      verify(cache).save(any())(EQ(UltimateParentEntity.format),any(),any())
+    }
+    "use the Filing type form the xml when the ReportingRole is CBC702" in {
+      val cache = mock[CBCSessionCache]
+      val controller = new Submission(securedActions, cache, fus)
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC702, Utr("7000000002"),"Bob Corp")))
+      status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
+      verify(cache).save(any())(EQ(FilingType.format),any(),any())
+    }
+    "use the UTR and Filing type form the xml when the ReportingRole is CBC703" in {
+      val cache = mock[CBCSessionCache]
+      val controller = new Submission(securedActions, cache, fus)
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC703, Utr("7000000002"),"Bob Corp")))
+      status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
+      verify(cache).save(any())(EQ(Utr.utrFormat),any(),any())
+      verify(cache).save(any())(EQ(FilingType.format),any(),any())
     }
   }
 
@@ -99,41 +134,26 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo"))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Fullname" in {
       val submitterInfo = SubmitterInfo("", "AAgency", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but AgencyOrBusinessname" in {
       val submitterInfo = SubmitterInfo("Fullname", "", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but JobRole" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "", "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Contact Phone" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "jobRole", "", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Email Address" in {
 
       val submitterInfo = Json.obj(
@@ -146,10 +166,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the all data exists but Email Address is in Invalid format" in {
       val submitterInfo = Json.obj(
         "fullName" ->"Fullname",
@@ -162,9 +178,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 400 when the empty fields of data exists" in {
       val submitterInfo = Json.obj(
         "fullName" ->"",
@@ -176,9 +189,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /submitSubmitterInfo" should {
     "return 303 when all of the data exists & valid" in {
       val submitterInfo = SubmitterInfo("Fullname", "AAgency", "jobRole", "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
@@ -206,19 +216,12 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-
-  "POST /reconfirmEmailSubmit" should {
     "return 400 when Email Address is in Invalid format" in {
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc.xyz")
 
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /reconfirmEmailSubmit" should {
     "return 303 when Email Address is valid" in {
 
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
@@ -277,7 +280,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[FileId]) thenReturn Future.successful(Some(FileId("yeah")))
         when(cache.read[EnvelopeId]) thenReturn Future.successful(Some(EnvelopeId("id")))
         when(cache.read[SubmitterInfo]) thenReturn Future.successful(Some(SubmitterInfo("name","agency","MD","0123123123",EmailAddress("max@max.com"), Some(AffinityGroup("Organisation")))))
-        when(cache.read[FilingType]) thenReturn Future.successful(Some(FilingType("asdf")))
+        when(cache.read[FilingType]) thenReturn Future.successful(Some(FilingType(CBC701)))
         when(cache.read[UltimateParentEntity]) thenReturn Future.successful(Some(UltimateParentEntity("yeah")))
         when(cache.read[FileMetadata]) thenReturn Future.successful(Some(FileMetadata("asdf","lkjasdf","lkj","lkj",10,"lkjasdf",JsNull,"")))
 
@@ -312,7 +315,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
         val file = mock[File]
 
-        when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh")))
+        when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC701, Utr("7000000002"),"Bob Corp")))
         when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.successful(Some(bpr))
         when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("utr")))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId.create(1).toOption)
@@ -320,7 +323,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[FileId](EQ(FileId.fileIdFormat),any(),any())) thenReturn Future.successful(Some(FileId("yeah")))
         when(cache.read[EnvelopeId](EQ(EnvelopeId.format),any(),any())) thenReturn Future.successful(Some(EnvelopeId("id")))
         when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(Some(SubmitterInfo("name","agency","MD","0123123123",EmailAddress("max@max.com"),None)))
-        when(cache.read[FilingType](EQ(FilingType.format),any(),any())) thenReturn Future.successful(Some(FilingType("asdf")))
+        when(cache.read[FilingType](EQ(FilingType.format),any(),any())) thenReturn Future.successful(Some(FilingType(CBC701)))
         when(cache.read[UltimateParentEntity](EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(Some(UltimateParentEntity("yeah")))
         when(cache.read[FileMetadata](EQ(FileMetadata.fileMetadataFormat),any(),any())) thenReturn Future.successful(Some(FileMetadata("asdf","lkjasdf","lkj","lkj",10,"lkjasdf",JsNull,"")))
         when(fus.getFile(anyString, anyString)(any(),any(),any())) thenReturn EitherT[Future, UnexpectedState, File](Future.successful(Right(file)))
@@ -369,7 +372,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
      Hash("hash"),
      "ofdsRegime",
      Utr("utr"),
-     FilingType("filingType"),
+     FilingType(CBC701),
      UltimateParentEntity("ultimateParentEntity")
    )
     val submitterInfo = SubmitterInfo("fullName", "agencyBusinessName", "contactPhone", "jobRole", EmailAddress("abc@abc.com"), None)
@@ -377,7 +380,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
   }
 
-  private def keyXMLInfo = {
-    KeyXMLFileInfo("messageRefID", "2012-04-01", "2012-04-01T00:00")
+  private val keyXMLInfo = {
+    KeyXMLFileInfo("messageRefID", "2012-04-01", "2012-04-01T00:00", CBC702, Utr("7000000001"), "Bob Corp")
   }
 }

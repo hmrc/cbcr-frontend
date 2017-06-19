@@ -101,17 +101,17 @@ class FileUpload @Inject()(val sec: SecuredActions,
 
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
 
-    val result: ServiceResponse[(Option[NonEmptyList[BusinessRuleErrors]], Option[NonEmptyList[XMLErrors]], FileMetadata)] = for {
+    val result: ServiceResponse[(Option[NonEmptyList[BusinessRuleErrors]], Option[NonEmptyList[XMLErrors]], FileMetadata, Option[KeyXMLFileInfo])] = for {
       metadata    <- fileUploadService.getFileMetaData(envelopeId, fileId).subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
       _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(metadata))
       f           <- fileUploadService.getFile(envelopeId, fileId)
       schemaVal    = schemaValidator.validateSchema(f).leftMap(XMLErrors.errorHandlerToXmlErrors).toValidatedNel
       cbcId       <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("Unable to find CBCId in cache"))
       businessVal  = businessRuleValidator.validateBusinessRules(f,cbcId,metadata.name)
-      _            = businessVal.flatMap(_.map(xmlInfo => cache.save(xmlInfo)).sequence)
+      xml         <- EitherT.right(businessVal.flatMap(_.map(xmlInfo => cache.save(xmlInfo).map(_ => xmlInfo)).sequence))
       errors      <- EitherT.right(businessVal.map(_.swap.toOption -> schemaVal.swap.toOption))
       _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(Hash(sha256Hash(f))))
-    } yield Tuple3(errors._1, errors._2, metadata)
+    } yield Tuple4(errors._1, errors._2, metadata, xml.toOption)
 
     result.fold(
       error => {
@@ -124,13 +124,14 @@ class FileUpload @Inject()(val sec: SecuredActions,
         })
       },
       validationErrors => {
-        val (bErrors, sErrors, md) = validationErrors
-        val length: BigDecimal     = (md.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+        val (bErrors, sErrors, md, xml) = validationErrors
+        val length: BigDecimal          = (md.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
 
-        bErrors.foreach(e => cache.save(AllBusinessRuleErrors(e.toList)))
-        sErrors.foreach(e => cache.save(e.head))
+        for {
+          _ <- bErrors.map(e => cache.save(AllBusinessRuleErrors(e.toList))).sequence[Future,CacheMap]
+          _ <- sErrors.map(e => cache.save(e.head)).sequence[Future,CacheMap]
+        } yield Ok(fileupload.fileUploadResult(md.name, length, sErrors.isDefined, bErrors.isDefined, includes.asideBusiness(), includes.phaseBannerBeta(), xml.map(_.reportingRole)))
 
-        Future.successful(Ok(fileupload.fileUploadResult(md.name, length, sErrors.isDefined, bErrors.isDefined, includes.asideBusiness(), includes.phaseBannerBeta())))
       }
     ).flatten.recover{
       case NonFatal(e) =>
