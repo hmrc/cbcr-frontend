@@ -85,8 +85,7 @@ class FileUploadServiceConnector() {
 
   def extractFile(resp: HttpResponse): ResponseExtract[File] = {
     resp.status match {
-      case 200 => {
-        //Logger.debug("The XML: "+resp.body)
+      case 200 =>
 
         val inputStream = Source.fromString(resp.body).getCharacterStream
         val xmlFile = File.createTempFile("xml", "xml")
@@ -97,7 +96,7 @@ class FileUploadServiceConnector() {
         )
         fos.close()
         Right(xmlFile)
-      }
+
       case _ => Left(UnexpectedState("Problems getting the File "))
     }
   }

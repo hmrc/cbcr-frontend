@@ -13,6 +13,7 @@ GET        /file-upload-response/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfront
 GET        /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
 GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getBusinessRuleErrors
 GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getXmlSchemaErrors
+GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.invalidFileType
 
 POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUltimateParentEntity
 POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo

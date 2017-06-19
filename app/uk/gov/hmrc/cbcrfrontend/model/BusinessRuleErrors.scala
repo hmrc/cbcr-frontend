@@ -65,7 +65,7 @@ object BusinessRuleErrors {
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
           case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
           case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
-            JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
+            JsSuccess(InvalidXMLError(otherError.replaceAll("^invalidxmlerror: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
         }
       }

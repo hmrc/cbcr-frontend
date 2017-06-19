@@ -33,7 +33,7 @@ import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
@@ -63,7 +63,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
             includes.phaseBannerBeta(), summaryData, formWithErrors)))),
           _              => fus.uploadMetadataAndRoute(summaryData.submissionMetaData).bimap(
             errors => {
-              Logger.error(errors.errorMsg)
+              Logger.error(errors.show)
               InternalServerError(FrontendGlobal.internalServerErrorTemplate)
             },
             _      => {
@@ -218,10 +218,10 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       ))),
       success => (for {
         submitterInfo <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))
-        saved         <- EitherT.right[Future, UnexpectedState, CacheMap](cache.save[SubmitterInfo](submitterInfo.copy(email = success)))
+        saved         <- EitherT.right[Future, CBCErrors,CacheMap](cache.save[SubmitterInfo](submitterInfo.copy(email = success)))
       } yield saved).fold(
         error => {
-          Logger.error(error.errorMsg)
+          Logger.error(error.show)
           InternalServerError(FrontendGlobal.internalServerErrorTemplate)
         },
         _ => Redirect(routes.Submission.submitSummary())
@@ -243,10 +243,10 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
           keyXMLFileInfo <- OptionT(cache.read[KeyXMLFileInfo]).toRight(UnexpectedState("KeyXMLFileInfo not found in cache"))
           bpr            <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
           summaryData = SummaryData(bpr,submissionMetaData, keyXMLFileInfo)
-          _              <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save[SummaryData](summaryData))
+          _              <- EitherT.right[Future,CBCErrors,CacheMap](cache.save[SummaryData](summaryData))
         } yield summaryData).fold(
-            (error: UnexpectedState) => {
-              Logger.error(error.errorMsg)
+            (error: CBCErrors) => {
+              Logger.error(error.show)
               InternalServerError(FrontendGlobal.internalServerErrorTemplate)
             },
           summaryData => {

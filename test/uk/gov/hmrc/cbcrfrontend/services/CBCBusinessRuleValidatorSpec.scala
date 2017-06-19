@@ -153,12 +153,23 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       "ReportingRole is missing" in {
         val validFile = new File("test/resources/cbcr-noReportingEntity.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile,cbcId,filename), 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename), 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe InvalidXMLError("ReportingEntity.ReportingRole not found or invalid"),
-          _      => fail("No InvalidXMLError generated")
+          _ => fail("No InvalidXMLError generated")
         )
+      }
+
+      "File is not a valid xml file" in {
+        val validFile = new File("test/resources/actually_a_jpg.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe InvalidXMLError("Unable to parse file"),
+          _ => fail("No InvalidXMLError generated")
+        )
+
       }
     }
     "return the KeyXmlInfo when everything is fine" in {
