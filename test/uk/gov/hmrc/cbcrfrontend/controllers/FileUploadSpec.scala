@@ -20,7 +20,7 @@ import java.io.{File, IOException}
 
 import cats.data.{EitherT, Validated}
 import cats.instances.future._
-import org.mockito.Matchers.{eq => EQ,_}
+import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
@@ -36,7 +36,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.auth._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
@@ -44,7 +44,8 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
 
 
 class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
@@ -64,11 +65,11 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
   implicit val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
 
-  def right[A](a:Future[A]) : ServiceResponse[A] = EitherT.right[Future,UnexpectedState, A](a)
-  def left[A](s:String) : ServiceResponse[A] = EitherT.left[Future,UnexpectedState, A](UnexpectedState(s))
-  def pure[A](a:A) : ServiceResponse[A] = EitherT.pure[Future,UnexpectedState, A](a)
+  def right[A](a:Future[A]) : ServiceResponse[A] = EitherT.right[Future,CBCErrors, A](a)
+  def left[A](s:String) : ServiceResponse[A] = EitherT.left[Future,CBCErrors, A](UnexpectedState(s))
+  def pure[A](a:A) : ServiceResponse[A] = EitherT.pure[Future,CBCErrors, A](a)
 
-  val md = FileMetadata("","","","",1.0,"",JsNull,"")
+  val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
 
   val controller = new FileUpload(securedActions, schemaValidator, businessRulesValidator,cache,fuService)
 
@@ -97,28 +98,23 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
       val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
       status(result) shouldBe Status.ACCEPTED
     }
-    "return 204 when the FUS hasn't updated the backend yet" in {
-      when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](None)
-      val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse).futureValue
-      status(result) shouldBe Status.NO_CONTENT
+    "return 204" when {
+      "the FUS hasn't updated the backend yet" in {
+        when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](None)
+        val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse).futureValue
+        status(result) shouldBe Status.NO_CONTENT
+      }
+      "file is not yet available" in {
+        when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED")): Option[FileUploadCallbackResponse])
+        val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse).futureValue
+        status(result) shouldBe Status.NO_CONTENT
+      }
     }
-    "return 204 when the file is not yet available" in {
-      when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED")):Option[FileUploadCallbackResponse])
-      val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse).futureValue
-      status(result) shouldBe Status.NO_CONTENT
-    }
-  }
-
-
-  "GET /fileUploadProgress/envelopeId/fileId" should {
     "return a 200" in {
       val request = addToken(FakeRequest("GET", "fileUploadProgress/envelopeId/fileId"))
       val result = controller.fileUploadProgress("test","test")(request)
       status(result) shouldBe Status.OK
     }
-  }
-
-  "GET /fileUploadReady/envelopeId/fileId" should {
     "return a 500" when {
       "the call to get the file metadata fails" in{
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
@@ -145,14 +141,15 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
         status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       }
     }
-    "return a 200" when {
-      "all the calls succeed" in {
+
+    "be redirected to an error page" when {
+      "the file extension is invalid" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
-        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
-        when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache",Map.empty))
-        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn right(file.file)
-        val result = controller.fileValidate("test","test")(request)
-        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md.copy(name = "bad.zip")))
+        val result = Await.result(controller.fileValidate("test","test")(request), 5.second)
+        result.header.headers("Location") should endWith("invalid-file-type")
+        status(result) shouldBe Status.SEE_OTHER
+
       }
     }
   }

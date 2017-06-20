@@ -25,7 +25,7 @@ import cats.instances.future._
 import cats.syntax.option._
 import cats.syntax.cartesian._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.frontend.auth.AuthContext
@@ -37,7 +37,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object cbcrfrontend {
 
-  def affinityGroupToUserType(a: AffinityGroup): Either[UnexpectedState, UserType] = a.affinityGroup.toLowerCase.trim match {
+  def affinityGroupToUserType(a: AffinityGroup): Either[CBCErrors, UserType] = a.affinityGroup.toLowerCase.trim match {
     case "agent" => Right(Agent)
     case "organisation" => Right(Organisation)
     case other => Left(UnexpectedState(s"Unknown affinity group: $other"))

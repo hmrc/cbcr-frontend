@@ -20,6 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
 import cats.instances.future._
+import cats.syntax.show._
 import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
@@ -28,7 +29,7 @@ import play.api.i18n.Messages.Implicits._
 import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model.{Agent, CBCId, Organisation, SubscriptionDetails}
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -56,7 +57,7 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
   val enterCBCId = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
     getUserType(authContext).fold[Result](
       error => {
-        Logger.error(error.errorMsg)
+        Logger.error(error.show)
         InternalServerError(FrontendGlobal.internalServerErrorTemplate)
       },
       userType =>
@@ -69,20 +70,20 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
   val submitCBCId = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request =>
       getUserType(authContext).leftMap{errors =>
-        Logger.error(errors.errorMsg)
+        Logger.error(errors.show)
         InternalServerError(FrontendGlobal.internalServerErrorTemplate)
       }.semiflatMap(userType =>
         cbcIdForm.bindFromRequest().fold[Future[Result]](
           errors => Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, errors))),
           id => {
-            val result: EitherT[Future, UnexpectedState, Option[SubscriptionDetails]] = for {
+            val result: EitherT[Future, CBCErrors, Option[SubscriptionDetails]] = for {
               id <- EitherT.fromOption[Future](CBCId(id), UnexpectedState(s"CBCId $id is Invalid"))
               sd <- subDataService.retrieveSubscriptionData(id)
             } yield sd
 
             result.value.flatMap(_.fold(
-              (error: UnexpectedState)               => {
-                Logger.error(error.errorMsg)
+              (error: CBCErrors)               => {
+                Logger.error(error.show)
                 Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
               },
               (details: Option[SubscriptionDetails]) => details.fold {
