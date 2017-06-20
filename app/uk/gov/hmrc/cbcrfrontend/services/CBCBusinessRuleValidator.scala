@@ -20,7 +20,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.File
 import javax.inject.{Inject, Singleton}
 
-import cats.data.{Validated, ValidatedNel}
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.syntax.all._
 import cats.instances.all._
 import org.joda.time.DateTime
@@ -33,6 +33,9 @@ import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.pull._
 import uk.gov.hmrc.cbcrfrontend._
+
+import scala.util.Try
+import scala.util.control.Exception.nonFatalCatch
 
 
 @Singleton
@@ -47,21 +50,23 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
 
 
   def validateBusinessRules(in:File, cBCId: CBCId, fileName:String)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,KeyXMLFileInfo]] = {
-    val stream = new XMLEventReader(scala.io.Source.fromFile(in)).toStream
-    messageRefIDCheck(stream).map{ messageRefIdVal  =>
-      val otherRules = (
-        validateTestDataPresent(stream).toValidatedNel |@|
-          validateReceivingCountry(stream).toValidatedNel |@|
-          validateSendingEntity(stream,cBCId).toValidatedNel |@|
-          validateFileName(in,fileName, stream).toValidatedNel |@|
-          validateReportingRole(stream).toValidatedNel |@|
-          validateTIN(stream).toValidatedNel |@|
-          findElementText("Name",None,stream).toValidNel(InvalidXMLError("No ReportingEntity.Entity.Name field found"))
-        ).map((_, _, _, _, reportingRole, tin, name) => (reportingRole, tin, name))
+    val s = nonFatalCatch opt new XMLEventReader(scala.io.Source.fromFile(in)).toStream toValidNel InvalidXMLError("Unable to parse file")
+    s.fold(
+      (value: NonEmptyList[InvalidXMLError]) => Future.successful(value.invalid[KeyXMLFileInfo]),
+      (stream: Stream[XMLEvent]) => messageRefIDCheck(stream).map { messageRefIdVal =>
+        val otherRules = (
+          validateTestDataPresent(stream).toValidatedNel |@|
+            validateReceivingCountry(stream).toValidatedNel |@|
+            validateSendingEntity(stream, cBCId).toValidatedNel |@|
+            validateFileName(in, fileName, stream).toValidatedNel |@|
+            validateReportingRole(stream).toValidatedNel |@|
+            validateTIN(stream).toValidatedNel |@|
+            findElementText("Name", None, stream).toValidNel(InvalidXMLError("No ReportingEntity.Entity.Name field found"))
+          ).map((_, _, _, _, reportingRole, tin, name) => (reportingRole, tin, name))
 
-      (otherRules |@| messageRefIdVal).map((values, roleToInfo) => roleToInfo.tupled(values))
+        (otherRules |@| messageRefIdVal).map((values, roleToInfo) => roleToInfo.tupled(values))
 
-    }
+      })
   }
 
   def validateTIN(in:Stream[XMLEvent]) : Validated[BusinessRuleErrors, Utr] =

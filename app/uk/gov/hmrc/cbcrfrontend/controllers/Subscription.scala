@@ -32,7 +32,7 @@ import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.{AuthConnector, BPRKnownFactsConnector}
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -85,25 +85,25 @@ class Subscription @Inject()(val sec: SecuredActions,
             case Some(id) =>
 
               val result = for {
-                bpr <- EitherT[Future, UnexpectedState, BusinessPartnerRecord](
+                bpr <- EitherT[Future, CBCErrors, BusinessPartnerRecord](
                   session.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
                 )
-                utr <- EitherT[Future, UnexpectedState, Utr](
+                utr <- EitherT[Future, CBCErrors, Utr](
                   session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
                 )
                 _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id, utr))
                 _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
-                _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(id))
-                _ <- EitherT.right[Future, UnexpectedState, CacheMap](session.save(data))
+                _ <- EitherT.right[Future, CBCErrors, CacheMap](session.save(id))
+                _ <- EitherT.right[Future, CBCErrors, CacheMap](session.save(data))
               } yield id
 
 
               result.fold[Future[Result]](
                 error => {
-                  Logger.error(error.errorMsg)
+                  Logger.error(error.show)
                   subscriptionDataService.clearSubscriptionData(id).fold(
                     error => {
-                      Logger.error(error.errorMsg)
+                      Logger.error(error.show)
                       InternalServerError(FrontendGlobal.internalServerErrorTemplate)
                     },
                     _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
@@ -138,7 +138,7 @@ class Subscription @Inject()(val sec: SecuredActions,
       success => (for {
         subscriberContact <- OptionT(session.read[SubscriberContact]).toRight(UnexpectedState("SubscriberContact not found in the cache"))
         cbcId             <- OptionT(session.read[CBCId]).toRight(UnexpectedState("CBCId not found in the cache"))
-        _                 <- EitherT.right[Future, UnexpectedState, CacheMap](session.save[SubscriberContact](subscriberContact.copy(email = success)))
+        _                 <- EitherT.right[Future, CBCErrors, CacheMap](session.save[SubscriberContact](subscriberContact.copy(email = success)))
 
       } yield cbcId).fold(
         _     => InternalServerError(FrontendGlobal.internalServerErrorTemplate),
@@ -169,7 +169,7 @@ class Subscription @Inject()(val sec: SecuredActions,
           case Agent => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
           case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = false,Organisation))
         }.leftMap { errors =>
-          Logger.error(errors.errorMsg)
+          Logger.error(errors.show)
           InternalServerError(FrontendGlobal.internalServerErrorTemplate)
         }.merge
       }
@@ -180,7 +180,7 @@ class Subscription @Inject()(val sec: SecuredActions,
     implicit request =>
 
       getUserType(authContext).leftMap{ errors =>
-        Logger.error(errors.errorMsg)
+        Logger.error(errors.show)
         InternalServerError(FrontendGlobal.internalServerErrorTemplate)
       }.flatMap { userType =>
 
@@ -193,7 +193,7 @@ class Subscription @Inject()(val sec: SecuredActions,
               NotFound(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
             )
             alreadySubscribed <- subscriptionDataService.alreadySubscribed(knownFacts.utr).leftMap { error =>
-              Logger.error(error.errorMsg)
+              Logger.error(error.show)
               InternalServerError(FrontendGlobal.internalServerErrorTemplate)
             }
             _ <- EitherT.cond[Future]( userType match {
@@ -227,7 +227,7 @@ class Subscription @Inject()(val sec: SecuredActions,
   def clearSubscriptionData(u:Utr) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
     if(CbcrSwitches.clearSubscriptionDataRoute.enabled) {
       subscriptionDataService.clearSubscriptionData(u).fold(
-        error => InternalServerError(error.errorMsg), {
+        error => InternalServerError(error.show), {
           case Some(_) => Ok
           case None => NoContent
         }

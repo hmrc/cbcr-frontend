@@ -31,7 +31,7 @@ import play.api.libs.Files
 import play.api.mvc._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, InvalidFileType, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCBusinessRuleValidator, CBCRXMLValidator, CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
@@ -64,9 +64,9 @@ class FileUpload @Inject()(val sec: SecuredActions,
 
     val result = for {
       envelopeId     <- fileUploadService.createEnvelope
-      _              <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(envelopeId))
+      _              <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(envelopeId))
       fileId          = UUID.randomUUID.toString
-      _              <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(FileId(fileId)))
+      _              <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(FileId(fileId)))
       successRedirect = s"$hostName/country-by-country-reporting/file-upload-progress/$envelopeId/$fileId"
       fileUploadUrl   = s"${FrontendAppConfig.fileUploadFrontendHost}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
         s"redirect-success-url=$successRedirect&" +
@@ -76,7 +76,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
 
 
     result.leftMap { error =>
-      Logger.error(error.errorMsg)
+      Logger.error(error.show)
       InternalServerError(FrontendGlobal.internalServerErrorTemplate)
     }.merge
 
@@ -103,26 +103,28 @@ class FileUpload @Inject()(val sec: SecuredActions,
 
     val result: ServiceResponse[(Option[NonEmptyList[BusinessRuleErrors]], Option[NonEmptyList[XMLErrors]], FileMetadata, Option[KeyXMLFileInfo])] = for {
       metadata    <- fileUploadService.getFileMetaData(envelopeId, fileId).subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
-      _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(metadata))
+      _           <- EitherT.cond[Future](metadata.name.endsWith(".xml"),(),InvalidFileType(metadata.name))
+      _           <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(metadata))
       f           <- fileUploadService.getFile(envelopeId, fileId)
       schemaVal    = schemaValidator.validateSchema(f).leftMap(XMLErrors.errorHandlerToXmlErrors).toValidatedNel
       cbcId       <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("Unable to find CBCId in cache"))
       businessVal  = businessRuleValidator.validateBusinessRules(f,cbcId,metadata.name)
       xml         <- EitherT.right(businessVal.flatMap(_.map(xmlInfo => cache.save(xmlInfo).map(_ => xmlInfo)).sequence))
       errors      <- EitherT.right(businessVal.map(_.swap.toOption -> schemaVal.swap.toOption))
-      _           <- EitherT.right[Future,UnexpectedState,CacheMap](cache.save(Hash(sha256Hash(f))))
+      _           <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(Hash(sha256Hash(f))))
     } yield Tuple4(errors._1, errors._2, metadata, xml.toOption)
 
-    result.fold(
-      error => {
-        fileUploadService.deleteEnvelope(envelopeId).fold(
-          _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate),
-          _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-        ).map(s => {
-          Logger.error(error.errorMsg)
-          s
-        })
-      },
+    result.fold({
+      case UnexpectedState(errorMsg, _) => fileUploadService.deleteEnvelope(envelopeId).fold(
+        _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate),
+        _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+      ).map(s => {
+        Logger.error(errorMsg)
+        s
+      })
+      case InvalidFileType(_) => Future.successful(Redirect(routes.FileUpload.invalidFileType()))
+
+    },
       validationErrors => {
         val (bErrors, sErrors, md, xml) = validationErrors
         val length: BigDecimal          = (md.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
@@ -140,6 +142,10 @@ class FileUpload @Inject()(val sec: SecuredActions,
     }
 
 
+  }
+
+  def invalidFileType = Action.async{ implicit request =>
+    Future.successful(Ok(fileupload.wrongFileType(includes.asideBusiness(),includes.phaseBannerBeta())))
   }
 
   private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
