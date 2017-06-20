@@ -13,8 +13,10 @@ GET        /file-upload-response/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfront
 GET        /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
 GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getBusinessRuleErrors
 GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getXmlSchemaErrors
-GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.invalidFileType
-GET        /virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.virusResponsePage
+GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileInvalid
+GET        /virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileContainsVirus
+GET        /file-too-large                                @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileTooLarge
+GET        /failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.handleError(errorCode:Int, reason:String)
 
 POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUltimateParentEntity
 POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo

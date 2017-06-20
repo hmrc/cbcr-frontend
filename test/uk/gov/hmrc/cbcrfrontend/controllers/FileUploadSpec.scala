@@ -94,7 +94,7 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
   "GET /fileUploadResponse/envelopeId/fileId" should {
     val fakeRequestGetFileUploadResponse  = addToken(FakeRequest("GET", "/fileUploadResponse/envelopeId/fileId"))
     "return 202 when the file is available" in {
-      when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right(Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE")):Option[FileUploadCallbackResponse])
+      when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right(Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE", None)):Option[FileUploadCallbackResponse])
       val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
       status(result) shouldBe Status.ACCEPTED
     }
@@ -105,7 +105,7 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
         status(result) shouldBe Status.NO_CONTENT
       }
       "file is not yet available" in {
-        when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED")): Option[FileUploadCallbackResponse])
+        when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED",None)): Option[FileUploadCallbackResponse])
         val result = controller.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse).futureValue
         status(result) shouldBe Status.NO_CONTENT
       }
@@ -143,27 +143,28 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
     }
 
     "be redirected to an error page" when {
-      "the file contains a virus" in {
-        val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
-        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
-        when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache",Map.empty))
-        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn left[File]("oops")
-        when(fuService.deleteEnvelope(EQ("test"))(any(),any(),any())) thenReturn right("yeah")
-        val result = controller.fileValidate("test","test")(request)
-        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-
-      }
-      "the file is too large" in {
-
-      }
       "the file extension is invalid" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
         when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md.copy(name = "bad.zip")))
         val result = Await.result(controller.fileValidate("test","test")(request), 5.second)
         result.header.headers("Location") should endWith("invalid-file-type")
         status(result) shouldBe Status.SEE_OTHER
-
       }
+    }
+  }
+
+  "The file-upload error call back" should {
+    "cause a redirect to file-too-large if the response has status-code 413" in {
+      val request = addToken(FakeRequest())
+      val result = Await.result(controller.handleError(413, "no reason")(request), 5.second)
+      result.header.headers("Location") should endWith("file-too-large")
+      status(result) shouldBe Status.SEE_OTHER
+    }
+    "cause a redirect to invalid-file-type if the response has status-code 415" in {
+      val request = addToken(FakeRequest())
+      val result = Await.result(controller.handleError(415, "no reason")(request), 5.second)
+      result.header.headers("Location") should endWith("invalid-file-type")
+      status(result) shouldBe Status.SEE_OTHER
     }
   }
 

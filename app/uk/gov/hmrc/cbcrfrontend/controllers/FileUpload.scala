@@ -58,7 +58,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr") }
 
   lazy val hostName = FrontendAppConfig.cbcrFrontendHost
-  lazy val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/technical-difficulties"
+  lazy val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/failed-callback"
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
@@ -83,7 +83,6 @@ class FileUpload @Inject()(val sec: SecuredActions,
   }
 
   def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
-
     val hostName = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
     Future.successful(Ok(fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
@@ -98,6 +97,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
         case Some("VirusDetected") => Conflict
         case _                     => InternalServerError
       }
+      case _           => NoContent
     }).getOrElse(NoContent)
 
 
@@ -114,7 +114,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
       xml         <- EitherT.right(businessVal.flatMap(_.map(xmlInfo => cache.save(xmlInfo).map(_ => xmlInfo)).sequence))
       errors      <- EitherT.right(businessVal.map(_.swap.toOption -> schemaVal.swap.toOption))
       _           <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(Hash(sha256Hash(f))))
-    } yield Tuple4(errors._1, errors._2, metadata, xml.toOption)
+    } yield (errors._1, errors._2, metadata, xml.toOption)
 
     result.fold({
       case UnexpectedState(errorMsg, _) => fileUploadService.deleteEnvelope(envelopeId).fold(
@@ -124,7 +124,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
         Logger.error(errorMsg)
         s
       })
-      case InvalidFileType(_) => Future.successful(Redirect(routes.FileUpload.invalidFileType()))
+      case InvalidFileType(_) => Future.successful(Redirect(routes.FileUpload.fileInvalid()))
 
     },
       validationErrors => {
@@ -143,12 +143,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
         InternalServerError(FrontendGlobal.internalServerErrorTemplate)
     }
 
-
-  }
-
-  def invalidFileType = Action.async{ implicit request =>
-    Future.successful(Ok(fileupload.wrongFileType(includes.asideBusiness(),includes.phaseBannerBeta())))
-  }
+ }
 
   private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
     val b = Files.TemporaryFile(name, ".txt")
@@ -177,10 +172,30 @@ class FileUpload @Inject()(val sec: SecuredActions,
     )
   }
 
-  def virusResponsePage = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Future.successful(Ok(fileupload.virus(includes.asideBusiness(), includes.phaseBannerBeta())))
+  def fileInvalid       = fileUploadError(FileNotXml)
+
+  def fileTooLarge      = fileUploadError(FileTooLarge)
+
+  def fileContainsVirus = fileUploadError(FileContainsVirus)
+
+  def fileUploadError(errorType:FileUploadErrorType) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    Future.successful(Ok(fileupload.fileUploadError(
+      includes.asideBusiness(),
+      includes.phaseBannerBeta(),
+      errorType
+    )))
   }
 
+  def handleError(errorCode:Int, reason:String) = Action.async{ implicit request =>
+    Logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
+    Future.successful(
+      errorCode match {
+        case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUpload.fileTooLarge())
+        case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUpload.fileInvalid())
+        case _                        => Redirect(routes.CBCController.technicalDifficulties())
+      }
+    )
+  }
 
   def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     fileUploadService.getFileUploadResponse(envelopeId,fileId).fold(
@@ -188,6 +203,5 @@ class FileUpload @Inject()(val sec: SecuredActions,
       response => fileUploadResponseToResult(response)
     )
   }
-
 
 }
