@@ -14,6 +14,7 @@ GET        /upload-report                                 @uk.gov.hmrc.cbcrfront
 GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getBusinessRuleErrors
 GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getXmlSchemaErrors
 GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.invalidFileType
+GET        /virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.virusResponsePage
 
 POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUltimateParentEntity
 POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo
