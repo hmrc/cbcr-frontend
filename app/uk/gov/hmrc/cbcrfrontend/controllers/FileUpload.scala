@@ -91,12 +91,14 @@ class FileUpload @Inject()(val sec: SecuredActions,
   }
 
 
-  def fileUploadResponseToResult(response: Option[FileUploadCallbackResponse], envelopeId: String): EitherT[Future, Result, Unit] =
-    EitherT.cond[Future](
-      response.exists(r => r.envelopeId == envelopeId && r.status == "AVAILABLE"),
-      (),
-      NoContent
-    )
+  def fileUploadResponseToResult(optResponse: Option[FileUploadCallbackResponse]): Result =
+    optResponse.map(response => response.status match {
+      case "AVAILABLE" => Accepted
+      case "ERROR"     => response.reason match {
+        case Some("VirusDetected") => Conflict
+        case _                     => InternalServerError
+      }
+    }).getOrElse(NoContent)
 
 
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
@@ -175,13 +177,16 @@ class FileUpload @Inject()(val sec: SecuredActions,
     )
   }
 
+  def virusResponsePage = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    Future.successful(Ok(fileupload.virus(includes.asideBusiness(), includes.phaseBannerBeta())))
+  }
+
 
   def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    (for {
-      response <- fileUploadService.getFileUploadResponse(envelopeId,fileId).leftMap(_ => NoContent)
-      _ = Logger.info(s"FileUploadResponse: $response")
-      _        <- fileUploadResponseToResult(response,envelopeId)
-    } yield Accepted).merge
+    fileUploadService.getFileUploadResponse(envelopeId,fileId).fold(
+      _        => NoContent,
+      response => fileUploadResponseToResult(response)
+    )
   }
 
 

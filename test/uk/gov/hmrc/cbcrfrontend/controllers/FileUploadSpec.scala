@@ -143,6 +143,19 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
     }
 
     "be redirected to an error page" when {
+      "the file contains a virus" in {
+        val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
+        when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache",Map.empty))
+        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn left[File]("oops")
+        when(fuService.deleteEnvelope(EQ("test"))(any(),any(),any())) thenReturn right("yeah")
+        val result = controller.fileValidate("test","test")(request)
+        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+
+      }
+      "the file is too large" in {
+
+      }
       "the file extension is invalid" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
         when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md.copy(name = "bad.zip")))
