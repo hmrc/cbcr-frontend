@@ -123,6 +123,10 @@ fileUploadResult.error.data=There are data errors in the XML report. Please down
 fileUploadResult.error.data.download=Data error report
 fileUploadResult.error.xml=There are errors in the XML report. Please download the following error summary and send it to your XML provider to correct them before resubmitting.
 fileUploadResult.error.xml.download=XML error report
+fileUploadResult.error.FileTooLarge=The report you sent is larger than 50MB. You'll need to solve this issue before sending it again.
+fileUploadResult.error.FileContainsVirus=The report you sent has failed our anti-virus checks. You'll need to solve this issue before sending it again.
+fileUploadResult.error.FileNotXml=The report you sent is the wrong file type. Please send it as an XML file.
+
 fileUploadResult.viewGuidance=View formatting guidance
 fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been submitted
 
