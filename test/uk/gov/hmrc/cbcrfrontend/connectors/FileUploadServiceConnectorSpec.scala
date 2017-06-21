@@ -17,8 +17,11 @@
 package uk.gov.hmrc.cbcrfrontend.connectors
 
 import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 import org.scalatest.{EitherValues, FlatSpec, Matchers}
+import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.EnvelopeId
 import uk.gov.hmrc.play.http.HttpResponse
@@ -27,6 +30,27 @@ import scala.io.Source
 
 
 class FileUploadServiceConnectorSpec extends FlatSpec with Matchers with EitherValues {
+
+
+
+  "envelopeRequest" should "return the expected Json Object" in {
+    val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+    val envelopeExpiryDate = LocalDateTime.now.plusDays(7).format(formatter)
+
+    val expectedEnvelopeRequest = Json.obj(
+      "callbackUrl" -> "http://localhost:9797/cbcr/saveFileUploadResponse",
+      "expiryDate" -> s"$envelopeExpiryDate",
+      "metadata" -> Json.obj(
+        "application" -> "Country By Country Reporting Service"
+      ),
+      "constraints" -> 	Json.obj("maxSize"-> "50MB")
+    )
+
+    val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", envelopeExpiryDate)
+
+    actualEnvelopeRequest should be (expectedEnvelopeRequest)
+  }
+
 
   /*
   "createEnvelope" should "return invalid state when response is missing Location header" in {
