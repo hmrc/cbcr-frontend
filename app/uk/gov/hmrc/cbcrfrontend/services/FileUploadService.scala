@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.{BufferedInputStream, File, FileInputStream}
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
@@ -42,7 +43,10 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext, fusUrl: ServiceUrl[FusUrl], cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[EnvelopeId] = {
     Logger.debug("Country by Country: Creating an envelope for file upload")
-    EitherT(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest("formTypeRef", cbcrsUrl.url))).map(fusConnector.extractEnvelopId))
+    val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+    def envelopeExpiryDate(numberOfDays: Int) = LocalDateTime.now.plusDays(numberOfDays).format(formatter)
+
+    EitherT(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl.url, envelopeExpiryDate(7)))).map(fusConnector.extractEnvelopId))
   }
 
   def uploadFile(xmlFile: java.io.File, envelopeId: String, fileId: String)(
