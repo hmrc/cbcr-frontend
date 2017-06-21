@@ -178,7 +178,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
 
   def fileContainsVirus = fileUploadError(FileContainsVirus)
 
-  def fileUploadError(errorType:FileUploadErrorType) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+  private def fileUploadError(errorType:FileUploadErrorType) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     Future.successful(Ok(fileupload.fileUploadError(
       includes.asideBusiness(),
       includes.phaseBannerBeta(),
