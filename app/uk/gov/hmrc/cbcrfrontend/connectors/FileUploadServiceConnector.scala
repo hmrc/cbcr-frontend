@@ -33,18 +33,15 @@ import scala.xml.Source
 class FileUploadServiceConnector() {
 
   val EnvelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
-  val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
 
 
-  def envelopeRequest(cbcrsUrl: String): JsObject = {
+  def envelopeRequest(cbcrsUrl: String, expiryDate: String): JsObject = {
 
     Logger.debug("CBCR URL: "+cbcrsUrl)
 
-    def envelopeExpiryDate(numberOfDays: Int) = LocalDateTime.now.plusDays(numberOfDays).format(formatter)
-
     Json.obj(
       "callbackUrl" -> s"$cbcrsUrl/cbcr/saveFileUploadResponse",
-      "expiryDate" -> s"${envelopeExpiryDate(7)}",
+      "expiryDate" -> s"$expiryDate",
       "metadata" -> Json.obj(
         "application" -> "Country By Country Reporting Service"
       ),
