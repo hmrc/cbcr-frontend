@@ -36,7 +36,7 @@ implicit request: Request[_], messages: Messages)
                     <p class="transaction-banner__heading">
                 </div>
             </section>
-            <p>@Messages("submitSuccessReceipt.submissionDateLabel") 31/12/2017 at 13.42.</p>
+            <p>@Messages("submitSuccessReceipt.submissionDateLabel") @submissionDateTime</p>
             @Messages("submitSuccessReceipt.digiSig")
             @hash
 
