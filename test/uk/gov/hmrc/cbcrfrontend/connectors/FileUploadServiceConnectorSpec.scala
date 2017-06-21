@@ -52,38 +52,6 @@ class FileUploadServiceConnectorSpec extends FlatSpec with Matchers with EitherV
   }
 
 
-  /*
-  "createEnvelope" should "return invalid state when response is missing Location header" in {
-
-    val responseFromFus = HttpResponse(201, responseHeaders = Map.empty[String, List[String]])
-
-    val res = new FileUploadServiceConnector().extractEnvelopId(responseFromFus)
-
-    res.left.value should be(UnexpectedState("Header Location not found"))
-
-  }
-
-  it should "return invalid state when Location header don't include envelopId" in {
-
-    val responseFromFus = HttpResponse(201, responseHeaders = Map("Location" -> List("invalid-location")))
-
-    val res = new FileUploadServiceConnector().extractEnvelopId(responseFromFus)
-
-    res.left.value should be(UnexpectedState("EnvelopeId in Location header: invalid-location not found"))
-
-  }
-
-  it should "return envelopId" in {
-
-    val responseFromFus = HttpResponse(201, responseHeaders = Map("Location" -> List("envelopes/123")))
-
-    val res = new FileUploadServiceConnector().extractEnvelopId(responseFromFus)
-
-    res.right.value should be(EnvelopeId("123"))
-
-  }
-*/
-
   it should "convert the string response into XML file" in {
 
     val responseFromFus = HttpResponse(200, responseString = Some("This is a xml file"))
