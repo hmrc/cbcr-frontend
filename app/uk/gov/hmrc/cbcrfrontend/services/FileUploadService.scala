@@ -41,7 +41,7 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext, fusUrl: ServiceUrl[FusUrl], cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[EnvelopeId] = {
     Logger.debug("Country by Country: Creating an envelope for file upload")
-    EitherT(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest("formTypeRef", cbcrsUrl.url))).map(fusConnector.extractEnvelopId))
+    EitherT(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl.url))).map(fusConnector.extractEnvelopId))
   }
 
   def uploadFile(xmlFile: java.io.File, envelopeId: String, fileId: String)(
