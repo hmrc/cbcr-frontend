@@ -13,8 +13,11 @@ function poll(envelopeId, fileId, protocolHostName) {
       },
       error: function(xhr,status,error){
         var errMsg = xhr.responseText;
-        alert("Error status: " + status + " -  Error message: " + errMsg + " - Other error: " + error);
-        window.location.href= protocolHostName+"/country-by-country-reporting/technical-difficulties";
+          if(xhr.status == 409) {
+            window.location.href=protocolHostName+"/country-by-country-reporting/virus-check-failed";
+          } else {
+            window.location.href= protocolHostName+"/country-by-country-reporting/technical-difficulties";
+          }
       }
 
       });
