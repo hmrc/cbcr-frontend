@@ -102,10 +102,7 @@ class Subscription @Inject()(val sec: SecuredActions,
                 error => {
                   Logger.error(error.show)
                   subscriptionDataService.clearSubscriptionData(id).fold(
-                    error => {
-                      Logger.error(error.show)
-                      InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-                    },
+                    errorRedirect,
                     _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
                   )
                 },
@@ -163,77 +160,64 @@ class Subscription @Inject()(val sec: SecuredActions,
   val enterKnownFacts = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
     authConnector.getEnrolments.flatMap{enrolments =>
       if(enrolments.exists(_.key == "HMRC-CBC-ORG")) {
-        Future.successful(NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(),includes.phaseBannerBeta())))
+        NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(),includes.phaseBannerBeta()))
       } else {
         getUserType(authContext).map{
-          case Agent => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
+          case Agent        => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
           case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = false,Organisation))
-        }.leftMap { errors =>
-          Logger.error(errors.show)
-          InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-        }.merge
+        }.leftMap(errorRedirect).merge
       }
     }
   }
 
-  val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request =>
+  val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-      getUserType(authContext).leftMap{ errors =>
-        Logger.error(errors.show)
-        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-      }.flatMap { userType =>
+    getUserType(authContext).leftMap(errorRedirect).flatMap { userType =>
 
-        knownFactsForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
-          formWithErrors => EitherT.left(Future.successful(
-            BadRequest(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))
-          )),
-          knownFacts =>  for {
-            bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
-              NotFound(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
-            )
-            alreadySubscribed <- subscriptionDataService.alreadySubscribed(knownFacts.utr).leftMap { error =>
-              Logger.error(error.show)
-              InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-            }
-            _ <- EitherT.cond[Future]( userType match {
-              case Organisation => !alreadySubscribed
-              case Agent        => alreadySubscribed
-            },(), NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
-            _ <- EitherT.right[Future, Result, CacheMap](session.save(bpr))
-            _ <- EitherT.right[Future, Result, CacheMap](session.save(knownFacts.utr))
-          } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value,userType))
+      knownFactsForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
+        formWithErrors => EitherT.left(
+          BadRequest(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))
+        ),
+        knownFacts =>  for {
+          bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
+            NotFound(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
+          )
+          alreadySubscribed <- subscriptionDataService.alreadySubscribed(knownFacts.utr).leftMap(errorRedirect)
+          _ <- EitherT.cond[Future]( userType match {
+            case Organisation => !alreadySubscribed
+            case Agent        => alreadySubscribed
+          },(), NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
+          _ <- EitherT.right[Future, Result, CacheMap](session.save(bpr))
+          _ <- EitherT.right[Future, Result, CacheMap](session.save(knownFacts.utr))
+        } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value,userType))
 
-        )
-      }.merge
+      )
+    }.merge
   }
 
   val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
-    Logger.debug("Country by Country: Contact Info Subscriber View")
-
-    Future.successful(Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm)))
+    Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm))
   }
 
-
   def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
-    Logger.debug("Country by Country: Contact Info Subscribe Success CbcId View")
     CBCId(id).fold[Future[Result]](
-      Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
+      InternalServerError(FrontendGlobal.internalServerErrorTemplate)
     )((cbcId: CBCId) =>
-    Future.successful(Ok(subscription.subscribeSuccessCbcId(includes.asideBusiness(), includes.phaseBannerBeta(),cbcId,request.session.get("companyName"))))
+      Ok(subscription.subscribeSuccessCbcId(includes.asideBusiness(), includes.phaseBannerBeta(),cbcId,request.session.get("companyName")))
     )
   }
 
   def clearSubscriptionData(u:Utr) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
     if(CbcrSwitches.clearSubscriptionDataRoute.enabled) {
       subscriptionDataService.clearSubscriptionData(u).fold(
-        error => InternalServerError(error.show), {
+        error => errorRedirect(error),
+        {
           case Some(_) => Ok
           case None => NoContent
         }
       )
     } else {
-      Future.successful(NotImplemented)
+      NotImplemented
     }
   }
 

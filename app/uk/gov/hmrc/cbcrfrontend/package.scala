@@ -24,6 +24,7 @@ import cats.data.{EitherT, OptionT, ValidatedNel}
 import cats.instances.future._
 import cats.syntax.option._
 import cats.syntax.cartesian._
+import cats.syntax.show._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -31,11 +32,22 @@ import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HeaderCarrier
+import _root_.play.api.mvc._
+import _root_.play.api.mvc.Results._
+import _root_.play.api.Logger
+import _root_.play.api.
 
 import scala.concurrent.{ExecutionContext, Future}
 
 
 package object cbcrfrontend {
+
+  implicit def resultFuture(r:Result):Future[Result] = Future.successful(r)
+
+  def errorRedirect(error:CBCErrors)(implicit request:Request[_]): Result = {
+    Logger.error(error.show)
+    InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+  }
 
   def affinityGroupToUserType(a: AffinityGroup): Either[CBCErrors, UserType] = a.affinityGroup.toLowerCase.trim match {
     case "agent" => Right(Agent)

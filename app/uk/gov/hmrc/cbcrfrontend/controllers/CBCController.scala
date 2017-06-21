@@ -21,16 +21,14 @@ import javax.inject.{Inject, Singleton}
 import cats.data.OptionT
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages.Implicits._
-import play.api.mvc.{Action, Request, Result}
+import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
-import uk.gov.hmrc.cbcrfrontend.exceptions.CBCErrors
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -68,12 +66,6 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
     utr       <- OptionT.fromOption[Future](if(Utr(utrString).isValid){ Some(Utr(utrString)) } else { None })
   } yield CBCEnrolment(cbcId,utr)
 
-  implicit def resultFuture(r:Result):Future[Result] = Future.successful(r)
-
-  private def errorRedirect(error:CBCErrors)(implicit request:Request[_]): Result = {
-    Logger.error(error.show)
-    InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-  }
 
   private def saveSubscriptionDetails(s:SubscriptionDetails)(implicit hc:HeaderCarrier): Future[Unit] = for {
     _ <- cache.save(s.utr)
