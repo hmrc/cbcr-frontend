@@ -16,11 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+sealed trait FileUploadErrorType
 
-
-case class FileUploadCallbackResponse(envelopeId: String, fileId: String, status: String, reason:Option[String])
-
-object FileUploadCallbackResponse {
-  implicit val fileUploadCallbackFormat = Json.format[FileUploadCallbackResponse]
-}
+case object FileTooLarge extends FileUploadErrorType
+case object FileContainsVirus extends FileUploadErrorType
+case object FileNotXml extends FileUploadErrorType

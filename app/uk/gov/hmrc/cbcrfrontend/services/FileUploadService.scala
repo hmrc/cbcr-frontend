@@ -30,6 +30,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
+import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{HttpExecutor, _}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
@@ -68,16 +69,19 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
   }
 
 
-  def getFileUploadResponse(envelopeId: String, fileId: String)(
-                             implicit
-                             hc: HeaderCarrier,
-                             ec: ExecutionContext,
-                             cbcrsUrl: ServiceUrl[CbcrsUrl]
-                           ): ServiceResponse[Option[FileUploadCallbackResponse]] = {
-    Logger.debug("Country by Country: Get file upload response")
-   fromFutureOptA(WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/$envelopeId")
-     .map(fusConnector.extractFileUploadResponseMessage))
-  }
+  def getFileUploadResponse(envelopeId: String, fileId: String)( implicit hc: HeaderCarrier, ec: ExecutionContext, cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[Option[FileUploadCallbackResponse]] =
+    EitherT(
+      WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/$envelopeId")
+        .map(resp => resp.status match {
+          case 200 => resp.json.validate[FileUploadCallbackResponse].fold(
+            invalid   => Left(UnexpectedState("Problems extracting File Upload response message "+invalid)),
+            response  => Right(Some(response))
+          )
+          case 204 => Right(None)
+          case _   => Left(UnexpectedState("Problems getting File Upload response message"))
+        })
+    )
+
 
   def getFile(envelopeId: String, fileId: String)(
                    implicit

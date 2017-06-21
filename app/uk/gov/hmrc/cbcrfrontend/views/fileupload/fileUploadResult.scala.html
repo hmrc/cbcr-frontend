@@ -79,9 +79,9 @@ implicit request: Request[_], messages: Messages)
             </table>
             <p>@Messages("fileUploadResult.notYetSubmitted")</p>
                 @{reportingRole match {
-                    case Some(CBC701) => <p><a class="button" href="../../submitter-info" id="btn-continue">@Messages("form.controls.continue")</a></p>
-                    case Some(CBC702) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">@Messages("form.controls.continue")</a></p>
-                    case Some(CBC703) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    case Some(CBC701) => <p><a class="button" href="../../submitter-info" id="btn-continue">{Messages("form.controls.continue")}</a></p>
+                    case Some(CBC702) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">{Messages("form.controls.continue")}</a></p>
+                    case Some(CBC703) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">{Messages("form.controls.continue")}</a></p>
                     case None         => <p></p>
                 }}
             } else {

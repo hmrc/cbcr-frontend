@@ -26,7 +26,7 @@
                     <ns1:AddressFree>Free Text</ns1:AddressFree>
                 </ns1:Address>
             </ns1:Entity>
-            <ns1:ReportingRole>CBC701</ns1:ReportingRole>
+            <ns1:ReportingRole>CBC703</ns1:ReportingRole>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_DocRefId</ns2:DocRefId>
