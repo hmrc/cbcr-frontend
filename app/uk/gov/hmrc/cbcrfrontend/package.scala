@@ -35,7 +35,6 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import _root_.play.api.mvc._
 import _root_.play.api.mvc.Results._
 import _root_.play.api.Logger
-import _root_.play.api.
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,9 +49,9 @@ package object cbcrfrontend {
   }
 
   def affinityGroupToUserType(a: AffinityGroup): Either[CBCErrors, UserType] = a.affinityGroup.toLowerCase.trim match {
-    case "agent" => Right(Agent)
+    case "agent"        => Right(Agent)
     case "organisation" => Right(Organisation)
-    case other => Left(UnexpectedState(s"Unknown affinity group: $other"))
+    case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
   }
 
   implicit def utrToLeft(u:Utr): Either[Utr, CBCId] = Left[Utr,CBCId](u)

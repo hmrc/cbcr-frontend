@@ -18,9 +18,10 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.OptionT
-import cats.instances.all._
+import cats.data.{EitherT, OptionT}
 import cats.syntax.all._
+import cats.instances.all._
+import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -29,6 +30,7 @@ import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
+import uk.gov.hmrc.cbcrfrontend.exceptions.{InvalidSession, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -58,12 +60,17 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
     )
   }
 
-  private def getCBCEnrolment(implicit hc:HeaderCarrier) : OptionT[Future,CBCEnrolment] = for {
+  private def getCBCEnrolment(implicit hc:HeaderCarrier) : EitherT[Future,UnexpectedState,CBCEnrolment] = for {
     enrolment <- OptionT(enrolments.getEnrolments.map(_.find(_.key == "HMRC-CBC-ORG")))
+      .toRight(UnexpectedState("Enrolment not found"))
     cbcString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("cbcid")).map(_.value))
+      .toRight(UnexpectedState("Enrolment did not contain a cbcid"))
     cbcId     <- OptionT.fromOption[Future](CBCId(cbcString))
+      .toRight(UnexpectedState(s"Enrolment contains an invalid cbcid: $cbcString"))
     utrString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("utr")).map(_.value))
+      .toRight(UnexpectedState(s"Enrolment does not contain a utr"))
     utr       <- OptionT.fromOption[Future](if(Utr(utrString).isValid){ Some(Utr(utrString)) } else { None })
+      .toRight(UnexpectedState(s"Enrolment contains an invalid utr $utrString"))
   } yield CBCEnrolment(cbcId,utr)
 
 
@@ -88,11 +95,18 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
                   Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.enterKnownFacts())
                 )
               case Organisation =>
-                getCBCEnrolment.withFilter(_.cbcId != subscriptionDetails.cbcId).cata[Future[Result]](
-                  saveSubscriptionDetails(subscriptionDetails).map(_ =>
-                    Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
-                  ),
-                  _ => BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, false,true))
+                getCBCEnrolment.ensure(InvalidSession)(
+                  _.cbcId === subscriptionDetails.cbcId
+                ).fold[Future[Result]](
+                  {
+                    case InvalidSession => BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, false, true))
+                    case error          => errorRedirect(error)
+                  },
+                  _     => {
+                    saveSubscriptionDetails(subscriptionDetails).map(_ =>
+                      Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
+                    )
+                  }
                 ).flatten
             })))
         })).merge
