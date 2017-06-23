@@ -19,14 +19,16 @@ package uk.gov.hmrc.cbcrfrontend.exceptions
 import cats.Show
 import play.api.libs.json.{JsValue, Json, OFormat}
 
-sealed trait CBCErrors
+sealed trait CBCErrors extends Product with Serializable
 case class UnexpectedState(errorMsg: String, json: Option[JsValue] = None) extends CBCErrors
 case class InvalidFileType(file:String) extends CBCErrors
+case object InvalidSession extends CBCErrors
 
 object CBCErrors {
   implicit val show = Show.show[CBCErrors]{
     case UnexpectedState(errorMsg,_) => errorMsg
     case InvalidFileType(file)       => s"InvalidFileType: $file"
+    case InvalidSession              => InvalidSession.toString
   }
 }
 

@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}
+import cats.kernel.Eq
 import play.api.data.FormError
 import play.api.data.format.{Formats, Formatter}
 import play.api.libs.json._
@@ -40,6 +41,8 @@ class CBCId private(val value:String){
 }
 
 object CBCId extends Modulus23Check {
+
+  implicit val cbcIdEq = Eq.instance[CBCId]((a,b) => a.value.equalsIgnoreCase(b.value))
 
   implicit val cbcFormatter = new Formatter[CBCId] {
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], CBCId] =

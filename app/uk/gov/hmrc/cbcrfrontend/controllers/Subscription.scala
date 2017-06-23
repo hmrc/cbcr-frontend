@@ -118,32 +118,29 @@ class Subscription @Inject()(val sec: SecuredActions,
 
   val reconfirmEmail = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    OptionT(session.read[SubscriberContact]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).fold (
-      error => error,
+    OptionT(session.read[SubscriberContact]).cata(
+      InternalServerError(FrontendGlobal.internalServerErrorTemplate),
       subscriberContactInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
     )
+
   }
 
 
   val reconfirmEmailSubmit = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     reconfirmEmailForm.bindFromRequest.fold(
-
-      formWithErrors => Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(
-        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
-      ))),
-      success => (for {
+      formWithErrors => BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors)),
+      success        => (for {
         subscriberContact <- OptionT(session.read[SubscriberContact]).toRight(UnexpectedState("SubscriberContact not found in the cache"))
         cbcId             <- OptionT(session.read[CBCId]).toRight(UnexpectedState("CBCId not found in the cache"))
         _                 <- EitherT.right[Future, CBCErrors, CacheMap](session.save[SubscriberContact](subscriberContact.copy(email = success)))
-
       } yield cbcId).fold(
-        _     => InternalServerError(FrontendGlobal.internalServerErrorTemplate),
+        error => errorRedirect(error),
         cbcId => Redirect(routes.Subscription.subscribeSuccessCbcId(cbcId.value))
       )
     )
-  }
 
+  }
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
