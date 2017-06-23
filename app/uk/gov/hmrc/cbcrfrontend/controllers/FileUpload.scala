@@ -114,7 +114,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
       _           <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(Hash(sha256Hash(f))))
     } yield (errors._1, errors._2, metadata, xml.toOption)
 
-    result.fold({
+    result.fold[Future[Result]]({
       case UnexpectedState(errorMsg, _) => fileUploadService.deleteEnvelope(envelopeId).fold(
         _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate),
         _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
@@ -140,10 +140,6 @@ class FileUpload @Inject()(val sec: SecuredActions,
         Logger.error(e.getMessage,e)
         InternalServerError(FrontendGlobal.internalServerErrorTemplate)
     }
-  }
-
-  def invalidFileType = Action.async{ implicit request =>
-    Ok(fileupload.wrongFileType(includes.asideBusiness(),includes.phaseBannerBeta()))
   }
 
   private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
