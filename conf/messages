@@ -90,14 +90,14 @@ filingHistory.report.referenceNo=Reference no.
 
 submitInfoFilingCapacity.mainHeading=In what capacity are you submitting a Country by Country report?
 submitInfoFilingCapacity.info=Your answer will help us assess how much of the information in the report we can disclose to you, if we need to check anything.
-submitInfoFilingCapacity.mneUserAgent.label=I''m either an employee of the multinational enterprise, or an agent with 64-8 authorisation to submit a report on it's behalf
+submitInfoFilingCapacity.mneUserAgent.label=I''m either an employee of the multinational enterprise, or an agent with 64-8 authorisation to submit a report on its behalf
 submitInfoFilingCapacity.representative.label=I''m neither an employee of the multinational enterprise nor an agent with 64-8 authorisation, but I do have permission to report on its behalf
 submitInfoFilingCapacity.representative.hint=You have been asked to submit on behalf of the ultimate parent entity without 64-8 authorisation
 
 submitInfoFilingType.mainHeading=What type of Country by Country report are you submitting?
 submitInfoFilingType.primaryFiling.label=A global report for a multinational enterprise with headquarters in the UK
-submitInfoFilingType.voluntaryFiling.label=A global report for a multinational enterprise whose headquarters aren't in the UK, via a subsidiary company
-submitInfoFilingType.localFiling.label=A report covering the UK only, for the UK subsidiary of a multinational enterprise whose headquarters aren't in the UK
+submitInfoFilingType.voluntaryFiling.label=A global report for a multinational enterprise whose headquarters aren''t in the UK, via a subsidiary company
+submitInfoFilingType.localFiling.label=A report covering the UK only, for the UK subsidiary of a multinational enterprise whose headquarters aren''t in the UK
 
 submitInfoUltimateParentEntity.mainHeading=What ultimate parent entity are you reporting for?
 submitInfoUltimateParentEntity.info1=The ultimate parent entity is the company at the top of your organisation''s corporate structure.
@@ -123,8 +123,8 @@ fileUploadResult.error.data=There are data errors in the XML report. Please down
 fileUploadResult.error.data.download=Data error report
 fileUploadResult.error.xml=There are errors in the XML report. Please download the following error summary and send it to your XML provider to correct them before resubmitting.
 fileUploadResult.error.xml.download=XML error report
-fileUploadResult.error.FileTooLarge=The report you sent is larger than 50MB. You'll need to solve this issue before sending it again.
-fileUploadResult.error.FileContainsVirus=The report you sent has failed our anti-virus checks. You'll need to solve this issue before sending it again.
+fileUploadResult.error.FileTooLarge=The report you sent is larger than 50MB. You''ll need to solve this issue before sending it again.
+fileUploadResult.error.FileContainsVirus=The report you sent has failed our anti-virus checks. You''ll need to solve this issue before sending it again.
 fileUploadResult.error.FileNotXml=The report you sent is the wrong file type. Please send it as an XML file.
 
 fileUploadResult.viewGuidance=View formatting guidance
@@ -182,7 +182,7 @@ submitterInfo.info=We''ll contact you if there''s a problem with the Country by 
 submitterInfo.fullName=Full name
 submitterInfo.fullName.error=Please enter your full name
 submitterInfo.employer=Employer
-submitterInfo.employer.error=Please enter your employer's name
+submitterInfo.employer.error=Please enter your employer''s name
 submitterInfo.jobTitle=Job title/role
 submitterInfo.jobTitle.error=Please enter your job title/role
 submitterInfo.phoneNumber=Contact phone number
