@@ -39,7 +39,7 @@ import org.mockito.Matchers
 import org.mockito.Matchers.{eq => EQ}
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.cbcrfrontend.connectors.{AuthConnector, BPRKnownFactsConnector}
+import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.http.cache.client.CacheMap
 
@@ -57,7 +57,7 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
   val dc = mock[BPRKnownFactsConnector]
   val cbcId = mock[CBCIdService]
   val cbcKF = mock[CBCKnownFactsService]
-  val auth  = mock[AuthConnector]
+  val auth  = mock[EnrolmentsConnector]
   implicit val cache = mock[CBCSessionCache]
   when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
 

@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 import javax.inject.Inject
 
 import com.typesafe.config.Config
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet}
 import configs.syntax._
@@ -28,7 +28,7 @@ import uk.gov.hmrc.cbcrfrontend.model.Enrolment
 import scala.concurrent.{ExecutionContext, Future}
 
 
-class AuthConnector @Inject() (httpGet: HttpGet, config:Configuration)(implicit ec:ExecutionContext) {
+class EnrolmentsConnector @Inject() (httpGet: HttpGet, config:Configuration)(implicit ec:ExecutionContext) {
 
   val conf = config.underlying.get[Config]("microservice.services.auth").value
 

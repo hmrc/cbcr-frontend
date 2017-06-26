@@ -59,13 +59,9 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
     OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {
       summaryData => {
         summarySubmitForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
-          formWithErrors => EitherT.left(Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-            includes.phaseBannerBeta(), summaryData, formWithErrors)))),
+          formWithErrors => EitherT.left(Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(includes.phaseBannerBeta(), summaryData, formWithErrors)))),
           _              => fus.uploadMetadataAndRoute(summaryData.submissionMetaData).bimap(
-            errors => {
-              Logger.error(errors.show)
-              InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-            },
+            errors => errorRedirect(errors),
             _      => {
               val submissionDateTime = LocalDateTime.now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH.MM."))
               Redirect(routes.Submission.submitSuccessReceipt(submissionDateTime, summaryData.submissionMetaData.submissionInfo.hash.value))
@@ -130,39 +126,37 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
           xmlInfo <- OptionT(cache.read[KeyXMLFileInfo])
         } yield xmlInfo.reportingRole
 
-        result.cata({
-          Logger.error("Unable to find KeyXMLFileInfo in cache")
-          InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-        },{
-          case CBC701 =>
-            Logger.error("ReportingRole was CBC701 - we should never be here")
-            InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-          case CBC702 =>
-            Redirect(routes.Submission.utr())
-          case CBC703 =>
-            Redirect(routes.Submission.submitterInfo())
-        })
+        result.cata(
+          errorRedirect(UnexpectedState("Unable to find KeyXMLFileInfo in cache")),
+          {
+            case CBC701 =>
+              errorRedirect(UnexpectedState("ReportingRole was CBC701 - we should never be here"))
+            case CBC702 =>
+              Redirect(routes.Submission.utr())
+            case CBC703 =>
+              Redirect(routes.Submission.submitterInfo())
+          })
       }
     )
   }
 
 
   val utr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Future.successful(Ok(views.html.forms.utrCheck( includes.phaseBannerBeta(),utrForm )))
+    Ok(views.html.forms.utrCheck( includes.phaseBannerBeta(),utrForm ))
   }
 
   val submitUtr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     utrForm.bindFromRequest.fold[Future[Result]](
-      (formWithErrors: Form[Utr]) => Future.successful(BadRequest(views.html.forms.utrCheck(includes.phaseBannerBeta(),formWithErrors))),
+      (formWithErrors: Form[Utr]) => BadRequest(views.html.forms.utrCheck(includes.phaseBannerBeta(),formWithErrors)),
       (utr: Utr)                  => cache.save(utr).map(_ => Redirect(routes.Submission.submitterInfo()))
     )
 
   }
 
 
-  val submitterInfo = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request =>
+  val submitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
       OptionT(cache.read[KeyXMLFileInfo]).map(kXml => kXml.reportingRole match {
 
         case CBC701 =>
@@ -181,10 +175,9 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
             _ <- cache.save(FilingType(CBC703))
           } yield ()
 
-      }).cata({
-        Logger.error("Unable to read KeyXMLFileInfo from cache")
-        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-      },_ => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(includes.asideBusiness(), includes.phaseBannerBeta(), submitterInfoForm))
+      }).cata(
+        errorRedirect(UnexpectedState("Unable to read KeyXMLFileInfo from cache")),
+        _ => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitterInfo(includes.asideBusiness(), includes.phaseBannerBeta(), submitterInfoForm))
       )
   }
 
@@ -220,18 +213,14 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         submitterInfo <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))
         saved         <- EitherT.right[Future, CBCErrors,CacheMap](cache.save[SubmitterInfo](submitterInfo.copy(email = success)))
       } yield saved).fold(
-        error => {
-          Logger.error(error.show)
-          InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-        },
-        _ => Redirect(routes.Submission.submitSummary())
+        error => errorRedirect(error),
+        _     => Redirect(routes.Submission.submitSummary())
       )
     )
 
   }
 
   val submitSummary = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
 
     generateMetadataFile(authContext.user.userId,cache).flatMap { md =>
       md.fold(
@@ -242,17 +231,11 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         submissionMetaData => (for {
           keyXMLFileInfo <- OptionT(cache.read[KeyXMLFileInfo]).toRight(UnexpectedState("KeyXMLFileInfo not found in cache"))
           bpr            <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
-          summaryData = SummaryData(bpr,submissionMetaData, keyXMLFileInfo)
+          summaryData     = SummaryData(bpr,submissionMetaData, keyXMLFileInfo)
           _              <- EitherT.right[Future,CBCErrors,CacheMap](cache.save[SummaryData](summaryData))
         } yield summaryData).fold(
-            (error: CBCErrors) => {
-              Logger.error(error.show)
-              InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-            },
-          summaryData => {
-            Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-              includes.phaseBannerBeta(), summaryData, summarySubmitForm))
-          }
+          error       => errorRedirect(error),
+          summaryData => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary( includes.phaseBannerBeta(), summaryData, summarySubmitForm))
         )
       )
 
@@ -261,17 +244,15 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         Logger.error(e.getMessage,e)
         InternalServerError
     }
+
   }
 
   def submitSuccessReceipt(submissionDateTime: String, hash: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(
-      includes.asideBusiness(), includes.phaseBannerBeta(), submissionDateTime: String, hash: String
-    )))
+    Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), submissionDateTime: String, hash: String ))
   }
 
   val filingHistory = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.filingHistory(
-      includes.phaseBannerBeta()
-    )))
+    Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.filingHistory(includes.phaseBannerBeta()))
   }
+
 }

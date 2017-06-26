@@ -31,6 +31,7 @@ import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
@@ -46,7 +47,17 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]
 
+  implicit val authCon = authConnector(TestUsers.cbcrUser)
+  val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
+  implicit val cache = mock[CBCSessionCache]
+  implicit val enrol = mock[EnrolmentsConnector]
   val subDataS = mock[SubscriptionDataService]
+  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
+  when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
+  when(enrol.getEnrolments(any())) thenReturn Future.successful(List.empty)
+
+  val controller = new CBCController(securedActions, subDataS, enrol)
+
   val id: CBCId = CBCId("XGCBC0000000001").getOrElse(fail("unable to create cbcid"))
   val subDetails = SubscriptionDetails(
     BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None)),
@@ -61,7 +72,6 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
 
   "GET /enter-CBCId" should {
     "return 200" in {
-      val controller = cbcController
       val result = Await.result(controller.enterCBCId(fakeRequestEnterCBCId), 5.second)
       status(result) shouldBe Status.OK
     }
@@ -71,19 +81,23 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
 
   "GET /submitCBCId" should {
     "return 403 if it was not a valid CBCId" in {
-      val controller = cbcController
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> "NOTAVALIDID")))
       status(result) shouldBe Status.BAD_REQUEST
     }
     "return 403 if the CBCId has not been registered" in {
-      val controller = cbcController
       when(subDataS.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](None)
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.BAD_REQUEST
     }
-    "return a redirect if successful" in {
-      val controller = cbcController
+    "return 403 if the CBCId has been registered but doesnt match the CBCId in the bearer token" in {
       when(subDataS.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
+      when(enrol.getEnrolments(any())) thenReturn Future.successful(List(Enrolment("HMRC-CBC-ORG",List(Identifier("cbcId","XLCBC0000000006"),Identifier("utr","7000000002")))))
+      val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
+      status(result) shouldBe Status.BAD_REQUEST
+    }
+    "return a redirect if successful" in {
+      when(subDataS.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
+      when(enrol.getEnrolments(any())) thenReturn Future.successful(List(Enrolment("HMRC-CBC-ORG",List(Identifier("cbcId",id.value),Identifier("utr","7000000002")))))
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.SEE_OTHER
     }
@@ -93,21 +107,10 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
 
   "GET /signOut" should {
     "return 303" in {
-      val controller = cbcController
       val result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
       status(result) shouldBe Status.SEE_OTHER
     }
   }
 
 
-  def cbcController(implicit messagesApi: MessagesApi) = {
-
-    implicit val authCon = authConnector(TestUsers.cbcrUser)
-    val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
-    implicit val cache = mock[CBCSessionCache]
-    when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
-    when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
-
-    new CBCController(securedActions, subDataS)
-  }
 }

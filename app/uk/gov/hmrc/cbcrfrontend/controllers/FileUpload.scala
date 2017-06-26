@@ -44,6 +44,7 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+import uk.gov.hmrc.cbcrfrontend._
 
 
 @Singleton
@@ -75,18 +76,15 @@ class FileUpload @Inject()(val sec: SecuredActions,
     } yield Ok(fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
 
 
-    result.leftMap { error =>
-      Logger.error(error.show)
-      InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-    }.merge
+    result.leftMap(errorRedirect).merge
 
   }
 
   def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
     val hostName = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
-    Future.successful(Ok(fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
-      envelopeId, fileId, hostName, assetsLocationPrefix)))
+    Ok(fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
+      envelopeId, fileId, hostName, assetsLocationPrefix))
   }
 
 
@@ -116,7 +114,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
       _           <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(Hash(sha256Hash(f))))
     } yield (errors._1, errors._2, metadata, xml.toOption)
 
-    result.fold({
+    result.fold[Future[Result]]({
       case UnexpectedState(errorMsg, _) => fileUploadService.deleteEnvelope(envelopeId).fold(
         _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate),
         _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
@@ -124,7 +122,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
         Logger.error(errorMsg)
         s
       })
-      case InvalidFileType(_) => Future.successful(Redirect(routes.FileUpload.fileInvalid()))
+      case InvalidFileType(_) => Redirect(routes.FileUpload.fileInvalid())
 
     },
       validationErrors => {
@@ -142,8 +140,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
         Logger.error(e.getMessage,e)
         InternalServerError(FrontendGlobal.internalServerErrorTemplate)
     }
-
- }
+  }
 
   private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
     val b = Files.TemporaryFile(name, ".txt")
