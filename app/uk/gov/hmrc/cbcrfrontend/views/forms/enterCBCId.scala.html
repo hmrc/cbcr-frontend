@@ -23,7 +23,7 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 
 
-@(asideCbc: Html, phaseBannerBeta: Html, userType:UserType, form:Form[_], noMatch:Boolean = false)(
+@(asideCbc: Html, phaseBannerBeta: Html, userType:UserType, form:Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -51,6 +51,16 @@ implicit request: Request[_], messages: Messages)
             }
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.submitCBCId()){
             <fieldset>
+                @if(missMatch){
+                <div class="flash error-summary error-summary--show"
+                     id="error-summary-display"
+                     role="alert"
+                     aria-labelledby="error-summary-heading"
+                     tabindex="-1">
+                    <h2 id="error-summary-heading" class="h3-heading">The country-by-country ID doesn't match our records.</h2>
+                    <p>Try again, or <a href="contact-hmrc-dummy-page">contact HMRC.</a></p>
+                </div>
+                }
                 <div class="form-group @if(errors || noMatch){form-field--error}">
                     @if(form.error("cbcId").isDefined){
                         <span class="error-notification">This should be 15 characters long

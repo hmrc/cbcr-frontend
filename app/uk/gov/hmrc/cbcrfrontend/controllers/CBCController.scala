@@ -18,9 +18,9 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.EitherT
-import cats.instances.future._
-import cats.syntax.show._
+import cats.data.{EitherT, OptionT}
+import cats.syntax.all._
+import cats.instances.all._
 import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
@@ -29,25 +29,24 @@ import play.api.i18n.Messages.Implicits._
 import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
-import uk.gov.hmrc.cbcrfrontend.model.{Agent, CBCId, Organisation, SubscriptionDetails}
+import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
+import uk.gov.hmrc.cbcrfrontend.exceptions.{InvalidSession, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
 
 @Singleton
-class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
+class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService, val enrolments:EnrolmentsConnector)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
-
-  val cbcIdForm : Form[String] = Form(
-    single(
-      "cbcId" -> nonEmptyText.verifying("Please enter a valid CBCId",{s => CBCId(s).isDefined})
-    )
+  val cbcIdForm : Form[CBCId] = Form(
+    single( "cbcId" -> of[CBCId] )
   )
 
   val technicalDifficulties = Action{ implicit request =>
@@ -56,60 +55,67 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
 
   val enterCBCId = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
     getUserType(authContext).fold[Result](
-      error => {
-        Logger.error(error.show)
-        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-      },
-      userType =>
-        Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm))
-
+      error    => errorRedirect(error),
+      userType => Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm))
     )
-
   }
 
-  val submitCBCId = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request =>
-      getUserType(authContext).leftMap{errors =>
-        Logger.error(errors.show)
-        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-      }.semiflatMap(userType =>
-        cbcIdForm.bindFromRequest().fold[Future[Result]](
-          errors => Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, errors))),
-          id => {
-            val result: EitherT[Future, CBCErrors, Option[SubscriptionDetails]] = for {
-              id <- EitherT.fromOption[Future](CBCId(id), UnexpectedState(s"CBCId $id is Invalid"))
-              sd <- subDataService.retrieveSubscriptionData(id)
-            } yield sd
+  private def getCBCEnrolment(implicit hc:HeaderCarrier) : EitherT[Future,UnexpectedState,CBCEnrolment] = for {
+    enrolment <- OptionT(enrolments.getEnrolments.map(_.find(_.key == "HMRC-CBC-ORG")))
+      .toRight(UnexpectedState("Enrolment not found"))
+    cbcString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("cbcid")).map(_.value))
+      .toRight(UnexpectedState("Enrolment did not contain a cbcid"))
+    cbcId     <- OptionT.fromOption[Future](CBCId(cbcString))
+      .toRight(UnexpectedState(s"Enrolment contains an invalid cbcid: $cbcString"))
+    utrString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("utr")).map(_.value))
+      .toRight(UnexpectedState(s"Enrolment does not contain a utr"))
+    utr       <- OptionT.fromOption[Future](if(Utr(utrString).isValid){ Some(Utr(utrString)) } else { None })
+      .toRight(UnexpectedState(s"Enrolment contains an invalid utr $utrString"))
+  } yield CBCEnrolment(cbcId,utr)
 
-            result.value.flatMap(_.fold(
-              (error: CBCErrors)               => {
-                Logger.error(error.show)
-                Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
-              },
-              (details: Option[SubscriptionDetails]) => details.fold {
-                Future.successful(BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, true)))
-              }(submissionDetails => {
-                for {
-                  _ <- cache.save(submissionDetails.utr)
-                  _ <- cache.save(submissionDetails.businessPartnerRecord)
-                  _ <- cache.save(submissionDetails.cbcId)
-                } yield userType match {
-                  case Agent => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.enterKnownFacts())
-                  case Organisation => Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
-                }
-              })
-            ))
-          }
-        )
-      ).merge
+
+  private def saveSubscriptionDetails(s:SubscriptionDetails)(implicit hc:HeaderCarrier): Future[Unit] = for {
+    _ <- cache.save(s.utr)
+    _ <- cache.save(s.businessPartnerRecord)
+    _ <- cache.save(s.cbcId)
+  } yield ()
+
+  val submitCBCId = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    getUserType(authContext).leftMap(errorRedirect).semiflatMap(userType =>
+      cbcIdForm.bindFromRequest().fold[Future[Result]](
+        errors => BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, errors)),
+        id     => {
+          subDataService.retrieveSubscriptionData(id).value.flatMap(_.fold(
+            error    => errorRedirect(error),
+            details  => details.fold[Future[Result]] {
+              BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, true))
+            }(subscriptionDetails => userType match {
+              case Agent =>
+                saveSubscriptionDetails(subscriptionDetails).map(_ =>
+                  Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.enterKnownFacts())
+                )
+              case Organisation =>
+                getCBCEnrolment.ensure(InvalidSession)(
+                  _.cbcId === subscriptionDetails.cbcId
+                ).fold[Future[Result]](
+                  {
+                    case InvalidSession => BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, false, true))
+                    case error          => errorRedirect(error)
+                  },
+                  _     => {
+                    saveSubscriptionDetails(subscriptionDetails).map(_ =>
+                      Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
+                    )
+                  }
+                ).flatten
+            })))
+        })).merge
   }
 
-  val signOut = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request => {
-      val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.enterCBCId().url}/enter-CBCId"
-      Future.successful(Redirect(s"${FrontendAppConfig.cbcrFrontendHost}/gg/sign-out$continue"))
-    }
-  }
+  val signOut = sec.AsyncAuthenticatedAction() { authContext => implicit request => {
+    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.enterCBCId().url}/enter-CBCId"
+    Future.successful(Redirect(s"${FrontendAppConfig.cbcrFrontendHost}/gg/sign-out$continue"))
+  }}
 
 }
 
