@@ -20,23 +20,24 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.OptionT
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
+import uk.gov.hmrc.cbcrfrontend.model.{MessageRefID, UnexpectedState}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpException, NotFoundException}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+import cats.syntax.show._
 
 @Singleton
 class MessageRefIdService @Inject() (connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {
 
-  def saveMessageRefId(m:String)(implicit hc:HeaderCarrier): OptionT[Future,UnexpectedState] =
-    OptionT(connector.saveMessageRefId(m).map(_ => None).recover{
+  def saveMessageRefId(m:MessageRefID)(implicit hc:HeaderCarrier): OptionT[Future,UnexpectedState] =
+    OptionT(connector.saveMessageRefId(m.show).map(_ => None).recover{
       case e:HttpException => Some(UnexpectedState(s"Response Code: ${e.responseCode}\n\n" + e.message))
       case NonFatal(e)     => Some(UnexpectedState(e.getMessage))
     })
 
-  def messageRefIdExists(m:String)(implicit hc:HeaderCarrier) : Future[Boolean] =
-    connector.messageRefIdExists(m).map(_ => true).recover{
+  def messageRefIdExists(m:MessageRefID)(implicit hc:HeaderCarrier) : Future[Boolean] =
+    connector.messageRefIdExists(m.show).map(_ => true).recover{
       case _:NotFoundException => false
     }
 

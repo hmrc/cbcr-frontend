@@ -31,15 +31,15 @@ import play.api.libs.Files
 import play.api.mvc._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, InvalidFileType, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.{CBCBusinessRuleValidator, CBCRXMLValidator, CBCSessionCache, FileUploadService}
+import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, FrontendGlobal, sha256Hash}
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,7 +52,8 @@ class FileUpload @Inject()(val sec: SecuredActions,
                            val schemaValidator: CBCRXMLValidator,
                            val businessRuleValidator: CBCBusinessRuleValidator,
                            val cache:CBCSessionCache,
-                           val fileUploadService:FileUploadService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+                           val fileUploadService:FileUploadService,
+                           val xmlExtractor:XmlInfoExtract)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend") }
@@ -99,48 +100,56 @@ class FileUpload @Inject()(val sec: SecuredActions,
     }).getOrElse(NoContent)
 
 
+  def getCbcId(implicit hc:HeaderCarrier): EitherT[Future, CBCErrors, CBCId] = OptionT(cache.read[CBCId]).toRight(UnexpectedState("CBCId not found in cache"))
+
+  def getMetaData(envelopeId: String, fileId: String)(implicit hc:HeaderCarrier): ServiceResponse[FileMetadata] = for {
+    metadata <- fileUploadService.getFileMetaData(envelopeId, fileId).subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
+    _        <- EitherT.cond[Future](metadata.name.endsWith(".xml"), (), InvalidFileType(metadata.name))
+    _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
+  } yield metadata
+
+  def validateBusinessRules(file:File, cbcId:CBCId, metadata: FileMetadata)(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
+    val rawXmlInfo  = xmlExtractor.extract(file)
+    val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, cbcId, metadata.name)
+    EitherT.right(xmlInfo.fold(
+      errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => None -> errors.toList),
+      info   =>{
+        cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file))).map(_ => Some(info) -> List.empty))
+      }
+    ).flatten)
+  }
+
+  def ifFatalErrors(b:Boolean,envelopeId: String, fileId: String)(implicit hc:HeaderCarrier): ServiceResponse[(FileMetadata, CBCId)] = if(b){
+    EitherT.left[Future,CBCErrors,(FileMetadata,CBCId)](Future.successful(FatalSchemaErrors))
+  } else {
+    (getMetaData(envelopeId,fileId) |@| getCbcId).tupled
+  }
+
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
 
-    val result: ServiceResponse[(Option[NonEmptyList[BusinessRuleErrors]], Option[NonEmptyList[XMLErrors]], FileMetadata, Option[KeyXMLFileInfo])] = for {
-      metadata    <- fileUploadService.getFileMetaData(envelopeId, fileId).subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
-      _           <- EitherT.cond[Future](metadata.name.endsWith(".xml"),(),InvalidFileType(metadata.name))
-      _           <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(metadata))
-      f           <- fileUploadService.getFile(envelopeId, fileId)
-      schemaVal    = schemaValidator.validateSchema(f).leftMap(XMLErrors.errorHandlerToXmlErrors).toValidatedNel
-      cbcId       <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("Unable to find CBCId in cache"))
-      businessVal  = businessRuleValidator.validateBusinessRules(f,cbcId,metadata.name)
-      xml         <- EitherT.right(businessVal.flatMap(_.map(xmlInfo => cache.save(xmlInfo).map(_ => xmlInfo)).sequence))
-      errors      <- EitherT.right(businessVal.map(_.swap.toOption -> schemaVal.swap.toOption))
-      _           <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(Hash(sha256Hash(f))))
-    } yield (errors._1, errors._2, metadata, xml.toOption)
+    val result = for {
+      file            <- fileUploadService.getFile(envelopeId, fileId)
+      schemaErrors     = CBCRXMLValidator.validateSchema(file)
+      _               <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
+      metadata_cbcId  <- ifFatalErrors(schemaErrors.hasFatalErrors,envelopeId,fileId)
+      _               <- EitherT.cond[Future](metadata_cbcId._1.name endsWith ".xml",(),InvalidFileType(metadata_cbcId._1.name))
+      xml_bizErrors   <- validateBusinessRules(file,metadata_cbcId._2,metadata_cbcId._1)
+      length           = (metadata_cbcId._1.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+    } yield Ok(fileupload.fileUploadResult(Some(metadata_cbcId._1.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
-    result.fold[Future[Result]]({
-      case UnexpectedState(errorMsg, _) => fileUploadService.deleteEnvelope(envelopeId).fold(
-        _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate),
-        _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-      ).map(s => {
-        Logger.error(errorMsg)
-        s
-      })
-      case InvalidFileType(_) => Redirect(routes.FileUpload.fileInvalid())
-
-    },
-      validationErrors => {
-        val (bErrors, sErrors, md, xml) = validationErrors
-        val length: BigDecimal          = (md.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-
-        for {
-          _ <- bErrors.map(e => cache.save(AllBusinessRuleErrors(e.toList))).sequence[Future,CacheMap]
-          _ <- sErrors.map(e => cache.save(e.head)).sequence[Future,CacheMap]
-        } yield Ok(fileupload.fileUploadResult(md.name, length, sErrors.isDefined, bErrors.isDefined, includes.asideBusiness(), includes.phaseBannerBeta(), xml.map(_.reportingRole)))
-
-      }
-    ).flatten.recover{
+    result.leftMap{
+      case FatalSchemaErrors      => BadRequest(fileupload.fileUploadResult(None, None, true, false, includes.asideBusiness(), includes.phaseBannerBeta(),None))
+      case InvalidFileType(_)     => Redirect(routes.FileUpload.fileInvalid())
+      case e:CBCErrors            =>
+        Logger.error(e.toString)
+        Redirect(routes.CBCController.technicalDifficulties())
+    }.merge.recover{
       case NonFatal(e) =>
         Logger.error(e.getMessage,e)
-        InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+        Redirect(routes.CBCController.technicalDifficulties())
     }
-  }
+
+ }
 
   private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
     val b = Files.TemporaryFile(name, ".txt")
