@@ -109,13 +109,13 @@ implicit request: Request[_], messages: Messages)
                             <h3>Key information from report XML</h3>
 
                             <p><span class="faded-text faded-text--small">MessageRefID:</span><br />
-                                @summaryData.keyXMLFileInfo.messageRefID
+                                @summaryData.xmlInfo.messageSpec.messageRefID
                             </p>
                             <p><span class="faded-text faded-text--small">ReportingPeriod:</span><br />
-                                @summaryData.keyXMLFileInfo.reportingPeriod
+                                @summaryData.xmlInfo.messageSpec.messageRefID.reportingPeriod
                             </p>
                             <p><span class="faded-text faded-text--small">TimeStamp:</span><br />
-                                @summaryData.keyXMLFileInfo.timeStamp
+                                @summaryData.xmlInfo.messageSpec.timestamp
                             </p>
                       </div>
                     </td>

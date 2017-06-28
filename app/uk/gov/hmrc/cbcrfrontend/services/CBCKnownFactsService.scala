@@ -23,8 +23,7 @@ import cats.instances.future._
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.GGConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
-import uk.gov.hmrc.cbcrfrontend.model.CBCKnownFacts
+import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, CBCKnownFacts, UnexpectedState}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.ExecutionContext

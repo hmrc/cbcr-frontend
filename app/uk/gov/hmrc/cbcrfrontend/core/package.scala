@@ -33,7 +33,7 @@ package uk.gov.hmrc.cbcrfrontend
  */
 
 import cats.data.EitherT
-import exceptions.{CBCErrors, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, UnexpectedState}
 
 import scala.concurrent.{ExecutionContext, Future}
 
