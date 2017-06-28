@@ -20,28 +20,25 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 
-import cats.data.{EitherT, OptionT, ValidatedNel}
+import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
 import play.api.Logger
-import play.api.mvc.{Action, Result}
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.views.html.includes
-import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import play.api.i18n.Messages.Implicits._
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
+import play.api.i18n.Messages.Implicits._
+import play.api.mvc.{Action, Result}
+import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
+import uk.gov.hmrc.cbcrfrontend.views.html.includes
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
-import uk.gov.hmrc.play.http.HeaderCarrier
-import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -123,8 +120,8 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       success => {
         val result = for {
           _       <- OptionT.liftF(cache.save(success))
-          xmlInfo <- OptionT(cache.read[KeyXMLFileInfo])
-        } yield xmlInfo.reportingRole
+          xmlInfo <- OptionT(cache.read[XMLInfo])
+        } yield xmlInfo.reportingEntity.reportingRole
 
         result.cata(
           errorRedirect(UnexpectedState("Unable to find KeyXMLFileInfo in cache")),
@@ -157,13 +154,13 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
   val submitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-      OptionT(cache.read[KeyXMLFileInfo]).map(kXml => kXml.reportingRole match {
+      OptionT(cache.read[XMLInfo]).map(kXml => kXml.reportingEntity.reportingRole match {
 
         case CBC701 =>
           for {
-            _ <- cache.save(kXml.tin)
+            _ <- cache.save(kXml.reportingEntity.tin)
             _ <- cache.save(FilingType(CBC701))
-            _ <- cache.save(UltimateParentEntity(kXml.name))
+            _ <- cache.save(UltimateParentEntity(kXml.reportingEntity.name))
           } yield ()
 
         case CBC702 =>
@@ -171,7 +168,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
         case CBC703 =>
           for {
-            _ <- cache.save(kXml.tin)
+            _ <- cache.save(kXml.reportingEntity.tin)
             _ <- cache.save(FilingType(CBC703))
           } yield ()
 
@@ -229,7 +226,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
           Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
         },
         submissionMetaData => (for {
-          keyXMLFileInfo <- OptionT(cache.read[KeyXMLFileInfo]).toRight(UnexpectedState("KeyXMLFileInfo not found in cache"))
+          keyXMLFileInfo <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
           bpr            <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
           summaryData     = SummaryData(bpr,submissionMetaData, keyXMLFileInfo)
           _              <- EitherT.right[Future,CBCErrors,CacheMap](cache.save[SummaryData](summaryData))

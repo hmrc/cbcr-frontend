@@ -16,14 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import org.scalatest.{EitherValues, FlatSpec, Matchers}
 import play.api.libs.json.Json
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.EnvelopeId
 import uk.gov.hmrc.play.http.HttpResponse
 
 import scala.io.Source

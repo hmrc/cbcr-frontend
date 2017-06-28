@@ -44,34 +44,25 @@ class CBCXMLValidatorSpec extends FlatSpec with Matchers {
   }
 
   "An Xml Validator" should "not return any error for a valid file" in {
-    CBCRXMLValidator.validateSchema(validXmlFile).isValid shouldBe true
+    CBCRXMLValidator.validateSchema(validXmlFile).hasErrors shouldBe false
+    CBCRXMLValidator.validateSchema(validXmlFile).hasFatalErrors shouldBe false
+    CBCRXMLValidator.validateSchema(validXmlFile).hasWarnings shouldBe false
   }
 
   it should "return an error if the file is invalid and a single error" in {
     val validate = CBCRXMLValidator.validateSchema(invalidXmlFile)
-    validate.isValid shouldBe false
-    validate.toEither.isLeft shouldBe true
-    validate.toEither.fold(a => {
-      assert(a.hasErrors)
-      assert(a.errorsCollection.size == 2)
-    }, f => f.deleteOnExit())
+    validate.hasErrors shouldBe true
+    validate.errorsCollection.size shouldBe 2
   }
 
   it should "return multiple errors if the file is invalid and has multiple errors" in {
     val validate = CBCRXMLValidator.validateSchema(invalidMultipleXmlFile)
-    validate.isValid shouldBe false
-    validate.toEither.isLeft shouldBe true
-    validate.toEither.fold(a => {
-      assert(a.hasErrors)
-      assert(a.errorsCollection.size == 40)
-    }, f => f.deleteOnExit())
+    validate.hasErrors shouldBe true
+    validate.errorsCollection.size shouldBe 40
   }
 
   it should "not throw errors if the validator encounters a fatal error" in {
-    CBCRXMLValidator.validateSchema(fatal).fold(
-      (xmlErrors: XmlErrorHandler) => println("At least I didn't throw an exception"),
-      (file: File) => fail("Should have failed!")
-    )
+    CBCRXMLValidator.validateSchema(fatal)
   }
 
 

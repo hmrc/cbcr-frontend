@@ -22,6 +22,7 @@ import javax.xml.validation.SchemaFactory
 
 import cats.data.Validated
 import org.xml.sax.{ErrorHandler, SAXParseException}
+import play.api.Logger
 
 import scala.collection.mutable.ListBuffer
 
@@ -30,22 +31,19 @@ class CBCRXMLValidator {
 
   val schemaLang = "http://www.w3.org/2001/XMLSchema"
 
-  def validateSchema(in: File): Validated[XmlErrorHandler, File] = {
+  def validateSchema(in: File): XmlErrorHandler  = {
 
     val validatorFactory = SchemaFactory.newInstance(schemaLang)
     val validator = validatorFactory.newSchema(new StreamSource(new File("conf/schema/CbcXML_v1.0.xsd"))).newValidator()
     val xmlErrorHandler = new XmlErrorHandler
     validator.setErrorHandler(xmlErrorHandler)
 
-    try {
-      validator.validate(new StreamSource(in))
-
-      if(xmlErrorHandler.hasErrors) Validated.Invalid(xmlErrorHandler)
-      else Validated.Valid(in)
-
-    } catch {
-      case _:SAXParseException => Validated.Invalid(xmlErrorHandler)
+    try { validator.validate(new StreamSource(in)) }
+    catch {
+      case e:SAXParseException => Logger.debug(s"XML Validator encountered a fatal exception: ${e.getMessage}")
     }
+
+    xmlErrorHandler
 
   }
 
@@ -54,20 +52,27 @@ class CBCRXMLValidator {
 class XmlErrorHandler extends ErrorHandler {
 
   def hasErrors: Boolean = errorsCollection.nonEmpty
+  def hasFatalErrors: Boolean = fatalErrorsCollection.nonEmpty
   def hasWarnings: Boolean = warningsCollection.nonEmpty
 
   private var errorsListBuffer: ListBuffer[String] = new ListBuffer[String]()
   private var warningsListBuffer: ListBuffer[String] = new ListBuffer[String]()
+  private var fatalErrorsListBuffer: ListBuffer[String] = new ListBuffer[String]()
 
   def errorsCollection: List[String] = errorsListBuffer.toList
   def warningsCollection: List[String] = warningsListBuffer.toList
+  def fatalErrorsCollection: List[String] = fatalErrorsListBuffer.toList
 
 
   private def addNewError(exception: SAXParseException) = {
     errorsListBuffer += s"Error at line number: ${exception.getLineNumber}, ${exception.getMessage}"
   }
 
-  override def fatalError(exception: SAXParseException): Unit = addNewError(exception)
+  private def addNewFatalError(exception: SAXParseException) = {
+    fatalErrorsListBuffer += s"Fatal error at line number: ${exception.getLineNumber}, ${exception.getMessage}"
+  }
+
+  override def fatalError(exception: SAXParseException): Unit = addNewFatalError(exception)
 
   override def error(exception: SAXParseException): Unit = addNewError(exception)
 

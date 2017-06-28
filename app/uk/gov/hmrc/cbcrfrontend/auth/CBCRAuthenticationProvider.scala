@@ -32,27 +32,22 @@
 
 package uk.gov.hmrc.cbcrfrontend.auth
 
-import java.net.URI
 import javax.inject.{Inject, Singleton}
 
+import cats.instances.future._
 import play.api.Configuration
-import play.api.mvc.Action
-import play.api.mvc.Results.Redirect
-import play.api.mvc.Results.Unauthorized
-import play.api.mvc.{AnyContent, Request, Result}
-
-import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.cbcrfrontend.controllers.{AsyncUserRequest, UserRequest}
+import play.api.mvc.Results.{Redirect, Unauthorized}
+import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.cbcrfrontend.controllers.{AsyncUserRequest, UserRequest}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{AffinityGroup, Agent, Organisation, UserType}
+import uk.gov.hmrc.cbcrfrontend.model.{Agent, Organisation, UserType}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.frontend.auth._
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.UnauthorisedAction
 import uk.gov.hmrc.play.http.HeaderCarrier
-import cats.instances.future._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 
 trait SecuredActions extends Actions {

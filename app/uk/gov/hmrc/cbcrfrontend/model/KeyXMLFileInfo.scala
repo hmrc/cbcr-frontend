@@ -16,16 +16,61 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import java.time.{LocalDateTime, Year}
+import scala.util.control.Exception._
+import play.api.libs.json._
 
 
-case class KeyXMLFileInfo(messageRefID: String,
-                          reportingPeriod: String,
-                          timeStamp: String,
-                          reportingRole: ReportingRole,
-                          tin: Utr,
-                          name:String)
+/** These models represent the raw data extracted from the XML file*/
+sealed trait RawXmlFields extends Product with Serializable
 
-object KeyXMLFileInfo {
-  implicit val format = Json.format[KeyXMLFileInfo]
+case class RawAdditionalInfo(docSpec: RawDocSpec) extends RawXmlFields
+case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
+case class RawDocSpec(docType:String, docRefId:String, corrDocRefId:Option[String]) extends RawXmlFields
+case class RawMessageSpec(messageRefID: String,
+                          receivingCountry:String,
+                          sendingEntityIn:String,
+                          timestamp:String,
+                          reportingPeriod:String) extends RawXmlFields
+case class RawReportingEntity(reportingRole: String,
+                              docSpec:RawDocSpec,
+                              tin: String,
+                              name:String) extends RawXmlFields
+case class RawXMLInfo(messageSpec: RawMessageSpec,
+                      reportingEntity: RawReportingEntity,
+                      cbcReport: RawCbcReports,
+                      additionalInfo: RawAdditionalInfo) extends RawXmlFields
+
+/** These models represent the type-validated data, derived from the raw data */
+case class DocRefId(id:String)
+object DocRefId { implicit val format = Json.format[DocRefId] }
+
+case class AdditionalInfo(docSpec: DocSpec)
+object AdditionalInfo { implicit val format = Json.format[AdditionalInfo] }
+
+case class CbcReports(docSpec: DocSpec)
+object CbcReports{ implicit val format = Json.format[CbcReports] }
+
+case class DocSpec(docType:DocTypeIndic, docRefId:DocRefId, corrDocRefId:Option[DocRefId])
+object DocSpec { implicit val format = Json.format[DocSpec] }
+
+case class MessageSpec(messageRefID: MessageRefID, receivingCountry:String, sendingEntityIn:CBCId, timestamp:LocalDateTime, reportingPeriod:Year)
+object MessageSpec{
+  implicit val yearFormat = new Format[Year] {
+    override def reads(json: JsValue): JsResult[Year] = json match {
+      case JsString(year) => (nonFatalCatch either Year.parse(year)).fold(
+        _     => JsError(s"Failed to parse $year as a Year"),
+        year  => JsSuccess(year)
+      )
+      case other => JsError(s"Failed to parse $other as a Year")
+    }
+    override def writes(o: Year): JsValue = JsString(o.toString)
+  }
+  implicit val format = Json.format[MessageSpec]
 }
+
+case class ReportingEntity(reportingRole: ReportingRole, reportingEntityDocSpec:DocSpec, tin: Utr, name: String)
+object ReportingEntity{ implicit val format = Json.format[ReportingEntity] }
+
+case class XMLInfo( messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:CbcReports, additionalInfo:AdditionalInfo)
+object XMLInfo { implicit val format = Json.format[XMLInfo] }

@@ -16,14 +16,16 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+sealed trait MessageTypeIndic
 
-case class SummaryData(businessPartnerRecord: BusinessPartnerRecord, submissionMetaData: SubmissionMetaData, xmlInfo: XMLInfo)
+case object CBC401 extends MessageTypeIndic
+case object CBC402 extends MessageTypeIndic
 
-object SummaryData {
-  implicit val submissionMetaDataFormat = Json.format[SubmissionMetaData]
-  implicit val format = Json.format[SummaryData]
+object MessageTypeIndic{
+  def parseFrom(s:String):Option[MessageTypeIndic] = s.toLowerCase.trim match{
+    case "cbc401" => Some(CBC401)
+    case "cbc402" => Some(CBC402)
+    case _        => None
+  }
 }
-
-
 
