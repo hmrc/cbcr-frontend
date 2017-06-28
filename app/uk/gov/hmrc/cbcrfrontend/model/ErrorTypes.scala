@@ -20,8 +20,27 @@ import cats.syntax.show._
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
 
-sealed trait ValidationErrors
+
+sealed trait CBCErrors
+
+object CBCErrors {
+  implicit val show = Show.show[CBCErrors]{
+    case UnexpectedState(errorMsg,_) => errorMsg
+    case v:ValidationErrors          => v.show
+  }
+}
+
+case class UnexpectedState(errorMsg: String, json: Option[JsValue] = None) extends CBCErrors
+object UnexpectedState{
+  implicit val invalidStateFormat: OFormat[UnexpectedState] = Json.format[UnexpectedState]
+}
+
+case object InvalidSession extends CBCErrors
+sealed trait ValidationErrors extends CBCErrors
+
+case class InvalidFileType(file:String) extends ValidationErrors
 case class XMLErrors(errors:List[String]) extends ValidationErrors
+case object FatalSchemaErrors extends ValidationErrors
 sealed trait BusinessRuleErrors extends ValidationErrors
 
 case object FileNameError extends BusinessRuleErrors
@@ -42,8 +61,11 @@ case object MessageRefIDTimestampError extends MessageRefIDError
 
 object ValidationErrors {
   implicit val validationErrorShows: Show[ValidationErrors] = Show.show[ValidationErrors]{
-    case x:XMLErrors          => x.show
-    case x:BusinessRuleErrors => x.show
+    case x:XMLErrors             => x.show
+    case x:BusinessRuleErrors    => x.show
+    case FatalSchemaErrors       => "Fatal Schema Error"
+    case InvalidFileType(f)      => s"File $f is an invalid file type"
+    case AllBusinessRuleErrors(e)=> e.map(_.show).mkString(",")
   }
 }
 object BusinessRuleErrors {
@@ -107,13 +129,13 @@ object MessageRefIDError {
 
 object XMLErrors {
   implicit val format = Json.format[XMLErrors]
-  def errorHandlerToXmlErrors(x:XmlErrorHandler) : XMLErrors = XMLErrors(x.errorsCollection ++ x.warningsCollection)
+  def errorHandlerToXmlErrors(x:XmlErrorHandler) : XMLErrors = XMLErrors(x.fatalErrorsCollection ++ x.errorsCollection ++ x.warningsCollection)
   implicit val xmlShows: Show[XMLErrors] = Show.show[XMLErrors](e =>
     "ErrorCode: 50007 - The referenced file failed validation against the CbC XML Schema\n\n" + e.errors.mkString("\n")
   )
 }
 
-case class AllBusinessRuleErrors(errors:List[BusinessRuleErrors])
+case class AllBusinessRuleErrors(errors:List[BusinessRuleErrors]) extends ValidationErrors
 object AllBusinessRuleErrors {
   implicit val format = new Format[AllBusinessRuleErrors] {
     override def writes(o: AllBusinessRuleErrors): JsValue = Json.obj("AllBusinessRuleErrors" -> o.errors)

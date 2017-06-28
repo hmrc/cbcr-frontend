@@ -19,14 +19,12 @@ package uk.gov.hmrc
 import java.io.File
 import java.nio.file.Files
 
-import scala.reflect.runtime.universe._
 import cats.data.{EitherT, OptionT, ValidatedNel}
 import cats.instances.future._
 import cats.syntax.option._
 import cats.syntax.cartesian._
 import cats.syntax.show._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.frontend.auth.AuthContext
@@ -37,6 +35,7 @@ import _root_.play.api.mvc.Results._
 import _root_.play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.reflect.runtime.universe._
 
 
 package object cbcrfrontend {

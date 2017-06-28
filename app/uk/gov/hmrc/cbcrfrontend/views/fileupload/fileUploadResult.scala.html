@@ -23,7 +23,7 @@
 @import uk.gov.hmrc.cbcrfrontend.model.CBC703
 @import java.nio.file._
 
-@(fileName: String, fileSize: BigDecimal, schemaErrors: Boolean , busErrors :Boolean, asideBusiness: Html, phaseBannerBeta: Html, reportingRole:Option[ReportingRole])(
+@(fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Boolean , busErrors :Boolean, asideBusiness: Html, phaseBannerBeta: Html, reportingRole:Option[ReportingRole])(
 implicit request: Request[_], messages: Messages)
 
 @errors = @{schemaErrors || busErrors}

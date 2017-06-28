@@ -20,8 +20,7 @@ import cats.data.EitherT
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriptionDetails, Utr}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.http.NotFoundException
