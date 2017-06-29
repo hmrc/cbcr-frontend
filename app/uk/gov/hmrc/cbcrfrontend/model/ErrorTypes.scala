@@ -27,6 +27,7 @@ object CBCErrors {
   implicit val show = Show.show[CBCErrors]{
     case UnexpectedState(errorMsg,_) => errorMsg
     case v:ValidationErrors          => v.show
+    case InvalidSession              => InvalidSession.toString
   }
 }
 
