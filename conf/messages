@@ -15,6 +15,9 @@ enterCBCId.dontHaveAnID.link.text=Register online
 enterCBCId.errorSummary.header=This Country by Country ID is invalid. This could be because:
 enterCBCId.errorSummary.reason1=It doesn''t match any that have been registered
 enterCBCId.errorSummary.reason2=You''ve entered it wrongly
+enterCBCId.missMatch.header=The country-by-country ID doesn't match the one created for this multinational group.
+enterCBCId.missMatch.message1=Try again, or
+enterCBCId.missMatch.message2=contact HMRC.
 
 subscribeFirst.mainHeading=Register for a Country by Country ID
 subscribeFirst.agentHeading=Verify your client Organisations Details
