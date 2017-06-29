@@ -16,12 +16,24 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
+import play.api.libs.json._
+
 sealed trait MessageTypeIndic
 
 case object CBC401 extends MessageTypeIndic
 case object CBC402 extends MessageTypeIndic
 
 object MessageTypeIndic{
+  implicit val format = new Format[MessageTypeIndic] {
+    override def writes(o: MessageTypeIndic): JsValue = JsString(o.toString)
+
+    override def reads(json: JsValue): JsResult[MessageTypeIndic] =  json match {
+      case JsString("CBC401") => JsSuccess(CBC401)
+      case JsString("CBC402") => JsSuccess(CBC402)
+      case other              => JsError(s"Unable to serialise $other as a MessageTypeIndic")
+    }
+
+  }
   def parseFrom(s:String):Option[MessageTypeIndic] = s.toLowerCase.trim match{
     case "cbc401" => Some(CBC401)
     case "cbc402" => Some(CBC402)

@@ -37,12 +37,19 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
           validateSendingEntity(in.messageSpec, cBCId).toValidatedNel |@|
           validateFileName(in.messageSpec, fileName).toValidatedNel |@|
           validateReportingRole(in.reportingEntity).toValidatedNel |@|
-          validateTIN(in.reportingEntity).toValidatedNel
-        ).map((_, rc, _, _, reportingRole, tin) => (rc, reportingRole, tin))
+          validateTIN(in.reportingEntity).toValidatedNel |@|
+          validateMessageTypeIndic(in).toValidatedNel
+        ).map((_, rc, _, _, reportingRole, tin, mti) => (rc, reportingRole, tin, mti))
 
       (otherRules |@| messageRefIdVal).map((values, msgRefId) =>
         XMLInfo(
-          MessageSpec(msgRefId,values._1,msgRefId.cBCId,msgRefId.creationTimestamp,msgRefId.reportingPeriod),
+          MessageSpec(
+            msgRefId,values._1,
+            msgRefId.cBCId,
+            msgRefId.creationTimestamp,
+            msgRefId.reportingPeriod,
+            values._4
+          ),
           ReportingEntity(values._2,rawDocSpecToDocSpec(in.reportingEntity.docSpec),values._3,in.reportingEntity.name),
           CbcReports(rawDocSpecToDocSpec(in.cbcReport.docSpec)),
           AdditionalInfo(rawDocSpecToDocSpec(in.additionalInfo.docSpec))
@@ -52,6 +59,16 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
     })
   }
 
+  private def validateMessageTypeIndic(r:RawXMLInfo) : Validated[BusinessRuleErrors,Option[MessageTypeIndic]] = {
+    r.messageSpec.messageType.flatMap(MessageTypeIndic.parseFrom).map{
+      case CBC401                                                            => Some(CBC401).valid
+      case CBC402 if !r.cbcReport.docSpec.docType.matches("OECD[23]")
+                  || !r.additionalInfo.docSpec.docType.matches("OECD[23]")
+                  || !r.reportingEntity.docSpec.docType.matches("OECD[023]") => MessageTypeIndicError.invalid
+      case CBC402                                                            => Some(CBC402).valid
+    }.getOrElse((None:Option[MessageTypeIndic]).valid)
+
+  }
 
   private def rawDocSpecToDocSpec(r:RawDocSpec):DocSpec = {
     DocSpec(OECD1,DocRefId(r.docRefId),None)

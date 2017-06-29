@@ -47,6 +47,7 @@ case object FileNameError extends BusinessRuleErrors
 case object TestDataError extends BusinessRuleErrors
 case object SendingEntityError extends BusinessRuleErrors
 case object ReceivingCountryError extends BusinessRuleErrors
+case object MessageTypeIndicError extends BusinessRuleErrors
 case class InvalidXMLError(error:String) extends BusinessRuleErrors {
   override def toString: String = s"InvalidXMLError: $error"
 }
@@ -76,12 +77,14 @@ object BusinessRuleErrors {
       case SendingEntityError    => JsString(SendingEntityError.toString)
       case ReceivingCountryError => JsString(ReceivingCountryError.toString)
       case FileNameError         => JsString(FileNameError.toString)
-      case m:InvalidXMLError       => JsString(m.toString)
+      case MessageTypeIndicError => JsString(MessageTypeIndicError.toString)
+      case m:InvalidXMLError     => JsString(m.toString)
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
       Json.fromJson[MessageRefIDError](json).orElse[BusinessRuleErrors]{
         json.asOpt[String].map(_.toLowerCase.trim) match {
+          case Some("messagetypeindicerror") => JsSuccess(MessageTypeIndicError)
           case Some("filenameerror")         => JsSuccess(FileNameError)
           case Some("testdataerror")         => JsSuccess(TestDataError)
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
@@ -98,6 +101,7 @@ object BusinessRuleErrors {
     case SendingEntityError    => "The SendingEntityIN field must match your CBCId"
     case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
     case FileNameError         => "MessageRefID must match filename"
+    case MessageTypeIndicError => "Error DocTypeIndic (Correction): If MessageTypeIndic is provided and completed with \"CBC402\" message can only contain DocTypeIndic \"OECD2\" or \"OECD3\". (With 1 execption ReportingEntity can contain DocTypeIndic \"OECD0\" where ReportingEntity information is unchanged. \"OECD0\" cannot be used in DocSpec\\DocTypeIndic for CbCReports or AdditionalInfo)"
     case i:InvalidXMLError     => i.toString
   }
 }

@@ -31,7 +31,8 @@ case class RawMessageSpec(messageRefID: String,
                           receivingCountry:String,
                           sendingEntityIn:String,
                           timestamp:String,
-                          reportingPeriod:String) extends RawXmlFields
+                          reportingPeriod:String,
+                          messageType: Option[String]) extends RawXmlFields
 case class RawReportingEntity(reportingRole: String,
                               docSpec:RawDocSpec,
                               tin: String,
@@ -45,16 +46,16 @@ case class RawXMLInfo(messageSpec: RawMessageSpec,
 case class DocRefId(id:String)
 object DocRefId { implicit val format = Json.format[DocRefId] }
 
+case class DocSpec(docType:DocTypeIndic, docRefId:DocRefId, corrDocRefId:Option[DocRefId])
+object DocSpec { implicit val format = Json.format[DocSpec] }
+
 case class AdditionalInfo(docSpec: DocSpec)
 object AdditionalInfo { implicit val format = Json.format[AdditionalInfo] }
 
 case class CbcReports(docSpec: DocSpec)
 object CbcReports{ implicit val format = Json.format[CbcReports] }
 
-case class DocSpec(docType:DocTypeIndic, docRefId:DocRefId, corrDocRefId:Option[DocRefId])
-object DocSpec { implicit val format = Json.format[DocSpec] }
-
-case class MessageSpec(messageRefID: MessageRefID, receivingCountry:String, sendingEntityIn:CBCId, timestamp:LocalDateTime, reportingPeriod:Year)
+case class MessageSpec(messageRefID: MessageRefID, receivingCountry:String, sendingEntityIn:CBCId, timestamp:LocalDateTime, reportingPeriod:Year, messageType: Option[MessageTypeIndic])
 object MessageSpec{
   implicit val yearFormat = new Format[Year] {
     override def reads(json: JsValue): JsResult[Year] = json match {
