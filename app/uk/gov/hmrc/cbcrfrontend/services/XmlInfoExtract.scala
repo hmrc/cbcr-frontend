@@ -52,8 +52,9 @@ class XmlInfoExtract {
       val receivingCountry = (ms \ "ReceivingCountry").text
       val sendingEntityIn  = (ms \ "SendingEntityIN").text
       val timestamp        = (ms \ "Timestamp").text
+      val msgType          = (ms \ "MessageTypeIndic").textOption
       val reportingPeriod  = (ms \ "ReportingPeriod").text
-      RawMessageSpec(msgRefId,receivingCountry,sendingEntityIn,timestamp,reportingPeriod)
+      RawMessageSpec(msgRefId,receivingCountry,sendingEntityIn,timestamp,reportingPeriod,msgType)
     }
 
     case List("CBC_OECD", "CbcBody", "ReportingEntity") => re => {
@@ -79,8 +80,7 @@ class XmlInfoExtract {
       finally xmlEventReader.foreach(_.close())
     }
 
-    val ms = collectedData.collectFirst{case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","",""))
-
+    val ms = collectedData.collectFirst{ case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","","",None))
     val re = collectedData.collectFirst{ case re:RawReportingEntity => re}.getOrElse(RawReportingEntity("",RawDocSpec("","",None),"",""))
     val ai = collectedData.collectFirst{ case ai:RawAdditionalInfo => ai}.getOrElse(RawAdditionalInfo(RawDocSpec("","",None)))
     val cr = collectedData.collectFirst{ case cr:RawCbcReports=> cr}.getOrElse(RawCbcReports(RawDocSpec("","",None)))
