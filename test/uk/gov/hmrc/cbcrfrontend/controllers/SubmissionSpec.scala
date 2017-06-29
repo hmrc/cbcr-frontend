@@ -386,7 +386,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         "GB",
         CBCId.create(99).getOrElse(fail("booo")),
         LocalDateTime.now(),
-        Year.parse("2017")
+        Year.parse("2017"),
+        None
       ),
       ReportingEntity(CBC701,DocSpec(OECD1,DocRefId("blagh"),None),Utr("7000000002"),"name"),
       CbcReports(DocSpec(OECD1,DocRefId("balgh"),None)),
