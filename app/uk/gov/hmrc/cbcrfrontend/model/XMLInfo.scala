@@ -55,7 +55,8 @@ object AdditionalInfo { implicit val format = Json.format[AdditionalInfo] }
 case class CbcReports(docSpec: DocSpec)
 object CbcReports{ implicit val format = Json.format[CbcReports] }
 
-case class MessageSpec(messageRefID: MessageRefID, receivingCountry:String, sendingEntityIn:CBCId, timestamp:LocalDateTime, reportingPeriod:Year, messageType: Option[MessageTypeIndic])
+case class MessageSpec(messageRefID: MessageRefID, receivingCountry:String, sendingEntityIn:CBCId, timestamp:LocalDateTime, reportingPeriod:Year,messageType:Option[MessageTypeIndic])
+
 object MessageSpec{
   implicit val yearFormat = new Format[Year] {
     override def reads(json: JsValue): JsResult[Year] = json match {
