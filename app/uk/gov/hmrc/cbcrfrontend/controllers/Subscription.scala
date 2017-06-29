@@ -33,6 +33,7 @@ import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.Implicits._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -41,6 +42,8 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.connectors.{AuthConnector => PlayAuthConnector}
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -78,7 +81,7 @@ class Subscription @Inject()(val sec: SecuredActions,
       Logger.debug("Country by Country: Generate CBCId and Store Data")
 
       subscriptionDataForm.bindFromRequest.fold(
-        errors => Future.successful(BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors))),
+        errors => BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
         data => {
           cbcIdService.getCbcId.flatMap {
             case Some(id) =>
@@ -105,10 +108,10 @@ class Subscription @Inject()(val sec: SecuredActions,
                     _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
                   )
                 },
-                _ => Future.successful(Redirect(routes.Subscription.reconfirmEmail()))
+                _ => Redirect(routes.Subscription.reconfirmEmail())
               ).flatten
 
-            case None => Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
+            case None => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
           }
         }
       )
@@ -121,25 +124,30 @@ class Subscription @Inject()(val sec: SecuredActions,
       InternalServerError(FrontendGlobal.internalServerErrorTemplate),
       subscriberContactInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
     )
-
   }
 
 
   val reconfirmEmailSubmit = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     reconfirmEmailForm.bindFromRequest.fold(
-      formWithErrors => BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors)),
-      success        => (for {
+
+      formWithErrors => BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(
+        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
+      )),
+      success => (for {
+        subscribed        <- EitherT.right[Future,CBCErrors,Boolean](session.read[Subscribed.type].map(_.isDefined))
+        _                 <- EitherT.cond[Future](!subscribed,(),UnexpectedState("Already subscribed"))
         subscriberContact <- OptionT(session.read[SubscriberContact]).toRight(UnexpectedState("SubscriberContact not found in the cache"))
         cbcId             <- OptionT(session.read[CBCId]).toRight(UnexpectedState("CBCId not found in the cache"))
         _                 <- EitherT.right[Future, CBCErrors, CacheMap](session.save[SubscriberContact](subscriberContact.copy(email = success)))
+        _                 <- EitherT.right[Future,CBCErrors,CacheMap](session.save(Subscribed))
       } yield cbcId).fold(
         error => errorRedirect(error),
         cbcId => Redirect(routes.Subscription.subscribeSuccessCbcId(cbcId.value))
       )
     )
-
   }
+
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
@@ -153,9 +161,12 @@ class Subscription @Inject()(val sec: SecuredActions,
     )((u,p) => BPRKnownFacts(Utr(u),p))((facts: BPRKnownFacts) => Some(facts.utr.value -> facts.postCode))
  )
 
+  def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
+    authConnector.getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
+
   val enterKnownFacts = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
-    authConnector.getEnrolments.flatMap{enrolments =>
-      if(enrolments.exists(_.key == "HMRC-CBC-ORG")) {
+    alreadyEnrolled.flatMap(subscribed =>
+      if(subscribed) {
         NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(),includes.phaseBannerBeta()))
       } else {
         getUserType(authContext).map{
@@ -163,7 +174,7 @@ class Subscription @Inject()(val sec: SecuredActions,
           case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = false,Organisation))
         }.leftMap(errorRedirect).merge
       }
-    }
+    )
   }
 
   val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
