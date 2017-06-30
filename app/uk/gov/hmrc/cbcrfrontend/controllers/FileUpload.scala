@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.io
 import java.io.{File, PrintWriter}
 import java.time.LocalDateTime
 import java.util.UUID
@@ -64,17 +65,14 @@ class FileUpload @Inject()(val sec: SecuredActions,
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     val result = for {
-      envelopeId     <- fileUploadService.createEnvelope
-      _              <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(envelopeId))
-      fileId          = UUID.randomUUID.toString
-      _              <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(FileId(fileId)))
+      envelopeId     <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
+      fileId         <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"))
       successRedirect = s"$hostName/country-by-country-reporting/file-upload-progress/$envelopeId/$fileId"
       fileUploadUrl   = s"${FrontendAppConfig.fileUploadFrontendHost}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
         s"redirect-success-url=$successRedirect&" +
         s"redirect-error-url=$fileUploadErrorRedirectUrl"
       fileName        = s"oecd-${LocalDateTime.now}-cbcr.xml"
     } yield Ok(fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
-
 
     result.leftMap(errorRedirect).merge
 
