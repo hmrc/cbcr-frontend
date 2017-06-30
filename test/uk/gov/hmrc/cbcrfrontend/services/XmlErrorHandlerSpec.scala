@@ -26,19 +26,19 @@ class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
   def addException(errorMessage: String, line: Int, column: Int) = new SAXParseException(errorMessage, "PublicId", "SystemId", line, column)
 
   val errors: List[SAXParseException] = List(addException("ErrorOne", 5, 2), addException("ErrorTwo", 13, 14))
+  val fatalErrors: List[SAXParseException] = List(addException("FatalErrorOne", 5, 2))
   val warnings: List[SAXParseException] = List(addException("WarningOne", 5, 2), addException("WarningTwo", 13, 14))
 
 
   "An XmlErrorHandler" should "report multiple errors and multiple warnings" in {
     val xmlErorHandler =  new XmlErrorHandler
 
-    errors.foreach(spe => xmlErorHandler.error(spe))
     warnings.foreach(spe => xmlErorHandler.warning(spe))
+    errors.foreach(spe => xmlErorHandler.error(spe))
+    fatalErrors.foreach(spe => xmlErorHandler.fatalError(spe))
 
     xmlErorHandler.hasErrors shouldBe true
     xmlErorHandler.errorsCollection.size shouldBe errors.size
-
-    val errorsMap = errors.map{spe => (s"${spe.getLineNumber.toString}:${spe.getColumnNumber}" , spe)}.toMap
 
     for(i <- errors.indices) {
       val message = s"Error at line number: ${errors(i).getLineNumber}, ${errors(i).getMessage}"
@@ -53,6 +53,13 @@ class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
       assert(message == xmlErorHandler.warningsCollection(i))
     }
 
+    xmlErorHandler.hasFatalErrors shouldBe true
+    xmlErorHandler.fatalErrorsCollection.size shouldBe fatalErrors.size
+
+    for(i <- fatalErrors.indices) {
+      val message = s"Fatal error at line number: ${fatalErrors(i).getLineNumber}, ${fatalErrors(i).getMessage}"
+      assert(message == xmlErorHandler.fatalErrorsCollection(i))
+    }
   }
 
 }

@@ -17,20 +17,20 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io.File
+import java.time.{LocalDateTime, Year}
 
-import cats.data.{EitherT, Validated}
-import org.mockito.Mockito._
-import org.mockito.Matchers._
-import play.api.libs.json.{JsNull, JsValue, Json}
+import cats.data.EitherT
 import org.mockito.Matchers.{eq => EQ, _}
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
+import play.api.libs.json.{JsNull, JsValue, Json}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
-import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
-import uk.gov.hmrc.cbcrfrontend.model.{FileId, KeyXMLFileInfo, _}
+import uk.gov.hmrc.cbcrfrontend.model.{FileId, XMLInfo, _}
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.emailaddress.EmailAddress
@@ -40,7 +40,6 @@ import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import uk.gov.hmrc.cbcrfrontend._
 
 
 class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
@@ -68,13 +67,13 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.toJson(ultimateParentEntity)))
       when(cache.save[UltimateParentEntity](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       "the reporting role is CBC702" in {
-        when(cache.read(EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingRole = CBC702)))
+        when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))))
         val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
         result.header.headers("Location") should endWith("/utr")
         status(result) shouldBe Status.SEE_OTHER
       }
       "the reporting role is CBC703" in {
-        when(cache.read(EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingRole = CBC703)))
+        when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703))))
         val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
         result.header.headers("Location") should endWith("/submitter-info")
         status(result) shouldBe Status.SEE_OTHER
@@ -84,7 +83,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val ultimateParentEntity  = UltimateParentEntity("UlitmateParentEntity")
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.toJson(ultimateParentEntity)))
       when(cache.save[UltimateParentEntity](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.read(EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingRole = CBC701)))
+      when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC701))))
       val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
@@ -93,7 +92,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   "GET /submitter-info" should {
     "return a 200" in {
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
-      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC701, Utr("7000000002"),"Bob Corp")))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
     }
@@ -102,7 +101,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val controller = new Submission(securedActions, cache, fus)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC701, Utr("7000000002"),"Bob Corp")))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
       verify(cache).save(any())(EQ(Utr.utrFormat),any(),any())
       verify(cache).save(any())(EQ(FilingType.format),any(),any())
@@ -113,7 +112,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val controller = new Submission(securedActions, cache, fus)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC702, Utr("7000000002"),"Bob Corp")))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
       verify(cache).save(any())(EQ(FilingType.format),any(),any())
     }
@@ -122,7 +121,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val controller = new Submission(securedActions, cache, fus)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC703, Utr("7000000002"),"Bob Corp")))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
       verify(cache).save(any())(EQ(Utr.utrFormat),any(),any())
       verify(cache).save(any())(EQ(FilingType.format),any(),any())
@@ -315,7 +314,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
         val file = mock[File]
 
-        when(cache.read[KeyXMLFileInfo](EQ(KeyXMLFileInfo.format),any(),any())) thenReturn Future.successful(Some(KeyXMLFileInfo("blagh","blagh","blagh",CBC701, Utr("7000000002"),"Bob Corp")))
+        when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
         when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.successful(Some(bpr))
         when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("utr")))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId.create(1).toOption)
@@ -380,7 +379,19 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
   }
 
-  private val keyXMLInfo = {
-    KeyXMLFileInfo("messageRefID", "2012-04-01", "2012-04-01T00:00", CBC702, Utr("7000000001"), "Bob Corp")
+  private lazy val keyXMLInfo = {
+    XMLInfo(
+      MessageSpec(
+        MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
+        "GB",
+        CBCId.create(99).getOrElse(fail("booo")),
+        LocalDateTime.now(),
+        Year.parse("2017"),
+        None
+      ),
+      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId("blagh"),None),Utr("7000000002"),"name"),
+      CbcReports(DocSpec(OECD1,DocRefId("balgh"),None)),
+      AdditionalInfo(DocSpec(OECD1,DocRefId("balgh"),None))
+    )
   }
 }

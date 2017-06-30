@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import cats.data.{EitherT, OptionT}
+import cats.data.EitherT
+import cats.instances.future._
+import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
-import org.mockito.Matchers._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
@@ -26,8 +27,8 @@ import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
-import uk.gov.hmrc.cbcrfrontend.exceptions.{CBCErrors, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCIdService, CBCKnownFactsService, CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
@@ -41,10 +42,13 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
+import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.reflect.runtime.universe._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.reflect.runtime.universe._
 
 class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
 
@@ -284,28 +288,29 @@ class SubscriptionSpec extends UnitSpec with ScalaFutures with OneAppPerSuite wi
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-
-  "POST /subscriberReconfirmEmailSubmit" should {
     "return 400 when Email Address is in Invalid format" in {
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc.xyz")
 
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-  }
-
-  "POST /subscriberReconfirmEmailSubmit" should {
     "return 303 when Email Address is valid" in {
 
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
+      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
       when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("name", "0123123123", EmailAddress("max@max.com"))))
       when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
       when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
 
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
+    }
+    "return 500 when trying to re-submit" in {
+
+      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
+      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(Some(Subscribed))
+      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.INTERNAL_SERVER_ERROR
     }
   }
 

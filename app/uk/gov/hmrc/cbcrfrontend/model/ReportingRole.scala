@@ -26,6 +26,13 @@ case object CBC702 extends ReportingRole
 case object CBC703 extends ReportingRole
 
 object ReportingRole {
+  def parseFromString(s:String) :Option[ReportingRole] = s.toLowerCase.trim match {
+    case "cbc701" => Some(CBC701)
+    case "cbc702" => Some(CBC702)
+    case "cbc703" => Some(CBC703)
+    case _        => None
+  }
+
   implicit val shows = Show.show[ReportingRole]{
     case CBC701 => "PRIMARY"
     case CBC702 => "VOLUNTARY"
@@ -37,15 +44,12 @@ object ReportingRole {
     override def writes(o: ReportingRole): JsValue = Json.obj("ReportingRole" -> o.toString)
 
     override def reads(json: JsValue): JsResult[ReportingRole] = json match {
-      case o:JsObject => (for {
-        rr <- o.value.get("ReportingRole")
-        rs <- rr.asOpt[String]
-      } yield rs match {
-        case "CBC701" => JsSuccess(CBC701)
-        case "CBC702" => JsSuccess(CBC702)
-        case "CBC703" => JsSuccess(CBC703)
-        case _        => JsError(s"Failed to parse $rs as ReportingRole")
-      }).getOrElse(JsError(s"Failed to parse $json as ReportingRole"))
+      case o:JsObject =>
+        (for {
+          rr <- o.value.get("ReportingRole")
+          rs <- rr.asOpt[String]
+          rx <- parseFromString(rs)
+        } yield JsSuccess(rx)).getOrElse(JsError(s"Failed to parse $json as ReportingRole"))
       case _          => JsError(s"Failed to parse $json as ReportingRole")
     }
   }

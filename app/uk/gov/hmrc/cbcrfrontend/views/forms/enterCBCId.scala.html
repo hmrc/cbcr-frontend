@@ -57,11 +57,11 @@ implicit request: Request[_], messages: Messages)
                      role="alert"
                      aria-labelledby="error-summary-heading"
                      tabindex="-1">
-                    <h2 id="error-summary-heading" class="h3-heading">The country-by-country ID doesn't match our records.</h2>
-                    <p>Try again, or <a href="contact-hmrc-dummy-page">contact HMRC.</a></p>
+                    <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCBCId.missMatch.header")</h2>
+                    <p>@Messages("enterCBCId.missMatch.message1") <a href="contact-hmrc-dummy-page">@Messages("enterCBCId.missMatch.message2")</a></p>
                 </div>
                 }
-                <div class="form-group @if(errors || noMatch){form-field--error}">
+                <div class="form-group @if(errors || noMatch || missMatch){form-field--error}">
                     @if(form.error("cbcId").isDefined){
                         <span class="error-notification">This should be 15 characters long
                         </span>
@@ -72,7 +72,7 @@ implicit request: Request[_], messages: Messages)
                         <div class="form-hint">@Messages("enterCBCId.formHint")</div>
                     </label>
 
-                    <input type="text" class="@{if(form.error("cbcId").isDefined || noMatch){ "input--medium input--cleared form-control error-field" } else {"input--medium input--cleared form-control"} }" name="cbcId" id="txt-cbcID"/>
+                    <input type="text" class="@{if(form.error("cbcId").isDefined || noMatch || missMatch){ "input--medium input--cleared form-control error-field" } else {"input--medium input--cleared form-control"} }" name="cbcId" id="txt-cbcID"/>
                 </div>
             </fieldset>
             @csrf_token()

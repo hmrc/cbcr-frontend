@@ -16,16 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import java.io.{File, FileInputStream}
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.io.File
 
 import play.api.Logger
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.core.CBCErrorOr
-import uk.gov.hmrc.cbcrfrontend.exceptions.UnexpectedState
-import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, FileUploadCallbackResponse}
+import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, UnexpectedState}
 import uk.gov.hmrc.play.http.HttpResponse
 
 import scala.xml.Source
