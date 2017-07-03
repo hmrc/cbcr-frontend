@@ -21,7 +21,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
 
 
-sealed trait CBCErrors
+sealed trait CBCErrors extends Product with Serializable
 
 object CBCErrors {
   implicit val show = Show.show[CBCErrors]{
@@ -52,6 +52,10 @@ case object MessageTypeIndicError extends BusinessRuleErrors
 case class InvalidXMLError(error:String) extends BusinessRuleErrors {
   override def toString: String = s"InvalidXMLError: $error"
 }
+
+case object CorrDocRefIdUnknownRecord extends BusinessRuleErrors
+case object CorrDocRefIdInvalidRecord extends BusinessRuleErrors
+case object DocRefIdDuplicate extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError

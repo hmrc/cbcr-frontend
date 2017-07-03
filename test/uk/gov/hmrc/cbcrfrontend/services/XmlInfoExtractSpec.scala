@@ -66,8 +66,8 @@ class XmlInfoExtractSpec extends UnitSpec {
       val a = e.additionalInfo
 
       a.docSpec.docType shouldBe "OECD1"
-      a.docSpec.docRefId shouldBe "String_DocRefId"
-      a.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId")
+      a.docSpec.docRefId shouldBe "MyDocRefId"
+      a.docSpec.corrDocRefId shouldBe Some("MyCorrDocRefId")
 
     }
   }
