@@ -46,7 +46,22 @@ case class RawXMLInfo(messageSpec: RawMessageSpec,
 case class DocRefId(id:String)
 object DocRefId { implicit val format = Json.format[DocRefId] }
 
-case class DocSpec(docType:DocTypeIndic, docRefId:DocRefId, corrDocRefId:Option[DocRefId])
+case class CorrDocRefId(cid:DocRefId)
+object CorrDocRefId {
+  implicit val format = new Format[CorrDocRefId] {
+    override def writes(o: CorrDocRefId): JsValue = Json.obj("CorrDocRefId" -> o.cid.id)
+
+    override def reads(json: JsValue): JsResult[CorrDocRefId] = json match {
+      case JsObject(u) => u.get("CorrDocRefId").flatMap(_.asOpt[String]).fold[JsResult[CorrDocRefId]](
+        JsError(s"Unable to deserialise $json as a CorrDocRefId"))(
+        id => JsSuccess(CorrDocRefId(DocRefId(id)))
+      )
+      case other => JsError(s"Unable to deserialise $other as a CorreDocRefId")
+    }
+  }
+}
+
+case class DocSpec(docType:DocTypeIndic, docRefId:DocRefId, corrDocRefId:Option[CorrDocRefId])
 object DocSpec { implicit val format = Json.format[DocSpec] }
 
 case class AdditionalInfo(docSpec: DocSpec)
