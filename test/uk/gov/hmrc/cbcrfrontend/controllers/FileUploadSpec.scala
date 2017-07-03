@@ -63,7 +63,7 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
 
   object TestSessionCache {
 
-    var suceed = true
+    var succeed = true
 
     val http = mock[HttpGet with HttpPut with HttpDelete]
     val configuration = new Configuration(ConfigFactory.load("application.conf"))
@@ -73,14 +73,12 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
     private class SessionCache(_config:Configuration, _http:HttpGet with HttpPut with HttpDelete) extends CBCSessionCache(_config, _http) {
       override def readOrCreate[T: Format : universe.TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] = universe.typeOf[T] match {
         case t if t =:= universe.typeOf[FileId] => OptionT.some[Future, FileId](FileId("fileId")).asInstanceOf[OptionT[Future, T]]
-        case t if t =:= universe.typeOf[EnvelopeId] => suceed match {
+        case t if t =:= universe.typeOf[EnvelopeId] => succeed match {
           case true =>  OptionT.some[Future, EnvelopeId](EnvelopeId("envId")).asInstanceOf[OptionT[Future, T]]
-          case false => OptionT.none 
+          case false => OptionT.none
         }
       }
     }
-
-
   }
 
   implicit val hc = HeaderCarrier()
@@ -109,11 +107,11 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
       status(result) shouldBe Status.OK
     }
     "return 500 when the is an error creating the envelope" in {
-      TestSessionCache.suceed = false
+      TestSessionCache.succeed = false
       when(fuService.createEnvelope(any(), any(), any(), any())) thenReturn left[EnvelopeId]("server error")
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      TestSessionCache.suceed = true
+      TestSessionCache.succeed = true
     }
   }
 
