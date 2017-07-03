@@ -18,7 +18,6 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.File
 
-import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -29,6 +28,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import cats.instances.future._
+import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
+import org.mockito.Matchers.{eq => EQ, _}
 /**
   * Created by max on 24/05/17.
   */
@@ -36,6 +37,10 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
 
   val messageRefIdService = mock[MessageRefIdService]
+  val docRefIdService = mock[DocRefIdService]
+
+  when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
+
   implicit val hc = HeaderCarrier()
   val extract = new XmlInfoExtract()
   implicit def fileToXml(f:File) : RawXMLInfo = extract.extract(f)
@@ -43,7 +48,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val cbcId = CBCId.create(56).getOrElse(fail("failed to generate CBCId"))
   val filename = "GB2016RGXVCBC0000000056CBC40120170311T090000X.xml"
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService)
   "The CBCBusinessRuleValidator" should {
     "return the correct error" when {
       "messageRefId is empty and return the correct message and errorcode" in {
@@ -202,9 +207,58 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           _ => fail("No InvalidXMLError generated")
         )
       }
+      "when a corrRefId is present but refers to an unknown docRefId" in {
+
+        val validFile = new File("test/resources/cbcr-valid.xml")
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe CorrDocRefIdUnknownRecord,
+          _ => fail("No InvalidXMLError generated")
+        )
+      }
+      "when a corrRefId is present but refers to an invalid docRefId" in {
+        val validFile = new File("test/resources/cbcr-valid.xml")
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Invalid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe CorrDocRefIdInvalidRecord,
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+      "when a docRefId is a duplicate" in  {
+        val validFile = new File("test/resources/cbcr-valid.xml")
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe DocRefIdDuplicate,
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
     }
     "return the KeyXmlInfo when everything is fine" in {
       val validFile = new File("test/resources/cbcr-valid.xml")
+      when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+      when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+      when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+      when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
       val result = Await.result(validator.validateBusinessRules(validFile,cbcId,filename).value, 5.seconds)
 
       result.fold(
