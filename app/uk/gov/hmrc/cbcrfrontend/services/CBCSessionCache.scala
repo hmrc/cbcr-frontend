@@ -17,18 +17,21 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
+
+import cats.data.OptionT
+
 import scala.reflect.runtime.universe._
 import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
-import play.api.libs.json.{Reads, Writes}
+import play.api.libs.json.{Format, Reads, Writes}
+import cats.instances.future._
 import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpDelete, HttpGet, HttpPut}
-
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with HttpPut with HttpDelete) extends SessionCache{
+class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with HttpPut with HttpDelete)(implicit ec: ExecutionContext) extends SessionCache {
 
   val conf: Config = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
 
@@ -47,6 +50,13 @@ class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with
 
   def read[T:Reads:TypeTag](implicit hc:HeaderCarrier): Future[Option[T]] =
     fetchAndGetEntry(stripPackage(typeOf[T].toString))
+
+  def readOrCreate[T:Format:TypeTag](f: => OptionT[Future,T])(implicit hc:HeaderCarrier) : OptionT[Future, T] =
+    OptionT(read[T].flatMap(_.fold(
+      f.semiflatMap{t => save(t).map(_ => t)}.value
+    )(t => Future.successful(Some(t)))))
+
+
 
 
   def stripPackage(s:String) : String = s.split('.').last
