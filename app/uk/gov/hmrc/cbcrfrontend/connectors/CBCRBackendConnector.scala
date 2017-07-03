@@ -24,6 +24,8 @@ import play.api.Configuration
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPut, HttpResponse}
 import configs.syntax._
 import play.api.libs.json.JsNull
+import uk.gov.hmrc.cbcrfrontend.model.{CorrDocRefId, DocRefId}
+import uk.gov.hmrc.play.http._
 
 import scala.concurrent.Future
 
@@ -45,6 +47,15 @@ class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut, config:Configura
 
   def saveMessageRefId(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
     http.PUT(url + s"/cbcr/message-ref-id/$id",JsNull)
+
+  def docRefIdQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.GET(url + s"cbcr/doc-ref-id/${d.id}")
+
+  def docRefIdSave(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.PUT(url + s"/cbcr/doc/ref/id/${d.id}",JsNull)
+
+  def corrDocRefIdSave(c:CorrDocRefId, d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.PUT(url + s"/cbcr/doc/ref/id/${c.cid.id}/${d.id}",JsNull)
 
 
 

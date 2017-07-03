@@ -22,41 +22,69 @@ import javax.inject.Inject
 
 import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
 import cats.syntax.all._
+import cats.instances.all._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)(implicit ec:ExecutionContext) {
+class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService, docRefIdService: DocRefIdService)(implicit ec:ExecutionContext) {
 
   def validateBusinessRules(in:RawXMLInfo, cBCId: CBCId, fileName:String)(implicit hc:HeaderCarrier) : EitherT[Future,NonEmptyList[BusinessRuleErrors],XMLInfo] = {
-    EitherT(messageRefIDCheck(in.messageSpec).map { messageRefIdVal =>
-      val otherRules = (
-        validateTestDataPresent(in).toValidatedNel |@|
-          validateReceivingCountry(in.messageSpec).toValidatedNel |@|
-          validateSendingEntity(in.messageSpec, cBCId).toValidatedNel |@|
-          validateFileName(in.messageSpec, fileName).toValidatedNel |@|
-          validateReportingRole(in.reportingEntity).toValidatedNel |@|
-          validateTIN(in.reportingEntity).toValidatedNel |@|
-          validateMessageTypeIndic(in).toValidatedNel
-        ).map((_, rc, _, _, reportingRole, tin, mti) => (rc, reportingRole, tin, mti))
+    EitherT(
+      (validateMessageRefIdD(in.messageSpec) |@|
+        validateDocSpec(in.reportingEntity.docSpec) |@|
+        validateDocSpec(in.cbcReport.docSpec) |@|
+        validateDocSpec(in.additionalInfo.docSpec)).map { (messageRefIdVal, reDocSpec, cbcDocSpec,addDocSpec) =>
 
-      (otherRules |@| messageRefIdVal).map((values, msgRefId) =>
-        XMLInfo(
-          MessageSpec(
-            msgRefId,values._1,
-            msgRefId.cBCId,
-            msgRefId.creationTimestamp,
-            msgRefId.reportingPeriod,
-            values._4
-          ),
-          ReportingEntity(values._2,rawDocSpecToDocSpec(in.reportingEntity.docSpec),values._3,in.reportingEntity.name),
-          CbcReports(rawDocSpecToDocSpec(in.cbcReport.docSpec)),
-          AdditionalInfo(rawDocSpecToDocSpec(in.additionalInfo.docSpec))
-        )
-      ).toEither
+          val otherRules = (
+            validateTestDataPresent(in).toValidatedNel |@|
+              validateReceivingCountry(in.messageSpec).toValidatedNel |@|
+              validateSendingEntity(in.messageSpec, cBCId).toValidatedNel |@|
+              validateFileName(in.messageSpec, fileName).toValidatedNel |@|
+              validateReportingRole(in.reportingEntity).toValidatedNel |@|
+              validateTIN(in.reportingEntity).toValidatedNel |@|
+              validateMessageTypeIndic(in).toValidatedNel
+            ).map((_, rc, _, _, reportingRole, tin, mti) => (rc, reportingRole, tin, mti))
 
-    })
+          (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec).map(
+            (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec) =>
+              XMLInfo(
+                MessageSpec(
+                  msgRefId,values._1,
+                  msgRefId.cBCId,
+                  msgRefId.creationTimestamp,
+                  msgRefId.reportingPeriod,
+                  values._4
+                ),
+                ReportingEntity(values._2,reDocSpec,values._3,in.reportingEntity.name),
+                CbcReports(cbcDocSpec),
+                AdditionalInfo(addDocSpec)
+              )
+          ).toEither
+      })
+  }
+
+  private def validateDocSpec(d:RawDocSpec)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,DocSpec]] = {
+    validateDocRefId(d.docRefId).zip(validateCorrDocRefId(d.corrDocRefId)).map {
+      case (x,c) => (x.toValidatedNel |@| c.toValidatedNel).map( (doc,corr) =>
+        DocSpec(OECD1,doc,corr)
+      )
+    }
+  }
+
+  private def validateCorrDocRefId(d:Option[String])(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,Option[CorrDocRefId]]] =
+    d.map(c => docRefIdService.queryDocRefId(DocRefId(c)).map{
+      case DocRefIdResponses.Valid        => d.map(x => CorrDocRefId(DocRefId(x))).valid
+      case DocRefIdResponses.Invalid      => CorrDocRefIdInvalidRecord.invalid
+      case DocRefIdResponses.DoesNotExist => CorrDocRefIdUnknownRecord.invalid
+    }).getOrElse(Future.successful(None.valid))
+
+  private def validateDocRefId(d:String)(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,DocRefId]] = {
+    docRefIdService.queryDocRefId(DocRefId(d)).map{
+      case DocRefIdResponses.DoesNotExist => DocRefId(d).valid
+      case _                              => DocRefIdDuplicate.invalid
+    }
   }
 
   private def validateMessageTypeIndic(r:RawXMLInfo) : Validated[BusinessRuleErrors,Option[MessageTypeIndic]] = {
@@ -120,7 +148,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService)
       if(result) MessageRefIDDuplicate.invalid else ().valid
     )
 
-  private def messageRefIDCheck(in:RawMessageSpec)(implicit hc:HeaderCarrier) : Future[ValidatedNel[MessageRefIDError, MessageRefID]] = {
+  private def validateMessageRefIdD(in:RawMessageSpec)(implicit hc:HeaderCarrier) : Future[ValidatedNel[MessageRefIDError, MessageRefID]] = {
     MessageRefID(in.messageRefID).toEither.fold(
       errors   => Future.successful(errors.invalid[MessageRefID]),
       msgRefId => isADuplicate(msgRefId).map(dup =>
