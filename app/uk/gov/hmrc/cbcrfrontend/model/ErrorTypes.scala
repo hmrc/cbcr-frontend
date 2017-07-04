@@ -84,6 +84,9 @@ object BusinessRuleErrors {
       case FileNameError         => JsString(FileNameError.toString)
       case MessageTypeIndicError => JsString(MessageTypeIndicError.toString)
       case m:InvalidXMLError     => JsString(m.toString)
+      case CorrDocRefIdInvalidRecord => JsString(CorrDocRefIdInvalidRecord.toString)
+      case CorrDocRefIdUnknownRecord => JsString(CorrDocRefIdUnknownRecord.toString)
+      case DocRefIdDuplicate         => JsString(DocRefIdDuplicate.toString)
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
@@ -94,6 +97,9 @@ object BusinessRuleErrors {
           case Some("testdataerror")         => JsSuccess(TestDataError)
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
           case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
+          case Some("corrdocrefidinvalidRecord") => JsSuccess(CorrDocRefIdInvalidRecord)
+          case Some("corrdocrefidunknownrecord") => JsSuccess(CorrDocRefIdUnknownRecord)
+          case Some("docrefidduplicate")         => JsSuccess(DocRefIdDuplicate)
           case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^invalidxmlerror: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -107,6 +113,9 @@ object BusinessRuleErrors {
     case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
     case FileNameError         => "MessageRefID must match filename"
     case MessageTypeIndicError => "Error DocTypeIndic (Correction): If MessageTypeIndic is provided and completed with \"CBC402\" message can only contain DocTypeIndic \"OECD2\" or \"OECD3\". (With 1 execption ReportingEntity can contain DocTypeIndic \"OECD0\" where ReportingEntity information is unchanged. \"OECD0\" cannot be used in DocSpec\\DocTypeIndic for CbCReports or AdditionalInfo)"
+    case CorrDocRefIdInvalidRecord => "Error Code 80003 CorrDocRefId (record no longer valid): The corrected record is no longer valid (invalidated or outdated by a previous correction message). As a consequence, no further information should have been received on this version of the record."
+    case CorrDocRefIdUnknownRecord => "Error Code 80002 CorrDocRefId (unknown record): The CorrDocRefId refers to an unknown record"
+    case DocRefIdDuplicate         => "Error Code 80001: DocRefId (already used)"
     case i:InvalidXMLError     => i.toString
   }
 }

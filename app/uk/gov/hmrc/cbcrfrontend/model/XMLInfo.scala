@@ -85,7 +85,7 @@ object MessageSpec{
   implicit val format = Json.format[MessageSpec]
 }
 
-case class ReportingEntity(reportingRole: ReportingRole, reportingEntityDocSpec:DocSpec, tin: Utr, name: String)
+case class ReportingEntity(reportingRole: ReportingRole, docSpec:DocSpec, tin: Utr, name: String)
 object ReportingEntity{ implicit val format = Json.format[ReportingEntity] }
 
 case class XMLInfo( messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:CbcReports, additionalInfo:AdditionalInfo)
