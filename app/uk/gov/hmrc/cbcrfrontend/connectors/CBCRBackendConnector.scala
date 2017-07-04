@@ -52,10 +52,10 @@ class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut, config:Configura
     http.GET(url + s"/cbcr/doc-ref-id/${d.id}")
 
   def docRefIdSave(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/cbcr/doc/ref/id/${d.id}",JsNull)
+    http.PUT(url + s"/cbcr/doc-ref-id/${d.id}",JsNull)
 
   def corrDocRefIdSave(c:CorrDocRefId, d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/cbcr/doc/ref/id/${c.cid.id}/${d.id}",JsNull)
+    http.PUT(url + s"/cbcr/corr-doc-ref-id/${c.cid.id}/${d.id}",JsNull)
 
 
 

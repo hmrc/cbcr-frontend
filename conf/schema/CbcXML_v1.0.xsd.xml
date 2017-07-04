@@ -14,7 +14,7 @@
     <urn:Contact>string</urn:Contact>
     <urn:MessageRefId>string</urn:MessageRefId>
     <!--Optional:-->
-    <urn:MessageTypeIndic>CBC401</urn:MessageTypeIndic>
+    <urn:MessageTypeIndic>CBC402</urn:MessageTypeIndic>
     <!--Zero or more repetitions:-->
     <urn:CorrMessageRefId>string</urn:CorrMessageRefId>
     <urn:ReportingPeriod>2014-06-09+01:00</urn:ReportingPeriod>
