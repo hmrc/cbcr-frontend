@@ -20,9 +20,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 
-import cats.data.{EitherT, OptionT}
-import cats.instances.all._
-import cats.syntax.all._
+import cats.data.{EitherT, NonEmptyList, OptionT}
 import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
@@ -32,7 +30,7 @@ import play.api.mvc.{Action, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html.includes
 import uk.gov.hmrc.emailaddress.EmailAddress
@@ -42,14 +40,34 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+import cats.instances.all._
+import cats.syntax.all._
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 
 @Singleton
-class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,val fus:FileUploadService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
+class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,val fus:FileUploadService, val docRefIdService: DocRefIdService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
 
   implicit lazy val fusUrl   = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+
+
+  def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
+    val reCorr = x.reportingEntity.docSpec.corrDocRefId
+    val reDocRef = x.reportingEntity.docSpec.docRefId
+    val cbCorr = x.cbcReport.docSpec.corrDocRefId
+    val cbDocRef = x.cbcReport.docSpec.docRefId
+    val adCorr = x.additionalInfo.docSpec.corrDocRefId
+    val adDocRef = x.additionalInfo.docSpec.docRefId
+
+    EitherT((reCorr.map(c => docRefIdService.saveCorrDocRefID(c, reDocRef)).getOrElse(docRefIdService.saveDocRefId(reDocRef)).value |@|
+      cbCorr.map(c => docRefIdService.saveCorrDocRefID(c,cbDocRef)).getOrElse(docRefIdService.saveDocRefId(cbDocRef)).value |@|
+      adCorr.map(c => docRefIdService.saveCorrDocRefID(c,adDocRef)).getOrElse(docRefIdService.saveDocRefId(adDocRef)).value)
+      .map((r,c,a) =>(r.toInvalidNel(()) |@| c.toInvalidNel(()) |@| a.toInvalidNel(())).map((_,_,_) => ()).toEither)
+    )
+
+  }
 
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
@@ -57,13 +75,16 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
       summaryData => {
         summarySubmitForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
           formWithErrors => EitherT.left(Future.successful(BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(includes.phaseBannerBeta(), summaryData, formWithErrors)))),
-          _              => fus.uploadMetadataAndRoute(summaryData.submissionMetaData).bimap(
-            errors => errorRedirect(errors),
-            _      => {
-              val submissionDateTime = LocalDateTime.now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH.MM."))
-              Redirect(routes.Submission.submitSuccessReceipt(submissionDateTime, summaryData.submissionMetaData.submissionInfo.hash.value))
+          _              => (for {
+            xml <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("Unable to read XMLInfo from cache"))
+            _   <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+            _   <- saveDocRefIds(xml).leftMap[CBCErrors]{ es =>
+              Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
+              UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
             }
-          )
+            submissionDateTime = LocalDateTime.now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH.MM."))
+          } yield Redirect(routes.Submission.submitSuccessReceipt(submissionDateTime, summaryData.submissionMetaData.submissionInfo.hash.value))
+            ).leftMap(errorRedirect)
         )
       }
     }.merge
