@@ -46,7 +46,7 @@ class DocRefIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:Exec
   def queryDocRefId(d:DocRefId)(implicit hc:HeaderCarrier) : Future[DocRefIdQueryResponse] =
     connector.docRefIdQuery(d).map(_ => Valid).recover{
       case _:NotFoundException   => DoesNotExist
-      case e:Upstream5xxResponse if e.upstreamResponseCode == Status.CONFLICT => Invalid
+      case e:Upstream4xxResponse if e.upstreamResponseCode == Status.CONFLICT => Invalid
     }
 
 }
