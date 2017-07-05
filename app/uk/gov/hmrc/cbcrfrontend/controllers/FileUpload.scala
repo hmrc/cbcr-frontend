@@ -125,14 +125,14 @@ class FileUpload @Inject()(val sec: SecuredActions,
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
 
     val result = for {
-      file            <- fileUploadService.getFile(envelopeId, fileId)
-      schemaErrors     = CBCRXMLValidator.validateSchema(file)
-      _               <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
-      metadata_cbcId  <- ifFatalErrors(schemaErrors.hasFatalErrors,envelopeId,fileId)
-      _               <- EitherT.cond[Future](metadata_cbcId._1.name endsWith ".xml",(),InvalidFileType(metadata_cbcId._1.name))
-      xml_bizErrors   <- validateBusinessRules(file,metadata_cbcId._2,metadata_cbcId._1)
-      length           = (metadata_cbcId._1.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-    } yield Ok(fileupload.fileUploadResult(Some(metadata_cbcId._1.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
+      file_metadata_cbcId <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId) |@| getCbcId).tupled
+      _                   <- EitherT.cond[Future](file_metadata_cbcId._2.name endsWith ".xml",(),InvalidFileType(file_metadata_cbcId._2.name))
+      schemaErrors         = CBCRXMLValidator.validateSchema(file_metadata_cbcId._1)
+      _                   <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
+      _                   <- EitherT.cond[Future](!schemaErrors.hasFatalErrors,(),FatalSchemaErrors)
+      xml_bizErrors       <- validateBusinessRules(file_metadata_cbcId._1,file_metadata_cbcId._3,file_metadata_cbcId._2)
+      length              = (file_metadata_cbcId._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+    } yield Ok(fileupload.fileUploadResult(Some(file_metadata_cbcId._2.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
     result.leftMap{
       case FatalSchemaErrors      => BadRequest(fileupload.fileUploadResult(None, None, true, false, includes.asideBusiness(), includes.phaseBannerBeta(),None))
