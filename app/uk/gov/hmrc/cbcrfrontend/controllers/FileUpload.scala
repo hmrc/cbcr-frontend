@@ -116,12 +116,6 @@ class FileUpload @Inject()(val sec: SecuredActions,
     ).flatten)
   }
 
-  def ifFatalErrors(b:Boolean,envelopeId: String, fileId: String)(implicit hc:HeaderCarrier): ServiceResponse[(FileMetadata, CBCId)] = if(b){
-    EitherT.left[Future,CBCErrors,(FileMetadata,CBCId)](Future.successful(FatalSchemaErrors))
-  } else {
-    (getMetaData(envelopeId,fileId) |@| getCbcId).tupled
-  }
-
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
 
     val result = for {
