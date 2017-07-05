@@ -97,7 +97,7 @@ object BusinessRuleErrors {
           case Some("testdataerror")         => JsSuccess(TestDataError)
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
           case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
-          case Some("corrdocrefidinvalidRecord") => JsSuccess(CorrDocRefIdInvalidRecord)
+          case Some("corrdocrefidinvalidrecord") => JsSuccess(CorrDocRefIdInvalidRecord)
           case Some("corrdocrefidunknownrecord") => JsSuccess(CorrDocRefIdUnknownRecord)
           case Some("docrefidduplicate")         => JsSuccess(DocRefIdDuplicate)
           case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
