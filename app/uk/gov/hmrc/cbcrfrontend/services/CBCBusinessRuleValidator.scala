@@ -44,8 +44,13 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
               validateFileName(in.messageSpec, fileName).toValidatedNel |@|
               validateReportingRole(in.reportingEntity).toValidatedNel |@|
               validateTIN(in.reportingEntity).toValidatedNel |@|
-              validateMessageTypeIndic(in).toValidatedNel
-            ).map((_, rc, _, _, reportingRole, tin, mti) => (rc, reportingRole, tin, mti))
+              validateMessageTypeIndic(in).toValidatedNel |@|
+              crossValidateDocRefIds(
+                in.reportingEntity.docSpec.docRefId,
+                in.cbcReport.docSpec.docRefId,
+                in.additionalInfo.docSpec.docRefId
+              ).toValidatedNel
+            ).map((_, rc, _, _, reportingRole, tin, mti,_) => (rc, reportingRole, tin, mti))
 
           (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec).map(
             (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec) =>
@@ -64,6 +69,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
           ).toEither
       })
   }
+
+  private def crossValidateDocRefIds(re:String,cb:String,ad:String): Validated[BusinessRuleErrors,Unit] =
+    Either.cond(re != cb && re != ad && cb != ad,(),DocRefIdDuplicate).toValidated
 
   private def validateDocSpec(d:RawDocSpec)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,DocSpec]] = {
     validateDocRefId(d.docRefId).zip(validateCorrDocRefId(d.corrDocRefId)).map {
