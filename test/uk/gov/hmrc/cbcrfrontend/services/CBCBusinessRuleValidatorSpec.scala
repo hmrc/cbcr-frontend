@@ -237,10 +237,24 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
 
       }
+      "when a docRefId is a duplicate within the file" in  {
+        val validFile = new File("test/resources/cbcr-valid-dup.xml")
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe DocRefIdDuplicate,
+          _ => fail("No InvalidXMLError generated")
+        )
+      }
       "when a docRefId is a duplicate" in  {
         val validFile = new File("test/resources/cbcr-valid.xml")
         when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
 
@@ -250,7 +264,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           errors => errors.head shouldBe DocRefIdDuplicate,
           _ => fail("No InvalidXMLError generated")
         )
-
       }
     }
     "return the KeyXmlInfo when everything is fine" in {

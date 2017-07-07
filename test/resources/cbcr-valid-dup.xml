@@ -37,7 +37,7 @@
         <ns1:CbcReports>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_DocRefId2</ns2:DocRefId>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">MyDocRefId</ns2:DocRefId>
                 <ns2:CorrMessageRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
                 <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrDocRefId</ns2:CorrDocRefId>
             </ns1:DocSpec>
