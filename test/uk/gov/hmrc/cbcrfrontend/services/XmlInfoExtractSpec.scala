@@ -38,7 +38,7 @@ class XmlInfoExtractSpec extends UnitSpec {
 
   "An XmlInfoExtract object" should {
     "provide an extract method what extracts the correct information from an xml" in {
-      val f = loadFile("cbcr-valid.xml")
+      val f = loadFile("cbcr-valid-dup.xml")
 
       val xmlInfoExtract = new XmlInfoExtract()
 
@@ -60,7 +60,7 @@ class XmlInfoExtractSpec extends UnitSpec {
       val r = e.cbcReport
 
       r.docSpec.docType shouldBe "OECD1"
-      r.docSpec.docRefId shouldBe "String_DocRefId2"
+      r.docSpec.docRefId shouldBe "MyDocRefId"
       r.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId")
 
       val a = e.additionalInfo
