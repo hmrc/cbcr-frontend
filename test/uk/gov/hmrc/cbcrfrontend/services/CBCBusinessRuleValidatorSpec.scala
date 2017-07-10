@@ -209,7 +209,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when a corrRefId is present but refers to an unknown docRefId" in {
 
-        val validFile = new File("test/resources/cbcr-valid.xml")
+        val validFile = new File("test/resources/cbcr-invalid-docRefId.xml")
         when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
@@ -223,7 +223,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
       }
       "when a corrRefId is present but refers to an invalid docRefId" in {
-        val validFile = new File("test/resources/cbcr-valid.xml")
+        val validFile = new File("test/resources/cbcr-invalid-docRefId.xml")
         when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Invalid)
@@ -265,6 +265,66 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           _ => fail("No InvalidXMLError generated")
         )
       }
+      "when the DocType is OECD1 but there are CorrDocRefIds defined" in {
+        val validFile = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds.xml")
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe CorrDocRefIdNotNeeded,
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+      "when the DocType is OECD[23] but there are no CorrDocRefIds defined" in {
+        val validFile = new File("test/resources/cbcr-OECD2-with-NoCorrDocRefIds.xml")
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe CorrDocRefIdMissing,
+          _ => fail("No InvalidXMLError generated")
+        )
+      }
+      "when the messageTypeIndic is CBC401 but doctypeIndic is not OECD1" in {
+        val validFile = new File("test/resources/cbcr-OECD2-Incompatible-messageTypes.xml")
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe MessageTypeIndicDocTypeIncompatible,
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+      "when there are a mixture of OECD1 and OECD[23] docTypeIndics" in {
+        val validFile = new File("test/resources/cbcr-docTypeIndicMixture.xml")
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(IncompatibleOECDTypes),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+
     }
     "return the KeyXmlInfo when everything is fine" in {
       val validFile = new File("test/resources/cbcr-valid.xml")
