@@ -53,6 +53,10 @@ case class InvalidXMLError(error:String) extends BusinessRuleErrors {
   override def toString: String = s"InvalidXMLError: $error"
 }
 
+case object MessageTypeIndicDocTypeIncompatible extends BusinessRuleErrors
+case object IncompatibleOECDTypes extends BusinessRuleErrors
+case object CorrDocRefIdMissing extends BusinessRuleErrors
+case object CorrDocRefIdNotNeeded extends BusinessRuleErrors
 case object CorrDocRefIdUnknownRecord extends BusinessRuleErrors
 case object CorrDocRefIdInvalidRecord extends BusinessRuleErrors
 case object DocRefIdDuplicate extends BusinessRuleErrors
