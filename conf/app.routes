@@ -6,6 +6,7 @@ GET        /                                              @uk.gov.hmrc.cbcrfront
 GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
 GET        /signOut                                       @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.signOut
+GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.guidance
 
 GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileValidate(envelopeId: String, fileId:String)
 GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress(envelopeId: String, fileId: String)
