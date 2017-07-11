@@ -97,17 +97,15 @@ class FileUpload @Inject()(val sec: SecuredActions,
     }).getOrElse(NoContent)
 
 
-  def getCbcId(implicit hc:HeaderCarrier): EitherT[Future, CBCErrors, CBCId] = OptionT(cache.read[CBCId]).toRight(UnexpectedState("CBCId not found in cache"))
-
   def getMetaData(envelopeId: String, fileId: String)(implicit hc:HeaderCarrier): ServiceResponse[FileMetadata] = for {
     metadata <- fileUploadService.getFileMetaData(envelopeId, fileId).subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
     _        <- EitherT.cond[Future](metadata.name.endsWith(".xml"), (), InvalidFileType(metadata.name))
     _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
   } yield metadata
 
-  def validateBusinessRules(file:File, cbcId:CBCId, metadata: FileMetadata)(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
+  def validateBusinessRules(file:File, metadata: FileMetadata)(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
     val rawXmlInfo  = xmlExtractor.extract(file)
-    val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, cbcId, metadata.name)
+    val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, metadata.name)
     EitherT.right(xmlInfo.fold(
       errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => None -> errors.toList),
       info   =>{
@@ -119,14 +117,14 @@ class FileUpload @Inject()(val sec: SecuredActions,
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
 
     val result = for {
-      file_metadata_cbcId <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId) |@| getCbcId).tupled
-      _                   <- EitherT.cond[Future](file_metadata_cbcId._2.name endsWith ".xml",(),InvalidFileType(file_metadata_cbcId._2.name))
-      schemaErrors         = CBCRXMLValidator.validateSchema(file_metadata_cbcId._1)
+      file_metadata       <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId)).tupled
+      _                   <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml",(),InvalidFileType(file_metadata._2.name))
+      schemaErrors         = CBCRXMLValidator.validateSchema(file_metadata._1)
       _                   <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
       _                   <- EitherT.cond[Future](!schemaErrors.hasFatalErrors,(),FatalSchemaErrors)
-      xml_bizErrors       <- validateBusinessRules(file_metadata_cbcId._1,file_metadata_cbcId._3,file_metadata_cbcId._2)
-      length              = (file_metadata_cbcId._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-    } yield Ok(fileupload.fileUploadResult(Some(file_metadata_cbcId._2.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
+      xml_bizErrors       <- validateBusinessRules(file_metadata._1,file_metadata._2)
+      length              = (file_metadata._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+    } yield Ok(fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
     result.leftMap{
       case FatalSchemaErrors      => BadRequest(fileupload.fileUploadResult(None, None, true, false, includes.asideBusiness(), includes.phaseBannerBeta(),None))
