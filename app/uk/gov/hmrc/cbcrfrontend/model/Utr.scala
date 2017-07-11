@@ -30,7 +30,7 @@ case class Utr(utr: String) extends TaxIdentifier {
 
   object CheckUTR extends Modulus11Check {
     def isValid(utr: String): Boolean = utr match {
-      case Utr.utrPattern(_*) =>
+      case Utr.utrRegex(_*) =>
         val suffix: String = utr.substring(1)
         val checkCharacter: Char = calculateCheckCharacter(suffix)
         checkCharacter == utr.charAt(0)
@@ -50,7 +50,7 @@ object Utr {
     override def unbind(key: String, value: Utr): String = value.value
   }
 
-  private val utrPattern = "^[0-9]{10}$".r
+  val utrRegex = "^[0-9]{10}$".r
 
   implicit val utrFormat: Writes[Utr] = new SimpleObjectWrites[Utr](_.value)
   implicit val utrRead: Reads[Utr] = new SimpleObjectReads[Utr]("utr", Utr.apply)

@@ -122,18 +122,25 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     }
   }
 
-  private def validateCorrDocRefId(d:Option[String])(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,Option[CorrDocRefId]]] =
-    d.map(c => docRefIdService.queryDocRefId(DocRefId(c)).map{
-      case DocRefIdResponses.Valid        => d.map(x => CorrDocRefId(DocRefId(x))).valid
-      case DocRefIdResponses.Invalid      => CorrDocRefIdInvalidRecord.invalid
-      case DocRefIdResponses.DoesNotExist => CorrDocRefIdUnknownRecord.invalid
-    }).getOrElse(Future.successful(None.valid))
+  private def validateCorrDocRefId(corrDocRefIdString:Option[String])(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,Option[CorrDocRefId]]] = {
+    corrDocRefIdString.map(DocRefId(_).fold[Future[Validated[BusinessRuleErrors,Option[CorrDocRefId]]]](
+      Future.successful(InvalidCorrDocRefId.invalid))(
+      d => docRefIdService.queryDocRefId(d).map {
+        case DocRefIdResponses.Valid => Some(CorrDocRefId(d)).valid
+        case DocRefIdResponses.Invalid => CorrDocRefIdInvalidRecord.invalid
+        case DocRefIdResponses.DoesNotExist => CorrDocRefIdUnknownRecord.invalid
+      })
+    ).getOrElse(Future.successful(None.valid))
+  }
 
-  private def validateDocRefId(d:String)(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,DocRefId]] = {
-    docRefIdService.queryDocRefId(DocRefId(d)).map{
-      case DocRefIdResponses.DoesNotExist => DocRefId(d).valid
-      case _                              => DocRefIdDuplicate.invalid
-    }
+  private def validateDocRefId(docRefIdString:String)(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,DocRefId]] = {
+    DocRefId(docRefIdString).fold[Future[Validated[BusinessRuleErrors,DocRefId]]](
+      Future.successful(InvalidDocRefId.invalid))(
+      d => docRefIdService.queryDocRefId(d).map{
+        case DocRefIdResponses.DoesNotExist => d.valid
+        case _                              => DocRefIdDuplicate.invalid
+      }
+    )
   }
 
   private def validateMessageTypeIndic(r:RawXMLInfo) : Validated[BusinessRuleErrors,Option[MessageTypeIndic]] = {
@@ -145,10 +152,6 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       case CBC402                                                            => Some(CBC402).valid
     }.getOrElse((None:Option[MessageTypeIndic]).valid)
 
-  }
-
-  private def rawDocSpecToDocSpec(r:RawDocSpec):DocSpec = {
-    DocSpec(OECD1,DocRefId(r.docRefId),None)
   }
 
   private def validateTIN(in:RawReportingEntity) : Validated[BusinessRuleErrors, Utr] = {
