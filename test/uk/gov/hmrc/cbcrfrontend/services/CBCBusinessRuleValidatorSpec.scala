@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.File
 
+import cats.data.EitherT
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -30,6 +31,7 @@ import scala.concurrent.{Await, Future}
 import cats.instances.future._
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import org.mockito.Matchers.{eq => EQ, _}
+import uk.gov.hmrc.emailaddress.EmailAddress
 /**
   * Created by max on 24/05/17.
   */
@@ -38,6 +40,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   val messageRefIdService = mock[MessageRefIdService]
   val docRefIdService = mock[DocRefIdService]
+  val subscriptionDataService = mock[SubscriptionDataService]
 
 
   val docRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT1").getOrElse(fail("bad docrefid"))
@@ -49,6 +52,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val corrDocRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT3C").getOrElse(fail("bad docrefid"))
 
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
+  when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](Some(submissionData))
 
   implicit val hc = HeaderCarrier()
   val extract = new XmlInfoExtract()
@@ -57,12 +61,17 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val cbcId = CBCId.create(56).getOrElse(fail("failed to generate CBCId"))
   val filename = "GB2016RGXVCBC0000000056CBC40120170311T090000X.xml"
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService)
+  val submissionData = SubscriptionDetails(
+    BusinessPartnerRecord("SAFEID",Some(OrganisationResponse("blagh")),EtmpAddress(None,None,None,None,Some("TF3 XFE"),None)),
+    SubscriberContact("name","phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
+  )
+
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService)
   "The CBCBusinessRuleValidator" should {
     "return the correct error" when {
       "messageRefId is empty and return the correct message and errorcode" in {
         val missingMessageRefID = new File("test/resources/cbcr-invalid-empty-messageRefID.xml")
-        val result = Await.result(validator.validateBusinessRules(missingMessageRefID, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(missingMessageRefID, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDMissing),
@@ -71,7 +80,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "messageRefId is null and return the correct message and errorcode" in {
         val nullMessageRefID = new File("test/resources/cbcr-invalid-null-messageRefID.xml")
-        val result = Await.result(validator.validateBusinessRules(nullMessageRefID, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(nullMessageRefID, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDMissing),
@@ -80,7 +89,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "messageRefId format is wrong" in {
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-invalid-messageRefID.xml")
-        val result = Await.result(validator.validateBusinessRules(invalidMessageRefID, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(invalidMessageRefID, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDFormatError),
@@ -90,7 +99,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       "messageRefId contains a CBCId that doesnt match the CBCId in the SendingEntityIN field" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-cbcId-messageRefID.xml")
-        val result = Await.result(validator.validateBusinessRules(invalidMessageRefID, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(invalidMessageRefID, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDCBCIdMismatch),
@@ -100,7 +109,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       "messageRefId contains a Reporting Year that doesn't match the year in the ReportingPeriod field" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-reportingYear-messageRefID.xml")
-        val result = Await.result(validator.validateBusinessRules(invalidMessageRefID, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(invalidMessageRefID, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDReportingPeriodMismatch),
@@ -110,7 +119,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       "messageRefId contains a creation timestamp that isn't valid" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-creationTimestamp-messageRefID.xml")
-        val result = Await.result(validator.validateBusinessRules(invalidMessageRefID, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(invalidMessageRefID, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDTimestampError),
@@ -120,7 +129,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       "messageRefId has been seen before" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(true)
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDDuplicate),
@@ -129,7 +138,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "test data is present" in {
         val validFile = new File("test/resources/cbcr-testData.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe TestDataError,
@@ -137,10 +146,11 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
       }
 
-      "SendingEntityIn does not match the CBCId we provided" in {
+      "SendingEntityIn does not match any CBCId in the database" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](None)
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, CBCId.create(57).getOrElse(fail("cant gen cbcid")), filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe SendingEntityError,
@@ -149,8 +159,9 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
 
       "ReceivingCountry does not equal GB" in {
+        when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](Some(submissionData))
         val validFile = new File("test/resources/cbcr-invalidReceivingCountry.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe ReceivingCountryError,
@@ -160,7 +171,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       "Filename does not match MessageRefId" in {
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, "INVALID" + filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, "INVALID" + filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe FileNameError,
@@ -170,7 +181,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       "ReportingRole is missing" in {
         val validFile = new File("test/resources/cbcr-noReportingEntity.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe InvalidXMLError("ReportingEntity.ReportingRole not found or invalid"),
@@ -180,7 +191,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       "MessageTypeIndic is CBC402 and the DocTypeIndic's are invalid" when {
         "CBCReports.docTypeIndic isn't OECD2 or OECD3" in{
           val validFile = new File("test/resources/cbcr-messageTypeIndic.xml")
-          val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
           result.fold(
             errors => errors.head shouldBe MessageTypeIndicError,
@@ -189,7 +200,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         }
         "AdditionalInfo.docTypeIndic isn't OECD2 or OECD3" in{
           val validFile = new File("test/resources/cbcr-messageTypeIndic2.xml")
-          val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
           result.fold(
             errors => errors.head shouldBe MessageTypeIndicError,
@@ -198,7 +209,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         }
         "ReportingEntity.docTypeIndic isn't OECD2 or OECD3 or OECD0" in{
           val validFile = new File("test/resources/cbcr-messageTypeIndic3.xml")
-          val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
           result.fold(
             errors => errors.head shouldBe MessageTypeIndicError,
@@ -209,7 +220,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       "File is not a valid xml file" in {
         val validFile = new File("test/resources/actually_a_jpg.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => (),
@@ -227,7 +238,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(DoesNotExist)
 
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe CorrDocRefIdUnknownRecord,
@@ -241,7 +252,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
 
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe CorrDocRefIdInvalidRecord,
@@ -255,7 +266,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
 
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe DocRefIdDuplicate,
@@ -268,7 +279,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
 
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe DocRefIdDuplicate,
@@ -281,7 +292,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
 
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe CorrDocRefIdNotNeeded,
@@ -291,7 +302,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when the DocType is OECD[23] but there are no CorrDocRefIds defined" in {
         val validFile = new File("test/resources/cbcr-OECD2-with-NoCorrDocRefIds.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe CorrDocRefIdMissing,
@@ -300,7 +311,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when the messageTypeIndic is CBC401 but doctypeIndic is not OECD1" in {
         val validFile = new File("test/resources/cbcr-OECD2-Incompatible-messageTypes.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.head shouldBe MessageTypeIndicDocTypeIncompatible,
@@ -311,7 +322,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       "when there are a mixture of OECD1 and OECD[23] docTypeIndics" in {
         val validFile = new File("test/resources/cbcr-docTypeIndicMixture.xml")
 
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(IncompatibleOECDTypes),
@@ -322,7 +333,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       "when there are invalid docRefIds" in {
         val validFile = new File("test/resources/cbcr-withInvalidDocRefId.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(InvalidDocRefId),
@@ -337,7 +348,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
 
-        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
           errors => errors.toList should contain(InvalidCorrDocRefId),
@@ -348,7 +359,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
     }
     "return the KeyXmlInfo when everything is fine" in {
       val validFile = new File("test/resources/cbcr-valid.xml")
-      val result = Await.result(validator.validateBusinessRules(validFile,cbcId,filename).value, 5.seconds)
+      val result = Await.result(validator.validateBusinessRules(validFile,filename).value, 5.seconds)
 
       result.fold(
         errors => fail(s"Error were generated: $errors"),

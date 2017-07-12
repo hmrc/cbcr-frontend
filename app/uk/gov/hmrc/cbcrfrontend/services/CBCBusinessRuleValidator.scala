@@ -28,23 +28,26 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService, docRefIdService: DocRefIdService)(implicit ec:ExecutionContext) {
+class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
+                                          docRefIdService: DocRefIdService,
+                                          subscriptionDataService: SubscriptionDataService)(implicit ec:ExecutionContext) {
 
 
   val oecd2Or3 = "OECD[23]"
   val testData = "OECD1[0123]"
 
-  def validateBusinessRules(in:RawXMLInfo, cBCId: CBCId, fileName:String)(implicit hc:HeaderCarrier) : EitherT[Future,NonEmptyList[BusinessRuleErrors],XMLInfo] = {
+  def validateBusinessRules(in:RawXMLInfo, fileName:String)(implicit hc:HeaderCarrier) : EitherT[Future,NonEmptyList[BusinessRuleErrors],XMLInfo] = {
     EitherT(
       (validateMessageRefIdD(in.messageSpec) |@|
         validateDocSpec(in.reportingEntity.docSpec) |@|
         validateDocSpec(in.cbcReport.docSpec) |@|
-        validateDocSpec(in.additionalInfo.docSpec)).map { (messageRefIdVal, reDocSpec, cbcDocSpec,addDocSpec) =>
+        validateDocSpec(in.additionalInfo.docSpec) |@|
+        validateSendingEntity(in.messageSpec)).map {
+        (messageRefIdVal, reDocSpec, cbcDocSpec,addDocSpec,sendingEntity) =>
 
         val otherRules = (
           validateTestDataPresent(in).toValidatedNel |@|
             validateReceivingCountry(in.messageSpec).toValidatedNel |@|
-            validateSendingEntity(in.messageSpec, cBCId).toValidatedNel |@|
             validateFileName(in.messageSpec, fileName).toValidatedNel |@|
             validateReportingRole(in.reportingEntity).toValidatedNel |@|
             validateTIN(in.reportingEntity).toValidatedNel |@|
@@ -60,10 +63,10 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             validateCorrDocRefIdExists(in.cbcReport.docSpec).toValidatedNel |@|
             validateMessageTypeIndicCompatible(in).toValidatedNel |@|
             crossValidateCorrDocRefIds(in.cbcReport.docSpec,in.reportingEntity.docSpec,in.additionalInfo.docSpec).toValidatedNel
-          ).map((_, rc, _, _, reportingRole, tin, mti,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
+          ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
 
-        (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec).map(
-          (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec) =>
+        (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec |@| sendingEntity ).map(
+          (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec, _) =>
             XMLInfo(
               MessageSpec(
                 msgRefId,values._1,
@@ -166,9 +169,17 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     if(fileName.split("""\.""").headOption.contains(in.messageRefID)){ ().valid }
     else { FileNameError.invalid }
 
-  private def validateSendingEntity(in:RawMessageSpec,cbcId:CBCId) : Validated[BusinessRuleErrors,CBCId] =
-    if(in.sendingEntityIn equalsIgnoreCase cbcId.value){ cbcId.valid }
-    else { SendingEntityError.invalid }
+  private def validateSendingEntity(in:RawMessageSpec)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,CBCId]] =
+    CBCId(in.sendingEntityIn).fold[Future[ValidatedNel[BusinessRuleErrors,CBCId]]](
+      Future.successful(SendingEntityError.invalidNel[CBCId]))(
+      cbcId => subscriptionDataService.retrieveSubscriptionData(Right(cbcId)).fold[ValidatedNel[BusinessRuleErrors,CBCId]](
+        (_: CBCErrors)                              => SendingEntityError.invalidNel,
+        (maybeDetails: Option[SubscriptionDetails]) => maybeDetails match {
+          case None    => SendingEntityError.invalidNel
+          case Some(_) => cbcId.validNel
+        }
+      )
+    )
 
   private def validateReceivingCountry(in:RawMessageSpec) : Validated[BusinessRuleErrors,String] =
     if(in.receivingCountry equalsIgnoreCase "GB"){ in.receivingCountry.valid }
