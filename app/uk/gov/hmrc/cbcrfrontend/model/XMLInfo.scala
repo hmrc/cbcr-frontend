@@ -17,6 +17,11 @@
 package uk.gov.hmrc.cbcrfrontend.model
 
 import java.time.{LocalDateTime, Year}
+
+import cats.Show
+import cats.syntax.show._
+import play.api.Logger
+
 import scala.util.control.Exception._
 import play.api.libs.json._
 
@@ -43,21 +48,55 @@ case class RawXMLInfo(messageSpec: RawMessageSpec,
                       additionalInfo: RawAdditionalInfo) extends RawXmlFields
 
 /** These models represent the type-validated data, derived from the raw data */
-case class DocRefId(id:String)
-object DocRefId { implicit val format = Json.format[DocRefId] }
+class DocRefId private[model](val msgRefID:MessageRefID,
+                              val tin:Utr,
+                              val docTypeIndic:DocTypeIndic,
+                              val parentGroupElement:ParentGroupElement,
+                              val uniq:String){
+
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case d:DocRefId => d.show == this.show
+    case _          => false
+  }
+
+}
+object DocRefId {
+  val docRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(${Utr.utrRegex.toString.init.tail})(OECD[0123])(ENT|REP|ADD)(.{0,41})""".r
+  def apply(s:String) : Option[DocRefId] = s match {
+    case docRefIdRegex(msgRef,_,_,_,_,_,_,tin,docType,pGroup,uniq) => for {
+      m <- MessageRefID(msgRef).toOption
+      u <- if(Utr(tin).isValid) Some(Utr(tin)) else None
+      o <- DocTypeIndic.fromString(docType)
+      p <- ParentGroupElement.fromString(pGroup)
+    } yield new DocRefId(m,u,o,p,uniq)
+    case _                                             => None
+  }
+
+  implicit val showDocRefId: Show[DocRefId] = Show.show[DocRefId](d =>
+    s"${d.msgRefID.show}_${d.tin.utr}${d.docTypeIndic}${d.parentGroupElement}${d.uniq}"
+  )
+
+  implicit val format = new Format[DocRefId] {
+
+    override def reads(json: JsValue): JsResult[DocRefId] = json match {
+      case JsString(s) if apply(s).isDefined => DocRefId(s).fold[JsResult[DocRefId]](
+        JsError(s"Unable to deserialize $s as a DocRefId"))(
+        d => JsSuccess(d))
+      case other => JsError(s"Unable to deserialize $other as a DocRefId")
+    }
+
+    override def writes(o: DocRefId): JsValue = JsString(o.show)
+
+  }
+
+
+}
 
 case class CorrDocRefId(cid:DocRefId)
 object CorrDocRefId {
   implicit val format = new Format[CorrDocRefId] {
-    override def writes(o: CorrDocRefId): JsValue = Json.obj("CorrDocRefId" -> o.cid.id)
-
-    override def reads(json: JsValue): JsResult[CorrDocRefId] = json match {
-      case JsObject(u) => u.get("CorrDocRefId").flatMap(_.asOpt[String]).fold[JsResult[CorrDocRefId]](
-        JsError(s"Unable to deserialise $json as a CorrDocRefId"))(
-        id => JsSuccess(CorrDocRefId(DocRefId(id)))
-      )
-      case other => JsError(s"Unable to deserialise $other as a CorreDocRefId")
-    }
+    override def writes(o: CorrDocRefId): JsValue = JsString(o.cid.show)
+    override def reads(json: JsValue): JsResult[CorrDocRefId] = DocRefId.format.reads(json).map(CorrDocRefId(_))
   }
 }
 

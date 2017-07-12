@@ -29,14 +29,14 @@
             <ns1:ReportingRole>CBC703</ns1:ReportingRole>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_DocRefId1</ns2:DocRefId>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT1</ns2:DocRefId>
                 <ns2:CorrMessageRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
             </ns1:DocSpec>
         </ns1:ReportingEntity>
         <ns1:CbcReports>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_DocRefId2</ns2:DocRefId>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT2</ns2:DocRefId>
                 <ns2:CorrMessageRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
             </ns1:DocSpec>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
@@ -73,7 +73,7 @@
         <ns1:AdditionalInfo>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">MyDocRefId</ns2:DocRefId>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT3</ns2:DocRefId>
                 <ns2:CorrMessageRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
             </ns1:DocSpec>
             <ns1:OtherInfo>String_OtherInfo</ns1:OtherInfo>

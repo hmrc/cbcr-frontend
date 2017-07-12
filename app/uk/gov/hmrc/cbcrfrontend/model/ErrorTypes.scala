@@ -52,7 +52,6 @@ case object MessageTypeIndicError extends BusinessRuleErrors
 case class InvalidXMLError(error:String) extends BusinessRuleErrors {
   override def toString: String = s"InvalidXMLError: $error"
 }
-
 case object MessageTypeIndicDocTypeIncompatible extends BusinessRuleErrors
 case object IncompatibleOECDTypes extends BusinessRuleErrors
 case object CorrDocRefIdMissing extends BusinessRuleErrors
@@ -60,6 +59,8 @@ case object CorrDocRefIdNotNeeded extends BusinessRuleErrors
 case object CorrDocRefIdUnknownRecord extends BusinessRuleErrors
 case object CorrDocRefIdInvalidRecord extends BusinessRuleErrors
 case object DocRefIdDuplicate extends BusinessRuleErrors
+case object InvalidDocRefId extends BusinessRuleErrors
+case object InvalidCorrDocRefId extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -81,13 +82,15 @@ object ValidationErrors {
 object BusinessRuleErrors {
   implicit val format = new Format[BusinessRuleErrors] {
     override def writes(o: BusinessRuleErrors): JsValue = o match {
-      case m:MessageRefIDError   => Json.toJson[MessageRefIDError](m)(MessageRefIDError.format)
-      case TestDataError         => JsString(TestDataError.toString)
-      case SendingEntityError    => JsString(SendingEntityError.toString)
-      case ReceivingCountryError => JsString(ReceivingCountryError.toString)
-      case FileNameError         => JsString(FileNameError.toString)
-      case MessageTypeIndicError => JsString(MessageTypeIndicError.toString)
-      case m:InvalidXMLError     => JsString(m.toString)
+      case m:MessageRefIDError       => Json.toJson[MessageRefIDError](m)(MessageRefIDError.format)
+      case TestDataError             => JsString(TestDataError.toString)
+      case SendingEntityError        => JsString(SendingEntityError.toString)
+      case ReceivingCountryError     => JsString(ReceivingCountryError.toString)
+      case FileNameError             => JsString(FileNameError.toString)
+      case MessageTypeIndicError     => JsString(MessageTypeIndicError.toString)
+      case m:InvalidXMLError         => JsString(m.toString)
+      case InvalidDocRefId           => JsString(InvalidDocRefId.toString)
+      case InvalidCorrDocRefId       => JsString(InvalidCorrDocRefId.toString)
       case CorrDocRefIdInvalidRecord => JsString(CorrDocRefIdInvalidRecord.toString)
       case CorrDocRefIdUnknownRecord => JsString(CorrDocRefIdUnknownRecord.toString)
       case DocRefIdDuplicate         => JsString(DocRefIdDuplicate.toString)
@@ -105,6 +108,8 @@ object BusinessRuleErrors {
           case Some("testdataerror")         => JsSuccess(TestDataError)
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
           case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
+          case Some("invaliddocrefid")       => JsSuccess(InvalidDocRefId)
+          case Some("invalidcorrdocrefid")       => JsSuccess(InvalidCorrDocRefId)
           case Some("corrdocrefidinvalidrecord") => JsSuccess(CorrDocRefIdInvalidRecord)
           case Some("corrdocrefidunknownrecord") => JsSuccess(CorrDocRefIdUnknownRecord)
           case Some("docrefidduplicate")         => JsSuccess(DocRefIdDuplicate)
@@ -132,6 +137,8 @@ object BusinessRuleErrors {
     case CorrDocRefIdNotNeeded => "Error Code 80004 CorrDocRefId (Initial record): CorrDocRefId cannot be provided when DocTypeIndic is OECD1"
     case IncompatibleOECDTypes => "Error DocTypeIndic: Document must not contain a mixture of New (OECD1) and corrected (OECD2 & OECD3) DocTypeIndics"
     case MessageTypeIndicDocTypeIncompatible => "Error DocTypeIndic (New): If MessageTypeIndic is provided and completed with \"CBC401\" DocTypeIndic must be \"OECD1\""
+    case InvalidDocRefId       => "Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide."
+    case InvalidCorrDocRefId   => "Error Code 8000 CorrDocRefId (format): The structure of the CorrDocRefID is not in the correct format, as set out in the User Guide."
     case i:InvalidXMLError     => i.toString
   }
 }
