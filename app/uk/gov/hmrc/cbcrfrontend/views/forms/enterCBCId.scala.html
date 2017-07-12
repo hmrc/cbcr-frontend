@@ -45,7 +45,7 @@ implicit request: Request[_], messages: Messages)
                     <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCBCId.errorSummary.header")</h2>
                     <ul>
                         <li role="tooltip">@Messages("enterCBCId.errorSummary.reason1")</li>
-                        <li role="tooltip">@Messages("enterCBCId.errorSummary.reason1")</li>
+                        <li role="tooltip">@Messages("enterCBCId.errorSummary.reason2")</li>
                     </ul>
                 </div>
             }
@@ -79,17 +79,6 @@ implicit request: Request[_], messages: Messages)
 
                 <input class="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">
             }
-            @{userType match {
-                case Agent =>
-                case Organisation =>
-                    <div class="reminder" style="margin-top:30px">
-                        <div class="label">Temporary content - remove for beta</div>
-                        <h3 style="padding-left:1em">Don't have a Country by Country ID?</h3>
-                        <a href="/country-by-country-reporting/register-for-cbcid">Register online</a>
-                    </div>
-
-
-            }}
         </div>
     </div>
 
