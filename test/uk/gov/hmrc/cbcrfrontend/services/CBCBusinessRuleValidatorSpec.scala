@@ -39,6 +39,15 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val messageRefIdService = mock[MessageRefIdService]
   val docRefIdService = mock[DocRefIdService]
 
+
+  val docRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT1").getOrElse(fail("bad docrefid"))
+  val docRefId2 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT2").getOrElse(fail("bad docrefid"))
+  val docRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT3").getOrElse(fail("bad docrefid"))
+
+  val corrDocRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT1C").getOrElse(fail("bad docrefid"))
+  val corrDocRefId2 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT2C").getOrElse(fail("bad docrefid"))
+  val corrDocRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT3C").getOrElse(fail("bad docrefid"))
+
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
 
   implicit val hc = HeaderCarrier()
@@ -209,11 +218,14 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when a corrRefId is present but refers to an unknown docRefId" in {
 
-        val validFile = new File("test/resources/cbcr-invalid-docRefId.xml")
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+        val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+        when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(DoesNotExist)
 
         val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
 
@@ -223,11 +235,11 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
       }
       "when a corrRefId is present but refers to an invalid docRefId" in {
-        val validFile = new File("test/resources/cbcr-invalid-docRefId.xml")
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Invalid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
+        val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(Invalid)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
 
         val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
 
@@ -239,10 +251,9 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when a docRefId is a duplicate within the file" in  {
         val validFile = new File("test/resources/cbcr-valid-dup.xml")
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
 
         val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
 
@@ -253,10 +264,9 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when a docRefId is a duplicate" in  {
         val validFile = new File("test/resources/cbcr-valid.xml")
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
 
         val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
 
@@ -267,10 +277,9 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when the DocType is OECD1 but there are CorrDocRefIds defined" in {
         val validFile = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds.xml")
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
 
         val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
 
@@ -282,11 +291,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when the DocType is OECD[23] but there are no CorrDocRefIds defined" in {
         val validFile = new File("test/resources/cbcr-OECD2-with-NoCorrDocRefIds.xml")
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
-
         val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
 
         result.fold(
@@ -296,11 +300,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when the messageTypeIndic is CBC401 but doctypeIndic is not OECD1" in {
         val validFile = new File("test/resources/cbcr-OECD2-Incompatible-messageTypes.xml")
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
-
         val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
 
         result.fold(
@@ -311,10 +310,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when there are a mixture of OECD1 and OECD[23] docTypeIndics" in {
         val validFile = new File("test/resources/cbcr-docTypeIndicMixture.xml")
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId1")))(any())) thenReturn Future.successful(DoesNotExist)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-        when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(Valid)
 
         val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
 
@@ -325,13 +320,34 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
+      "when there are invalid docRefIds" in {
+        val validFile = new File("test/resources/cbcr-withInvalidDocRefId.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(InvalidDocRefId),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+
+      "when there are invalid corrDocRefIds" in {
+        val validFile = new File("test/resources/cbcr-withInvalidCorrDocRefId.xml")
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, cbcId, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(InvalidCorrDocRefId),
+          _ => fail("No InvalidXMLError generated")
+        )
+      }
+
     }
     "return the KeyXmlInfo when everything is fine" in {
       val validFile = new File("test/resources/cbcr-valid.xml")
-      when(docRefIdService.queryDocRefId(EQ(DocRefId("String_CorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-      when(docRefIdService.queryDocRefId(EQ(DocRefId("String_DocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
-      when(docRefIdService.queryDocRefId(EQ(DocRefId("MyCorrDocRefId")))(any())) thenReturn Future.successful(Valid)
-      when(docRefIdService.queryDocRefId(EQ(DocRefId("MyDocRefId")))(any())) thenReturn Future.successful(DoesNotExist)
       val result = Await.result(validator.validateBusinessRules(validFile,cbcId,filename).value, 5.seconds)
 
       result.fold(

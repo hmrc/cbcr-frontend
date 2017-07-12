@@ -410,6 +410,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
   }
 
+  val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
+
   private lazy val keyXMLInfo = {
     XMLInfo(
       MessageSpec(
@@ -420,9 +422,9 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         Year.parse("2017"),
         None
       ),
-      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId("blagh"),None),Utr("7000000002"),"name"),
-      CbcReports(DocSpec(OECD1,DocRefId("balgh"),None)),
-      AdditionalInfo(DocSpec(OECD1,DocRefId("balgh"),None))
+      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),Utr("7000000002"),"name"),
+      CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None)),
+      AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None))
     )
   }
 }
