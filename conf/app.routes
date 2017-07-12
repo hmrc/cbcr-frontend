@@ -2,8 +2,8 @@
 
 
 GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.technicalDifficulties
-GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
+GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
 GET        /signOut                                       @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.signOut
 
