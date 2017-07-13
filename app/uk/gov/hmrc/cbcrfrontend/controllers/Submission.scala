@@ -232,7 +232,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         saved         <- EitherT.right[Future, CBCErrors,CacheMap](cache.save[SubmitterInfo](submitterInfo.copy(email = success)))
       } yield saved).fold(
         error => errorRedirect(error),
-        _     => Redirect(routes.Submission.submitSummary())
+        _     => Redirect(routes.CBCController.enterCBCId())
       )
     )
 
