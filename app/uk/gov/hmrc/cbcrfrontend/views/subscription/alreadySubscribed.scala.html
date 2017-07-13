@@ -19,6 +19,7 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @(asideCbc: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
@@ -44,7 +45,7 @@ implicit request: Request[_], messages: Messages)
 
         </div>
 
-        <a class="button" href="signOut">@Messages("form.controls.signOut")</a>
+        <a class="button" href="@routes.CBCController.signOut()">@Messages("form.controls.signOut")</a>
     </div>
 </div>
 }

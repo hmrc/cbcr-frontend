@@ -17,6 +17,7 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @(asideBusiness: Html, phaseBannerBeta: Html, submissionDateTime: String, hash: String)(
 implicit request: Request[_], messages: Messages)
@@ -46,7 +47,7 @@ implicit request: Request[_], messages: Messages)
             <h3>@Messages("submitSuccessReceipt.whatNext.heading")</h3>
             @Messages("submitSuccessReceipt.whatNext.info")
             <p>
-                <a class="button" href="signOut" id="btn-close">@Messages("form.controls.signOut")</a>
+                <a class="button" href="@routes.CBCController.signOut()" id="btn-close">@Messages("form.controls.signOut")</a>
             </p>
         </div>
     </div>
