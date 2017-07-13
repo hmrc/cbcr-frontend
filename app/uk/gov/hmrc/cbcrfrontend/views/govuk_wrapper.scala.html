@@ -28,6 +28,7 @@
 @import layouts.{govuk_template => hmrcGovUkTemplate}
 @import uk.gov.hmrc.play.views.html.{layouts => uiLayouts}
 @import uk.gov.hmrc.play.views.html.{helpers => uiHelpers}
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @head = {
     @uiLayouts.head(
@@ -37,8 +38,8 @@
 }
 
 @headerNavLinks = {
-  <li><a id="homeNavHref" href="http://www.google.com"
-         data-journey-click="primary-navigation:Click:Home">Home</a></li>
+  <li><a id="homeNavHref" href="@routes.CBCController.signOut()"
+         data-journey-click="primary-navigation:Click:Home">@Messages("form.controls.signOut")</a></li>
 }
 
 @insideHeader = {
@@ -70,6 +71,13 @@
       serviceInfoContent = Some(serviceInfoContent))
 }
 
+@betaBanner = {
+    @uiLayouts.betaBanner(false, appConfig.betaFeedbackUrlNoAuth, appConfig.betaFeedbackUrlNoAuth, true, true)
+}
+
+@serviceInfoContent = {
+    @uiLayouts.serviceInfo(betaBanner, false, Option.empty, true )
+}
 @mainContentHeader = {
     @if(contentHeader.isDefined) {
         @uiLayouts.main_content_header(contentHeader = contentHeader.get)
@@ -84,7 +92,7 @@
       mainClass = mainClass,
       mainDataAttributes = mainDataAttributes,
       mainContentHeader = mainContentHeader,
-      serviceInfo = serviceInfo,
+      serviceInfo = serviceInfoContent,
       getHelpForm = getHelpForm,
       sidebar = sidebar)
 }

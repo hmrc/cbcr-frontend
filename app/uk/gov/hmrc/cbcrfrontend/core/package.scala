@@ -33,24 +33,25 @@ package uk.gov.hmrc.cbcrfrontend
  */
 
 import cats.data.EitherT
-import exceptions.UnexpectedState
-import scala.concurrent.{ ExecutionContext, Future }
+import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, UnexpectedState}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 package object core {
 
-  type ServiceResponse[A] = EitherT[Future, UnexpectedState, A]
-  type Opt[A] = Either[UnexpectedState, A]
+  type ServiceResponse[A] = EitherT[Future, CBCErrors, A]
+  type CBCErrorOr[A] = Either[CBCErrors, A]
 
-  def fromFutureOptA[A](fa: Future[Opt[A]]): ServiceResponse[A] = {
-    EitherT[Future, UnexpectedState, A](fa)
+  def fromFutureOptA[A](fa: Future[CBCErrorOr[A]]): ServiceResponse[A] = {
+    EitherT[Future, CBCErrors, A](fa)
   }
 
   def fromFutureA[A](fa: Future[A])(implicit ec: ExecutionContext): ServiceResponse[A] = {
-    EitherT[Future, UnexpectedState, A](fa.map(Right(_)))
+    EitherT[Future, CBCErrors, A](fa.map(Right(_)))
   }
 
-  def fromOptA[A](oa: Opt[A])(implicit ec: ExecutionContext): ServiceResponse[A] = {
-    EitherT[Future, UnexpectedState, A](Future.successful(oa))
+  def fromOptA[A](oa: CBCErrorOr[A])(implicit ec: ExecutionContext): ServiceResponse[A] = {
+    EitherT[Future, CBCErrors, A](Future.successful(oa))
   }
 
   def fromFutureOptionA[A](fo: Future[Option[A]])(invalid: => UnexpectedState)(implicit ec: ExecutionContext): ServiceResponse[A] = {
@@ -58,6 +59,6 @@ package object core {
       case Some(a) => Right(a)
       case None    => Left(invalid)
     }
-    EitherT[Future, UnexpectedState, A](futureA)
+    EitherT[Future, CBCErrors, A](futureA)
   }
 }

@@ -18,44 +18,78 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import helper._
+@import tags._
+@import uk.gov.hmrc.cbcrfrontend.model._
 
 
-@(asideCbc: Html, phaseBannerBeta: Html)(
+@(asideCbc: Html, phaseBannerBeta: Html, userType:UserType, form:Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideCbc
 }
 
+@errors = @{form.error("cbcId").isDefined}
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
-
     <div class="grid-row">
         <div class="column-two-thirds">
 
-            <h1>
-                Enter your Country by Country ID
-            </h1>
-            <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile" method="POST" >
-
-                <fieldset>
-                    <div class="form-group">
-                        <p class="form-hint">This is the 15 digit ID you received when you registered,
-                            <br>for example: XACBC0000999999.
-                        </p>
-                        <input type="text" class="input--medium input--cleared"/>
-                    </div>
-                </fieldset>
-                @csrf_token()
-                <p>
-                <div class="form-field">
-                    <input class="button" type="submit" id="continue" value="Continue">
+            <h1>@Messages("enterCBCId.mainHeading")</h1>
+            @if(form.error("cbcId").isDefined){
+                <div class="flash error-summary error-summary--show"
+                id="error-summary-display"
+                role="alert"
+                aria-labelledby="error-summary-heading"
+                tabindex="-1">
+                    <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCBCId.errorSummary.header")</h2>
+                    <ul>
+                        <li role="tooltip">@Messages("enterCBCId.errorSummary.reason1")</li>
+                        <li role="tooltip">@Messages("enterCBCId.errorSummary.reason1")</li>
+                    </ul>
                 </div>
-                </p>
-            </form>
+            }
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.submitCBCId()){
+            <fieldset>
+                @if(missMatch){
+                <div class="flash error-summary error-summary--show"
+                     id="error-summary-display"
+                     role="alert"
+                     aria-labelledby="error-summary-heading"
+                     tabindex="-1">
+                    <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCBCId.missMatch.header")</h2>
+                    <p>@Messages("enterCBCId.missMatch.message1") <a href="contact-hmrc-dummy-page">@Messages("enterCBCId.missMatch.message2")</a></p>
+                </div>
+                }
+                <div class="form-group @if(errors || noMatch || missMatch){form-field--error}">
+                    @if(form.error("cbcId").isDefined){
+                        <span class="error-notification">This should be 15 characters long
+                        </span>
+                    }
+                    @if(noMatch){ <span class="error-notification">The Country by Country ID does not match one that has been registered</span> }
+                    <label for="txt-cbcID">
+                        <div>@Messages("enterCBCId.formHintWhereYouGotIt")</div>
+                        <div class="form-hint">@Messages("enterCBCId.formHint")</div>
+                    </label>
 
-            <h3>Don't have a Country by Country ID?</h3>
-            <a href="/country-by-country-reporting/subscribeFirst">Register online</a>
+                    <input type="text" class="@{if(form.error("cbcId").isDefined || noMatch || missMatch){ "input--medium input--cleared form-control error-field" } else {"input--medium input--cleared form-control"} }" name="cbcId" id="txt-cbcID"/>
+                </div>
+            </fieldset>
+            @csrf_token()
+
+                <input class="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">
+            }
+            @{userType match {
+                case Agent =>
+                case Organisation =>
+                    <div class="reminder" style="margin-top:30px">
+                        <div class="label">Temporary content - remove for beta</div>
+                        <h3 style="padding-left:1em">Don't have a Country by Country ID?</h3>
+                        <a href="/country-by-country-reporting/register-for-cbcid">Register online</a>
+                    </div>
+
+
+            }}
         </div>
     </div>
 

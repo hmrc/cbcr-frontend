@@ -1,0 +1,59 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import helper._
+@import tags._
+
+@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(
+implicit request: Request[_], messages: Messages)
+
+@sidebarContent = {
+@asideBusiness
+}
+
+@fullNameErrors = @{form.error("fullName").isDefined}
+@agencyBusinessNameErrors = @{form.error("agencyBusinessName").isDefined}
+@jobRoleErrors = @{form.error("jobRole").isDefined}
+
+@contactPhoneErrors = @{form.error("contactPhone").isDefined}
+@emailErrors = @{form.error("email").isDefined}
+
+@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+
+<h1>
+    @Messages("submitterInfo.mainHeading")
+</h1>
+<p>@Messages("submitterInfo.info")</p>
+<div class="form-group">
+    @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitSubmitterInfo()){
+    @formFieldDisplay(fullNameErrors,"fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
+    @formFieldDisplay(agencyBusinessNameErrors,"agencyBusinessName", Some(Messages("submitterInfo.employer.error")),Messages("submitterInfo.employer"), form)
+    @formFieldDisplay(jobRoleErrors,"jobRole", Some(Messages("submitterInfo.jobTitle.error")),Messages("submitterInfo.jobTitle"), form)
+    @formFieldDisplay(contactPhoneErrors,"contactPhone", Some(Messages("submitterInfo.phoneNumber.error")),Messages("submitterInfo.phoneNumber"), form)
+    @formFieldDisplay(emailErrors,"email", Some(Messages("submitterInfo.emailAddress.error")),Messages("submitterInfo.emailAddress"), form)
+    @CSRF.formField
+    <div class="form-field">
+        <button role="button" type="submit" id="btn-continue">Continue</button>
+    </div>
+    }
+</div>
+
+}
+
+

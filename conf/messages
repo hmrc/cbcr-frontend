@@ -1,6 +1,197 @@
-cbc.title=Country By Country Reporting
-cbc.history.top.message=Your CBCID needs to be included in the sendingEntityIN field in the XML file
+
 cbc.button.fileupload.report=Upload Report
-cbc.button.fileupload=Upload
+cbc.button.continue=Continue
 cbc.entercbcid.label=CBC Id
+
+form.controls.continue=Continue
+form.controls.signOut=Sign out
+
+enterCBCId.mainHeading=Enter your Country by Country ID
+enterCBCId.formHint=This is the 15-character ID you received when you registered, for example: XACBC0000999999.
+enterCBCId.formHintWhereYouGotIt=Country by Country ID
+enterCBCId.dontHaveAnID.heading=Don''t have a Country by Country ID?
+enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
+enterCBCId.dontHaveAnID.link.text=Register online
+enterCBCId.errorSummary.header=This Country by Country ID is invalid. This could be because:
+enterCBCId.errorSummary.reason1=It doesn''t match any that have been registered
+enterCBCId.errorSummary.reason2=You''ve entered it wrongly
+enterCBCId.missMatch.header=The country-by-country ID doesn't match the one created for this multinational group.
+enterCBCId.missMatch.message1=Try again, or
+enterCBCId.missMatch.message2=contact HMRC.
+
+subscribeFirst.mainHeading=Register for a Country by Country ID
+subscribeFirst.agentHeading=Verify your client Organisations Details
+subscribeFirst.formHeading=Enter the details for the UK-registered business that''s submitting a Country by Country report to HMRC.
+subscribeFirst.noMatchingBusiness.heading=We can''t find the registered business using these details
+subscribeFirst.noMatchingBusiness.suggestion1=The UTR or postcode you entered may be wrong
+subscribeFirst.noMatchingBusiness.suggestion2=The UTR and postcode may not match
+subscribeFirst.noMatchingBusiness.suggestion3=The business may not be registered with HMRC
+subscribeFirst.noMatchingBusiness.suggestion4=If you think these details are correct, contact HMRC
+subscribeFirst.utr.errors.errorNotification=This should be a 10 digit number
+subscribeFirst.utr.label=Unique Taxpayer Reference (UTR)
+subscribeFirst.utr.hint=This should be either a Corporation Tax or a Self Assessment UTR
+subscribeFirst.utr.errors.formHint=This should be either a Corportation Tax or a Self Assessment UTR
+subscribeFirst.postcode.errors.errorNotification=Enter a valid UK postcode
+subscribeFirst.postcode.label=UK postcode
+
+subscribeMatchFound.mainHeading=Confirm your business details
+subscribeMatchFound.businessDetails.heading=Business details
+subscribeMatchFound.businessDetails.name=Name
+subscribeMatchFound.businessDetails.postcode=Postcode
+subscribeMatchFound.businessDetails.utr=UTR
+
+subscribeSuccessCbcId.mainHeading=Your registration is complete
+subscribeSuccessCbcId.subHeading=Your Country by Country ID is:
+subscribeSuccessCbcId.printThisButton=Print this page
+subscribeSuccessCbcId.printThis1=Print this screen and keep your ID safe. You''ll need it each time you want to submit a report.
+subscribeSuccessCbcId.printThis2=Make sure you securely pass on the Country by Country ID to your XML report provider, as it must be included in your report.
+subscribeSuccessCbcId.printThis3=Sign out now, and then sign back in again when you''re ready to submit your Country by Country report.
+
+contactInfoSubscriber.mainHeading=Enter your organisation''s Country by Country contact details
+contactInfoSubscriber.subHeading=Enter the name of the person we should contact if there are any questions about the information contained in the Country by Country report.
+contactInfoSubscriber.fullName.label=Full name
+contactInfoSubscriber.fullName.error=Please enter your Full name
+contactInfoSubscriber.fullName.hint=The person we should contact
+contactInfoSubscriber.jobTitle.label=Job title/role
+contactInfoSubscriber.jobTitle.hint=The person we should contact
+contactInfoSubscriber.jobTitle.error=Please enter your Job title/role
+contactInfoSubscriber.phoneNumber.label=Phone number
+contactInfoSubscriber.phoneNumber.hint=The phone number of the person we should contact
+contactInfoSubscriber.phoneNumber.error=Please enter a valid phone number
+contactInfoSubscriber.emailAddress.label=Email address
+contactInfoSubscriber.emailAdress.hint=The email address of the person we should contact
+contactInfoSubscriber.emailAddress.error=Please enter a valid email address
+
+contactInfoSubscriber.reconfirm.email.mainHeading=Is this your correct email address?
+contactInfoSubscriber.reconfirm.email.label=Email address
+contactInfoSubscriber.reconfirm.email.submit=Yes, this is correct
+contactInfoSubscriber.reconfirm.email.wrong=If the email is wrong, you can change it on this page
+contactInfoSubscriber.reconfirm.email.invalid=Please enter a valid email address
+cbcHistory.mainHeading=Country By Country Reporting
+cbcHistory.top.message=Your CBCID needs to be included in the sendingEntityIN field in the XML file
+
+contactInfoSubmitter.mainHeading=Enter your contact details
+contactInfoSubmitter.fullName.label=Full name
+contactInfoSubmitter.business.label=Agency or business you work for
+contactInfoSubmitter.role.label=Job title/role
+contactInfoSubmitter.phone.label=Contact phone number
+contactInfoSubmitter.email.label=Contact email address
+contactInfoSubmitter.reconfirm.email.mainHeading=Is this your correct email address?
+contactInfoSubmitter.reconfirm.email.label=Email address
+contactInfoSubmitter.reconfirm.email.submit=Yes, this is correct
+contactInfoSubmitter.reconfirm.email.wrong=If the email is wrong, you can change it on this page
+contactInfoSubmitter.reconfirm.email.invalid=Please enter a valid email address
+
+
+filingHistory.mainHeading=Filing History for Multinational Ltd
+filingHistory.submit=Submit Report
+filingHistory.report.reportingPeriod=Reporting period
+filingHistory.report.dateSubmitted=Date Submitted
+filingHistory.report.messageReference=Message reference ID
+filingHistory.report.size=Size
+filingHistory.report.referenceNo=Reference no.
+
+submitInfoFilingCapacity.mainHeading=In what capacity are you submitting a Country by Country report?
+submitInfoFilingCapacity.info=Your answer will help us assess how much of the information in the report we can disclose to you, if we need to check anything.
+submitInfoFilingCapacity.mneUserAgent.label=I''m either an employee of the multinational enterprise, or an agent with 64-8 authorisation to submit a report on its behalf
+submitInfoFilingCapacity.representative.label=I''m neither an employee of the multinational enterprise nor an agent with 64-8 authorisation, but I do have permission to report on its behalf
+submitInfoFilingCapacity.representative.hint=You have been asked to submit on behalf of the ultimate parent entity without 64-8 authorisation
+
+submitInfoFilingType.mainHeading=What type of Country by Country report are you submitting?
+submitInfoFilingType.primaryFiling.label=A global report for a multinational enterprise with headquarters in the UK
+submitInfoFilingType.voluntaryFiling.label=A global report for a multinational enterprise whose headquarters aren''t in the UK, via a subsidiary company
+submitInfoFilingType.localFiling.label=A report covering the UK only, for the UK subsidiary of a multinational enterprise whose headquarters aren''t in the UK
+
+submitInfoUltimateParentEntity.mainHeading=What ultimate parent entity are you reporting for?
+submitInfoUltimateParentEntity.info1=The ultimate parent entity is the company at the top of your organisation''s corporate structure.
+submitInfoUltimateParentEntity.info2=We''re asking this question to make sure we can match the Country by Country report with the correct ultimate parent entity.
+submitInfoUltimateParentEntity.upe.label=Name of ultimate parent entity
+submitInfoUltimateParentEntity.upe.error=Please enter the name of the ultimate parent entity
+
+submitSuccessReceipt.mainHeading=Your report has been received
+submitSuccessReceipt.confirmationNumberLabel=Your confirmation number is:
+submitSuccessReceipt.submissionDateLabel=Your report was received on
+submitSuccessReceipt.digiSig=You can use the following digital signature as a receipt for the report you submitted:
+submitSuccessReceipt.printInfo=Print this screen to keep a record of your report.
+submitSuccessReceipt.print=Print this page
+submitSuccessReceipt.print.text=Print this screen to keep a record of your report.
+submitSuccessReceipt.whatNext.heading=What happens next
+submitSuccessReceipt.whatNext.info=We''ll check the information in your report. If there are no issues with it, there''s nothing more for you to do. If there are issues with your report, we''ll contact you.
+fileUploadProgress.mainHeading=Checking XML Schema…
+fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
+
+fileUploadResult.mainHeading.ok=Your report''s format is correct
+fileUploadResult.mainHeading.error=There are errors in your XML report
+fileUploadResult.error.data=There are data errors in the XML report. Please download the following error summary and make sure the issues are resolved before resubmitting.
+fileUploadResult.error.data.download=Data error report
+fileUploadResult.error.xml=There are errors in the XML report. Please download the following error summary and send it to your XML provider to correct them before resubmitting.
+fileUploadResult.error.xml.download=XML error report
+fileUploadResult.error.FileTooLarge=The report you sent is larger than 50MB. You''ll need to solve this issue before sending it again.
+fileUploadResult.error.FileContainsVirus=The report you sent has failed our anti-virus checks. You''ll need to solve this issue before sending it again.
+fileUploadResult.error.FileNotXml=The report you sent is the wrong file type. Please send it as an XML file.
+
+fileUploadResult.viewGuidance=View formatting guidance
+fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been submitted
+
+
+
+fileUploadProgress.mainHeading=Checking XML Schema…
+fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
+
+fileUploadResult.mainHeading.ok=Your report''s format is correct
+fileUploadResult.mainHeading.error=There are errors in your XML report
+fileUploadResult.error.data=There are data errors in the XML report. Please download the following error summary and make sure the issues are resolved before resubmitting.
+fileUploadResult.error.data.download=Data error report
+fileUploadResult.error.xml=There are errors in the XML report. Please download the following error summary and send it to your XML provider to correct them before resubmitting.
+fileUploadResult.error.xml.download=XML error report
+fileUploadResult.viewGuidance=View formatting guidance
+fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been submitted
+
+
+
+submitSummary.mainHeading=Check your report details
+submitSummary.secondaryHeading=Your submission details
+submitSummary.table.registeredMNE=Registered multinational enterprise:
+submitSummary.table.filingType=Report type:
+submitSummary.table.ultimateParent=Ultimate parent entity:
+submitSummary.table.filedBy=Submitted by:
+submitSummary.table.filingCapacity=Submitter type:
+submitSummary.table.reportDetails=Report details:
+submitSummary.confirmSubmit=Confirm and submit
+submitSummary.declaration.heading=Declaration
+submitSummary.declaration.text=The business has confirmed this is the correct report to be submitted.
+submitSummary.declaration.error.text=Please confirm
+submitSummary.submit=Submit
+submitSummary.submitReport=Submit report
+
+uploadReport.mainHeading=Upload your report
+uploadReport.warning=Your report must be a valid XML file using the current OECD Country by Country XML schema.
+uploadReport.checkSize=Please check that the file size is no bigger than 25MB.
+uploadReport.wellCheck=After you''ve uploaded your report, we''ll check that it conforms with the XML schema and HMRC guidelines.
+uploadReport.inputField.label=Choose the file you want to upload:
+uploadReport.afterInputField=Make sure you check this is the correct file before uploading it.
+uploadReport.uploadButton=Upload
+uploadReport.error=You must select a file
+
+
+uploadResult.mainHeading.ok=Your report''s format is correct
+uploadResult.mainHeading.error=There are errors in your XML report
+uploadResult.fileName=Filename
+uploadResult.fileSize=Size
+uploadResult.viewFormattingGuidance=View formatting guidance
+
+submitterInfo.mainHeading=Enter your contact details
+submitterInfo.info=We''ll contact you if there''s a problem with the Country by Country report you''re submitting.
+submitterInfo.fullName=Full name
+submitterInfo.fullName.error=Please enter your full name
+submitterInfo.employer=Employer
+submitterInfo.employer.error=Please enter your employer''s name
+submitterInfo.jobTitle=Job title/role
+submitterInfo.jobTitle.error=Please enter your job title/role
+submitterInfo.phoneNumber=Contact phone number
+submitterInfo.phoneNumber.error=Please enter a valid phone number
+submitterInfo.emailAddress=Contact email address
+submitterInfo.emailAddress.error=Please enter a valid email address
+
+
 

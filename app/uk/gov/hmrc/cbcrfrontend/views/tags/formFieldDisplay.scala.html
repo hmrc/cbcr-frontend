@@ -14,7 +14,7 @@
  * limitations under the License.
  *@
 
-@(isError:Boolean, name:String, errorMessage:Option[String], label:String, form:Form[_])
+@(isError:Boolean, name:String, errorMessage:Option[String], label:String, form:Form[_], formHint:Option[String]=None)
 
 <div class="form-field @if(isError){form-field--error} else {form-field--tall}">
     <div class="form-group">
@@ -22,6 +22,9 @@
             @errorMessage.map(error => <span class="error-notification">{error}</span>)
         }
         <label class="form-label" for="@name">@label</label>
+        @if(formHint.isDefined){
+            <div class="form-hint">@formHint</div>
+        }
         <input type="text" name="@name" class="@{if(isError){ "input--medium error-field" } else {"form-control"} }" id="@name"  @if(!isError){ value="@form.data.get(name)"} >
     </div>
 </div>

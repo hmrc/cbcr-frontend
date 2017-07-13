@@ -16,39 +16,112 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import play.api.Logger
-import play.api.mvc.Action
-import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend.views.html._
-
-import scala.concurrent.Future
-import play.api.Play.current
-import play.api.i18n.Messages.Implicits._
-import play.api.mvc._
 import javax.inject.{Inject, Singleton}
 
+import cats.data.{EitherT, OptionT}
+import cats.syntax.all._
+import cats.instances.all._
+import play.api.Logger
+import play.api.Play.current
+import play.api.data.Form
+import play.api.data.Forms._
+import play.api.i18n.Messages.Implicits._
+import play.api.mvc.{Action, AnyContent, Result}
+import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
+import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.http.HeaderCarrier
+
+import scala.concurrent.Future
 
 
-//object CBCController extends CBCController
 @Singleton
-class CBCController @Inject()(val sec: SecuredActions)  extends FrontendController with ServicesConfig {
+class CBCController @Inject()(val sec: SecuredActions, val subDataService: SubscriptionDataService, val enrolments:EnrolmentsConnector)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
+  val cbcIdForm : Form[CBCId] = Form(
+    single( "cbcId" -> of[CBCId] )
+  )
 
-  val enterCBCId = sec.AsyncAuthenticatedAction { authContext => implicit request =>
-    Logger.debug("Country by Country: Enter CBCID: "+request.secure)
-
-    Future.successful(Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta())))
+  val technicalDifficulties = Action{ implicit request =>
+    InternalServerError(FrontendGlobal.internalServerErrorTemplate)
   }
 
-  val submitCBCId = Action.async { implicit request =>
-
-    Logger.debug("Country by Country: Submit CBCID")
-
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.cbcHistory()))
+  val enterCBCId = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
+    getUserType(authContext).fold[Result](
+      error    => errorRedirect(error),
+      userType => Ok(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm))
+    )
   }
 
+  private def getCBCEnrolment(implicit hc:HeaderCarrier) : EitherT[Future,UnexpectedState,CBCEnrolment] = for {
+    enrolment <- OptionT(enrolments.getEnrolments.map(_.find(_.key == "HMRC-CBC-ORG")))
+      .toRight(UnexpectedState("Enrolment not found"))
+    cbcString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("cbcid")).map(_.value))
+      .toRight(UnexpectedState("Enrolment did not contain a cbcid"))
+    cbcId     <- OptionT.fromOption[Future](CBCId(cbcString))
+      .toRight(UnexpectedState(s"Enrolment contains an invalid cbcid: $cbcString"))
+    utrString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("utr")).map(_.value))
+      .toRight(UnexpectedState(s"Enrolment does not contain a utr"))
+    utr       <- OptionT.fromOption[Future](if(Utr(utrString).isValid){ Some(Utr(utrString)) } else { None })
+      .toRight(UnexpectedState(s"Enrolment contains an invalid utr $utrString"))
+  } yield CBCEnrolment(cbcId,utr)
+
+
+  private def saveSubscriptionDetails(s:SubscriptionDetails)(implicit hc:HeaderCarrier): Future[Unit] = for {
+    _ <- cache.save(s.utr)
+    _ <- cache.save(s.businessPartnerRecord)
+    _ <- cache.save(s.cbcId)
+  } yield ()
+
+  val submitCBCId = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    getUserType(authContext).leftMap(errorRedirect).semiflatMap(userType =>
+      cbcIdForm.bindFromRequest().fold[Future[Result]](
+        errors => BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, errors)),
+        id     => {
+          subDataService.retrieveSubscriptionData(id).value.flatMap(_.fold(
+            error    => errorRedirect(error),
+            details  => details.fold[Future[Result]] {
+              BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, true))
+            }(subscriptionDetails => userType match {
+              case Agent =>
+                saveSubscriptionDetails(subscriptionDetails).map(_ =>
+                  Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.enterKnownFacts())
+                )
+              case Organisation =>
+                getCBCEnrolment.ensure(InvalidSession)(
+                  _.cbcId === subscriptionDetails.cbcId
+                ).fold[Future[Result]](
+                  {
+                    case InvalidSession => BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, false, true))
+                    case error          => errorRedirect(error)
+                  },
+                  _     => {
+                    saveSubscriptionDetails(subscriptionDetails).map(_ =>
+                      Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
+                    )
+                  }
+                ).flatten
+            })))
+        })).merge
+  }
+
+
+  val signOut = sec.AsyncAuthenticatedAction() { authContext => implicit request => {
+    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.guidance.url}"
+    Future.successful(Redirect(s"${FrontendAppConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
+  }}
+
+
+  def guidance =  Action.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.guidanceOverviewQa()))
+  }
 
 }
+
 

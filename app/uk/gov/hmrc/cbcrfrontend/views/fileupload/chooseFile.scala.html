@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@(fileUploadUrl: String, fileName: String, asideBusiness: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -26,43 +26,38 @@ implicit request: Request[_], messages: Messages)
 }
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
-
     <div class="grid-row">
+        <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-two-thirds">
             <h1>
-                Upload your report
+            @Messages("uploadReport.mainHeading")
             </h1>
 
             <div class="indent-warning">
-                <p><strong>Your report needs to be in a set XML format before it can be submitted. Upload your report to check that the format is correct. </strong></p>
+                <p><strong>@Messages("uploadReport.warning")</strong></p>
             </div>
-            <details>
-                <summary class="[modifier class]">XML format checklist</summary>
-                <div>
-                    <ul class="bullets">
-                        <li>File name is unique</li>
-                        <li>File size is no bigger than 25MB</li>
-                        <li>XML is well formed  - <a href="#">view guidance</a></li>
-                        <li>Country by Country ID is contained in 'sendingEntityIN' field of XML  - <a href="http://www.oecd.org/tax/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-and-taxpayers.pdf">view guidance</a></li>
-                        <li>XML is formatted according to OECD schema  - <a href="http://www.oecd.org/tax/country-by-country-reporting-xml-schema-user-guide-for-tax-administrations-and-taxpayers.pdf">view guidance</a></li>
-                    </ul>
-                </div>
-            </details>
-
+            <p>@Messages("uploadReport.checkSize")</p>
+            <p>@Messages("uploadReport.wellCheck")</p>
             <div class="form-group">
-                <label class="form-label" for="file-input">Choose the file to upload. You will submit your report later.</label>
+                <div class="form-field-group">
+                    <label class="form-label" for="input-file">@Messages("uploadReport.inputField.label")</label>
 
-                @form(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.upload(), 'enctype -> "multipart/form-data") {
+                    <span id="@fileName-error-message" class="error-notification" role="alert" data-input-name="@fileName">
 
-                <input type="file" id="file-input" class="upload-report-input" name ="oecdcbcxml" accept="application/xml" >
-                <div class="form-field form-field--submit">
-                    <input type="submit" class="button" value="Check for errors" />
+                    </span>
+                    <input type="file" id="input-file" class="upload-report-input" name ="@fileName" accept=".xml" required
+                data-msg-required="@Messages("uploadReport.error")">
+                    <p>@Messages("uploadReport.afterInputField")</p>
                 </div>
-                }
+                    <div class="form-field form-field--submit">
+                    @csrf_token()
+                <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
+                </div>
+
             </div>
 
-        </div>
+            </div>
+        </form>
     </div>
 
 }

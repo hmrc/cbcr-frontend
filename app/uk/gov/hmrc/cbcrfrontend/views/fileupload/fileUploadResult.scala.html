@@ -1,0 +1,96 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.model.ReportingRole
+@import uk.gov.hmrc.cbcrfrontend.model.CBC701
+@import uk.gov.hmrc.cbcrfrontend.model.CBC702
+@import uk.gov.hmrc.cbcrfrontend.model.CBC703
+@import java.nio.file._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+
+@(fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Boolean , busErrors :Boolean, asideBusiness: Html, phaseBannerBeta: Html, reportingRole:Option[ReportingRole])(
+implicit request: Request[_], messages: Messages)
+
+@errors = @{schemaErrors || busErrors}
+
+@sidebarContent = {
+@asideBusiness
+}
+
+@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@phaseBannerBeta
+
+
+<main id="content" role="main">
+
+    <div class="grid-row">
+        <div class="column-two-thirds">
+            <h1>
+                @if(!errors){
+                    @Messages("uploadResult.mainHeading.ok")
+                } else {
+                    @Messages("uploadResult.mainHeading.error")
+                }
+            </h1>
+
+            @if(schemaErrors) {
+            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
+                <p>@Messages("fileUploadResult.error.xml")</p>
+
+                <div class="notice">
+                    <a href="../../get-xml-schema-errors">@Messages("fileUploadResult.error.xml.download")</a>
+                </div>
+                <br>
+            </div>
+            } @if(busErrors){
+            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
+                <p>@Messages("fileUploadResult.error.data")</p>
+                <div class="notice">
+                    <a href="../../get-business-rule-errors">@Messages("fileUploadResult.error.data.download")</a>
+                </div>
+                <br>
+            </div>
+            }
+            @if(!errors){
+            <table id="table-successReport">
+                <tbody>
+                <th scope="row">@Messages("uploadResult.fileName")</th>
+                <th scope="row">@fileName</th>
+                <tr>
+                    <td>@Messages("uploadResult.fileSize")</td>
+                    <td>@fileSize KB</td>
+                </tr>
+                </tbody>
+            </table>
+            <p>@Messages("fileUploadResult.notYetSubmitted")</p>
+                @{reportingRole match {
+                    case Some(CBC701) => <p><a class="button" href="../../submitter-info" id="btn-continue">{Messages("form.controls.continue")}</a></p>
+                    case Some(CBC702) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">{Messages("form.controls.continue")}</a></p>
+                    case Some(CBC703) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">{Messages("form.controls.continue")}</a></p>
+                    case None         => <p></p>
+                }}
+            } else {
+            <p><a href="#">@Messages("uploadResult.viewFormattingGuidance")</a></p>
+            <a class="button" href="@routes.CBCController.signOut()">@Messages("form.controls.signOut")</a>
+            }
+
+        </div>
+    </div>
+</main>
+}

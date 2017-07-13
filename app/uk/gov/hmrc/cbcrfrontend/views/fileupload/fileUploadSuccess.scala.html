@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@(fileName: String,fileSize: String, asideBusiness: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -26,28 +26,26 @@ implicit request: Request[_], messages: Messages)
 }
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
-
 <main id="content" role="main">
 
  <div class="grid-row">
   <div class="column-two-thirds">
    <h1>
-    Your report's format is correct
+    @Messages("uploadResult.mainHeading.ok")
    </h1>
 
-   <table>
+   <table id="table-successReport">
     <tbody>
-    <th scope="row">Filename</th>
-    <th scope="row">GB-2017-multinational_ltd-cbc-report-messagerefid-01.xml</th>
+    <th scope="row">@Messages("uploadResult.fileName")</th>
+    <th scope="row">@fileName</th>
     <tr>
-     <td>Size</td>
-     <td>3200KB</td>
+     <td>@Messages("uploadResult.fileSize")</td>
+     <td>@fileSize KB</td>
     </tr>
     </tbody>
    </table>
 
-   <p><a class="button" href="/country-by-country-reporting/submitInfoFilingType">Continue</a></p>
+   <p><a class="button" href="filingType" id="btn-continue">@Messages("form.controls.continue")</a></p>
 
   </div>
  </div>

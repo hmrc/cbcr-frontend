@@ -15,10 +15,11 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@(asideBusiness: Html, phaseBannerBeta: Html)(
+@(asideBusiness: Html, phaseBannerBeta: Html, submissionDateTime: String, hash: String)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -26,31 +27,27 @@ implicit request: Request[_], messages: Messages)
 }
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
 
     <div class="grid-row">
         <div class="column-two-thirds">
             <section>
-                <div class="govuk-box-highlight">
-                    <h1>Report has been submitted </h1>
-                    <p>
-                        Your confirmation number is: <br>
-                        <strong class="heading-medium">H25-RS42-2VP</strong>
-                    </p>
+                <div class="transaction-banner--complete">
+
+                    <span class="transaction-banner__heading h1-heading">@Messages("submitSuccessReceipt.mainHeading")</span>
+                    <p class="transaction-banner__heading">
                 </div>
             </section>
-            <p>Your report was submitted on 31/12/2017 at 13.42.</p>
+            <p>@Messages("submitSuccessReceipt.submissionDateLabel") @submissionDateTime</p>
+            @Messages("submitSuccessReceipt.digiSig")
+            @hash
 
-            <button onclick="myFunction()" class="toggle__button">Print this page</button>
+            <p>@Messages("submitSuccessReceipt.printInfo")</p>
+            <button onclick="window.print()" class="toggle__button">@Messages("submitSuccessReceipt.print")</button>
             <br>
-            <h2 class="heading-medium">What happens next</h2>
-            <ul class="bullets">
-                <li>Your report will now be checked</li>
-                <li>We'll contact you if there are any issues with the report</li>
-                <li>We'll email a confirmation when your report has been approved</li>
-            </ul>
+            <h3>@Messages("submitSuccessReceipt.whatNext.heading")</h3>
+            @Messages("submitSuccessReceipt.whatNext.info")
             <p>
-                <a class="button" href="/country-by-country-reporting/filingHistory">Close</a>
+                <a class="button" href="@routes.CBCController.signOut()" id="btn-close">@Messages("form.controls.signOut")</a>
             </p>
         </div>
     </div>

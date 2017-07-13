@@ -16,175 +16,187 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import javax.inject.Inject
-
-import play.api.mvc._
-import uk.gov.hmrc.cbcrfrontend.services.FileUploadService
-import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.config.ServicesConfig
-import play.api.libs.json.JsObject
-import play.api.libs.json._
-import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
-import uk.gov.hmrc.cbcrfrontend.xmlvalidator.CBCRXMLValidator
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import cats.implicits._
-import play.api.Logger
-import uk.gov.hmrc.cbcrfrontend.views.html._
-import play.api.Play.current
-import play.api.i18n.Messages.Implicits._
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.{AppConfig, FrontendAppConfig}
+import java.io
+import java.io.{File, PrintWriter}
+import java.time.LocalDateTime
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
-import play.api.libs.Files.TemporaryFile
+import cats.data._
+import cats.instances.all._
+import cats.syntax.all._
+import play.api.Logger
+import play.api.Play.current
+import play.api.i18n.Messages.Implicits._
+import play.api.libs.Files
+import play.api.mvc._
+import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
+import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, FrontendGlobal, sha256Hash}
+import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
+import uk.gov.hmrc.cbcrfrontend._
 
 
 @Singleton
-class FileUpload @Inject()(val sec: SecuredActions)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
-  lazy val fusConnector = new FileUploadServiceConnector()
-  lazy val fileUploadService = new FileUploadService(fusConnector)
-  implicit val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
-  implicit val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
-  implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+class FileUpload @Inject()(val sec: SecuredActions,
+                           val schemaValidator: CBCRXMLValidator,
+                           val businessRuleValidator: CBCBusinessRuleValidator,
+                           val cache:CBCSessionCache,
+                           val fileUploadService:FileUploadService,
+                           val xmlExtractor:XmlInfoExtract)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
+  implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
+  implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend") }
+  implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr") }
 
+  lazy val hostName = FrontendAppConfig.cbcrFrontendHost
+  lazy val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/failed-callback"
 
-  val chooseXMLFile = sec.AsyncAuthenticatedAction { authContext => implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.chooseFile(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
+  val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-  val upload =  sec.AsyncAuthenticatedAction { authContext => implicit request =>
+    val result = for {
+      envelopeId     <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
+      fileId         <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"))
+      successRedirect = s"$hostName/country-by-country-reporting/file-upload-progress/$envelopeId/$fileId"
+      fileUploadUrl   = s"${FrontendAppConfig.fileUploadFrontendHost}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
+        s"redirect-success-url=$successRedirect&" +
+        s"redirect-error-url=$fileUploadErrorRedirectUrl"
+      fileName        = s"oecd-${LocalDateTime.now}-cbcr.xml"
+    } yield Ok(fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
 
-    request.body.asMultipartFormData match {
-
-      case Some(body) => {
-
-        val protocol = if (request.secure) "https" else "http"
-        val hostName = request.host
-        implicit val protocolHostName = s"$protocol://$hostName"
-
-        import java.io._
-        import cats.syntax.either._
-        Logger.debug("Country by Country file upload started...")
-        val validatedData = Either.fromOption(
-          body.file("oecdcbcxml").map {
-            _.ref.file
-          },
-          new FileNotFoundException("which file")
-        ).flatMap {
-          CBCRXMLValidator(_).toEither
-        }
-
-        validatedData.fold(
-          exception => {
-            Logger.debug("Exception details: " + exception.getLocalizedMessage)
-            Future(Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> exception.getLocalizedMessage))
-          },
-          file => {
-
-            Logger.debug("Country by Country file validated OK...")
-
-            implicit val xml: File = file
-            fileUploadService.createEnvelopeAndUpload.fold(
-              error      => Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> "error uploading file"),
-              envelopeId => Redirect(routes.FileUpload.fileUploadProgress).flashing("ENVELOPEID" -> envelopeId)
-            )
-          }
-        )
-      }
-      case _ => Future(Redirect(routes.FileUpload.errorFileUpload).flashing("error" -> "Input received is not Multipart Upload"))
-    }
-  }
-
-  val fileUploadCallback = Action.async {  implicit request =>
-
-    Logger.debug("fileUploadCallback called:")
-    request.body.asJson match {
-      case Some(body) => {
-        Logger.debug("Callback json: " + body)
-        implicit val callbackResponse = body.as[JsObject]
-        fileUploadService.saveFileUploadCallbackResponse.fold(error => InternalServerError("Something went wrong"),  response => Ok(response))
-      }
-      case _ => Future.successful(Ok("Invalid response received from FileUpload service"))
-    }
-
+    result.leftMap(errorRedirect).merge
 
   }
 
-  val fileUploadProgress = Action.async { implicit request =>
-    val envelopeId = request.flash.get("ENVELOPEID")
-    Logger.debug("Headers :"+envelopeId)
-    val protocol = if(request.secure) "https" else "http"
-    val hostName = request.host
-    val protocolHostName = s"$protocol://$hostName"
+  def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
+    val hostName = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
-
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadProgress(
-      includes.asideBusiness(), includes.phaseBannerBeta(),
-      envelopeId.getOrElse("notfound"), protocolHostName,assetsLocationPrefix)))
+    Ok(fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
+      envelopeId, fileId, hostName, assetsLocationPrefix))
   }
 
-  def getFileUploadResponse(eId: String) = Action.async { implicit request =>
-    implicit val envelopeId = eId
-    fileUploadService.getFileUploadResponse.fold(error => InternalServerError("Something went wrong"),  response => Ok(response))
-  }
-  val errorFileUpload = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.errors.fileUploadError()))
+
+  def fileUploadResponseToResult(optResponse: Option[FileUploadCallbackResponse]): Result =
+    optResponse.map(response => response.status match {
+      case "AVAILABLE" => Accepted
+      case "ERROR"     => response.reason match {
+        case Some("VirusDetected") => Conflict
+        case _                     => InternalServerError
+      }
+      case _           => NoContent
+    }).getOrElse(NoContent)
+
+
+  def getMetaData(envelopeId: String, fileId: String)(implicit hc:HeaderCarrier): ServiceResponse[FileMetadata] = for {
+    metadata <- fileUploadService.getFileMetaData(envelopeId, fileId).subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
+    _        <- EitherT.cond[Future](metadata.name.endsWith(".xml"), (), InvalidFileType(metadata.name))
+    _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
+  } yield metadata
+
+  def validateBusinessRules(file:File, metadata: FileMetadata)(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
+    val rawXmlInfo  = xmlExtractor.extract(file)
+    val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, metadata.name)
+    EitherT.right(xmlInfo.fold(
+      errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => None -> errors.toList),
+      info   =>{
+        cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file))).map(_ => Some(info) -> List.empty))
+      }
+    ).flatten)
   }
 
-  val successFileUpload = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.fileupload.fileUploadSuccess(
-      includes.asideBusiness(), includes.phaseBannerBeta()
+  def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
+
+    val result = for {
+      file_metadata       <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId)).tupled
+      _                   <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml",(),InvalidFileType(file_metadata._2.name))
+      schemaErrors         = CBCRXMLValidator.validateSchema(file_metadata._1)
+      _                   <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
+      _                   <- EitherT.cond[Future](!schemaErrors.hasFatalErrors,(),FatalSchemaErrors)
+      xml_bizErrors       <- validateBusinessRules(file_metadata._1,file_metadata._2)
+      length              = (file_metadata._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+    } yield Ok(fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
+
+    result.leftMap{
+      case FatalSchemaErrors      => BadRequest(fileupload.fileUploadResult(None, None, true, false, includes.asideBusiness(), includes.phaseBannerBeta(),None))
+      case InvalidFileType(_)     => Redirect(routes.FileUpload.fileInvalid())
+      case e:CBCErrors            =>
+        Logger.error(e.toString)
+        Redirect(routes.CBCController.technicalDifficulties())
+    }.merge.recover{
+      case NonFatal(e) =>
+        Logger.error(e.getMessage,e)
+        Redirect(routes.CBCController.technicalDifficulties())
+    }
+
+ }
+
+  private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
+    val b = Files.TemporaryFile(name, ".txt")
+    val writer = new PrintWriter(b.file)
+    writer.write(e.map(_.show).mkString("\n"))
+    writer.flush()
+    writer.close()
+    b.file
+  }
+
+  def getBusinessRuleErrors = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    OptionT(cache.read[AllBusinessRuleErrors]).map(x => errorsToFile(x.errors,"BusinessRuleErrors")
+    ).fold(
+      NoContent
+    )((file: File) =>
+      Ok.sendFile(content = file,inline = false, onClose = () => file.delete())
+    )
+  }
+
+  def getXmlSchemaErrors = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    OptionT(cache.read[XMLErrors]).map(x => errorsToFile(List(x),"XMLSchemaErrors")
+    ).fold(
+      NoContent
+    )((file: File) =>
+      Ok.sendFile(content = file,inline = false, onClose = () => file.delete())
+    )
+  }
+
+  def fileInvalid       = fileUploadError(FileNotXml)
+
+  def fileTooLarge      = fileUploadError(FileTooLarge)
+
+  def fileContainsVirus = fileUploadError(FileContainsVirus)
+
+  private def fileUploadError(errorType:FileUploadErrorType) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    Future.successful(Ok(fileupload.fileUploadError(
+      includes.asideBusiness(),
+      includes.phaseBannerBeta(),
+      errorType
     )))
   }
 
-
-  val submitInfoFilingType = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingType(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
+  def handleError(errorCode:Int, reason:String) = Action.async{ implicit request =>
+    Logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
+    Future.successful(
+      errorCode match {
+        case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUpload.fileTooLarge())
+        case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUpload.fileInvalid())
+        case _                        => Redirect(routes.CBCController.technicalDifficulties())
+      }
+    )
   }
 
-  val submitInfoUltimateParentEntity = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoUltimateParentEntity(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-  val submitInfoFilingCapacity = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitInfoFilingCapacity(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-  val contactInfoSubmitter = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.contactInfoSubmitter(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-  val submitSummary = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSummary(
-      includes.phaseBannerBeta()
-    )))
-  }
-
-  val submitSuccessReceipt = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(
-      includes.asideBusiness(), includes.phaseBannerBeta()
-    )))
-  }
-
-  val filingHistory = Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.filingHistory(
-      includes.phaseBannerBeta()
-    )))
+  def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    fileUploadService.getFileUploadResponse(envelopeId,fileId).fold(
+      _        => NoContent,
+      response => fileUploadResponseToResult(response)
+    )
   }
 
 }
