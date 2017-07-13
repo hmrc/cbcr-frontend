@@ -33,6 +33,7 @@ trait AppConfig {
   val betaFeedbackUrlNoAuth: String
   val governmentGatewaySignOutUrl: String
 
+
 }
 
 object FrontendAppConfig extends AppConfig with ServicesConfig {
@@ -53,6 +54,7 @@ object FrontendAppConfig extends AppConfig with ServicesConfig {
   override lazy val governmentGatewaySignInUrl = loadConfig("government-gateway-sign-in-url")
 
   override lazy val governmentGatewaySignOutUrl: String = loadConfig("government-gateway-sign-out-url")
+
 
   // this will be empty in non-local environments
   override lazy val cbcrFrontendBaseUrl = loadConfig("cbcr-frontend-base-url")

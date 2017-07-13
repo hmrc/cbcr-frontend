@@ -228,11 +228,16 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors, true
       ))),
       success => (for {
-        submitterInfo <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))
-        saved         <- EitherT.right[Future, CBCErrors,CacheMap](cache.save[SubmitterInfo](submitterInfo.copy(email = success)))
-      } yield saved).fold(
-        error => errorRedirect(error),
-        _     => Redirect(routes.Submission.submitSummary())
+        submitterInfo   <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))
+        _               <- EitherT.right[Future, CBCErrors,CacheMap](cache.save[SubmitterInfo](submitterInfo.copy(email = success)))
+        straightThrough <- EitherT.right[Future,CBCErrors,Boolean](cache.read[CBCId].map(_.isDefined))
+      } yield straightThrough).fold(
+        error           => errorRedirect(error),
+        straightThrough => if(straightThrough) {
+          Redirect(routes.Submission.submitSummary())
+        } else {
+          Redirect(routes.CBCController.enterCBCId())
+        }
       )
     )
 
