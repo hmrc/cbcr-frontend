@@ -16,18 +16,23 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
+import play.api.data.validation.ValidationError
 import play.api.libs.json._
 
-/**
-  * Created by max on 26/06/17.
-  */
 sealed trait DocTypeIndic
+
 case object OECD0 extends DocTypeIndic
 case object OECD1 extends DocTypeIndic
 case object OECD2 extends DocTypeIndic
 case object OECD3 extends DocTypeIndic
 
 object DocTypeIndic {
+
+  def fromString(s:String): Option[DocTypeIndic] = format.reads(JsString(s)).fold(
+    _ => None,
+    d => Some(d)
+  )
+
   implicit val format = new Format[DocTypeIndic] {
     override def writes(o: DocTypeIndic): JsValue = JsString(o.toString)
 
