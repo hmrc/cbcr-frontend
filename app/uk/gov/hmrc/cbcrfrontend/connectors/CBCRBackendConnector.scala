@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 import javax.inject.Singleton
 import javax.inject.Inject
 
+import cats.syntax.show._
 import com.typesafe.config.Config
 import play.api.Configuration
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPut, HttpResponse}
@@ -49,13 +50,13 @@ class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut, config:Configura
     http.PUT(url + s"/cbcr/message-ref-id/$id",JsNull)
 
   def docRefIdQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.GET(url + s"/cbcr/doc-ref-id/${d.id}")
+    http.GET(url + s"/cbcr/doc-ref-id/${d.show}")
 
   def docRefIdSave(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/cbcr/doc-ref-id/${d.id}",JsNull)
+    http.PUT(url + s"/cbcr/doc-ref-id/${d.show}",JsNull)
 
   def corrDocRefIdSave(c:CorrDocRefId, d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/cbcr/corr-doc-ref-id/${c.cid.id}/${d.id}",JsNull)
+    http.PUT(url + s"/cbcr/corr-doc-ref-id/${c.cid.show}/${d.show}",JsNull)
 
 
 

@@ -29,7 +29,7 @@
             <ns1:ReportingRole>CBC703</ns1:ReportingRole>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT1</ns2:DocRefId>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT1</ns2:DocRefId>
                 <ns2:CorrMessageRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
             </ns1:DocSpec>
         </ns1:ReportingEntity>
