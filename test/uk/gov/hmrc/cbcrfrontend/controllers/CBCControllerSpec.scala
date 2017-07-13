@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import akka.stream.{ActorMaterializer, Materializer}
+import akka.util.Timeout
 import cats.data.EitherT
 import cats.instances.future._
 import org.scalatest.concurrent.ScalaFutures
@@ -32,6 +34,7 @@ import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.{JsValue, Json}
+import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, SubscriptionDataService}
@@ -41,8 +44,13 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import akka.util.Timeout
+import play.Logger
+import play.api.mvc.Result
 
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector with MockitoSugar{
 
@@ -69,6 +77,8 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
   )
 
   implicit val hc = HeaderCarrier()
+
+  implicit val timeout: Timeout = Duration.apply(20, "s")
 
   val fakeRequestEnterCBCId = addToken(FakeRequest("GET", "/enter-CBCId"))
 
@@ -108,9 +118,13 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
   val fakeRequestSignOut = addToken(FakeRequest("GET", "/signOut"))
 
   "GET /signOut" should {
-    "return 303" in {
-      val result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
+    "return 303 to Company Auth" in {
+      val result: Result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
       status(result) shouldBe Status.SEE_OTHER
+      val maybeUri = result.header.headers.getOrElse("location", "")
+      Logger.debug(s"location: ${maybeUri}")
+      maybeUri shouldBe "http://localhost:9025/gg/sign-out?continue=http://localhost:9696/country-by-country-reporting/guidance"
+
     }
   }
 

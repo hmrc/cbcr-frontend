@@ -18,6 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @(asideBusiness: Html, phaseBannerBeta: Html, errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages)
 
@@ -38,7 +39,7 @@
             }
         </div>
 
-        <a class="button" href="signOut">Sign out</a>
+        <a class="button" href="@routes.CBCController.signOut()">Sign out</a>
     </div>
 </div>
 }
