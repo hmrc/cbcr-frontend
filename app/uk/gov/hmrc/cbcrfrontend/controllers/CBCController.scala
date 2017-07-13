@@ -73,7 +73,7 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
   } yield CBCEnrolment(cbcId,utr)
 
 
-  private def saveSubscriptionDetails(s:SubscriptionDetails)(implicit hc:HeaderCarrier): Future[Unit] = for {
+  private def cacheSubscriptionDetails(s:SubscriptionDetails)(implicit hc:HeaderCarrier): Future[Unit] = for {
     _ <- cache.save(s.utr)
     _ <- cache.save(s.businessPartnerRecord)
     _ <- cache.save(s.cbcId)
@@ -90,20 +90,18 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
               BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, true))
             }(subscriptionDetails => userType match {
               case Agent =>
-                saveSubscriptionDetails(subscriptionDetails).map(_ =>
+                cacheSubscriptionDetails(subscriptionDetails).map(_ =>
                   Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.Subscription.enterKnownFacts())
                 )
               case Organisation =>
-                getCBCEnrolment.ensure(InvalidSession)(
-                  _.cbcId === subscriptionDetails.cbcId
-                ).fold[Future[Result]](
+                getCBCEnrolment.ensure(InvalidSession)( _.cbcId === subscriptionDetails.cbcId ).fold[Future[Result]](
                   {
                     case InvalidSession => BadRequest(forms.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), userType, cbcIdForm, false, true))
                     case error          => errorRedirect(error)
                   },
                   _     => {
-                    saveSubscriptionDetails(subscriptionDetails).map(_ =>
-                      Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
+                    cacheSubscriptionDetails(subscriptionDetails).map(_ =>
+                      Redirect(routes.Submission.submitSummary())
                     )
                   }
                 ).flatten

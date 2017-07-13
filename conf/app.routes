@@ -2,8 +2,8 @@
 
 
 GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.technicalDifficulties
-GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
+GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
 POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
 GET        /signOut                                       @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.signOut
 GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.guidance
@@ -27,7 +27,7 @@ GET        /utr                                           @uk.gov.hmrc.cbcrfront
 GET        /submitter-info                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitterInfo
 GET        /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.Submission.upe
 GET        /reconfirmEmail                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmail
-GET        /submitSummary                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSummary
+GET        /submit-summary                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSummary
 GET        /submitSuccessReceipt                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt(submissionDateTime: String, hash: String)
 GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingHistory
 POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.Submission.confirm
