@@ -22,6 +22,7 @@
 @import uk.gov.hmrc.cbcrfrontend.model.CBC702
 @import uk.gov.hmrc.cbcrfrontend.model.CBC703
 @import java.nio.file._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @(fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Boolean , busErrors :Boolean, asideBusiness: Html, phaseBannerBeta: Html, reportingRole:Option[ReportingRole])(
 implicit request: Request[_], messages: Messages)
@@ -86,7 +87,7 @@ implicit request: Request[_], messages: Messages)
                 }}
             } else {
             <p><a href="#">@Messages("uploadResult.viewFormattingGuidance")</a></p>
-            <a class="button" href="signOut">@Messages("form.controls.signOut")</a>
+            <a class="button" href="@routes.CBCController.signOut()">@Messages("form.controls.signOut")</a>
             }
 
         </div>

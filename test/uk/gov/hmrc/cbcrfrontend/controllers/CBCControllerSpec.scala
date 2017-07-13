@@ -44,10 +44,11 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.duration._
-
 import akka.util.Timeout
-import scala.concurrent.duration.Duration
+import play.Logger
+import play.api.mvc.Result
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -117,10 +118,12 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
   val fakeRequestSignOut = addToken(FakeRequest("GET", "/signOut"))
 
   "GET /signOut" should {
-    "return 200" in {
-      val result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
-      status(result) shouldBe Status.OK
-      contentAsString(result) should  include("Guidance")
+    "return 303 to Company Auth" in {
+      val result: Result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
+      status(result) shouldBe Status.SEE_OTHER
+      val maybeUri = result.header.headers.getOrElse("location", "")
+      Logger.debug(s"location: ${maybeUri}")
+      maybeUri shouldBe "http://localhost:9025/gg/sign-out?continue=http://localhost:9696/country-by-country-reporting/guidance"
 
     }
   }

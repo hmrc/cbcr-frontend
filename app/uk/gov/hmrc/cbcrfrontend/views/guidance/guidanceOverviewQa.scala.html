@@ -17,6 +17,7 @@
 @import play.api.i18n.Messages.Implicits._
 @import play.api.Play.current
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @()(implicit request: Request[_])
 
@@ -59,8 +60,8 @@
                     <div class="call-to-action">
                         <p><a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#notify">Notify</a>
                             <abbr title="HM Revenue and Customs">HMRC</abbr> that you’re required to send a
-                            country-by-country report.<br><br><a href="https://www-qa.***REMOVED***/country-by-country-reporting/register-for-cbcid" rel="external">Register</a> to use the country-by-country reporting
-                            service.<br><br><a href="https://www-qa.***REMOVED***/country-by-country-reporting/enter-CBCId" rel="external">Send a report</a> using the reporting service.</p></div>
+                            country-by-country report.<br><br><a href="@routes.Subscription.enterKnownFacts" rel="external">Register</a> to use the country-by-country reporting
+                            service.<br><br><a href="@routes.CBCController.enterCBCId()" rel="external" >Send a report</a> using the reporting service.</p></div>
                     <p>The UK follows the country-by-country reporting requirements of the
                         Organisation for Economic Co-operation and Development (<abbr title="Organisation for Economic Co-operation and Development">OECD</abbr>).
                         You’ll have to send <abbr title="HM Revenue and Customs">HMRC</abbr> a <a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#reporting">report</a>
@@ -89,7 +90,7 @@
                                 <li>has information exchange agreements already in place between it and the
                                     UK, but <abbr title="HM Revenue and Customs">HMRC</abbr> has notified you
                                     that they aren’t working effectively</li></ul></li></ul>
-                    <p>You can also <a href="volunteer">volunteer
+                    <p>You can also <a href="#volunteer">volunteer
                         to send <abbr title="HM Revenue and Customs">HMRC</abbr></a> a report if you
                         aren’t required to do so.</p>
                     <h2 id="notify">Notifications</h2>
@@ -109,13 +110,13 @@
                         Relationship Manager (<abbr title="customer relationship manager">CRM</abbr>),
                         copy them into your email.</p>
                     <p>If you’ve told <abbr title="HM Revenue and Customs">HMRC</abbr> you’ll need
-                        to send a country-by-country report to us, you’ll need to <a href="register">register</a>
+                        to send a country-by-country report to us, you’ll need to <a href="">register</a>
                         if you haven’t already done so.</p>
                     <h2 id="reporting">Send your report</h2>
                     <p>You’ll have to upload a valid, completed XML schema as part of the
                         country-by-country reporting process.</p>
                     <div class="call-to-action">
-                        <p>You must follow <a href="business-rules">these
+                        <p>You must follow <a href="#business-rules">these
                             rules</a> when completing the schema.</p></div>
                     <p>In order to send <abbr title="HM Revenue and Customs">HMRC</abbr> your
                         report, you’ll use the <a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#LINK%20to%20reporting%20service">reporting
@@ -139,7 +140,7 @@
                             deadline</a>, with a daily penalty of up to £60</li>
                         <li>up to £3,000 for an inaccurate report</li></ul>
                     <p>If there’s an error in your report, you can send a replacement schema by
-                        using the <a href="../service-homepage-subscribed-agent.html" rel="external">reporting service</a> again.</p>
+                        using the <a href="@routes.CBCController.enterCBCId()" rel="external">reporting service</a> again.</p>
                     <p>You won’t receive a penalty for an inaccurate report where you’ve sent an
                         accurate replacement schema before the deadline.</p>
                     <h2 id="contact-us">Contact us</h2>
@@ -156,7 +157,7 @@
                     <h2 id="further-information">Further information</h2>
                     <p>You can find more details on the above in the <a href="https://www.gov.uk/hmrc-internal-manuals/international-exchange-of-information">International
                         Exchange of Information Manual</a>.</p></div></div></div>
-        <div class="govuk-sticky-element" data-sticky-element=""><a class="back-to-content" href="overview" data-module="track-click" data-track-label="contents" data-track-action="backToContentsLinkClicked" data-track-category="contentsClicked"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 13 17" width="13" height="17"><path fill="currentColor" d="M 6.5 0 L 0 6.5 L 1.4 8 l 4 -4 v 12.7 h 2 V 4 l 4.3 4 L 13 6.4 Z"></path>     </svg>    Contents </a>   </div></div>
+        <div class="govuk-sticky-element" data-sticky-element=""><a class="back-to-content" href="guidance" data-module="track-click" data-track-label="contents" data-track-action="backToContentsLinkClicked" data-track-category="contentsClicked"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 13 17" width="13" height="17"><path fill="currentColor" d="M 6.5 0 L 0 6.5 L 1.4 8 l 4 -4 v 12.7 h 2 V 4 l 4.3 4 L 13 6.4 Z"></path>     </svg>    Contents </a>   </div></div>
     <div class="govuk-document-footer direction-ltr">
         <h2 class="visuallyhidden">    Document information   </h2>
         <div class="history-information" id="history">
