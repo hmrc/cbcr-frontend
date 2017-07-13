@@ -223,14 +223,32 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
-    "return 303 when Email Address is valid" in {
+    "return 303 when Email Address is valid" should {
+      "redirect to submit-summary if a cbcId exists" in {
 
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      when(cache.read[SubmitterInfo] (EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(Some(SubmitterInfo("name","agency","MD","0123123123",EmailAddress("max@max.com"), Some(AffinityGroup("Organisation")))))
-      when(cache.save[SubmitterInfo](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+        val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
+        val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
+        when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(Some(SubmitterInfo("name", "agency", "MD", "0123123123", EmailAddress("max@max.com"), Some(AffinityGroup("Organisation")))))
+        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(CBCId.create(10).getOrElse(fail("oops"))))
+        when(cache.save[SubmitterInfo](any())(any(), any(), any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
 
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
+        val result = Await.result(controller.reconfirmEmailSubmit(fakeRequestSubmit),2.seconds)
+
+        result.header.headers("Location") should endWith("/submit-summary")
+        status(result) shouldBe Status.SEE_OTHER
+      }
+      "redirect to enter-cbcId if a cbcid does not exist" in {
+        val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
+        val fakeRequestSubmit = addToken(FakeRequest("POST", "/reconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
+        when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(Some(SubmitterInfo("name", "agency", "MD", "0123123123", EmailAddress("max@max.com"), Some(AffinityGroup("Organisation")))))
+        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(None)
+        when(cache.save[SubmitterInfo](any())(any(), any(), any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+
+        val result = Await.result(controller.reconfirmEmailSubmit(fakeRequestSubmit),2.seconds)
+
+        result.header.headers("Location") should endWith("/enter-CBCId")
+        status(result) shouldBe Status.SEE_OTHER
+      }
     }
   }
 
