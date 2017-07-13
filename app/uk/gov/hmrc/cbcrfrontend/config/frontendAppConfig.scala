@@ -31,6 +31,7 @@ trait AppConfig {
   val cbcrFrontendHost: String
   val fileUploadFrontendHost: String
   val betaFeedbackUrlNoAuth: String
+  val companyAuthFrontend: String
 
 }
 
@@ -50,7 +51,9 @@ object FrontendAppConfig extends AppConfig with ServicesConfig {
   override lazy val fileUploadFrontendHost = loadConfig(s"file-upload-public-frontend.host")
 
   override lazy val governmentGatewaySignInUrl = loadConfig("government-gateway-sign-in-url")
-  //  override lazy val governmentGatewaySignInUrl = "http://localhost:9025/gg/sign-in"
+
+  override lazy val companyAuthFrontend: String = loadConfig("company-auth-frontend.protocol") + "://" +
+    loadConfig("company-auth-frontend.host") + ":" + loadConfig("company-auth-frontend.port")
 
   // this will be empty in non-local environments
   override lazy val cbcrFrontendBaseUrl = loadConfig("cbcr-frontend-base-url")

@@ -26,7 +26,7 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages.Implicits._
-import play.api.mvc.{Action, Result}
+import play.api.mvc.{Action, AnyContent, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
@@ -111,10 +111,16 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
         })).merge
   }
 
+
   val signOut = sec.AsyncAuthenticatedAction() { authContext => implicit request => {
-    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.enterCBCId().url}/enter-CBCId"
-    Future.successful(Redirect(s"${FrontendAppConfig.cbcrFrontendHost}/gg/sign-out$continue"))
+    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCController.guidance.url}"
+    Future.successful(Redirect(s"${FrontendAppConfig.companyAuthFrontend}/gg/sign-out$continue"))
   }}
+
+
+  def guidance =  Action.async { implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.guidanceOverviewQa()))
+  }
 
 }
 
