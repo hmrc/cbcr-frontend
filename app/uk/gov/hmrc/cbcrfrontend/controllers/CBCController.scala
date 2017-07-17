@@ -101,7 +101,7 @@ class CBCController @Inject()(val sec: SecuredActions, val subDataService: Subsc
                   },
                   _     => {
                     cacheSubscriptionDetails(subscriptionDetails).map(_ =>
-                      Redirect(routes.Submission.submitSummary())
+                      Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUpload.chooseXMLFile())
                     )
                   }
                 ).flatten
