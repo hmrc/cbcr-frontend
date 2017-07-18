@@ -108,10 +108,9 @@ submitInfoUltimateParentEntity.info2=We''re asking this question to make sure we
 submitInfoUltimateParentEntity.upe.label=Name of ultimate parent entity
 submitInfoUltimateParentEntity.upe.error=Please enter the name of the ultimate parent entity
 
-submitSuccessReceipt.mainHeading=Your report has been received
 submitSuccessReceipt.confirmationNumberLabel=Your confirmation number is:
 submitSuccessReceipt.submissionDateLabel=Your report was received on
-submitSuccessReceipt.digiSig=You can use the following digital signature as a receipt for the report you submitted:
+submitSuccessReceipt.digiSig=You can use this digital signature as a receipt for the report you''ve sent:
 submitSuccessReceipt.printInfo=Print this screen to keep a record of your report.
 submitSuccessReceipt.print=Print this page
 submitSuccessReceipt.print.text=Print this screen to keep a record of your report.
