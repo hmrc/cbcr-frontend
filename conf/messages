@@ -150,18 +150,15 @@ fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been s
 
 
 submitSummary.mainHeading=Check your report details
-submitSummary.secondaryHeading=Your submission details
-submitSummary.table.registeredMNE=Registered multinational enterprise:
-submitSummary.table.filingType=Report type:
-submitSummary.table.ultimateParent=Ultimate parent entity:
-submitSummary.table.filedBy=Submitted by:
-submitSummary.table.filingCapacity=Submitter type:
-submitSummary.table.reportDetails=Report details:
-submitSummary.confirmSubmit=Confirm and submit
+submitSummary.table.ultimateParent=Group parent business
+submitSummary.table.utr=Unique taxpayer reference
+submitSummary.table.filedBy=Sent by
+submitSummary.table.filingInfo=Sender''s contact details
+submitSummary.table.reportDetails=Report details
 submitSummary.declaration.heading=Declaration
-submitSummary.declaration.text=The business has confirmed this is the correct report to be submitted.
+submitSummary.declaration.text=I confirm that the information I have provided is accurate and complete to the best of my knowledge
 submitSummary.declaration.error.text=Please confirm
-submitSummary.submit=Submit
+submitSummary.submit=Continue
 submitSummary.submitReport=Submit report
 
 uploadReport.mainHeading=Upload your report

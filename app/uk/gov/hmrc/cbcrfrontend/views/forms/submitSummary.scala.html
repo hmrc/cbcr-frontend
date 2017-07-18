@@ -34,10 +34,7 @@ implicit request: Request[_], messages: Messages)
             <table class="check-your-answers">
                 <thead>
                 <tr>
-                    <th colspan="2">
-                        <h2 class="heading-medium">
-                            @Messages("submitSummary.secondaryHeading")
-                        </h2>
+                    <th>
                     </th>
                     <th>
                     </th>
@@ -46,33 +43,7 @@ implicit request: Request[_], messages: Messages)
 
                 <tbody>
                 <tr>
-                    <th>
-                        @Messages("submitSummary.table.registeredMNE")
-                    </th>
-                    <td>
-                        @{ if(summaryData.businessPartnerRecord.organisation.isDefined) summaryData.businessPartnerRecord.organisation.get.organisationName}<br />
-                        Postcode: @summaryData.businessPartnerRecord.address.postalCode.getOrElse("")<br />
-                        UTR: @summaryData.submissionMetaData.submissionInfo.utr.utr<br />
-                        CbCID: @summaryData.submissionMetaData.submissionInfo.cbcId.value
-                    </td>
-                    <td>
-                    </td>
-
-                <tr>
-                    <th>
-                        @Messages("submitSummary.table.filingType")
-                    </th>
-                    <td>
-                        @summaryData.submissionMetaData.submissionInfo.filingType.value match {
-                            case CBC701 => { @Messages("submitInfoFilingType.primaryFiling.label") }
-                            case CBC702 => { @Messages("submitInfoFilingType.voluntaryFiling.label") }
-                            case CBC703 => { @Messages("submitInfoFilingType.localFiling.label") }
-                        }
-                    </td>
-
-                </tr>
-                <tr>
-                    <th>
+                    <th style="white-space:nowrap">
                         @Messages("submitSummary.table.ultimateParent")
                     </th>
                     <td>
@@ -81,40 +52,52 @@ implicit request: Request[_], messages: Messages)
 
                 </tr>
                 <tr>
-                    <th>
+                    <th style="white-space:nowrap">
+                        @Messages("submitSummary.table.utr")
+                    </th>
+                    <td>
+                        @summaryData.submissionMetaData.submissionInfo.utr.value<br />
+                    </td>
+
+                </tr>
+                <tr>
+                    <th style="white-space:nowrap">
                         @Messages("submitSummary.table.filedBy")
                     </th>
                     <td>
                         @summaryData.submissionMetaData.submitterInfo.fullName<br />
                         @summaryData.submissionMetaData.submitterInfo.agencyBusinessName<br />
-                        @summaryData.submissionMetaData.submitterInfo.jobRole<br />
-                        Tel: @summaryData.submissionMetaData.submitterInfo.contactPhone<br />
-                        Email: @summaryData.submissionMetaData.submitterInfo.email.value
                     </td>
 
                 </tr>
                 <tr>
-                    <th>
+                    <th style="white-space:nowrap">
+                        @Messages("submitSummary.table.filingInfo")
+                    </th>
+                    <td>
+
+                        <span class="faded-text faded-text--small">Phone number:</span><br/>
+                        @summaryData.submissionMetaData.submitterInfo.contactPhone<br />
+                        <span class="faded-text faded-text--small">Email address:</span><br/>
+                        @summaryData.submissionMetaData.submitterInfo.email.value
+                    </td>
+                </tr>
+                <tr>
+                    <th style="white-space:nowrap">
                         @Messages("submitSummary.table.reportDetails")
                     </th>
                     <td>
                         <div>
-                            <p><span class="faded-text faded-text--small">File name:</span><br />
+                            <p><span class="faded-text faded-text--small">Filename:</span><br />
                                 @summaryData.submissionMetaData.fileInfo.name
                             </p>
                             <p><span class="faded-text faded-text--small">File size:</span><br />
                                 @summaryData.submissionMetaData.fileInfo.length KB
                             </p>
-                            <hr>
-                            <h3>Key information from report XML</h3>
-
-                            <p><span class="faded-text faded-text--small">MessageRefID:</span><br />
-                                @summaryData.xmlInfo.messageSpec.messageRefID
-                            </p>
                             <p><span class="faded-text faded-text--small">ReportingPeriod:</span><br />
                                 @summaryData.xmlInfo.messageSpec.messageRefID.reportingPeriod
                             </p>
-                            <p><span class="faded-text faded-text--small">TimeStamp:</span><br />
+                            <p><span class="faded-text faded-text--small">Timestamp:</span><br />
                                 @summaryData.xmlInfo.messageSpec.timestamp
                             </p>
                       </div>
@@ -123,10 +106,6 @@ implicit request: Request[_], messages: Messages)
                 </tr>
                 </tbody>
             </table>
-            <h2 class="heading-medium">@Messages("submitSummary.confirmSubmit")</h2>
-            <p class="text">
-
-            </p>
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.confirm()) {
             @CSRF.formField
 
