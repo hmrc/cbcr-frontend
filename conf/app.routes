@@ -28,7 +28,7 @@ GET        /submitter-info                                @uk.gov.hmrc.cbcrfront
 GET        /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.Submission.upe
 GET        /reconfirmEmail                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmail
 GET        /submit-summary                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSummary
-GET        /submitSuccessReceipt                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt(submissionDateTime: String, hash: String)
+GET        /submit-receipt                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt
 GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingHistory
 POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.Submission.confirm
 

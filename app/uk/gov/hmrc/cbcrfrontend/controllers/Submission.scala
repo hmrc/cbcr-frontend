@@ -82,8 +82,9 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
               Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
             }
-            submissionDateTime = LocalDateTime.now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH.MM."))
-          } yield Redirect(routes.Submission.submitSuccessReceipt(submissionDateTime, summaryData.submissionMetaData.submissionInfo.hash.value))
+            _  <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(SubmissionDate(LocalDateTime.now)))
+
+          } yield Redirect(routes.Submission.submitSuccessReceipt())
             ).leftMap(errorRedirect)
         )
       }
@@ -270,8 +271,15 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
   }
 
-  def submitSuccessReceipt(submissionDateTime: String, hash: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), submissionDateTime: String, hash: String ))
+  def submitSuccessReceipt() = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    (for {
+      hash <- OptionT(cache.read[SummaryData]).map(_.submissionMetaData.submissionInfo.hash.value)
+      dt   <- OptionT(cache.read[SubmissionDate]).map(_.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH:mm")))
+    } yield (hash,dt)).cata(
+      errorRedirect(UnexpectedState("Unable to read SummaryData or SubmissionDate from cache")),
+      tuple => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple._2,tuple._1))
+    )
+
   }
 
   val filingHistory = Action.async { implicit request =>
