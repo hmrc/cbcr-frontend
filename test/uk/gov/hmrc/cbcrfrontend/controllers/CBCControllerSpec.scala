@@ -112,6 +112,8 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
       when(enrol.getEnrolments(any())) thenReturn Future.successful(List(Enrolment("HMRC-CBC-ORG",List(Identifier("cbcId",id.value),Identifier("utr","7000000002")))))
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.SEE_OTHER
+      val maybeUri = result.header.headers.getOrElse("location", "")
+      maybeUri shouldBe "/country-by-country-reporting/upload-report"
     }
   }
 
@@ -122,7 +124,6 @@ class CBCControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite w
       val result: Result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
       status(result) shouldBe Status.SEE_OTHER
       val maybeUri = result.header.headers.getOrElse("location", "")
-      Logger.debug(s"location: ${maybeUri}")
       maybeUri shouldBe "http://localhost:9025/gg/sign-out?continue=http://localhost:9696/country-by-country-reporting/guidance"
 
     }
