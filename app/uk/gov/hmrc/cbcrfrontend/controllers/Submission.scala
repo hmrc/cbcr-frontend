@@ -21,6 +21,8 @@ import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
+import cats.instances.all._
+import cats.syntax.all._
 import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
@@ -37,12 +39,11 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import cats.instances.all._
-import cats.syntax.all._
-import uk.gov.hmrc.play.http.HeaderCarrier
+import scala.util.control.Exception.nonFatalCatch
 
 
 @Singleton
@@ -52,6 +53,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
+  val dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH:mm")
 
   def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
     val reCorr = x.reportingEntity.docSpec.corrDocRefId
@@ -82,8 +84,9 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
               Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
             }
-            submissionDateTime = LocalDateTime.now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH.MM."))
-          } yield Redirect(routes.Submission.submitSuccessReceipt(submissionDateTime, summaryData.submissionMetaData.submissionInfo.hash.value))
+            _  <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(SubmissionDate(LocalDateTime.now)))
+
+          } yield Redirect(routes.Submission.submitSuccessReceipt())
             ).leftMap(errorRedirect)
         )
       }
@@ -270,8 +273,19 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
   }
 
-  def submitSuccessReceipt(submissionDateTime: String, hash: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), submissionDateTime: String, hash: String ))
+  def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
+    EitherT((cache.read[SummaryData] |@| cache.read[SubmissionDate]).map {
+      case (maybeData, maybeDate) => for {
+        data          <- maybeData toRight UnexpectedState("SummaryData not found in cache")
+        date          <- maybeDate toRight UnexpectedState("SubmissionDate not found in cache")
+        formattedDate <- nonFatalCatch opt date.date.format(dateFormat) toRight UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")
+      } yield (data.submissionMetaData.submissionInfo.hash, formattedDate)
+    }).fold(
+      (error: UnexpectedState) => errorRedirect(error),
+      (tuple: (Hash, String))  => Ok(views.html.forms.submitSuccessReceipt(includes.asideBusiness(),includes.phaseBannerBeta(),tuple._2,tuple._1.value))
+    )
+
   }
 
   val filingHistory = Action.async { implicit request =>
