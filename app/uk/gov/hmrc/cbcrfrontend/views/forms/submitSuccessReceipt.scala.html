@@ -33,11 +33,12 @@ implicit request: Request[_], messages: Messages)
             <section>
                 <div class="transaction-banner--complete">
 
-                    <span class="transaction-banner__heading h1-heading">@Messages("submitSuccessReceipt.mainHeading")</span>
+                    <div class="transaction-banner__heading h1-heading">@Messages("submitSuccessReceipt.submissionDateLabel")</div>
+                    <div class="transaction-banner__heading h1-heading">@submissionDateTime</div>
                     <p class="transaction-banner__heading">
                 </div>
             </section>
-            <p>@Messages("submitSuccessReceipt.submissionDateLabel") @submissionDateTime</p>
+            <p></p>
             @Messages("submitSuccessReceipt.digiSig")
             @hash
 
