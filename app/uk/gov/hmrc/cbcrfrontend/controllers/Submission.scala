@@ -21,6 +21,8 @@ import java.time.format.DateTimeFormatter
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
+import cats.instances.all._
+import cats.syntax.all._
 import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
@@ -37,12 +39,11 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import cats.instances.all._
-import cats.syntax.all._
-import uk.gov.hmrc.play.http.HeaderCarrier
+import scala.util.control.Exception.nonFatalCatch
 
 
 @Singleton
@@ -52,6 +53,7 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
+  val dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH:mm")
 
   def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
     val reCorr = x.reportingEntity.docSpec.corrDocRefId
@@ -271,13 +273,17 @@ class Submission @Inject()(val sec: SecuredActions, val cache:CBCSessionCache,va
 
   }
 
-  def submitSuccessReceipt() = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    (for {
-      hash <- OptionT(cache.read[SummaryData]).map(_.submissionMetaData.submissionInfo.hash.value)
-      dt   <- OptionT(cache.read[SubmissionDate]).map(_.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH:mm")))
-    } yield (hash,dt)).cata(
-      errorRedirect(UnexpectedState("Unable to read SummaryData or SubmissionDate from cache")),
-      tuple => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple._2,tuple._1))
+  def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
+    EitherT((cache.read[SummaryData] |@| cache.read[SubmissionDate]).map {
+      case (maybeData, maybeDate) => for {
+        data          <- maybeData toRight UnexpectedState("SummaryData not found in cache")
+        date          <- maybeDate toRight UnexpectedState("SubmissionDate not found in cache")
+        formattedDate <- nonFatalCatch opt date.date.format(dateFormat) toRight UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")
+      } yield (data.submissionMetaData.submissionInfo.hash, formattedDate)
+    }).fold(
+      (error: UnexpectedState) => errorRedirect(error),
+      (tuple: (Hash, String))  => Ok(views.html.forms.submitSuccessReceipt(includes.asideBusiness(),includes.phaseBannerBeta(),tuple._2,tuple._1.value))
     )
 
   }
