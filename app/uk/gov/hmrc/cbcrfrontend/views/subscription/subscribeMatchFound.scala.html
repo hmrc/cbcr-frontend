@@ -38,11 +38,9 @@ implicit request: Request[_], messages: Messages)
             </h1>
 
             <table class="form-group">
-                <thead>
                 <tr>
-                    <th colspan="2">@Messages("subscribeMatchFound.businessDetails.heading")</th>
+                    <th colspan="2"></th>
                 </tr>
-                </thead>
                 <tbody>
                 <tr>
                     <th>@Messages("subscribeMatchFound.businessDetails.name")</th>
@@ -58,6 +56,11 @@ implicit request: Request[_], messages: Messages)
                 </tr>
                 </tbody>
             </table>
+
+            <p>
+              @Messages("subscribeMatchFound.businessDetails.advice")
+            </p>
+            <p><a href="register-for-cbcid">Back</a></p>
 
             <p>
                 @userType match {
