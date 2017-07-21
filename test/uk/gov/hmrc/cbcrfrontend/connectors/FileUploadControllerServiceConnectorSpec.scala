@@ -26,7 +26,7 @@ import uk.gov.hmrc.play.http.HttpResponse
 import scala.io.Source
 
 
-class FileUploadServiceConnectorSpec extends FlatSpec with Matchers with EitherValues {
+class FileUploadControllerServiceConnectorSpec extends FlatSpec with Matchers with EitherValues {
 
 
 

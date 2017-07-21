@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,22 +12,30 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package uk.gov.hmrc.cbcrfrontend.model
+@import play.api.i18n.Messages.Implicits._
+@import play.api.Play.current
+@()(implicit request: Request[_])
 
-import play.api.libs.json.Json
-import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.emailaddress.PlayJsonFormats._
+@uk.gov.hmrc.cbcrfrontend.views.html.main_template(title = "Country By Country", bodyClasses = None) {
+<div align="center">
 
-case class SubmitterInfo(fullName: String,
-                         agencyBusinessName: Option[AgencyBusinessName],
-                         contactPhone: String,
-                         email:EmailAddress,
-                         affinityGroup: Option[AffinityGroup]
-                        )
+<h1>@Messages("cbcHistory.mainHeading")</h1>
 
+</br>
+</br>
 
-object SubmitterInfo {
-  implicit val format = Json.format[SubmitterInfo]
+<p>
+<div id="message">
+@Messages("cbcHistory.top.message")
+</div>
+</p>
+
+</br>
+</br>
+<div class="form-group">
+    <a id="btn-fileUpload" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.chooseXMLFile()">@Messages("cbc.button.fileupload")</a>
+</div>
+</div>
 }

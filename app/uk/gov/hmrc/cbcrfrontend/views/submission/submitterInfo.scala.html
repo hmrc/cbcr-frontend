@@ -39,12 +39,9 @@ implicit request: Request[_], messages: Messages)
 <h1>
     @Messages("submitterInfo.mainHeading")
 </h1>
-<p>@Messages("submitterInfo.info")</p>
 <div class="form-group">
-    @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitSubmitterInfo()){
+    @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo()){
     @formFieldDisplay(fullNameErrors,"fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
-    @formFieldDisplay(agencyBusinessNameErrors,"agencyBusinessName", Some(Messages("submitterInfo.employer.error")),Messages("submitterInfo.employer"), form)
-    @formFieldDisplay(jobRoleErrors,"jobRole", Some(Messages("submitterInfo.jobTitle.error")),Messages("submitterInfo.jobTitle"), form)
     @formFieldDisplay(contactPhoneErrors,"contactPhone", Some(Messages("submitterInfo.phoneNumber.error")),Messages("submitterInfo.phoneNumber"), form)
     @formFieldDisplay(emailErrors,"email", Some(Messages("submitterInfo.emailAddress.error")),Messages("submitterInfo.emailAddress"), form)
     @CSRF.formField

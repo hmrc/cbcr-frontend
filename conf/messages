@@ -146,6 +146,9 @@ fileUploadResult.error.xml.download=XML error report
 fileUploadResult.viewGuidance=View formatting guidance
 fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been submitted
 
+enterCompanyName.mainHeading=Enter the name of the company you work for
+enterCompanyName.formHintWhereYouGotIt=Company name
+enterCompanyName.formHint=This is the company that employs you, but not necessarily the one you''re sending the report for.
 
 
 submitSummary.mainHeading=Check your report details
@@ -176,17 +179,12 @@ uploadResult.fileName=Filename
 uploadResult.fileSize=Size
 uploadResult.viewFormattingGuidance=View formatting guidance
 
-submitterInfo.mainHeading=Enter your contact details
-submitterInfo.info=We''ll contact you if there''s a problem with the Country by Country report you''re submitting.
-submitterInfo.fullName=Full name
+submitterInfo.mainHeading=Enter your contact details, as the sender fo the report
+submitterInfo.fullName=Your name
 submitterInfo.fullName.error=Please enter your full name
-submitterInfo.employer=Employer
-submitterInfo.employer.error=Please enter your employer''s name
-submitterInfo.jobTitle=Job title/role
-submitterInfo.jobTitle.error=Please enter your job title/role
-submitterInfo.phoneNumber=Contact phone number
+submitterInfo.phoneNumber=Your phone number
 submitterInfo.phoneNumber.error=Please enter a valid phone number
-submitterInfo.emailAddress=Contact email address
+submitterInfo.emailAddress=Your email address
 submitterInfo.emailAddress.error=Please enter a valid email address
 
 

@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
+import javax.inject.{Inject,Singleton}
+
 import cats.data.OptionT
 import cats.instances.future._
 import play.api.libs.json.Json
@@ -31,7 +33,8 @@ import scala.concurrent.Future
   * Optionally return the [[uk.gov.hmrc.cbcrfrontend.model.BusinessPartnerRecord]] depending on whether it contains
   * the same postcode as the provided [[BPRKnownFacts]]
   */
-class BPRKnownFactsService(dc:BPRKnownFactsConnector) {
+@Singleton
+class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector) {
 
   private def sanitisePostCode(s:String) : String = s.toLowerCase.replaceAll("\\s", "")
 
