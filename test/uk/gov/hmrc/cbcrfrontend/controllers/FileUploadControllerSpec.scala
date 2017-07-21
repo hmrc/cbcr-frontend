@@ -47,7 +47,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.runtime.universe
 
 
-class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
+class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
 
   implicit val ec: ExecutionContext                    = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi: MessagesApi                = app.injector.instanceOf[MessagesApi]
@@ -92,8 +92,8 @@ class FileUploadSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with
 
   val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
 
-  val partiallyMockedController = new FileUpload(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor)
-  val controller = new FileUpload(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor)
+  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor)
+  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor)
 
   val file = Files.TemporaryFile("","")
   val validFile = new File("test/resources/cbcr-valid.xml")

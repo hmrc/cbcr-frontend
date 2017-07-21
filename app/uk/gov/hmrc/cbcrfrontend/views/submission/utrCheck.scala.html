@@ -32,7 +32,7 @@ implicit request: Request[_], messages: Messages)
         <h1>
             Enter the Unique Taxpayer Reference of your UK business
         </h1>
-        @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.Submission.submitUtr) {
+        @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
         @CSRF.formField
         <fieldset>
             <legend class="visuallyhidden">Enter UK details for registered business</legend>

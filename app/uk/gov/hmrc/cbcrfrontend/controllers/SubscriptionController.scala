@@ -48,17 +48,16 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class Subscription @Inject()(val sec: SecuredActions,
-                             val subscriptionDataService: SubscriptionDataService,
-                             val connector:BPRKnownFactsConnector,
-                             val cbcIdService:CBCIdService,
-                             val kfService:CBCKnownFactsService,
-                             val authConnector:EnrolmentsConnector)
-                            (implicit ec: ExecutionContext,
+class SubscriptionController @Inject()(val sec: SecuredActions,
+                                       val subscriptionDataService: SubscriptionDataService,
+                                       val connector:BPRKnownFactsConnector,
+                                       val cbcIdService:CBCIdService,
+                                       val kfService:CBCKnownFactsService,
+                                       val authConnector:EnrolmentsConnector,
+                                       val knownFactsService:BPRKnownFactsService)
+                                      (implicit ec: ExecutionContext,
                              val playAuth:PlayAuthConnector,
                              val session:CBCSessionCache) extends FrontendController with ServicesConfig {
-
-  lazy val knownFactsService:BPRKnownFactsService = new BPRKnownFactsService(connector)
 
   val subscriptionDataForm: Form[SubscriberContact] = Form(
     mapping(
@@ -108,7 +107,7 @@ class Subscription @Inject()(val sec: SecuredActions,
                     _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
                   )
                 },
-                _ => Redirect(routes.Subscription.reconfirmEmail())
+                _ => Redirect(routes.SubscriptionController.reconfirmEmail())
               ).flatten
 
             case None => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
@@ -122,7 +121,7 @@ class Subscription @Inject()(val sec: SecuredActions,
 
     OptionT(session.read[SubscriberContact]).cata(
       InternalServerError(FrontendGlobal.internalServerErrorTemplate),
-      subscriberContactInfo => Ok(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
+      subscriberContactInfo => Ok(views.html.submission.reconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
     )
   }
 
@@ -131,7 +130,7 @@ class Subscription @Inject()(val sec: SecuredActions,
 
     reconfirmEmailForm.bindFromRequest.fold(
 
-      formWithErrors => BadRequest(uk.gov.hmrc.cbcrfrontend.views.html.forms.reconfirmEmail(
+      formWithErrors => BadRequest(views.html.submission.reconfirmEmail(
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
       )),
       success => (for {
@@ -143,64 +142,11 @@ class Subscription @Inject()(val sec: SecuredActions,
         _                 <- EitherT.right[Future,CBCErrors,CacheMap](session.save(Subscribed))
       } yield cbcId).fold(
         error => errorRedirect(error),
-        cbcId => Redirect(routes.Subscription.subscribeSuccessCbcId(cbcId.value))
+        cbcId => Redirect(routes.SubscriptionController.subscribeSuccessCbcId(cbcId.value))
       )
     )
   }
 
-
-  val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
-    case utr if Utr(utr).isValid => Valid
-    case _                       => Invalid(ValidationError("UTR is not valid"))
-  }
-
- val knownFactsForm = Form(
-    mapping(
-      "utr" -> nonEmptyText.verifying(utrConstraint),
-      "postCode" -> nonEmptyText
-    )((u,p) => BPRKnownFacts(Utr(u),p))((facts: BPRKnownFacts) => Some(facts.utr.value -> facts.postCode))
- )
-
-  def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
-    authConnector.getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
-
-  val enterKnownFacts = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
-    alreadyEnrolled.flatMap(subscribed =>
-      if(subscribed) {
-        NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(),includes.phaseBannerBeta()))
-      } else {
-        getUserType(authContext).map{
-          case Agent        => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, Agent))
-          case Organisation => Ok(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = false,Organisation))
-        }.leftMap(errorRedirect).merge
-      }
-    )
-  }
-
-  val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    getUserType(authContext).leftMap(errorRedirect).flatMap { userType =>
-
-      knownFactsForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
-        formWithErrors => EitherT.left(
-          BadRequest(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))
-        ),
-        knownFacts =>  for {
-          bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
-            NotFound(subscription.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
-          )
-          alreadySubscribed <- subscriptionDataService.alreadySubscribed(knownFacts.utr).leftMap(errorRedirect)
-          _ <- EitherT.cond[Future]( userType match {
-            case Organisation => !alreadySubscribed
-            case Agent        => alreadySubscribed
-          },(), NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
-          _ <- EitherT.right[Future, Result, CacheMap](session.save(bpr))
-          _ <- EitherT.right[Future, Result, CacheMap](session.save(knownFacts.utr))
-        } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value,userType))
-
-      )
-    }.merge
-  }
 
   val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm))
