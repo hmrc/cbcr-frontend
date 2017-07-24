@@ -34,11 +34,11 @@ subscribeFirst.utr.errors.formHint=This should be either a Corportation Tax or a
 subscribeFirst.postcode.errors.errorNotification=Enter a valid UK postcode
 subscribeFirst.postcode.label=UK postcode
 
-subscribeMatchFound.mainHeading=Confirm your business details
-subscribeMatchFound.businessDetails.heading=Business details
+subscribeMatchFound.mainHeading=Check your business details
 subscribeMatchFound.businessDetails.name=Name
 subscribeMatchFound.businessDetails.postcode=Postcode
-subscribeMatchFound.businessDetails.utr=UTR
+subscribeMatchFound.businessDetails.utr=Unique taxpayer reference
+subscribeMatchFound.businessDetails.advice=If these details aren''t correct, go back and enter a different unique taxpayer reference and postcode.
 
 subscribeSuccessCbcId.mainHeading=Your registration is complete
 subscribeSuccessCbcId.subHeading=Your Country by Country ID is:
