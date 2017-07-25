@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 
-import java.time.{LocalDateTime, Year}
+import java.time.{LocalDate, LocalDateTime, Year}
 import javax.inject.Inject
 
 import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
@@ -65,14 +65,14 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             crossValidateCorrDocRefIds(in.cbcReport.docSpec,in.reportingEntity.docSpec,in.additionalInfo.docSpec).toValidatedNel
           ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
 
-        (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec |@| sendingEntity ).map(
-          (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec, _) =>
+        (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec |@| sendingEntity |@| validateReportingPeriod(in.messageSpec).toValidatedNel).map(
+          (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec, _,reportingPeriod) =>
             XMLInfo(
               MessageSpec(
                 msgRefId,values._1,
                 msgRefId.cBCId,
                 msgRefId.creationTimestamp,
-                msgRefId.reportingPeriod,
+                reportingPeriod,
                 values._4
               ),
               ReportingEntity(values._2,reDocSpec,values._3,in.reportingEntity.name),
@@ -191,19 +191,21 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     else if(in.reportingEntity.docSpec.docType.matches(testData)) TestDataError.invalid
     else ().valid
 
-  //The CbC ID within the MessageRefId does not match the CbC ID in the SendingEntityIN field
   private def validateCBCId(in:RawMessageSpec, messageRefID: MessageRefID) : Validated[MessageRefIDError,Unit] =
     if(in.sendingEntityIn.equalsIgnoreCase(messageRefID.cBCId.value)) { ().valid}
     else MessageRefIDCBCIdMismatch.invalid
 
-  private def validateReportingPeriod(in:RawMessageSpec, year:Year) : Validated[MessageRefIDError,Year] =
+  private def validateReportingPeriod(in:RawMessageSpec) : Validated[BusinessRuleErrors,LocalDate] =
+    Validated.catchNonFatal(LocalDate.parse(in.reportingPeriod))
+      .leftMap(_ => InvalidXMLError("Invalid Date for reporting period"))
+
+  private def validateReportingPeriodMatches(in:RawMessageSpec, year:Year) : Validated[MessageRefIDError,Year] =
     if(in.reportingPeriod.startsWith(year.toString)) { year.valid }
     else { MessageRefIDReportingPeriodMismatch.invalid }
 
   private def validateDateStamp(in:RawMessageSpec) : Validated[MessageRefIDError,LocalDateTime] =
-    Validated.catchNonFatal(LocalDateTime.parse(in.timestamp,MessageRefID.dateFmt)).bimap(
-      _   => MessageRefIDTimestampError,
-      ldt => ldt
+    Validated.catchNonFatal(LocalDateTime.parse(in.timestamp,MessageRefID.dateFmt)).leftMap(
+      _   => MessageRefIDTimestampError
     )
 
   private def isADuplicate(msgRefId:MessageRefID)(implicit hc:HeaderCarrier) : Future[Validated[MessageRefIDError,Unit]] =
@@ -215,7 +217,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     MessageRefID(in.messageRefID).toEither.fold(
       errors   => Future.successful(errors.invalid[MessageRefID]),
       msgRefId => isADuplicate(msgRefId).map(dup =>
-        (dup.toValidatedNel |@| validateCBCId(in, msgRefId).toValidatedNel |@| validateReportingPeriod(in, msgRefId.reportingPeriod).toValidatedNel).map(
+        (dup.toValidatedNel |@| validateCBCId(in, msgRefId).toValidatedNel |@| validateReportingPeriodMatches(in, msgRefId.reportingPeriod).toValidatedNel).map(
           (_, _, _) => msgRefId
         )
       )

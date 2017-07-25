@@ -1,47 +1,48 @@
 # microservice specific routes
 
 
-GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.technicalDifficulties
-GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
-GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
-POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
-GET        /signOut                                       @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.signOut
-GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.guidance
+GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
+GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
+GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
+POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.submitCBCId
+GET        /signOut                                       @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOut
+GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.guidance
+GET        /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterKnownFacts
+POST       /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.checkKnownFacts
+GET        /register-for-cbcid                            @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterKnownFacts
 
-GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileValidate(envelopeId: String, fileId:String)
-GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress(envelopeId: String, fileId: String)
-GET        /file-upload-response/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadResponse(envelopeId: String, fileId: String)
-GET        /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
-GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getBusinessRuleErrors
-GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getXmlSchemaErrors
-GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileInvalid
-GET        /virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileContainsVirus
-GET        /file-too-large                                @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileTooLarge
-GET        /failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.handleError(errorCode:Int, reason:String)
+GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileValidate(envelopeId: String, fileId:String)
+GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadProgress(envelopeId: String, fileId: String)
+GET        /file-upload-response/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadResponse(envelopeId: String, fileId: String)
+GET        /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.chooseXMLFile
+GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.getBusinessRuleErrors
+GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.getXmlSchemaErrors
+GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileInvalid
+GET        /virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileContainsVirus
+GET        /file-too-large                                @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileTooLarge
+GET        /failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.handleError(errorCode:Int, reason:String)
 
-POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUltimateParentEntity
-POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSubmitterInfo
-POST       /reconfirmEmailSubmit                          @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmailSubmit
-POST       /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitUtr
-GET        /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.Submission.utr
-GET        /submitter-info                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitterInfo
-GET        /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.Submission.upe
-GET        /reconfirmEmail                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.reconfirmEmail
-GET        /submit-summary                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSummary
-GET        /submit-receipt                                @uk.gov.hmrc.cbcrfrontend.controllers.Submission.submitSuccessReceipt
-GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.Submission.filingHistory
-POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.Submission.confirm
+POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUltimateParentEntity
+POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSubmitterInfo
+POST       /reconfirmEmailSubmit                          @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.reconfirmEmailSubmit
+POST       /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUtr
+GET        /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.utr
+GET        /submitter-info                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitterInfo
+GET        /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.upe
+GET        /reconfirmEmail                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.reconfirmEmail
+GET        /submit-summary                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSummary
+GET        /submit-receipt                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSuccessReceipt
+GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.filingHistory
+POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.confirm
+POST       /enter-company-name                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.saveCompanyName
+GET        /enter-company-name                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.enterCompanyName
 
-GET        /known-facts-check                             @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
-POST       /checkKnownFacts                               @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.checkKnownFacts
-GET        /register-for-cbcid                            @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.enterKnownFacts
-GET        /contactInfoSubscriber                         @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.contactInfoSubscriber
-GET        /subscribeSuccessCbcId/:cbcId                  @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeSuccessCbcId(cbcId:String)
-GET        /subscriberReconfirmEmail                      @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.reconfirmEmail
-POST       /subscriberReconfirmEmailSubmit                @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.reconfirmEmailSubmit
-
-POST       /submitSubscriptionData                        @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.submitSubscriptionData
-DELETE     /clear-subscription-data/:utr                  @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.clearSubscriptionData(utr:uk.gov.hmrc.cbcrfrontend.model.Utr)
+GET        /contactInfoSubscriber                         @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber
+GET        /subscribeSuccessCbcId/:cbcId                  @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
+GET        /subscriberReconfirmEmail                      @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmail
+POST       /subscriberReconfirmEmailSubmit                @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmailSubmit
+POST       /submitSubscriptionData                        @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.submitSubscriptionData
+DELETE     /clear-subscription-data/:utr                  @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.clearSubscriptionData(utr:uk.gov.hmrc.cbcrfrontend.model.Utr)
 
 GET        /deEnrol                                       @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.deEnrol
 GET        /enrolments                                    @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.getEnrolments
