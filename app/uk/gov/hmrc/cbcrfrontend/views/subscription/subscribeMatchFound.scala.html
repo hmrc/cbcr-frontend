@@ -60,14 +60,17 @@ implicit request: Request[_], messages: Messages)
             <p>
               @Messages("subscribeMatchFound.businessDetails.advice")
             </p>
-            <p><a href="register-for-cbcid">Back</a></p>
-
-            <p>
-                @userType match {
-                    case Organisation => { <a class="button" href="/country-by-country-reporting/contactInfoSubscriber" role="button">@Messages("form.controls.continue")</a> }
-                    case Agent => { <a class="button" href="/country-by-country-reporting/submit-summary" role="button">@Messages("form.controls.continue")</a> }
+            @userType match {
+                case Organisation => {
+                    <p><a href="register-for-cbcid">Back</a></p>
+                    <p><a class="button" href="contactInfoSubscriber" role="button">@Messages("form.controls.continue")</a></p>
                 }
-            </p>
+                case Agent        => {
+                    <p><a href="known-facts">Back</a></p>
+                    <p><a class="button" href="submit-summary" role="button">@Messages("form.controls.continue")</a></p>
+                }
+            }
+
 
         </div>
     </div>
