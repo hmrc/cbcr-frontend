@@ -134,13 +134,13 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
    "return 406 if we have already subscribed" in {
      when(enrol.getEnrolments(any())) thenReturn List(Enrolment("HMRC-CBC-ORG",List.empty))
      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
-     status(controller.enterKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
+     status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
 
    }
     "return 200 if we haven't already subscribed" in {
       when(enrol.getEnrolments(any())) thenReturn List.empty
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
-      status(controller.enterKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
+      status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
 
