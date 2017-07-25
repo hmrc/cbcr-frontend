@@ -7,9 +7,9 @@ GET        /                                              @uk.gov.hmrc.cbcrfront
 POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.submitCBCId
 GET        /signOut                                       @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOut
 GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.guidance
-GET        /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterKnownFacts
+GET        /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsAgent
 POST       /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.checkKnownFacts
-GET        /register-for-cbcid                            @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterKnownFacts
+GET        /register-for-cbcid                            @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsOrganisation
 
 GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileValidate(envelopeId: String, fileId:String)
 GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadProgress(envelopeId: String, fileId: String)
