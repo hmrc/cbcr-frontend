@@ -188,4 +188,6 @@ submitterInfo.emailAddress=Your email address
 submitterInfo.emailAddress.error=Please enter a valid email address
 
 
-
+notAuthorised.mainHeading=Agents aren''t authorised to register for this service
+notAuthorised.message=Did you mean to
+notAuthorised.message.link=send a country by country report

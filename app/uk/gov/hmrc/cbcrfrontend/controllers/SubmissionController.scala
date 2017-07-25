@@ -252,7 +252,7 @@ class SubmissionController @Inject()(val sec: SecuredActions, val cache:CBCSessi
               if (straightThrough) Redirect(routes.SubmissionController.submitSummary())
               else Redirect(routes.SharedController.enterCBCId())
             case Agent        =>
-              Redirect(routes.SharedController.enterKnownFacts())
+              Redirect(routes.SharedController.verifyKnownFactsAgent())
           }
         )
       )
