@@ -15,7 +15,7 @@ enterCBCId.dontHaveAnID.link.text=Register online
 enterCBCId.errorSummary.header=This Country by Country ID is invalid. This could be because:
 enterCBCId.errorSummary.reason1=It doesn''t match any that have been registered
 enterCBCId.errorSummary.reason2=You''ve entered it wrongly
-enterCBCId.missMatch.header=The country-by-country ID doesn't match the one created for this multinational group.
+enterCBCId.missMatch.header=The country-by-country ID doesn''t match the one created for this multinational group.
 enterCBCId.missMatch.message1=Try again, or
 enterCBCId.missMatch.message2=contact HMRC.
 
@@ -30,7 +30,7 @@ subscribeFirst.noMatchingBusiness.suggestion4=If you think these details are cor
 subscribeFirst.utr.errors.errorNotification=This should be a 10 digit number
 subscribeFirst.utr.label=Unique Taxpayer Reference (UTR)
 subscribeFirst.utr.hint=This should be either a Corporation Tax or a Self Assessment UTR
-subscribeFirst.utr.errors.formHint=This should be either a Corportation Tax or a Self Assessment UTR
+subscribeFirst.utr.errors.formHint=This should be either a Corporation Tax or a Self Assessment UTR
 subscribeFirst.postcode.errors.errorNotification=Enter a valid UK postcode
 subscribeFirst.postcode.label=UK postcode
 
@@ -116,7 +116,7 @@ submitSuccessReceipt.print=Print this page
 submitSuccessReceipt.print.text=Print this screen to keep a record of your report.
 submitSuccessReceipt.whatNext.heading=What happens next
 submitSuccessReceipt.whatNext.info=We''ll check the information in your report. If there are no issues with it, there''s nothing more for you to do. If there are issues with your report, we''ll contact you.
-fileUploadProgress.mainHeading=Checking XML Schema…
+fileUploadProgress.mainHeading=Checking XML Schema
 fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
 
 fileUploadResult.mainHeading.ok=Your report''s format is correct
@@ -134,7 +134,7 @@ fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been s
 
 
 
-fileUploadProgress.mainHeading=Checking XML Schema…
+fileUploadProgress.mainHeading=Checking XML Schema
 fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
 
 fileUploadResult.mainHeading.ok=Your report''s format is correct
@@ -179,7 +179,7 @@ uploadResult.fileName=Filename
 uploadResult.fileSize=Size
 uploadResult.viewFormattingGuidance=View formatting guidance
 
-submitterInfo.mainHeading=Enter your contact details, as the sender fo the report
+submitterInfo.mainHeading=Enter your contact details, as the sender of the report
 submitterInfo.fullName=Your name
 submitterInfo.fullName.error=Please enter your full name
 submitterInfo.phoneNumber=Your phone number
