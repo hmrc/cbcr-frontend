@@ -27,7 +27,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.Messages.Implicits._
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
@@ -36,6 +36,7 @@ import uk.gov.hmrc.cbcrfrontend.services.{BPRKnownFactsService, CBCSessionCache,
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
@@ -132,7 +133,15 @@ class SharedController @Inject()(val sec: SecuredActions,
   def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
     enrolments.getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
 
-  val enterKnownFacts = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
+  val verifyKnownFactsOrganisation = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+    implicit request => enterKnownFacts(authContext)
+  }
+
+  val verifyKnownFactsAgent = sec.AsyncAuthenticatedAction() { authContext =>
+    implicit request => enterKnownFacts(authContext)
+  }
+
+  def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]) =
     getUserType(authContext).semiflatMap{ userType =>
       alreadyEnrolled.flatMap(subscribed =>
         if (subscribed) {
@@ -145,7 +154,6 @@ class SharedController @Inject()(val sec: SecuredActions,
       (errors: CBCErrors) => errorRedirect(errors),
       (result: Result)    => result
     )
-  }
 
   val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
