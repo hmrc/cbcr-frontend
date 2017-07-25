@@ -48,12 +48,12 @@ import uk.gov.hmrc.cbcrfrontend._
 
 
 @Singleton
-class FileUpload @Inject()(val sec: SecuredActions,
-                           val schemaValidator: CBCRXMLValidator,
-                           val businessRuleValidator: CBCBusinessRuleValidator,
-                           val cache:CBCSessionCache,
-                           val fileUploadService:FileUploadService,
-                           val xmlExtractor:XmlInfoExtract)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+class FileUploadController @Inject()(val sec: SecuredActions,
+                                     val schemaValidator: CBCRXMLValidator,
+                                     val businessRuleValidator: CBCBusinessRuleValidator,
+                                     val cache:CBCSessionCache,
+                                     val fileUploadService:FileUploadService,
+                                     val xmlExtractor:XmlInfoExtract)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend") }
@@ -72,7 +72,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
         s"redirect-success-url=$successRedirect&" +
         s"redirect-error-url=$fileUploadErrorRedirectUrl"
       fileName        = s"oecd-${LocalDateTime.now}-cbcr.xml"
-    } yield Ok(fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
+    } yield Ok(submission.fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
 
     result.leftMap(errorRedirect).merge
 
@@ -81,7 +81,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
   def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
     val hostName = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
-    Ok(fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
+    Ok(submission.fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
       envelopeId, fileId, hostName, assetsLocationPrefix))
   }
 
@@ -124,18 +124,18 @@ class FileUpload @Inject()(val sec: SecuredActions,
       _                   <- EitherT.cond[Future](!schemaErrors.hasFatalErrors,(),FatalSchemaErrors)
       xml_bizErrors       <- validateBusinessRules(file_metadata._1,file_metadata._2)
       length              = (file_metadata._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-    } yield Ok(fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
+    } yield Ok(submission.fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
     result.leftMap{
-      case FatalSchemaErrors      => BadRequest(fileupload.fileUploadResult(None, None, true, false, includes.asideBusiness(), includes.phaseBannerBeta(),None))
-      case InvalidFileType(_)     => Redirect(routes.FileUpload.fileInvalid())
+      case FatalSchemaErrors      => BadRequest(submission.fileupload.fileUploadResult(None, None, true, false, includes.asideBusiness(), includes.phaseBannerBeta(),None))
+      case InvalidFileType(_)     => Redirect(routes.FileUploadController.fileInvalid())
       case e:CBCErrors            =>
         Logger.error(e.toString)
-        Redirect(routes.CBCController.technicalDifficulties())
+        Redirect(routes.SharedController.technicalDifficulties())
     }.merge.recover{
       case NonFatal(e) =>
         Logger.error(e.getMessage,e)
-        Redirect(routes.CBCController.technicalDifficulties())
+        Redirect(routes.SharedController.technicalDifficulties())
     }
 
  }
@@ -174,7 +174,7 @@ class FileUpload @Inject()(val sec: SecuredActions,
   def fileContainsVirus = fileUploadError(FileContainsVirus)
 
   private def fileUploadError(errorType:FileUploadErrorType) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Future.successful(Ok(fileupload.fileUploadError(
+    Future.successful(Ok(submission.fileupload.fileUploadError(
       includes.asideBusiness(),
       includes.phaseBannerBeta(),
       errorType
@@ -185,9 +185,9 @@ class FileUpload @Inject()(val sec: SecuredActions,
     Logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
     Future.successful(
       errorCode match {
-        case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUpload.fileTooLarge())
-        case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUpload.fileInvalid())
-        case _                        => Redirect(routes.CBCController.technicalDifficulties())
+        case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
+        case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
+        case _                        => Redirect(routes.SharedController.technicalDifficulties())
       }
     )
   }

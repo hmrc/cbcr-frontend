@@ -74,7 +74,6 @@ object SubmissionMetaData {
       "submitterInfo" -> Json.obj(
         "fullName" -> o.submitterInfo.fullName,
         "agencyBusinessName" -> o.submitterInfo.agencyBusinessName,
-        "jobRole" -> o.submitterInfo.jobRole,
         "email" -> o.submitterInfo.email.value,
         "affinityGroup" -> o.submitterInfo.affinityGroup.map(_.affinityGroup)
       )
