@@ -125,6 +125,10 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
     )
   }
 
+  val alreadySubscribed = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
+    Future.successful(Ok(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
+  }
+
 
   val reconfirmEmailSubmit = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
