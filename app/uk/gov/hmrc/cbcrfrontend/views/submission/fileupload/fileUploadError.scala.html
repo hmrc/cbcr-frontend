@@ -27,7 +27,7 @@
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 <div class="grid-row">
     <div class="column-two-thirds">
-        <h1> Your report has not been uploaded </h1>
+        <h1>@Messages("fileUploadResult.error")</h1>
 
         <div class="flash error-summary error-summary--show"
              id="error-summary-display"
@@ -35,7 +35,7 @@
              aria-labelledby="error-summary-heading"
              tabindex="-1">
             @defining("fileUploadResult.error." + errorType.toString) { key =>
-            <p>@Messages(key)</p>
+                <p>@Messages(key)</p>
             }
         </div>
 

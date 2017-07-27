@@ -145,7 +145,7 @@ class SharedController @Inject()(val sec: SecuredActions,
     getUserType(authContext).semiflatMap{ userType =>
       alreadyEnrolled.flatMap(subscribed =>
         if (subscribed) {
-          NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta(),userType))
+          NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta()))
         } else {
           Ok(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, userType))
         }
@@ -168,12 +168,12 @@ class SharedController @Inject()(val sec: SecuredActions,
             NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
           )
           alreadySubscribed <- subDataService.alreadySubscribed(knownFacts.utr).leftMap(errorRedirect)
-          _ <- EitherT.cond[Future]( userType match {
-            case Organisation => !alreadySubscribed
-            case Agent        => alreadySubscribed
-          },(), NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta(), userType)))
-          _ <- EitherT.right[Future, Result, CacheMap](cache.save(bpr))
-          _ <- EitherT.right[Future, Result, CacheMap](cache.save(knownFacts.utr))
+          _ <- EitherT.fromEither[Future](userType match {
+            case Organisation if alreadySubscribed => Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
+            case Agent if !alreadySubscribed       => Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
+            case _                                 => Right(())
+          })
+          _ <- EitherT.right[Future, Result, Unit]((cache.save(bpr) |@| cache.save(knownFacts.utr)).map((_,_) => ()))
         } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value,userType))
 
       )

@@ -37,6 +37,7 @@ POST       /confirm                                       @uk.gov.hmrc.cbcrfront
 POST       /enter-company-name                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.saveCompanyName
 GET        /enter-company-name                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.enterCompanyName
 
+GET        /already-subscribed                            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.alreadySubscribed
 GET        /contactInfoSubscriber                         @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber
 GET        /subscribeSuccessCbcId/:cbcId                  @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
 GET        /subscriberReconfirmEmail                      @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmail

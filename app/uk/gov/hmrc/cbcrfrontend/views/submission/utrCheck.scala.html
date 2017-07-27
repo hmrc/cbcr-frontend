@@ -29,21 +29,16 @@ implicit request: Request[_], messages: Messages)
 
 <div class="grid-row">
     <div class="column-two-thirds">
-        <h1>
-            Enter the Unique Taxpayer Reference of your UK business
-        </h1>
+        <h1>@Messages("utrCheck.mainHeading")</h1>
         @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
         @CSRF.formField
         <fieldset>
-            <legend class="visuallyhidden">Enter UK details for registered business</legend>
             <div class="form-field @if(error){ form-field--error} else { form-field--tall }">
                 @if(form.error("utr").isDefined){
-                <span class="error-notification">Please enter a valid UTR</span>
+                <span class="error-notification">@Messages("utrCheck.error")</span>
                 }
-                <label>
-                    Unique Taxpayer Reference
-                    <input class="form-control--block" type="text" name="utr" id="utr" value=""/>
-                </label>
+                <label>@Messages("utrCheck.label")</label>
+                <input class="form-control--block" type="text" name="utr" id="utr" value=""/>
             </div>
         </fieldset>
         <p><button type="submit" class="button">@Messages("form.controls.continue")</button></p>
