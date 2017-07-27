@@ -22,7 +22,7 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
 
-@(asideCbc: Html, phaseBannerBeta: Html, userType:UserType)(
+@(asideCbc: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -33,28 +33,15 @@ implicit request: Request[_], messages: Messages)
 <div class="grid-row">
     <div class="column-two-thirds">
 
-        @{userType match {
-            case Agent =>
-        <h1> Verify your client Organisations Details </h1>
-        <div class="flash error-summary error-summary--show"
-             id="error-summary-display"
-             role="alert"
-             aria-labelledby="error-summary-heading"
-             tabindex="-1">
-            <p>This multinational enterprise has not been registered for Country by Country Reporting.  </p>
-            <p>If this isn't correct, <a href="#">contact HMRC.</a></p>
-        </div>
-        case Organisation =>
-        <h1> Register for Country by Country reporting </h1>
+        <h1>@Messages("subscribeFirst.mainHeading")</h1>
             <div class="flash error-summary error-summary--show"
              id="error-summary-display"
              role="alert"
              aria-labelledby="error-summary-heading"
              tabindex="-1">
-             <p>This multinational enterprise has already been registered.  </p>
-             <p>If this isn't correct, <a href="#">contact HMRC.</a></p>
+             <p>@Messages("subscribeFirst.alreadyRegistered")</p>
+             <p>@Messages("subscribeFirst.alreadyRegistered2") <a href="#">@Messages("subscribeFirst.alreadyRegistered2.link")</a></p>
             </div>
-        }}
 
         <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
     </div>

@@ -34,8 +34,6 @@ implicit request: Request[_], messages: Messages)
 }
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
-
 
 <main id="content" role="main">
 
@@ -43,37 +41,38 @@ implicit request: Request[_], messages: Messages)
         <div class="column-two-thirds">
             <h1>
                 @if(!errors){
-                    @Messages("uploadResult.mainHeading.ok")
+                    @Messages("fileUploadResult.mainHeading.ok")
                 } else {
-                    @Messages("uploadResult.mainHeading.error")
+                    @Messages("fileUploadResult.mainHeading.error")
                 }
             </h1>
 
             @if(schemaErrors) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>@Messages("fileUploadResult.error.xml")</p>
-
-                <div class="notice">
-                    <a href="../../get-xml-schema-errors">@Messages("fileUploadResult.error.xml.download")</a>
-                </div>
-                <br>
+                <p>@Messages("fileUploadResult.error") <a href="../../get-xml-schema-errors">@Messages("fileUploadResult.error.xml.link")</a>.</p>
+                <p>@Messages("fileUploadResult.error.xml.message")</p>
             </div>
+
             } @if(busErrors){
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>@Messages("fileUploadResult.error.data")</p>
-                <div class="notice">
-                    <a href="../../get-business-rule-errors">@Messages("fileUploadResult.error.data.download")</a>
-                </div>
-                <br>
+                <p>@Messages("fileUploadResult.error") <a href="../../get-business-rule-errors">@Messages("fileUploadResult.error.data.link")</a>.</p>
+                <p>@Messages("fileUploadResult.error.data.message")</p>
             </div>
             }
+                <br>
             @if(!errors){
             <table id="table-successReport">
                 <tbody>
-                <th scope="row">@Messages("uploadResult.fileName")</th>
-                <th scope="row">@fileName</th>
                 <tr>
-                    <td>@Messages("uploadResult.fileSize")</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                <td scope="row">@Messages("fileUploadResult.fileName")</td>
+                <td scope="row">@fileName</td>
+                </tr>
+                <tr>
+                    <td>@Messages("fileUploadResult.fileSize")</td>
                     <td>@fileSize KB</td>
                 </tr>
                 </tbody>
@@ -86,7 +85,7 @@ implicit request: Request[_], messages: Messages)
                     case None         => <p></p>
                 }}
             } else {
-            <p><a href="#">@Messages("uploadResult.viewFormattingGuidance")</a></p>
+            <p><a href="#">@Messages("fileUploadResult.error.guidance")</a></p>
             <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
             }
 

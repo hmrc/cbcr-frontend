@@ -38,13 +38,8 @@ implicit request: Request[_], messages: Messages)
                     <p class="transaction-banner__heading">
                 </div>
             </section>
-            <p></p>
-            @Messages("submitSuccessReceipt.digiSig")
-            @hash
 
-            <p>@Messages("submitSuccessReceipt.printInfo")</p>
-            <button onclick="window.print()" class="toggle__button">@Messages("submitSuccessReceipt.print")</button>
-            <br>
+            <p><a href="#" onclick="window.print()" class="print-link">@Messages("submitSuccessReceipt.print")</a></p>
             <h3>@Messages("submitSuccessReceipt.whatNext.heading")</h3>
             @Messages("submitSuccessReceipt.whatNext.info")
             <p>
