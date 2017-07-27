@@ -61,7 +61,7 @@ class SubscriptionDataService extends ServicesConfig{
 
   }
   def saveSubscriptionData(data:SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
-    val fullUrl = url.url + s"/cbcr/saveSubscriptionData"
+    val fullUrl = url.url + s"/cbcr/subscription-data"
     EitherT[Future,CBCErrors, String](
       WSHttp.POST[SubscriptionDetails,HttpResponse](fullUrl,data).map { response =>
         response.status match {
@@ -76,7 +76,7 @@ class SubscriptionDataService extends ServicesConfig{
 
   def clearSubscriptionData(id: Either[Utr,CBCId])(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]] = {
 
-    val fullUrl = url.url + s"/cbcr/clearSubscriptionData"
+    val fullUrl = (cbcId:CBCId) => url.url + s"/cbcr/subscription-data/$cbcId"
 
     for {
       cbc    <- id.fold(
@@ -85,7 +85,7 @@ class SubscriptionDataService extends ServicesConfig{
       )
       result <- cbc.fold(EitherT.pure[Future,CBCErrors,Option[String]](None))(id =>
         EitherT[Future, CBCErrors, Option[String]](
-          WSHttp.POST[CBCId, HttpResponse](fullUrl, id).map { response =>
+          WSHttp.DELETE[HttpResponse](fullUrl(id)).map { response =>
             Right[CBCErrors, Option[String]](Some(response.body))
           }.recover {
             case _:NotFoundException => Right[CBCErrors, Option[String]](None)
