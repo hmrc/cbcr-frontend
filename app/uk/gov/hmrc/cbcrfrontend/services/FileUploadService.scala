@@ -16,111 +16,118 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{BufferedInputStream, FileInputStream}
+import java.io.{BufferedInputStream, File, FileInputStream}
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
+import javax.inject.{Inject, Singleton}
 
+import cats.data.EitherT
 import cats.implicits._
 import play.api.Logger
-import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.typesclasses._
+import uk.gov.hmrc.cbcrfrontend.typesclasses.{HttpExecutor, _}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.ExecutionContext
 
 
-class FileUploadService(fusConnector: FileUploadServiceConnector) {
+@Singleton
+class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
 
-  implicit val xmlUploadCallbackFormat: Format[XMLUploadCallback] = (
-    (JsPath \ "envelopeId").format[String] and
-      (JsPath \ "fileId").format[String] and
-      (JsPath \ "status").format[String]
+  def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext, fusUrl: ServiceUrl[FusUrl], cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[EnvelopeId] = {
+    Logger.debug("Country by Country: Creating an envelope for file upload")
+    val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+    def envelopeExpiryDate(numberOfDays: Int) = LocalDateTime.now.plusDays(numberOfDays).format(formatter)
 
-    ) (XMLUploadCallback.apply, unlift(XMLUploadCallback.unapply))
+    EitherT(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl.url, envelopeExpiryDate(7)))).map(fusConnector.extractEnvelopId))
+  }
 
-
-  def createEnvelopeAndUpload(
+  def uploadFile(xmlFile: java.io.File, envelopeId: String, fileId: String)(
                       implicit
                       hc: HeaderCarrier,
                       ec: ExecutionContext,
-                      fusUrl: ServiceUrl[FusUrl],
-                      fusFeUrl: ServiceUrl[FusFeUrl],
-                      cbcrsUrl: ServiceUrl[CbcrsUrl],
-                      protocolHostName: String,
-                      xmlFile: java.io.File
-                    ): ServiceResponse[String] = {
+                      fusFeUrl: ServiceUrl[FusFeUrl]
+                ): ServiceResponse[String] = {
 
-    val date = LocalDateTime.now
-    val fileNamePrefix = s"oecd-$date"
-
-    val fileId = UUID.randomUUID.toString
+    val fileNamePrefix = s"oecd-${LocalDateTime.now}"
     val bis = new BufferedInputStream(new FileInputStream(xmlFile))
     val xmlByteArray: Array[Byte] = Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
+
+    Logger.debug("Country by Country: FileUpload service: Uploading the file to the envelope")
+
+    fromFutureOptA(HttpExecutor(fusFeUrl,
+      UploadFile(EnvelopeId(envelopeId),
+        FileId(fileId), s"$fileNamePrefix-cbcr.xml ", "application/xml;charset=UTF-8", xmlByteArray)).map(fusConnector.extractFileUploadMessage))
+
+  }
+
+
+  def getFileUploadResponse(envelopeId: String, fileId: String)( implicit hc: HeaderCarrier, ec: ExecutionContext, cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[Option[FileUploadCallbackResponse]] =
+    EitherT(
+      WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/$envelopeId")
+        .map(resp => resp.status match {
+          case 200 => resp.json.validate[FileUploadCallbackResponse].fold(
+            invalid   => Left(UnexpectedState("Problems extracting File Upload response message "+invalid)),
+            response  => Right(Some(response))
+          )
+          case 204 => Right(None)
+          case _   => Left(UnexpectedState("Problems getting File Upload response message"))
+        })
+    )
+
+
+  def getFile(envelopeId: String, fileId: String)(
+                   implicit
+                   hc: HeaderCarrier,
+                   ec: ExecutionContext,
+                   fusUrl: ServiceUrl[FusUrl]
+                   ): ServiceResponse[File] = {
+
+      fromFutureOptA(WSHttp.GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").map(fusConnector.extractFile))
+  }
+
+
+  def deleteEnvelope(envelopeId: String)(
+    implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    fusUrl: ServiceUrl[FusUrl]
+  ): ServiceResponse[String] = {
+
+    fromFutureOptA(WSHttp.DELETE[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId").map(fusConnector.extractEnvelopeDeleteMessage))
+  }
+
+
+  def getFileMetaData(envelopeId: String, fileId: String)(
+    implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    fusUrl: ServiceUrl[FusUrl]
+  ): ServiceResponse[Option[FileMetadata]] = {
+
+    fromFutureOptA(WSHttp.GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata").map(fusConnector.extractFileMetadata))
+  }
+
+
+  def uploadMetadataAndRoute(metaData:SubmissionMetaData)( implicit hc: HeaderCarrier,
+                                                           ec: ExecutionContext,
+                                                           fusUrl: ServiceUrl[FusUrl],
+                                                           fusFeUrl: ServiceUrl[FusFeUrl] ): ServiceResponse[String] = {
+
     val metadataFileId = UUID.randomUUID.toString
-
-
-    Logger.debug("Country by Country: Creating an envelope for file upload")
+    val envelopeId = metaData.fileInfo.envelopeId
 
     for {
-      envelopeId <- fromFutureOptA(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest("formTypeRef", protocolHostName, cbcrsUrl.url))).map(fusConnector.extractEnvelopId))
-      uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
-        UploadFile(envelopeId, FileId(s"xml-$fileId"), s"$fileNamePrefix-cbcr.xml ", " application/xml; charset=UTF-8", xmlByteArray)))
-      uploaded <- fromFutureA(HttpExecutor(fusFeUrl,
-        UploadFile(envelopeId, FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", mockedMetadata)))
-
-      _          <- fromFutureA    (HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "dfs", "DMS")))
-
-    } yield envelopeId.value
-  }
-
-
-  def getFileUploadResponse(
-                             implicit
-                             hc: HeaderCarrier,
-                             ec: ExecutionContext,
-                             cbcrsUrl: ServiceUrl[CbcrsUrl],
-                             envelopeId: String
-                           ): ServiceResponse[String] = {
-
-
-    Logger.debug("Country by Country: Get file upload response")
-
-
-    for {
-    //      fileUploadResponse <- fromFutureA(HttpExecutor(cbcrsUrl, GetFileUploadResponse(envelopeId)))
-
-      fileUploadResponse <- fromFutureA(WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/" + envelopeId + "?cbcId=CBCId1234"))
-
-
-    } yield fileUploadResponse.body
-  }
-
-
-  def saveFileUploadCallbackResponse(
-                                      implicit
-                                      hc: HeaderCarrier,
-                                      callbackResponse: JsObject,
-                                      ec: ExecutionContext,
-                                      cbcrsUrl: ServiceUrl[CbcrsUrl]
-                                    ): ServiceResponse[String] = {
-
-    Logger.debug("Country by Country: Save file upload response")
-
-    for {
-      saveResponse <- fromFutureA(HttpExecutor(cbcrsUrl, FileUploadCallbackResponse(callbackResponse)))
-    } yield saveResponse.body
-
-  }
-
-  def mockedMetadata = {
-    val bis = new BufferedInputStream(new FileInputStream("docs/metadata.json"))
-    Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
-
+      _ <- EitherT.right(HttpExecutor(fusFeUrl, UploadFile(envelopeId,
+        FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", Json.toJson(metaData).toString().getBytes)
+      ))
+      resourceUrl <- EitherT.right(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")))
+    } yield resourceUrl.body
   }
 
 }

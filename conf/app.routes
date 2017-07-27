@@ -1,36 +1,54 @@
 # microservice specific routes
 
-POST       /fileUploadCallback          @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadCallback
 
-GET        /enter-CBCId                 @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.enterCBCId
-POST       /submit-CBCId                @uk.gov.hmrc.cbcrfrontend.controllers.CBCController.submitCBCId
+GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
+GET        /enter-CBCId                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
+GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
+POST       /submit-CBCId                                  @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.submitCBCId
+GET        /signOut                                       @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOut
+GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.guidance
+GET        /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsAgent
+POST       /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.checkKnownFacts
+GET        /register-for-cbcid                            @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsOrganisation
 
-GET        /getFileuploadResponse/:envelopeId  @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.getFileUploadResponse(envelopeId: String)
-POST       /file-upload                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.upload
-POST       /upload-report               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.chooseXMLFile
-GET        /upload-progress             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.fileUploadProgress
-GET        /successFileUpload           @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.successFileUpload
+GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileValidate(envelopeId: String, fileId:String)
+GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadProgress(envelopeId: String, fileId: String)
+GET        /file-upload-response/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadResponse(envelopeId: String, fileId: String)
+GET        /upload-report                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.chooseXMLFile
+GET        /get-business-rule-errors                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.getBusinessRuleErrors
+GET        /get-xml-schema-errors                         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.getXmlSchemaErrors
+GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileInvalid
+GET        /virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileContainsVirus
+GET        /file-too-large                                @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileTooLarge
+GET        /failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.handleError(errorCode:Int, reason:String)
 
-GET        /submitInfoFilingType        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoFilingType
-GET        /submitInfoUltimateParentEntity      @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoUltimateParentEntity
-GET        /submitInfoFilingCapacity    @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitInfoFilingCapacity
+POST       /submitUltimateParentEntity                    @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUltimateParentEntity
+POST       /submitSubmitterInfo                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSubmitterInfo
+POST       /reconfirmEmailSubmit                          @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.reconfirmEmailSubmit
+POST       /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUtr
+GET        /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.utr
+GET        /submitter-info                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitterInfo
+GET        /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.upe
+GET        /reconfirmEmail                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.reconfirmEmail
+GET        /submit-summary                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSummary
+GET        /submit-receipt                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSuccessReceipt
+GET        /filingHistory                                 @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.filingHistory
+POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.confirm
+POST       /enter-company-name                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.saveCompanyName
+GET        /enter-company-name                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.enterCompanyName
 
+GET        /contactInfoSubscriber                         @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber
+GET        /subscribeSuccessCbcId/:cbcId                  @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
+GET        /subscriberReconfirmEmail                      @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmail
+POST       /subscriberReconfirmEmailSubmit                @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmailSubmit
+POST       /submitSubscriptionData                        @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.submitSubscriptionData
+DELETE     /clear-subscription-data/:utr                  @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.clearSubscriptionData(utr:uk.gov.hmrc.cbcrfrontend.model.Utr)
 
-GET        /errorFileUpload             @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.errorFileUpload
-GET        /contactInfoSubmitter        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.contactInfoSubmitter
-GET        /submitSummary               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitSummary
-GET        /submitSuccessReceipt        @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.submitSuccessReceipt
-GET        /filingHistory               @uk.gov.hmrc.cbcrfrontend.controllers.FileUpload.filingHistory
+GET        /deEnrol                                       @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.deEnrol
+GET        /enrolments                                    @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.getEnrolments
 
-POST       /checkKnownFacts             @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.checkKnownFacts
-GET        /subscribeFirst              @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeFirst
-GET        /contactInfoSubscriber       @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.contactInfoSubscriber
+GET        /assets/*file                                  controllers.Assets.versioned(path="/public", file: Asset)
 
-GET        /subscribeSuccessCbcId/:cbcId       @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.subscribeSuccessCbcId(cbcId:String)
-POST       /submitSubscriptionData             @uk.gov.hmrc.cbcrfrontend.controllers.Subscription.submitSubscriptionData
-
-
-GET        /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 
 
 

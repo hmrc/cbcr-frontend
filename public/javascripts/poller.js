@@ -1,20 +1,25 @@
 
 
-function poll(envelopeId, protocolHostName) {
+function poll(envelopeId, fileId, protocolHostName) {
    setTimeout(function() {
-
-      $.ajax({ url: protocolHostName+"/country-by-country-reporting/getFileuploadResponse/"+envelopeId, success: function(data){
-        var key = "status";
-        var value = data[key];
-        var eKey = "envelopeId"
-        var eVal = data[eKey]
-
-        if(eVal == envelopeId && value == 'AVAILABLE'){
-            window.location.href= protocolHostName+"/country-by-country-reporting/successFileUpload";
-        } else{
-        //Setup the next poll recursively
-        poll(envelopeId, protocolHostName);
+      $.ajax({ url: protocolHostName+"/country-by-country-reporting/file-upload-response/"+envelopeId+"/"+fileId,
+      success: function(data, statusText, xhr){
+          if(xhr.status == 202) {
+            window.location.href=protocolHostName+"/country-by-country-reporting/file-upload-ready/"+envelopeId + "/" + fileId
+        }else{
+          //Setup the next poll recursively
+          poll(envelopeId, fileId, protocolHostName);
         }
-      }, dataType: "json"});
-  }, 2000);
+      },
+      error: function(xhr,status,error){
+        var errMsg = xhr.responseText;
+          if(xhr.status == 409) {
+            window.location.href=protocolHostName+"/country-by-country-reporting/virus-check-failed";
+          } else {
+            window.location.href= protocolHostName+"/country-by-country-reporting/technical-difficulties";
+          }
+      }
+
+      });
+  }, 3000);
 }

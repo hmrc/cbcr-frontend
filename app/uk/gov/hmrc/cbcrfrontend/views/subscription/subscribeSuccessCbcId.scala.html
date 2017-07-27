@@ -17,8 +17,9 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.model.CBCId
 
-@(asideBusiness: Html, phaseBannerBeta: Html, cbcId:String, companyName:Option[String])(
+@(asideBusiness: Html, phaseBannerBeta: Html, cbcId:CBCId, companyName:Option[String])(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -26,32 +27,24 @@ implicit request: Request[_], messages: Messages)
 }
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
     <div class="grid-row">
         <div class="column-two-thirds">
             <section>
-                <div class="govuk-box-highlight">
-                    <h1>Registration complete for @companyName</h1>
-                    <p>
-                        Your Country by Country ID is: <br>
-                        <strong class="heading-medium">@cbcId</strong>
+                <div class="transaction-banner--complete">
+                    <span class="transaction-banner__heading h1-heading">@Messages("subscribeSuccessCbcId.mainHeading") @companyName</span>
+                    <p class="transaction-banner__heading">
+                        @Messages("subscribeSuccessCbcId.subHeading")<br>
+                        <strong class="heading-medium">@cbcId.value</strong>
                     </p>
                 </div>
             </section>
-            <button onclick="myFunction()" class="toggle__button" style="padding:0;">Print this page</button>
-            <p>Print or save this screen and keep your ID safe. You 'll need it each time you want to submit a report.</p>
-            <br>
-            <h2 class="heading-medium">What happens next?</h2>
-            <ul>
-                <li>Create your report using the <a href="#">correct report format</a> </li>
-                <li>List your ID in the <a href="#">required field</a> of your report</li>
-                <li>Submit your report using HMRC's online service</li>
-            </ul>
+            <button onclick="window.print()" class="toggle__button" style="padding:0;">@Messages("subscribeSuccessCbcId.printThisButton")</button>
+            <p>@Messages("subscribeSuccessCbcId.printThis1")</p>
+            <p>@Messages("subscribeSuccessCbcId.printThis2")</p>
+            <p>@Messages("subscribeSuccessCbcId.printThis3")</p>
             <p>
-                <a class="button" href="/">Sign out</a>
+                <a class="button" href="/country-by-country-reporting/upload-report">@Messages("cbc.button.continue")</a>
             </p>
-            <hr>
-            <p><a href="https://www.gov.uk/service-manual/user-centred-design/resources/patterns/feedback-pages.html">What did you think of this service?</a></p>
         </div>
 
     </div>
