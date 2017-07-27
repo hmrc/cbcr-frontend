@@ -86,15 +86,13 @@ class SubscriptionDataService extends ServicesConfig{
       result <- cbc.fold(EitherT.pure[Future,CBCErrors,Option[String]](None))(id =>
         EitherT[Future, CBCErrors, Option[String]](
           WSHttp.POST[CBCId, HttpResponse](fullUrl, id).map { response =>
-            response.status match {
-              case Status.OK        => Right[CBCErrors, Option[String]](Some(response.body))
-              case Status.NOT_FOUND => Right[CBCErrors, Option[String]](None)
-              case _ => Left[CBCErrors, Option[String]](UnexpectedState(response.body))
-            }
+            Right[CBCErrors, Option[String]](Some(response.body))
           }.recover {
-            case NonFatal(t) => Left[CBCErrors, Option[String]](UnexpectedState(t.getMessage))
+            case _:NotFoundException => Right[CBCErrors, Option[String]](None)
+            case NonFatal(t)         => Left[CBCErrors, Option[String]](UnexpectedState(t.getMessage))
           }
-        ))
+        )
+      )
     } yield result
 
   }
