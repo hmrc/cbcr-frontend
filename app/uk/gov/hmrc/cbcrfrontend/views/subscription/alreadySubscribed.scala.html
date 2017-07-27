@@ -1,0 +1,62 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import helper._
+@import tags._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.cbcrfrontend.model._
+
+@(asideCbc: Html, phaseBannerBeta: Html, userType:UserType)(
+implicit request: Request[_], messages: Messages)
+
+@sidebarContent = {
+@asideCbc
+}
+
+@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+<div class="grid-row">
+    <div class="column-two-thirds">
+
+        @{userType match {
+            case Agent =>
+        <h1> Verify your client Organisations Details </h1>
+        <div class="flash error-summary error-summary--show"
+             id="error-summary-display"
+             role="alert"
+             aria-labelledby="error-summary-heading"
+             tabindex="-1">
+            <p>This multinational enterprise has not been registered for Country by Country Reporting.  </p>
+            <p>If this isn't correct, <a href="#">contact HMRC.</a></p>
+        </div>
+        case Organisation =>
+        <h1> Register for Country by Country reporting </h1>
+            <div class="flash error-summary error-summary--show"
+             id="error-summary-display"
+             role="alert"
+             aria-labelledby="error-summary-heading"
+             tabindex="-1">
+             <p>This multinational enterprise has already been registered.  </p>
+             <p>If this isn't correct, <a href="#">contact HMRC.</a></p>
+            </div>
+        }}
+
+        <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
+    </div>
+</div>
+}

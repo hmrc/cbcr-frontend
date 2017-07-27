@@ -17,8 +17,9 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.model._
 
-@(asideCbc: Html, phaseBannerBeta: Html, name:String, postCode:String, utr:String)(
+@(asideCbc: Html, phaseBannerBeta: Html, name:String, postCode:String, utr:String, userType:UserType)(
 implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -26,41 +27,50 @@ implicit request: Request[_], messages: Messages)
 }
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-@phaseBannerBeta
+
 <main id="content" role="main">
 
     <div class="grid-row">
         <div class="column-two-thirds">
 
             <h1>
-                Confirm your business details
+                @Messages("subscribeMatchFound.mainHeading")
             </h1>
 
             <table class="form-group">
-                <thead>
                 <tr>
-                    <th colspan="2">Business details</th>
+                    <th colspan="2"></th>
                 </tr>
-                </thead>
                 <tbody>
                 <tr>
-                    <td>Name</td>
+                    <th>@Messages("subscribeMatchFound.businessDetails.name")</th>
                     <td>@name</td>
                 </tr>
                 <tr>
-                    <td>Postcode</td>
+                    <th>@Messages("subscribeMatchFound.businessDetails.postcode")</th>
                     <td>@postCode</td>
                 </tr>
                 <tr>
-                    <td>UTR</td>
+                    <th>@Messages("subscribeMatchFound.businessDetails.utr")</th>
                     <td>@utr</td>
                 </tr>
                 </tbody>
             </table>
 
             <p>
-                <a class="button" href="/country-by-country-reporting/contactInfoSubscriber" role="button">Continue</a>
+              @Messages("subscribeMatchFound.businessDetails.advice")
             </p>
+            @userType match {
+                case Organisation => {
+                    <p><a href="register-for-cbcid">Back</a></p>
+                    <p><a class="button" href="contactInfoSubscriber" role="button">@Messages("form.controls.continue")</a></p>
+                }
+                case Agent        => {
+                    <p><a href="known-facts">Back</a></p>
+                    <p><a class="button" href="submit-summary" role="button">@Messages("form.controls.continue")</a></p>
+                }
+            }
+
 
         </div>
     </div>

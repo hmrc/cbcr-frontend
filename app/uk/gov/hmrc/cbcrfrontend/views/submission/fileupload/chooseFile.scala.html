@@ -1,0 +1,63 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+
+@(fileUploadUrl: String, fileName: String, asideBusiness: Html, phaseBannerBeta: Html)(
+implicit request: Request[_], messages: Messages)
+
+@sidebarContent = {
+@asideBusiness
+}
+
+@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+    <div class="grid-row">
+        <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
+        <div class="column-two-thirds">
+            <h1>
+            @Messages("uploadReport.mainHeading")
+            </h1>
+
+            <div class="indent-warning">
+                <p><strong>@Messages("uploadReport.warning")</strong></p>
+            </div>
+            <p>@Messages("uploadReport.checkSize")</p>
+            <p>@Messages("uploadReport.wellCheck")</p>
+            <div class="form-group">
+                <div class="form-field-group">
+                    <label class="form-label" for="input-file">@Messages("uploadReport.inputField.label")</label>
+
+                    <span id="@fileName-error-message" class="error-notification" role="alert" data-input-name="@fileName">
+
+                    </span>
+                    <input type="file" id="input-file" class="upload-report-input" name ="@fileName" accept=".xml" required
+                data-msg-required="@Messages("uploadReport.error")">
+                    <p>@Messages("uploadReport.afterInputField")</p>
+                </div>
+                    <div class="form-field form-field--submit">
+                    @csrf_token()
+                <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
+                </div>
+
+            </div>
+
+            </div>
+        </form>
+    </div>
+
+}

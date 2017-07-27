@@ -1,0 +1,172 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import play.api.i18n.Messages.Implicits._
+@import play.api.Play.current
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+
+@()(implicit request: Request[_])
+
+
+@mainContent =  {
+
+    <div class="grid-row">
+        <div class="grid-layout__column--2-3">
+            <div class="govuk-title length-long">
+                <p class="context">Guidance</p>
+                <h1>Check if you must send a country-by-country report</h1></div></div>
+        </div>
+
+        <div class="grid-layout__column--2-3">
+            <div class="govuk-metadata direction-ltr" data-module="toggle">
+                <dl>
+                    <dt>Published:</dt>
+                    <dd>17 May 2017</dd>
+                    <dt>Last updated:</dt>
+                    <dd>        20 June 2017,           <a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#history" data-module="track-click" data-track-label="history" data-track-action="see-all-updates-link-clicked" data-track-category="content-history">            see all updates
+                    </a>       </dd></dl></div></div>
+    <p class="description">    Qualifying multinational groups must send HM Revenue
+        and Customs (HMRC) a report each year on certain aspects of their
+        business&nbsp;activities.   </p>
+    <div class="grid-row sidebar-with-body" id="contents" data-module="sticky-element-container">
+        <div class="grid-layout__column--1-3"><nav role="navigation">
+            <h2>Contents</h2>
+            <ol class="dash-list" data-module="track-click">
+                <li><a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#groups-which-must-complete-a-report" data-track-label="groups-which-must-complete-a-report" data-track-action="leftColumnH2" data-track-category="contentsClicked">Groups which must complete a report</a>
+                </li>
+                <li><a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#notify" data-track-label="notify" data-track-action="leftColumnH2" data-track-category="contentsClicked">Notifications</a>         </li>
+                <li><a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#reporting" data-track-label="reporting" data-track-action="leftColumnH2" data-track-category="contentsClicked">Send your report</a>         </li>
+                <li><a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#penalties" data-track-label="penalties" data-track-action="leftColumnH2" data-track-category="contentsClicked">Penalties</a>         </li>
+                <li><a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#contact-us" data-track-label="contact-us" data-track-action="leftColumnH2" data-track-category="contentsClicked">Contact us</a>         </li>
+                <li><a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#further-information" data-track-label="further-information" data-track-action="leftColumnH2" data-track-category="contentsClicked">Further information</a>
+                </li></ol></nav></div>
+        <div class="grid-layout__column--2-3 ">
+            <div class="govuk-govspeak direction-ltr">
+                <div class="govspeak">
+                    <div class="call-to-action">
+                        <p><a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#notify">Notify</a>
+                            <abbr title="HM Revenue and Customs">HMRC</abbr> that you’re required to send a
+                            country-by-country report.<br><br><a href="@routes.SharedController.verifyKnownFactsOrganisation()" rel="external">Register</a> to use the country-by-country reporting
+                            service.<br><br><a href="@routes.FileUploadController.chooseXMLFile()" rel="external" >Send a report</a> using the reporting service.</p></div>
+                    <p>The UK follows the country-by-country reporting requirements of the
+                        Organisation for Economic Co-operation and Development (<abbr title="Organisation for Economic Co-operation and Development">OECD</abbr>).
+                        You’ll have to send <abbr title="HM Revenue and Customs">HMRC</abbr> a <a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#reporting">report</a>
+                        if you meet certain criteria.</p>
+                    <h2 id="groups-which-must-complete-a-report">Groups which must complete a
+                        report</h2>
+                    <p>The reporting requirements apply to multinational enterprises with a
+                        consolidated revenue of €750 million or more in the relevant accounting
+                        period.</p>
+                    <p>You can find information on the qualifying criteria, and other areas, in the
+                        <a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#LINK%20to%20manual">International
+                            Exchange of Information Manual</a>.</p>
+                    <h3 id="controllingbusiness">Group’s reporting member</h3>
+                    <p>For <abbr title="HM Revenue and Customs">HMRC</abbr>’s purposes, this will be
+                        if you’re any of the following:</p>
+                    <ul>
+                        <li>based in the UK, and you’re the parent business of the group in
+                            question</li>
+                        <li>the highest level UK business of an enterprise based in a country that
+                            either:
+                            <ul>
+                                <li>doesn’t require your multinational enterprise to file a
+                                    country-by-country report</li>
+                                <li>has entered into a tax information exchange agreement, but with no
+                                    country-by-country reporting requirements</li>
+                                <li>has information exchange agreements already in place between it and the
+                                    UK, but <abbr title="HM Revenue and Customs">HMRC</abbr> has notified you
+                                    that they aren’t working effectively</li></ul></li></ul>
+                    <p>You can also <a href="#volunteer">volunteer
+                        to send <abbr title="HM Revenue and Customs">HMRC</abbr></a> a report if you
+                        aren’t required to do so.</p>
+                    <h2 id="notify">Notifications</h2>
+                    <p>If your group needs to send a report, you must tell <abbr title="HM Revenue and Customs">HMRC</abbr>
+                        each year at the end of your accounting period:</p>
+                    <ul>
+                        <li>that this is the case</li>
+                        <li>who will be sending the report</li>
+                        <li>which country the report will be sent to</li></ul>
+                    <p>You do this by emailing <a href="mailto:notification.cbcrfiling hmrc.gsi.gov.uk">notification.cbcrfiling hmrc.gsi.gov.uk</a>.</p>
+                    <div class="call-to-action">
+                        <p>Don’t send your country-by-country report to the notification
+                            mailbox.</p></div>
+                    <p>You will have until 1 September 2017 to do so if this is later than your
+                        relevant accounting period.</p>
+                    <p>If you have an <abbr title="HM Revenue and Customs">HMRC</abbr> Customer
+                        Relationship Manager (<abbr title="customer relationship manager">CRM</abbr>),
+                        copy them into your email.</p>
+                    <p>If you’ve told <abbr title="HM Revenue and Customs">HMRC</abbr> you’ll need
+                        to send a country-by-country report to us, you’ll need to <a href="">register</a>
+                        if you haven’t already done so.</p>
+                    <h2 id="reporting">Send your report</h2>
+                    <p>You’ll have to upload a valid, completed XML schema as part of the
+                        country-by-country reporting process.</p>
+                    <div class="call-to-action">
+                        <p>You must follow <a href="#business-rules">these
+                            rules</a> when completing the schema.</p></div>
+                    <p>In order to send <abbr title="HM Revenue and Customs">HMRC</abbr> your
+                        report, you’ll use the <a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#LINK%20to%20reporting%20service">reporting
+                        service</a>.</p>
+                    <p><abbr title="HM Revenue and Customs">HMRC</abbr> recommends you register at
+                        least 1 day before you need to send the report as you’ll need the CbCID number
+                        you’ll receive from registering in order to complete your XML schema.</p>
+                    <h3 id="deadl">Deadline</h3>
+                    <p>You must have sent your report within 12 months from the end of your relevant
+                        accounting period.</p>
+                    <p>If you need to correct or amend your report after you send it to <abbr title="HM Revenue and Customs">HMRC</abbr>,
+                        you have 3 years from the end of the relevant accounting period to do so.</p>
+                    <h2 id="penalties">Penalties</h2>
+                    <p>You could be charged a penalty for late filing or inaccuracies in your
+                        country-by-country report. You may be charged:</p>
+                    <ul>
+                        <li>£300 for failing to <a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#notify">notify</a>
+                            <abbr title="HM Revenue and Customs">HMRC</abbr> by the notification deadline,
+                            with a daily penalty of up to £60</li>
+                        <li>£300 for failing to report by the <a href="https://draft-origin.publishing.service.gov.uk/guidance/check-if-you-must-send-a-country-by-country-report#deadl">reporting
+                            deadline</a>, with a daily penalty of up to £60</li>
+                        <li>up to £3,000 for an inaccurate report</li></ul>
+                    <p>If there’s an error in your report, you can send a replacement schema by
+                        using the <a href="@routes.FileUploadController.chooseXMLFile()" rel="external">reporting service</a> again.</p>
+                    <p>You won’t receive a penalty for an inaccurate report where you’ve sent an
+                        accurate replacement schema before the deadline.</p>
+                    <h2 id="contact-us">Contact us</h2>
+                    <p>If you already have an <abbr title="HM Revenue and Customs">HMRC</abbr> <abbr title="customer relationship manager">CRM</abbr>, they should be your first
+                        point of contact for any questions in relation to:</p>
+                    <ul>
+                        <li>notifications</li>
+                        <li>the registration service</li>
+                        <li>the reporting service</li>
+                        <li><abbr title="HM Revenue and Customs">HMRC</abbr>’s rules for completing
+                            the XML schema</li></ul>
+                    <p>If you don’t have a <abbr title="customer relationship manager">CRM</abbr>,
+                        you can email [mailbox].</p>
+                    <h2 id="further-information">Further information</h2>
+                    <p>You can find more details on the above in the <a href="https://www.gov.uk/hmrc-internal-manuals/international-exchange-of-information">International
+                        Exchange of Information Manual</a>.</p></div></div></div>
+        <div class="govuk-sticky-element" data-sticky-element=""><a class="back-to-content" href="guidance" data-module="track-click" data-track-label="contents" data-track-action="backToContentsLinkClicked" data-track-category="contentsClicked"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 13 17" width="13" height="17"><path fill="currentColor" d="M 6.5 0 L 0 6.5 L 1.4 8 l 4 -4 v 12.7 h 2 V 4 l 4.3 4 L 13 6.4 Z"></path>     </svg>    Contents </a>   </div></div>
+    <div class="govuk-document-footer direction-ltr">
+        <h2 class="visuallyhidden">    Document information   </h2>
+        <div class="history-information" id="history">
+            <p>        Published:         <span class="published definition">17 May
+                2017</span></p>
+            <p>        Updated:         <span class="updated definition">20 June
+                2017</span></p></div>
+        <div class="related-information"></div></div>
+
+}
+
+@govuk_wrapper(appConfig = uk.gov.hmrc.cbcrfrontend.FrontendAppConfig, title = "Guidance", mainContent = mainContent)

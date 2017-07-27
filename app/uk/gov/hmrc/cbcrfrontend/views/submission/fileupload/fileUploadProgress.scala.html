@@ -1,0 +1,50 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.AppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+
+@(asideBusiness: Html, phaseBannerBeta: Html, envelopeId: String, fileId: String, hostName: String, assetsLocationPrefix: String)(
+implicit request: Request[_], messages: Messages)
+
+@sidebarContent = {
+@asideBusiness
+}
+
+@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+<script src='@routes.Assets.versioned("javascripts/jquery-3.1.1.min.js")' ></script>
+<script src='@routes.Assets.versioned("javascripts/poller.js")' type="text/javascript"></script>
+
+<main id="content" role="main">
+
+ <div class="grid-row">
+  <div class="column-two-thirds">
+   <h1>
+    @Messages("fileUploadProgress.mainHeading")
+   </h1>
+   <body onload="poll('@envelopeId', '@fileId', '@hostName')" >
+
+   <img alt="loading..." src="@assetsLocationPrefix/images/loading.gif" />
+   </body>
+
+   <p>@Messages("fileUploadProgress.message")</p>
+  
+
+  </div>
+ </div>
+</main>
+}
