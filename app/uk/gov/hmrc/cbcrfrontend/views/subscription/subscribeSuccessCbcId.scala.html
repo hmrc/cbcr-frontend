@@ -38,10 +38,10 @@ implicit request: Request[_], messages: Messages)
                     </p>
                 </div>
             </section>
-            <button onclick="window.print()" class="toggle__button" style="padding:0;">@Messages("subscribeSuccessCbcId.printThisButton")</button>
+            <p><a href="#" onclick="window.print()" class="print-link">@Messages("subscribeSuccessCbcId.printThisButton")</a></p>
             <p>@Messages("subscribeSuccessCbcId.printThis1")</p>
-            <p>@Messages("subscribeSuccessCbcId.printThis2")</p>
-            <p>@Messages("subscribeSuccessCbcId.printThis3")</p>
+            <h3>@Messages("subscribeSuccessCbcId.next")</h3>
+            <p>@Messages("subscribeSuccessCbcId.next2")</p>
             <p>
                 <a class="button" href="/country-by-country-reporting/upload-report">@Messages("cbc.button.continue")</a>
             </p>

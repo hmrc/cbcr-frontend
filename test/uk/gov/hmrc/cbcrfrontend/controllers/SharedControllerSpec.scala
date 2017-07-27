@@ -164,7 +164,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](false)
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
-    "return 406 when we have already used that utr and we are an Organisation"  in {
+    "return 303 when we have already used that utr and we are an Organisation"  in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
@@ -173,7 +173,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](true)
-      status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
+      status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.SEE_OTHER
     }
     "return 200 when we have already used that utr and we are an Agent"  in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
