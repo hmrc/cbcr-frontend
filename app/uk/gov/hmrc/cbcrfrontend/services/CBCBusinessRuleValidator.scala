@@ -37,13 +37,14 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   val testData = "OECD1[0123]"
 
   def validateBusinessRules(in:RawXMLInfo, fileName:String)(implicit hc:HeaderCarrier) : EitherT[Future,NonEmptyList[BusinessRuleErrors],XMLInfo] = {
-    EitherT(
-      (validateMessageRefIdD(in.messageSpec) |@|
-        validateDocSpec(in.reportingEntity.docSpec) |@|
-        validateDocSpec(in.cbcReport.docSpec) |@|
-        validateDocSpec(in.additionalInfo.docSpec) |@|
-        validateSendingEntity(in.messageSpec)).map {
-        (messageRefIdVal, reDocSpec, cbcDocSpec,addDocSpec,sendingEntity) =>
+    val tuple = (validateMessageRefIdD(in.messageSpec) |@|
+      validateDocSpec(in.reportingEntity.docSpec) |@|
+      validateDocSpec(in.cbcReport.docSpec) |@|
+      validateDocSpec(in.additionalInfo.docSpec) |@|
+      validateSendingEntity(in.messageSpec)).tupled
+
+    EitherT(tuple.map{
+      case (messageRefIdVal, reDocSpec, cbcDocSpec,addDocSpec,sendingEntity) =>
 
         val otherRules = (
           validateTestDataPresent(in).toValidatedNel |@|
@@ -59,8 +60,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             ).toValidatedNel |@|
             validateMessageTypeIndic(in).toValidatedNel |@|
             validateCorrDocRefIdExists(in.cbcReport.docSpec).toValidatedNel |@|
-            validateCorrDocRefIdExists(in.cbcReport.docSpec).toValidatedNel |@|
-            validateCorrDocRefIdExists(in.cbcReport.docSpec).toValidatedNel |@|
+            validateCorrDocRefIdExists(in.reportingEntity.docSpec).toValidatedNel |@|
+            validateCorrDocRefIdExists(in.additionalInfo.docSpec).toValidatedNel |@|
             validateMessageTypeIndicCompatible(in).toValidatedNel |@|
             crossValidateCorrDocRefIds(in.cbcReport.docSpec,in.reportingEntity.docSpec,in.additionalInfo.docSpec).toValidatedNel
           ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
@@ -80,7 +81,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
               AdditionalInfo(addDocSpec)
             )
         ).toEither
-      })
+    })
   }
 
   private def validateMessageTypeIndicCompatible(r:RawXMLInfo):Validated[BusinessRuleErrors,Unit] = {
