@@ -39,6 +39,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpDelete, HttpGet, HttpPut}
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -58,6 +59,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val schemaValidator: CBCRXMLValidator                = mock[CBCRXMLValidator]
   val businessRulesValidator: CBCBusinessRuleValidator = mock[CBCBusinessRuleValidator]
   val cache: CBCSessionCache                           = mock[CBCSessionCache]
+  val audit: AuditConnector                            = mock[AuditConnector]
   val extractor: XmlInfoExtract                        = new XmlInfoExtract()
 
 
@@ -92,11 +94,13 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
 
-  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor)
-  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor)
+  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor, audit)
+  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor, audit)
 
   val file = Files.TemporaryFile("","")
   val validFile = new File("test/resources/cbcr-valid.xml")
+
+  when(audit.sendEvent(any())(any(),any())) thenReturn Future(AuditResult.Success)
 
   "GET /upload-report" should {
     val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
