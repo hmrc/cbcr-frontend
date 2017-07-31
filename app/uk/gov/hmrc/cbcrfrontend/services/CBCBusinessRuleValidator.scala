@@ -37,14 +37,13 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   val testData = "OECD1[0123]"
 
   def validateBusinessRules(in:RawXMLInfo, fileName:String)(implicit hc:HeaderCarrier) : EitherT[Future,NonEmptyList[BusinessRuleErrors],XMLInfo] = {
-    val tuple = (validateMessageRefIdD(in.messageSpec) |@|
-      validateDocSpec(in.reportingEntity.docSpec) |@|
-      validateDocSpec(in.cbcReport.docSpec) |@|
-      validateDocSpec(in.additionalInfo.docSpec) |@|
-      validateSendingEntity(in.messageSpec)).tupled
-
-    EitherT(tuple.map{
-      case (messageRefIdVal, reDocSpec, cbcDocSpec,addDocSpec,sendingEntity) =>
+    EitherT(
+      (validateMessageRefIdD(in.messageSpec) |@|
+        validateDocSpec(in.reportingEntity.docSpec) |@|
+        validateDocSpec(in.cbcReport.docSpec) |@|
+        validateDocSpec(in.additionalInfo.docSpec) |@|
+        validateSendingEntity(in.messageSpec)).map {
+        (messageRefIdVal, reDocSpec, cbcDocSpec,addDocSpec,sendingEntity) =>
 
         val otherRules = (
           validateTestDataPresent(in).toValidatedNel |@|
