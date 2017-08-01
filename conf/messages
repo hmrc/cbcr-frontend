@@ -24,6 +24,7 @@ subscribeFirst.alreadyRegistered=This company or partnership has already been re
 subscribeFirst.alreadyRegistered2=If this isn''t correct,
 subscribeFirst.alreadyRegistered2.link=contact HMRC
 subscribeFirst.utr.label=Unique taxpayer reference
+subscribeFirst.utr.hint=This can be for Corporation Tax, or Self Assessment for a business partnership
 subscribeFirst.postcode.label=UK postcode
 
 subscribeMatchFound.mainHeading=Check the company or partnership details
