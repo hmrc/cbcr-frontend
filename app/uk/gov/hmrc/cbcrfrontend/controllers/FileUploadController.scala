@@ -58,14 +58,14 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                                      val businessRuleValidator: CBCBusinessRuleValidator,
                                      val cache:CBCSessionCache,
                                      val fileUploadService:FileUploadService,
-                                     val xmlExtractor:XmlInfoExtract,
-                                     val audit:AuditConnector)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+                                     val xmlExtractor:XmlInfoExtract)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend") }
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr") }
 
   lazy val hostName = FrontendAppConfig.cbcrFrontendHost
+  lazy val audit = FrontendAuditConnector
   lazy val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/failed-callback"
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
