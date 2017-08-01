@@ -29,6 +29,7 @@ import play.api.Logger
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.Files
+import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -45,6 +46,10 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.model.{DataEvent, ExtendedDataEvent}
+import uk.gov.hmrc.play.audit.AuditExtensions._
+import uk.gov.hmrc.play.frontend.auth.AuthContext
 
 
 @Singleton
@@ -60,6 +65,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr") }
 
   lazy val hostName = FrontendAppConfig.cbcrFrontendHost
+  lazy val audit = FrontendAuditConnector
   lazy val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/failed-callback"
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
@@ -121,9 +127,15 @@ class FileUploadController @Inject()(val sec: SecuredActions,
       _                   <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml",(),InvalidFileType(file_metadata._2.name))
       schemaErrors         = CBCRXMLValidator.validateSchema(file_metadata._1)
       _                   <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
-      _                   <- EitherT.cond[Future](!schemaErrors.hasFatalErrors,(),FatalSchemaErrors)
+      _                   <- if(!schemaErrors.hasFatalErrors) EitherT.pure[Future,CBCErrors,Unit](())
+                             else auditFailedSubmission(authContext, "schema validation errors").flatMap(_ =>
+                                  EitherT.left[Future,CBCErrors,Unit](Future.successful(FatalSchemaErrors))
+                             )
       xml_bizErrors       <- validateBusinessRules(file_metadata._1,file_metadata._2)
       length              = (file_metadata._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+      _                   <- if(schemaErrors.hasErrors) auditFailedSubmission(authContext,"schema validation errors")
+                             else if(xml_bizErrors._2.nonEmpty) auditFailedSubmission(authContext,"business rules errors")
+                             else EitherT.pure[Future,CBCErrors,Unit](())
     } yield Ok(submission.fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
     result.leftMap{
@@ -174,11 +186,11 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   def fileContainsVirus = fileUploadError(FileContainsVirus)
 
   private def fileUploadError(errorType:FileUploadErrorType) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Future.successful(Ok(submission.fileupload.fileUploadError(
+    auditFailedSubmission(authContext,errorType.toString).map(_ => Ok(submission.fileupload.fileUploadError(
       includes.asideBusiness(),
       includes.phaseBannerBeta(),
       errorType
-    )))
+    ))).leftMap(errorRedirect).merge
   }
 
   def handleError(errorCode:Int, reason:String) = Action.async{ implicit request =>
@@ -197,6 +209,16 @@ class FileUploadController @Inject()(val sec: SecuredActions,
       _        => NoContent,
       response => fileUploadResponseToResult(response)
     )
+  }
+
+  def auditFailedSubmission(authContext: AuthContext, reason:String) (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
+    EitherT(audit.sendEvent(DataEvent("Country-By-Country", "FailedSubmission",
+      tags = hc.toAuditTags("FailedSubmission", "N/A") ++ Map("reason" -> reason)
+    )).map {
+      case AuditResult.Success         => Right(AuditResult.Success)
+      case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
+      case AuditResult.Disabled        => Right(AuditResult.Success)
+    })
   }
 
 }
