@@ -174,7 +174,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
         status(result) shouldBe Status.SEE_OTHER
         verify(fuService).getFile(any(),any())(any(),any(),any())
         verify(fuService).getFileMetaData(any(),any())(any(),any(),any())
-        verify(cache, times(2)).save(any())(any(),any(),any())
+        verify(cache,atLeastOnce()).save(any())(any(),any(),any())
       }
     }
 
