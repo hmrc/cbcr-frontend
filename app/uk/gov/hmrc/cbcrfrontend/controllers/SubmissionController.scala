@@ -58,12 +58,12 @@ class SubmissionController @Inject()(val sec: SecuredActions,
                                      val cache:CBCSessionCache,
                                      val fus:FileUploadService,
                                      val docRefIdService: DocRefIdService,
-                                     val auth:AuthConnector,
-                                     val audit:AuditConnector)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
+                                     val auth:AuthConnector)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
 
   implicit lazy val fusUrl   = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+  lazy val audit = FrontendAuditConnector
 
   val dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH:mm")
 
