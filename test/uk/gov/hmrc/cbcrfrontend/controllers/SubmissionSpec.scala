@@ -37,7 +37,6 @@ import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, File
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -58,7 +57,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val fus  = mock[FileUploadService]
   val docRefService = mock[DocRefIdService]
   val auth = mock[AuthConnector]
-  val audit = mock[AuditConnector]
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload"}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
@@ -67,7 +65,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val bpr = BusinessPartnerRecord("safeId",None, EtmpAddress(None,None,None,None,None,None))
   
   implicit val hc = HeaderCarrier()
-  val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,audit)
+  val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth)
 
   override protected def afterEach(): Unit = {
     reset(cache,fus,docRefService)
@@ -112,7 +110,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the UTR, UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,audit)
+      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -125,7 +123,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,audit)
+      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))))
       when(cache.save[FilingType](any())(EQ(FilingType.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -134,7 +132,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the UTR and Filing type form the xml when the ReportingRole is CBC703" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,audit)
+      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703))))
       when(cache.save[Utr](any())(EQ(Utr.utrFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -473,8 +471,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "returns a 200 otherwise" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
-
-        when(audit.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
 
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn Future.successful(Some(summaryData))
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(Some(SubmissionDate(LocalDateTime.now())))
