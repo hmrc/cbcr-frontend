@@ -215,6 +215,19 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
             errors => errors.head shouldBe MessageTypeIndicError,
             _ => fail("No InvalidXMLError generated")
           )
+
+          when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DocRefIdResponses.DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DocRefIdResponses.DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DocRefIdResponses.DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(DocRefIdResponses.Valid)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(DocRefIdResponses.Valid)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(DocRefIdResponses.Valid)
+
+          val validFile2 = new File("test/resources/cbcr-messageTypeIndic4.xml")
+          val result2 = Await.result(validator.validateBusinessRules(validFile2, filename).value, 5.seconds)
+
+          result2.left.map( errors => fail(s"errors generated: $errors"))
+
         }
       }
 
