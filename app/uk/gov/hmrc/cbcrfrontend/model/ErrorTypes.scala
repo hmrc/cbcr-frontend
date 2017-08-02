@@ -126,7 +126,7 @@ object BusinessRuleErrors {
   implicit val eShows: Show[BusinessRuleErrors] =  Show.show[BusinessRuleErrors]{
     case m:MessageRefIDError => m.show
     case TestDataError         => "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD11OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
-    case SendingEntityError    => "The SendingEntityIN field must match your CBCId"
+    case SendingEntityError    => "The CBCId in the SendingEntityIN field has not been registered"
     case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
     case FileNameError         => "MessageRefID must match filename"
     case MessageTypeIndicError => "Error DocTypeIndic (Correction): If MessageTypeIndic is provided and completed with \"CBC402\" message can only contain DocTypeIndic \"OECD2\" or \"OECD3\". (With 1 execption ReportingEntity can contain DocTypeIndic \"OECD0\" where ReportingEntity information is unchanged. \"OECD0\" cannot be used in DocSpec\\DocTypeIndic for CbCReports or AdditionalInfo)"
