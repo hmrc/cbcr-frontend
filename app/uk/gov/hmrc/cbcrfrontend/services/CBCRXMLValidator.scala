@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.File
+import java.io.{File, FileInputStream}
+import javax.xml.transform.sax.SAXSource
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.SchemaFactory
 
@@ -25,6 +26,7 @@ import org.xml.sax.{ErrorHandler, SAXParseException}
 import play.api.Logger
 
 import scala.collection.mutable.ListBuffer
+import scala.xml.InputSource
 
 
 class CBCRXMLValidator {

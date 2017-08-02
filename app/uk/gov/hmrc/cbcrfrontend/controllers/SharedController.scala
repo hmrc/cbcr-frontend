@@ -31,6 +31,7 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{BPRKnownFactsService, CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -174,12 +175,21 @@ class SharedController @Inject()(val sec: SecuredActions,
             case _                                 => Right(())
           })
           _ <- EitherT.right[Future, Result, Unit]((cache.save(bpr) |@| cache.save(knownFacts.utr)).map((_,_) => ()))
-        } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value,userType))
+        } yield Redirect(routes.SharedController.knownFactsMatch())
 
       )
     }.merge
   }
 
+  def knownFactsMatch = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
+    val result:ServiceResponse[Result] = for {
+      userType <- getUserType(authContext)
+      bpr      <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("Unable to read BusinessPartnerRecord from cache"))
+      utr      <- OptionT(cache.read[Utr]).toRight(UnexpectedState("Unable to read Utr from cache"):CBCErrors)
+    } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), bpr.address.postalCode.orEmpty, utr.value , userType))
+
+    result.leftMap(errorRedirect).merge
+  }
 
 }
 

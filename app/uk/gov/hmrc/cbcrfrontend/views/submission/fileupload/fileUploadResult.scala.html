@@ -49,13 +49,13 @@ implicit request: Request[_], messages: Messages)
 
             @if(schemaErrors) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>@Messages("fileUploadResult.error") <a href="../../get-xml-schema-errors">@Messages("fileUploadResult.error.xml.link")</a>.</p>
+                <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link")</a>.</p>
                 <p>@Messages("fileUploadResult.error.xml.message")</p>
             </div>
 
             } @if(busErrors){
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>@Messages("fileUploadResult.error") <a href="../../get-business-rule-errors">@Messages("fileUploadResult.error.data.link")</a>.</p>
+                <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")</a>.</p>
                 <p>@Messages("fileUploadResult.error.data.message")</p>
             </div>
             }
@@ -78,12 +78,14 @@ implicit request: Request[_], messages: Messages)
                 </tbody>
             </table>
             <p>@Messages("fileUploadResult.notYetSubmitted")</p>
-                @{reportingRole match {
-                    case Some(CBC701) => <p><a class="button" href="../../enter-company-name" id="btn-continue">{Messages("form.controls.continue")}</a></p>
-                    case Some(CBC702) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">{Messages("form.controls.continue")}</a></p>
-                    case Some(CBC703) => <p><a class="button" href="../../ultimate-parent-entity" id="btn-continue">{Messages("form.controls.continue")}</a></p>
-                    case None         => <p></p>
-                }}
+
+            @if(reportingRole == Some(CBC701)) {
+                <p><a class="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
+            }
+            @if(reportingRole == Some(CBC702) || reportingRole == Some(CBC703)) {
+                <p><a class="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+            }
+
             } else {
             <p><a href="#">@Messages("fileUploadResult.error.guidance")</a></p>
             <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
