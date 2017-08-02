@@ -34,6 +34,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
 
   val oecd2Or3 = "OECD[23]"
+  val oecd0Or2Or3 = "OECD[023]"
   val testData = "OECD1[0123]"
 
   def validateBusinessRules(in:RawXMLInfo, fileName:String)(implicit hc:HeaderCarrier) : EitherT[Future,NonEmptyList[BusinessRuleErrors],XMLInfo] = {
@@ -151,7 +152,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       case CBC401                                                            => Some(CBC401).valid
       case CBC402 if !r.cbcReport.docSpec.docType.matches(oecd2Or3)
                   || !r.additionalInfo.docSpec.docType.matches(oecd2Or3)
-                  || !r.reportingEntity.docSpec.docType.matches(oecd2Or3)    => MessageTypeIndicError.invalid
+                  || !r.reportingEntity.docSpec.docType.matches(oecd0Or2Or3) => MessageTypeIndicError.invalid
       case CBC402                                                            => Some(CBC402).valid
     }.getOrElse((None:Option[MessageTypeIndic]).valid)
 
