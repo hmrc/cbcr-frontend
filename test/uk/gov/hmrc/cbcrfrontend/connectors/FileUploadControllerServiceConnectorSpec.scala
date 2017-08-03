@@ -40,7 +40,10 @@ class FileUploadControllerServiceConnectorSpec extends FlatSpec with Matchers wi
       "metadata" -> Json.obj(
         "application" -> "Country By Country Reporting Service"
       ),
-      "constraints" -> 	Json.obj("maxSize"-> "50MB")
+      "constraints" -> 	Json.obj(
+        "maxSize"-> "50MB",
+        "maxSizePerItem"-> "50MB"
+      )
     )
 
     val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", envelopeExpiryDate)
