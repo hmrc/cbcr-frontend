@@ -42,7 +42,10 @@ class FileUploadServiceConnector() {
       "metadata" -> Json.obj(
         "application" -> "Country By Country Reporting Service"
       ),
-      "constraints" -> 	Json.obj("maxSize"-> "50MB")
+      "constraints" -> 	Json.obj(
+        "maxSize"-> "50MB",
+        "maxSizePerItem"-> "50MB"
+      )
     )
   }
 
