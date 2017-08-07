@@ -69,7 +69,7 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
 
   def getFileUploadResponse(envelopeId: String, fileId: String)( implicit hc: HeaderCarrier, ec: ExecutionContext, cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
-      WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/$envelopeId")
+      WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response/$envelopeId")
         .map(resp => resp.status match {
           case 200 => resp.json.validate[FileUploadCallbackResponse].fold(
             invalid   => Left(UnexpectedState("Problems extracting File Upload response message "+invalid)),

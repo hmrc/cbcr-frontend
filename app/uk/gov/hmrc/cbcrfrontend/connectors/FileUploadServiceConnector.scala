@@ -37,7 +37,7 @@ class FileUploadServiceConnector() {
     Logger.debug("CBCR URL: "+cbcrsUrl)
 
     Json.obj(
-      "callbackUrl" -> s"$cbcrsUrl/cbcr/saveFileUploadResponse",
+      "callbackUrl" -> s"$cbcrsUrl/cbcr/file-upload-response",
       "expiryDate" -> s"$expiryDate",
       "metadata" -> Json.obj(
         "application" -> "Country By Country Reporting Service"
