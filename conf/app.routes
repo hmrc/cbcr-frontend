@@ -2,8 +2,8 @@
 
 
 GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
-GET        /cbcid/enter                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
-POST       /cbcid                                         @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.submitCBCId
+GET        /cbc-id/enter                                  @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
+POST       /cbc-id                                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.submitCBCId
 GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
 GET        /sign-out                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOut
 GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.guidance
@@ -40,7 +40,7 @@ GET        /company-name/enter                            @uk.gov.hmrc.cbcrfront
 
 GET        /already-subscribed                            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.alreadySubscribed
 GET        /contact-info-subscriber                       @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber
-GET        /subscribe-success-cbcid/:cbcId                @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
+GET        /subscribe-success-cbc-id/:cbcId               @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
 GET        /subscriber-email/reconfirm                    @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmail
 POST       /subscriber-email                              @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmailSubmit
 POST       /subscription-data                             @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.submitSubscriptionData
