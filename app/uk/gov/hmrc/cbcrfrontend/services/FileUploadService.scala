@@ -16,16 +16,22 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{BufferedInputStream, File, FileInputStream}
+import java.io.{BufferedInputStream, File, FileInputStream, InputStream}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.{Sink, StreamConverters}
+import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
 import play.api.Logger
 import play.api.libs.json._
+import play.api.libs.ws.{StreamedResponse, WSClient}
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
@@ -33,11 +39,14 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{HttpExecutor, _}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
-class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
+class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector,ws:WSClient)(implicit ac:ActorSystem) {
+
+  implicit val materializer = ActorMaterializer()
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext, fusUrl: ServiceUrl[FusUrl], cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[EnvelopeId] = {
     Logger.debug("Country by Country: Creating an envelope for file upload")
@@ -55,11 +64,9 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
                 ): ServiceResponse[String] = {
 
     val fileNamePrefix = s"oecd-${LocalDateTime.now}"
-    val bis = new BufferedInputStream(new FileInputStream(xmlFile))
-    val xmlByteArray: Array[Byte] = Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
+    val xmlByteArray: Array[Byte] = org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(xmlFile))
 
     Logger.debug("Country by Country: FileUpload service: Uploading the file to the envelope")
-
     fromFutureOptA(HttpExecutor(fusFeUrl,
       UploadFile(EnvelopeId(envelopeId),
         FileId(fileId), s"$fileNamePrefix-cbcr.xml ", "application/xml;charset=UTF-8", xmlByteArray)).map(fusConnector.extractFileUploadMessage))
@@ -86,9 +93,15 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
                    hc: HeaderCarrier,
                    ec: ExecutionContext,
                    fusUrl: ServiceUrl[FusUrl]
-                   ): ServiceResponse[File] = {
+                   ): ServiceResponse[InputStream] = {
+    EitherT(ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").withMethod("GET")
+      .stream()
+      .map(s => Either.right[CBCErrors,InputStream](
+        s.body.runWith(StreamConverters.asInputStream(FiniteDuration(30, TimeUnit.SECONDS))))
+      )
+    )
 
-      fromFutureOptA(WSHttp.GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").map(fusConnector.extractFile))
+
   }
 
 

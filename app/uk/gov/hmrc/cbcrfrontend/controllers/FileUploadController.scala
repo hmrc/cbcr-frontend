@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io
-import java.io.{File, PrintWriter}
+import java.io.{File, InputStream, PrintWriter}
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -58,7 +58,9 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                                      val businessRuleValidator: CBCBusinessRuleValidator,
                                      val cache:CBCSessionCache,
                                      val fileUploadService:FileUploadService,
-                                     val xmlExtractor:XmlInfoExtract)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+                                     val xmlExtractor:XmlInfoExtract,
+                                     val validator:CBCRXMLValidator
+                                    )(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend") }
@@ -109,14 +111,12 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
   } yield metadata
 
-  def validateBusinessRules(file:File, metadata: FileMetadata)(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
+  def validateBusinessRules(file:InputStream, metadata: FileMetadata)(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
     val rawXmlInfo  = xmlExtractor.extract(file)
     val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, metadata.name)
     EitherT.right(xmlInfo.fold(
       errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => None -> errors.toList),
-      info   =>{
-        cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file))).map(_ => Some(info) -> List.empty))
-      }
+      info   => cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file))).map(_ => Some(info) -> List.empty))
     ).flatten)
   }
 
@@ -125,7 +125,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     val result = for {
       file_metadata       <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId)).tupled
       _                   <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml",(),InvalidFileType(file_metadata._2.name))
-      schemaErrors         = CBCRXMLValidator.validateSchema(file_metadata._1)
+      schemaErrors        =  validator.validateSchema(file_metadata._1)
       _                   <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
       _                   <- if(!schemaErrors.hasFatalErrors) EitherT.pure[Future,CBCErrors,Unit](())
                              else auditFailedSubmission(authContext, "schema validation errors").flatMap(_ =>
