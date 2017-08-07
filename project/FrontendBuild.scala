@@ -24,7 +24,13 @@ object FrontendBuild extends Build with MicroService {
     "org.typelevel" %% "cats-core" % "0.9.0",
     "uk.gov.hmrc" %% "http-caching-client" % "6.2.0",
     "com.github.kxbmap" %% "configs" % "0.4.4",
-    "com.scalawilliam" %% "xs4s" % "0.3"
+    "com.scalawilliam" %% "xs4s" % "0.3",
+    "org.codehaus.woodstox" % "woodstox-core-asl" % "4.4.1",
+    "msv" % "msv" % "20050913",
+    "com.sun.xml" % "relaxngDatatype" % "1.0",
+    "com.sun.msv.datatype.xsd" % "xsdlib" % "2013.2",
+    "commons-io" % "commons-io" % "2.5"
+
   )
 
   def test(scope: String = "test") = Seq(

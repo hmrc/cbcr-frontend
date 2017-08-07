@@ -16,25 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.File
+import java.io.FileInputStream
 
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.util.{Failure, Success, Try}
-
 class XmlInfoExtractSpec extends UnitSpec {
 
-  private def loadFile(filename: String) = {
-    Try {
-      new File(s"test/resources/$filename")
-    } match {
-      case Success(file) => {
-        if (file.exists()) file
-        else fail(s"File not found: $filename")
-      }
-      case Failure(e) => fail(e)
-    }
-  }
+  private def loadFile(filename: String) = new FileInputStream(s"test/resources/$filename")
 
   "An XmlInfoExtract object" should {
     "provide an extract method what extracts the correct information from an xml" in {
