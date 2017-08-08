@@ -84,14 +84,14 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))))
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
-        result.header.headers("Location") should endWith("/utr/enter")
+        result.header.headers("Location") should endWith("/utr/entry-form")
         status(result) shouldBe Status.SEE_OTHER
       }
       "the reporting role is CBC703" in {        when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703))))
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
-        result.header.headers("Location") should endWith("/company-name/enter")
+        result.header.headers("Location") should endWith("/company-name/entry-form")
         status(result) shouldBe Status.SEE_OTHER
       }
     }
@@ -263,7 +263,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
           val result = Await.result(controller.reconfirmEmailSubmit(fakeRequestSubmit), 2.seconds)
 
-          result.header.headers("Location") should endWith("/cbc-id/enter")
+          result.header.headers("Location") should endWith("/cbc-id/entry-form")
           status(result) shouldBe Status.SEE_OTHER
         }
       }
@@ -280,7 +280,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
           val result = Await.result(controller.reconfirmEmailSubmit(fakeRequestSubmit), 2.seconds)
 
-          result.header.headers("Location") should endWith("/agent/verify")
+          result.header.headers("Location") should endWith("/agent/verify-form")
           status(result) shouldBe Status.SEE_OTHER
         }
 
