@@ -86,7 +86,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
   }
 
-  def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
+  def fileUploadProgress(envelopeId: String, fileId: String) = sec.AuthenticatedAction{ _ => implicit request =>
     val hostName = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
     Ok(submission.fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
@@ -194,15 +194,13 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     ))).leftMap(errorRedirect).merge
   }
 
-  def handleError(errorCode:Int, reason:String) = Action.async{ implicit request =>
+  def handleError(errorCode:Int, reason:String) = sec.AuthenticatedAction{ _ => implicit request =>
     Logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
-    Future.successful(
-      errorCode match {
-        case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
-        case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
-        case _                        => Redirect(routes.SharedController.technicalDifficulties())
-      }
-    )
+    errorCode match {
+      case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
+      case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
+      case _                        => Redirect(routes.SharedController.technicalDifficulties())
+    }
   }
 
   def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
