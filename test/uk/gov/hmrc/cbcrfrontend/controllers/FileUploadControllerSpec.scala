@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.io.File
+import java.io.{File, FileInputStream, InputStream}
 
+import akka.actor.ActorSystem
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import com.typesafe.config.ConfigFactory
@@ -28,7 +29,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
-import play.api.Configuration
+import play.api.{Configuration, Environment}
 import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.Files
@@ -52,6 +53,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   implicit val ec: ExecutionContext                    = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi: MessagesApi                = app.injector.instanceOf[MessagesApi]
+  implicit val env                                     = app.injector.instanceOf[Environment]
+  implicit val as                                     = app.injector.instanceOf[ActorSystem]
   implicit val authCon                                 = authConnector(TestUsers.cbcrUser)
   val securedActions: SecuredActionsTest               = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
 
@@ -97,11 +100,13 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
 
-  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor)
-  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor)
+  val validator = new CBCRXMLValidator(env)
+
+  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor,validator)
+  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor,validator)
 
   val file = Files.TemporaryFile("","")
-  val validFile = new File("test/resources/cbcr-valid.xml")
+  val validFile:InputStream = new FileInputStream("test/resources/cbcr-valid.xml")
 
   "GET /upload-report" should {
     val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
@@ -156,7 +161,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       }
       "the call to get the file fails" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
-        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn left[File]("oops")
+        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn left[InputStream]("oops")
         when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
         val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
         result.header.headers("Location") should endWith("technical-difficulties")
