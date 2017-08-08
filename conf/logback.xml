@@ -49,16 +49,16 @@
 
     <logger name="uk.gov" level="INFO"/>
 
-    <logger name="application" level="ERROR"/>
+    <logger name="application" level="DEBUG"/>
 
-    <logger name="connector" level="ERROR">
+    <logger name="connector" level="TRACE">
         <appender-ref ref="STDOUT"/>
     </logger>
 
     <logger name="play.core.netty" level="INFO"/>
 
 
-    <root level="ERROR">
+    <root level="DEBUG">
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>
