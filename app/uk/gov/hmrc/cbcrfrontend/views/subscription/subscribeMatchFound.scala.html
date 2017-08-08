@@ -18,6 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @(asideCbc: Html, phaseBannerBeta: Html, name:String, postCode:String, utr:String, userType:UserType)(
 implicit request: Request[_], messages: Messages)
@@ -63,11 +64,11 @@ implicit request: Request[_], messages: Messages)
             @userType match {
                 case Organisation => {
                     <p><a href="register-for-cbcid">Back</a></p>
-                    <p><a class="button" href="contactInfoSubscriber" role="button">@Messages("form.controls.continue")</a></p>
+                    <p><a class="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.continue")</a></p>
                 }
                 case Agent        => {
                     <p><a href="known-facts">Back</a></p>
-                    <p><a class="button" href="submit-summary" role="button">@Messages("form.controls.continue")</a></p>
+                    <p><a class="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.continue")</a></p>
                 }
             }
 

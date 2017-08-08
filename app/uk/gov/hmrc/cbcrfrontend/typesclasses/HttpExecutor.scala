@@ -117,7 +117,7 @@ object HttpExecutor {
                   rds: HttpReads[HttpResponse],
                   getBody: GetBody[FUCallbackResponse, JsObject]
                 ): Future[HttpResponse] = {
-      WSHttp.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/saveFileUploadResponse", getBody(obj))
+      WSHttp.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", getBody(obj))
     }
 
   }
