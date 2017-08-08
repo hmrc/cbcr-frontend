@@ -173,9 +173,12 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](true)
-      status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.SEE_OTHER
+      val result = controller.checkKnownFacts(fakeRequestSubscribe)
+      status(result) shouldBe Status.SEE_OTHER
+      result.header.headers("Location") should endWith("/already-subscribed")
+
     }
-    "return 200 when we have already used that utr and we are an Agent"  in {
+    "return 303 when that utr has not been registered and we are an Agent"  in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
@@ -183,20 +186,23 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent")))
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](true)
-      status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
+      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](false)
+      val result = controller.checkKnownFacts(fakeRequestSubscribe)
+      status(result) shouldBe Status.NOT_FOUND
     }
 
-    "return 200 when the utr and postcode are valid" in {
+    "return 303 when the utr and postcode are valid" in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/chehttps://github.com/hmrc/cbcr/pull/14ckKnownFacts").withJsonBody(Json.toJson(kf)))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](false)
-      status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.OK
+      val result = controller.checkKnownFacts(fakeRequestSubscribe)
+      status(result) shouldBe Status.SEE_OTHER
+      result.header.headers("Location") should endWith("/known-facts/match")
     }
   }
 

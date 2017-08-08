@@ -84,14 +84,14 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))))
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
-        result.header.headers("Location") should endWith("/utr")
+        result.header.headers("Location") should endWith("/utr/enter")
         status(result) shouldBe Status.SEE_OTHER
       }
       "the reporting role is CBC703" in {        when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703))))
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
-        result.header.headers("Location") should endWith("/enter-company-name")
+        result.header.headers("Location") should endWith("/company-name/enter")
         status(result) shouldBe Status.SEE_OTHER
       }
     }
@@ -248,7 +248,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
           val result = Await.result(controller.reconfirmEmailSubmit(fakeRequestSubmit), 2.seconds)
 
-          result.header.headers("Location") should endWith("/submit-summary")
+          result.header.headers("Location") should endWith("/submission/summary")
           status(result) shouldBe Status.SEE_OTHER
         }
         "redirect to enter-cbcId if a cbcid does not exist" in {
@@ -263,7 +263,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
           val result = Await.result(controller.reconfirmEmailSubmit(fakeRequestSubmit), 2.seconds)
 
-          result.header.headers("Location") should endWith("/enter-CBCId")
+          result.header.headers("Location") should endWith("/cbc-id/enter")
           status(result) shouldBe Status.SEE_OTHER
         }
       }
@@ -280,7 +280,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
           val result = Await.result(controller.reconfirmEmailSubmit(fakeRequestSubmit), 2.seconds)
 
-          result.header.headers("Location") should endWith("/known-facts")
+          result.header.headers("Location") should endWith("/agent/verify")
           status(result) shouldBe Status.SEE_OTHER
         }
 

@@ -18,6 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @(asideBusiness: Html, phaseBannerBeta: Html, cbcId:CBCId, companyName:Option[String])(
 implicit request: Request[_], messages: Messages)
@@ -43,7 +44,7 @@ implicit request: Request[_], messages: Messages)
             <h3>@Messages("subscribeSuccessCbcId.next")</h3>
             <p>@Messages("subscribeSuccessCbcId.next2")</p>
             <p>
-                <a class="button" href="/country-by-country-reporting/upload-report">@Messages("cbc.button.continue")</a>
+                <a class="button" href="@routes.FileUploadController.chooseXMLFile()">@Messages("cbc.button.continue")</a>
             </p>
         </div>
 

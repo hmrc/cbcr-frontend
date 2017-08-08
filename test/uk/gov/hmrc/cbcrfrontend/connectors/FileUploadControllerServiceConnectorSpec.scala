@@ -35,7 +35,7 @@ class FileUploadControllerServiceConnectorSpec extends FlatSpec with Matchers wi
     val envelopeExpiryDate = LocalDateTime.now.plusDays(7).format(formatter)
 
     val expectedEnvelopeRequest = Json.obj(
-      "callbackUrl" -> "http://localhost:9797/cbcr/saveFileUploadResponse",
+      "callbackUrl" -> "http://localhost:9797/cbcr/file-upload-response",
       "expiryDate" -> s"$envelopeExpiryDate",
       "metadata" -> Json.obj(
         "application" -> "Country By Country Reporting Service"
