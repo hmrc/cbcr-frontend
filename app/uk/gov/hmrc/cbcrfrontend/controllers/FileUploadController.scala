@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io
-import java.io.{File, InputStream, PrintWriter}
+import java.io._
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -111,12 +111,12 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
   } yield metadata
 
-  def validateBusinessRules(file:InputStream, metadata: FileMetadata)(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
-    val rawXmlInfo  = xmlExtractor.extract(file)
-    val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, metadata.name)
+  def validateBusinessRules(file_metadata:(File,FileMetadata))(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
+    val rawXmlInfo  = xmlExtractor.extract(file_metadata._1)
+    val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, file_metadata._2.name)
     EitherT.right(xmlInfo.fold(
       errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => None -> errors.toList),
-      info   => cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file))).map(_ => Some(info) -> List.empty))
+      info   => cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file_metadata._1))).map(_ => Some(info) -> List.empty))
     ).flatten)
   }
 
@@ -131,11 +131,12 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                              else auditFailedSubmission(authContext, "schema validation errors").flatMap(_ =>
                                   EitherT.left[Future,CBCErrors,Unit](Future.successful(FatalSchemaErrors))
                              )
-      xml_bizErrors       <- validateBusinessRules(file_metadata._1,file_metadata._2)
+      xml_bizErrors       <- validateBusinessRules(file_metadata)
       length              = (file_metadata._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
       _                   <- if(schemaErrors.hasErrors) auditFailedSubmission(authContext,"schema validation errors")
                              else if(xml_bizErrors._2.nonEmpty) auditFailedSubmission(authContext,"business rules errors")
                              else EitherT.pure[Future,CBCErrors,Unit](())
+      _                   = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
     } yield Ok(submission.fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
     result.leftMap{

@@ -66,9 +66,9 @@ package object cbcrfrontend {
       .map(affinityGroupToUserType)
     )
 
-  def sha256Hash(file: InputStream): String =
+  def sha256Hash(file: File): String =
     String.format("%064x", new java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(
-      org.apache.commons.io.IOUtils.toByteArray(file)
+      org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
     )))
 
   def generateMetadataFile(gatewayId: String, cache: CBCSessionCache)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[ValidatedNel[String, SubmissionMetaData]] = {
