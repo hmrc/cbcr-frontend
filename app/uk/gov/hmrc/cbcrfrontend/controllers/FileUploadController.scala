@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.io
 import java.io._
 import java.time.LocalDateTime
 import java.util.UUID
@@ -29,7 +28,6 @@ import play.api.Logger
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.Files
-import play.api.libs.json.Json
 import play.api.mvc._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -37,19 +35,18 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html._
-import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, FrontendGlobal, sha256Hash}
+import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, sha256Hash, _}
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.audit.AuditExtensions._
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
+import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.play.audit.model.{DataEvent, ExtendedDataEvent}
-import uk.gov.hmrc.play.audit.AuditExtensions._
-import uk.gov.hmrc.play.frontend.auth.AuthContext
 
 
 @Singleton
@@ -86,7 +83,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
   }
 
-  def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
+  def fileUploadProgress(envelopeId: String, fileId: String) = sec.AuthenticatedAction{ _ => implicit request =>
     val hostName = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
     Ok(submission.fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
@@ -194,15 +191,13 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     ))).leftMap(errorRedirect).merge
   }
 
-  def handleError(errorCode:Int, reason:String) = Action.async{ implicit request =>
+  def handleError(errorCode:Int, reason:String) = sec.AuthenticatedAction{ _ => implicit request =>
     Logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
-    Future.successful(
-      errorCode match {
-        case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
-        case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
-        case _                        => Redirect(routes.SharedController.technicalDifficulties())
-      }
-    )
+    errorCode match {
+      case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
+      case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
+      case _                        => Redirect(routes.SharedController.technicalDifficulties())
+    }
   }
 
   def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
