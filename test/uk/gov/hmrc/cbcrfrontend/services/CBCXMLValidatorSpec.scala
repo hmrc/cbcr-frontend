@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.FileInputStream
+import java.io.File
 
 import akka.actor.ActorSystem
 import org.scalatest.{Matchers, WordSpec}
@@ -25,7 +25,7 @@ import play.api.Environment
 
 class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite {
 
-  private def loadFile(filename: String) = new FileInputStream(s"test/resources/$filename")
+  private def loadFile(filename: String) = new File(s"test/resources/$filename")
 
   def validXmlFile            = loadFile("cbcr-valid.xml")
   val invalidXmlFile          = loadFile("cbcr-invalid.xml")
