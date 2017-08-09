@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.File
 
 import akka.actor.ActorSystem
+import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Environment
@@ -36,7 +37,11 @@ class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite {
   implicit val env = app.injector.instanceOf[Environment]
 
   implicit val as = app.injector.instanceOf[ActorSystem]
-  val validator = new CBCRXMLValidator(env)
+
+  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+  val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
+  val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
 
   "An Xml Validator" should {
     "not return any error for a valid file" in {

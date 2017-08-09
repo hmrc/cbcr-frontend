@@ -22,6 +22,7 @@ import akka.actor.ActorSystem
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import com.typesafe.config.ConfigFactory
+import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import org.compass.core.config.CompassConfigurationFactory
 import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
@@ -100,7 +101,11 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
 
-  val validator = new CBCRXMLValidator(env)
+  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+  val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
+
+  val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
 
   val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor,validator)
   val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor,validator)
