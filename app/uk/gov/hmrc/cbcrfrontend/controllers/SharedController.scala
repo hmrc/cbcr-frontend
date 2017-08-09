@@ -19,9 +19,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT}
-import cats.syntax.all._
 import cats.instances.all._
-import play.api.Logger
+import cats.syntax.all._
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -35,7 +34,6 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{BPRKnownFactsService, CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
-import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
