@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.InputStream
+import java.io.{File, InputStream}
 import javax.inject.Inject
 import javax.xml.stream.XMLInputFactory
 
@@ -32,14 +32,14 @@ import scala.collection.mutable.ListBuffer
 class CBCRXMLValidator @Inject()(env:Environment)(implicit system:ActorSystem) {
 
 
-  def validateSchema(input: InputStream): XmlErrorHandler = {
+  def validateSchema(input: File): XmlErrorHandler = {
 
     val xmlValidationSchemaFactory = XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
     val schemaInputStream          = env.resourceAsStream("schema/CbcXML_v1.0.xsd").getOrElse(throw new Exception("Couldn't find schema"))
     val xmlValidationSchema        = xmlValidationSchemaFactory.createSchema(schemaInputStream)
 
     val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
-    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input).asInstanceOf[XMLStreamReader2]  //java
+    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
 
     val xmlErrorHandler = new XmlErrorHandler()
     xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)

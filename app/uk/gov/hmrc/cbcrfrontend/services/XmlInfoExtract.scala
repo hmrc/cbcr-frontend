@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.InputStream
+import java.io.{File, InputStream}
 import javax.xml.stream.XMLInputFactory
 
 import cats.instances.all._
@@ -70,10 +70,11 @@ class XmlInfoExtract {
 
   }
 
-  def extract(file:InputStream): RawXMLInfo = {
+  def extract(file:File): RawXMLInfo = {
 
     val collectedData: List[RawXmlFields] = {
-      val xmlEventReader = nonFatalCatch opt xmlInputfactory.createXMLEventReader(Source.fromInputStream(file).bufferedReader())
+
+      val xmlEventReader = nonFatalCatch opt xmlInputfactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
 
       try xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten
       finally xmlEventReader.foreach(_.close())
