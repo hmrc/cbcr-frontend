@@ -170,7 +170,7 @@ object MessageRefIDError {
 
 object XMLErrors {
   implicit val format = Json.format[XMLErrors]
-  def errorHandlerToXmlErrors(x:XmlErrorHandler) : XMLErrors = XMLErrors(x.fatalErrorsCollection ++ x.errorsCollection ++ x.warningsCollection)
+  def errorHandlerToXmlErrors(x:XmlErrorHandler) : XMLErrors = XMLErrors(x.fatalErrorsCollection ++ x.errorsCollection)
   implicit val xmlShows: Show[XMLErrors] = Show.show[XMLErrors](e =>
     "ErrorCode: 50007 - The referenced file failed validation against the CbC XML Schema\n\n" + e.errors.mkString("\n")
   )

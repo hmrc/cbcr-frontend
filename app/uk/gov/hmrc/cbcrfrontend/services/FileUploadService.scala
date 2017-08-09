@@ -17,6 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.{BufferedInputStream, File, FileInputStream, InputStream}
+import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -30,6 +31,7 @@ import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
 import play.api.Logger
+import play.api.http.Status
 import play.api.libs.json._
 import play.api.libs.ws.{StreamedResponse, WSClient}
 import uk.gov.hmrc.cbcrfrontend.WSHttp
@@ -88,21 +90,29 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector,ws:W
     )
 
 
-  def getFile(envelopeId: String, fileId: String)(
-                   implicit
-                   hc: HeaderCarrier,
-                   ec: ExecutionContext,
-                   fusUrl: ServiceUrl[FusUrl]
-                   ): ServiceResponse[InputStream] = {
-    EitherT(ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").withMethod("GET")
-      .stream()
-      .map(s => Either.right[CBCErrors,InputStream](
-        s.body.runWith(StreamConverters.asInputStream(FiniteDuration(30, TimeUnit.SECONDS))))
-      )
+  def getFile(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier,
+                                                  ec: ExecutionContext,
+                                                  fusUrl: ServiceUrl[FusUrl]): ServiceResponse[File] =
+    EitherT(
+      ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").withMethod("GET") .stream().flatMap{
+        res => res.headers.status match {
+          case Status.OK =>
+            val file = java.nio.file.Files.createTempFile(envelopeId,"xml")
+            val outputStream = java.nio.file.Files.newOutputStream(file)
+
+            val sink = Sink.foreach[ByteString] { bytes => outputStream.write(bytes.toArray) }
+
+            res.body.runWith(sink).andThen {
+              case result =>
+                outputStream.close()
+                result.get
+            }.map(_ => Right(file.toFile))
+          case otherStatus => Future.successful(Left(
+            UnexpectedState(s"Failed to retrieve file $fileId from envelope $envelopeId - received $otherStatus response")
+          ))
+        }
+      }
     )
-
-
-  }
 
 
   def deleteEnvelope(envelopeId: String)(
