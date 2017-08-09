@@ -100,15 +100,11 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector,ws:W
             val file = java.nio.file.Files.createTempFile(envelopeId,"xml")
             val outputStream = java.nio.file.Files.newOutputStream(file)
 
-            // The sink that writes to the output stream
             val sink = Sink.foreach[ByteString] { bytes => outputStream.write(bytes.toArray) }
 
-            // materialize and run the stream
             res.body.runWith(sink).andThen {
               case result =>
-                // Close the output stream whether there was an error or not
                 outputStream.close()
-                // Get the result or rethrow the error
                 result.get
             }.map(_ => Right(file.toFile))
           case otherStatus => Future.successful(Left(
