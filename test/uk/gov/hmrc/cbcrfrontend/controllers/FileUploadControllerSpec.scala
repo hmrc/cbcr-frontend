@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.io.{File, FileInputStream, InputStream}
+import java.io.File
 
 import akka.actor.ActorSystem
 import cats.data.{EitherT, OptionT}
@@ -106,7 +106,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor,validator)
 
   val file = Files.TemporaryFile("","")
-  val validFile:InputStream = new FileInputStream("test/resources/cbcr-valid.xml")
+  val validFile:File= new File("test/resources/cbcr-valid.xml")
 
   "GET /upload-report" should {
     val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
@@ -161,7 +161,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       }
       "the call to get the file fails" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
-        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn left[InputStream]("oops")
+        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn left[File]("oops")
         when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
         val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
         result.header.headers("Location") should endWith("technical-difficulties")

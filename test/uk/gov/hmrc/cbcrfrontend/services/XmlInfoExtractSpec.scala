@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.FileInputStream
+import java.io.{File, FileInputStream}
 
 import uk.gov.hmrc.play.test.UnitSpec
 
 class XmlInfoExtractSpec extends UnitSpec {
 
-  private def loadFile(filename: String) = new FileInputStream(s"test/resources/$filename")
+  private def loadFile(filename: String) = new File(s"test/resources/$filename")
 
   "An XmlInfoExtract object" should {
     "provide an extract method what extracts the correct information from an xml" in {
