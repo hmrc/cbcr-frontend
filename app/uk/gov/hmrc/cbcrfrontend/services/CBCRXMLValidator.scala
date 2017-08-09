@@ -29,16 +29,13 @@ import play.api.{Environment, Logger}
 import scala.collection.mutable.ListBuffer
 
 
-class CBCRXMLValidator @Inject()(env:Environment)(implicit system:ActorSystem) {
+class CBCRXMLValidator @Inject()(env:Environment, xmlValidationSchema: XMLValidationSchema)(implicit system:ActorSystem) {
 
+
+  val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
 
   def validateSchema(input: File): XmlErrorHandler = {
 
-    val xmlValidationSchemaFactory = XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-    val schemaInputStream          = env.resourceAsStream("schema/CbcXML_v1.0.xsd").getOrElse(throw new Exception("Couldn't find schema"))
-    val xmlValidationSchema        = xmlValidationSchemaFactory.createSchema(schemaInputStream)
-
-    val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
     val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
 
     val xmlErrorHandler = new XmlErrorHandler()
