@@ -16,24 +16,22 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{BufferedInputStream, File, FileInputStream, InputStream}
-import java.nio.file.Path
+import java.io.{File, FileInputStream}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{Sink, StreamConverters}
+import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
 import play.api.Logger
 import play.api.http.Status
 import play.api.libs.json._
-import play.api.libs.ws.{StreamedResponse, WSClient}
+import play.api.libs.ws.WSClient
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
@@ -41,7 +39,6 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{HttpExecutor, _}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 
 
