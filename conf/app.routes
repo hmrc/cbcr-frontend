@@ -21,7 +21,7 @@ GET        /xml-schema-errors                             @uk.gov.hmrc.cbcrfront
 GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileInvalid
 GET        /virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileContainsVirus
 GET        /file-too-large                                @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileTooLarge
-GET        /failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.handleError(errorCode:Int, reason:String)
+GET        /failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.handleError(errorCode:Int = 0, reason:String = "Unknown")
 
 GET        /ultimate-parent-entity/entry-form             @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.upe
 POST       /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUltimateParentEntity

@@ -65,14 +65,19 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
   lazy val hostName = FrontendAppConfig.cbcrFrontendHost
   lazy val audit = FrontendAuditConnector
-  lazy val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/failed-callback"
+//  lazy val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/failed-callback"
+  lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     val result = for {
       envelopeId     <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
       fileId         <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"))
-      successRedirect = s"$hostName/country-by-country-reporting/file-upload-progress/$envelopeId/$fileId"
+//      successRedirect = s"$hostName/country-by-country-reporting/file-upload-progress/$envelopeId/$fileId"
+      successRedirect = s"$hostName${routes.FileUploadController.fileUploadProgress(envelopeId.value, fileId.value).url}"
+//      fileUploadUrl   = s"${FrontendAppConfig.fileUploadFrontendHost}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
+//        s"redirect-success-url=$successRedirect&" +
+//        s"redirect-error-url=$fileUploadErrorRedirectUrl"
       fileUploadUrl   = s"${FrontendAppConfig.fileUploadFrontendHost}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
         s"redirect-success-url=$successRedirect&" +
         s"redirect-error-url=$fileUploadErrorRedirectUrl"
