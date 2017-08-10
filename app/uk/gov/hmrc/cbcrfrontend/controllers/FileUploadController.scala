@@ -201,9 +201,16 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   }
 
   def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    Logger.info(s"Received a file-upload-response query for $envelopeId")
     fileUploadService.getFileUploadResponse(envelopeId,fileId).fold(
-      _        => NoContent,
-      response => fileUploadResponseToResult(response)
+      error    => {
+        Logger.info(s"File not ready: $error")
+        NoContent
+      },
+      response => {
+        Logger.info(s"Response back was: $response")
+        fileUploadResponseToResult(response)
+      }
     )
   }
 
