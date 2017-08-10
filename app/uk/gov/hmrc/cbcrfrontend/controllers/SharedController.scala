@@ -19,9 +19,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT}
-import cats.syntax.all._
 import cats.instances.all._
-import play.api.Logger
+import cats.syntax.all._
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -31,10 +30,10 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{BPRKnownFactsService, CBCSessionCache, SubscriptionDataService}
 import uk.gov.hmrc.cbcrfrontend.views.html._
-import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -145,7 +144,7 @@ class SharedController @Inject()(val sec: SecuredActions,
     getUserType(authContext).semiflatMap{ userType =>
       alreadyEnrolled.flatMap(subscribed =>
         if (subscribed) {
-          NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta(),userType))
+          NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta()))
         } else {
           Ok(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, userType))
         }
@@ -168,18 +167,27 @@ class SharedController @Inject()(val sec: SecuredActions,
             NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
           )
           alreadySubscribed <- subDataService.alreadySubscribed(knownFacts.utr).leftMap(errorRedirect)
-          _ <- EitherT.cond[Future]( userType match {
-            case Organisation => !alreadySubscribed
-            case Agent        => alreadySubscribed
-          },(), NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta(), userType)))
-          _ <- EitherT.right[Future, Result, CacheMap](cache.save(bpr))
-          _ <- EitherT.right[Future, Result, CacheMap](cache.save(knownFacts.utr))
-        } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), knownFacts.postCode, knownFacts.utr.value,userType))
+          _ <- EitherT.fromEither[Future](userType match {
+            case Organisation if alreadySubscribed => Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
+            case Agent if !alreadySubscribed       => Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
+            case _                                 => Right(())
+          })
+          _ <- EitherT.right[Future, Result, Unit]((cache.save(bpr) |@| cache.save(knownFacts.utr)).map((_,_) => ()))
+        } yield Redirect(routes.SharedController.knownFactsMatch())
 
       )
     }.merge
   }
 
+  def knownFactsMatch = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
+    val result:ServiceResponse[Result] = for {
+      userType <- getUserType(authContext)
+      bpr      <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("Unable to read BusinessPartnerRecord from cache"))
+      utr      <- OptionT(cache.read[Utr]).toRight(UnexpectedState("Unable to read Utr from cache"):CBCErrors)
+    } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), bpr.address.postalCode.orEmpty, utr.value , userType))
+
+    result.leftMap(errorRedirect).merge
+  }
 
 }
 

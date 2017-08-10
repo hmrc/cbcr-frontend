@@ -33,22 +33,12 @@ implicit request: Request[_], messages: Messages)
  <div class="grid-row">
   <div class="column-two-thirds">
 
-      @userType match {
-      case Agent        => { <h1>@Messages("subscribeFirst.agentHeading")</h1> }
-      case Organisation => { <h1>@Messages("subscribeFirst.mainHeading")</h1> }
-      }
-
-   <p>@Messages("subscribeFirst.formHeading")</p>
+      <h1>@Messages("subscribeFirst.mainHeading")</h1>
 
       @if(errors){
               <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
                   <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>
-                  <ul>
-                      <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion1")</li>
-                      <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion2")</li>
-                      <li role="tooltip">@Messages("subscribeFirst.noMatchingBusiness.suggestion3")</li>
-                  </ul>
-                  <p>@Messages("subscribeFirst.noMatchingBusiness.suggestion4")</p>
+                  <p>@Messages("subscribeFirst.noMatchingBusiness.suggestion") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.noMatchingBusiness.suggestion.link")</a></p>
               </div>
       }
 

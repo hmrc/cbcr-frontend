@@ -19,6 +19,7 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_], submissionContext: Boolean = false)(
 implicit request: Request[_], messages: Messages)
@@ -42,7 +43,11 @@ implicit request: Request[_], messages: Messages)
     <fieldset>
         <legend class="visuallyhidden">Enter your contact details</legend>
         <div class="form-field form-field--tall">
-            @if(submissionContext) { <form action ="/country-by-country-reporting/reconfirmEmailSubmit" method ="POST"> } else {<form action ="/country-by-country-reporting/subscriberReconfirmEmailSubmit" method ="POST">}
+            @if(submissionContext) {
+              <form action ="@routes.SubmissionController.reconfirmEmailSubmit" method ="POST">
+            } else {
+              <form action ="@routes.SubscriptionController.reconfirmEmailSubmit" method ="POST">
+            }
             @formFieldDisplay(emailErrors,"reconfirmEmail", Some(Messages("contactInfoSubmitter.reconfirm.email.invalid")), Messages("contactInfoSubmitter.reconfirm.email.label"), form)
         @CSRF.formField
         </div>
