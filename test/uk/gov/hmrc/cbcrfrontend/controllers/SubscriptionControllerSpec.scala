@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import cats.data.EitherT
+import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
@@ -77,7 +77,10 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
 
   val cbcid = CBCId.create(1).getOrElse(fail("Could not generate cbcid"))
 
-
+  val subscriptionDetails = SubscriptionDetails(
+    BusinessPartnerRecord("SAFEID",Some(OrganisationResponse("blagh")),EtmpAddress(None,None,None,None,Some("TF3 XFE"),None)),
+    SubscriberContact("name","phonenum",EmailAddress("test@test.com")),cbcid,Utr("7000000002")
+  )
 
   "GET /contactInfoSubscriber" should {
     "return 200" in {
@@ -155,6 +158,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
       val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
       when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(None)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
