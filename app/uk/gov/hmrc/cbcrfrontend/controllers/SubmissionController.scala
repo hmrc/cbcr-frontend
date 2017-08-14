@@ -107,8 +107,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   def createSuccessfulSubmissionAuditEvent(authContext: AuthContext, summaryData:SummaryData)
                                           (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =
-    EitherT(audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRSuccessfulSubmission",
-      tags = hc.toAuditTags("CBCRSuccessfulSubmission", "N/A") + ("path" -> request.uri),
+    EitherT(audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
+      tags = hc.toAuditTags("CBCRFilingSuccessful", "N/A") + ("path" -> request.uri),
       detail = Json.toJson(summaryData)
     )).map{
       case AuditResult.Success         => Right(AuditResult.Success)
