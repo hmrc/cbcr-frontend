@@ -220,8 +220,8 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   }
 
   def auditFailedSubmission(authContext: AuthContext, reason:String) (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
-    EitherT(audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFailedSubmission",
-      tags = hc.toAuditTags("CBCRFailedSubmission", "N/A") ++ Map("reason" -> reason, "path" -> request.uri)
+    EitherT(audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
+      tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri)
     )).map {
       case AuditResult.Success         => Right(AuditResult.Success)
       case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
