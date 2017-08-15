@@ -63,11 +63,11 @@ implicit request: Request[_], messages: Messages)
             </p>
             @userType match {
                 case Organisation => {
-                    <p><a href="register-for-cbcid">Back</a></p>
+                    <p><a href="@routes.SharedController.verifyKnownFactsOrganisation">Back</a></p>
                     <p><a class="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.continue")</a></p>
                 }
                 case Agent        => {
-                    <p><a href="known-facts">Back</a></p>
+                    <p><a href="@routes.SharedController.verifyKnownFactsAgent">Back</a></p>
                     <p><a class="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.continue")</a></p>
                 }
             }
