@@ -194,8 +194,8 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   def createSuccessfulSubscriptionAuditEvent(authContext: AuthContext, subscriptionData:SubscriptionDetails)
                                            (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =
-    EitherT(audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRSuccessfulSubscription",
-      tags = hc.toAuditTags("CBCRSuccessfulSubscription", "N/A") + ("path" -> request.uri),
+    EitherT(audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRSubscription",
+      tags = hc.toAuditTags("CBCRSubscription", "N/A") + ("path" -> request.uri),
       detail = Json.toJson(subscriptionData)
     )).map{
       case AuditResult.Success         => Right(AuditResult.Success)
