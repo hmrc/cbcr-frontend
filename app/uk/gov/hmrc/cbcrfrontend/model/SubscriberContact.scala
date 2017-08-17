@@ -89,7 +89,7 @@ object CBCId extends Modulus23Check {
 
 }
 
-case class SubscriberContact(name:String, phoneNumber:String, email:EmailAddress)
+case class SubscriberContact(firstName:String, lastName:String, phoneNumber:String, email:EmailAddress)
 object SubscriberContact {
   implicit val subscriptionFormat :Format[SubscriberContact] = Json.format[SubscriberContact]
 }
