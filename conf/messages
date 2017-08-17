@@ -42,9 +42,12 @@ subscribeSuccessCbcId.next2=If your report is ready to send, continue. Alternati
 
 contactInfoSubscriber.mainHeading=Who should we contact about the content of the report?
 contactInfoSubscriber.subHeading=Enter the name of the person we should contact if there are any questions about the information contained in the Country by Country report.
-contactInfoSubscriber.fullName.label=Full name
-contactInfoSubscriber.fullName.error=Please enter your Full name
-contactInfoSubscriber.fullName.hint=The person we should contact
+contactInfoSubscriber.firstName.label=First name
+contactInfoSubscriber.firstName.error=Please enter your first name
+contactInfoSubscriber.firstName.hint=The first name of the person we should contact
+contactInfoSubscriber.lastName.label=Last name
+contactInfoSubscriber.lastName.error=Please enter your last name
+contactInfoSubscriber.lastName.hint=The last name of the person we should contact
 contactInfoSubscriber.phoneNumber.label=Phone number
 contactInfoSubscriber.phoneNumber.hint=The phone number of the person we should contact
 contactInfoSubscriber.phoneNumber.error=Please enter a valid phone number

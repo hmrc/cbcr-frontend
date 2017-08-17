@@ -68,12 +68,11 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   val subscriptionDataForm: Form[SubscriberContact] = Form(
     mapping(
-      "name"        -> nonEmptyText,
+      "firstName"   -> nonEmptyText,
+      "lastName"    -> nonEmptyText,
       "phoneNumber" -> nonEmptyText,
-      "email"       -> email.verifying(EmailAddress.isValid(_))
-    )((name: String, phoneNumber:String, email: String) =>
-      SubscriberContact(name, phoneNumber, EmailAddress(email))
-    )(sc => Some((sc.name,sc.phoneNumber, sc.email.value)))
+      "email"       -> email.verifying(EmailAddress.isValid(_)).transform[EmailAddress](EmailAddress(_),_.value)
+    )(SubscriberContact.apply)(SubscriberContact.unapply)
   )
 
   val reconfirmEmailForm : Form[EmailAddress] = Form(

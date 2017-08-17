@@ -27,7 +27,8 @@ implicit request: Request[_], messages: Messages)
 @asideCbc
 }
 
-@nameErrors = @{form.error("name").isDefined}
+@firstNameErrors = @{form.error("firstName").isDefined}
+@lastNameErrors = @{form.error("lastName").isDefined}
 @phoneNumberErrors = @{form.error("phoneNumber").isDefined}
 @emailErrors = @{form.error("email").isDefined}
 
@@ -40,7 +41,8 @@ implicit request: Request[_], messages: Messages)
             </h1>
             <div class="form-group">
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.submitSubscriptionData()){
-                @formFieldDisplay(nameErrors,"name", Some(Messages("contactInfoSubscriber.fullName.error")),Messages("contactInfoSubscriber.fullName.label"), form, None)
+                @formFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)
+                @formFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None)
                 @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages("contactInfoSubscriber.phoneNumber.error")),Messages("contactInfoSubscriber.phoneNumber.label"), form, None)
                 @formFieldDisplay(emailErrors,"email", Some(Messages("contactInfoSubscriber.emailAddress.error")),Messages("contactInfoSubscriber.emailAddress.label"), form, None)
                 @CSRF.formField
