@@ -76,7 +76,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
 
   val subscriptionDetails = SubscriptionDetails(
     BusinessPartnerRecord("SAFEID",Some(OrganisationResponse("blagh")),EtmpAddress(None,None,None,None,Some("TF3 XFE"),None)),
-    SubscriberContact("name","lastname","phonenum",EmailAddress("test@test.com")),cbcid,Utr("7000000002")
+    SubscriberContact("Jimbo","Jones","phonenum",EmailAddress("test@test.com")),cbcid,Utr("7000000002")
   )
 
   "GET /contactInfoSubscriber" should {
@@ -99,7 +99,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData"))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
-    "return 400 when the name is missing" in {
+    "return 400 when either first or last name or both are missing" in {
       val subService = mock[SubscriptionDataService]
       val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
         override lazy val audit = auditMock
@@ -110,6 +110,22 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+
+      val data2 = Json.obj(
+        "phoneNumber" -> "12345678",
+        "email" -> "blagh@blagh.com",
+        "firstName" -> "Bob"
+      )
+      val fakeRequestSubscribe2 = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data2))
+      status(controller.submitSubscriptionData(fakeRequestSubscribe2)) shouldBe Status.BAD_REQUEST
+
+      val data3 = Json.obj(
+        "phoneNumber" -> "12345678",
+        "email" -> "blagh@blagh.com",
+        "lastName" -> "Jones"
+      )
+      val fakeRequestSubscribe3 = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data3))
+      status(controller.submitSubscriptionData(fakeRequestSubscribe3)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the email is missing" in {
       val subService = mock[SubscriptionDataService]
@@ -118,7 +134,8 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       }
       val data = Json.obj(
         "phoneNumber" -> "12345678",
-        "name" -> "Dave"
+        "firstName" -> "Dave",
+        "lastName" -> "Jones"
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
@@ -130,7 +147,8 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       }
       val data = Json.obj(
         "phoneNumber" -> "12345678",
-        "name" -> "Dave",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
         "email" -> "THISISNOTANEMAIL"
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
@@ -142,7 +160,8 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
         override lazy val audit = auditMock
       }
       val data = Json.obj(
-        "name" -> "Dave",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
         "email" -> "blagh@blagh.com"
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
@@ -212,7 +231,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
     "return 200" in {
 
       val fakeRequestReconfirmEmail = addToken(FakeRequest("GET", "/subscriberReconfirmEmail"))
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("name", "lastname","0123123123", EmailAddress("max@max.com"))))
+      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname","0123123123", EmailAddress("max@max.com"))))
       status(controller.reconfirmEmail(fakeRequestReconfirmEmail)) shouldBe Status.OK
     }
   }
@@ -236,7 +255,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("name", "lastname", "0123123123", EmailAddress("max@max.com"))))
+      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname", "0123123123", EmailAddress("max@max.com"))))
       when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
       when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
