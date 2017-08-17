@@ -63,7 +63,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   val submissionData = SubscriptionDetails(
     BusinessPartnerRecord("SAFEID",Some(OrganisationResponse("blagh")),EtmpAddress(None,None,None,None,Some("TF3 XFE"),None)),
-    SubscriberContact("name","phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
+    SubscriberContact("Brian","Lastname", "phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
   )
 
   val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService)

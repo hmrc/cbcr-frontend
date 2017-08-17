@@ -74,7 +74,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   val id: CBCId = CBCId("XGCBC0000000001").getOrElse(fail("unable to create cbcid"))
   val subDetails = SubscriptionDetails(
     BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None)),
-    SubscriberContact("lkajsdf","lkasjdf",EmailAddress("max@max.com")),
+    SubscriberContact("firstName","lastName", "lkasjdf",EmailAddress("max@max.com")),
     id,
     Utr("utr")
   )
