@@ -70,7 +70,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
     mapping(
       "firstName"   -> nonEmptyText,
       "lastName"    -> nonEmptyText,
-      "phoneNumber" -> nonEmptyText,
+      "phoneNumber" -> nonEmptyText.verifying(_.matches("""^[A-Z0-9 )/(-*#]{1,24}$""")),
       "email"       -> email.verifying(EmailAddress.isValid(_)).transform[EmailAddress](EmailAddress(_),_.value)
     )(SubscriberContact.apply)(SubscriberContact.unapply)
   )
