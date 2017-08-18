@@ -45,7 +45,6 @@ class XmlInfoExtract {
     RawDocSpec(docType, docRefId, corrDocRefId)
   }
 
-
   private val splitter: XmlElementExtractor[RawXmlFields] = XmlElementExtractor{
     case List("CBC_OECD", "MessageSpec") => ms => {
       val msgRefId         = (ms \ "MessageRefId").text
@@ -69,6 +68,11 @@ class XmlInfoExtract {
 
     case List("CBC_OECD", "CbcBody", "AdditionalInfo") => cr => RawAdditionalInfo(getDocSpec(cr))
 
+    case List("CBC_OECD") => cv => {
+      val cbcValue = cv.attribute("version").toString
+      RawCbcVal(cbcValue)
+    }
+
   }
 
   def extract(file:File): RawXMLInfo = {
@@ -84,8 +88,9 @@ class XmlInfoExtract {
     val re = collectedData.collectFirst{ case re:RawReportingEntity => re}.getOrElse(RawReportingEntity("",RawDocSpec("","",None),"",""))
     val ai = collectedData.collectFirst{ case ai:RawAdditionalInfo => ai}.getOrElse(RawAdditionalInfo(RawDocSpec("","",None)))
     val cr = collectedData.collectFirst{ case cr:RawCbcReports=> cr}.getOrElse(RawCbcReports(RawDocSpec("","",None)))
+    val cv = collectedData.collectFirst{ case cv:RawCbcVal=> cv}.getOrElse(RawCbcVal(""))
 
-    RawXMLInfo(ms,re,cr,ai)
+    RawXMLInfo(ms,re,cr,ai,cv)
 
   }
 
