@@ -168,6 +168,21 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
 
+    "return 400 when the phone number is invalid" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
+      val data = Json.obj(
+        "phoneNumber" -> "I'm not a phone number",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
+        "email" -> "blagh@blagh.com"
+      )
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+    }
+
     "return 500 when the SubscriptionDataService errors" in {
       val subService = mock[SubscriptionDataService]
       val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
