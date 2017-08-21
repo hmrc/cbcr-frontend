@@ -25,13 +25,13 @@ import play.api.Configuration
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPut, HttpResponse}
 import configs.syntax._
 import play.api.libs.json.JsNull
-import uk.gov.hmrc.cbcrfrontend.model.{CorrDocRefId, DocRefId}
+import uk.gov.hmrc.cbcrfrontend.model.{CorrDocRefId, DocRefId, SubscriptionDetails}
 import uk.gov.hmrc.play.http._
 
 import scala.concurrent.Future
 
 @Singleton
-class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut, config:Configuration) {
+class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut with HttpPost, config:Configuration) {
 
   val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
@@ -41,7 +41,7 @@ class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut, config:Configura
     port  <- conf.get[Int]("port")
   } yield s"$proto://$host:$port").value
 
-  def getId()(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(url+ "/cbcr/cbc-id")
+  def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.POST(url+ "/cbcr/cbc-id", s)
 
   def messageRefIdExists(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
     http.GET(url + s"/cbcr/message-ref-id/$id")
