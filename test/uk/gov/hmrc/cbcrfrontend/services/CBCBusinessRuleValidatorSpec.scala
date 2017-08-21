@@ -378,6 +378,18 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
       }
 
+      "when the CBC_OECD version is invalid" in {
+        val validFile = new File("test/resources/cbcr-withInvalidCBC-OECDVersion.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(CbcOecdVersionError),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+
+
     }
     "return the KeyXmlInfo when everything is fine" in {
       val validFile = new File("test/resources/cbcr-valid.xml")
@@ -388,6 +400,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         _      => ()
       )
     }
+
   }
 
 }

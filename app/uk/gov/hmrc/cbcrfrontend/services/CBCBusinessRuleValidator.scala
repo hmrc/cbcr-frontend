@@ -43,8 +43,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
         validateDocSpec(in.reportingEntity.docSpec) |@|
         validateDocSpec(in.cbcReport.docSpec) |@|
         validateDocSpec(in.additionalInfo.docSpec) |@|
-        validateSendingEntity(in.messageSpec)).map {
-        (messageRefIdVal, reDocSpec, cbcDocSpec,addDocSpec,sendingEntity) =>
+        validateSendingEntity(in.messageSpec) ).map {
+        (messageRefIdVal, reDocSpec, cbcDocSpec, addDocSpec, sendingEntity) =>
 
         val otherRules = (
           validateTestDataPresent(in).toValidatedNel |@|
@@ -63,11 +63,12 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             validateCorrDocRefIdExists(in.reportingEntity.docSpec).toValidatedNel |@|
             validateCorrDocRefIdExists(in.additionalInfo.docSpec).toValidatedNel |@|
             validateMessageTypeIndicCompatible(in).toValidatedNel |@|
-            crossValidateCorrDocRefIds(in.cbcReport.docSpec,in.reportingEntity.docSpec,in.additionalInfo.docSpec).toValidatedNel
-          ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
+            crossValidateCorrDocRefIds(in.cbcReport.docSpec,in.reportingEntity.docSpec,in.additionalInfo.docSpec).toValidatedNel |@|
+            validateCbcOecdVersion(in.cbcVal).toValidatedNel
+          ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
 
         (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec |@| sendingEntity |@| validateReportingPeriod(in.messageSpec).toValidatedNel).map(
-          (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec, _,reportingPeriod) =>
+          (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec, _, reportingPeriod) =>
             XMLInfo(
               MessageSpec(
                 msgRefId,values._1,
@@ -82,6 +83,14 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             )
         ).toEither
     })
+  }
+
+  private def validateCbcOecdVersion(cv:RawCbcVal):Validated[BusinessRuleErrors,Unit] = {
+    if(cv.cbcVer != "1.0"){
+      CbcOecdVersionError.invalid
+    } else {
+      ().valid
+    }
   }
 
   private def validateMessageTypeIndicCompatible(r:RawXMLInfo):Validated[BusinessRuleErrors,Unit] = {
