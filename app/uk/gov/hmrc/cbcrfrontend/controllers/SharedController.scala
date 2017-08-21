@@ -103,11 +103,7 @@ class SharedController @Inject()(val sec: SecuredActions,
             error => errorRedirect(error),
             details => details.fold[Future[Result]] {
               BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm, true))
-            }(subscriptionDetails => getCBCEnrolment.ensure(InvalidSession){e =>
-              Logger.error(s"e: $e")
-              Logger.error(s"subscriptionDetails: $subscriptionDetails")
-              subscriptionDetails.cbcId.contains(e.cbcId)
-            }.fold[Future[Result]](
+            }(subscriptionDetails => getCBCEnrolment.ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId)).fold[Future[Result]](
               {
                 case InvalidSession => BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm, false, true))
                 case error => errorRedirect(error)
