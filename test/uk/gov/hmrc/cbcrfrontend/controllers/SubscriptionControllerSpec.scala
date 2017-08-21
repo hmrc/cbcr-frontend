@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import cats.data.EitherT
+import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
@@ -72,7 +72,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
   when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
 
 
-  val cbcid = CBCId.create(1).getOrElse(fail("Could not generate cbcid"))
+  val cbcid = CBCId.create(1).toOption
 
   val subscriptionDetails = SubscriptionDetails(
     BusinessPartnerRecord("SAFEID",Some(OrganisationResponse("blagh")),EtmpAddress(None,None,None,None,Some("TF3 XFE"),None)),
@@ -190,7 +190,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       }
       val sData = SubscriberContact("Dave","Smith", "0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
-      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(Some(cbcid))
+      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT[Future,CBCId](Future.successful(cbcid))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,CBCErrors, String](Future.successful(UnexpectedState("return 500 when the SubscriptionDataService errors")))
       when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[String]](None)
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None))))
@@ -206,7 +206,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
-      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(None)
+      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT[Future,CBCId](Future.successful(None))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
     }
@@ -218,7 +218,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,CBCErrors, String](Future.successful(UnexpectedState("oops")))
-      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
+      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
       when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.left[Future,CBCErrors, Unit](UnexpectedState("oops"))
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None))))
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
@@ -234,7 +234,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,CBCErrors, String]("done")
-      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
+      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
       when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,CBCErrors, Unit](())
       when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER

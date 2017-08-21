@@ -58,7 +58,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val extract = new XmlInfoExtract()
   implicit def fileToXml(f:File) : RawXMLInfo = extract.extract(f)
 
-  val cbcId = CBCId.create(56).getOrElse(fail("failed to generate CBCId"))
+  val cbcId = CBCId.create(56).toOption
   val filename = "GB2016RGXVCBC0000000056CBC40120170311T090000X.xml"
 
   val submissionData = SubscriptionDetails(

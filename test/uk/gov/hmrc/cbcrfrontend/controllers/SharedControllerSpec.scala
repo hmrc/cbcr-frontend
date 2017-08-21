@@ -75,7 +75,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   val subDetails = SubscriptionDetails(
     BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None)),
     SubscriberContact("firstName","lastName", "lkasjdf",EmailAddress("max@max.com")),
-    id,
+    Some(id),
     Utr("utr")
   )
 
