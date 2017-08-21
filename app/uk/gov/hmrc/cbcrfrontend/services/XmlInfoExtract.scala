@@ -46,6 +46,7 @@ class XmlInfoExtract {
   }
 
   private val splitter: XmlElementExtractor[RawXmlFields] = XmlElementExtractor{
+
     case List("CBC_OECD", "MessageSpec") => ms => {
       val msgRefId         = (ms \ "MessageRefId").text
       val receivingCountry = (ms \ "ReceivingCountry").text
@@ -68,12 +69,16 @@ class XmlInfoExtract {
 
     case List("CBC_OECD", "CbcBody", "AdditionalInfo") => cr => RawAdditionalInfo(getDocSpec(cr))
 
+  }
+
+  private val splitter2: XmlElementExtractor[RawXmlFields] = XmlElementExtractor {
+
     case List("CBC_OECD") => cv => {
-      val cbcValue = cv.attribute("version").toString
+      val cbcValue = cv.attributes.get("version").getOrElse("").toString
       RawCbcVal(cbcValue)
     }
-
   }
+
 
   def extract(file:File): RawXMLInfo = {
 
@@ -84,13 +89,21 @@ class XmlInfoExtract {
       finally xmlEventReader.foreach(_.close())
     }
 
+    val collectedData2: List[RawXmlFields] = {
+      val xmlEventReader2 = nonFatalCatch opt xmlInputfactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
+
+      try xmlEventReader2.map(_.toIterator.scanCollect(splitter2.Scan).toList).toList.flatten
+      finally xmlEventReader2.foreach(_.close())
+    }
+
+    val cv = collectedData2.collectFirst{ case cv:RawCbcVal=> cv}.getOrElse(RawCbcVal(""))
     val ms = collectedData.collectFirst{ case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","","",None))
     val re = collectedData.collectFirst{ case re:RawReportingEntity => re}.getOrElse(RawReportingEntity("",RawDocSpec("","",None),"",""))
     val ai = collectedData.collectFirst{ case ai:RawAdditionalInfo => ai}.getOrElse(RawAdditionalInfo(RawDocSpec("","",None)))
     val cr = collectedData.collectFirst{ case cr:RawCbcReports=> cr}.getOrElse(RawCbcReports(RawDocSpec("","",None)))
-    val cv = collectedData.collectFirst{ case cv:RawCbcVal=> cv}.getOrElse(RawCbcVal(""))
 
     RawXMLInfo(ms,re,cr,ai,cv)
+//    RawXMLInfo(ms,re,cr,ai)
 
   }
 
