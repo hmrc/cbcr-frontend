@@ -18,9 +18,10 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
 
+import cats.data.OptionT
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
-import uk.gov.hmrc.cbcrfrontend.model.CBCId
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriptionDetails}
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,12 +29,13 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext){
 
-  def getCbcId(implicit hc:HeaderCarrier) : Future[Option[CBCId]] =
-    connector.getId().map{ response =>
+  def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : OptionT[Future,CBCId] = {
+    OptionT(connector.subscribe(s).map { response =>
       response.status match {
-        case Status.OK => CBCId(response.body)
+        case Status.OK => CBCId((response.json \ "cbc-id").as[String])
         case _         => None
       }
-    }
+    })
+  }
 
 }

@@ -80,7 +80,7 @@ class SubscriptionDataService extends ServicesConfig{
 
     for {
       cbc    <- id.fold(
-        utr => retrieveSubscriptionData(Left(utr)).map(_.map(_.cbcId)),
+        utr => retrieveSubscriptionData(Left(utr)).map(_.flatMap(_.cbcId)),
         id  => EitherT.pure[Future,CBCErrors,Option[CBCId]](Some(id))
       )
       result <- cbc.fold(EitherT.pure[Future,CBCErrors,Option[String]](None))(id =>

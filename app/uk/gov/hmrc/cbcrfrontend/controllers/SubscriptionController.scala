@@ -81,6 +81,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
     )(EmailAddress.apply)(EmailAddress.unapply)
   )
 
+
   val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request =>
       Logger.debug("Country by Country: Generate CBCId and Store Data")
@@ -88,20 +89,24 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       subscriptionDataForm.bindFromRequest.fold(
         errors => BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
         data => {
-          cbcIdService.getCbcId.flatMap {
-            case Some(id) =>
+          val id_bpr_utr:ServiceResponse[(CBCId,BusinessPartnerRecord,Utr)] = for {
+            bpr_utr <- (EitherT[Future, CBCErrors, BusinessPartnerRecord](
+              session.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
+            ) |@| EitherT[Future, CBCErrors, Utr](
+              session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
+            )).tupled
+            subDetails = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
+            id <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
+          } yield Tuple3(id, bpr_utr._1, bpr_utr._2)
+
+          id_bpr_utr.semiflatMap{
+            case (id,bpr,utr) =>
 
               val result = for {
-                bpr <- EitherT[Future, CBCErrors, BusinessPartnerRecord](
-                  session.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
-                )
-                utr <- EitherT[Future, CBCErrors, Utr](
-                  session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
-                )
-                _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, id, utr))
+                _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, Some(id), utr))
                 _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
                 _ <- EitherT.right[Future, CBCErrors, (CacheMap,CacheMap,CacheMap)](
-                  (session.save(id) |@| session.save(data) |@| session.save(SubscriptionDetails(bpr, data, id, utr))).tupled
+                  (session.save(id) |@| session.save(data) |@| session.save(SubscriptionDetails(bpr, data, Some(id), utr))).tupled
                 )
               } yield id
 
@@ -117,8 +122,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                 _ => Redirect(routes.SubscriptionController.reconfirmEmail())
               ).flatten
 
-            case None => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-          }
+          }.leftMap(errors => errorRedirect(errors)).merge
         }
       )
   }

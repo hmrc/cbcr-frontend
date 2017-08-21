@@ -21,6 +21,7 @@ import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
+import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -102,7 +103,7 @@ class SharedController @Inject()(val sec: SecuredActions,
             error => errorRedirect(error),
             details => details.fold[Future[Result]] {
               BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm, true))
-            }(subscriptionDetails => getCBCEnrolment.ensure(InvalidSession)(_.cbcId === subscriptionDetails.cbcId).fold[Future[Result]](
+            }(subscriptionDetails => getCBCEnrolment.ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId)).fold[Future[Result]](
               {
                 case InvalidSession => BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm, false, true))
                 case error => errorRedirect(error)
