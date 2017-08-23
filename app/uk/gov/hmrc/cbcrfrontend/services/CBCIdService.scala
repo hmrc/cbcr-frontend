@@ -23,6 +23,7 @@ import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriptionDetails}
 import uk.gov.hmrc.play.http.HeaderCarrier
+import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,6 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext){
 
   def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : OptionT[Future,CBCId] = {
+    Logger.info(s"************* SubscriptionDetails: $s.toString")
     OptionT(connector.subscribe(s).map { response =>
       response.status match {
         case Status.OK => CBCId((response.json \ "cbc-id").as[String])
