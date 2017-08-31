@@ -40,6 +40,8 @@ GET        /company-name/entry-form                       @uk.gov.hmrc.cbcrfront
 
 GET        /already-subscribed                            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.alreadySubscribed
 GET        /contact-info-subscriber                       @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber
+GET        /contact-info-subscriber/update-form            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.updateInfoSubscriber
+POST        /contact-info-subscriber/update-form            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.saveUpdatedInfoSubscriber
 GET        /subscribe-success-cbc-id/:cbcId               @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
 GET        /subscriber-email/entry-form                   @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmail
 POST       /subscriber-email                              @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmailSubmit

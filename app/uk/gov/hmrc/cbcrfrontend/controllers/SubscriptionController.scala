@@ -58,7 +58,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                                        val connector:BPRKnownFactsConnector,
                                        val cbcIdService:CBCIdService,
                                        val kfService:CBCKnownFactsService,
-                                       val enrolConnector:EnrolmentsConnector,
+                                       val enrollments:EnrolmentsConnector,
                                        val knownFactsService:BPRKnownFactsService)
                                       (implicit ec: ExecutionContext,
                              val playAuth:PlayAuthConnector,
@@ -171,6 +171,37 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm))
+  }
+
+
+  val updateInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
+    // check the authenticated user is subscribed by retrieving UTR from the authcontext
+    getUserType(authContext).semiflatMap{ userType =>
+      enrollments.alreadyEnrolled.flatMap(subscribed =>
+        if (subscribed) {
+          // query the current contact info subscriber
+          // populate the form with the date retrieved
+          val prepopulatedForm = subscriptionDataForm.bind(Map("firstName" -> "peter", "lastName" -> "anning",
+            "email" -> "peter.anning@gmail.com", "phoneNumber" -> "07595948265"))
+          Ok(update.updateKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
+        } else {
+          Ok("Error not enrolled") // replace with an error page
+        }
+      )
+    }.fold(
+      (errors: CBCErrors) => errorRedirect(errors),
+      (result: Result)    => result
+    )
+
+  }
+
+  val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit requests =>
+    subscriptionDataForm.bindFromRequest.fold(
+      errors => BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
+      data => {
+        Ok("Saved") // implment the save call
+      }
+    )
   }
 
   def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>

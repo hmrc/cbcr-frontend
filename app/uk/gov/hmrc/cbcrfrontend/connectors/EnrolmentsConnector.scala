@@ -44,6 +44,7 @@ class EnrolmentsConnector @Inject() (httpGet: HttpGet, config:Configuration)(imp
   } yield enrolments
 
 
-
+  def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
+    getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
 
 }

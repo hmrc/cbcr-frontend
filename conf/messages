@@ -54,6 +54,7 @@ contactInfoSubscriber.phoneNumber.error=Please enter a valid phone number
 contactInfoSubscriber.emailAddress.label=Email address
 contactInfoSubscriber.emailAdress.hint=The email address of the person we should contact
 contactInfoSubscriber.emailAddress.error=Please enter a valid email address
+contactInfoSubscriber.updateHeading=Update your details
 
 contactInfoSubscriber.reconfirm.email.mainHeading=Is this your correct email address?
 contactInfoSubscriber.reconfirm.email.label=Email address
