@@ -47,7 +47,7 @@ import scala.concurrent.Future
 @Singleton
 class SharedController @Inject()(val sec: SecuredActions,
                                  val subDataService: SubscriptionDataService,
-                                 val enrolments:EnrolmentsConnector,
+                                 val enrollments:EnrolmentsConnector,
                                  val authConnector:AuthConnector,
                                  val knownFactsService: BPRKnownFactsService)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
@@ -76,7 +76,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   }
 
   private def getCBCEnrolment(implicit hc:HeaderCarrier) : EitherT[Future,UnexpectedState,CBCEnrolment] = for {
-    enrolment <- OptionT(enrolments.getEnrolments.map(_.find(_.key == "HMRC-CBC-ORG")))
+    enrolment <- OptionT(enrollments.getEnrolments.map(_.find(_.key == "HMRC-CBC-ORG")))
       .toRight(UnexpectedState("Enrolment not found"))
     cbcString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("cbcid")).map(_.value))
       .toRight(UnexpectedState("Enrolment did not contain a cbcid"))
@@ -130,8 +130,6 @@ class SharedController @Inject()(val sec: SecuredActions,
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.guidanceOverviewQa()))
   }
 
-  def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
-    enrolments.getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
 
   val verifyKnownFactsOrganisation = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request => enterKnownFacts(authContext)
@@ -143,7 +141,7 @@ class SharedController @Inject()(val sec: SecuredActions,
 
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]) =
     getUserType(authContext).semiflatMap{ userType =>
-      alreadyEnrolled.flatMap(subscribed =>
+      enrollments.alreadyEnrolled.flatMap(subscribed =>
         if (subscribed) {
           NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta()))
         } else {
