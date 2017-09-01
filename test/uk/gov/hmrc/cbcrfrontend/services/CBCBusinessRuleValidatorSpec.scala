@@ -389,6 +389,16 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
+      "when the XML Encoding value is NOT UTF-8" in {
+        val validFile = new File("test/resources/cbcr-withInvalidXmlEncodingValue.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(XmlEncodingError),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
 
     }
     "return the KeyXmlInfo when everything is fine" in {

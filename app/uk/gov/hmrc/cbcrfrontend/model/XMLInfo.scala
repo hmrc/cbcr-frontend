@@ -32,6 +32,7 @@ case class RawAdditionalInfo(docSpec: RawDocSpec) extends RawXmlFields
 case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
 case class RawDocSpec(docType:String, docRefId:String, corrDocRefId:Option[String]) extends RawXmlFields
 case class RawCbcVal(cbcVer:String) extends RawXmlFields
+case class RawXmlEncodingVal(xmlEncodingVal: String) extends RawXmlFields
 case class RawMessageSpec(messageRefID: String,
                           receivingCountry:String,
                           sendingEntityIn:String,
@@ -46,7 +47,8 @@ case class RawXMLInfo(messageSpec: RawMessageSpec,
                       reportingEntity: RawReportingEntity,
                       cbcReport: RawCbcReports,
                       additionalInfo: RawAdditionalInfo,
-                      cbcVal: RawCbcVal) extends RawXmlFields
+                      cbcVal: RawCbcVal,
+                      xmlEncoding: RawXmlEncodingVal) extends RawXmlFields
 
 /** These models represent the type-validated data, derived from the raw data */
 class DocRefId private[model](val msgRefID:MessageRefID,

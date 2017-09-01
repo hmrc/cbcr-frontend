@@ -63,6 +63,7 @@ case object InvalidDocRefId extends BusinessRuleErrors
 case object InvalidCorrDocRefId extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
+case object XmlEncodingError extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -101,6 +102,7 @@ object BusinessRuleErrors {
       case IncompatibleOECDTypes     => JsString(IncompatibleOECDTypes.toString)
       case MessageTypeIndicDocTypeIncompatible => JsString(MessageTypeIndicDocTypeIncompatible.toString)
       case CbcOecdVersionError       => JsString(CbcOecdVersionError.toString)
+      case XmlEncodingError           => JsString(XmlEncodingError.toString)
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
@@ -121,6 +123,7 @@ object BusinessRuleErrors {
           case Some("incompatibleoecdtypes")     => JsSuccess(IncompatibleOECDTypes)
           case Some("messagetypeindicdoctypeincompatible") => JsSuccess(MessageTypeIndicDocTypeIncompatible)
           case Some("cbcoecdversionerror")    => JsSuccess(CbcOecdVersionError)
+          case Some("xmlencodingerror")       => JsSuccess(XmlEncodingError)
           case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^invalidxmlerror: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -144,6 +147,7 @@ object BusinessRuleErrors {
     case InvalidDocRefId       => "Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide."
     case InvalidCorrDocRefId   => "Error Code 8000 CorrDocRefId (format): The structure of the CorrDocRefID is not in the correct format, as set out in the User Guide."
     case CbcOecdVersionError   => """CBC_OECD version must equal "1.0"""
+    case XmlEncodingError      => """XML encoding must equal UTF8"""
     case i:InvalidXMLError     => i.toString
   }
 }

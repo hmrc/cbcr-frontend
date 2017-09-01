@@ -64,8 +64,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             validateCorrDocRefIdExists(in.additionalInfo.docSpec).toValidatedNel |@|
             validateMessageTypeIndicCompatible(in).toValidatedNel |@|
             crossValidateCorrDocRefIds(in.cbcReport.docSpec,in.reportingEntity.docSpec,in.additionalInfo.docSpec).toValidatedNel |@|
-            validateCbcOecdVersion(in.cbcVal).toValidatedNel
-          ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
+            validateCbcOecdVersion(in.cbcVal).toValidatedNel |@|
+            validateXmlEncodingVal(in.xmlEncoding).toValidatedNel
+          ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
 
         (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec |@| sendingEntity |@| validateReportingPeriod(in.messageSpec).toValidatedNel).map(
           (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec, _, reportingPeriod) =>
@@ -83,6 +84,14 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             )
         ).toEither
     })
+  }
+
+  private def validateXmlEncodingVal(xe:RawXmlEncodingVal):Validated[BusinessRuleErrors,Unit] ={
+    if(xe.xmlEncodingVal != "UTF-8"){
+      XmlEncodingError.invalid
+    } else {
+      ().valid
+    }
   }
 
   private def validateCbcOecdVersion(cv:RawCbcVal):Validated[BusinessRuleErrors,Unit] = {
