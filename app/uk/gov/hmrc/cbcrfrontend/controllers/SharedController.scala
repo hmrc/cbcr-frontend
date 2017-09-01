@@ -139,9 +139,12 @@ class SharedController @Inject()(val sec: SecuredActions,
     implicit request => enterKnownFacts(authContext)
   }
 
+  def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
+    enrollments.getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
+
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]) =
     getUserType(authContext).semiflatMap{ userType =>
-      enrollments.alreadyEnrolled.flatMap(subscribed =>
+      alreadyEnrolled.flatMap(subscribed =>
         if (subscribed) {
           NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta()))
         } else {
