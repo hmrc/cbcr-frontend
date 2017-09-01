@@ -18,12 +18,13 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 
 import javax.inject.Inject
 
+import cats.data.OptionT
 import com.typesafe.config.Config
 import play.api.Configuration
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet}
 import configs.syntax._
-import uk.gov.hmrc.cbcrfrontend.model.Enrolment
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Enrolment}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,8 +44,20 @@ class EnrolmentsConnector @Inject() (httpGet: HttpGet, config:Configuration)(imp
     enrolments    <- httpGet.GET[List[Enrolment]](url + enrolmentsUri.toString().replaceAll("\"",""))
   } yield enrolments
 
-
   def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
     getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
+
+  def getCbcId(implicit hc:HeaderCarrier): OptionT[Future,CBCId] =
+    OptionT(alreadyEnrolled.flatMap { success =>
+      if (success) {
+        getEnrolments.map(enrolments => enrolments.find(e => e.key == "HMRC-CBC-ORG")).map(optE => optE match {
+          case Some(opt) => opt.identifiers
+          case _ => List()
+        }).map(ids => ids.find(id => id.key == "cbcId")).map[Option[CBCId]](optId => optId match {
+          case Some(cbcId) => CBCId(cbcId.value)
+          case _ => None
+        })
+      } else Future(None)
+    })
 
 }

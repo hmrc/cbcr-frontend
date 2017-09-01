@@ -176,22 +176,31 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   val updateInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     // check the authenticated user is subscribed by retrieving UTR from the authcontext
-    getUserType(authContext).semiflatMap{ userType =>
-      enrollments.alreadyEnrolled.flatMap(subscribed =>
-        if (subscribed) {
-          // query the current contact info subscriber
-          // populate the form with the date retrieved
-          val prepopulatedForm = subscriptionDataForm.bind(Map("firstName" -> "peter", "lastName" -> "anning",
-            "email" -> "peter.anning@gmail.com", "phoneNumber" -> "07595948265"))
-          Ok(update.updateKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
-        } else {
-          Ok("Error not enrolled") // replace with an error page
-        }
-      )
-    }.fold(
-      (errors: CBCErrors) => errorRedirect(errors),
-      (result: Result)    => result
+//    getUserType(authContext).semiflatMap{ userType =>
+//      enrollments.alreadyEnrolled.flatMap(subscribed =>
+//        if (subscribed) {
+//          // query the current contact info subscriber
+//          // populate the form with the date retrieved
+//          val prepopulatedForm = subscriptionDataForm.bind(Map("firstName" -> "peter", "lastName" -> "anning",
+//            "email" -> "peter.anning@gmail.com", "phoneNumber" -> "07595948265"))
+//          Ok(update.updateKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
+//        } else {
+//          Ok("Error not enrolled") // replace with an error page
+//        }
+//      )
+//    }.fold(
+//      (errors: CBCErrors) => errorRedirect(errors),
+//      (result: Result)    => result
+//    )
+    enrollments.getCbcId.map { cbcId =>
+      val prepopulatedForm = subscriptionDataForm.bind(Map("firstName" -> "peter", "lastName" -> "anning",
+        "email" -> "peter.anning@gmail.com", "phoneNumber" -> "07595948265"))
+      Ok(update.updateKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
+    }.cata(
+      Ok("Not enrolled"),
+      result => result
     )
+
 
   }
 
