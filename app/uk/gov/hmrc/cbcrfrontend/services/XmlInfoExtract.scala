@@ -110,6 +110,15 @@ class XmlInfoExtract {
 
   }
 
+  private val splitter2: XmlElementExtractor[RawXmlFields] = XmlElementExtractor {
+
+    case List("CBC_OECD") => cv => {
+      val cbcValue = cv.attributes.get("version").getOrElse("").toString
+      RawCbcVal(cbcValue)
+    }
+  }
+
+
   def extract(file:File): RawXMLInfo = {
 
     val collectedData: List[RawXmlFields] = {

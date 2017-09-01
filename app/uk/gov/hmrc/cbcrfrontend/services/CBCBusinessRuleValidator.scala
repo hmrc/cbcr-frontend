@@ -68,6 +68,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             validateXmlEncodingVal(in.xmlEncoding).toValidatedNel
           ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
 
+
         (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec |@| sendingEntity |@| validateReportingPeriod(in.messageSpec).toValidatedNel).map(
           (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec, _, reportingPeriod) =>
             XMLInfo(
