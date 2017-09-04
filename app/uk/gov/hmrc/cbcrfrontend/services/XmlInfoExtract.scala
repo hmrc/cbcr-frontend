@@ -29,13 +29,11 @@ import scala.io.Source
 import scala.util.control.Exception.nonFatalCatch
 import scala.xml.{Node, NodeSeq}
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
-
 import play.api.Logger
 
 class XmlInfoExtract {
-  private val xmlInputfactory: XMLInputFactory = XMLInputFactory.newInstance()
 
-  private val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
+  private val xmlInputFactory: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
 
   implicit class NodeSeqPimp(n: NodeSeq) {
     def textOption: Option[String] = n map (_.text) headOption
@@ -50,7 +48,7 @@ class XmlInfoExtract {
   }
 
   private def extractEncoding(input: File): RawXmlEncodingVal = {
-    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
+    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
 
     val encodingVal: String = xmlStreamReader.getCharacterEncodingScheme
     xmlStreamReader.closeCompletely()
@@ -58,29 +56,27 @@ class XmlInfoExtract {
   }
 
   private def extractCbcVal(input: File): RawCbcVal = {
-    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
-    var cbcVar: String = ""
+    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
 
-    try {
-      while (xmlStreamReader.hasNext && cbcVar == "") {
-        val event = xmlStreamReader.next()
+    val value = nonFatalCatch either {
+      RawCbcVal(
+        if(xmlStreamReader.hasNext()) {
+          xmlStreamReader.nextTag()
+          xmlStreamReader.getAttributeValue("","version")
+        } else ""
+      )
+    }
 
-        event match {
+    xmlStreamReader.closeCompletely()
 
-          case XMLStreamConstants.START_ELEMENT =>
-            for (attrib <- 0 to (xmlStreamReader.getAttributeCount - 1) if (xmlStreamReader.getAttributeLocalName(attrib) == "version"))
-              cbcVar = xmlStreamReader.getAttributeValue(attrib)
-
-        }
-      }
-      RawCbcVal(cbcVar)
-
-    } catch {
-      case e: Exception => {
+    value.fold(
+      e => {
         Logger.warn(s"extractCbcVal encountered the following error: ${e.getMessage}")
         RawCbcVal("")
-      }
-    } finally {xmlStreamReader.closeCompletely()}
+      },
+      cbcVal => cbcVal
+    )
+
   }
 
 
@@ -114,7 +110,7 @@ class XmlInfoExtract {
 
     val collectedData: List[RawXmlFields] = {
 
-      val xmlEventReader = nonFatalCatch opt xmlInputfactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
+      val xmlEventReader = nonFatalCatch opt xmlInputFactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
 
       try xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten
       finally xmlEventReader.foreach(_.close())
