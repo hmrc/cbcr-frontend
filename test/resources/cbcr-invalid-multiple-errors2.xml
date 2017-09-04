@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ns1:CBC_OECD version="1.0" xmlns:ns1="urn:oecd:ties:cbc:v1">
+<ns1:CBC_OECD version="" xmlns:ns1="urn:oecd:ties:cbc:v1">
     <ns1:MessageSpec>
         <ns1:SendingEntityIN>ABCCorp </ns1:SendingEntityIN>
         <ns1:TransmittingCountry>US</ns1:TransmittingCountry>
@@ -21,7 +21,7 @@
                 <ns1:TIN issuedBy="HMRC">1001</ns1:TIN>
                 <ns1:IN INType="2001" issuedBy="HMRC"/>
                 <ns1:Name>ABCCorp</ns1:Name>
-                <ns1:Address legalAddressType="OECD303">
+                <ns1:Address legalAddressTyfpe="OECD303">
                     <ns1:CountryCode>US</ns1:CountryCode>
                     <ns1:AddressFree>Free Text</ns1:AddressFree>
                 </ns1:Address>
@@ -34,15 +34,23 @@
                 <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrDocRefId</ns2:CorrDocRefId>
             </ns1:DocSpec>
         </ns1:ReportingEntity>
+        <asdljs></asdljs>
         <ns1:CbcReports>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
+                <asdljs></asdljs>
+                <asdljs></asdljs>
+                <asdljs></asdljs>
+                <asdljs></asdljs>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_DocRefId</ns2:DocRefId>
                 <ns2:CorrMessageRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
                 <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrDocRefId</ns2:CorrDocRefId>
             </ns1:DocSpec>
+            <asdljs></asdljs>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>
+                <asdljs></asdljs>
+                <asdljs></asdljs>
                 <ns1:Revenues>
                     <ns1:Unrelated currCode="USD">CBC601</ns1:Unrelated>
                     <ns1:Related currCode="USD">CBC602</ns1:Related>
@@ -62,26 +70,62 @@
                     <ns1:TIN issuedBy="USGOV">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="USGOV"/>
                     <ns1:Name/>
+                    <yeah></yeah>
                     <ns1:Address legalAddressType="OECD303">
-                        <ns1:CountryCode>US</ns1:CountryCode>
+                        <ns1:CountryCode>99</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
                     </ns1:Address>
                 </ns1:ConstEntity>
-                <ns1:IncorpCountryCode>US</ns1:IncorpCountryCode>
+                <ns1:IncorpCountryCode>SDF</ns1:IncorpCountryCode>
                 <ns1:BizActivities>CBC510</ns1:BizActivities>
+                <ns1:BizActivities>CBC5102</ns1:BizActivities>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
+                <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
                 <ns1:OtherEntityInfo>String_OtherEntityInfo</ns1:OtherEntityInfo>
             </ns1:ConstEntities>
         </ns1:CbcReports>
-        <ns1:AdditionalInfo>
+        <ns1:AdditionsdfalInfo>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_DocRefId</ns2:DocRefId>
-                <ns2:CorrMessageRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
+                <ns2:CorrMessageRefId xmlns:nasds2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
                 <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrDocRefId</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:OtherInfo>String_OtherInfo</ns1:OtherInfo>
-            <ns1:ResCountryCode/>
+            <ns1:ResCounitryCode/>
             <ns1:SummaryRef/>
-        </ns1:AdditionalInfo>
+        </ns1:AdditionsdfalInfo>
     </ns1:CbcBody>
 </ns1:CBC_OECD>

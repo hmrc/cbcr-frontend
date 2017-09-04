@@ -61,7 +61,7 @@ class SubscriptionDataService extends ServicesConfig{
 
   }
   def saveSubscriptionData(data:SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
-    val fullUrl = url.url + s"/cbcr/saveSubscriptionData"
+    val fullUrl = url.url + s"/cbcr/subscription-data"
     EitherT[Future,CBCErrors, String](
       WSHttp.POST[SubscriptionDetails,HttpResponse](fullUrl,data).map { response =>
         response.status match {
@@ -76,25 +76,23 @@ class SubscriptionDataService extends ServicesConfig{
 
   def clearSubscriptionData(id: Either[Utr,CBCId])(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]] = {
 
-    val fullUrl = url.url + s"/cbcr/clearSubscriptionData"
+    val fullUrl = (cbcId:CBCId) => url.url + s"/cbcr/subscription-data/$cbcId"
 
     for {
       cbc    <- id.fold(
-        utr => retrieveSubscriptionData(Left(utr)).map(_.map(_.cbcId)),
+        utr => retrieveSubscriptionData(Left(utr)).map(_.flatMap(_.cbcId)),
         id  => EitherT.pure[Future,CBCErrors,Option[CBCId]](Some(id))
       )
       result <- cbc.fold(EitherT.pure[Future,CBCErrors,Option[String]](None))(id =>
         EitherT[Future, CBCErrors, Option[String]](
-          WSHttp.POST[CBCId, HttpResponse](fullUrl, id).map { response =>
-            response.status match {
-              case Status.OK        => Right[CBCErrors, Option[String]](Some(response.body))
-              case Status.NOT_FOUND => Right[CBCErrors, Option[String]](None)
-              case _ => Left[CBCErrors, Option[String]](UnexpectedState(response.body))
-            }
+          WSHttp.DELETE[HttpResponse](fullUrl(id)).map { response =>
+            Right[CBCErrors, Option[String]](Some(response.body))
           }.recover {
-            case NonFatal(t) => Left[CBCErrors, Option[String]](UnexpectedState(t.getMessage))
+            case _:NotFoundException => Right[CBCErrors, Option[String]](None)
+            case NonFatal(t)         => Left[CBCErrors, Option[String]](UnexpectedState(t.getMessage))
           }
-        ))
+        )
+      )
     } yield result
 
   }

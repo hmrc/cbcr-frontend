@@ -26,7 +26,8 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, CBCKnownFacts, UnexpectedState}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 @Singleton
 class CBCKnownFactsService @Inject() (connector:GGConnector)(implicit ec:ExecutionContext) {
@@ -35,14 +36,19 @@ class CBCKnownFactsService @Inject() (connector:GGConnector)(implicit ec:Executi
     Either.cond(res.status == Status.OK, res.body, UnexpectedState(res.body))
 
   private def addKnownFacts(kf:CBCKnownFacts)(implicit hc:HeaderCarrier) : ServiceResponse[String] =
-    EitherT(connector.addKnownFacts(kf).map(httpResponseToEither))
+    EitherT(connector.addKnownFacts(kf).map(httpResponseToEither).recover{
+      case NonFatal(e) => Left(UnexpectedState(e.getMessage))
+    })
 
   private def enrol(kf:CBCKnownFacts)(implicit hc:HeaderCarrier) : ServiceResponse[String] =
-    EitherT(connector.enrolCBC(kf).map(httpResponseToEither))
+    EitherT(connector.enrolCBC(kf).map(httpResponseToEither).recover{
+      case NonFatal(e) => Left(UnexpectedState(e.getMessage))
+    })
 
-  def addKnownFactsToGG(kf:CBCKnownFacts)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] = for {
-    _ <- addKnownFacts(kf)
-    _ <- enrol(kf)
-  } yield ()
+  def addKnownFactsToGG(kf:CBCKnownFacts)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
+    for {
+      _ <- addKnownFacts(kf)
+      _ <- enrol(kf)
+    } yield ()
 
 }

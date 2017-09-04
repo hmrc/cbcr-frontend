@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.io
-import java.io.{File, PrintWriter}
+import java.io._
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -36,15 +35,18 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html._
-import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, FrontendGlobal, sha256Hash}
+import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, sha256Hash, _}
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.audit.AuditExtensions._
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
+import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import uk.gov.hmrc.cbcrfrontend._
 
 
 @Singleton
@@ -53,21 +55,24 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                                      val businessRuleValidator: CBCBusinessRuleValidator,
                                      val cache:CBCSessionCache,
                                      val fileUploadService:FileUploadService,
-                                     val xmlExtractor:XmlInfoExtract)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+                                     val xmlExtractor:XmlInfoExtract,
+                                     val validator:CBCRXMLValidator
+                                    )(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend") }
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr") }
 
   lazy val hostName = FrontendAppConfig.cbcrFrontendHost
-  lazy val fileUploadErrorRedirectUrl = s"$hostName/country-by-country-reporting/failed-callback"
+  lazy val audit = FrontendAuditConnector
+  lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     val result = for {
       envelopeId     <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
       fileId         <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"))
-      successRedirect = s"$hostName/country-by-country-reporting/file-upload-progress/$envelopeId/$fileId"
+      successRedirect = s"$hostName${routes.FileUploadController.fileUploadProgress(envelopeId.value, fileId.value).url}"
       fileUploadUrl   = s"${FrontendAppConfig.fileUploadFrontendHost}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
         s"redirect-success-url=$successRedirect&" +
         s"redirect-error-url=$fileUploadErrorRedirectUrl"
@@ -78,7 +83,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
   }
 
-  def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
+  def fileUploadProgress(envelopeId: String, fileId: String) = sec.AuthenticatedAction{ _ => implicit request =>
     val hostName = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
     Ok(submission.fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
@@ -103,14 +108,12 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
   } yield metadata
 
-  def validateBusinessRules(file:File, metadata: FileMetadata)(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
-    val rawXmlInfo  = xmlExtractor.extract(file)
-    val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, metadata.name)
+  def validateBusinessRules(file_metadata:(File,FileMetadata))(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
+    val rawXmlInfo  = xmlExtractor.extract(file_metadata._1)
+    val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, file_metadata._2.name)
     EitherT.right(xmlInfo.fold(
       errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => None -> errors.toList),
-      info   =>{
-        cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file))).map(_ => Some(info) -> List.empty))
-      }
+      info   => cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file_metadata._1))).map(_ => Some(info) -> List.empty))
     ).flatten)
   }
 
@@ -119,11 +122,18 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     val result = for {
       file_metadata       <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId)).tupled
       _                   <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml",(),InvalidFileType(file_metadata._2.name))
-      schemaErrors         = CBCRXMLValidator.validateSchema(file_metadata._1)
+      schemaErrors        =  validator.validateSchema(file_metadata._1)
       _                   <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
-      _                   <- EitherT.cond[Future](!schemaErrors.hasFatalErrors,(),FatalSchemaErrors)
-      xml_bizErrors       <- validateBusinessRules(file_metadata._1,file_metadata._2)
+      _                   <- if(!schemaErrors.hasFatalErrors) EitherT.pure[Future,CBCErrors,Unit](())
+                             else auditFailedSubmission(authContext, "schema validation errors").flatMap(_ =>
+                                  EitherT.left[Future,CBCErrors,Unit](Future.successful(FatalSchemaErrors))
+                             )
+      xml_bizErrors       <- validateBusinessRules(file_metadata)
       length              = (file_metadata._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+      _                   <- if(schemaErrors.hasErrors) auditFailedSubmission(authContext,"schema validation errors")
+                             else if(xml_bizErrors._2.nonEmpty) auditFailedSubmission(authContext,"business rules errors")
+                             else EitherT.pure[Future,CBCErrors,Unit](())
+      _                   = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
     } yield Ok(submission.fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaErrors.hasErrors, xml_bizErrors._2.nonEmpty, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
     result.leftMap{
@@ -174,29 +184,44 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   def fileContainsVirus = fileUploadError(FileContainsVirus)
 
   private def fileUploadError(errorType:FileUploadErrorType) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Future.successful(Ok(submission.fileupload.fileUploadError(
+    auditFailedSubmission(authContext,errorType.toString).map(_ => Ok(submission.fileupload.fileUploadError(
       includes.asideBusiness(),
       includes.phaseBannerBeta(),
       errorType
-    )))
+    ))).leftMap(errorRedirect).merge
   }
 
-  def handleError(errorCode:Int, reason:String) = Action.async{ implicit request =>
+  def handleError(errorCode:Int, reason:String) = sec.AuthenticatedAction{ _ => implicit request =>
     Logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
-    Future.successful(
-      errorCode match {
-        case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
-        case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
-        case _                        => Redirect(routes.SharedController.technicalDifficulties())
+    errorCode match {
+      case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
+      case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
+      case _                        => Redirect(routes.SharedController.technicalDifficulties())
+    }
+  }
+
+  def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+    Logger.info(s"Received a file-upload-response query for $envelopeId")
+    fileUploadService.getFileUploadResponse(envelopeId,fileId).fold(
+      error    => {
+        Logger.info(s"File not ready: $error")
+        NoContent
+      },
+      response => {
+        Logger.info(s"Response back was: $response")
+        fileUploadResponseToResult(response)
       }
     )
   }
 
-  def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    fileUploadService.getFileUploadResponse(envelopeId,fileId).fold(
-      _        => NoContent,
-      response => fileUploadResponseToResult(response)
-    )
+  def auditFailedSubmission(authContext: AuthContext, reason:String) (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
+    EitherT(audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
+      tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri)
+    )).map {
+      case AuditResult.Success         => Right(AuditResult.Success)
+      case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
+      case AuditResult.Disabled        => Right(AuditResult.Success)
+    })
   }
 
 }

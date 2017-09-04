@@ -36,7 +36,8 @@ implicit request: Request[_], messages: Messages)
    <h1>
     @Messages("fileUploadProgress.mainHeading")
    </h1>
-   <body onload="poll('@envelopeId', '@fileId', '@hostName')" >
+   
+   <body onload="poll('@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileUploadResponse(envelopeId, fileId)', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileValidate(envelopeId, fileId)', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileContainsVirus', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.technicalDifficulties()')" >
 
    <img alt="loading..." src="@assetsLocationPrefix/images/loading.gif" />
    </body>

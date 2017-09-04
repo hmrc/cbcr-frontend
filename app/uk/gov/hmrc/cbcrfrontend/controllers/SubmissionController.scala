@@ -28,31 +28,42 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages.Implicits._
-import play.api.mvc.{Action, Result}
+import play.api.libs.json.Json
+import play.api.mvc.{Action, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html.includes
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.audit.AuditExtensions._
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
 import scala.util.control.Exception.nonFatalCatch
+import scala.util.control.NonFatal
 
 
 @Singleton
-class SubmissionController @Inject()(val sec: SecuredActions, val cache:CBCSessionCache, val fus:FileUploadService, val docRefIdService: DocRefIdService, val auth:AuthConnector)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
+class SubmissionController @Inject()(val sec: SecuredActions,
+                                     val cache:CBCSessionCache,
+                                     val fus:FileUploadService,
+                                     val docRefIdService: DocRefIdService,
+                                     val auth:AuthConnector)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
 
   implicit lazy val fusUrl   = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+  lazy val audit: AuditConnector = FrontendAuditConnector
 
   val dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH:mm")
 
@@ -93,6 +104,17 @@ class SubmissionController @Inject()(val sec: SecuredActions, val cache:CBCSessi
       }
     }.merge
   }
+
+  def createSuccessfulSubmissionAuditEvent(authContext: AuthContext, summaryData:SummaryData)
+                                          (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =
+    EitherT(audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
+      tags = hc.toAuditTags("CBCRFilingSuccessful", "N/A") + ("path" -> request.uri),
+      detail = Json.toJson(summaryData)
+    )).map{
+      case AuditResult.Success         => Right(AuditResult.Success)
+      case AuditResult.Failure(msg,_)  => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
+      case AuditResult.Disabled        => Right(AuditResult.Success)
+    })
 
   val utrForm:Form[Utr] = Form(
     mapping(
@@ -265,29 +287,33 @@ class SubmissionController @Inject()(val sec: SecuredActions, val cache:CBCSessi
 
   val submitSummary = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    generateMetadataFile(authContext.user.userId,cache).flatMap { md =>
-      md.fold(
-        errors => {
-          Logger.error(errors.toList.mkString(", "))
-          Future.successful(InternalServerError(FrontendGlobal.internalServerErrorTemplate))
-        },
-        submissionMetaData => (for {
-          keyXMLFileInfo <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
-          bpr            <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
-          summaryData     = SummaryData(bpr,submissionMetaData, keyXMLFileInfo)
-          _              <- EitherT.right[Future,CBCErrors,CacheMap](cache.save[SummaryData](summaryData))
-        } yield summaryData).fold(
-          error       => errorRedirect(error),
-          summaryData => Ok(views.html.submission.submitSummary( includes.phaseBannerBeta(), summaryData, summarySubmitForm))
-        )
+    val result = for {
+      userIds <- EitherT.right[Future, CBCErrors, UserIds](auth.getIds[UserIds](authContext))
+      smd     <- EitherT(generateMetadataFile(userIds.externalId, cache).map(_.toEither)).leftMap(errors =>
+        UnexpectedState(errors.toList.mkString("\n"))
       )
+      sd      <- createSummaryData(smd)
+    } yield Ok(views.html.submission.submitSummary(includes.phaseBannerBeta(), sd, summarySubmitForm))
 
-    }.recover{
+    result.fold(
+      errors => errorRedirect(errors),
+      result => result
+    ).recover{
       case NonFatal(e) =>
         Logger.error(e.getMessage,e)
         InternalServerError
     }
 
+
+  }
+
+  def createSummaryData(submissionMetaData: SubmissionMetaData)(implicit hc:HeaderCarrier) : ServiceResponse[SummaryData] = {
+    for {
+      keyXMLFileInfo <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
+      bpr            <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
+      summaryData    = SummaryData(bpr, submissionMetaData, keyXMLFileInfo)
+      _              <- EitherT.right[Future, CBCErrors, CacheMap](cache.save[SummaryData](summaryData))
+    } yield summaryData
   }
 
   def enterCompanyName = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
@@ -303,14 +329,16 @@ class SubmissionController @Inject()(val sec: SecuredActions, val cache:CBCSessi
 
   def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    EitherT((cache.read[SummaryData] |@| cache.read[SubmissionDate]).map {
+    val data = EitherT((cache.read[SummaryData] |@| cache.read[SubmissionDate]).map {
       case (maybeData, maybeDate) => for {
         data          <- maybeData toRight UnexpectedState("SummaryData not found in cache")
         date          <- maybeDate toRight UnexpectedState("SubmissionDate not found in cache")
         formattedDate <- nonFatalCatch opt date.date.format(dateFormat) toRight UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")
-      } yield (data.submissionMetaData.submissionInfo.hash, formattedDate)
-    }).fold(
-      (error: UnexpectedState) => errorRedirect(error),
+      } yield (data, formattedDate)
+    })
+
+    data.flatMap(t => createSuccessfulSubmissionAuditEvent(authContext,t._1).map(_ => (t._1.submissionMetaData.submissionInfo.hash,t._2))).fold(
+      (error: CBCErrors) => errorRedirect(error),
       (tuple: (Hash, String))  => Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(),includes.phaseBannerBeta(),tuple._2,tuple._1.value))
     )
 

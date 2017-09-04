@@ -34,6 +34,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
 
   val oecd2Or3 = "OECD[23]"
+  val oecd0Or2Or3 = "OECD[023]"
   val testData = "OECD1[0123]"
 
   def validateBusinessRules(in:RawXMLInfo, fileName:String)(implicit hc:HeaderCarrier) : EitherT[Future,NonEmptyList[BusinessRuleErrors],XMLInfo] = {
@@ -42,8 +43,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
         validateDocSpec(in.reportingEntity.docSpec) |@|
         validateDocSpec(in.cbcReport.docSpec) |@|
         validateDocSpec(in.additionalInfo.docSpec) |@|
-        validateSendingEntity(in.messageSpec)).map {
-        (messageRefIdVal, reDocSpec, cbcDocSpec,addDocSpec,sendingEntity) =>
+        validateSendingEntity(in.messageSpec) ).map {
+        (messageRefIdVal, reDocSpec, cbcDocSpec, addDocSpec, sendingEntity) =>
 
         val otherRules = (
           validateTestDataPresent(in).toValidatedNel |@|
@@ -59,14 +60,17 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             ).toValidatedNel |@|
             validateMessageTypeIndic(in).toValidatedNel |@|
             validateCorrDocRefIdExists(in.cbcReport.docSpec).toValidatedNel |@|
-            validateCorrDocRefIdExists(in.cbcReport.docSpec).toValidatedNel |@|
-            validateCorrDocRefIdExists(in.cbcReport.docSpec).toValidatedNel |@|
+            validateCorrDocRefIdExists(in.reportingEntity.docSpec).toValidatedNel |@|
+            validateCorrDocRefIdExists(in.additionalInfo.docSpec).toValidatedNel |@|
             validateMessageTypeIndicCompatible(in).toValidatedNel |@|
-            crossValidateCorrDocRefIds(in.cbcReport.docSpec,in.reportingEntity.docSpec,in.additionalInfo.docSpec).toValidatedNel
-          ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
+            crossValidateCorrDocRefIds(in.cbcReport.docSpec,in.reportingEntity.docSpec,in.additionalInfo.docSpec).toValidatedNel |@|
+            validateCbcOecdVersion(in.cbcVal).toValidatedNel |@|
+            validateXmlEncodingVal(in.xmlEncoding).toValidatedNel
+          ).map((_, rc, _, reportingRole, tin, mti,_,_,_,_,_,_,_,_,_) => (rc, reportingRole, tin, mti))
+
 
         (otherRules |@| messageRefIdVal |@| reDocSpec |@| cbcDocSpec |@| addDocSpec |@| sendingEntity |@| validateReportingPeriod(in.messageSpec).toValidatedNel).map(
-          (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec, _,reportingPeriod) =>
+          (values, msgRefId, reDocSpec,cbcDocSpec,addDocSpec, _, reportingPeriod) =>
             XMLInfo(
               MessageSpec(
                 msgRefId,values._1,
@@ -80,7 +84,23 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
               AdditionalInfo(addDocSpec)
             )
         ).toEither
-      })
+    })
+  }
+
+  private def validateXmlEncodingVal(xe:RawXmlEncodingVal):Validated[BusinessRuleErrors,Unit] ={
+    if(xe.xmlEncodingVal != "UTF-8"){
+      XmlEncodingError.invalid
+    } else {
+      ().valid
+    }
+  }
+
+  private def validateCbcOecdVersion(cv:RawCbcVal):Validated[BusinessRuleErrors,Unit] = {
+    if(cv.cbcVer != "1.0"){
+      CbcOecdVersionError.invalid
+    } else {
+      ().valid
+    }
   }
 
   private def validateMessageTypeIndicCompatible(r:RawXMLInfo):Validated[BusinessRuleErrors,Unit] = {
@@ -151,7 +171,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       case CBC401                                                            => Some(CBC401).valid
       case CBC402 if !r.cbcReport.docSpec.docType.matches(oecd2Or3)
                   || !r.additionalInfo.docSpec.docType.matches(oecd2Or3)
-                  || !r.reportingEntity.docSpec.docType.matches(oecd2Or3)    => MessageTypeIndicError.invalid
+                  || !r.reportingEntity.docSpec.docType.matches(oecd0Or2Or3) => MessageTypeIndicError.invalid
       case CBC402                                                            => Some(CBC402).valid
     }.getOrElse((None:Option[MessageTypeIndic]).valid)
 

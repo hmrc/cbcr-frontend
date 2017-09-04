@@ -18,6 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}
+import cats.syntax.all._
+import cats.instances.all._
 import cats.kernel.Eq
 import play.api.data.FormError
 import play.api.data.format.{Formats, Formatter}
@@ -38,6 +40,11 @@ import uk.gov.hmrc.emailaddress.PlayJsonFormats._
   */
 class CBCId private(val value:String){
   override def toString:String = value
+  override def hashCode(): Int = value.hashCode
+  override def equals(obj: scala.Any): Boolean = obj match{
+    case c:CBCId => c.value === this.value
+    case _       => false
+  }
 }
 
 object CBCId extends Modulus23Check {
@@ -71,7 +78,7 @@ object CBCId extends Modulus23Check {
       None
     }
 
-  val cbcRegex = """^X[A-Z]CBC0000\d{6}$"""
+  val cbcRegex = """^X[A-Z]CBC\d{10}$"""
   private def isValidCBC(s:String) : Boolean = s.matches(cbcRegex)
 
   def create(i:Int): Validated[Throwable,CBCId] = if(i > 999999 || i < 0){
@@ -89,12 +96,12 @@ object CBCId extends Modulus23Check {
 
 }
 
-case class SubscriberContact(name:String, phoneNumber:String, email:EmailAddress)
+case class SubscriberContact(firstName:String, lastName:String, phoneNumber:String, email:EmailAddress)
 object SubscriberContact {
   implicit val subscriptionFormat :Format[SubscriberContact] = Json.format[SubscriberContact]
 }
 
-case class SubscriptionDetails(businessPartnerRecord: BusinessPartnerRecord, subscriberContact: SubscriberContact, cbcId:CBCId, utr:Utr)
+case class SubscriptionDetails(businessPartnerRecord: BusinessPartnerRecord, subscriberContact: SubscriberContact, cbcId:Option[CBCId], utr:Utr)
 object SubscriptionDetails{
   implicit val subscriptionDetailsFormat: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
 

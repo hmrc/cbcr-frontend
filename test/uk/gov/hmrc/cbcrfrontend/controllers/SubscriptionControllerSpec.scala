@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import cats.data.EitherT
+import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
@@ -27,24 +27,16 @@ import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
+import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
-import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
-import cats.instances.future._
-import org.mockito.Matchers
-import org.mockito.Matchers.{eq => EQ}
-import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -57,6 +49,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
   implicit val authCon = authConnector(TestUsers.cbcrUser)
   val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
   val subService = mock[SubscriptionDataService]
+  val auditMock = mock[AuditConnector]
 
   val dc = mock[BPRKnownFactsConnector]
   val cbcId = mock[CBCIdService]
@@ -66,7 +59,9 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
   implicit val cache = mock[CBCSessionCache]
   when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
 
-  val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
+  val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+    override lazy val audit = auditMock
+  }
 
   implicit val hc = HeaderCarrier()
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
@@ -74,15 +69,22 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
   implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
   implicit val utrTag = implicitly[TypeTag[Utr]]
 
+  when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
 
-  val cbcid = CBCId.create(1).getOrElse(fail("Could not generate cbcid"))
 
+  val cbcid = CBCId.create(1).toOption
 
+  val subscriptionDetails = SubscriptionDetails(
+    BusinessPartnerRecord("SAFEID",Some(OrganisationResponse("blagh")),EtmpAddress(None,None,None,None,Some("TF3 XFE"),None)),
+    SubscriberContact("Jimbo","Jones","phonenum",EmailAddress("test@test.com")),cbcid,Utr("7000000002")
+  )
 
   "GET /contactInfoSubscriber" should {
     "return 200" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/contactInfoSubscriber"))
       status(controller.contactInfoSubscriber(fakeRequestSubscribe)) shouldBe Status.OK
     }
@@ -91,36 +93,62 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
   "POST /submitSubscriptionData" should {
     "return 400 when the there is no data" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData"))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
-    "return 400 when the name is missing" in {
+    "return 400 when either first or last name or both are missing" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "email" -> "blagh@blagh.com"
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+
+      val data2 = Json.obj(
+        "phoneNumber" -> "12345678",
+        "email" -> "blagh@blagh.com",
+        "firstName" -> "Bob"
+      )
+      val fakeRequestSubscribe2 = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data2))
+      status(controller.submitSubscriptionData(fakeRequestSubscribe2)) shouldBe Status.BAD_REQUEST
+
+      val data3 = Json.obj(
+        "phoneNumber" -> "12345678",
+        "email" -> "blagh@blagh.com",
+        "lastName" -> "Jones"
+      )
+      val fakeRequestSubscribe3 = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data3))
+      status(controller.submitSubscriptionData(fakeRequestSubscribe3)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the email is missing" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
       val data = Json.obj(
         "phoneNumber" -> "12345678",
-        "name" -> "Dave"
+        "firstName" -> "Dave",
+        "lastName" -> "Jones"
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the email is invalid" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
       val data = Json.obj(
         "phoneNumber" -> "12345678",
-        "name" -> "Dave",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
         "email" -> "THISISNOTANEMAIL"
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
@@ -128,9 +156,27 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
     }
     "return 400 when the phone number is missing" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
       val data = Json.obj(
-        "name" -> "Dave",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
+        "email" -> "blagh@blagh.com"
+      )
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
+    }
+
+    "return 400 when the phone number is invalid" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
+      val data = Json.obj(
+        "phoneNumber" -> "I'm not a phone number",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
         "email" -> "blagh@blagh.com"
       )
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
@@ -139,10 +185,12 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
 
     "return 500 when the SubscriptionDataService errors" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
-      val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
+      val sData = SubscriberContact("Dave","Smith", "0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
-      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(Some(cbcid))
+      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT[Future,CBCId](Future.successful(cbcid))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,CBCErrors, String](Future.successful(UnexpectedState("return 500 when the SubscriptionDataService errors")))
       when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[String]](None)
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None))))
@@ -152,20 +200,25 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
     }
     "return 500 when the getCbcId call errors out" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
-      val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
+      val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
-      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(None)
+      when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
+      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT[Future,CBCId](Future.successful(None))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
     }
     "return 500 when the addKnownFactsToGG call errors" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
-      val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
+      val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,CBCErrors, String](Future.successful(UnexpectedState("oops")))
-      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
+      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
       when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.left[Future,CBCErrors, Unit](UnexpectedState("oops"))
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None))))
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
@@ -175,11 +228,13 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
     }
     "return 303 (see_other) when all params are present and valid and the SubscriptionDataService returns Ok" in {
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF)
-      val sData = SubscriberContact("Dave","0207456789",EmailAddress("Bob@bob.com"))
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,cbcKF,auth,bprKF){
+        override lazy val audit = auditMock
+      }
+      val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,CBCErrors, String]("done")
-      when(cbcId.getCbcId(anyObject())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
+      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
       when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,CBCErrors, Unit](())
       when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
@@ -191,7 +246,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
     "return 200" in {
 
       val fakeRequestReconfirmEmail = addToken(FakeRequest("GET", "/subscriberReconfirmEmail"))
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("name", "0123123123", EmailAddress("max@max.com"))))
+      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname","0123123123", EmailAddress("max@max.com"))))
       status(controller.reconfirmEmail(fakeRequestReconfirmEmail)) shouldBe Status.OK
     }
   }
@@ -215,7 +270,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
       when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("name", "0123123123", EmailAddress("max@max.com"))))
+      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname", "0123123123", EmailAddress("max@max.com"))))
       when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
       when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))

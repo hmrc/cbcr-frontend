@@ -16,37 +16,76 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.File
-import javax.xml.stream.XMLInputFactory
+import java.io.{File, InputStream}
+import javax.xml.stream.{XMLInputFactory, XMLStreamConstants}
 
-import com.scalawilliam.xs4s.XmlElementExtractor
-import com.scalawilliam.xs4s.Implicits._
-import uk.gov.hmrc.cbcrfrontend.model._
-
-
-import scala.util.control.Exception.nonFatalCatch
-import scala.io.Source
-import scala.xml.{Elem, NodeSeq}
 import cats.instances.all._
 import cats.syntax.all._
+import com.scalawilliam.xs4s.Implicits._
+import com.scalawilliam.xs4s.XmlElementExtractor
+import uk.gov.hmrc.cbcrfrontend.model._
+
+import scala.io.Source
+import scala.util.control.Exception.nonFatalCatch
+import scala.xml.{Node, NodeSeq}
+import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
+
+import play.api.Logger
 
 class XmlInfoExtract {
   private val xmlInputfactory: XMLInputFactory = XMLInputFactory.newInstance()
+
+  private val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
 
   implicit class NodeSeqPimp(n: NodeSeq) {
     def textOption: Option[String] = n map (_.text) headOption
     def text: String = textOption.orEmpty
   }
 
-  private def getDocSpec(e: Elem): RawDocSpec = {
-    val docType = (e \ "DocSpec" \ "DocTypeIndic").text
-    val docRefId = (e \ "DocSpec" \ "DocRefId").text
-    val corrDocRefId = (e \ "DocSpec" \ "CorrDocRefId").textOption
+  private def getDocSpec(e: Node): RawDocSpec = {
+    val docType = (e \ "DocTypeIndic").text
+    val docRefId = (e \ "DocRefId").text
+    val corrDocRefId = (e \ "CorrDocRefId").textOption
     RawDocSpec(docType, docRefId, corrDocRefId)
+  }
+
+  private def extractEncoding(input: File): RawXmlEncodingVal = {
+    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
+
+    val encodingVal: String = xmlStreamReader.getCharacterEncodingScheme
+    xmlStreamReader.closeCompletely()
+    RawXmlEncodingVal(encodingVal)
+  }
+
+  private def extractCbcVal(input: File): RawCbcVal = {
+    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
+    var cbcVar: String = ""
+
+    try {
+      while (xmlStreamReader.hasNext && cbcVar == "") {
+        val event = xmlStreamReader.next()
+
+        event match {
+
+          case XMLStreamConstants.START_ELEMENT =>
+            for (attrib <- 0 to (xmlStreamReader.getAttributeCount - 1) if (xmlStreamReader.getAttributeLocalName(attrib) == "version"))
+              cbcVar = xmlStreamReader.getAttributeValue(attrib)
+
+        }
+      }
+      RawCbcVal(cbcVar)
+
+    } catch {
+      case e: Exception => {
+        Logger.warn(s"extractCbcVal encountered the following error: ${e.getMessage}")
+        RawCbcVal("")
+      }
+    } finally {xmlStreamReader.closeCompletely()}
   }
 
 
   private val splitter: XmlElementExtractor[RawXmlFields] = XmlElementExtractor{
+
     case List("CBC_OECD", "MessageSpec") => ms => {
       val msgRefId         = (ms \ "MessageRefId").text
       val receivingCountry = (ms \ "ReceivingCountry").text
@@ -61,31 +100,35 @@ class XmlInfoExtract {
       val tin  = (re \ "Entity" \ "TIN").text
       val name = (re \ "Entity" \ "Name").text
       val rr   = (re \ "ReportingRole").text
-      val ds   = getDocSpec(re)
+      val ds   = getDocSpec((re \ "DocSpec").head) //DocSpec is required in ReportingEntity so this will exist!
       RawReportingEntity(rr,ds,tin,name)
     }
 
-    case List("CBC_OECD", "CbcBody", "CbcReports") => cr => RawCbcReports(getDocSpec(cr))
+    case List("CBC_OECD", "CbcBody", "CbcReports", "DocSpec") => ds => RawCbcReports(getDocSpec(ds))
 
-    case List("CBC_OECD", "CbcBody", "AdditionalInfo") => cr => RawAdditionalInfo(getDocSpec(cr))
+    case List("CBC_OECD", "CbcBody", "AdditionalInfo", "DocSpec") => ds => RawAdditionalInfo(getDocSpec(ds))
 
   }
 
   def extract(file:File): RawXMLInfo = {
 
     val collectedData: List[RawXmlFields] = {
+
       val xmlEventReader = nonFatalCatch opt xmlInputfactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
 
       try xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten
       finally xmlEventReader.foreach(_.close())
     }
 
+
+    val xe = extractEncoding(file)
+    val cv = extractCbcVal(file)
     val ms = collectedData.collectFirst{ case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","","",None))
     val re = collectedData.collectFirst{ case re:RawReportingEntity => re}.getOrElse(RawReportingEntity("",RawDocSpec("","",None),"",""))
     val ai = collectedData.collectFirst{ case ai:RawAdditionalInfo => ai}.getOrElse(RawAdditionalInfo(RawDocSpec("","",None)))
     val cr = collectedData.collectFirst{ case cr:RawCbcReports=> cr}.getOrElse(RawCbcReports(RawDocSpec("","",None)))
 
-    RawXMLInfo(ms,re,cr,ai)
+    RawXMLInfo(ms,re,cr,ai,cv,xe)
 
   }
 
