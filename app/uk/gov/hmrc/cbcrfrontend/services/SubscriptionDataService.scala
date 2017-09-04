@@ -60,6 +60,20 @@ class SubscriptionDataService extends ServicesConfig{
     )
 
   }
+  def updateSubscriptionData(cbcId:CBCId,data:SubscriberContact)(implicit hc: HeaderCarrier, ec:ExecutionContext): ServiceResponse[String] = {
+    val fullUrl = url.url + s"/cbcr/subscription-data/$cbcId"
+    EitherT[Future,CBCErrors, String](
+      WSHttp.PUT[SubscriberContact,HttpResponse](fullUrl,data).map { response =>
+        response.status match {
+          case Status.OK => Right[CBCErrors,String](response.body)
+          case _         => Left[CBCErrors,String](UnexpectedState(response.body))
+        }
+      }.recover{
+        case NonFatal(t) => Left[CBCErrors,String](UnexpectedState(t.getMessage))
+      }
+    )
+  }
+
   def saveSubscriptionData(data:SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data"
     EitherT[Future,CBCErrors, String](

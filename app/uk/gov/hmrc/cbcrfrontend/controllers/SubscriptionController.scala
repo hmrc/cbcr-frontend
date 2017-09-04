@@ -61,8 +61,8 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                                        val enrollments:EnrolmentsConnector,
                                        val knownFactsService:BPRKnownFactsService)
                                       (implicit ec: ExecutionContext,
-                             val playAuth:PlayAuthConnector,
-                             val session:CBCSessionCache) extends FrontendController with ServicesConfig {
+                                       val playAuth:PlayAuthConnector,
+                                       val session:CBCSessionCache) extends FrontendController with ServicesConfig {
 
   lazy val audit: AuditConnector = FrontendAuditConnector
 
@@ -175,40 +175,47 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
 
   val updateInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
-    // check the authenticated user is subscribed by retrieving UTR from the authcontext
-//    getUserType(authContext).semiflatMap{ userType =>
-//      enrollments.alreadyEnrolled.flatMap(subscribed =>
-//        if (subscribed) {
-//          // query the current contact info subscriber
-//          // populate the form with the date retrieved
-//          val prepopulatedForm = subscriptionDataForm.bind(Map("firstName" -> "peter", "lastName" -> "anning",
-//            "email" -> "peter.anning@gmail.com", "phoneNumber" -> "07595948265"))
-//          Ok(update.updateKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
-//        } else {
-//          Ok("Error not enrolled") // replace with an error page
-//        }
-//      )
-//    }.fold(
-//      (errors: CBCErrors) => errorRedirect(errors),
-//      (result: Result)    => result
-//    )
-    enrollments.getCbcId.map { cbcId =>
-      val prepopulatedForm = subscriptionDataForm.bind(Map("firstName" -> "peter", "lastName" -> "anning",
-        "email" -> "peter.anning@gmail.com", "phoneNumber" -> "07595948265"))
-      Ok(update.updateKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
-    }.cata(
-      Ok("Not enrolled"),
-      result => result
-    )
 
+    val subscriptionData: ServiceResponse[ETMPSubscription] = for {
+      cbcId           <- enrollments.getCbcId.toRight(UnexpectedState("Couldn't get CBCId"))
+      optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
+      details         <- EitherT.fromOption[Future](optionalDetails,UnexpectedState("No SubscriptionDetails"))
+      bpr              = details.businessPartnerRecord
+      _               <- EitherT.right[Future,CBCErrors,CacheMap](session.save(bpr))
+      _               <- EitherT.right[Future,CBCErrors,CacheMap](session.save(cbcId))
+      subData         <- cbcIdService.getETMPSubscriptionData(bpr.safeId).toRight(UnexpectedState("No ETMP Subscription Data"):CBCErrors)
+    } yield subData
+
+    subscriptionData.fold(
+      error => BadRequest(error.toString),
+      data => {
+        val prepopulatedForm = subscriptionDataForm.bind(Map(
+          "firstName"   -> data.names.name1,
+          "lastName"    -> data.names.name2,
+          "email"       -> data.contact.email.value,
+          "phoneNumber" -> data.contact.phoneNumber
+        ))
+        Ok(update.updateKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
+      }
+    )
 
   }
 
   val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit requests =>
     subscriptionDataForm.bindFromRequest.fold(
       errors => BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
-      data => {
-        Ok("Saved") // implment the save call
+      data   => {
+        (for {
+          bpr     <- OptionT(session.read[BusinessPartnerRecord]).toRight(UnexpectedState("No BPR found in cache"))
+          cbcId   <- OptionT(session.read[CBCId]).toRight(UnexpectedState("No CBCId found in cache"))
+          details  = CorrespondenceDetails(bpr.address,ContactDetails(data.email,data.phoneNumber),ContactName(data.firstName,data.lastName))
+          _       <- cbcIdService.updateETMPSubscriptionData(bpr.safeId,details)
+          _       <- subscriptionDataService.updateSubscriptionData(cbcId,SubscriberContact(data.firstName,data.lastName,data.phoneNumber,data.email))
+        } yield Ok("Saved")
+          ).fold(
+          errors => errorRedirect(errors),
+          result => result
+        )
       }
     )
   }

@@ -25,7 +25,7 @@ import play.api.Configuration
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPut, HttpResponse}
 import configs.syntax._
 import play.api.libs.json.JsNull
-import uk.gov.hmrc.cbcrfrontend.model.{CorrDocRefId, DocRefId, SubscriptionDetails}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http._
 
 import scala.concurrent.Future
@@ -39,25 +39,32 @@ class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut with HttpPost, co
     proto <- conf.get[String]("protocol")
     host  <- conf.get[String]("host")
     port  <- conf.get[Int]("port")
-  } yield s"$proto://$host:$port").value
+  } yield s"$proto://$host:$port/cbcr").value
 
-  def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.POST(url+ "/cbcr/cbc-id", s)
+  def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.POST(url + "/subscription", s)
+
+  def getETMPSubscriptionData(safeId:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.GET(url + s"/subscription/$safeId")
+
+  def updateETMPSubscriptionData(safeId:String,correspondenceDetails: CorrespondenceDetails)(implicit hc:HeaderCarrier) : Future[HttpResponse] = {
+    implicit val emailFormat = ContactDetails.emailFormat
+    http.PUT(url + s"/subscription/$safeId", correspondenceDetails)
+  }
 
   def messageRefIdExists(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.GET(url + s"/cbcr/message-ref-id/$id")
+    http.GET(url + s"/message-ref-id/$id")
 
   def saveMessageRefId(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/cbcr/message-ref-id/$id",JsNull)
+    http.PUT(url + s"/message-ref-id/$id",JsNull)
 
   def docRefIdQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.GET(url + s"/cbcr/doc-ref-id/${d.show}")
+    http.GET(url + s"/doc-ref-id/${d.show}")
 
   def docRefIdSave(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/cbcr/doc-ref-id/${d.show}",JsNull)
+    http.PUT(url + s"/doc-ref-id/${d.show}",JsNull)
 
   def corrDocRefIdSave(c:CorrDocRefId, d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/cbcr/corr-doc-ref-id/${c.cid.show}/${d.show}",JsNull)
-
-
+    http.PUT(url + s"/corr-doc-ref-id/${c.cid.show}/${d.show}",JsNull)
 
 }

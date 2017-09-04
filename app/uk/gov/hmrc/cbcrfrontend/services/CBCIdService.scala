@@ -19,11 +19,12 @@ package uk.gov.hmrc.cbcrfrontend.services
 import javax.inject.{Inject, Singleton}
 
 import cats.data.OptionT
+import cats.instances.future._
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, SubscriptionDetails}
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.HeaderCarrier
-import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,7 +32,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext){
 
   def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : OptionT[Future,CBCId] = {
-    Logger.info(s"************* SubscriptionDetails: $s.toString")
     OptionT(connector.subscribe(s).map { response =>
       response.status match {
         case Status.OK => CBCId((response.json \ "cbc-id").as[String])
@@ -39,5 +39,18 @@ class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:Executi
       }
     })
   }
+
+  def getETMPSubscriptionData(safeId:String)(implicit hc:HeaderCarrier) : OptionT[Future,ETMPSubscription] =
+    OptionT(connector.getETMPSubscriptionData(safeId).map{ response =>
+      Option(response.json).flatMap(_.validate[ETMPSubscription].asOpt)
+    })
+
+
+  def updateETMPSubscriptionData(safeId:String,correspondenceDetails: CorrespondenceDetails)(implicit hc:HeaderCarrier) : ServiceResponse[UpdateResponse] = {
+    OptionT(connector.updateETMPSubscriptionData(safeId,correspondenceDetails).map{ response =>
+      Option(response.json).flatMap(_.validate[UpdateResponse].asOpt)
+    }).toRight(UnexpectedState("Failed to update ETMP subscription data"):CBCErrors)
+  }
+
 
 }

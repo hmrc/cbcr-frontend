@@ -20,7 +20,7 @@ import javax.inject.Inject
 
 import cats.data.OptionT
 import com.typesafe.config.Config
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet}
 import configs.syntax._
@@ -48,16 +48,13 @@ class EnrolmentsConnector @Inject() (httpGet: HttpGet, config:Configuration)(imp
     getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
 
   def getCbcId(implicit hc:HeaderCarrier): OptionT[Future,CBCId] =
-    OptionT(alreadyEnrolled.flatMap { success =>
-      if (success) {
-        getEnrolments.map(enrolments => enrolments.find(e => e.key == "HMRC-CBC-ORG")).map(optE => optE match {
-          case Some(opt) => opt.identifiers
-          case _ => List()
-        }).map(ids => ids.find(id => id.key == "cbcId")).map[Option[CBCId]](optId => optId match {
-          case Some(cbcId) => CBCId(cbcId.value)
-          case _ => None
-        })
-      } else Future(None)
-    })
-
+    OptionT(
+      getEnrolments.map{ enrolments =>
+        for {
+          value      <- enrolments.find(_.key == "HMRC-CBC-ORG")
+          identifier <- value.identifiers.find(_.key == "cbcId")
+          cbcId      <- CBCId(identifier.value)
+        } yield cbcId
+      }
+    )
 }
