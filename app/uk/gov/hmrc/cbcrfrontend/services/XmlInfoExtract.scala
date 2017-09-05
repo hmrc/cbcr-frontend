@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.{File, InputStream}
-import javax.xml.stream.XMLInputFactory
+import javax.xml.stream.{XMLInputFactory, XMLStreamConstants}
 
 import cats.instances.all._
 import cats.syntax.all._
@@ -28,9 +28,12 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import scala.io.Source
 import scala.util.control.Exception.nonFatalCatch
 import scala.xml.{Node, NodeSeq}
+import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
+import play.api.Logger
 
 class XmlInfoExtract {
-  private val xmlInputfactory: XMLInputFactory = XMLInputFactory.newInstance()
+
+  private val xmlInputFactory: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
 
   implicit class NodeSeqPimp(n: NodeSeq) {
     def textOption: Option[String] = n map (_.text) headOption
@@ -44,8 +47,41 @@ class XmlInfoExtract {
     RawDocSpec(docType, docRefId, corrDocRefId)
   }
 
+  private def extractEncoding(input: File): RawXmlEncodingVal = {
+    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
+
+    val encodingVal: String = xmlStreamReader.getCharacterEncodingScheme
+    xmlStreamReader.closeCompletely()
+    RawXmlEncodingVal(encodingVal)
+  }
+
+  private def extractCbcVal(input: File): RawCbcVal = {
+    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
+
+    val value = nonFatalCatch either {
+      RawCbcVal(
+        if(xmlStreamReader.hasNext()) {
+          xmlStreamReader.nextTag()
+          xmlStreamReader.getAttributeValue("","version")
+        } else ""
+      )
+    }
+
+    xmlStreamReader.closeCompletely()
+
+    value.fold(
+      e => {
+        Logger.warn(s"extractCbcVal encountered the following error: ${e.getMessage}")
+        RawCbcVal("")
+      },
+      cbcVal => cbcVal
+    )
+
+  }
+
 
   private val splitter: XmlElementExtractor[RawXmlFields] = XmlElementExtractor{
+
     case List("CBC_OECD", "MessageSpec") => ms => {
       val msgRefId         = (ms \ "MessageRefId").text
       val receivingCountry = (ms \ "ReceivingCountry").text
@@ -74,18 +110,21 @@ class XmlInfoExtract {
 
     val collectedData: List[RawXmlFields] = {
 
-      val xmlEventReader = nonFatalCatch opt xmlInputfactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
+      val xmlEventReader = nonFatalCatch opt xmlInputFactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
 
       try xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten
       finally xmlEventReader.foreach(_.close())
     }
 
+
+    val xe = extractEncoding(file)
+    val cv = extractCbcVal(file)
     val ms = collectedData.collectFirst{ case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","","",None))
     val re = collectedData.collectFirst{ case re:RawReportingEntity => re}.getOrElse(RawReportingEntity("",RawDocSpec("","",None),"",""))
     val ai = collectedData.collectFirst{ case ai:RawAdditionalInfo => ai}.getOrElse(RawAdditionalInfo(RawDocSpec("","",None)))
     val cr = collectedData.collectFirst{ case cr:RawCbcReports=> cr}.getOrElse(RawCbcReports(RawDocSpec("","",None)))
 
-    RawXMLInfo(ms,re,cr,ai)
+    RawXMLInfo(ms,re,cr,ai,cv,xe)
 
   }
 
