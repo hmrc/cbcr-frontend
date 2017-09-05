@@ -27,6 +27,7 @@ import org.codehaus.stax2.validation._
 import play.api.{Environment, Logger}
 
 import scala.collection.mutable.ListBuffer
+import scala.util.control.Exception.nonFatalCatch
 
 
 class CBCRXMLValidator @Inject()(env:Environment, xmlValidationSchema: XMLValidationSchema)(implicit system:ActorSystem) {
@@ -82,7 +83,8 @@ class XmlErrorHandler() extends ValidationProblemHandler{
     }
 
     if(listBuffer.size < errorMessageLimit) {
-      listBuffer += s"${problem.getMessage} on line ${problem.getLocation.getLineNumber}"
+      val lineNumber = nonFatalCatch opt problem.getLocation.getLineNumber
+      listBuffer += lineNumber.fold(s"${problem.getMessage}")(line => s"${problem.getMessage} on line $line")
     } else {
       fatalErrorsListBuffer += s"Number of errors exceeding limit ($errorMessageLimit), aborting validation.."
       throw ErrorLimitExceededException
