@@ -203,7 +203,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit requests =>
     subscriptionDataForm.bindFromRequest.fold(
-      errors => BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
+      errors => BadRequest(update.updateKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
       data   => {
         (for {
           bpr     <- OptionT(session.read[BusinessPartnerRecord]).toRight(UnexpectedState("No BPR found in cache"))
