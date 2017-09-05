@@ -35,13 +35,11 @@ class CBCRXMLValidator @Inject()(env:Environment, xmlValidationSchema: XMLValida
   val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
 
   def validateSchema(input: File): XmlErrorHandler = {
-
-    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
-
     val xmlErrorHandler = new XmlErrorHandler()
-    xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
 
     try {
+      val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
+      xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
       xmlStreamReader.validateAgainst(xmlValidationSchema)
       while ( xmlStreamReader.hasNext ) { xmlStreamReader.next }
     } catch {
