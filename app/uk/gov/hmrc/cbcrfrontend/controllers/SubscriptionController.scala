@@ -90,13 +90,15 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
         errors => BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
         data => {
           val id_bpr_utr:ServiceResponse[(CBCId,BusinessPartnerRecord,Utr)] = for {
-            bpr_utr <- (EitherT[Future, CBCErrors, BusinessPartnerRecord](
+            subscribed        <- EitherT.right[Future,CBCErrors,Boolean](session.read[Subscribed.type].map(_.isDefined))
+            _                 <- EitherT.cond[Future](!subscribed,(),UnexpectedState("Already subscribed"))
+            bpr_utr           <- (EitherT[Future, CBCErrors, BusinessPartnerRecord](
               session.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
             ) |@| EitherT[Future, CBCErrors, Utr](
               session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
             )).tupled
-            subDetails = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
-            id <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
+            subDetails        = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
+            id               <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
           } yield Tuple3(id, bpr_utr._1, bpr_utr._2)
 
           id_bpr_utr.semiflatMap{
