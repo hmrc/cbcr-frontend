@@ -31,6 +31,8 @@ sealed trait RawXmlFields extends Product with Serializable
 case class RawAdditionalInfo(docSpec: RawDocSpec) extends RawXmlFields
 case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
 case class RawDocSpec(docType:String, docRefId:String, corrDocRefId:Option[String]) extends RawXmlFields
+case class RawCbcVal(cbcVer:String) extends RawXmlFields
+case class RawXmlEncodingVal(xmlEncodingVal: String) extends RawXmlFields
 case class RawMessageSpec(messageRefID: String,
                           receivingCountry:String,
                           sendingEntityIn:String,
@@ -44,7 +46,9 @@ case class RawReportingEntity(reportingRole: String,
 case class RawXMLInfo(messageSpec: RawMessageSpec,
                       reportingEntity: RawReportingEntity,
                       cbcReport: RawCbcReports,
-                      additionalInfo: RawAdditionalInfo) extends RawXmlFields
+                      additionalInfo: RawAdditionalInfo,
+                      cbcVal: RawCbcVal,
+                      xmlEncoding: RawXmlEncodingVal) extends RawXmlFields
 
 /** These models represent the type-validated data, derived from the raw data */
 class DocRefId private[model](val msgRefID:MessageRefID,
@@ -126,5 +130,8 @@ object MessageSpec{
 case class ReportingEntity(reportingRole: ReportingRole, docSpec:DocSpec, tin: Utr, name: String)
 object ReportingEntity{ implicit val format = Json.format[ReportingEntity] }
 
-case class XMLInfo( messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:CbcReports, additionalInfo:AdditionalInfo)
+case class CbcOecdInfo(cbcVer: String)
+object CbcOecdInfo{ implicit val format = Json.format[CbcOecdInfo] }
+
+case class XMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:CbcReports, additionalInfo:AdditionalInfo)
 object XMLInfo { implicit val format = Json.format[XMLInfo] }
