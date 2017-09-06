@@ -18,16 +18,19 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io.File
 
+import akka.actor.ActorSystem
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import com.typesafe.config.ConfigFactory
+import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import org.compass.core.config.CompassConfigurationFactory
 import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
-import play.api.Configuration
+import play.api.{Configuration, Environment}
 import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.Files
@@ -47,10 +50,12 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.runtime.universe
 
 
-class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
+class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector with BeforeAndAfterEach{
 
   implicit val ec: ExecutionContext                    = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi: MessagesApi                = app.injector.instanceOf[MessagesApi]
+  implicit val env                                     = app.injector.instanceOf[Environment]
+  implicit val as                                     = app.injector.instanceOf[ActorSystem]
   implicit val authCon                                 = authConnector(TestUsers.cbcrUser)
   val securedActions: SecuredActionsTest               = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
 
@@ -60,6 +65,10 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val cache: CBCSessionCache                           = mock[CBCSessionCache]
   val extractor: XmlInfoExtract                        = new XmlInfoExtract()
 
+  override protected def afterEach(): Unit = {
+    reset(cache,businessRulesValidator,schemaValidator,fuService)
+    super.afterEach()
+  }
 
   object TestSessionCache {
 
@@ -92,15 +101,20 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
 
-  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor)
-  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor)
+  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+  val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
+
+  val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
+
+  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor,validator)
+  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor,validator)
 
   val file = Files.TemporaryFile("","")
-  val validFile = new File("test/resources/cbcr-valid.xml")
+  val validFile:File= new File("test/resources/cbcr-valid.xml")
 
   "GET /upload-report" should {
     val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
-    val envelopeId = OptionT.some[Future, EnvelopeId](EnvelopeId("envelopeId"))
 
     "return 200 when the envelope is created successfully" in {
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
@@ -143,32 +157,34 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       "the call to get the file metadata fails" in{
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
         when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn right(validFile)
-        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId.create(1).toOption)
-        when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache",Map.empty))
         when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](None)
-        when(fuService.deleteEnvelope(EQ("test"))(any(),any(),any())) thenReturn right("yeah")
-        val result = Await.result(partiallyMockedController.fileValidate("test","test")(request), 2.second)
+        val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
         result.header.headers("Location") should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
-      }
-      "the call to cache.save fails" in {
-        val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
-        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
-        when(cache.save(any())(any(),any(),any())) thenReturn Future.failed(new Exception("bad"))
-        when(fuService.deleteEnvelope(EQ("test"))(any(),any(),any())) thenReturn right("yeah")
-        val result = Await.result(partiallyMockedController.fileValidate("test","test")(request), 2.second)
-        result.header.headers("Location") should endWith("technical-difficulties")
-        status(result) shouldBe Status.SEE_OTHER
+        verify(fuService).getFile(any(),any())(any(),any(),any())
+        verify(fuService).getFileMetaData(any(),any())(any(),any(),any())
       }
       "the call to get the file fails" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
-        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
-        when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache",Map.empty))
         when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn left[File]("oops")
-        when(fuService.deleteEnvelope(EQ("test"))(any(),any(),any())) thenReturn right("yeah")
-        val result = Await.result(partiallyMockedController.fileValidate("test","test")(request), 2.second)
+        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
+        val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
         result.header.headers("Location") should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
+        verify(fuService).getFile(any(),any())(any(),any(),any())
+        verify(fuService).getFileMetaData(any(),any())(any(),any(),any())
+      }
+      "the call to cache.save fails" in {
+        val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn right(validFile)
+        when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
+        when(cache.save(any())(any(),any(),any())) thenReturn Future.failed(new Exception("bad"))
+        val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
+        result.header.headers("Location") should endWith("technical-difficulties")
+        status(result) shouldBe Status.SEE_OTHER
+        verify(fuService).getFile(any(),any())(any(),any(),any())
+        verify(fuService).getFileMetaData(any(),any())(any(),any(),any())
+        verify(cache,atLeastOnce()).save(any())(any(),any(),any())
       }
     }
 

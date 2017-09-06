@@ -215,6 +215,19 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
             errors => errors.head shouldBe MessageTypeIndicError,
             _ => fail("No InvalidXMLError generated")
           )
+
+          when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DocRefIdResponses.DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DocRefIdResponses.DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DocRefIdResponses.DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(DocRefIdResponses.Valid)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(DocRefIdResponses.Valid)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(DocRefIdResponses.Valid)
+
+          val validFile2 = new File("test/resources/cbcr-messageTypeIndic4.xml")
+          val result2 = Await.result(validator.validateBusinessRules(validFile2, filename).value, 5.seconds)
+
+          result2.left.map( errors => fail(s"errors generated: $errors"))
+
         }
       }
 
@@ -287,14 +300,23 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
       }
       "when the DocType is OECD1 but there are CorrDocRefIds defined" in {
-        val validFile = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds.xml")
         when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
 
-        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
-        result.fold(
+        val validFile1 = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds1.xml")
+        Await.result(validator.validateBusinessRules(validFile1, filename).value, 5.seconds).fold(
+          errors => errors.head shouldBe CorrDocRefIdNotNeeded,
+          _ => fail("No InvalidXMLError generated")
+        )
+        val validFile2 = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds2.xml")
+        Await.result(validator.validateBusinessRules(validFile2, filename).value, 5.seconds).fold(
+          errors => errors.head shouldBe CorrDocRefIdNotNeeded,
+          _ => fail("No InvalidXMLError generated")
+        )
+        val validFile3 = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds3.xml")
+        Await.result(validator.validateBusinessRules(validFile3, filename).value, 5.seconds).fold(
           errors => errors.head shouldBe CorrDocRefIdNotNeeded,
           _ => fail("No InvalidXMLError generated")
         )

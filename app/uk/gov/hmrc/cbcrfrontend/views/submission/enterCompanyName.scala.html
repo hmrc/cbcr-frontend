@@ -35,15 +35,6 @@ implicit request: Request[_], messages: Messages)
     <div class="column-two-thirds">
 
         <h1>@Messages("enterCompanyName.mainHeading")</h1>
-        @if(error){
-        <div class="flash error-summary error-summary--show"
-             id="error-summary-display"
-             role="alert"
-             aria-labelledby="error-summary-heading"
-             tabindex="-1">
-            <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCompanyName.errorSummary.header")</h2>
-        </div>
-        }
         @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.saveCompanyName()){
         <fieldset>
             <div class="form-group @if(error){form-field--error}">

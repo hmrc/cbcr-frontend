@@ -16,19 +16,18 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.File
+import java.io.{File, InputStream}
 import javax.xml.stream.XMLInputFactory
 
-import com.scalawilliam.xs4s.XmlElementExtractor
-import com.scalawilliam.xs4s.Implicits._
-import uk.gov.hmrc.cbcrfrontend.model._
-
-
-import scala.util.control.Exception.nonFatalCatch
-import scala.io.Source
-import scala.xml.{Elem, NodeSeq}
 import cats.instances.all._
 import cats.syntax.all._
+import com.scalawilliam.xs4s.Implicits._
+import com.scalawilliam.xs4s.XmlElementExtractor
+import uk.gov.hmrc.cbcrfrontend.model._
+
+import scala.io.Source
+import scala.util.control.Exception.nonFatalCatch
+import scala.xml.{Node, NodeSeq}
 
 class XmlInfoExtract {
   private val xmlInputfactory: XMLInputFactory = XMLInputFactory.newInstance()
@@ -38,10 +37,10 @@ class XmlInfoExtract {
     def text: String = textOption.orEmpty
   }
 
-  private def getDocSpec(e: Elem): RawDocSpec = {
-    val docType = (e \ "DocSpec" \ "DocTypeIndic").text
-    val docRefId = (e \ "DocSpec" \ "DocRefId").text
-    val corrDocRefId = (e \ "DocSpec" \ "CorrDocRefId").textOption
+  private def getDocSpec(e: Node): RawDocSpec = {
+    val docType = (e \ "DocTypeIndic").text
+    val docRefId = (e \ "DocRefId").text
+    val corrDocRefId = (e \ "CorrDocRefId").textOption
     RawDocSpec(docType, docRefId, corrDocRefId)
   }
 
@@ -61,19 +60,20 @@ class XmlInfoExtract {
       val tin  = (re \ "Entity" \ "TIN").text
       val name = (re \ "Entity" \ "Name").text
       val rr   = (re \ "ReportingRole").text
-      val ds   = getDocSpec(re)
+      val ds   = getDocSpec((re \ "DocSpec").head) //DocSpec is required in ReportingEntity so this will exist!
       RawReportingEntity(rr,ds,tin,name)
     }
 
-    case List("CBC_OECD", "CbcBody", "CbcReports") => cr => RawCbcReports(getDocSpec(cr))
+    case List("CBC_OECD", "CbcBody", "CbcReports", "DocSpec") => ds => RawCbcReports(getDocSpec(ds))
 
-    case List("CBC_OECD", "CbcBody", "AdditionalInfo") => cr => RawAdditionalInfo(getDocSpec(cr))
+    case List("CBC_OECD", "CbcBody", "AdditionalInfo", "DocSpec") => ds => RawAdditionalInfo(getDocSpec(ds))
 
   }
 
   def extract(file:File): RawXMLInfo = {
 
     val collectedData: List[RawXmlFields] = {
+
       val xmlEventReader = nonFatalCatch opt xmlInputfactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
 
       try xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten

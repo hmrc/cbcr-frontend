@@ -18,52 +18,62 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.File
 
-import org.scalatest.{FlatSpec, Matchers}
+import akka.actor.ActorSystem
+import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
+import org.scalatest.{Matchers, WordSpec}
+import org.scalatestplus.play.OneAppPerSuite
+import play.api.Environment
 
-import scala.util.{Failure, Success, Try}
+class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite {
 
-class CBCXMLValidatorSpec extends FlatSpec with Matchers {
+  private def loadFile(filename: String) = new File(s"test/resources/$filename")
 
-  val validXmlFile: File = loadFile("cbcr-valid.xml")
-  val invalidXmlFile: File = loadFile("cbcr-invalid.xml")
-  val invalidMultipleXmlFile: File = loadFile("cbcr-invalid-multiple-errors.xml")
-  val fatal:File = loadFile("fatal.xml")
+  def validXmlFile            = loadFile("cbcr-valid.xml")
+  val invalidXmlFile          = loadFile("cbcr-invalid.xml")
+  val invalidMultipleXmlFile  = loadFile("cbcr-invalid-multiple-errors.xml")
+  val invalidMultipleXmlFile2 = loadFile("cbcr-invalid-multiple-errors2.xml")
+  val fatal                   = loadFile("fatal.xml")
 
-  val ERROR_MESSAGE = "cvc-datatype-valid.1.2.1: '2016-11-01 15:00' is not a valid value for 'dateTime'."
+  implicit val env = app.injector.instanceOf[Environment]
 
-  private def loadFile(filename: String) = {
-    Try {
-      new File(s"test/resources/${filename}")
-    } match {
-      case Success(file) => {
-        if(file.exists()) file
-        else fail(s"File not found: ${filename}")
-      }
-      case Failure(e) => fail(e)
+  implicit val as = app.injector.instanceOf[ActorSystem]
+
+  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+  val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
+  val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
+
+  "An Xml Validator" should {
+    "not return any error for a valid file" in {
+      validator.validateSchema(validXmlFile).hasErrors shouldBe false
+      validator.validateSchema(validXmlFile).hasFatalErrors shouldBe false
+      validator.validateSchema(validXmlFile).hasWarnings shouldBe false
     }
+
+    "return an error if the file is invalid and a single error" in {
+      val validate = validator.validateSchema(invalidXmlFile)
+      validate.hasErrors shouldBe true
+      validate.errorsCollection.size shouldBe 1
+    }
+
+    "return multiple errors if the file is invalid and has multiple errors" in {
+      val validate = validator.validateSchema(invalidMultipleXmlFile)
+      validate.hasErrors shouldBe true
+      validate.errorsCollection.size shouldBe 20
+    }
+
+    "not throw errors if the validator encounters a fatal error" in {
+      val validate = validator.validateSchema(fatal)
+      validate.hasFatalErrors shouldBe true
+    }
+
+    "stop collecting errors after the configurable limit is reached" in {
+      val validate = validator.validateSchema(invalidMultipleXmlFile2)
+      validate.hasFatalErrors shouldBe true
+      validate.hasErrors shouldBe true
+      validate.errorsCollection.size shouldBe 100
+
+    }
+
   }
-
-  "An Xml Validator" should "not return any error for a valid file" in {
-    CBCRXMLValidator.validateSchema(validXmlFile).hasErrors shouldBe false
-    CBCRXMLValidator.validateSchema(validXmlFile).hasFatalErrors shouldBe false
-    CBCRXMLValidator.validateSchema(validXmlFile).hasWarnings shouldBe false
-  }
-
-  it should "return an error if the file is invalid and a single error" in {
-    val validate = CBCRXMLValidator.validateSchema(invalidXmlFile)
-    validate.hasErrors shouldBe true
-    validate.errorsCollection.size shouldBe 2
-  }
-
-  it should "return multiple errors if the file is invalid and has multiple errors" in {
-    val validate = CBCRXMLValidator.validateSchema(invalidMultipleXmlFile)
-    validate.hasErrors shouldBe true
-    validate.errorsCollection.size shouldBe 40
-  }
-
-  it should "not throw errors if the validator encounters a fatal error" in {
-    CBCRXMLValidator.validateSchema(fatal)
-  }
-
-
 }

@@ -32,6 +32,6 @@ class BPRKnownFactsConnector @Inject()(http:HttpGet) extends ServicesConfig{
 
   def lookup(utr:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(generateUrl(url.url,utr).toString)
 
-  private def generateUrl(baseUrl:String,utr:String) : URL = new URL(s"$baseUrl/cbcr/getBusinessPartnerRecord/$utr")
+  private def generateUrl(baseUrl:String,utr:String) : URL = new URL(s"$baseUrl/cbcr/business-partner-record/$utr")
 
 }

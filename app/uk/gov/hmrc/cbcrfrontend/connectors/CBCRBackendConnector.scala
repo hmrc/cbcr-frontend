@@ -41,7 +41,7 @@ class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut, config:Configura
     port  <- conf.get[Int]("port")
   } yield s"$proto://$host:$port").value
 
-  def getId()(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(url+ "/cbcr/getCBCId")
+  def getId()(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(url+ "/cbcr/cbc-id")
 
   def messageRefIdExists(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
     http.GET(url + s"/cbcr/message-ref-id/$id")

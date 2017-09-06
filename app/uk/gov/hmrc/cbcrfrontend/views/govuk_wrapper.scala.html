@@ -44,7 +44,7 @@
 
 @insideHeader = {
     @uiLayouts.header_nav(
-      navTitle = Some("cbcr-frontend"),
+      navTitle = Some("Send a country-by-country report"),
       navTitleLink = None,
       showBetaLink = false,
       navLinks = Some(headerNavLinks))
@@ -76,7 +76,7 @@
 }
 
 @serviceInfoContent = {
-    @uiLayouts.serviceInfo(betaBanner, false, Option.empty, true )
+    @uiLayouts.serviceInfo(betaBanner, false, Option.empty, false)
 }
 @mainContentHeader = {
     @if(contentHeader.isDefined) {
