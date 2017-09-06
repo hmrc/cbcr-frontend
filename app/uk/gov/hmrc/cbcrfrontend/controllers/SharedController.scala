@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.nio.file.{Files, Path, Paths}
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT}
@@ -124,9 +125,29 @@ class SharedController @Inject()(val sec: SecuredActions,
     Future.successful(Redirect(s"${FrontendAppConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
   }}
 
+  def volunteer = Action.async{ implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.volunteer()))
+  }
+
+  def register = Action.async{ implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.register()))
+  }
+
+  def report = Action.async{ implicit request =>
+   Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.report()))
+  }
+
+  def downloadGuide = Action.async{ implicit request =>
+    val file: Path = Paths.get("conf/downloads/cbcguide.pdf")
+    Future.successful(Ok.sendPath(file,inline = false,fileName = _ => "cbcGuide.pdf"))
+  }
 
   def guidance =  Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.guidanceOverviewQa()))
+  }
+
+  def businessRules = Action.async{ implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.businessRules()))
   }
 
   def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
