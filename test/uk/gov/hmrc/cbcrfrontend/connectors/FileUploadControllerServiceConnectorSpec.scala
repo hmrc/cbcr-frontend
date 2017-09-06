@@ -35,30 +35,20 @@ class FileUploadControllerServiceConnectorSpec extends FlatSpec with Matchers wi
     val envelopeExpiryDate = LocalDateTime.now.plusDays(7).format(formatter)
 
     val expectedEnvelopeRequest = Json.obj(
-      "callbackUrl" -> "http://localhost:9797/cbcr/saveFileUploadResponse",
+      "callbackUrl" -> "http://localhost:9797/cbcr/file-upload-response",
       "expiryDate" -> s"$envelopeExpiryDate",
       "metadata" -> Json.obj(
         "application" -> "Country By Country Reporting Service"
       ),
-      "constraints" -> 	Json.obj("maxSize"-> "50MB")
+      "constraints" -> 	Json.obj(
+        "maxSize"-> "50MB",
+        "maxSizePerItem"-> "50MB"
+      )
     )
 
     val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", envelopeExpiryDate)
 
     actualEnvelopeRequest should be (expectedEnvelopeRequest)
-  }
-
-
-  it should "convert the string response into XML file" in {
-
-    val responseFromFus = HttpResponse(200, responseString = Some("This is a xml file"))
-
-    val res = new FileUploadServiceConnector().extractFile(responseFromFus)
-
-    val fileContents = Source.fromFile(res.right.value).getLines.mkString
-    fileContents shouldBe "This is a xml file"
-
-
   }
 
 }

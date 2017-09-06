@@ -16,16 +16,22 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{BufferedInputStream, File, FileInputStream}
+import java.io.{File, FileInputStream}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Sink
+import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
 import play.api.Logger
+import play.api.http.Status
 import play.api.libs.json._
+import play.api.libs.ws.WSClient
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
@@ -33,11 +39,13 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{HttpExecutor, _}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
-class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
+class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector,ws:WSClient)(implicit ac:ActorSystem) {
+
+  implicit val materializer = ActorMaterializer()
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext, fusUrl: ServiceUrl[FusUrl], cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[EnvelopeId] = {
     Logger.debug("Country by Country: Creating an envelope for file upload")
@@ -55,11 +63,9 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
                 ): ServiceResponse[String] = {
 
     val fileNamePrefix = s"oecd-${LocalDateTime.now}"
-    val bis = new BufferedInputStream(new FileInputStream(xmlFile))
-    val xmlByteArray: Array[Byte] = Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
+    val xmlByteArray: Array[Byte] = org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(xmlFile))
 
     Logger.debug("Country by Country: FileUpload service: Uploading the file to the envelope")
-
     fromFutureOptA(HttpExecutor(fusFeUrl,
       UploadFile(EnvelopeId(envelopeId),
         FileId(fileId), s"$fileNamePrefix-cbcr.xml ", "application/xml;charset=UTF-8", xmlByteArray)).map(fusConnector.extractFileUploadMessage))
@@ -69,7 +75,7 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
 
   def getFileUploadResponse(envelopeId: String, fileId: String)( implicit hc: HeaderCarrier, ec: ExecutionContext, cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
-      WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/retrieveFileUploadResponse/$envelopeId")
+      WSHttp.GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response/$envelopeId")
         .map(resp => resp.status match {
           case 200 => resp.json.validate[FileUploadCallbackResponse].fold(
             invalid   => Left(UnexpectedState("Problems extracting File Upload response message "+invalid)),
@@ -81,15 +87,29 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector) {
     )
 
 
-  def getFile(envelopeId: String, fileId: String)(
-                   implicit
-                   hc: HeaderCarrier,
-                   ec: ExecutionContext,
-                   fusUrl: ServiceUrl[FusUrl]
-                   ): ServiceResponse[File] = {
+  def getFile(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier,
+                                                  ec: ExecutionContext,
+                                                  fusUrl: ServiceUrl[FusUrl]): ServiceResponse[File] =
+    EitherT(
+      ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").withMethod("GET") .stream().flatMap{
+        res => res.headers.status match {
+          case Status.OK =>
+            val file = java.nio.file.Files.createTempFile(envelopeId,"xml")
+            val outputStream = java.nio.file.Files.newOutputStream(file)
 
-      fromFutureOptA(WSHttp.GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").map(fusConnector.extractFile))
-  }
+            val sink = Sink.foreach[ByteString] { bytes => outputStream.write(bytes.toArray) }
+
+            res.body.runWith(sink).andThen {
+              case result =>
+                outputStream.close()
+                result.get
+            }.map(_ => Right(file.toFile))
+          case otherStatus => Future.successful(Left(
+            UnexpectedState(s"Failed to retrieve file $fileId from envelope $envelopeId - received $otherStatus response")
+          ))
+        }
+      }
+    )
 
 
   def deleteEnvelope(envelopeId: String)(

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc
 
-import java.io.File
+import java.io.{File, FileInputStream, InputStream}
 import java.nio.file.Files
 
 import cats.data.{EitherT, OptionT, ValidatedNel}
@@ -67,7 +67,9 @@ package object cbcrfrontend {
     )
 
   def sha256Hash(file: File): String =
-    String.format("%064x", new java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file.toPath))))
+    String.format("%064x", new java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(
+      org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
+    )))
 
   def generateMetadataFile(gatewayId: String, cache: CBCSessionCache)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[ValidatedNel[String, SubmissionMetaData]] = {
 

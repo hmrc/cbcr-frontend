@@ -16,7 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend
 
+import java.io.File
+
 import com.google.inject.AbstractModule
+import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import uk.gov.hmrc.cbcrfrontend.auth.{SecuredActions, SecuredActionsImpl}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -30,5 +33,11 @@ class GuiceModule extends AbstractModule with ServicesConfig {
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
     bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
     bind(classOf[BPRKnownFactsConnector])
+    bind(classOf[XMLValidationSchema]).toInstance{
+      val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+        XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+      val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
+      xmlValidationSchemaFactory.createSchema(schemaFile)
+    }
   }
 }

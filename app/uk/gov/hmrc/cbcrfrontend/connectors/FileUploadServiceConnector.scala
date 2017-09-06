@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import java.io.File
+import java.io.{File, InputStream}
 
 import play.api.Logger
 import play.api.http.HeaderNames.LOCATION
@@ -37,12 +37,15 @@ class FileUploadServiceConnector() {
     Logger.debug("CBCR URL: "+cbcrsUrl)
 
     Json.obj(
-      "callbackUrl" -> s"$cbcrsUrl/cbcr/saveFileUploadResponse",
+      "callbackUrl" -> s"$cbcrsUrl/cbcr/file-upload-response",
       "expiryDate" -> s"$expiryDate",
       "metadata" -> Json.obj(
         "application" -> "Country By Country Reporting Service"
       ),
-      "constraints" -> 	Json.obj("maxSize"-> "50MB")
+      "constraints" -> 	Json.obj(
+        "maxSize"-> "50MB",
+        "maxSizePerItem"-> "50MB"
+      )
     )
   }
 
@@ -61,24 +64,6 @@ class FileUploadServiceConnector() {
         case 200 => Right(resp.body)
         case   _ => Left(UnexpectedState("Problems uploading the file"))
       }
-  }
-
-  def extractFile(resp: HttpResponse): CBCErrorOr[File] = {
-    resp.status match {
-      case 200 =>
-
-        val inputStream = Source.fromString(resp.body).getCharacterStream
-        val xmlFile = File.createTempFile("xml", "xml")
-        val fos = new java.io.FileOutputStream(xmlFile)
-
-        fos.write(
-          Stream.continually(inputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
-        )
-        fos.close()
-        Right(xmlFile)
-
-      case _ => Left(UnexpectedState("Problems getting the File "))
-    }
   }
 
   def extractEnvelopeDeleteMessage(resp: HttpResponse): CBCErrorOr[String] = {
