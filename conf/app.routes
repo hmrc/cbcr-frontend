@@ -7,6 +7,11 @@ POST       /cbc-id                                        @uk.gov.hmrc.cbcrfront
 GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
 GET        /sign-out                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOut
 GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.guidance
+GET        /guidance/register                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.register
+GET        /guidance/volunteer                            @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.volunteer
+GET        /guidance/report                               @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.report
+GET        /guidance/business-rules                       @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.businessRules
+GET        /guidance/download-cbc-guide                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.downloadGuide
 GET        /known-facts/agent/verify-form                 @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsAgent
 POST       /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.checkKnownFacts
 GET        /known-facts/match                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.knownFactsMatch

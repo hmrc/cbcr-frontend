@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.nio.file.{Files, Path, Paths}
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT}
@@ -47,7 +48,7 @@ import scala.concurrent.Future
 @Singleton
 class SharedController @Inject()(val sec: SecuredActions,
                                  val subDataService: SubscriptionDataService,
-                                 val enrollments:EnrolmentsConnector,
+                                 val enrolments:EnrolmentsConnector,
                                  val authConnector:AuthConnector,
                                  val knownFactsService: BPRKnownFactsService)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
@@ -76,7 +77,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   }
 
   private def getCBCEnrolment(implicit hc:HeaderCarrier) : EitherT[Future,UnexpectedState,CBCEnrolment] = for {
-    enrolment <- OptionT(enrollments.getEnrolments.map(_.find(_.key == "HMRC-CBC-ORG")))
+    enrolment <- OptionT(enrolments.getEnrolments.map(_.find(_.key == "HMRC-CBC-ORG")))
       .toRight(UnexpectedState("Enrolment not found"))
     cbcString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("cbcid")).map(_.value))
       .toRight(UnexpectedState("Enrolment did not contain a cbcid"))
@@ -125,11 +126,33 @@ class SharedController @Inject()(val sec: SecuredActions,
     Future.successful(Redirect(s"${FrontendAppConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
   }}
 
+  def volunteer = Action.async{ implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.volunteer()))
+  }
+
+  def register = Action.async{ implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.register()))
+  }
+
+  def report = Action.async{ implicit request =>
+   Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.report()))
+  }
+
+  def downloadGuide = Action.async{ implicit request =>
+    val file: Path = Paths.get("conf/downloads/cbcguide.pdf")
+    Future.successful(Ok.sendPath(file,inline = false,fileName = _ => "cbcGuide.pdf"))
+  }
 
   def guidance =  Action.async { implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.guidanceOverviewQa()))
   }
 
+  def businessRules = Action.async{ implicit request =>
+    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.businessRules()))
+  }
+
+  def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
+    enrolments.getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
 
   val verifyKnownFactsOrganisation = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request => enterKnownFacts(authContext)
@@ -138,9 +161,6 @@ class SharedController @Inject()(val sec: SecuredActions,
   val verifyKnownFactsAgent = sec.AsyncAuthenticatedAction() { authContext =>
     implicit request => enterKnownFacts(authContext)
   }
-
-  def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
-    enrollments.getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
 
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]) =
     getUserType(authContext).semiflatMap{ userType =>
