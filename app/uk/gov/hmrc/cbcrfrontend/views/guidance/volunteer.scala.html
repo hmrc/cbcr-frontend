@@ -1,0 +1,113 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import play.api.i18n.Messages.Implicits._
+@import play.api.Play.current
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+
+@()(implicit request: Request[_])
+
+
+@mainContent =  {
+<DIV class="grid-row">
+ <DIV class="grid-layout__column--2-3">
+  <DIV class="govuk-title length-long">
+   <P class="context">Guidance</P>
+   <H1>Volunteer to send a country-by-country report in the UK</H1></DIV></DIV>
+ <DIV class="grid-layout__column--1-3"></DIV></DIV>
+<DIV class="grid-row">
+ <DIV class="grid-layout__column--2-3">
+  <DIV class="govuk-metadata direction-ltr" data-module="toggle">
+   <DL>
+    <DT>Part of:</DT>
+    <DD><A href="https://draft-origin.publishing.service.gov.uk/government/collections/country-by-country-reporting">Country-by-country
+     reporting</A>       </DD>
+    <DT>Published:</DT>
+    <DD>18 May 2017</DD>
+    <DT>Last updated:</DT>
+    <DD>        27 July 2017,           <A href="https://draft-origin.publishing.service.gov.uk/guidance/volunteer-a-country-by-country-report-in-the-uk#history"
+                                           data-module="track-click" data-track-label="history" data-track-action="see-all-updates-link-clicked"
+                                           data-track-category="content-history">            see all updates
+    </A>       </DD></DL></DIV></DIV></DIV>
+<P class="description">    If you aren't required to send HMRC a report, your
+ multinational group may still send one voluntarily under
+ certain&nbsp;circumstances.   </P>
+<DIV class="grid-row sidebar-with-body" id="contents" data-module="sticky-element-container">
+ <DIV class="grid-layout__column--1-3"><NAV role="navigation">
+  <H2>Contents</H2>
+  <OL class="dash-list" data-module="track-click">
+   <LI><A href="volunteer#overview"
+          data-track-label="overview" data-track-action="leftColumnH2"
+          data-track-category="contentsClicked">Overview</A>         </LI>
+   <LI><A href="volunteer#register-to-report"
+          data-track-label="register-to-report" data-track-action="leftColumnH2"
+          data-track-category="contentsClicked">Register to report</A>         </LI>
+   <LI><A href="volunteer#send-your-report"
+          data-track-label="send-your-report" data-track-action="leftColumnH2"
+          data-track-category="contentsClicked">Send your report</A>         </LI>
+   <LI><A href="volunteer#further-information"
+          data-track-label="further-information" data-track-action="leftColumnH2"
+          data-track-category="contentsClicked">Further information</A>
+   </LI></OL></NAV></DIV>
+ <DIV class="grid-layout__column--2-3 ">
+  <DIV class="govuk-govspeak direction-ltr">
+   <DIV class="govspeak">
+    <DIV class="call-to-action">
+     <P>Register and report using the country-by-country reporting service.</P></DIV>
+    <H2 id="overview">Overview</H2>
+    <P>You can send a country-by-country report if your group parent business isn’t based in
+     the UK but you have a UK  <A href="../guidance#groups-which-must-complete-a-report">group
+      member</A> that isn’t required to file a country-by-country report.</P>
+    <P>Your <A href="../guidance#controllingbusiness">group
+     parent business</A> must be in a country which meets one of the following
+     conditions:</P>
+    <P>
+     &#8226 it isn’t required to send a country-by-country report<BR>
+     &#8226 it has entered into an international agreement allowing information to be
+     exchanged, and either:
+     <BR>
+     &nbsp &nbsp &#8226 there are no specific arrangements to exchange country-by-country
+     reports<BR>
+     &nbsp &nbsp &#8226 HM Revenue and Customs (HMRC) has notified your group parent
+     business those arrangements aren’t working effectively</P>
+    <P>Your group parent business must give you permission
+     to send a voluntary country-by-country report. They’ll need to notify HMRC in
+     writing that you have their permission, which should be sent to <A href="mailto:notification.cbcrfiling@@hmrc.gsi.gov.uk">notification.cbcrfiling@@hmrc.gsi.gov.uk</A>.</P>
+    <H2 id="register-to-report">Register to report</H2>
+    <P>Once you’ve been given permission by your group parent business to send a country-by-country report, you’ll need <A href="/country-by-country-reporting-private-beta-1/known-facts/organisation/verify-form">to
+     register</A>.</P>
+    <H2 id="send-your-report">Send your report</H2>
+    <P>Once you’ve registered, you can <A href="/country-by-country-reporting-private-beta-1/report/upload-form">send
+     your report</A>.</P>
+    <H2 id="further-information">Further information</H2>
+    <P>You can find more details on the above in the <A href="https://www.gov.uk/hmrc-internal-manuals/international-exchange-of-information">International
+     Exchange of Information Manual</A>.</P></DIV></DIV></DIV>
+ </DIV>
+<DIV class="govuk-document-footer direction-ltr">
+ <H2 class="visuallyhidden">    Document information   </H2>
+ <DIV class="history-information" id="history">
+  <P>        Published:         <SPAN class="published definition">18 May
+2017</SPAN></P>
+  <P>        Updated:         <SPAN class="updated definition">27 July
+2017</SPAN></P></DIV>
+ <DIV class="related-information">
+  <P>        Part of:         <SPAN class="part-of"><SPAN class="definition"><A
+          href="https://draft-origin.publishing.service.gov.uk/government/collections/country-by-country-reporting">Country-by-country
+   reporting</A>         </SPAN></SPAN></P></DIV></DIV>
+}
+
+@govuk_wrapper(appConfig = uk.gov.hmrc.cbcrfrontend.FrontendAppConfig, title = "Guidance", mainContent = mainContent)
