@@ -17,6 +17,7 @@
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @(fileUploadUrl: String, fileName: String, asideBusiness: Html, phaseBannerBeta: Html)(
 implicit request: Request[_], messages: Messages)
@@ -35,7 +36,7 @@ implicit request: Request[_], messages: Messages)
 
                 <p><strong>@Messages("uploadReport.warning")</strong></p>
             <p>@Messages("uploadReport.moreInfo")
-                <a href="https://www.prototypes.***REMOVED***/country-by-country-reporting-prototype/v1-5/guidance/business-rules">
+                <a href="@routes.SharedController.businessRules">
                     @Messages("uploadReport.moreInfoLink")
                 </a>
             </p>
