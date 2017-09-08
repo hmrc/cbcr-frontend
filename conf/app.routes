@@ -42,6 +42,7 @@ GET        /filing-history                                @uk.gov.hmrc.cbcrfront
 POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.confirm
 POST       /company-name                                  @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.saveCompanyName
 GET        /company-name/entry-form                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.enterCompanyName
+GET        /not-registered                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.notRegistered
 
 GET        /already-subscribed                            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.alreadySubscribed
 GET        /contact-info-subscriber                       @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber

@@ -1,4 +1,7 @@
 
+notRegistered.heading=You aren''t registered to send a country-by-country report
+notRegistered.content=You''ll need to register to send a report.
+notRegistered.register=Register
 cbc.button.fileupload.report=Upload Report
 cbc.button.continue=Continue
 cbc.entercbcid.label=CBC Id
