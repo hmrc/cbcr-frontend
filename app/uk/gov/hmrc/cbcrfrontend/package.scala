@@ -47,10 +47,13 @@ package object cbcrfrontend {
     InternalServerError(FrontendGlobal.internalServerErrorTemplate)
   }
 
-  def affinityGroupToUserType(a: AffinityGroup): Either[CBCErrors, UserType] = a.affinityGroup.toLowerCase.trim match {
-    case "agent"        => Right(Agent)
-    case "organisation" => Right(Organisation)
-    case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
+  def affinityGroupToUserType(a: AffinityGroup): Either[CBCErrors, UserType] = {
+    Logger.error(s"AFFINITYGROUPTOUSERTYPE $a")
+    a.affinityGroup.toLowerCase.trim match {
+      case "agent"        => Right(Agent)
+      case "organisation" => Right(Organisation)
+      case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
+    }
   }
 
   implicit def utrToLeft(u:Utr): Either[Utr, CBCId] = Left[Utr,CBCId](u)
