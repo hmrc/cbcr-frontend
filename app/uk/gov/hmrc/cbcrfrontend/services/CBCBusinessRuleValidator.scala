@@ -40,9 +40,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   def validateBusinessRules(in:RawXMLInfo, fileName:String)(implicit hc:HeaderCarrier) : EitherT[Future,NonEmptyList[BusinessRuleErrors],XMLInfo] = {
     EitherT(
       (validateMessageRefIdD(in.messageSpec) |@|
-        validateDocSpec(in.reportingEntity.docSpec) |@|
-        validateDocSpec(in.cbcReport.docSpec) |@|
-        validateDocSpec(in.additionalInfo.docSpec) |@|
+        validateDocSpec(in.reportingEntity.docSpec,ENT) |@|
+        validateDocSpec(in.cbcReport.docSpec,REP) |@|
+        validateDocSpec(in.additionalInfo.docSpec,ADD) |@|
         validateSendingEntity(in.messageSpec) ).map {
         (messageRefIdVal, reDocSpec, cbcDocSpec, addDocSpec, sendingEntity) =>
 
@@ -86,6 +86,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
         ).toEither
     })
   }
+
 
   private def validateXmlEncodingVal(xe:RawXmlEncodingVal):Validated[BusinessRuleErrors,Unit] ={
     if(xe.xmlEncodingVal != "UTF-8"){
@@ -137,31 +138,39 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def crossValidateDocRefIds(re:String,cb:String,ad:String): Validated[BusinessRuleErrors,Unit] =
     Either.cond(re != cb && re != ad && cb != ad,(),DocRefIdDuplicate).toValidated
 
-  private def validateDocSpec(d:RawDocSpec)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,DocSpec]] = {
-    validateDocRefId(d.docRefId).zip(validateCorrDocRefId(d.corrDocRefId)).map {
+  private def validateDocSpec(d:RawDocSpec,parentGroupElement: ParentGroupElement)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,DocSpec]] = {
+    validateDocRefId(d.docRefId,parentGroupElement).zip(validateCorrDocRefId(d.corrDocRefId,parentGroupElement)).map {
       case (x,c) => (x.toValidatedNel |@| c.toValidatedNel).map( (doc,corr) =>
         DocSpec(OECD1,doc,corr)
       )
     }
   }
 
-  private def validateCorrDocRefId(corrDocRefIdString:Option[String])(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,Option[CorrDocRefId]]] = {
+  private def validateCorrDocRefId(corrDocRefIdString:Option[String],parentGroupElement: ParentGroupElement)(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,Option[CorrDocRefId]]] = {
     corrDocRefIdString.map(DocRefId(_).fold[Future[Validated[BusinessRuleErrors,Option[CorrDocRefId]]]](
       Future.successful(InvalidCorrDocRefId.invalid))(
-      d => docRefIdService.queryDocRefId(d).map {
-        case DocRefIdResponses.Valid => Some(CorrDocRefId(d)).valid
-        case DocRefIdResponses.Invalid => CorrDocRefIdInvalidRecord.invalid
-        case DocRefIdResponses.DoesNotExist => CorrDocRefIdUnknownRecord.invalid
+      d => if(d.parentGroupElement != parentGroupElement) {
+        Future.successful(CorrDocRefIdInvalidParentGroupElement.invalid)
+      } else {
+        docRefIdService.queryDocRefId(d).map {
+          case DocRefIdResponses.Valid => Some(CorrDocRefId(d)).valid
+          case DocRefIdResponses.Invalid => CorrDocRefIdInvalidRecord.invalid
+          case DocRefIdResponses.DoesNotExist => CorrDocRefIdUnknownRecord.invalid
+        }
       })
     ).getOrElse(Future.successful(None.valid))
   }
 
-  private def validateDocRefId(docRefIdString:String)(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,DocRefId]] = {
+  private def validateDocRefId(docRefIdString:String, parentGroupElement: ParentGroupElement)(implicit hc:HeaderCarrier) : Future[Validated[BusinessRuleErrors,DocRefId]] = {
     DocRefId(docRefIdString).fold[Future[Validated[BusinessRuleErrors,DocRefId]]](
       Future.successful(InvalidDocRefId.invalid))(
-      d => docRefIdService.queryDocRefId(d).map{
-        case DocRefIdResponses.DoesNotExist => d.valid
-        case _                              => DocRefIdDuplicate.invalid
+      d => if(d.parentGroupElement != parentGroupElement) {
+        Future.successful(DocRefIdInvalidParentGroupElement.invalid)
+      } else {
+        docRefIdService.queryDocRefId(d).map{
+          case DocRefIdResponses.DoesNotExist => d.valid
+          case _                              => DocRefIdDuplicate.invalid
+        }
       }
     )
   }
