@@ -105,6 +105,9 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     }.merge
   }
 
+  def notRegistered =  sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
+    Ok(views.html.submission.notRegistered(includes.asideBusiness(), includes.phaseBannerBeta()))
+  }
   def createSuccessfulSubmissionAuditEvent(authContext: AuthContext, summaryData:SummaryData)
                                           (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =
     EitherT(audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
