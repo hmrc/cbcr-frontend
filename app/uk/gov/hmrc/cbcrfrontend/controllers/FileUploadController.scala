@@ -30,6 +30,7 @@ import play.api.i18n.Messages.Implicits._
 import play.api.libs.Files
 import play.api.mvc._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
@@ -42,6 +43,7 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult
 import uk.gov.hmrc.play.audit.model.DataEvent
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.AuthContext
+import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
@@ -53,11 +55,12 @@ import scala.util.control.NonFatal
 class FileUploadController @Inject()(val sec: SecuredActions,
                                      val schemaValidator: CBCRXMLValidator,
                                      val businessRuleValidator: CBCBusinessRuleValidator,
-                                     val cache:CBCSessionCache,
+                                     val enrol:EnrolmentsConnector,
                                      val fileUploadService:FileUploadService,
                                      val xmlExtractor:XmlInfoExtract,
                                      val validator:CBCRXMLValidator
-                                    )(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig {
+                                    )(implicit ec: ExecutionContext, cache:CBCSessionCache, auth:AuthConnector) extends FrontendController with ServicesConfig {
+
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend") }
@@ -67,20 +70,31 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   lazy val audit = FrontendAuditConnector
   lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
 
+  private def allowedToSubmit(authContext: AuthContext)(implicit hc: HeaderCarrier) = getUserType(authContext).semiflatMap {
+    case Organisation => enrol.alreadyEnrolled
+    case Agent        => Future.successful(true)
+  }
+
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    val result = for {
-      envelopeId     <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
-      fileId         <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"))
-      successRedirect = s"$hostName${routes.FileUploadController.fileUploadProgress(envelopeId.value, fileId.value).url}"
-      fileUploadUrl   = s"${FrontendAppConfig.fileUploadFrontendHost}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
-        s"redirect-success-url=$successRedirect&" +
-        s"redirect-error-url=$fileUploadErrorRedirectUrl"
-      fileName        = s"oecd-${LocalDateTime.now}-cbcr.xml"
-    } yield Ok(submission.fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
+      allowedToSubmit(authContext).flatMap { canSubmit =>
 
-    result.leftMap(errorRedirect).merge
+        if (canSubmit) {
+          for {
+            envelopeId      <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
+            fileId          <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"): CBCErrors)
+            successRedirect = s"$hostName${routes.FileUploadController.fileUploadProgress(envelopeId.value, fileId.value).url}"
+            fileUploadUrl   = s"${FrontendAppConfig.fileUploadFrontendHost}/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
+              s"redirect-success-url=$successRedirect&" +
+              s"redirect-error-url=$fileUploadErrorRedirectUrl"
+            fileName        = s"oecd-${LocalDateTime.now}-cbcr.xml"
+          } yield Ok(submission.fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
 
+        } else {
+          EitherT.right[Future, CBCErrors, Result](Future.successful(Redirect(routes.SubmissionController.notRegistered())))
+        }
+
+      }.valueOr(errorRedirect)
   }
 
   def fileUploadProgress(envelopeId: String, fileId: String) = sec.AuthenticatedAction{ _ => implicit request =>

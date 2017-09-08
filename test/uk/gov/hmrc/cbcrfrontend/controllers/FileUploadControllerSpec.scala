@@ -34,8 +34,9 @@ import play.api.{Configuration, Environment}
 import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.Files
-import play.api.libs.json.{Format, JsNull}
+import play.api.libs.json.{Format, JsNull, Reads}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.auth._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -55,7 +56,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   implicit val ec: ExecutionContext                    = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi: MessagesApi                = app.injector.instanceOf[MessagesApi]
   implicit val env                                     = app.injector.instanceOf[Environment]
-  implicit val as                                     = app.injector.instanceOf[ActorSystem]
+  implicit val as                                      = app.injector.instanceOf[ActorSystem]
   implicit val authCon                                 = authConnector(TestUsers.cbcrUser)
   val securedActions: SecuredActionsTest               = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
 
@@ -64,6 +65,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val businessRulesValidator: CBCBusinessRuleValidator = mock[CBCBusinessRuleValidator]
   val cache: CBCSessionCache                           = mock[CBCSessionCache]
   val extractor: XmlInfoExtract                        = new XmlInfoExtract()
+  val enrol:EnrolmentsConnector                        = mock[EnrolmentsConnector]
 
   override protected def afterEach(): Unit = {
     reset(cache,businessRulesValidator,schemaValidator,fuService)
@@ -73,6 +75,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   object TestSessionCache {
 
     var succeed = true
+    var agent = false
 
     val http = mock[HttpGet with HttpPut with HttpDelete]
     val configuration = new Configuration(ConfigFactory.load("application.conf"))
@@ -80,6 +83,11 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     def apply(): CBCSessionCache = new SessionCache(configuration, http)
 
     private class SessionCache(_config:Configuration, _http:HttpGet with HttpPut with HttpDelete) extends CBCSessionCache(_config, _http) {
+
+      override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] = universe.typeOf[T] match {
+        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" } else {"Organisation"})).asInstanceOf[Option[T]])
+      }
+
       override def readOrCreate[T: Format : universe.TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] = universe.typeOf[T] match {
         case t if t =:= universe.typeOf[FileId] => OptionT.some[Future, FileId](FileId("fileId")).asInstanceOf[OptionT[Future, T]]
         case t if t =:= universe.typeOf[EnvelopeId] => succeed match {
@@ -107,8 +115,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
 
-  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, TestSessionCache(),fuService, extractor,validator)
-  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, cache,fuService, extractor,validator)
+  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,validator)(ec,TestSessionCache(),authCon)
+  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,validator)(ec,cache,authCon)
 
   val file = Files.TemporaryFile("","")
   val validFile:File= new File("test/resources/cbcr-valid.xml")
@@ -117,10 +125,25 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
 
     "return 200 when the envelope is created successfully" in {
+      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(true)
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
+    "redirect to not registered page if Organisation user has is not enrolled" in {
+      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(false)
+      val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
+      status(result) shouldBe Status.SEE_OTHER
+    }
+    "allow agent to submit even when no enrolment" in {
+      TestSessionCache.agent = true
+      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(false)
+      val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
+      status(result) shouldBe Status.OK
+      TestSessionCache.agent = false
+
+    }
     "return 500 when the is an error creating the envelope" in {
+      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(true)
       TestSessionCache.succeed = false
       when(fuService.createEnvelope(any(), any(), any(), any())) thenReturn left[EnvelopeId]("server error")
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
