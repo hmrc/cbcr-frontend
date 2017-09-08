@@ -48,7 +48,6 @@ package object cbcrfrontend {
   }
 
   def affinityGroupToUserType(a: AffinityGroup): Either[CBCErrors, UserType] = {
-    Logger.error(s"AFFINITYGROUPTOUSERTYPE $a")
     a.affinityGroup.toLowerCase.trim match {
       case "agent"        => Right(Agent)
       case "organisation" => Right(Organisation)
