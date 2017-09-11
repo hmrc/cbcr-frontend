@@ -65,7 +65,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
   lazy val audit: AuditConnector = FrontendAuditConnector
 
-  val dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH:mm")
+  val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm")
 
   def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
     val reCorr = x.reportingEntity.docSpec.corrDocRefId
