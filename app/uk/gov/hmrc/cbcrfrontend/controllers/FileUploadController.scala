@@ -21,6 +21,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
+import cats.Monad
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
@@ -71,7 +72,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
 
   private def allowedToSubmit(authContext: AuthContext)(implicit hc: HeaderCarrier) = getUserType(authContext).semiflatMap {
-    case Organisation => enrol.alreadyEnrolled
+    case Organisation => Monad[Future].ifM(enrol.alreadyEnrolled)(Future.successful(true), cache.read[CBCId].map(_.isDefined))
     case Agent        => Future.successful(true)
   }
 
