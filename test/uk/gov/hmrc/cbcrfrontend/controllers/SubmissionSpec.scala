@@ -489,7 +489,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "contain a valid dateformat" in {
 
-      LocalDateTime.of(2017,12,1,23,59,59).format(controller.dateFormat) shouldEqual "01/12/2017 at 23:59"
+      LocalDateTime.of(2017,12,1,23,59,59).format(controller.dateFormat) shouldEqual "01 December 2017 at 23:59"
     }
   }
 
