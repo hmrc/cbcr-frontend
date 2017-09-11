@@ -86,6 +86,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
       override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] = universe.typeOf[T] match {
         case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" } else {"Organisation"})).asInstanceOf[Option[T]])
+        case t if t =:= universe.typeOf[CBCId] => Future.successful(None)
       }
 
       override def readOrCreate[T: Format : universe.TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] = universe.typeOf[T] match {
