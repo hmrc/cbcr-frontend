@@ -185,22 +185,22 @@ class SharedController @Inject()(val sec: SecuredActions,
           BadRequest(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))
         ),
         knownFacts =>  for {
-          bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
+          bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
             NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
           )
-          cbcId <- OptionT(cache.read[XMLInfo]).map(_.messageSpec.sendingEntityIn).toRight(errorRedirect(UnexpectedState("No CBCID found in cache")))
+          cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.read[XMLInfo]).map(_.messageSpec.sendingEntityIn).value)
           subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
-          _ <- EitherT.fromEither[Future](userType match {
+          _                   <- EitherT.fromEither[Future](userType match {
             case Agent if subscriptionDetails.isEmpty =>
               Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
-            case Agent if subscriptionDetails.exists(sd => !sd.cbcId.contains(cbcId)) =>
+            case Agent if subscriptionDetails.flatMap(_.cbcId) != cbcId || cbcId.isEmpty =>
               Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
             case Organisation if subscriptionDetails.isDefined =>
               Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
             case _                                             =>
               Right(())
           })
-          _ <- EitherT.right[Future, Result, Unit]((cache.save(bpr) |@| cache.save(knownFacts.utr)).map((_,_) => ()))
+          _                   <- EitherT.right[Future, Result, Unit]((cache.save(bpr) |@| cache.save(knownFacts.utr)).map((_,_) => ()))
         } yield Redirect(routes.SharedController.knownFactsMatch())
 
       )
