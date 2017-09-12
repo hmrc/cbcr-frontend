@@ -24,10 +24,10 @@
 @import java.nio.file._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@(fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Boolean , busErrors :Boolean, asideBusiness: Html, phaseBannerBeta: Html, reportingRole:Option[ReportingRole])(
+@(fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors :Option[Int], asideBusiness: Html, phaseBannerBeta: Html, reportingRole:Option[ReportingRole])(
 implicit request: Request[_], messages: Messages)
 
-@errors = @{schemaErrors || busErrors}
+@errors = @{schemaErrors.isDefined || busErrors.isDefined}
 
 @sidebarContent = {
 @asideBusiness
@@ -47,15 +47,16 @@ implicit request: Request[_], messages: Messages)
                 }
             </h1>
 
-            @if(schemaErrors) {
+            @schemaErrors.map{ size =>
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link")</a>.</p>
+                <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link") (TXT:@{size}KB)</a>.</p>
                 <p>@Messages("fileUploadResult.error.xml.message")</p>
             </div>
 
-            } @if(busErrors){
+            }
+            @busErrors.map{ size =>
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")</a>.</p>
+                <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link") (TXT:@{size}KB)</a>.</p>
                 <p>@Messages("fileUploadResult.error.data.message")</p>
             </div>
             }
