@@ -41,7 +41,7 @@ sealed trait ValidationErrors extends CBCErrors
 
 case class InvalidFileType(file:String) extends ValidationErrors
 case class XMLErrors(errors:List[String]) extends ValidationErrors
-case object FatalSchemaErrors extends ValidationErrors
+case class FatalSchemaErrors(size:Option[Int]) extends ValidationErrors
 sealed trait BusinessRuleErrors extends ValidationErrors
 
 case object FileNameError extends BusinessRuleErrors
@@ -79,7 +79,7 @@ object ValidationErrors {
   implicit val validationErrorShows: Show[ValidationErrors] = Show.show[ValidationErrors]{
     case x:XMLErrors             => x.show
     case x:BusinessRuleErrors    => x.show
-    case FatalSchemaErrors       => "Fatal Schema Error"
+    case FatalSchemaErrors(_)    => "Fatal Schema Error"
     case InvalidFileType(f)      => s"File $f is an invalid file type"
     case AllBusinessRuleErrors(e)=> e.map(_.show).mkString(",")
   }
