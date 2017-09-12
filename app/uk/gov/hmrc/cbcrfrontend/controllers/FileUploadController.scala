@@ -173,7 +173,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     val f = errorsToFile(e,"")
     val kb = f.length() * 0.001
     f.delete()
-    kb.toInt+1
+    Math.incrementExact(kb.toInt)
   }
 
   private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
