@@ -65,7 +65,6 @@ implicit request: Request[_], messages: Messages)
                         @Messages("submitSummary.table.filedBy")
                     </th>
                     <td>
-                        @summaryData.submissionMetaData.submitterInfo.fullName<br />
                         @summaryData.submissionMetaData.submitterInfo.agencyBusinessName.map(_.name)<br />
                     </td>
 
@@ -75,12 +74,14 @@ implicit request: Request[_], messages: Messages)
                         @Messages("submitSummary.table.filingInfo")
                     </th>
                     <td>
-
+                        <span class="faded-text faded-text--small">Full name:</span><br/>
+                        @summaryData.submissionMetaData.submitterInfo.fullName<br />
                         <span class="faded-text faded-text--small">Phone number:</span><br/>
                         @summaryData.submissionMetaData.submitterInfo.contactPhone<br />
                         <span class="faded-text faded-text--small">Email address:</span><br/>
                         @summaryData.submissionMetaData.submitterInfo.email.value
                     </td>
+                    <td><a></a><td/>
                 </tr>
                 <tr>
                     <th style="white-space:nowrap">
@@ -109,21 +110,9 @@ implicit request: Request[_], messages: Messages)
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm()) {
             @CSRF.formField
 
-            @if(form.error("cbcDeclaration").isDefined){
-            <div class="form-field--error">
-            <span class="error-notification">@Messages("submitSummary.declaration.error.text")</span>
-
-                <div class="multiple-choice">
-                    <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
-                    <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
+                <div class="form-group">
+                    <p class="important-notice"> <strong> @Messages("submitSummary.declaration.text")</strong><p>
                 </div>
-            </div>
-            } else {
-                <div class="multiple-choice">
-                    <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
-                    <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
-                </div>
-            }
 
 
                 <p>
