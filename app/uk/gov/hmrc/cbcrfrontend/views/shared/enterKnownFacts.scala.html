@@ -48,17 +48,17 @@ implicit request: Request[_], messages: Messages)
           <fieldset>
               <div class="form-field form-field--tall  @if(errors){form-field--error}">
 
-                  <label>@Messages("subscribeFirst.utr.label")</label>
+                  <label for="utr">@Messages("subscribeFirst.utr.label")
                   <span class="form-hint">@Messages("subscribeFirst.utr.hint")</span>
                   <input class="form-control--block" type="text" name="utr" id="utr" />
-
+                  </label>
               </div>
 
               <div class="form-field form-field--tall  @if(errors){form-field--error}">
 
-                  <label>@Messages("subscribeFirst.postcode.label")</label>
+                  <label for="postCode">@Messages("subscribeFirst.postcode.label")
                   <input class="form-control--block" type="text" name="postCode" id="postCode" />
-
+                  </label>
               </div>
           </fieldset>
 
