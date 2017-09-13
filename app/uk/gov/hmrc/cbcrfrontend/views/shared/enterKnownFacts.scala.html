@@ -39,8 +39,8 @@ implicit request: Request[_], messages: Messages)
               <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
                   <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>
                   <p>@Messages("subscribeFirst.noMatchingBusiness.suggestion") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.noMatchingBusiness.suggestion.link")</a></p>
-                  <p><a href="#utr">@Messages("subscribeFirst.error.message.utr-empty")</a></p>
-                  <p><a href="#postCode">@Messages("subscribeFirst.error.message.postcode-empty")</a>
+                  <p><strong><a href="#utr">@Messages("subscribeFirst.error.message.utr-empty")</a></strong></p>
+                  <p><strong><a href="#postCode">@Messages("subscribeFirst.error.message.postcode-empty")</strong></a>
               </div>
       }
 
