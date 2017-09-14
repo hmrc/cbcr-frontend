@@ -65,7 +65,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
   lazy val audit: AuditConnector = FrontendAuditConnector
 
-  val dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy 'at' HH:mm")
+  val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm")
 
   def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
     val reCorr = x.reportingEntity.docSpec.corrDocRefId
@@ -105,6 +105,9 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     }.merge
   }
 
+  def notRegistered =  sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
+    Ok(views.html.submission.notRegistered(includes.asideBusiness(), includes.phaseBannerBeta()))
+  }
   def createSuccessfulSubmissionAuditEvent(authContext: AuthContext, summaryData:SummaryData)
                                           (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =
     EitherT(audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",

@@ -41,7 +41,7 @@ sealed trait ValidationErrors extends CBCErrors
 
 case class InvalidFileType(file:String) extends ValidationErrors
 case class XMLErrors(errors:List[String]) extends ValidationErrors
-case object FatalSchemaErrors extends ValidationErrors
+case class FatalSchemaErrors(size:Option[Int]) extends ValidationErrors
 sealed trait BusinessRuleErrors extends ValidationErrors
 
 case object FileNameError extends BusinessRuleErrors
@@ -59,6 +59,8 @@ case object CorrDocRefIdNotNeeded extends BusinessRuleErrors
 case object CorrDocRefIdUnknownRecord extends BusinessRuleErrors
 case object CorrDocRefIdInvalidRecord extends BusinessRuleErrors
 case object DocRefIdDuplicate extends BusinessRuleErrors
+case object DocRefIdInvalidParentGroupElement extends BusinessRuleErrors
+case object CorrDocRefIdInvalidParentGroupElement extends BusinessRuleErrors
 case object InvalidDocRefId extends BusinessRuleErrors
 case object InvalidCorrDocRefId extends BusinessRuleErrors
 
@@ -77,7 +79,7 @@ object ValidationErrors {
   implicit val validationErrorShows: Show[ValidationErrors] = Show.show[ValidationErrors]{
     case x:XMLErrors             => x.show
     case x:BusinessRuleErrors    => x.show
-    case FatalSchemaErrors       => "Fatal Schema Error"
+    case FatalSchemaErrors(_)    => "Fatal Schema Error"
     case InvalidFileType(f)      => s"File $f is an invalid file type"
     case AllBusinessRuleErrors(e)=> e.map(_.show).mkString(",")
   }
@@ -97,6 +99,8 @@ object BusinessRuleErrors {
       case CorrDocRefIdInvalidRecord => JsString(CorrDocRefIdInvalidRecord.toString)
       case CorrDocRefIdUnknownRecord => JsString(CorrDocRefIdUnknownRecord.toString)
       case DocRefIdDuplicate         => JsString(DocRefIdDuplicate.toString)
+      case DocRefIdInvalidParentGroupElement => JsString(DocRefIdInvalidParentGroupElement.toString)
+      case CorrDocRefIdInvalidParentGroupElement => JsString(CorrDocRefIdInvalidParentGroupElement.toString)
       case CorrDocRefIdMissing       => JsString(CorrDocRefIdMissing.toString)
       case CorrDocRefIdNotNeeded     => JsString(CorrDocRefIdNotNeeded.toString)
       case IncompatibleOECDTypes     => JsString(IncompatibleOECDTypes.toString)
@@ -118,6 +122,8 @@ object BusinessRuleErrors {
           case Some("corrdocrefidinvalidrecord") => JsSuccess(CorrDocRefIdInvalidRecord)
           case Some("corrdocrefidunknownrecord") => JsSuccess(CorrDocRefIdUnknownRecord)
           case Some("docrefidduplicate")         => JsSuccess(DocRefIdDuplicate)
+          case Some("docrefidinvalidparentgroupelement") => JsSuccess(DocRefIdInvalidParentGroupElement)
+          case Some("corrdocrefidinvalidparentgroupelement") => JsSuccess(CorrDocRefIdInvalidParentGroupElement)
           case Some("corrdocrefidmissing")       => JsSuccess(CorrDocRefIdMissing)
           case Some("corrdocrefidnotneeded")     => JsSuccess(CorrDocRefIdNotNeeded)
           case Some("incompatibleoecdtypes")     => JsSuccess(IncompatibleOECDTypes)
@@ -140,6 +146,8 @@ object BusinessRuleErrors {
     case CorrDocRefIdInvalidRecord => "Error Code 80003 CorrDocRefId (record no longer valid): The corrected record is no longer valid (invalidated or outdated by a previous correction message). As a consequence, no further information should have been received on this version of the record."
     case CorrDocRefIdUnknownRecord => "Error Code 80002 CorrDocRefId (unknown record): The CorrDocRefId refers to an unknown record"
     case DocRefIdDuplicate         => "Error Code 80001: DocRefId (already used)"
+    case DocRefIdInvalidParentGroupElement => "Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide."
+    case CorrDocRefIdInvalidParentGroupElement => "Error Code 80000 CorrDocRefId (format): The structure of the CorrDocRefId is not in the correct format, as set out in the User Guide."
     case CorrDocRefIdMissing   => "Error Code 80005 CorrDocRefId (missing): CorrDocRefId must be provided when DocTypeIndic is OECD2 or OECD3"
     case CorrDocRefIdNotNeeded => "Error Code 80004 CorrDocRefId (Initial record): CorrDocRefId cannot be provided when DocTypeIndic is OECD1"
     case IncompatibleOECDTypes => "Error DocTypeIndic: Document must not contain a mixture of New (OECD1) and corrected (OECD2 & OECD3) DocTypeIndics"

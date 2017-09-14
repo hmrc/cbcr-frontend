@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.time.{LocalDate, LocalDateTime}
+
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.Timeout
 import org.mockito.Matchers.{eq => EQ, _}
@@ -65,13 +67,33 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   implicit val enrol = mock[EnrolmentsConnector]
   val subService = mock[SubscriptionDataService]
   val bprKF    = mock[BPRKnownFactsService]
+
+  val id: CBCId = CBCId("XGCBC0000000001").getOrElse(fail("unable to create cbcid"))
+
+  val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
+
+  private lazy val keyXMLInfo = {
+    XMLInfo(
+      MessageSpec(
+        MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
+        "GB",
+        CBCId.create(99).getOrElse(fail("booo")),
+        LocalDateTime.now(),
+        LocalDate.parse("2017-01-30"),
+        None
+      ),
+      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),Utr("7000000002"),"name"),
+      CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None)),
+      AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None))
+    )
+  }
+
   when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
   when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
   when(enrol.getEnrolments(any())) thenReturn Future.successful(List.empty)
 
   val controller = new SharedController(securedActions, subService, enrol,authCon,bprKF)
 
-  val id: CBCId = CBCId("XGCBC0000000001").getOrElse(fail("unable to create cbcid"))
   val subDetails = SubscriptionDetails(
     BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB")),
     SubscriberContact("firstName","lastName", "lkasjdf",EmailAddress("max@max.com")),
@@ -161,18 +183,19 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.none[Future,BusinessPartnerRecord]
-      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](false)
+      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](None)
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
     "return 303 when we have already used that utr and we are an Organisation"  in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(None)
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("line1", None, None, None, Some("SW46NR"), "GB"))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](true)
+      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       result.header.headers("Location") should endWith("/already-subscribed")
@@ -184,9 +207,9 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent")))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](false)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.NOT_FOUND
     }
@@ -197,13 +220,28 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/chehttps://github.com/hmrc/cbcr/pull/14ckKnownFacts").withJsonBody(Json.toJson(kf)))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(None)
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.alreadySubscribed(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Boolean](false)
+      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](None)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       result.header.headers("Location") should endWith("/known-facts/match")
     }
+
+    "return 303 when CBCId in KF does not match CBCId in submitted XML"  in {
+      val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
+      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
+      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
+      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent")))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(tin = Utr("7000000003")))))
+      when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      val result = controller.checkKnownFacts(fakeRequestSubscribe)
+      status(result) shouldBe Status.NOT_FOUND
+    }
+
   }
 
 

@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Path, Paths}
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -44,7 +43,6 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-
 @Singleton
 class SharedController @Inject()(val sec: SecuredActions,
                                  val subDataService: SubscriptionDataService,
@@ -65,7 +63,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   )
 
   val cbcIdForm : Form[CBCId] = Form(
-    single( "cbcId" -> of[CBCId] )
+    single( "cbcId" -> of[CBCId])
   )
 
   val technicalDifficulties = Action{ implicit request =>
@@ -185,16 +183,22 @@ class SharedController @Inject()(val sec: SecuredActions,
           BadRequest(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))
         ),
         knownFacts =>  for {
-          bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
+          bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
             NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
           )
-          alreadySubscribed <- subDataService.alreadySubscribed(knownFacts.utr).leftMap(errorRedirect)
-          _ <- EitherT.fromEither[Future](userType match {
-            case Organisation if alreadySubscribed => Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
-            case Agent if !alreadySubscribed       => Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
-            case _                                 => Right(())
+          cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.read[XMLInfo]).map(_.messageSpec.sendingEntityIn).value)
+          subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
+          _                   <- EitherT.fromEither[Future](userType match {
+            case Agent if subscriptionDetails.isEmpty =>
+              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
+            case Agent if subscriptionDetails.flatMap(_.cbcId) != cbcId || cbcId.isEmpty =>
+              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
+            case Organisation if subscriptionDetails.isDefined =>
+              Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
+            case _                                             =>
+              Right(())
           })
-          _ <- EitherT.right[Future, Result, Unit]((cache.save(bpr) |@| cache.save(knownFacts.utr)).map((_,_) => ()))
+          _                   <- EitherT.right[Future, Result, Unit]((cache.save(bpr) |@| cache.save(knownFacts.utr)).map((_,_) => ()))
         } yield Redirect(routes.SharedController.knownFactsMatch())
 
       )

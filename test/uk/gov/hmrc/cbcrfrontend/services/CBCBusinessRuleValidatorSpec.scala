@@ -43,13 +43,13 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val subscriptionDataService = mock[SubscriptionDataService]
 
 
-  val docRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT1").getOrElse(fail("bad docrefid"))
-  val docRefId2 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT2").getOrElse(fail("bad docrefid"))
-  val docRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT3").getOrElse(fail("bad docrefid"))
+  val docRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
+  val docRefId2 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").getOrElse(fail("bad docrefid"))
+  val docRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ADD").getOrElse(fail("bad docrefid"))
 
-  val corrDocRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT1C").getOrElse(fail("bad docrefid"))
-  val corrDocRefId2 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT2C").getOrElse(fail("bad docrefid"))
-  val corrDocRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT3C").getOrElse(fail("bad docrefid"))
+  val corrDocRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTC").getOrElse(fail("bad docrefid"))
+  val corrDocRefId2 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REPC").getOrElse(fail("bad docrefid"))
+  val corrDocRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ADDC").getOrElse(fail("bad docrefid"))
 
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](Some(submissionData))
@@ -395,6 +395,27 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
         result.fold(
           errors => errors.toList should contain(XmlEncodingError),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+
+      "when the DocRefId refers to the wrong parent group element" in {
+        val validFile = new File("test/resources/cbcr-invalid-docrefid-PGE.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(DocRefIdInvalidParentGroupElement),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+      "when the CorrDocRefId refers to the wrong parent group element" in {
+        val validFile = new File("test/resources/cbcr-invalid-corrdocrefid-PGE.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(CorrDocRefIdInvalidParentGroupElement),
           _ => fail("No InvalidXMLError generated")
         )
 
