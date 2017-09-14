@@ -16,17 +16,41 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json._
+import play.api.libs.json.Reads._
+import play.api.libs.functional.syntax._ // Combinator syntax
 
-case class EtmpAddress(addressLine1: Option[String],
+case class EtmpAddress(addressLine1: String,
                        addressLine2: Option[String],
                        addressLine3: Option[String],
                        addressLine4: Option[String],
                        postalCode: Option[String],
-                       countryCode: Option[String])
+                       countryCode: String)
 
 object EtmpAddress {
-  implicit val formats = Json.format[EtmpAddress]
+  implicit val bprFormat = Json.format[EtmpAddress]
+
+  val subscriptionFormat = new Format[EtmpAddress] {
+    override def writes(o: EtmpAddress) = Json.obj(
+      "line1" -> o.addressLine1,
+      "line2" -> o.addressLine1,
+      "line3" -> o.addressLine1,
+      "line4" -> o.addressLine1,
+      "postalCode" -> o.postalCode,
+      "countryCode" -> o.countryCode
+    )
+
+    implicit val etmpAddressReads : Reads[EtmpAddress] =
+      ((JsPath \ "line1").read[String] and
+        (JsPath \ "line2").readNullable[String] and
+        (JsPath \ "line3").readNullable[String] and
+        (JsPath \ "line4").readNullable[String] and
+        (JsPath \ "postalCode").readNullable[String] and
+        (JsPath \ "countryCode").read[String])(EtmpAddress.apply _)
+
+    override def reads(json: JsValue) = etmpAddressReads.reads(json)
+  }
+
 }
 
 case class OrganisationResponse(organisationName: String)

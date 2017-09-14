@@ -73,9 +73,9 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
 
   val id: CBCId = CBCId("XGCBC0000000001").getOrElse(fail("unable to create cbcid"))
   val subDetails = SubscriptionDetails(
-    BusinessPartnerRecord("safeid",None,EtmpAddress(None,None,None,None,None,None)),
-    SubscriberContact("lkajsdf","lkasjdf",EmailAddress("max@max.com")),
-    id,
+    BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB")),
+    SubscriberContact("firstName","lastName", "lkasjdf",EmailAddress("max@max.com")),
+    Some(id),
     Utr("utr")
   )
 
@@ -168,7 +168,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
-      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
+      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("line1", None, None, None, Some("SW46NR"), "GB"))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -180,7 +180,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
     }
     "return 303 when that utr has not been registered and we are an Agent"  in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
-      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
+      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent")))
@@ -193,7 +193,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
 
     "return 303 when the utr and postcode are valid" in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
-      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress(None, None, None, None, Some("SW46NR"), None))
+      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/chehttps://github.com/hmrc/cbcr/pull/14ckKnownFacts").withJsonBody(Json.toJson(kf)))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
