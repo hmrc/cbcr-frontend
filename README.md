@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/hmrc/cbcr-frontend.svg)](https://travis-ci.org/hmrc/cbcr-frontend) [ ![Download](https://api.bintray.com/packages/hmrc/releases/cbcr-frontend/images/download.svg) ](https://bintray.com/hmrc/releases/cbcr-frontend/_latestVersion)
 
-  
+ 
 
 
 

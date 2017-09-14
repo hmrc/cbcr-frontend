@@ -1,7 +1,8 @@
 import sbt.Keys._
-import sbt.Tests.{SubProcess, Group}
+import sbt.Tests.{Group, SubProcess}
 import sbt._
 import play.routes.compiler.StaticRoutesGenerator
+import play.sbt.PlayImport.PlayKeys.playDefaultPort
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 
 
@@ -28,6 +29,7 @@ trait MicroService {
     .enablePlugins(Seq(play.sbt.PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin) ++ plugins : _*)
     .settings(playSettings : _*)
     .settings(scalaSettings: _*)
+    .settings(playDefaultPort := 9696)
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
     .settings(
