@@ -18,7 +18,6 @@ enterCBCId.dontHaveAnID.link.text=Register online
 enterCBCId.error.header=The country-by-country ID doesn''t match the one created for this company or partnership.
 enterCBCId.error.message=Try again, or
 enterCBCId.error.message.link=contact HMRC.
-enterCBCId.error.message.invalid.id=You haven''t entered a valid country-by-country ID
 
 subscribeFirst.mainHeading=Enter details of the UK-registered company or partnership that''s sending a report
 subscribeFirst.noMatchingBusiness.heading=We can''t find the company or partnership.
@@ -30,8 +29,6 @@ subscribeFirst.alreadyRegistered2.link=contact HMRC
 subscribeFirst.utr.label=Unique taxpayer reference
 subscribeFirst.utr.hint=This can be for Corporation Tax, or Self Assessment for a business partnership
 subscribeFirst.postcode.label=UK postcode
-subscribeFirst.error.message.utr-empty=You haven''t entered a valid unique taxpayer reference
-subscribeFirst.error.message.postcode-empty=You haven''t entered a valid UK postcode
 
 subscribeMatchFound.mainHeading=Check the company or partnership details
 subscribeMatchFound.businessDetails.name=Name
@@ -145,12 +142,12 @@ submitSummary.mainHeading=Confirm your report details
 submitSummary.table.ultimateParent=Group parent business
 submitSummary.table.utr=Unique taxpayer reference
 submitSummary.table.filedBy=Sent by
-submitSummary.table.filingInfo=Sender''s details
+submitSummary.table.filingInfo=Sender''s contact details
 submitSummary.table.reportDetails=Report details
 submitSummary.declaration.heading=Declaration
-submitSummary.declaration.text=By sending your report, you''re confirming that the information you''ve provided is correct and complete
+submitSummary.declaration.text=I confirm that the information I have provided is accurate and complete to the best of my knowledge
 submitSummary.declaration.error.text=Please confirm
-submitSummary.submit=Confirm and send
+submitSummary.submit=Continue
 submitSummary.submitReport=Submit report
 
 uploadReport.mainHeading=Upload your report
