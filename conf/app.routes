@@ -26,7 +26,7 @@ GET        /xml-schema-errors                             @uk.gov.hmrc.cbcrfront
 GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileInvalid
 GET        /virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileContainsVirus
 GET        /file-too-large                                @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileTooLarge
-GET        /failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.handleError(errorCode:Int = 0, reason:String = "Unknown")
+GET        /failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.handleError(errorCode:Int ?= 0, reason:String ?= "Unknown")
 
 GET        /ultimate-parent-entity/entry-form             @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.upe
 POST       /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUltimateParentEntity
@@ -45,6 +45,8 @@ GET        /company-name/entry-form                       @uk.gov.hmrc.cbcrfront
 
 GET        /already-subscribed                            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.alreadySubscribed
 GET        /contact-info-subscriber                       @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber
+GET        /contact-info-subscriber/update-form           @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.updateInfoSubscriber
+POST       /contact-info-subscriber/update-form           @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.saveUpdatedInfoSubscriber
 GET        /subscribe-success-cbc-id/:cbcId               @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
 GET        /subscriber-email/entry-form                   @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmail
 POST       /subscriber-email                              @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmailSubmit

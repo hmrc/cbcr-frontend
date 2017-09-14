@@ -66,7 +66,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
 
-  val bpr = BusinessPartnerRecord("safeId",None, EtmpAddress(None,None,None,None,None,None))
+  val bpr = BusinessPartnerRecord("safeId",None, EtmpAddress("Line1",None,None,None,None,"GB"))
   
   implicit val hc = HeaderCarrier()
   val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth) {
