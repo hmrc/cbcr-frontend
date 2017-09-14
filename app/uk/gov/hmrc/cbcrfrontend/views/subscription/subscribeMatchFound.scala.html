@@ -29,7 +29,6 @@ implicit request: Request[_], messages: Messages)
 
 @main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
 
-<main id="content" role="main">
 
     <div class="grid-row">
         <div class="column-two-thirds">
@@ -65,13 +64,11 @@ implicit request: Request[_], messages: Messages)
                 }
                 case Agent        => {
                     <p><a href="@routes.SharedController.verifyKnownFactsAgent">Back</a></p>
-                    <p><a class="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.continue")</a></p>
+                    <p><a   class="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.continue")</a></p>
                 }
             }
 
 
         </div>
     </div>
-
-</main>
 }
