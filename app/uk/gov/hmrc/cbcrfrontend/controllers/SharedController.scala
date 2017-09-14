@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.nio.file.{Path, Paths}
+import java.nio.file.{Files, Path, Paths}
 import javax.inject.{Inject, Singleton}
 
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
+import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -43,6 +44,7 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
+
 @Singleton
 class SharedController @Inject()(val sec: SecuredActions,
                                  val subDataService: SubscriptionDataService,
@@ -63,7 +65,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   )
 
   val cbcIdForm : Form[CBCId] = Form(
-    single( "cbcId" -> of[CBCId])
+    single( "cbcId" -> of[CBCId] )
   )
 
   val technicalDifficulties = Action{ implicit request =>
