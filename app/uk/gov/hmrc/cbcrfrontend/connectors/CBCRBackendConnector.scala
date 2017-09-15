@@ -67,4 +67,10 @@ class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut with HttpPost, co
   def corrDocRefIdSave(c:CorrDocRefId, d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
     http.PUT(url + s"/corr-doc-ref-id/${c.cid.show}/${d.show}",JsNull)
 
+  def reportingEntityDataSave(r:ReportingEntityData)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.POST(url+ "/reporting-entity",r)
+
+  def reportingEntityDataQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.GET(url + s"/reporting-entity/$d")
+
 }
