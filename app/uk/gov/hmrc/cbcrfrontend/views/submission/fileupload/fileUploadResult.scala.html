@@ -24,71 +24,82 @@
 @import java.nio.file._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@(fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors :Option[Int], asideBusiness: Html, phaseBannerBeta: Html, reportingRole:Option[ReportingRole])(
-implicit request: Request[_], messages: Messages)
+@(fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], asideBusiness: Html, phaseBannerBeta: Html, reportingRole: Option[ReportingRole])(
+        implicit request: Request[_], messages: Messages)
 
-@errors = @{schemaErrors.isDefined || busErrors.isDefined}
+@errors = @{
+    schemaErrors.isDefined || busErrors.isDefined
+}
 
 @sidebarContent = {
 @asideBusiness
 }
 
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-
-<main id="content" role="main">
+@main_template(if(!errors) {
+    Messages("fileUploadResult.mainHeading.ok")
+}
+else {
+    Messages("fileUploadResult.mainHeading.error")
+},
+    sidebarLinks = Some(sidebarContent)) {
 
     <div class="grid-row">
         <div class="column-two-thirds">
             <h1>
-                @if(!errors){
-                    @Messages("fileUploadResult.mainHeading.ok")
-                } else {
-                    @Messages("fileUploadResult.mainHeading.error")
-                }
+            @if(!errors) {
+                @Messages("fileUploadResult.mainHeading.ok")
+            } else {
+                @Messages("fileUploadResult.mainHeading.error")
+            }
             </h1>
 
-            @schemaErrors.map{ size =>
-            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link") (TXT:@{size}KB)</a>.</p>
-                <p>@Messages("fileUploadResult.error.xml.message")</p>
-            </div>
+            @schemaErrors.map { size =>
+                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
+                    <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link")
+                        (TXT:@{
+                        size
+                    }KB)</a>.</p>
+                    <p>@Messages("fileUploadResult.error.xml.message")</p>
+                </div>
 
             }
-            @busErrors.map{ size =>
-            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link") (TXT:@{size}KB)</a>.</p>
-                <p>@Messages("fileUploadResult.error.data.message")</p>
-            </div>
+            @busErrors.map { size =>
+                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
+                    <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
+                        (TXT:@{
+                        size
+                    }KB)</a>.</p>
+                    <p>@Messages("fileUploadResult.error.data.message")</p>
+                </div>
             }
-                <br>
-            @if(!errors){
-            <table id="table-successReport">
-                <tbody>
-                <tr>
-                <td scope="row">@Messages("fileUploadResult.fileName")</td>
-                <td scope="row">@fileName</td>
-                </tr>
-                <tr>
-                    <td>@Messages("fileUploadResult.fileSize")</td>
-                    <td>@fileSize KB</td>
-                </tr>
-                </tbody>
-            </table>
-            <p>@Messages("fileUploadResult.notYetSubmitted")</p>
+            <br>
+            @if(!errors) {
+                <table id="table-successReport">
+                    <tbody>
+                        <tr>
+                            <td scope="row">@Messages("fileUploadResult.fileName")</td>
+                            <td scope="row">@fileName</td>
+                        </tr>
+                        <tr>
+                            <td>@Messages("fileUploadResult.fileSize")</td>
+                            <td>@fileSize KB</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>@Messages("fileUploadResult.notYetSubmitted")</p>
 
-            @if(reportingRole == Some(CBC701)) {
-                <p><a class="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
-            }
-            @if(reportingRole == Some(CBC702) || reportingRole == Some(CBC703)) {
-                <p><a class="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
-            }
+                @if(reportingRole == Some(CBC701)) {
+                    <p><a class="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                }
+                @if(reportingRole == Some(CBC702) || reportingRole == Some(CBC703)) {
+                    <p><a class="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                }
 
             } else {
-            <p><a href="#">@Messages("fileUploadResult.error.guidance")</a></p>
-            <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
+                <p><a href="#">@Messages("fileUploadResult.error.guidance")</a></p>
+                <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
             }
 
         </div>
     </div>
-</main>
 }

@@ -29,7 +29,7 @@ implicit request: Request[_], messages: Messages)
 
 @ultimateParentEntityErrors = @{form.error("ultimateParentEntity").isDefined}
 
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("submitInfoUltimateParentEntity.mainHeading"), sidebarLinks = Some(sidebarContent)) {
 
     <div class="grid-row">
         <div class="column-two-thirds">

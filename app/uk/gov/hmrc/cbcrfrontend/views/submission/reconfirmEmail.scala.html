@@ -29,7 +29,7 @@ implicit request: Request[_], messages: Messages)
 }
 
 @emailErrors = @{form.error("reconfirmEmail").isDefined}
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("contactInfoSubmitter.reconfirm.email.mainHeading"), sidebarLinks = Some(sidebarContent)) {
 
 
 <div class="grid-row">
