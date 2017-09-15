@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
+import cats.data.ValidatedNel
+import cats.syntax.all._
+import cats.instances.all._
 import play.api.libs.json.Json
 
 
@@ -40,13 +43,36 @@ case class ReportingEntityData(cbcReportsDRI:DocRefId,
                                ultimateParentEntity: UltimateParentEntity,
                                reportingRole: ReportingRole)
 
+case class PartialReportingEntityData(cbcReportsDRI:Option[DocRefId],
+                                      additionalInfoDRI:Option[DocRefId],
+                                      reportingEntityDRI:DocRefId,
+                                      utr:Utr,
+                                      ultimateParentEntity: UltimateParentEntity,
+                                      reportingRole: ReportingRole)
+
+object PartialReportingEntityData { implicit val format = Json.format[PartialReportingEntityData] }
+
 object ReportingEntityData{
   implicit val format = Json.format[ReportingEntityData]
 
-  def extract(x:XMLInfo):ReportingEntityData =
-    ReportingEntityData(
-      x.cbcReport.docSpec.docRefId,
-      x.additionalInfo.docSpec.docRefId,
+  def extractComplete(x:XMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]=
+    (x.cbcReport.map(_.docSpec.docRefId).toValidNel(UnexpectedState("CBCReport DocRefId not found")) |@|
+    x.additionalInfo.map(_.docSpec.docRefId).toValidNel(UnexpectedState("AdditionalInfo DocRefId not found"))).map{ (c,a) =>
+      ReportingEntityData(
+        c,a,
+        x.reportingEntity.docSpec.docRefId,
+        x.reportingEntity.tin,
+        UltimateParentEntity(x.reportingEntity.name),
+        x.reportingEntity.reportingRole
+      )
+
+    }
+
+
+  def extract(x:XMLInfo):PartialReportingEntityData =
+    PartialReportingEntityData(
+      x.cbcReport.map(_.docSpec.docRefId),
+      x.additionalInfo.map(_.docSpec.docRefId),
       x.reportingEntity.docSpec.docRefId,
       x.reportingEntity.tin,
       UltimateParentEntity(x.reportingEntity.name),

@@ -44,9 +44,9 @@ case class RawReportingEntity(reportingRole: String,
                               tin: String,
                               name:String) extends RawXmlFields
 case class RawXMLInfo(messageSpec: RawMessageSpec,
-                      reportingEntity: RawReportingEntity,
-                      cbcReport: RawCbcReports,
-                      additionalInfo: RawAdditionalInfo,
+                      reportingEntity: Option[RawReportingEntity],
+                      cbcReport: Option[RawCbcReports],
+                      additionalInfo: Option[RawAdditionalInfo],
                       cbcVal: RawCbcVal,
                       xmlEncoding: RawXmlEncodingVal) extends RawXmlFields
 
@@ -133,5 +133,5 @@ object ReportingEntity{ implicit val format = Json.format[ReportingEntity] }
 case class CbcOecdInfo(cbcVer: String)
 object CbcOecdInfo{ implicit val format = Json.format[CbcOecdInfo] }
 
-case class XMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:CbcReports, additionalInfo:AdditionalInfo)
+case class XMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:Option[CbcReports], additionalInfo:Option[AdditionalInfo])
 object XMLInfo { implicit val format = Json.format[XMLInfo] }

@@ -68,18 +68,24 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm")
 
   def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
-    val reCorr = x.reportingEntity.docSpec.corrDocRefId
-    val reDocRef = x.reportingEntity.docSpec.docRefId
-    val cbCorr = x.cbcReport.docSpec.corrDocRefId
-    val cbDocRef = x.cbcReport.docSpec.docRefId
-    val adCorr = x.additionalInfo.docSpec.corrDocRefId
-    val adDocRef = x.additionalInfo.docSpec.docRefId
+    val reDocRef  = x.reportingEntity.docSpec.docRefId
+    val reCorr    = x.reportingEntity.docSpec.corrDocRefId
+    val reportIds = x.cbcReport.map{reports => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId}
+    val addIds    = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
 
-    EitherT((reCorr.map(c => docRefIdService.saveCorrDocRefID(c, reDocRef)).getOrElse(docRefIdService.saveDocRefId(reDocRef)).value |@|
-      cbCorr.map(c => docRefIdService.saveCorrDocRefID(c,cbDocRef)).getOrElse(docRefIdService.saveDocRefId(cbDocRef)).value |@|
-      adCorr.map(c => docRefIdService.saveCorrDocRefID(c,adDocRef)).getOrElse(docRefIdService.saveDocRefId(adDocRef)).value)
-      .map((r,c,a) =>(r.toInvalidNel(()) |@| c.toInvalidNel(()) |@| a.toInvalidNel(())).map((_,_,_) => ()).toEither)
-    )
+    val reResult= reCorr.map(c => docRefIdService.saveCorrDocRefID(c, reDocRef)).getOrElse(docRefIdService.saveDocRefId(reDocRef))
+    val crResult = OptionT.fromOption[Future](reportIds).flatMap{
+      case (doc,corr) => corr.map(docRefIdService.saveCorrDocRefID(_,doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+    }
+    val addResult = OptionT.fromOption[Future](addIds).flatMap{
+      case (doc,corr) => corr.map(docRefIdService.saveCorrDocRefID(_,doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+    }
+
+    EitherT((reResult.toLeft(()).toValidatedNel |@|
+      crResult.toLeft(()).toValidatedNel |@|
+      addResult.toLeft(()).toValidatedNel).map((a,b,c) => (a |@| b |@| c).map((_,_,_) => ()).toEither))
+
+
 
   }
 

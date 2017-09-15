@@ -530,8 +530,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         None
       ),
       ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),Utr("7000000002"),"name"),
-      CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None)),
-      AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None))
+      Some(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None))),
+      Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None)))
     )
   }
 }
