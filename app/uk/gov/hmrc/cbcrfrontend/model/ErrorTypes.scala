@@ -44,6 +44,8 @@ case class XMLErrors(errors:List[String]) extends ValidationErrors
 case class FatalSchemaErrors(size:Option[Int]) extends ValidationErrors
 sealed trait BusinessRuleErrors extends ValidationErrors
 
+
+case object OriginalSubmissionNotFound extends BusinessRuleErrors
 case object FileNameError extends BusinessRuleErrors
 case object TestDataError extends BusinessRuleErrors
 case object SendingEntityError extends BusinessRuleErrors

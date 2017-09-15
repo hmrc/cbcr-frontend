@@ -179,13 +179,14 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
       }
 
-      "ReportingRole is missing" in {
+      //TODO: In a when CBCR-435 is done, we'll need to mock a call to the backend to retrieve missing ReportingEntity data
+      "ReportingEntity is missing" in {
         val validFile = new File("test/resources/cbcr-noReportingEntity.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe InvalidXMLError("ReportingEntity.ReportingRole not found or invalid"),
-          _ => fail("No InvalidXMLError generated")
+          errors => errors.toList should contain(OriginalSubmissionNotFound),
+          _      => fail("No InvalidXMLError generated")
         )
       }
       "MessageTypeIndic is CBC402 and the DocTypeIndic's are invalid" when {
@@ -327,7 +328,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe CorrDocRefIdMissing,
+          errors => errors.toList should contain(CorrDocRefIdMissing),
           _ => fail("No InvalidXMLError generated")
         )
       }
@@ -336,7 +337,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe MessageTypeIndicDocTypeIncompatible,
+          errors => errors.toList should contain(MessageTypeIndicDocTypeIncompatible),
           _ => fail("No InvalidXMLError generated")
         )
 
