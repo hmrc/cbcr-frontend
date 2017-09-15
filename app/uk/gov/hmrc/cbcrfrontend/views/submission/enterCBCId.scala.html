@@ -31,7 +31,7 @@ implicit request: Request[_], messages: Messages)
 }
 
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("enterCBCId.mainHeading"), sidebarLinks = Some(sidebarContent)) {
     <div class="grid-row">
         <div class="column-two-thirds">
 
