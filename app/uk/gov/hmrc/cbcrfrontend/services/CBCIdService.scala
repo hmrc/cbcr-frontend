@@ -40,14 +40,13 @@ class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:Executi
       }
     })
   }
-  //todo good place to put it?
   def email(email:Email)(implicit hc:HeaderCarrier) : OptionT[Future,Boolean] = {
     OptionT(connector.sendEmail(email).map { response =>
       response.status match {
           //
         case Status.ACCEPTED => Some(true)
         case _         =>
-          Logger.info("The email has failed to send :( " + response)
+          Logger.error("The email has failed to send :( " + email + " response " + response)
           None
       }
     })
