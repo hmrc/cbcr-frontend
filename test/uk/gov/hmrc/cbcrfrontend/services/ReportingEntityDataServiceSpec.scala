@@ -33,7 +33,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ReportingEntityDataServiceTest extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
+class ReportingEntityDataServiceSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
 
   val connector = mock[CBCRBackendConnector]
   val reds = new ReportingEntityDataService(connector)
