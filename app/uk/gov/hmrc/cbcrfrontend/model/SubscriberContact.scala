@@ -38,24 +38,27 @@ import uk.gov.hmrc.emailaddress.PlayJsonFormats._
   *
   * Note: This is a hard limit of 999999 unique CBCIds
   */
-class CBCId private(val value:String){
-  override def toString:String = value
+class CBCId private(val value: String) {
+  override def toString: String = value
+
   override def hashCode(): Int = value.hashCode
-  override def equals(obj: scala.Any): Boolean = obj match{
-    case c:CBCId => c.value === this.value
-    case _       => false
+
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case c: CBCId => c.value === this.value
+    case _ => false
   }
 }
 
 object CBCId extends Modulus23Check {
 
-  implicit val cbcIdEq = Eq.instance[CBCId]((a,b) => a.value.equalsIgnoreCase(b.value))
+  implicit val cbcIdEq = Eq.instance[CBCId]((a, b) => a.value.equalsIgnoreCase(b.value))
 
   implicit val cbcFormatter = new Formatter[CBCId] {
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], CBCId] =
       Formats.stringFormat.bind(key, data).right.flatMap { s =>
         CBCId(s).toRight(Seq(FormError(key, "error.cbcid", Nil)))
       }
+
     override def unbind(key: String, value: CBCId): Map[String, String] = Map(key -> value.value)
 
   }
@@ -71,39 +74,41 @@ object CBCId extends Modulus23Check {
     }
   }
 
-  def apply(s:String) : Option[CBCId] =
-    if(isValidCBC(s) && isCheckCorrect(s,1)){
+  def apply(s: String): Option[CBCId] =
+    if (isValidCBC(s) && isCheckCorrect(s, 1)) {
       Some(new CBCId(s))
     } else {
       None
     }
 
   val cbcRegex = """^X[A-Z]CBC\d{10}$"""
-  private def isValidCBC(s:String) : Boolean = s.matches(cbcRegex)
 
-  def create(i:Int): Validated[Throwable,CBCId] = if(i > 999999 || i < 0){
-      Invalid(new IllegalArgumentException("CBCId ranges from 0-999999"))
-    } else {
-      val sequenceNumber = i.formatted("%06d")
-      val id = s"CBC0000$sequenceNumber"
-      val checkChar = calculateCheckCharacter(id)
-      CBCId(s"X$checkChar" + id).fold[Validated[Throwable,CBCId]](
-        Invalid(new Exception(s"Generated CBCId did not validate: $id"))
-      )(
-        cbcId => Valid(cbcId)
-      )
-    }
+  private def isValidCBC(s: String): Boolean = s.matches(cbcRegex)
+
+  def create(i: Int): Validated[Throwable, CBCId] = if (i > 999999 || i < 0) {
+    Invalid(new IllegalArgumentException("CBCId ranges from 0-999999"))
+  } else {
+    val sequenceNumber = i.formatted("%06d")
+    val id = s"CBC0000$sequenceNumber"
+    val checkChar = calculateCheckCharacter(id)
+    CBCId(s"X$checkChar" + id).fold[Validated[Throwable, CBCId]](
+      Invalid(new Exception(s"Generated CBCId did not validate: $id"))
+    )(
+      cbcId => Valid(cbcId)
+    )
+  }
 
 }
 
-case class SubscriberContact(firstName:String, lastName:String, phoneNumber:String, email:EmailAddress)
+case class SubscriberContact(firstName: String, lastName: String, phoneNumber: String, email: EmailAddress)
+
 object SubscriberContact {
-  implicit val subscriptionFormat :Format[SubscriberContact] = Json.format[SubscriberContact]
+  implicit val subscriptionFormat: Format[SubscriberContact] = Json.format[SubscriberContact]
 }
 
-case class SubscriptionDetails(businessPartnerRecord: BusinessPartnerRecord, subscriberContact: SubscriberContact, cbcId:Option[CBCId], utr:Utr)
-object SubscriptionDetails{
-  implicit val subscriptionDetailsFormat: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
+case class SubscriptionDetails(businessPartnerRecord: BusinessPartnerRecord, subscriberContact: SubscriberContact, cbcId: Option[CBCId], utr: Utr)
 
+object SubscriptionDetails {
+  implicit val subscriptionDetailsFormat: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]
 }
 

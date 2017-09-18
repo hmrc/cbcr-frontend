@@ -20,6 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.OptionT
 import cats.instances.future._
+import play.api.Logger
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -39,7 +40,18 @@ class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:Executi
       }
     })
   }
-
+  //todo good place to put it?
+  def email(email:Email)(implicit hc:HeaderCarrier) : OptionT[Future,Boolean] = {
+    OptionT(connector.sendEmail(email).map { response =>
+      response.status match {
+          //
+        case Status.ACCEPTED => Some(true)
+        case _         =>
+          Logger.info("The email has failed to send :( " + response)
+          None
+      }
+    })
+  }
   def getETMPSubscriptionData(safeId:String)(implicit hc:HeaderCarrier) : OptionT[Future,ETMPSubscription] =
     OptionT(connector.getETMPSubscriptionData(safeId).map{ response =>
       Option(response.json).flatMap(_.validate[ETMPSubscription].asOpt)

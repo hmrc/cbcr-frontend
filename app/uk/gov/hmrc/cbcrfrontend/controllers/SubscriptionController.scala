@@ -162,6 +162,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
           UnexpectedState("SubscriptionDetails not found in cache")
         )
         _                 <- EitherT.right[Future,CBCErrors,CacheMap](session.save(Subscribed))
+        _                 <-  EitherT.right[Future,CBCErrors,CacheMap](session.save(Subscribed))
         _                 <- createSuccessfulSubscriptionAuditEvent(authContext,data)
       } yield cbcId).fold(
         error => errorRedirect(error),
@@ -221,7 +222,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       }
     )
   }
-
+  //todo should I  put it here
   def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
     CBCId(id).fold[Future[Result]](
       InternalServerError(FrontendGlobal.internalServerErrorTemplate)
