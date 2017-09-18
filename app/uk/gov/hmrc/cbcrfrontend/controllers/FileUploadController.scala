@@ -59,7 +59,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                                      val enrol:EnrolmentsConnector,
                                      val fileUploadService:FileUploadService,
                                      val xmlExtractor:XmlInfoExtract,
-                                     val validator:CBCRXMLValidator
+                                     val reportingEntityDataService: ReportingEntityDataService
                                     )(implicit ec: ExecutionContext, cache:CBCSessionCache, auth:AuthConnector) extends FrontendController with ServicesConfig {
 
 
@@ -137,27 +137,31 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     val result = for {
       file_metadata       <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId)).tupled
       _                   <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml",(),InvalidFileType(file_metadata._2.name))
-      schemaErrors        =  validator.validateSchema(file_metadata._1)
+      schemaErrors        =  schemaValidator.validateSchema(file_metadata._1)
       xmlErrors           = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
       schemaSize          = if(xmlErrors.errors.nonEmpty){ Some(getErrorFileSize(List(xmlErrors))) } else { None }
       _                   <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
       _                   <- if(!schemaErrors.hasFatalErrors) EitherT.pure[Future,CBCErrors,Unit](())
                              else auditFailedSubmission(authContext, "schema validation errors").flatMap(_ =>
-                                  EitherT.left[Future,CBCErrors,Unit](Future.successful(FatalSchemaErrors(schemaSize)))
+                               EitherT.left[Future,CBCErrors,Unit](Future.successful(FatalSchemaErrors(schemaSize)))
                              )
       xml_bizErrors       <- validateBusinessRules(file_metadata)
       businessSize        =  if(xml_bizErrors._2.nonEmpty){ Some(getErrorFileSize(xml_bizErrors._2)) } else { None }
       length              = (file_metadata._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
       _                   <- if(schemaErrors.hasErrors) auditFailedSubmission(authContext,"schema validation errors")
                              else if(xml_bizErrors._2.nonEmpty) auditFailedSubmission(authContext,"business rules errors")
-                             else EitherT.pure[Future,CBCErrors,Unit](())
+                             else xml_bizErrors._1.map{xml =>
+                                reportingEntityDataService.saveReportingEntityData(ReportingEntityData.extract(xml))
+                              }.sequence[ServiceResponse,Unit]
+
       _                   = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
     } yield Ok(submission.fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
     result.leftMap{
       case FatalSchemaErrors(size)=>
         BadRequest(submission.fileupload.fileUploadResult(None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
-      case InvalidFileType(_)     => Redirect(routes.FileUploadController.fileInvalid())
+      case InvalidFileType(_)     =>
+        Redirect(routes.FileUploadController.fileInvalid())
       case e:CBCErrors            =>
         Logger.error(e.toString)
         Redirect(routes.SharedController.technicalDifficulties())

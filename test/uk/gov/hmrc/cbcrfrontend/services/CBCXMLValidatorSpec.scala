@@ -28,7 +28,7 @@ class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite {
 
   private def loadFile(filename: String) = new File(s"test/resources/$filename")
 
-  def validXmlFile            = loadFile("cbcr-valid.xml")
+  val validXmlFile            = loadFile("cbcr-valid.xml")
   val invalidXmlFile          = loadFile("cbcr-invalid.xml")
   val invalidMultipleXmlFile  = loadFile("cbcr-invalid-multiple-errors.xml")
   val invalidMultipleXmlFile2 = loadFile("cbcr-invalid-multiple-errors2.xml")
