@@ -132,6 +132,23 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     ).flatten)
   }
 
+  def handleSubmissionTypes(xml:XMLInfo)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
+    xml.reportingEntity.docSpec.docType match {
+        // RESENT| NEW
+      case OECD0 | OECD1 =>
+        ReportingEntityData.extract(xml).fold[ServiceResponse[Unit]](
+          errors => {
+            EitherT.left(Future.successful(
+              UnexpectedState(s"Unable to submit partially completed data when docType is ${xml.reportingEntity.docSpec.docType}\n${errors.toList.mkString("\n")}")
+            ))
+          },
+          (data: ReportingEntityData) => reportingEntityDataService.saveReportingEntityData(data)
+        )
+
+        // UPDATE| DELETE
+      case OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
+    }
+
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
 
     val result = for {
@@ -151,7 +168,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
       _                   <- if(schemaErrors.hasErrors) auditFailedSubmission(authContext,"schema validation errors")
                              else if(xml_bizErrors._2.nonEmpty) auditFailedSubmission(authContext,"business rules errors")
                              else xml_bizErrors._1.map{xml =>
-                                reportingEntityDataService.saveReportingEntityData(ReportingEntityData.extract(xml))
+                                handleSubmissionTypes(xml)
                               }.sequence[ServiceResponse,Unit]
 
       _                   = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)

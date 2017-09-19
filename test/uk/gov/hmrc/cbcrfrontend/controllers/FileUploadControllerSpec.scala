@@ -120,8 +120,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
         None
       ),
       ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),Utr("7000000002"),"name"),
-      CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None)),
-      AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None))
+      Some(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
+      Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
     )
 
   def right[A](a:Future[A]) : ServiceResponse[A] = EitherT.right[Future,CBCErrors, A](a)
