@@ -109,6 +109,7 @@ object BusinessRuleErrors {
       case MessageTypeIndicDocTypeIncompatible => JsString(MessageTypeIndicDocTypeIncompatible.toString)
       case CbcOecdVersionError       => JsString(CbcOecdVersionError.toString)
       case XmlEncodingError           => JsString(XmlEncodingError.toString)
+      case OriginalSubmissionNotFound => JsString(OriginalSubmissionNotFound.toString)
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
@@ -132,6 +133,7 @@ object BusinessRuleErrors {
           case Some("messagetypeindicdoctypeincompatible") => JsSuccess(MessageTypeIndicDocTypeIncompatible)
           case Some("cbcoecdversionerror")    => JsSuccess(CbcOecdVersionError)
           case Some("xmlencodingerror")       => JsSuccess(XmlEncodingError)
+          case Some("originalsubmissionnotfound") => JsSuccess(OriginalSubmissionNotFound)
           case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^invalidxmlerror: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -158,6 +160,7 @@ object BusinessRuleErrors {
     case InvalidCorrDocRefId   => "Error Code 8000 CorrDocRefId (format): The structure of the CorrDocRefID is not in the correct format, as set out in the User Guide."
     case CbcOecdVersionError   => """CBC_OECD version must equal "1.0"""
     case XmlEncodingError      => """XML encoding must equal UTF8"""
+    case OriginalSubmissionNotFound => "Original submission could not be identified"
     case i:InvalidXMLError     => i.toString
   }
 }
