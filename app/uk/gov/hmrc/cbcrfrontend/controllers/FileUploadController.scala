@@ -136,7 +136,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     xml.reportingEntity.docSpec.docType match {
         // RESENT| NEW
       case OECD0 | OECD1 =>
-        ReportingEntityData.extractComplete(xml).fold[ServiceResponse[Unit]](
+        ReportingEntityData.extract(xml).fold[ServiceResponse[Unit]](
           errors => {
             EitherT.left(Future.successful(
               UnexpectedState(s"Unable to submit partially completed data when docType is ${xml.reportingEntity.docSpec.docType}\n${errors.toList.mkString("\n")}")
@@ -146,7 +146,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
         )
 
         // UPDATE| DELETE
-      case OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(ReportingEntityData.extract(xml))
+      case OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
     }
 
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>

@@ -62,6 +62,7 @@ object ContactDetails{
       case JsObject(m) => m.get("emailAddress").flatMap(_.asOpt[String].map(EmailAddress(_))).fold[JsResult[EmailAddress]](
         JsError("Unable to serialise emailAddress")
       )(emailAddress => JsSuccess(emailAddress))
+      case other => JsError(s"Unable to serialise emailAddress: $other")
     }
   }
   implicit val format = Json.format[ContactDetails]
