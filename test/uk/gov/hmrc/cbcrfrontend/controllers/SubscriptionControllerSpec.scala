@@ -33,7 +33,7 @@ import play.api.mvc.{AnyContent, Request}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
-import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.{SubscriptionEmailSent, _}
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
@@ -42,7 +42,7 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-
+import uk.gov.hmrc.cbcrfrontend.model.SubscriptionEmailSent.SubscriptionEmailSentFormat
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
 
@@ -301,6 +301,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cbcId.email(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
+      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
     }
@@ -315,6 +316,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cbcId.email(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
+      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
       verify(cbcId,times(1)).email(any())(any())
@@ -333,8 +335,10 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cbcId.email(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
 
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
+      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(Some(SubscriptionEmailSent))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit2)) shouldBe Status.SEE_OTHER
       verify(cbcId,times(1)).email(any())(any())
     }
@@ -351,6 +355,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cbcId.email(any())(any())) thenReturn  OptionT.none[Future,Boolean]
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
     }
     "return 500 when trying to re-submit" in {

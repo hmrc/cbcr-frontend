@@ -166,9 +166,9 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
           )
           _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(Subscribed))
           subscriptionEmailSent <- EitherT.right[Future, CBCErrors, Boolean](cache.read[SubscriptionEmailSent.type].map(_.isDefined))
-          sentSubscriptionEmail <- EitherT.cond[Future](subscriptionEmailSent,
-            CBCErrors,
-            cbcIdService.email(Email(data.subscriberContact.email, "cbcr_subscription", cbcId)).value).value
+          _ <-
+          if (!subscriptionEmailSent) EitherT.right[Future, CBCErrors, Option[Boolean]](cbcIdService.email(Email(data.subscriberContact.email, "cbcr_subscription", cbcId)).value)
+          else EitherT.pure[Future, CBCErrors, Unit](())
           _ <- createSuccessfulSubscriptionAuditEvent(authContext, data)
         } yield cbcId).fold(
           error => errorRedirect(error),
