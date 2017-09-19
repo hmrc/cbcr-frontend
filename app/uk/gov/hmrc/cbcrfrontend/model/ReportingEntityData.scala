@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
+import cats.data.ValidatedNel
+import cats.syntax.all._
+import cats.instances.all._
 import play.api.libs.json.Json
 
 
@@ -40,17 +43,45 @@ case class ReportingEntityData(cbcReportsDRI:DocRefId,
                                ultimateParentEntity: UltimateParentEntity,
                                reportingRole: ReportingRole)
 
-object ReportingEntityData{
-  implicit val format = Json.format[ReportingEntityData]
+case class DocRefIdPair(docRefId: DocRefId,corrDocRefId: Option[CorrDocRefId])
+object DocRefIdPair{ implicit val format = Json.format[DocRefIdPair] }
 
-  def extract(x:XMLInfo):ReportingEntityData =
-    ReportingEntityData(
-      x.cbcReport.docSpec.docRefId,
-      x.additionalInfo.docSpec.docRefId,
-      x.reportingEntity.docSpec.docRefId,
+case class PartialReportingEntityData(cbcReportsDRI:Option[DocRefIdPair],
+                                      additionalInfoDRI:Option[DocRefIdPair],
+                                      reportingEntityDRI:DocRefIdPair,
+                                      utr:Utr,
+                                      ultimateParentEntity: UltimateParentEntity,
+                                      reportingRole: ReportingRole)
+
+object PartialReportingEntityData {
+  implicit val format = Json.format[PartialReportingEntityData]
+  def extract(x:XMLInfo):PartialReportingEntityData =
+    PartialReportingEntityData(
+      x.cbcReport.map(cr => DocRefIdPair(cr.docSpec.docRefId,cr.docSpec.corrDocRefId)),
+      x.additionalInfo.map(ai => DocRefIdPair(ai.docSpec.docRefId, ai.docSpec.corrDocRefId)),
+      DocRefIdPair(x.reportingEntity.docSpec.docRefId,x.reportingEntity.docSpec.corrDocRefId),
       x.reportingEntity.tin,
       UltimateParentEntity(x.reportingEntity.name),
       x.reportingEntity.reportingRole
     )
+}
+
+object ReportingEntityData{
+  implicit val format = Json.format[ReportingEntityData]
+
+  def extract(x:XMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]=
+    (x.cbcReport.map(_.docSpec.docRefId).toValidNel(UnexpectedState("CBCReport DocRefId not found")) |@|
+    x.additionalInfo.map(_.docSpec.docRefId).toValidNel(UnexpectedState("AdditionalInfo DocRefId not found"))).map{ (c,a) =>
+      ReportingEntityData(
+        c,a,
+        x.reportingEntity.docSpec.docRefId,
+        x.reportingEntity.tin,
+        UltimateParentEntity(x.reportingEntity.name),
+        x.reportingEntity.reportingRole
+      )
+
+    }
+
+
 }
 
