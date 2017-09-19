@@ -199,9 +199,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def validateMessageTypeIndic(r:RawXMLInfo) : Validated[BusinessRuleErrors,Option[MessageTypeIndic]] = {
     r.messageSpec.messageType.flatMap(MessageTypeIndic.parseFrom).map{
       case CBC401                                                                      => Some(CBC401).valid
-      case CBC402 if !r.cbcReport.exists(_.docSpec.docType.matches(oecd2Or3))
-                  || !r.additionalInfo.exists(_.docSpec.docType.matches(oecd2Or3))
-                  || !r.reportingEntity.exists(_.docSpec.docType.matches(oecd0Or2Or3)) => MessageTypeIndicError.invalid
+      case CBC402 if !r.cbcReport.forall(_.docSpec.docType.matches(oecd2Or3))
+                  || !r.additionalInfo.forall(_.docSpec.docType.matches(oecd2Or3))
+                  || !r.reportingEntity.forall(_.docSpec.docType.matches(oecd0Or2Or3)) => MessageTypeIndicError.invalid
       case CBC402                                                                      => Some(CBC402).valid
     }.getOrElse((None:Option[MessageTypeIndic]).valid)
 
