@@ -20,12 +20,10 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import helper._
 
-@(phaseBannerBeta: Html, summaryData: SummaryData, form: Form[_])(
+@(phaseBannerBeta: Html, summaryData: SummaryData)(
         implicit request: Request[_], messages: Messages)
 
-@cbcDeclarationErrors = @{
-    form.error("cbcDeclaration").isDefined
-}
+
 
 @main_template(Messages("submitSummary.mainHeading")) {
     <div class="grid-row">
@@ -111,27 +109,9 @@
             </table>
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm()) {
                 @CSRF.formField
-                @if(form.error("cbcDeclaration").isDefined) {
-                    <div class="form-field--error">
-                        <span class="error-notification">@Messages("submitSummary.declaration.error.text")</span>
-
-                        <div class="multiple-choice">
-                            <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float: left;
-                                margin-right: 10px;
-                                margin-top: 3px;">
-                            <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
-                        </div>
+                    <div class="form-group">
+                        <p class="important-notice"> <strong> @Messages("submitSummary.declaration.text")</strong><p>
                     </div>
-                } else {
-                    <div class="multiple-choice">
-                        <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float: left;
-                            margin-right: 10px;
-                            margin-top: 3px;">
-                        <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
-                    </div>
-                }
-
-
                 <p>
                     <button type="submit" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
                 </p>
