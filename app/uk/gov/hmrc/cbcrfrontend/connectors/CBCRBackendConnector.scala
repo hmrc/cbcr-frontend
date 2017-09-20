@@ -16,55 +16,56 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import javax.inject.Singleton
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 
 import cats.syntax.show._
 import com.typesafe.config.Config
-import play.api.Configuration
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPut, HttpResponse}
 import configs.syntax._
+import play.api.Configuration
 import play.api.libs.json.JsNull
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.play.http._
-
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPut, HttpResponse, _}
+import uk.gov.hmrc.cbcrfrontend.model.Email
 import scala.concurrent.Future
 
 @Singleton
-class CBCRBackendConnector @Inject()(http:HttpGet with HttpPut with HttpPost, config:Configuration) {
+class CBCRBackendConnector @Inject()(http: HttpGet with HttpPut with HttpPost, config: Configuration) {
 
   val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
   val url: String = (for {
     proto <- conf.get[String]("protocol")
-    host  <- conf.get[String]("host")
-    port  <- conf.get[Int]("port")
+    host <- conf.get[String]("host")
+    port <- conf.get[Int]("port")
   } yield s"$proto://$host:$port/cbcr").value
 
-  def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+  def subscribe(s: SubscriptionDetails)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.POST(url + "/subscription", s)
 
-  def getETMPSubscriptionData(safeId:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+  def sendEmail(email: Email)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.POST(url + s"/email", email)
+
+  def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/subscription/$safeId")
 
-  def updateETMPSubscriptionData(safeId:String,correspondenceDetails: CorrespondenceDetails)(implicit hc:HeaderCarrier) : Future[HttpResponse] = {
+  def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     implicit val emailFormat = ContactDetails.emailFormat
     http.PUT(url + s"/subscription/$safeId", correspondenceDetails)
   }
 
-  def messageRefIdExists(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+  def messageRefIdExists(id: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/message-ref-id/$id")
 
-  def saveMessageRefId(id:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/message-ref-id/$id",JsNull)
+  def saveMessageRefId(id: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.PUT(url + s"/message-ref-id/$id", JsNull)
 
-  def docRefIdQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+  def docRefIdQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/doc-ref-id/${d.show}")
 
-  def docRefIdSave(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/doc-ref-id/${d.show}",JsNull)
+  def docRefIdSave(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.PUT(url + s"/doc-ref-id/${d.show}", JsNull)
 
-  def corrDocRefIdSave(c:CorrDocRefId, d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + s"/corr-doc-ref-id/${c.cid.show}/${d.show}",JsNull)
+  def corrDocRefIdSave(c: CorrDocRefId, d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.PUT(url + s"/corr-doc-ref-id/${c.cid.show}/${d.show}", JsNull)
 
 }
