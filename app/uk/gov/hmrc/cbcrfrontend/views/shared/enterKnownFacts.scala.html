@@ -36,7 +36,7 @@ implicit request: Request[_], messages: Messages)
       <h1>@Messages("subscribeFirst.mainHeading")</h1>
 
       @if(errors){
-              <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
+              <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                   <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>
                   <p>@Messages("subscribeFirst.noMatchingBusiness.suggestion") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.noMatchingBusiness.suggestion.link")</a></p>
                   <p><strong><a href="#utr">@Messages("subscribeFirst.error.message.utr-empty")</a></strong></p>

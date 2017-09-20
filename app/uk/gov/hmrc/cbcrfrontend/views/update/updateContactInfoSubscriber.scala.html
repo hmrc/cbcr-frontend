@@ -32,7 +32,7 @@
 @phoneNumberErrors = @{form.error("phoneNumber").isDefined}
 @emailErrors = @{form.error("email").isDefined}
 
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("contactInfoSubscriber.updateHeading"), sidebarLinks = Some(sidebarContent)) {
 
     <div class="grid-row">
         <div class="column-two-thirds">
