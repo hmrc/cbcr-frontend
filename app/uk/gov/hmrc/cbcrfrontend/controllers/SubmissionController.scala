@@ -232,61 +232,40 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       )
   }
 
-  val submitSubmitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    submitterInfoForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.submission.submitterInfo(
-        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
-      ))),
-      success => for {
-        ag <- cache.read[AffinityGroup]
-        _  <- cache.save(success.copy(affinityGroup = ag))
-      } yield Redirect(routes.SubmissionController.reconfirmEmail())
-    )
-  }
 
+  val submitSubmitterInfo = sec.AsyncAuthenticatedAction() { authContext =>
+    implicit request =>
+      getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext]).semiflatMap { userType =>
+        submitterInfoForm.bindFromRequest.fold(
+          formWithErrors => Future.successful(BadRequest(views.html.submission.submitterInfo(
+            includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
+          ))),
+          success => {
+            val passStraightThrough = for {
+              straightThrough <- EitherT.right[Future, CBCErrors, Boolean](cache.read[CBCId].map(_.isDefined))
+              ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
+              _               <- EitherT.right[Future, CBCErrors,CacheMap](cache.save(success.copy(affinityGroup = Some(ag))))
+            } yield straightThrough
 
-  val reconfirmEmail = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    OptionT(cache.read[SubmitterInfo]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).fold (
-      error => error,
-      submitterInfo => Ok(views.html.submission.reconfirmEmail(includes.asideBusiness(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(submitterInfo.email), true))
-    )
-  }
-
-
-  val reconfirmEmailSubmit = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    getUserType(authContext)(cache,auth,implicitly[HeaderCarrier],implicitly[ExecutionContext]).semiflatMap{ userType =>
-      reconfirmEmailForm.bindFromRequest.fold(
-        formWithErrors => Future.successful(BadRequest(views.html.submission.reconfirmEmail(
-          includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors, true
-        ))),
-        success => (for {
-          submitterInfo   <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))
-          name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
-          _               <- EitherT.right[Future, CBCErrors, CacheMap](cache.save[SubmitterInfo](
-            submitterInfo.copy(email = success, agencyBusinessName = Some(name))
-          ))
-          straightThrough <- EitherT.right[Future, CBCErrors, Boolean](cache.read[CBCId].map(_.isDefined))
-          xml             <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
-          _               <- EitherT.right[Future, CBCErrors,CacheMap](cache.save(xml.messageSpec.sendingEntityIn))
-        } yield straightThrough).fold(
-          error           => errorRedirect(error),
-          straightThrough => userType match {
-            case Organisation =>
-              if (straightThrough) Redirect(routes.SubmissionController.submitSummary())
-              else Redirect(routes.SharedController.enterCBCId())
-            case Agent        =>
-              Redirect(routes.SharedController.verifyKnownFactsAgent())
+            passStraightThrough.fold(
+              error => errorRedirect(error),
+              straightThrough => userType match{
+                case Organisation =>
+                  if (straightThrough) Redirect(routes.SubmissionController.submitSummary())
+                  else Redirect(routes.SharedController.enterCBCId())
+                case Agent =>
+                  Redirect(routes.SharedController.verifyKnownFactsAgent())
+              }
+            )
           }
         )
+      }.fold(
+        error => errorRedirect(error),
+        result => result
       )
-    }.fold(
-      error  => errorRedirect(error),
-      result => result
-    )
-
   }
+
+
 
   val submitSummary = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 

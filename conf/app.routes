@@ -34,8 +34,6 @@ GET        /submitter-info/entry-form                     @uk.gov.hmrc.cbcrfront
 POST       /submitter-info                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSubmitterInfo
 POST       /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUtr
 GET        /utr/entry-form                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.utr
-GET        /submitter-email/entry-form                    @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.reconfirmEmail
-POST       /submitter-email                               @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.reconfirmEmailSubmit
 GET        /submission/summary                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSummary
 GET        /submission/receipt                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSuccessReceipt
 GET        /filing-history                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.filingHistory
@@ -49,8 +47,6 @@ GET        /contact-info-subscriber                       @uk.gov.hmrc.cbcrfront
 GET        /contact-info-subscriber/update-form           @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.updateInfoSubscriber
 POST       /contact-info-subscriber/update-form           @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.saveUpdatedInfoSubscriber
 GET        /subscribe-success-cbc-id/:cbcId               @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
-GET        /subscriber-email/entry-form                   @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmail
-POST       /subscriber-email                              @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.reconfirmEmailSubmit
 POST       /subscription-data                             @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.submitSubscriptionData
 DELETE     /subscription-data/:utr                        @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.clearSubscriptionData(utr:uk.gov.hmrc.cbcrfrontend.model.Utr)
 

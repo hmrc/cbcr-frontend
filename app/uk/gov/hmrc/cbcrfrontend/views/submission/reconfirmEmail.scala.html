@@ -44,9 +44,9 @@ implicit request: Request[_], messages: Messages)
         <legend class="visuallyhidden">Enter your contact details</legend>
         <div class="form-field form-field--tall">
             @if(submissionContext) {
-              <form action ="@routes.SubmissionController.reconfirmEmailSubmit" method ="POST">
+              @*<form action ="@routes.SubmissionController.reconfirmEmailSubmit" method ="POST">*@
             } else {
-              <form action ="@routes.SubscriptionController.reconfirmEmailSubmit" method ="POST">
+              @*<form action ="@routes.SubscriptionController.reconfirmEmailSubmit" method ="POST">*@
             }
             @formFieldDisplay(emailErrors,"reconfirmEmail", Some(Messages("contactInfoSubmitter.reconfirm.email.invalid")), Messages("contactInfoSubmitter.reconfirm.email.label"), form)
         @CSRF.formField
