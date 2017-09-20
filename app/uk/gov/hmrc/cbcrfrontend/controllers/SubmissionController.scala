@@ -90,24 +90,17 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   }
 
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {
-      summaryData => {
-        summarySubmitForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
-          formWithErrors => EitherT.left(Future.successful(BadRequest(views.html.submission.submitSummary(includes.phaseBannerBeta(), summaryData, formWithErrors)))),
-          _              => (for {
+    OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {surrmarydata =>
+      (for {
             xml <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("Unable to read XMLInfo from cache"))
-            _   <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+            _   <- fus.uploadMetadataAndRoute(surrmarydata.submissionMetaData)
             _   <- saveDocRefIds(xml).leftMap[CBCErrors]{ es =>
               Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
             }
             _  <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(SubmissionDate(LocalDateTime.now)))
 
-          } yield Redirect(routes.SubmissionController.submitSuccessReceipt())
-            ).leftMap(errorRedirect)
-        )
-      }
+          } yield Redirect(routes.SubmissionController.submitSuccessReceipt())).leftMap(errorRedirect)
     }.merge
   }
 
@@ -154,11 +147,6 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     )(EmailAddress.apply)(EmailAddress.unapply)
   )
 
-  val summarySubmitForm : Form[Boolean] = Form(
-    single(
-      "cbcDeclaration" -> boolean.verifying(d => d)
-    )
-  )
 
   val enterCompanyNameForm : Form[AgencyBusinessName] = Form(
     single(
@@ -302,7 +290,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
         UnexpectedState(errors.toList.mkString("\n"))
       )
       sd      <- createSummaryData(smd)
-    } yield Ok(views.html.submission.submitSummary(includes.phaseBannerBeta(), sd, summarySubmitForm))
+    } yield Ok(views.html.submission.submitSummary(includes.phaseBannerBeta(), sd))
 
     result.fold(
       errors => errorRedirect(errors),

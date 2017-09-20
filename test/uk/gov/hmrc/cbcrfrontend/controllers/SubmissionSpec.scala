@@ -404,22 +404,16 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
 
     "provide an action '/confirm'" which {
-      "returns 400 when the there is no data" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
-        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-        when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
-        status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.BAD_REQUEST
-      }
       "returns a 500 when the call to the cache fails" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
-        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.parse("{\"cbcDeclaration\": \"true\"}")))
+        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
         when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(None)
         status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
       }
       "returns a 500 when the call to file-upload fails" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
-        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.parse("{\"cbcDeclaration\": \"true\"}")))
+        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
         when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
         when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT.left[Future,CBCErrors,String](UnexpectedState("fail"))
@@ -428,7 +422,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       }
       "returns a 500 when the call to save the docRefIds fail" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
-        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.parse("{\"cbcDeclaration\": \"true\"}")))
+        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
         when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
         when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT.pure[Future,CBCErrors,String]("ok")
@@ -440,7 +434,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "returns 303 when the there is data" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
 
-        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.parse("{\"cbcDeclaration\": \"true\"}")))
+        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
 
         when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
         when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,CBCErrors,String](Future.successful(Right("routed")))
