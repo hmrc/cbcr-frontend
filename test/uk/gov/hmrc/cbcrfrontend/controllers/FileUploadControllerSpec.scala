@@ -138,7 +138,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,reportingEntity)(ec,cache,authCon)
 
   val testFile:File= new File("test/resources/cbcr-valid.xml")
-  val tempFile:File=Files.TemporaryFile("test","xml").file
+  val tempFile:File=Files.TemporaryFile("test",".xml").file
   val validFile = java.nio.file.Files.copy(testFile.toPath,tempFile.toPath,REPLACE_EXISTING).toFile
 
   "GET /upload-report" should {
@@ -231,15 +231,17 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       }
     }
     "return a 200 when the fileValidate call is successful and all dependant calls return successfully" in {
+      val evenMoreValidFile = java.nio.file.Files.copy(testFile.toPath,tempFile.toPath,REPLACE_EXISTING).toFile
       val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
-      when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn right(validFile)
+      when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn right(evenMoreValidFile)
       when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
       when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(new CacheMap("",Map.empty))
       when(reportingEntity.saveReportingEntityData(any())(any())) thenReturn right[Unit](())
       when(businessRulesValidator.validateBusinessRules(any(),any())(any())) thenReturn EitherT.right[Future,NonEmptyList[BusinessRuleErrors],XMLInfo](xmlinfo)
       val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
-      status(result) shouldBe Status.OK
+      val returnVal = status(result)
+      returnVal shouldBe Status.OK
       verify(fuService).getFile(any(),any())(any(),any(),any())
       verify(fuService).getFileMetaData(any(),any())(any(),any(),any())
       verify(cache,atLeastOnce()).save(any())(any(),any(),any())

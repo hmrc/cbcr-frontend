@@ -256,51 +256,6 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
     }
   }
 
-  "GET /subscriberReconfirmEmail" should {
-    "return 200" in {
-
-      val fakeRequestReconfirmEmail = addToken(FakeRequest("GET", "/subscriberReconfirmEmail"))
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname","0123123123", EmailAddress("max@max.com"))))
-      status(controller.reconfirmEmail(fakeRequestReconfirmEmail)) shouldBe Status.OK
-    }
-  }
-
-
-  "POST /subscriberReconfirmEmailSubmit" should {
-    "return 400 when the Email Address is empty" in {
-
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
-    }
-    "return 400 when Email Address is in Invalid format" in {
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc.xyz")
-
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
-    }
-    "return 303 when Email Address is valid" in {
-
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname", "0123123123", EmailAddress("max@max.com"))))
-      when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
-      when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-
-
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
-    }
-    "return 500 when trying to re-submit" in {
-
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(Some(Subscribed))
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.INTERNAL_SERVER_ERROR
-    }
-  }
-
 
   "DELETE to clear-subscription-data/utr" should {
     "work correctly when enabled and" when {
@@ -450,6 +405,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
         "lastName" -> "Jones"
       )
       val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
+      when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
       when(cbcId.updateETMPSubscriptionData(any(),any())(any())) thenReturn EitherT.right[Future,CBCErrors,UpdateResponse](UpdateResponse(LocalDateTime.now()))
       when(subService.updateSubscriptionData(any(),any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors,String]("Ok")
       val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
