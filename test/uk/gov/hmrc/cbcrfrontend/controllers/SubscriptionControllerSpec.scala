@@ -301,7 +301,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cbcId.email(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
-      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
+      when(cache.read[SubscriptionEmailSent] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
     }
@@ -316,7 +316,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cbcId.email(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
-      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
+      when(cache.read[SubscriptionEmailSent] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
       verify(cbcId,times(1)).email(any())(any())
@@ -336,10 +336,10 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cbcId.email(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
+      when(cache.read[SubscriptionEmailSent] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
 
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
-      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(Some(SubscriptionEmailSent))
+      when(cache.read[SubscriptionEmailSent](EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(Some(SubscriptionEmailSent()))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit2)) shouldBe Status.SEE_OTHER
       verify(cbcId,times(1)).email(any())(any())
       verify(cache,times(1)).save(any())(EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())
@@ -357,7 +357,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cbcId.email(any())(any())) thenReturn  OptionT.none[Future,Boolean]
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-      when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
+      when(cache.read[SubscriptionEmailSent] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
       verify(cache,times(0)).save(any())(EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())
     }
