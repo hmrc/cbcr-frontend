@@ -124,7 +124,6 @@ fileUploadResult.fileName=Filename
 fileUploadResult.fileSize=Size
 
 fileUploadResult.error=Your report has not been uploaded
-fileUploadResult.error=Download this
 fileUploadResult.error.data.link=data error report
 fileUploadResult.error.data.message=Give it to your XML creator to correct the errors before you send the country-by-country report again.
 fileUploadResult.error.xml.link=XML error report
