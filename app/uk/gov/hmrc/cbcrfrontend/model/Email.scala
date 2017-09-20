@@ -22,7 +22,7 @@ case class Email(to: List[String], templateId: String, parameters: Map[String, S
 //todo if anyone cant get this working as case object be my quest!
 case class SubscriptionEmailSent(defaultValue:String = "")
 case object SubscriptionEmailSent {
-  implicit val SubscriptionEmailSentFormat = Json.format[SubscriptionEmailSent]
+  implicit val SubscriptionEmailSentFormat: Format[SubscriptionEmailSent] = Json.format[SubscriptionEmailSent]
 }
 
 object Email {
