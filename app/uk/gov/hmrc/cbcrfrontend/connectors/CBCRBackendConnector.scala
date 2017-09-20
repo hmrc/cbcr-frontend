@@ -43,7 +43,7 @@ class CBCRBackendConnector @Inject()(http: HttpGet with HttpPut with HttpPost, c
     http.POST(url + "/subscription", s)
 
   def sendEmail(email: Email)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.POST(url + s"/subscription/email", email)
+    http.POST(url + s"/email", email)
 
   def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/subscription/$safeId")

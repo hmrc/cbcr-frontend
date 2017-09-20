@@ -305,7 +305,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
     }
-    "send an email in" in {
+    "send an email in and write SubscriptionEmailSent to the cache in" in {
 
       val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
@@ -320,6 +320,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
       verify(cbcId,times(1)).email(any())(any())
+      verify(cache,times(1)).save(any())(EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())
     }
     "Not send the email again if the email has been send" in {
 
@@ -341,6 +342,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(Some(SubscriptionEmailSent))
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit2)) shouldBe Status.SEE_OTHER
       verify(cbcId,times(1)).email(any())(any())
+      verify(cache,times(1)).save(any())(EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())
     }
     "return 303 when Email Address is valid even if the email fails" in {
 
@@ -357,6 +359,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       when(cache.read[SubscriptionEmailSent.type] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
       status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
+      verify(cache,times(0)).save(any())(EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())
     }
     "return 500 when trying to re-submit" in {
 

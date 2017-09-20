@@ -18,17 +18,10 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json._
 
-case class Email(email: String, templateId: String, cbcId: CBCId)
-
+case class Email(to: List[String], templateId: String, parameters: Map[String, String])
+case class SubscriptionEmailSent(defaultValue:String = "")
 case object SubscriptionEmailSent {
-  implicit val SubscriptionEmailSentFormat = new Format[SubscriptionEmailSent.type] {
-    override def writes(o: SubscriptionEmailSent.type): JsValue = JsString(o.toString)
-
-    override def reads(json: JsValue): JsResult[SubscriptionEmailSent.type] = json match {
-      case JsString("SubscriptionEmailSent") => JsSuccess(SubscriptionEmailSent)
-      case other => JsError(s"Failed to serialise SubscriptionEmailSent: $other")
-    }
-  }
+  implicit val SubscriptionEmailSentFormat = Json.format[SubscriptionEmailSent]
 }
 
 object Email {

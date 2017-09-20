@@ -43,11 +43,10 @@ class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:Executi
   def email(email:Email)(implicit hc:HeaderCarrier) : OptionT[Future,Boolean] = {
     OptionT(connector.sendEmail(email).map { response =>
       response.status match {
-          //
         case Status.ACCEPTED => Some(true)
         case _         =>
           Logger.error("The email has failed to send :( " + email + " response " + response)
-          None
+          Some(false)
       }
     })
   }

@@ -34,7 +34,6 @@ import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.model.Implicits._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
@@ -51,7 +50,7 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.cbcrfrontend.model.SubscriptionEmailSent
 import scala.concurrent.{ExecutionContext, Future}
-
+import uk.gov.hmrc.cbcrfrontend.model.Implicits.format
 @Singleton
 class SubscriptionController @Inject()(val sec: SecuredActions,
                                        val subscriptionDataService: SubscriptionDataService,
@@ -165,9 +164,12 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
             UnexpectedState("SubscriptionDetails not found in cache")
           )
           _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(Subscribed))
-          subscriptionEmailSent <- EitherT.right[Future, CBCErrors, Boolean](cache.read[SubscriptionEmailSent.type].map(_.isDefined))
-          _ <-
-          if (!subscriptionEmailSent) EitherT.right[Future, CBCErrors, Option[Boolean]](cbcIdService.email(Email(data.subscriberContact.email, "cbcr_subscription", cbcId)).value)
+          subscriptionEmailSent <- EitherT.right[Future, CBCErrors, Boolean](cache.read[SubscriptionEmailSent].map(_.isDefined))
+          emailSent <-
+          if (!subscriptionEmailSent) EitherT.right[Future, CBCErrors, Option[Boolean]](
+            cbcIdService.email(makeSubEmail(data.subscriberContact, cbcId)).value)
+          else EitherT.pure[Future, CBCErrors, Option[Boolean]](None)
+          _ <- if (emailSent.getOrElse(false)) EitherT.right[Future, CBCErrors, CacheMap](cache.save(SubscriptionEmailSent()))
           else EitherT.pure[Future, CBCErrors, Unit](())
           _ <- createSuccessfulSubscriptionAuditEvent(authContext, data)
         } yield cbcId).fold(
@@ -175,6 +177,14 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
           cbcId => Redirect(routes.SubscriptionController.subscribeSuccessCbcId(cbcId.value))
         )
       )
+  }
+
+  private def makeSubEmail(subscriberContact: SubscriberContact, cbcId: CBCId): Email = {
+    Email(List(subscriberContact.email.value),
+      "cbcr_subscription",
+      Map("f_name" → subscriberContact.firstName,
+        "s_name" → subscriberContact.lastName,
+        "cbcrId" → cbcId.value))
   }
 
 
@@ -232,7 +242,6 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       )
   }
 
-  //todo should I  put it here
   def subscribeSuccessCbcId(id: String) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request =>
       CBCId(id).fold[Future[Result]](
