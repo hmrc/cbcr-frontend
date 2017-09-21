@@ -169,23 +169,24 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   }
 
-  val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit requests =>
-    subscriptionDataForm.bindFromRequest.fold(
-      errors => BadRequest(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
-      data   => {
-        (for {
-          bpr     <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("No BPR found in cache"))
-          cbcId   <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("No CBCId found in cache"))
-          details  = CorrespondenceDetails(bpr.address,ContactDetails(data.email,data.phoneNumber),ContactName(data.firstName,data.lastName))
-          _       <- cbcIdService.updateETMPSubscriptionData(bpr.safeId,details)
-          _       <- subscriptionDataService.updateSubscriptionData(cbcId,SubscriberContact(data.firstName,data.lastName,data.phoneNumber,data.email))
-        } yield Ok("Saved")
-          ).fold(
-          errors => errorRedirect(errors),
-          result => result
-        )
-      }
-    )
+  val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+    implicit requests =>
+      subscriptionDataForm.bindFromRequest.fold(
+        errors => BadRequest(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
+        data => {
+          (for {
+            bpr <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("No BPR found in cache"))
+            cbcId <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("No CBCId found in cache"))
+            details = CorrespondenceDetails(bpr.address, ContactDetails(data.email, data.phoneNumber), ContactName(data.firstName, data.lastName))
+            _ <- cbcIdService.updateETMPSubscriptionData(bpr.safeId, details)
+            _ <- subscriptionDataService.updateSubscriptionData(cbcId, SubscriberContact(data.firstName, data.lastName, data.phoneNumber, data.email))
+          } yield Ok("Saved")
+            ).fold(
+            errors => errorRedirect(errors),
+            result => result
+          )
+        }
+      )
   }
 
   def subscribeSuccessCbcId(id:String) = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
