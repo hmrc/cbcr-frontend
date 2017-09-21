@@ -34,7 +34,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.model.{FileId, XMLInfo, _}
-import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService}
+import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
@@ -61,20 +61,21 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val docRefService = mock[DocRefIdService]
   val auth = mock[AuthConnector]
   val auditMock = mock[AuditConnector]
-
+  val mockCBCIdService   = mock[CBCIdService]
+  val mockEmailService = mock[EmailService]
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload"}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
 
   val bpr = BusinessPartnerRecord("safeId",None, EtmpAddress("Line1",None,None,None,None,"GB"))
-  
+
   implicit val hc = HeaderCarrier()
-  val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth) {
+  val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,mockCBCIdService,mockEmailService) {
     override lazy val audit = auditMock
   }
 
   override protected def afterEach(): Unit = {
-    reset(cache,fus,docRefService)
+    reset(cache,fus,docRefService,mockEmailService)
     super.afterEach()
   }
 
@@ -116,7 +117,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the UTR, UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth)
+      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,mockCBCIdService,mockEmailService)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -129,7 +130,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth)
+      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,mockCBCIdService,mockEmailService)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))))
       when(cache.save[FilingType](any())(EQ(FilingType.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -138,7 +139,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the UTR and Filing type form the xml when the ReportingRole is CBC703" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth) {
+      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,mockCBCIdService,mockEmailService) {
         override lazy val audit = auditMock
       }
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
@@ -469,16 +470,72 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
         }
       }
-      "returns a 200 otherwise" in {
+      "sends an email" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
         when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-
+        when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
+        when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+        when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn Future.successful(Some(summaryData))
+        when(cache.read[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
+        when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(Some(SubmissionDate(LocalDateTime.now())))
+        status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
+        verify(mockEmailService,times(1)).sendEmail(any())(any())
+        verify(cache,times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
+      }
+      "will still return a 200 if the email fails" in {
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+        when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+        when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+        when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](false)
+        when(cache.read[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn Future.successful(Some(summaryData))
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(Some(SubmissionDate(LocalDateTime.now())))
         status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
+        verify(mockEmailService,times(1)).sendEmail(any())(any())
+        verify(cache,times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
+      }
+      "will write  a ConfirmationEmailSent to the cache if an email is sent" in {
 
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+
+        when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+        when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
+        when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn Future.successful(Some(summaryData))
+        when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+        when(cache.read[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
+        when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(Some(SubmissionDate(LocalDateTime.now())))
+        status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
+        verify(mockEmailService,times(1)).sendEmail(any())(any())
+        verify(cache,times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
+      }
+      "not send the email if it has already been sent and not save to the cache" in {
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+        when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
+        when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+        when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+        when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn Future.successful(Some(summaryData))
+        when(cache.read[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(Some(ConfirmationEmailSent()))
+        when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(Some(SubmissionDate(LocalDateTime.now())))
+        status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
+        verify(mockEmailService,times(0)).sendEmail(any())(any())
+        verify(cache,times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
+      }
+      "returns a 200 otherwise" in {
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+        when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
+        when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+        when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+        when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn Future.successful(Some(summaryData))
+        when(cache.read[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
+        when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(Some(SubmissionDate(LocalDateTime.now())))
+        status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
+        verify(cache,times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
       }
     }
     "contain a valid dateformat" in {
