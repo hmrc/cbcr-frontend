@@ -62,7 +62,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                                        val knownFactsService:BPRKnownFactsService)
                                       (implicit ec: ExecutionContext,
                                        val playAuth:PlayAuthConnector,
-                                       val session:CBCSessionCache) extends FrontendController with ServicesConfig {
+                                       val cache:CBCSessionCache) extends FrontendController with ServicesConfig {
 
   lazy val audit: AuditConnector = FrontendAuditConnector
 
@@ -90,12 +90,12 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
         errors => BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
         data => {
           val id_bpr_utr_subscribed:ServiceResponse[(CBCId,BusinessPartnerRecord,Utr,Boolean)] = for {
-            subscribed        <- EitherT.right[Future,CBCErrors,Boolean](session.read[Subscribed.type].map(_.isDefined))
+            subscribed        <- EitherT.right[Future,CBCErrors,Boolean](cache.read[Subscribed.type].map(_.isDefined))
             _                 <- EitherT.cond[Future](!subscribed,(),UnexpectedState("Already subscribed"))
             bpr_utr           <- (EitherT[Future, CBCErrors, BusinessPartnerRecord](
-              session.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
+              cache.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
             ) |@| EitherT[Future, CBCErrors, Utr](
-              session.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
+              cache.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
             )).tupled
             subDetails        = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
             id               <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
@@ -108,7 +108,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                 _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, Some(id), utr))
                 _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
                 _ <- EitherT.right[Future, CBCErrors, (CacheMap,CacheMap,CacheMap,CacheMap)](
-                  (session.save(id) |@| session.save(data) |@| session.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@| session.save(subscribed)).tupled
+                  (cache.save(id) |@| cache.save(data) |@| cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@| cache.save(subscribed)).tupled
                 )
                 _ <- createSuccessfulSubscriptionAuditEvent(authContext,SubscriptionDetails(bpr, data, Some(id), utr))
               } yield id
@@ -149,8 +149,8 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
       details         <- EitherT.fromOption[Future](optionalDetails,UnexpectedState("No SubscriptionDetails"))
       bpr              = details.businessPartnerRecord
-      _               <- EitherT.right[Future,CBCErrors,CacheMap](session.save(bpr))
-      _               <- EitherT.right[Future,CBCErrors,CacheMap](session.save(cbcId))
+      _               <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(bpr))
+      _               <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(cbcId))
       subData         <- cbcIdService.getETMPSubscriptionData(bpr.safeId).toRight(UnexpectedState("No ETMP Subscription Data"):CBCErrors)
     } yield subData
 
@@ -174,8 +174,8 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       errors => BadRequest(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
       data   => {
         (for {
-          bpr     <- OptionT(session.read[BusinessPartnerRecord]).toRight(UnexpectedState("No BPR found in cache"))
-          cbcId   <- OptionT(session.read[CBCId]).toRight(UnexpectedState("No CBCId found in cache"))
+          bpr     <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("No BPR found in cache"))
+          cbcId   <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("No CBCId found in cache"))
           details  = CorrespondenceDetails(bpr.address,ContactDetails(data.email,data.phoneNumber),ContactName(data.firstName,data.lastName))
           _       <- cbcIdService.updateETMPSubscriptionData(bpr.safeId,details)
           _       <- subscriptionDataService.updateSubscriptionData(cbcId,SubscriberContact(data.firstName,data.lastName,data.phoneNumber,data.email))
