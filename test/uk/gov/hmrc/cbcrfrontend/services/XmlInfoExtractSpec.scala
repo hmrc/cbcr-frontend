@@ -40,20 +40,20 @@ class XmlInfoExtractSpec extends UnitSpec {
       e.xmlEncoding.xmlEncodingVal shouldBe "UTF-8"
       e.cbcVal.cbcVer shouldBe "1.0"
 
-      val re = e.reportingEntity
+      val re = e.reportingEntity.get
       re.name shouldBe "ABCCorp"
       re.tin shouldBe "7000000002"
       re.docSpec.docType shouldBe "OECD1"
       re.docSpec.docRefId shouldBe "String_DocRefId1"
       re.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId")
 
-      val r = e.cbcReport
+      val r = e.cbcReport.get
 
       r.docSpec.docType shouldBe "OECD1"
       r.docSpec.docRefId shouldBe "MyDocRefId"
       r.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId")
 
-      val a = e.additionalInfo
+      val a = e.additionalInfo.get
 
       a.docSpec.docType shouldBe "OECD1"
       a.docSpec.docRefId shouldBe "MyDocRefId"

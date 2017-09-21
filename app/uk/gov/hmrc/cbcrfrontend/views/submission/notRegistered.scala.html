@@ -28,7 +28,7 @@
 
 @sidebarContent = { @asideCbc }
 
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("notRegistered.heading"), sidebarLinks = Some(sidebarContent)) {
 <div class="grid-row">
     <div class="column-two-thirds">
         <h1>@Messages("notRegistered.heading")</h1>
@@ -36,7 +36,7 @@
         <div class="flash error-summary error-summary--show"
              id="error-summary-display"
              role="alert"
-             aria-labelledby="error-summary-heading"
+             aria-labelledby="error-summary-display"
              tabindex="-1">
 
             <p>@Messages("notRegistered.content")</p>

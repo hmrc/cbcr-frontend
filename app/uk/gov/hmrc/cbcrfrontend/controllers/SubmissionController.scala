@@ -33,8 +33,8 @@ import play.api.mvc.{Action, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService}
+import uk.gov.hmrc.cbcrfrontend.model.{ConfirmationEmailSent, SummaryData, _}
+import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html.includes
 import uk.gov.hmrc.emailaddress.EmailAddress
@@ -58,7 +58,9 @@ class SubmissionController @Inject()(val sec: SecuredActions,
                                      val cache:CBCSessionCache,
                                      val fus:FileUploadService,
                                      val docRefIdService: DocRefIdService,
-                                     val auth:AuthConnector)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
+                                     val auth:AuthConnector,
+                                     val cbidService: CBCIdService,
+                                     val emailService:EmailService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
 
   implicit lazy val fusUrl   = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
@@ -68,40 +70,38 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm")
 
   def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
-    val reCorr = x.reportingEntity.docSpec.corrDocRefId
-    val reDocRef = x.reportingEntity.docSpec.docRefId
-    val cbCorr = x.cbcReport.docSpec.corrDocRefId
-    val cbDocRef = x.cbcReport.docSpec.docRefId
-    val adCorr = x.additionalInfo.docSpec.corrDocRefId
-    val adDocRef = x.additionalInfo.docSpec.docRefId
+    val reDocRef  = x.reportingEntity.docSpec.docRefId
+    val reCorr    = x.reportingEntity.docSpec.corrDocRefId
+    val reportIds = x.cbcReport.map{reports => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId}
+    val addIds    = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
 
-    EitherT((reCorr.map(c => docRefIdService.saveCorrDocRefID(c, reDocRef)).getOrElse(docRefIdService.saveDocRefId(reDocRef)).value |@|
-      cbCorr.map(c => docRefIdService.saveCorrDocRefID(c,cbDocRef)).getOrElse(docRefIdService.saveDocRefId(cbDocRef)).value |@|
-      adCorr.map(c => docRefIdService.saveCorrDocRefID(c,adDocRef)).getOrElse(docRefIdService.saveDocRefId(adDocRef)).value)
-      .map((r,c,a) =>(r.toInvalidNel(()) |@| c.toInvalidNel(()) |@| a.toInvalidNel(())).map((_,_,_) => ()).toEither)
-    )
+    val reResult= reCorr.map(c => docRefIdService.saveCorrDocRefID(c, reDocRef)).getOrElse(docRefIdService.saveDocRefId(reDocRef))
+    val crResult = OptionT.fromOption[Future](reportIds).flatMap{
+      case (doc,corr) => corr.map(docRefIdService.saveCorrDocRefID(_,doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+    }
+    val addResult = OptionT.fromOption[Future](addIds).flatMap{
+      case (doc,corr) => corr.map(docRefIdService.saveCorrDocRefID(_,doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+    }
+
+    EitherT((reResult.toLeft(()).toValidatedNel |@|
+      crResult.toLeft(()).toValidatedNel |@|
+      addResult.toLeft(()).toValidatedNel).map((a,b,c) => (a |@| b |@| c).map((_,_,_) => ()).toEither))
+
+
 
   }
 
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {
-      summaryData => {
-        summarySubmitForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
-          formWithErrors => EitherT.left(Future.successful(BadRequest(views.html.submission.submitSummary(includes.phaseBannerBeta(), summaryData, formWithErrors)))),
-          _              => (for {
+    OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {surrmarydata =>
+      (for {
             xml <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("Unable to read XMLInfo from cache"))
-            _   <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+            _   <- fus.uploadMetadataAndRoute(surrmarydata.submissionMetaData)
             _   <- saveDocRefIds(xml).leftMap[CBCErrors]{ es =>
               Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
             }
-            _  <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(SubmissionDate(LocalDateTime.now)))
-
-          } yield Redirect(routes.SubmissionController.submitSuccessReceipt())
-            ).leftMap(errorRedirect)
-        )
-      }
+            _  <- right(cache.save(SubmissionDate(LocalDateTime.now)))
+          } yield Redirect(routes.SubmissionController.submitSuccessReceipt())).leftMap(errorRedirect)
     }.merge
   }
 
@@ -148,11 +148,6 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     )(EmailAddress.apply)(EmailAddress.unapply)
   )
 
-  val summarySubmitForm : Form[Boolean] = Form(
-    single(
-      "cbcDeclaration" -> boolean.verifying(d => d)
-    )
-  )
 
   val enterCompanyNameForm : Form[AgencyBusinessName] = Form(
     single(
@@ -270,12 +265,12 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   val submitSummary = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     val result = for {
-      userIds <- EitherT.right[Future, CBCErrors, UserIds](auth.getIds[UserIds](authContext))
+      userIds <- right(auth.getIds[UserIds](authContext))
       smd     <- EitherT(generateMetadataFile(userIds.externalId, cache).map(_.toEither)).leftMap(errors =>
         UnexpectedState(errors.toList.mkString("\n"))
       )
       sd      <- createSummaryData(smd)
-    } yield Ok(views.html.submission.submitSummary(includes.phaseBannerBeta(), sd, summarySubmitForm))
+    } yield Ok(views.html.submission.submitSummary(includes.phaseBannerBeta(), sd))
 
     result.fold(
       errors => errorRedirect(errors),
@@ -294,7 +289,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       keyXMLFileInfo <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
       bpr            <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
       summaryData    = SummaryData(bpr, submissionMetaData, keyXMLFileInfo)
-      _              <- EitherT.right[Future, CBCErrors, CacheMap](cache.save[SummaryData](summaryData))
+      _              <- right(cache.save[SummaryData](summaryData))
     } yield summaryData
   }
 
@@ -309,23 +304,45 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     )
   }
 
+
+
   def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    val data = EitherT((cache.read[SummaryData] |@| cache.read[SubmissionDate]).map {
-      case (maybeData, maybeDate) => for {
-        data          <- maybeData toRight UnexpectedState("SummaryData not found in cache")
-        date          <- maybeDate toRight UnexpectedState("SubmissionDate not found in cache")
-        formattedDate <- nonFatalCatch opt date.date.format(dateFormat) toRight UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")
+    val data: EitherT[Future, CBCErrors, (SummaryData, String)] =
+      for {
+        dataTuple          <- right((cache.read[SummaryData] |@| cache.read[SubmissionDate]).tupled)
+        data               <- fromEither(dataTuple._1 toRight UnexpectedState("SummaryData not found in cache"))
+        date               <- fromEither(dataTuple._2 toRight UnexpectedState("SubmissionDate not found in cache"))
+        formattedDate      <- fromEither((nonFatalCatch opt date.date.format(dateFormat)).toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")))
+        emailSentAlready   <- right(cache.read[ConfirmationEmailSent].map(_.isDefined))
+        sentEmail          <- if(!emailSentAlready)right(emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate)).value)
+                              else  pure(None)
+        _                  <- if(sentEmail.getOrElse(false))right(cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
+                              else pure(())
       } yield (data, formattedDate)
-    })
 
-    data.flatMap(t => createSuccessfulSubmissionAuditEvent(authContext,t._1).map(_ => (t._1.submissionMetaData.submissionInfo.hash,t._2))).fold(
+
+
+    data.flatMap(t =>
+      createSuccessfulSubmissionAuditEvent(authContext,t._1).map(_ => {
+      (t._1.submissionMetaData.submissionInfo.hash, t._2)
+    })).fold(
       (error: CBCErrors) => errorRedirect(error),
-      (tuple: (Hash, String))  => Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(),includes.phaseBannerBeta(),tuple._2,tuple._1.value))
+      (tuple: (Hash, String))  => {
+        Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple._2, tuple._1.value))
+      }
     )
-
   }
-
+private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String):Email ={
+  val summitedInfo = data.submissionMetaData.submitterInfo
+  Email(List(summitedInfo.email.toString()),
+    "cbcr_report_confirmation",
+    Map(
+      "name" → summitedInfo.fullName,
+      "received_at" → formattedDate,
+      "hash"   → data.submissionMetaData.submissionInfo.hash.value
+  ))
+}
   val filingHistory = Action.async { implicit request =>
     Ok(views.html.submission.filingHistory(includes.phaseBannerBeta()))
   }

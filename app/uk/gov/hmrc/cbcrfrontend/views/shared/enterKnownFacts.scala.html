@@ -27,7 +27,7 @@ implicit request: Request[_], messages: Messages)
 }
 @errors = @{knownFactsForm.hasErrors || noMatchingBusiness}
 
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("subscribeFirst.mainHeading"), sidebarLinks = Some(sidebarContent)) {
 
 
  <div class="grid-row">
@@ -36,7 +36,7 @@ implicit request: Request[_], messages: Messages)
       <h1>@Messages("subscribeFirst.mainHeading")</h1>
 
       @if(errors){
-              <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
+              <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                   <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>
                   <p>@Messages("subscribeFirst.noMatchingBusiness.suggestion") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.noMatchingBusiness.suggestion.link")</a></p>
                   <p><strong><a href="#utr">@Messages("subscribeFirst.error.message.utr-empty")</a></strong></p>
@@ -48,17 +48,17 @@ implicit request: Request[_], messages: Messages)
           <fieldset>
               <div class="form-field form-field--tall  @if(errors){form-field--error}">
 
-                  <label>@Messages("subscribeFirst.utr.label")</label>
+                  <label for="utr">@Messages("subscribeFirst.utr.label")
                   <span class="form-hint">@Messages("subscribeFirst.utr.hint")</span>
                   <input class="form-control--block" type="text" name="utr" id="utr" />
-
+                  </label>
               </div>
 
               <div class="form-field form-field--tall  @if(errors){form-field--error}">
 
-                  <label>@Messages("subscribeFirst.postcode.label")</label>
+                  <label for="postCode">@Messages("subscribeFirst.postcode.label")
                   <input class="form-control--block" type="text" name="postCode" id="postCode" />
-
+                  </label>
               </div>
           </fieldset>
 
