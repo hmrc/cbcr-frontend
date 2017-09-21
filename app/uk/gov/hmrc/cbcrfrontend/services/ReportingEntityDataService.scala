@@ -20,6 +20,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
+import play.api.Logger
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, PartialReportingEntityData, ReportingEntityData, UnexpectedState}
@@ -50,7 +51,9 @@ class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(impl
           data   => Right(Some(data))
         )
       }.recover{
-        case _:NotFoundException => Right(None)
+        case _:NotFoundException =>
+          Logger.error("Got a NotFoundException - backend returned 404")
+          Right(None)
         case NonFatal(e)         => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
       }
     )

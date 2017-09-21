@@ -39,17 +39,12 @@ object ReportingRole {
     case CBC703 => "LOCAL"
   }
 
-  implicit val format = new Format[ReportingRole] {
+   implicit val format = new Format[ReportingRole] {
 
-    override def writes(o: ReportingRole): JsValue = Json.obj("ReportingRole" -> o.toString)
+    override def writes(o: ReportingRole): JsValue = JsString(o.toString)
 
     override def reads(json: JsValue): JsResult[ReportingRole] = json match {
-      case o:JsObject =>
-        (for {
-          rr <- o.value.get("ReportingRole")
-          rs <- rr.asOpt[String]
-          rx <- parseFromString(rs)
-        } yield JsSuccess(rx)).getOrElse(JsError(s"Failed to parse $json as ReportingRole"))
+      case o:JsString => parseFromString(o.value).fold[JsResult[ReportingRole]](JsError(s"Failed to parse $json as ReportingRole"))(JsSuccess(_))
       case _          => JsError(s"Failed to parse $json as ReportingRole")
     }
   }
