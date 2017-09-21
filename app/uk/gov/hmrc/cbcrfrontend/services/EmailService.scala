@@ -26,6 +26,7 @@ import uk.gov.hmrc.cbcrfrontend.model.Email
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 @Singleton
 class EmailService  @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {
@@ -34,10 +35,11 @@ class EmailService  @Inject()(connector:CBCRBackendConnector)(implicit ec:Execut
     OptionT(connector.sendEmail(email).map { response =>
       response.status match {
         case Status.ACCEPTED => Some(true)
-        case _         =>
-          Logger.error("The email has failed to send :( " + email + " response " + response)
-          Some(false)
       }
+    }.recover{
+      case NonFatal(e) =>
+        Logger.error("The email has failed to send :( " + email + " exception " + e)
+        Some(false)
     })
   }
 }

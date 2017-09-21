@@ -90,7 +90,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
 
   }
-   //todo send email here
+
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {surrmarydata =>
       (for {
@@ -327,7 +327,6 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
 
 
-  //todo makes more sence here
   def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     val data: EitherT[Future, CBCErrors, (SummaryData, String)] =
