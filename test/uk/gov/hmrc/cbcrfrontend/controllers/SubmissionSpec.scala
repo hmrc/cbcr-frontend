@@ -35,6 +35,7 @@ import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.model.{FileId, XMLInfo, _}
 import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
@@ -63,6 +64,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val auditMock = mock[AuditConnector]
   val mockCBCIdService   = mock[CBCIdService]
   val mockEmailService = mock[EmailService]
+  val reportingEntity = mock[ReportingEntityDataService]
+
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload"}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
@@ -70,19 +73,19 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val bpr = BusinessPartnerRecord("safeId",None, EtmpAddress("Line1",None,None,None,None,"GB"))
 
   implicit val hc = HeaderCarrier()
-  val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,mockCBCIdService,mockEmailService) {
+  val controller = new SubmissionController(securedActions, cache, fus, docRefService,reportingEntity,auth,mockCBCIdService,mockEmailService) {
     override lazy val audit = auditMock
   }
 
   override protected def afterEach(): Unit = {
-    reset(cache,fus,docRefService,mockEmailService)
+    reset(cache,fus,docRefService,reportingEntity,mockEmailService)
     super.afterEach()
   }
 
   "POST /submitUltimateParentEntity " should {
+    val ultimateParentEntity  = UltimateParentEntity("UlitmateParentEntity")
+    val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.obj("ultimateParentEntity" -> ultimateParentEntity.ultimateParentEntity)))
     "return 303 and point to the correct page" when {
-      val ultimateParentEntity  = UltimateParentEntity("UlitmateParentEntity")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.toJson(ultimateParentEntity)))
       "the reporting role is CBC702" in {
         when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))))
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -90,7 +93,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         result.header.headers("Location") should endWith("/utr/entry-form")
         status(result) shouldBe Status.SEE_OTHER
       }
-      "the reporting role is CBC703" in {        when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      "the reporting role is CBC703" in {
+        when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703))))
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
@@ -99,8 +103,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       }
     }
     "return 500 when the reportingrole is CBC701 as this should never happen" in {
-      val ultimateParentEntity  = UltimateParentEntity("UlitmateParentEntity")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(Json.toJson(ultimateParentEntity)))
       when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.read(EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC701))))
       val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
@@ -117,7 +119,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the UTR, UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,mockCBCIdService,mockEmailService)
+      val controller = new SubmissionController(securedActions, cache, fus, docRefService,reportingEntity, auth,mockCBCIdService,mockEmailService)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -130,7 +132,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,mockCBCIdService,mockEmailService)
+      val controller = new SubmissionController(securedActions, cache, fus, docRefService,reportingEntity,auth,mockCBCIdService,mockEmailService)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))))
       when(cache.save[FilingType](any())(EQ(FilingType.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -139,7 +141,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the UTR and Filing type form the xml when the ReportingRole is CBC703" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,auth,mockCBCIdService,mockEmailService) {
+      val controller = new SubmissionController(securedActions, cache, fus, docRefService,reportingEntity,auth,mockCBCIdService,mockEmailService) {
         override lazy val audit = auditMock
       }
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
@@ -418,21 +420,39 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
       }
 
-      "returns 303 when the there is data" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+      "returns 303 when the there is data and " should {
+        "call saveReportingEntityData when the submissionType is OECD1" in {
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+          val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
+          when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
+          when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,CBCErrors,String](Future.successful(Right("routed")))
+          when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
+          when(cache.save[SubmissionDate](any())(EQ(SubmissionDate.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+          when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT.pure[Future,CBCErrors,String]("ok")
+          when(reportingEntity.saveReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Unit](())
+          when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
+          verify(reportingEntity).saveReportingEntityData(any())(any())
+        }
+        "call updateReportingEntityData when the submissionType is OECD[023]" in {
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+          val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
+          lazy val updateXml = keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(docSpec = keyXMLInfo.reportingEntity.docSpec.copy(docType = OECD2)))
+          when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
+          when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,CBCErrors,String](Future.successful(Right("routed")))
+          when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(updateXml))
+          when(cache.save[SubmissionDate](any())(EQ(SubmissionDate.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+          when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT.pure[Future,CBCErrors,String]("ok")
+          when(reportingEntity.updateReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Unit](())
+          when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
+          verify(reportingEntity).updateReportingEntityData(any())(any())
 
-        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-
-        when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn Future.successful(Some(summaryData))
-        when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT[Future,CBCErrors,String](Future.successful(Right("routed")))
-        when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
-        when(cache.save[SubmissionDate](any())(EQ(SubmissionDate.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-        when(fus.uploadMetadataAndRoute(any())(any(),any(),any(),any())) thenReturn EitherT.pure[Future,CBCErrors,String]("ok")
-        when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
-        when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
-        status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
-
+        }
       }
+
     }
 
     "provide an action 'submitSuccessReceipt'" which {

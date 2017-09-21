@@ -33,6 +33,8 @@ import play.api.mvc.{Action, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService}
 import uk.gov.hmrc.cbcrfrontend.model.{ConfirmationEmailSent, SummaryData, _}
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
@@ -58,6 +60,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
                                      val cache:CBCSessionCache,
                                      val fus:FileUploadService,
                                      val docRefIdService: DocRefIdService,
+                                     val reportingEntityDataService: ReportingEntityDataService,
                                      val auth:AuthConnector,
                                      val cbidService: CBCIdService,
                                      val emailService:EmailService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
@@ -70,26 +73,59 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm")
 
   def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
-    val reDocRef  = x.reportingEntity.docSpec.docRefId
-    val reCorr    = x.reportingEntity.docSpec.corrDocRefId
-    val reportIds = x.cbcReport.map{reports => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId}
-    val addIds    = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
+    x.reportingEntity.docSpec.docType match {
+      case OECD0 =>
+        val reportIds = x.cbcReport.map { reports => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId }
+        val addIds = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
 
-    val reResult= reCorr.map(c => docRefIdService.saveCorrDocRefID(c, reDocRef)).getOrElse(docRefIdService.saveDocRefId(reDocRef))
-    val crResult = OptionT.fromOption[Future](reportIds).flatMap{
-      case (doc,corr) => corr.map(docRefIdService.saveCorrDocRefID(_,doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+        val crResult = OptionT.fromOption[Future](reportIds).flatMap {
+          case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+        }
+        val addResult = OptionT.fromOption[Future](addIds).flatMap {
+          case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+        }
+
+        EitherT((crResult.toLeft(()).toValidatedNel |@| addResult.toLeft(()).toValidatedNel).map(
+          (a, b) => (a |@| b).map((_, _) => ()).toEither)
+        )
+
+      case OECD1 | OECD2 | OECD3 =>
+        val reDocRef = x.reportingEntity.docSpec.docRefId
+        val reCorr = x.reportingEntity.docSpec.corrDocRefId
+        val reportIds = x.cbcReport.map { reports => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId }
+        val addIds = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
+
+        val reResult = reCorr.map(c => docRefIdService.saveCorrDocRefID(c, reDocRef)).getOrElse(docRefIdService.saveDocRefId(reDocRef))
+        val crResult = OptionT.fromOption[Future](reportIds).flatMap {
+          case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+        }
+        val addResult = OptionT.fromOption[Future](addIds).flatMap {
+          case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+        }
+
+        EitherT((reResult.toLeft(()).toValidatedNel |@|
+          crResult.toLeft(()).toValidatedNel |@|
+          addResult.toLeft(()).toValidatedNel).map((a, b, c) => (a |@| b |@| c).map((_, _, _) => ()).toEither))
+
     }
-    val addResult = OptionT.fromOption[Future](addIds).flatMap{
-      case (doc,corr) => corr.map(docRefIdService.saveCorrDocRefID(_,doc)).getOrElse(docRefIdService.saveDocRefId(doc))
-    }
-
-    EitherT((reResult.toLeft(()).toValidatedNel |@|
-      crResult.toLeft(()).toValidatedNel |@|
-      addResult.toLeft(()).toValidatedNel).map((a,b,c) => (a |@| b |@| c).map((_,_,_) => ()).toEither))
-
-
-
   }
+
+  def storeOrUpdateReportingEntityData(xml:XMLInfo)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
+    xml.reportingEntity.docSpec.docType match {
+      // RESENT| NEW
+      case OECD1 =>
+        ReportingEntityData.extract(xml).fold[ServiceResponse[Unit]](
+          errors => {
+            EitherT.left(Future.successful(
+              UnexpectedState(s"Unable to submit partially completed data when docType is ${xml.reportingEntity.docSpec.docType}\n${errors.toList.mkString("\n")}")
+            ))
+          },
+          (data: ReportingEntityData) => reportingEntityDataService.saveReportingEntityData(data)
+        )
+
+      // UPDATE| DELETE
+      case OECD0 | OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
+    }
 
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {surrmarydata =>
@@ -101,6 +137,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
             }
             _  <- right(cache.save(SubmissionDate(LocalDateTime.now)))
+            _  <- storeOrUpdateReportingEntityData(xml)
           } yield Redirect(routes.SubmissionController.submitSuccessReceipt())).leftMap(errorRedirect)
     }.merge
   }
@@ -129,7 +166,6 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     mapping("ultimateParentEntity" -> nonEmptyText
     )(UltimateParentEntity.apply)(UltimateParentEntity.unapply)
   )
-
 
   val submitterInfoForm: Form[SubmitterInfo] = Form(
     mapping(
@@ -303,8 +339,6 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       name   => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
     )
   }
-
-
 
   def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
