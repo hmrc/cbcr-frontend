@@ -37,7 +37,7 @@ import play.api.libs.json.Json
   * @param reportingRole The [[ReportingRole]] from the [[ReportingEntity]] section of the XML document
   */
 case class ReportingEntityData(cbcReportsDRI:DocRefId,
-                               additionalInfoDRI:DocRefId,
+                               additionalInfoDRI:Option[DocRefId],
                                reportingEntityDRI:DocRefId,
                                utr:Utr,
                                ultimateParentEntity: UltimateParentEntity,
@@ -70,10 +70,9 @@ object ReportingEntityData{
   implicit val format = Json.format[ReportingEntityData]
 
   def extract(x:XMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]=
-    (x.cbcReport.map(_.docSpec.docRefId).toValidNel(UnexpectedState("CBCReport DocRefId not found")) |@|
-    x.additionalInfo.map(_.docSpec.docRefId).toValidNel(UnexpectedState("AdditionalInfo DocRefId not found"))).map{ (c,a) =>
+    x.cbcReport.map(_.docSpec.docRefId).toValidNel(UnexpectedState("CBCReport DocRefId not found")).map{c =>
       ReportingEntityData(
-        c,a,
+        c,x.additionalInfo.map(_.docSpec.docRefId),
         x.reportingEntity.docSpec.docRefId,
         x.reportingEntity.tin,
         UltimateParentEntity(x.reportingEntity.name),
@@ -81,7 +80,6 @@ object ReportingEntityData{
       )
 
     }
-
 
 }
 
