@@ -56,6 +56,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                                        val subscriptionDataService: SubscriptionDataService,
                                        val connector: BPRKnownFactsConnector,
                                        val cbcIdService: CBCIdService,
+                                       val emailService: EmailService,
                                        val kfService: CBCKnownFactsService,
                                        val enrollments: EnrolmentsConnector,
                                        val knownFactsService: BPRKnownFactsService)
@@ -167,7 +168,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
           subscriptionEmailSent <- EitherT.right[Future, CBCErrors, Boolean](cache.read[SubscriptionEmailSent].map(_.isDefined))
           emailSent <-
           if (!subscriptionEmailSent) EitherT.right[Future, CBCErrors, Option[Boolean]](
-            cbcIdService.email(makeSubEmail(data.subscriberContact, cbcId)).value)
+            emailService.sendEmail(makeSubEmail(data.subscriberContact, cbcId)).value)
           else EitherT.pure[Future, CBCErrors, Option[Boolean]](None)
           _ <- if (emailSent.getOrElse(false)) EitherT.right[Future, CBCErrors, CacheMap](cache.save(SubscriptionEmailSent()))
           else EitherT.pure[Future, CBCErrors, Unit](())
@@ -183,8 +184,8 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
     Email(List(subscriberContact.email.value),
       "cbcr_subscription",
       Map("f_name" → subscriberContact.firstName,
-        "s_name" → subscriberContact.lastName,
-        "cbcrId" → cbcId.value))
+          "s_name" → subscriberContact.lastName,
+          "cbcrId" → cbcId.value))
   }
 
 
