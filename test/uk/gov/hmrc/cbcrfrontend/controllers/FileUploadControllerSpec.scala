@@ -70,7 +70,6 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val cache: CBCSessionCache                           = mock[CBCSessionCache]
   val extractor: XmlInfoExtract                        = new XmlInfoExtract()
   val enrol:EnrolmentsConnector                        = mock[EnrolmentsConnector]
-  val reportingEntity:ReportingEntityDataService       = mock[ReportingEntityDataService]
 
   override protected def afterEach(): Unit = {
     reset(cache,businessRulesValidator,schemaValidator,fuService)
@@ -134,8 +133,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
   val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
 
-  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,reportingEntity)(ec,TestSessionCache(),authCon)
-  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,reportingEntity)(ec,cache,authCon)
+  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,TestSessionCache(),authCon)
+  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,cache,authCon)
 
   val testFile:File= new File("test/resources/cbcr-valid.xml")
   val tempFile:File=Files.TemporaryFile("test",".xml").file
@@ -237,7 +236,6 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
       when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(new CacheMap("",Map.empty))
-      when(reportingEntity.saveReportingEntityData(any())(any())) thenReturn right[Unit](())
       when(businessRulesValidator.validateBusinessRules(any(),any())(any())) thenReturn EitherT.right[Future,NonEmptyList[BusinessRuleErrors],XMLInfo](xmlinfo)
       val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
       val returnVal = status(result)
@@ -245,7 +243,6 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       verify(fuService).getFile(any(),any())(any(),any(),any())
       verify(fuService).getFileMetaData(any(),any())(any(),any(),any())
       verify(cache,atLeastOnce()).save(any())(any(),any(),any())
-      verify(reportingEntity).saveReportingEntityData(any())(any())
       verify(businessRulesValidator).validateBusinessRules(any(),any())(any())
       verify(schemaValidator).validateSchema(any())
 

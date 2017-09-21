@@ -41,6 +41,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val messageRefIdService = mock[MessageRefIdService]
   val docRefIdService = mock[DocRefIdService]
   val subscriptionDataService = mock[SubscriptionDataService]
+  val reportingEntity = mock[ReportingEntityDataService]
 
 
   val docRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
@@ -66,7 +67,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
     SubscriberContact("Brian","Lastname", "phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
   )
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity)
   "The CBCBusinessRuleValidator" should {
     "return the correct error" when {
       "messageRefId is empty and return the correct message and errorcode" in {

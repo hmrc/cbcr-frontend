@@ -58,9 +58,8 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                                      val businessRuleValidator: CBCBusinessRuleValidator,
                                      val enrol:EnrolmentsConnector,
                                      val fileUploadService:FileUploadService,
-                                     val xmlExtractor:XmlInfoExtract,
-                                     val reportingEntityDataService: ReportingEntityDataService
-                                    )(implicit ec: ExecutionContext, cache:CBCSessionCache, auth:AuthConnector) extends FrontendController with ServicesConfig {
+                                     val xmlExtractor:XmlInfoExtract)
+                                    (implicit ec: ExecutionContext, cache:CBCSessionCache, auth:AuthConnector) extends FrontendController with ServicesConfig {
 
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
@@ -132,22 +131,6 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     ).flatten)
   }
 
-  def handleSubmissionTypes(xml:XMLInfo)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
-    xml.reportingEntity.docSpec.docType match {
-        // RESENT| NEW
-      case OECD0 | OECD1 =>
-        ReportingEntityData.extract(xml).fold[ServiceResponse[Unit]](
-          errors => {
-            EitherT.left(Future.successful(
-              UnexpectedState(s"Unable to submit partially completed data when docType is ${xml.reportingEntity.docSpec.docType}\n${errors.toList.mkString("\n")}")
-            ))
-          },
-          (data: ReportingEntityData) => reportingEntityDataService.saveReportingEntityData(data)
-        )
-
-        // UPDATE| DELETE
-      case OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
-    }
 
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
 
@@ -167,10 +150,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
       length              = (file_metadata._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
       _                   <- if(schemaErrors.hasErrors) auditFailedSubmission(authContext,"schema validation errors")
                              else if(xml_bizErrors._2.nonEmpty) auditFailedSubmission(authContext,"business rules errors")
-                             else xml_bizErrors._1.map{xml =>
-                                handleSubmissionTypes(xml)
-                              }.sequence[ServiceResponse,Unit]
-
+                             else EitherT.pure[Future,CBCErrors,Unit](())
       _                   = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
     } yield Ok(submission.fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
