@@ -22,7 +22,7 @@ import javax.inject.{Inject, Singleton}
 import cats.data.EitherT
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, ReportingEntityData, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, PartialReportingEntityData, ReportingEntityData, UnexpectedState}
 import uk.gov.hmrc.play.http.{HeaderCarrier, NotFoundException}
 
 import scala.concurrent.ExecutionContext
@@ -30,6 +30,12 @@ import scala.util.control.NonFatal
 
 @Singleton
 class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {
+
+  def updateReportingEntityData(data:PartialReportingEntityData)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
+    EitherT(connector.reportingEntityDataUpdate(data).map(_ => Right(())).recover{
+      case NonFatal(t) => Left(UnexpectedState(s"Attempt to update reporting entity data failed: ${t.getMessage}"))
+    })
+
 
   def saveReportingEntityData(data:ReportingEntityData)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
     EitherT(connector.reportingEntityDataSave(data).map(_ => Right(())).recover{

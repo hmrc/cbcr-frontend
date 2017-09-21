@@ -18,7 +18,7 @@
 @import play.api.Play.current
 @()(implicit request: Request[_])
 
-@uk.gov.hmrc.cbcrfrontend.views.html.main_template(title = "Country By Country", bodyClasses = None) {
+@uk.gov.hmrc.cbcrfrontend.views.html.main_template(Messages("cbcHistory.mainHeading"), bodyClasses = None) {
 <div align="center">
 
 <h1>@Messages("cbcHistory.mainHeading")</h1>

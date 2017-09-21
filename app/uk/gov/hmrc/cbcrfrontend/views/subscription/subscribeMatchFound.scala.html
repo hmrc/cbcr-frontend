@@ -20,61 +20,57 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@(asideCbc: Html, phaseBannerBeta: Html, name:String, postCode:String, utr:String, userType:UserType)(
-implicit request: Request[_], messages: Messages)
+@(asideCbc: Html, phaseBannerBeta: Html, name: String, postCode: String, utr: String, userType: UserType)(
+        implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
 @asideCbc
 }
 
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
-
-<main id="content" role="main">
-
+@main_template(Messages("subscribeMatchFound.mainHeading"), sidebarLinks = Some(sidebarContent)) {
     <div class="grid-row">
         <div class="column-two-thirds">
 
             <h1>
-                @Messages("subscribeMatchFound.mainHeading")
+            @Messages("subscribeMatchFound.mainHeading")
             </h1>
 
+            @userType match {
+                case Organisation => {
+                    <p><a class ="back-link" href="@routes.SharedController.verifyKnownFactsOrganisation">Back</a></p>
+                }
+                case Agent => {
+                    <p><a class ="back-link" href="@routes.SharedController.verifyKnownFactsAgent">Back</a></p>
+                }
+            }
             <table class="form-group">
-                <tr>
-                    <th colspan="2"></th>
-                </tr>
                 <tbody>
-                <tr>
-                    <th>@Messages("subscribeMatchFound.businessDetails.name")</th>
-                    <td>@name</td>
-                </tr>
-                <tr>
-                    <th>@Messages("subscribeMatchFound.businessDetails.postcode")</th>
-                    <td>@postCode</td>
-                </tr>
-                <tr>
-                    <th>@Messages("subscribeMatchFound.businessDetails.utr")</th>
-                    <td>@utr</td>
-                </tr>
+                    <tr>
+                        <th>@Messages("subscribeMatchFound.businessDetails.name")</th>
+                        <td>@name</td>
+                    </tr>
+                    <tr>
+                        <th>@Messages("subscribeMatchFound.businessDetails.postcode")</th>
+                        <td>@postCode</td>
+                    </tr>
+                    <tr>
+                        <th>@Messages("subscribeMatchFound.businessDetails.utr")</th>
+                        <td>@utr</td>
+                    </tr>
                 </tbody>
             </table>
 
             <p>
-              @Messages("subscribeMatchFound.businessDetails.advice")
+            @Messages("subscribeMatchFound.businessDetails.advice")
             </p>
             @userType match {
                 case Organisation => {
-                    <p><a href="@routes.SharedController.verifyKnownFactsOrganisation">Back</a></p>
                     <p><a class="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.continue")</a></p>
                 }
-                case Agent        => {
-                    <p><a href="@routes.SharedController.verifyKnownFactsAgent">Back</a></p>
+                case Agent => {
                     <p><a class="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.continue")</a></p>
                 }
             }
-
-
         </div>
     </div>
-
-</main>
 }
