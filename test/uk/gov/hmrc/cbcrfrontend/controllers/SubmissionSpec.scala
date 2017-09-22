@@ -72,6 +72,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
   val bpr = BusinessPartnerRecord("safeId",None, EtmpAddress("Line1",None,None,None,None,"GB"))
 
+  val cbcId = CBCId.create(99).getOrElse(fail("failed to gen cbcid"))
+
   implicit val hc = HeaderCarrier()
   val controller = new SubmissionController(securedActions, cache, fus, docRefService,reportingEntity,auth,mockCBCIdService,mockEmailService) {
     override lazy val audit = auditMock
@@ -220,12 +222,16 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(None)
       when(cache.save[SubmitterInfo](any())(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
+      when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       val returnVal = status(controller.submitSubmitterInfo(fakeRequestSubmit))
       returnVal shouldBe Status.SEE_OTHER
 
 
       verify(cache, times(2)).read(EQ(AffinityGroup.format),any(),any())
+      verify(cache).read(EQ(XMLInfo.format),any(),any())
       verify(cache).save(any())(EQ(SubmitterInfo.format),any(),any())
+      verify(cache).save(any())(EQ(CBCId.cbcIdFormat),any(),any())
 
     }
 
@@ -240,6 +246,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
           when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(Some(SubmitterInfo("name", None, "0123123123", EmailAddress("max@max.com"), Some(AffinityGroup("Organisation")))))
           when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(CBCId.create(10).getOrElse(fail("oops"))))
           when(cache.save[SubmitterInfo](any())(any(), any(), any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+          when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
+          when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
 
           val result = Await.result(controller.submitSubmitterInfo(fakeRequestSubmit), 2.seconds)
 
@@ -253,6 +261,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
           when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(Some(SubmitterInfo("name", None, "0123123123", EmailAddress("max@max.com"), Some(AffinityGroup("Organisation")))))
           when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(None)
           when(cache.save[SubmitterInfo](any())(any(), any(), any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+          when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
+          when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
 
           val result = Await.result(controller.submitSubmitterInfo(fakeRequestSubmit), 2.seconds)
 
@@ -268,6 +278,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
           when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(Some(SubmitterInfo("name", None, "0123123123", EmailAddress("max@max.com"), Some(AffinityGroup("Organisation")))))
           when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(None)
           when(cache.save[SubmitterInfo](any())(any(), any(), any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+          when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
+          when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
 
           val result = Await.result(controller.submitSubmitterInfo(fakeRequestSubmit), 2.seconds)
 
