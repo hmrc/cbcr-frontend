@@ -75,13 +75,6 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
     )(SubscriberContact.apply)(SubscriberContact.unapply)
   )
 
-//  val reconfirmEmailForm: Form[EmailAddress] = Form(
-//    mapping(
-//      "reconfirmEmail" -> email.verifying(EmailAddress.isValid(_))
-//    )(EmailAddress.apply)(EmailAddress.unapply)
-//  )
-
-
   val alreadySubscribed = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request =>
       Future.successful(Ok(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
