@@ -89,27 +89,28 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       subscriptionDataForm.bindFromRequest.fold(
         errors => BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
         data => {
-          val id_bpr_utr: ServiceResponse[(CBCId, BusinessPartnerRecord, Utr)] = for {
-            subscribed <- EitherT.right[Future, CBCErrors, Boolean](cache.read[Subscribed.type].map(_.isDefined))
-            _ <- EitherT.cond[Future](!subscribed, (), UnexpectedState("Already subscribed"))
-            bpr_utr <- (EitherT[Future, CBCErrors, BusinessPartnerRecord](
+          val id_bpr_utr_subscribed:ServiceResponse[(CBCId,BusinessPartnerRecord,Utr,Boolean)] = for {
+            subscribed        <- EitherT.right[Future,CBCErrors,Boolean](cache.read[Subscribed.type].map(_.isDefined))
+            _                 <- EitherT.cond[Future](!subscribed,(),UnexpectedState("Already subscribed"))
+            bpr_utr           <- (EitherT[Future, CBCErrors, BusinessPartnerRecord](
               cache.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))
             ) |@| EitherT[Future, CBCErrors, Utr](
               cache.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
             )).tupled
-            subDetails = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
-            id <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
-          } yield Tuple3(id, bpr_utr._1, bpr_utr._2)
+            subDetails        = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
+            id               <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
+          } yield Tuple4(id, bpr_utr._1, bpr_utr._2, subscribed)
 
-          id_bpr_utr.semiflatMap {
-            case (id, bpr, utr) =>
+          id_bpr_utr_subscribed.semiflatMap{
+            case (id,bpr,utr,subscribed) =>
 
               val result = for {
                 _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, Some(id), utr))
                 _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
-                _ <- EitherT.right[Future, CBCErrors, (CacheMap, CacheMap, CacheMap)](
-                  (cache.save(id) |@| cache.save(data) |@| cache.save(SubscriptionDetails(bpr, data, Some(id), utr))).tupled
+                _ <- EitherT.right[Future, CBCErrors, (CacheMap,CacheMap,CacheMap,CacheMap)](
+                  (cache.save(id) |@| cache.save(data) |@| cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@| cache.save(subscribed)).tupled
                 )
+                _ <- createSuccessfulSubscriptionAuditEvent(authContext,SubscriptionDetails(bpr, data, Some(id), utr))
               } yield id
 
 
@@ -121,7 +122,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                     _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
                   )
                 },
-                _ => Redirect(routes.SubscriptionController.reconfirmEmail())
+                _ => Redirect(routes.SubscriptionController.subscribeSuccessCbcId(id.value))
               ).flatten
 
           }.leftMap(errors => errorRedirect(errors)).merge
@@ -130,14 +131,6 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
   }
 
 
-  val reconfirmEmail = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request =>
-
-      OptionT(cache.read[SubscriberContact]).cata(
-        InternalServerError(FrontendGlobal.internalServerErrorTemplate),
-        subscriberContactInfo => Ok(views.html.submission.reconfirmEmail(includes.asideCbc(), includes.phaseBannerBeta(), reconfirmEmailForm.fill(subscriberContactInfo.email)))
-      )
-  }
 
   val alreadySubscribed = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request =>
@@ -145,81 +138,36 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
   }
 
 
-  val reconfirmEmailSubmit = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request =>
-
-      reconfirmEmailForm.bindFromRequest.fold(
-
-        formWithErrors => BadRequest(views.html.submission.reconfirmEmail(
-          includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
-        )),
-        success => (for {
-          subscribed <- EitherT.right[Future, CBCErrors, Boolean](cache.read[Subscribed.type].map(_.isDefined))
-          _ <- EitherT.cond[Future](!subscribed, (), UnexpectedState("Already subscribed"))
-          subscriberContact <- OptionT(cache.read[SubscriberContact]).toRight(UnexpectedState("SubscriberContact not found in the cache"))
-          cbcId <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("CBCId not found in the cache"))
-          newSubscriberContact = subscriberContact.copy(email = success)
-          _ <- if (subscriberContact.email != success) EitherT.right[Future, CBCErrors, CacheMap](cache.save[SubscriberContact](newSubscriberContact))
-          else EitherT.pure[Future, CBCErrors, Unit](())
-          data <- OptionT(cache.read[SubscriptionDetails]).map(_.copy(subscriberContact = newSubscriberContact)).toRight(
-            UnexpectedState("SubscriptionDetails not found in cache")
-          )
-          _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(Subscribed))
-          subscriptionEmailSent <- EitherT.right[Future, CBCErrors, Boolean](cache.read[SubscriptionEmailSent].map(_.isDefined))
-          emailSent <-
-          if (!subscriptionEmailSent) EitherT.right[Future, CBCErrors, Option[Boolean]](
-            emailService.sendEmail(makeSubEmail(data.subscriberContact, cbcId)).value)
-          else EitherT.pure[Future, CBCErrors, Option[Boolean]](None)
-          _ <- if (emailSent.getOrElse(false)) EitherT.right[Future, CBCErrors, CacheMap](cache.save(SubscriptionEmailSent()))
-          else EitherT.pure[Future, CBCErrors, Unit](())
-          _ <- createSuccessfulSubscriptionAuditEvent(authContext, data)
-        } yield cbcId).fold(
-          error => errorRedirect(error),
-          cbcId => Redirect(routes.SubscriptionController.subscribeSuccessCbcId(cbcId.value))
-        )
-      )
-  }
-
-  private def makeSubEmail(subscriberContact: SubscriberContact, cbcId: CBCId): Email = {
-    Email(List(subscriberContact.email.value),
-      "cbcr_subscription",
-      Map("f_name" → subscriberContact.firstName,
-          "s_name" → subscriberContact.lastName,
-          "cbcrId" → cbcId.value))
-  }
-
-
-  val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
-    implicit request =>
-      Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm))
+  val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
+    Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm))
   }
 
 
   val updateInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request =>
 
-      val subscriptionData: ServiceResponse[ETMPSubscription] = for {
-        cbcId <- enrollments.getCbcId.toRight(UnexpectedState("Couldn't get CBCId"))
-        optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
-        details <- EitherT.fromOption[Future](optionalDetails, UnexpectedState("No SubscriptionDetails"))
-        bpr = details.businessPartnerRecord
-        _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(bpr))
-        _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(cbcId))
-        subData <- cbcIdService.getETMPSubscriptionData(bpr.safeId).toRight(UnexpectedState("No ETMP Subscription Data"): CBCErrors)
-      } yield subData
+    val subscriptionData: ServiceResponse[ETMPSubscription] = for {
+      cbcId <- enrollments.getCbcId.toRight(UnexpectedState("Couldn't get CBCId"))
+      optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
+      details <- EitherT.fromOption[Future](optionalDetails, UnexpectedState("No SubscriptionDetails"))
+      bpr = details.businessPartnerRecord
+      _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(bpr))
+      _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(cbcId))
+      subData <- cbcIdService.getETMPSubscriptionData(bpr.safeId).toRight(UnexpectedState("No ETMP Subscription Data"): CBCErrors)
+    } yield subData
 
-      subscriptionData.fold(
-        error => BadRequest(error.toString),
-        data => {
-          val prepopulatedForm = subscriptionDataForm.bind(Map(
-            "firstName" -> data.names.name1,
-            "lastName" -> data.names.name2,
-            "email" -> data.contact.email.value,
-            "phoneNumber" -> data.contact.phoneNumber
-          ))
-          Ok(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
-        }
-      )
+    subscriptionData.fold(
+      error => BadRequest(error.toString),
+      data => {
+        val prepopulatedForm = subscriptionDataForm.bind(Map(
+          "firstName" -> data.names.name1,
+          "lastName" -> data.names.name2,
+          "email" -> data.contact.email.value,
+          "phoneNumber" -> data.contact.phoneNumber
+        ))
+        Ok(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
+      }
+    )
 
   }
 

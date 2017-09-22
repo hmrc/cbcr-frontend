@@ -79,8 +79,6 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
   implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
   implicit val utrTag = implicitly[TypeTag[Utr]]
 
-
-
   val cbcid = CBCId.create(1).toOption
 
   val subscriptionDetails = SubscriptionDetails(
@@ -257,117 +255,13 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,CBCErrors, String]("done")
       when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
       when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,CBCErrors, Unit](())
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
+      when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
       when(cache.read[Subscribed.type](EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
       when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
-      when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("700000002")))
+      when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
       verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
-    }
-  }
-
-  "GET /subscriberReconfirmEmail" should {
-    "return 200" in {
-
-      val fakeRequestReconfirmEmail = addToken(FakeRequest("GET", "/subscriberReconfirmEmail"))
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname","0123123123", EmailAddress("max@max.com"))))
-      status(controller.reconfirmEmail(fakeRequestReconfirmEmail)) shouldBe Status.OK
-    }
-  }
-
-
-  "POST /subscriberReconfirmEmailSubmit" should {
-    "return 400 when the Email Address is empty" in {
-
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
-    }
-    "return 400 when Email Address is in Invalid format" in {
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc.xyz")
-
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
-    }
-    "return 303 when Email Address is valid" in {
-
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
-      when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("700000002")))
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname", "0123123123", EmailAddress("max@max.com"))))
-      when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
-      when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(emailMock.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
-      when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
-      when(cache.read[SubscriptionEmailSent] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
-      when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
-    }
-    "send an email in and write SubscriptionEmailSent to the cache in" in {
-
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname", "0123123123", EmailAddress("max@max.com"))))
-      when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
-      when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(emailMock.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
-      when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
-      when(cache.read[SubscriptionEmailSent] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
-      when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
-      verify(emailMock,times(1)).sendEmail(any())(any())
-      verify(cache,times(1)).save(any())(EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())
-    }
-    "Not send the email again if the email has been send" in {
-
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      val fakeRequestSubmit2 = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-
-      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname", "0123123123", EmailAddress("max@max.com"))))
-      when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
-      when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(emailMock.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
-      when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
-      when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-      when(cache.read[SubscriptionEmailSent] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
-
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
-      when(cache.read[SubscriptionEmailSent](EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(Some(SubscriptionEmailSent()))
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit2)) shouldBe Status.SEE_OTHER
-      verify(emailMock,times(1)).sendEmail(any())(any())
-      verify(cache,times(1)).save(any())(EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())
-    }
-    "return 303 when Email Address is valid even if the email fails" in {
-
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.read[SubscriberContact] (EQ(SubscriberContact.subscriptionFormat),any(),any())) thenReturn Future.successful(Some(SubscriberContact("firstName", "lastname", "0123123123", EmailAddress("max@max.com"))))
-      when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId("XGCBC0000000001"))
-      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
-      when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn Future.successful(Some(subscriptionDetails))
-      when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.save[CBCId](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(emailMock.sendEmail(any())(any())) thenReturn  OptionT.none[Future,Boolean]
-      when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-      when(cache.read[SubscriptionEmailSent] (EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.SEE_OTHER
-      verify(cache,times(0)).save(any())(EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())
-    }
-    "return 500 when trying to re-submit" in {
-
-      val reconfirmEmail = Json.obj("reconfirmEmail" -> "abc@xyz.com")
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/subscriberReconfirmEmailSubmit").withJsonBody(Json.toJson(reconfirmEmail)))
-      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(Some(Subscribed))
-      status(controller.reconfirmEmailSubmit(fakeRequestSubmit)) shouldBe Status.INTERNAL_SERVER_ERROR
     }
   }
 
