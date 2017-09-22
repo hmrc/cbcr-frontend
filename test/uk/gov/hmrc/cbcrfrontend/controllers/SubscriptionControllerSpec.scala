@@ -79,9 +79,6 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
   implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
   implicit val utrTag = implicitly[TypeTag[Utr]]
 
-  when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-
-
   val cbcid = CBCId.create(1).toOption
 
   val subscriptionDetails = SubscriptionDetails(
