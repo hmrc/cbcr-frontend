@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json._
 
 case class AgencyBusinessName(name:String)
 object AgencyBusinessName{
