@@ -263,6 +263,17 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
       verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
     }
+    "return 500 when trying to resubmit subscription details" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
+        override lazy val audit = auditMock
+      }
+      val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      when(cache.read[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(Some(Subscribed))
+      status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
+
+    }
   }
 
 
