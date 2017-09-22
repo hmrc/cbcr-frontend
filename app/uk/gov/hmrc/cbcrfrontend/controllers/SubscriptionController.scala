@@ -75,12 +75,17 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
     )(SubscriberContact.apply)(SubscriberContact.unapply)
   )
 
-  val reconfirmEmailForm: Form[EmailAddress] = Form(
-    mapping(
-      "reconfirmEmail" -> email.verifying(EmailAddress.isValid(_))
-    )(EmailAddress.apply)(EmailAddress.unapply)
-  )
+//  val reconfirmEmailForm: Form[EmailAddress] = Form(
+//    mapping(
+//      "reconfirmEmail" -> email.verifying(EmailAddress.isValid(_))
+//    )(EmailAddress.apply)(EmailAddress.unapply)
+//  )
 
+
+  val alreadySubscribed = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+    implicit request =>
+      Future.successful(Ok(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
+  }
 
   val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request =>
@@ -89,7 +94,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       subscriptionDataForm.bindFromRequest.fold(
         errors => BadRequest(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
         data => {
-          val id_bpr_utr_subscribed:ServiceResponse[(CBCId,BusinessPartnerRecord,Utr,Boolean)] = for {
+          val id_bpr_utr:ServiceResponse[(CBCId,BusinessPartnerRecord,Utr)] = for {
             subscribed        <- EitherT.right[Future,CBCErrors,Boolean](cache.read[Subscribed.type].map(_.isDefined))
             _                 <- EitherT.cond[Future](!subscribed,(),UnexpectedState("Already subscribed"))
             bpr_utr           <- (EitherT[Future, CBCErrors, BusinessPartnerRecord](
@@ -98,17 +103,17 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
               cache.read[Utr].map(_.toRight(UnexpectedState("UTR record not found")))
             )).tupled
             subDetails        = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
-            id               <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
-          } yield Tuple4(id, bpr_utr._1, bpr_utr._2, subscribed)
+            id                <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
+          } yield Tuple3(id, bpr_utr._1, bpr_utr._2)
 
-          id_bpr_utr_subscribed.semiflatMap{
-            case (id,bpr,utr,subscribed) =>
+          id_bpr_utr.semiflatMap{
+            case (id,bpr,utr) =>
 
               val result = for {
                 _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, Some(id), utr))
                 _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
-                _ <- EitherT.right[Future, CBCErrors, (CacheMap,CacheMap,CacheMap,CacheMap)](
-                  (cache.save(id) |@| cache.save(data) |@| cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@| cache.save(subscribed)).tupled
+                _ <- EitherT.right[Future, CBCErrors, (CacheMap,CacheMap,CacheMap, CacheMap)](
+                  (cache.save(id) |@| cache.save(data) |@| cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@| cache.save(Subscribed)).tupled
                 )
                 _ <- createSuccessfulSubscriptionAuditEvent(authContext,SubscriptionDetails(bpr, data, Some(id), utr))
               } yield id
@@ -130,12 +135,6 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       )
   }
 
-
-
-  val alreadySubscribed = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
-    implicit request =>
-      Future.successful(Ok(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
-  }
 
 
   val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>
