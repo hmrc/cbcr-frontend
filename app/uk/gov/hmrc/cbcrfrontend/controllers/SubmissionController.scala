@@ -276,6 +276,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
               straightThrough <- EitherT.right[Future, CBCErrors, Boolean](cache.read[CBCId].map(_.isDefined))
               ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
               _               <- EitherT.right[Future, CBCErrors,CacheMap](cache.save(success.copy(affinityGroup = Some(ag))))
+              xml             <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
+              _               <- right(cache.save(xml.messageSpec.sendingEntityIn))
             } yield straightThrough
 
             passStraightThrough.fold(
