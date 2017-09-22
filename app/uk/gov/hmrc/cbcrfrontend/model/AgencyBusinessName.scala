@@ -20,13 +20,5 @@ import play.api.libs.json._
 
 case class AgencyBusinessName(name:String)
 object AgencyBusinessName{
-  implicit val format = new Format[AgencyBusinessName] {
-
-    override def writes(o: AgencyBusinessName): JsValue = JsString(o.toString)
-
-    override def reads(json: JsValue): JsResult[AgencyBusinessName] = json match {
-      case o:JsString => Option(AgencyBusinessName(o.value)).fold[JsResult[AgencyBusinessName]](JsError(s"Failed to parse $json as AgencyBusinessName"))(JsSuccess(_))
-      case _          => JsError(s"Failed to parse $json as AgencyBusinessName")
-    }
-  }
+  implicit val format = Json.format[AgencyBusinessName]
 }
