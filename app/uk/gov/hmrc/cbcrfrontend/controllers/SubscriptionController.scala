@@ -108,6 +108,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                 _ <- EitherT.right[Future, CBCErrors, (CacheMap,CacheMap,CacheMap, CacheMap)](
                   (cache.save(id) |@| cache.save(data) |@| cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@| cache.save(Subscribed)).tupled
                 )
+                _ <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("CBCId not found in the cache"))
                 _ <- createSuccessfulSubscriptionAuditEvent(authContext,SubscriptionDetails(bpr, data, Some(id), utr))
               } yield id
 
