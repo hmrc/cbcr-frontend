@@ -278,6 +278,11 @@ class SubmissionController @Inject()(val sec: SecuredActions,
               _               <- EitherT.right[Future, CBCErrors,CacheMap](cache.save(success.copy(affinityGroup = Some(ag))))
               xml             <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
               _               <- right(cache.save(xml.messageSpec.sendingEntityIn))
+              submitterInfo   <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))
+              name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
+              _               <- EitherT.right[Future, CBCErrors, CacheMap](cache.save[SubmitterInfo](
+                submitterInfo.copy(agencyBusinessName = Some(name))
+              ))
             } yield straightThrough
 
             passStraightThrough.fold(
@@ -309,7 +314,6 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       )
       sd      <- createSummaryData(smd)
     } yield Ok(views.html.submission.submitSummary(includes.phaseBannerBeta(), sd))
-
     result.fold(
       errors => errorRedirect(errors),
       result => result
