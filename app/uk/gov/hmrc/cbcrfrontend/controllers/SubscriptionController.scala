@@ -108,7 +108,11 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                 _ <- EitherT.right[Future, CBCErrors, (CacheMap,CacheMap,CacheMap, CacheMap)](
                   (cache.save(id) |@| cache.save(data) |@| cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@| cache.save(Subscribed)).tupled
                 )
-                _ <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("CBCId not found in the cache"))
+                subscriptionEmailSent <- EitherT.right[Future, CBCErrors, Boolean](cache.read[SubscriptionEmailSent].map(_.isDefined))
+                emailSent ← if (!subscriptionEmailSent)EitherT.right[Future, CBCErrors, Option[Boolean]](emailService.sendEmail(makeSubEmail(data, id)).value)
+                            else EitherT.pure[Future, CBCErrors, Option[Boolean]](None)
+                _ <- if (emailSent.getOrElse(false)) EitherT.right[Future, CBCErrors, CacheMap](cache.save(SubscriptionEmailSent()))
+                     else EitherT.pure[Future, CBCErrors, Unit](())
                 _ <- createSuccessfulSubscriptionAuditEvent(authContext,SubscriptionDetails(bpr, data, Some(id), utr))
               } yield id
 
@@ -128,7 +132,13 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
         }
       )
   }
-
+  private def makeSubEmail(subscriberContact: SubscriberContact, cbcId: CBCId): Email = {
+    Email(List(subscriberContact.email.value),
+      "cbcr_subscription",
+      Map("f_name" → subscriberContact.firstName,
+        "s_name" → subscriberContact.lastName,
+        "cbcrId" → cbcId.value))
+  }
 
 
   val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)){ authContext => implicit request =>

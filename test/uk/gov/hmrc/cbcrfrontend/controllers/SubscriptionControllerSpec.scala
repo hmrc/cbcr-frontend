@@ -245,7 +245,7 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(subService).clearSubscriptionData(any())(any(),any())
     }
-    "return 303 (see_other) when all params are present and valid and the SubscriptionDataService returns Ok" in {
+    "return 303 (see_other) when all params are present and valid and the SubscriptionDataService returns Ok and send an email " in {
       val subService = mock[SubscriptionDataService]
       val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
         override lazy val audit = auditMock
@@ -259,10 +259,37 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
       when(cache.read[Subscribed.type](EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(cbcid)
+      when(cache.read[SubscriptionEmailSent](EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(None)
       when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.save[SubscriptionEmailSent](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(emailMock.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
       verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
+      verify(emailMock,times(1)).sendEmail(any())(any())
+    }
+    "not send an email if one has already been send " in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
+        override lazy val audit = auditMock
+      }
+      val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,CBCErrors, String]("done")
+      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
+      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,CBCErrors, Unit](())
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
+      when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
+      when(cache.read[Subscribed.type](EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
+      when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(cbcid)
+      when(cache.read[SubscriptionEmailSent](EQ(SubscriptionEmailSent.SubscriptionEmailSentFormat),any(),any())) thenReturn Future.successful(Some(SubscriptionEmailSent()))
+      when(cache.save[SubscriberContact](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.save[SubscriptionEmailSent](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(emailMock.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
+      status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
+      verify(subService, times(0)).clearSubscriptionData(any())(any(),any())
+      verify(emailMock,times(0)).sendEmail(any())(any())
     }
     "return 500 when trying to resubmit subscription details" in {
       val subService = mock[SubscriptionDataService]
