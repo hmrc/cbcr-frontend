@@ -156,7 +156,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
     result.leftMap{
       case FatalSchemaErrors(size)=>
-        BadRequest(submission.fileupload.fileUploadResult(None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
+        Ok(submission.fileupload.fileUploadResult(None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
       case InvalidFileType(_)     =>
         Redirect(routes.FileUploadController.fileInvalid())
       case e:CBCErrors            =>
