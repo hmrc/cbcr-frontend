@@ -106,13 +106,15 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       val rr = in.cbcReport.map(_.docSpec.docType).orElse(in.additionalInfo.map(_.docSpec.docType)).flatMap(DocTypeIndic.fromString)
 
       (id |@| rr).map { (drid, dti) =>
-        reportingEntityDataService.queryReportingEntityData(drid).subflatMap{
+        reportingEntityDataService.queryReportingEntityData(drid).leftMap{
+          cbcErrors => {
+            Logger.error(s"Got error back: $cbcErrors")
+            throw new Exception(s"Error communicating with backend: $cbcErrors")
+          }
+        }.subflatMap{
           case Some(red) => Right(ReportingEntity(red.reportingRole, DocSpec(OECD0, red.reportingEntityDRI, None), red.utr, red.ultimateParentEntity.ultimateParentEntity))
           case None      => Left(OriginalSubmissionNotFound)
-        }.leftMap{cbcErrors => {
-          Logger.error(s"Got error back: $cbcErrors")
-          throw new Exception(s"Error communicating with backend: $cbcErrors")
-        }}.toValidatedNel
+        }.toValidatedNel
       }.getOrElse{
         Future.successful(OriginalSubmissionNotFound.invalidNel)
       }
