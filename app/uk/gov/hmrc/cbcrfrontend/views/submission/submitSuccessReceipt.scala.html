@@ -41,7 +41,8 @@ implicit request: Request[_], messages: Messages)
 
             <p><a href="#" onclick="window.print()" class="print-link">@Messages("submitSuccessReceipt.print")</a></p>
             <h3>@Messages("submitSuccessReceipt.whatNext.heading")</h3>
-            @Messages("submitSuccessReceipt.whatNext.info")
+            <p>@Messages("submitSuccessReceipt.email")</p>
+            <p>@Messages("submitSuccessReceipt.whatNext.info")</p>
             <p>
                 <a class="button" href="@routes.SharedController.signOut()" id="btn-close">@Messages("form.controls.signOut")</a>
             </p>
