@@ -137,6 +137,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
     val result = for {
       file_metadata       <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId)).tupled
+      _                   <- right(cache.save(file_metadata._2))
       _                   <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml",(),InvalidFileType(file_metadata._2.name))
       schemaErrors        =  schemaValidator.validateSchema(file_metadata._1)
       xmlErrors           = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
@@ -242,14 +243,24 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     )
   }
 
+  //Turn a Case class into a map
+  private def getCCParams(cc: AnyRef): Map[String, String] =
+    (Map[String, String]() /: cc.getClass.getDeclaredFields) {(a, f) =>
+      f.setAccessible(true)
+      a + (f.getName -> f.get(cc).toString)
+    }
+
   def auditFailedSubmission(authContext: AuthContext, reason:String) (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
-    EitherT(audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
-      tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri)
-    )).map {
-      case AuditResult.Success         => Right(AuditResult.Success)
-      case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
-      case AuditResult.Disabled        => Right(AuditResult.Success)
-    })
+    for {
+      md <- right(cache.read[FileMetadata])
+      result <- EitherT[Future,CBCErrors,AuditResult.Success.type](audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
+        tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri) ++ md.map(getCCParams).getOrElse(Map.empty[String,String])
+      )).map {
+        case AuditResult.Success => Right(AuditResult.Success)
+        case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
+        case AuditResult.Disabled => Right(AuditResult.Success)
+      })
+    } yield result
   }
 
 }
