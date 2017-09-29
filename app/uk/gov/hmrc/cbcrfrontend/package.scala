@@ -69,17 +69,26 @@ package object cbcrfrontend {
       .map(affinityGroupToUserType)
     )
 
+  def getUserGGId(ac:AuthContext)(implicit cache:CBCSessionCache, sec:AuthConnector,hc:HeaderCarrier,ec:ExecutionContext) : Future[GGId] =
+    OptionT(cache.read[GGId])
+      .getOrElseF{
+        sec.getUserDetails[GGId](ac)
+          .flatMap(ag => cache.save[GGId](ag)
+            .map(_ => ag))
+      }
+
   def sha256Hash(file: File): String =
     String.format("%064x", new java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(
       org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
     )))
 
-  def generateMetadataFile(gatewayId: String, cache: CBCSessionCache)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[ValidatedNel[String, SubmissionMetaData]] = {
+  def generateMetadataFile(cache: CBCSessionCache, authContext: AuthContext)(implicit hc: HeaderCarrier, ec: ExecutionContext, sec:AuthConnector): Future[ValidatedNel[String, SubmissionMetaData]] = {
 
     def errors[T: TypeTag](v: Option[T]): ValidatedNel[String, T] =
       v.toValidNel(s"Could not find data for ${typeOf[T].toString} in cache")
 
     for {
+      gatewayId <- getUserGGId(authContext)(cache,sec,hc,ec)
       bpr <- cache.read[BusinessPartnerRecord]
       utr <- cache.read[Utr]
       hash <- cache.read[Hash]
@@ -98,7 +107,7 @@ package object cbcrfrontend {
 
         SubmissionMetaData(
           SubmissionInfo(
-            gwCredId = gatewayId,
+            gwCredId = gatewayId.authProviderId,
             cbcId = id,
             bpSafeId = record.safeId,
             hash = hash,
