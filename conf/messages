@@ -48,19 +48,20 @@ subscribeSuccessCbcId.email=We''ll send you a confirmation email for your record
 subscribeSuccessCbcId.next2=If your report is ready to send, continue. Alternatively, sign out now and send the report when it's complete.
 
 contactInfoSubscriber.mainHeading=Who should we contact about the content of the report?
+contactInfoSubscriber.errors=We''ve found some errors
 contactInfoSubscriber.subHeading=Enter the name of the person we should contact if there are any questions about the information contained in the Country by Country report.
 contactInfoSubscriber.firstName.label=First name
-contactInfoSubscriber.firstName.error=Please enter your first name
+contactInfoSubscriber.firstName.error=Enter your first name
 contactInfoSubscriber.firstName.hint=The first name of the person we should contact
 contactInfoSubscriber.lastName.label=Last name
-contactInfoSubscriber.lastName.error=Please enter your last name
+contactInfoSubscriber.lastName.error=Enter your last name
 contactInfoSubscriber.lastName.hint=The last name of the person we should contact
 contactInfoSubscriber.phoneNumber.label=Phone number
 contactInfoSubscriber.phoneNumber.hint=The phone number of the person we should contact
-contactInfoSubscriber.phoneNumber.error=Please enter a valid phone number
+contactInfoSubscriber.phoneNumber.error=Enter a valid phone number
 contactInfoSubscriber.emailAddress.label=Email address
 contactInfoSubscriber.emailAdress.hint=The email address of the person we should contact
-contactInfoSubscriber.emailAddress.error=Please enter a valid email address
+contactInfoSubscriber.emailAddress.error=Enter a valid email address
 contactInfoSubscriber.updateHeading=Update your details
 
 contactInfoSubscriber.reconfirm.email.mainHeading=Is this your correct email address?
@@ -140,6 +141,8 @@ fileUploadResult.notYetSubmitted=We''ll need some more information from you befo
 
 enterCompanyName.mainHeading=Enter the name of the company or partnership you work for
 enterCompanyName.formHintWhereYouGotIt=Company or partnership name
+enterCompanyName.form.error.header=You haven''t entered the company or partnership name.
+enterCompanyName.form.error=Enter a company or partnership name
 enterCompanyName.formHint=This isn''t necessarily the one you''re sending the report for
 
 submitSummary.mainHeading=Confirm your report details
@@ -164,12 +167,13 @@ uploadReport.uploadButton=Upload
 uploadReport.error=You must select a file
 
 submitterInfo.mainHeading=Enter your contact details, as the sender of the report
+submitterInfo.error.heading=We have found some error''s
 submitterInfo.fullName=Your name
-submitterInfo.fullName.error=Please enter your full name
+submitterInfo.fullName.error=Enter your full name
 submitterInfo.phoneNumber=Your phone number
-submitterInfo.phoneNumber.error=Please enter a valid phone number
+submitterInfo.phoneNumber.error=Enter a valid phone number
 submitterInfo.emailAddress=Your email address
-submitterInfo.emailAddress.error=Please enter a valid email address
+submitterInfo.emailAddress.error=Enter a valid email address
 
 notAuthorised.mainHeading=Agents aren''t authorised to register for this service
 notAuthorised.message=Did you mean to

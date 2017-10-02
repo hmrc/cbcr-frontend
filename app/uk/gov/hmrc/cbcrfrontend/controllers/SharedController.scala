@@ -22,6 +22,7 @@ import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
+import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -179,9 +180,7 @@ class SharedController @Inject()(val sec: SecuredActions,
     getUserType(authContext).leftMap(errorRedirect).flatMap { userType =>
 
       knownFactsForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
-        formWithErrors => EitherT.left(
-          BadRequest(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))
-        ),
+        formWithErrors => EitherT.left(BadRequest(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))),
         knownFacts =>  for {
           bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
             NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
