@@ -51,6 +51,7 @@ package object cbcrfrontend {
     a.affinityGroup.toLowerCase.trim match {
       case "agent"        => Right(Agent)
       case "organisation" => Right(Organisation)
+      case "individual"   => Right(Individual)
       case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
     }
   }

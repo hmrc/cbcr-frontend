@@ -19,15 +19,15 @@ package uk.gov.hmrc.cbcrfrontend.auth
 import javax.inject.{Inject, Singleton}
 
 import cats.instances.future._
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.controllers.{AsyncUserRequest, UserRequest}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.model.{Agent, Organisation, UserType}
+import uk.gov.hmrc.cbcrfrontend.model.{Agent, Individual, Organisation, UserType}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.play.frontend.auth._
+import uk.gov.hmrc.play.frontend.auth.{PageVisibilityResult, _}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.HeaderCarrier
 import play.api.i18n.Messages.Implicits._
@@ -35,6 +35,7 @@ import play.api.Play.current
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.cbcrfrontend.views.html.subscription.notAuthorised
 
 
 trait SecuredActions extends Actions {
@@ -51,11 +52,14 @@ class SecuredActionsImpl @Inject()(configuration: Configuration)(implicit cache:
 
   private val agentAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), new AffinityGroupPredicate(Agent))
 
+  private val individualAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), CBCRPageVisibilityIndividual)
+
   override def AuthenticatedAction(r: UserRequest) = normalAuth(r)
 
   override def AsyncAuthenticatedAction(u:Option[UserType] = None)(r: AsyncUserRequest) = u match {
     case Some(Agent)        => agentAuth.async(r)
     case Some(Organisation) => organisationAuth.async(r)
+    case Some(Individual)   => individualAuth.async(r)
     case None               => normalAuth.async(r)
   }
 
@@ -83,10 +87,24 @@ object CBCRPageVisibilityPredicate extends PageVisibilityPredicate {
     Future.successful(PageIsVisible)
 }
 
+object CBCRPageVisibilityIndividual extends PageVisibilityPredicate {
+  def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageBlocked] = {
+    implicit val r = request
+    Future.successful(PageBlocked(Future.successful
+    (Unauthorized(uk.gov.hmrc.cbcrfrontend.views.html.not_authorised_indivitial()))))
+  }
+}
+
 class AffinityGroupPredicate(restrictToUser: UserType)(implicit auth: AuthConnector, cache:CBCSessionCache, ec:ExecutionContext)
   extends PageVisibilityPredicate {
 
-  private def errorPage(implicit request:Request[_]) = Future.successful(Unauthorized(views.html.subscription.notAuthorised(includes.asideBusiness(), includes.phaseBannerBeta())))
+  private def errorPage(userType: Option[UserType] = None)(implicit request:Request[_]) ={
+    userType match {
+      case Some(Agent) => Future.successful(Unauthorized(notAuthorised(includes.asideBusiness(), includes.phaseBannerBeta())))
+      case Some(Individual) => Future.successful(Unauthorized(not_authorised_indivitial()))
+      case _ =>   Future.successful(Unauthorized(notAuthorised(includes.asideBusiness(), includes.phaseBannerBeta())))
+    }
+   }
 
   override def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageVisibilityResult] = {
 
@@ -95,8 +113,8 @@ class AffinityGroupPredicate(restrictToUser: UserType)(implicit auth: AuthConnec
     implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
 
     val userType: ServiceResponse[UserType] = getUserType(authContext)(cache,auth,hc(request),ec)
-
-    userType.fold( _ => PageBlocked(errorPage),{ ut => if(ut == restrictToUser){PageIsVisible} else { PageBlocked(errorPage)}})
+    userType.fold( _ => PageBlocked(errorPage()),{ ut => if(ut == restrictToUser){PageIsVisible} else {
+      PageBlocked(errorPage(Some(ut)))}})
   }
 
 }
