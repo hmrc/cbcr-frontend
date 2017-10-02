@@ -29,13 +29,12 @@ implicit request: Request[_], messages: Messages)
 @sidebarContent = {
 @asideCbc
 }
-
+    @import tags.formFieldDisplay
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
-@main_template(Messages("enterCBCId.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(if(form.hasErrors){"Error: " + Messages("enterCBCId.mainHeading")}else {Messages("enterCBCId.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
+
     <div class="grid-row">
         <div class="column-two-thirds">
-
-            <h1>@Messages("enterCBCId.mainHeading")</h1>
             @if(errors){
                 <div class="flash error-summary error-summary--show"
                 id="error-summary-display"
@@ -47,15 +46,12 @@ implicit request: Request[_], messages: Messages)
                     <strong><a href="#txt-cbcID">@Messages("enterCBCId.error.message.invalid.id")</a></strong>
                 </div>
             }
+            <h1>@Messages("enterCBCId.mainHeading")</h1>
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId()){
             <fieldset>
-                <div class="form-group @if(errors){form-field--error}">
-                    <label for="txt-cbcID">
-                        <div>@Messages("enterCBCId.formHintWhereYouGotIt")</div>
-                        <div class="form-hint">@Messages("enterCBCId.formHint")</div>
-                    </label>
-
-                    <input type="text" class="@{if(errors){ "input--medium input--cleared form-control error-field" } else {"input--medium input--cleared form-control"} }" name="cbcId" id="txt-cbcID"/>
+                <div class="form-group">
+                    @formFieldDisplay(errors,"txt-cbcID",Some(Messages("enterCBCId.error.message.invalid.id")),
+                        Messages("enterCBCId.formHintWhereYouGotIt"),form,Some(Messages("enterCBCId.error.header")))
                 </div>
             </fieldset>
             @csrf_token()
