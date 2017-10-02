@@ -129,10 +129,6 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
 
-  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
-    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-  val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
-
   val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,TestSessionCache(),authCon)
   val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,cache,authCon)
 

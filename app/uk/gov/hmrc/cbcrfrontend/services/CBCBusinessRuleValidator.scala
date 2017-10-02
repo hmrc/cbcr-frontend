@@ -25,6 +25,7 @@ import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
 import cats.instances.all._
 import cats.syntax.all._
 import play.api.Logger
+import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.HeaderCarrier
 
@@ -129,7 +130,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   }
 
   private def validateCbcOecdVersion(cv:RawCbcVal):Validated[BusinessRuleErrors,Unit] = {
-    if(cv.cbcVer != "1.0"){
+    if(cv.cbcVer != FrontendAppConfig.schemaVersion){
       CbcOecdVersionError.invalid
     } else {
       ().valid

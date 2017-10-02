@@ -38,10 +38,7 @@ class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite {
 
   implicit val as = app.injector.instanceOf[ActorSystem]
 
-  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
-    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-  val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
-  val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
+  val validator = new CBCRXMLValidator(env)
 
   "An Xml Validator" should {
     "not return any error for a valid file" in {

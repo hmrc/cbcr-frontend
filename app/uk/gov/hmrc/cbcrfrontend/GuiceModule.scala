@@ -33,11 +33,5 @@ class GuiceModule extends AbstractModule with ServicesConfig {
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
     bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
     bind(classOf[BPRKnownFactsConnector])
-    bind(classOf[XMLValidationSchema]).toInstance{
-      val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
-        XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-      val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
-      xmlValidationSchemaFactory.createSchema(schemaFile)
-    }
   }
 }

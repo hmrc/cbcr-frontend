@@ -32,6 +32,7 @@ trait AppConfig {
   val fileUploadFrontendHost: String
   val betaFeedbackUrlNoAuth: String
   val governmentGatewaySignOutUrl: String
+  val schemaVersion: String
 
 
 }
@@ -68,6 +69,8 @@ object FrontendAppConfig extends AppConfig with ServicesConfig {
 
   lazy val whitelist = whitelistConfig("whitelist")
   lazy val whitelistExcluded = whitelistConfig("whitelist-excluded")
+
+  lazy val schemaVersion = loadConfig(s"oecd-schema-version")
 
 
 }
