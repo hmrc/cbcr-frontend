@@ -25,15 +25,23 @@ import com.ctc.wstx.exc.WstxException
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
 import org.codehaus.stax2.validation._
 import play.api.{Environment, Logger}
+import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Exception.nonFatalCatch
 
 
-class CBCRXMLValidator @Inject()(env:Environment, xmlValidationSchema: XMLValidationSchema)(implicit system:ActorSystem) {
+class CBCRXMLValidator @Inject()(env:Environment)(implicit system:ActorSystem) {
 
 
   val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
+
+  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+  val schemaVer: String = FrontendAppConfig.schemaVersion
+  val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
+  val xmlValidationSchema2: XMLValidationSchema = xmlValidationSchemaFactory.createSchema(schemaFile)
+
 
   def validateSchema(input: File): XmlErrorHandler = {
     val xmlErrorHandler = new XmlErrorHandler()
@@ -41,7 +49,7 @@ class CBCRXMLValidator @Inject()(env:Environment, xmlValidationSchema: XMLValida
     try {
       val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
       xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
-      xmlStreamReader.validateAgainst(xmlValidationSchema)
+      xmlStreamReader.validateAgainst(xmlValidationSchema2)
       while ( xmlStreamReader.hasNext ) { xmlStreamReader.next }
     } catch {
       case e:WstxException =>
