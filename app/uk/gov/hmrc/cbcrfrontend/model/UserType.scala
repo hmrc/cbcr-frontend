@@ -21,6 +21,7 @@ import play.api.libs.json._
 sealed trait UserType extends Product with Serializable
 case object Organisation extends UserType
 case object Agent extends UserType
+case object Individual extends UserType
 
 case class AffinityGroup(affinityGroup: String)
 object AffinityGroup{
