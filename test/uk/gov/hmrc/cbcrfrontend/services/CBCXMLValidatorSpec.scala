@@ -19,10 +19,12 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.File
 
 import akka.actor.ActorSystem
+import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.OneAppPerSuite
-import play.api.Environment
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 
 class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite {
 
@@ -33,12 +35,16 @@ class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite {
   val invalidMultipleXmlFile  = loadFile("cbcr-invalid-multiple-errors.xml")
   val invalidMultipleXmlFile2 = loadFile("cbcr-invalid-multiple-errors2.xml")
   val fatal                   = loadFile("fatal.xml")
+  val configuration           = new Configuration(ConfigFactory.load("application.conf"))
 
   implicit val env = app.injector.instanceOf[Environment]
 
   implicit val as = app.injector.instanceOf[ActorSystem]
 
-  val validator = new CBCRXMLValidator(env)
+  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+  val schemaFile: File = new File(s"conf/schema/${FrontendAppConfig.schemaVersion}/CbcXML_v${FrontendAppConfig.schemaVersion}.xsd")
+  val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
 
   "An Xml Validator" should {
     "not return any error for a valid file" in {

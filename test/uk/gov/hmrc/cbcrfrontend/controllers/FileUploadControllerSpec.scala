@@ -40,6 +40,7 @@ import play.api.libs.Files
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.json.{Format, JsNull, Reads}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.auth._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -71,6 +72,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val extractor: XmlInfoExtract                        = new XmlInfoExtract()
   val enrol:EnrolmentsConnector                        = mock[EnrolmentsConnector]
 
+  val configuration = new Configuration(ConfigFactory.load("application.conf"))
+
   override protected def afterEach(): Unit = {
     reset(cache,businessRulesValidator,schemaValidator,fuService)
     super.afterEach()
@@ -82,7 +85,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     var agent = false
 
     val http = mock[HttpGet with HttpPut with HttpDelete]
-    val configuration = new Configuration(ConfigFactory.load("application.conf"))
+//    val configuration = new Configuration(ConfigFactory.load("application.conf"))
 
     def apply(): CBCSessionCache = new SessionCache(configuration, http)
 
@@ -128,6 +131,11 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   def pure[A](a:A) : ServiceResponse[A] = EitherT.pure[Future,CBCErrors, A](a)
 
   val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
+
+  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+  val schemaVer: String = configuration.getString("oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration oecd-schema-version"))
+  val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
 
   val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,TestSessionCache(),authCon)
   val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,cache,authCon)
