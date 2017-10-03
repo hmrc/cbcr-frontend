@@ -41,9 +41,10 @@ class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite {
 
   implicit val as = app.injector.instanceOf[ActorSystem]
 
+  val schemaVer: String = configuration.getString("oecd-schema-version").getOrElse("oecd-schema-version deos not exist")
   val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-  val schemaFile: File = new File(s"conf/schema/${FrontendAppConfig.schemaVersion}/CbcXML_v${FrontendAppConfig.schemaVersion}.xsd")
+  val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
   val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
 
   "An Xml Validator" should {
