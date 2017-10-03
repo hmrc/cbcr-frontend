@@ -40,13 +40,14 @@ import uk.gov.hmrc.cbcrfrontend.views.html.subscription.notAuthorised
 
 trait SecuredActions extends Actions {
   def AuthenticatedAction(r: UserRequest): Action[AnyContent]
-  def AsyncAuthenticatedAction(u:Option[UserType] = None)(r: AsyncUserRequest): Action[AnyContent]
+
+  def AsyncAuthenticatedAction(u: Option[UserType] = None)(r: AsyncUserRequest): Action[AnyContent]
 }
 
 @Singleton
-class SecuredActionsImpl @Inject()(configuration: Configuration)(implicit cache:CBCSessionCache,val authConnector: AuthConnector, ec:ExecutionContext) extends SecuredActions {
+class SecuredActionsImpl @Inject()(configuration: Configuration)(implicit cache: CBCSessionCache, val authConnector: AuthConnector, ec: ExecutionContext) extends SecuredActions {
 
-  private val normalAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), CBCRPageVisibilityPredicate)
+  private val normalAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), new CBCRPageVisibilityPredicate())
 
   private val organisationAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), new AffinityGroupPredicate(Organisation))
 
@@ -56,16 +57,16 @@ class SecuredActionsImpl @Inject()(configuration: Configuration)(implicit cache:
 
   override def AuthenticatedAction(r: UserRequest) = normalAuth(r)
 
-  override def AsyncAuthenticatedAction(u:Option[UserType] = None)(r: AsyncUserRequest) = u match {
-    case Some(Agent)        => agentAuth.async(r)
+  override def AsyncAuthenticatedAction(u: Option[UserType] = None)(r: AsyncUserRequest) = u match {
+    case Some(Agent) => agentAuth.async(r)
     case Some(Organisation) => organisationAuth.async(r)
-    case Some(Individual)   => individualAuth.async(r)
-    case None               => normalAuth.async(r)
+    case Some(Individual) => individualAuth.async(r)
+    case None => normalAuth.async(r)
   }
 
 }
 
-class CBCRAuthenticationProvider (configuration: Configuration) extends GovernmentGateway {
+class CBCRAuthenticationProvider(configuration: Configuration) extends GovernmentGateway {
 
   val cbcrFrontendBaseUrl = configuration.getString("cbcr-frontend-base-url").getOrElse("")
   val governmentGatewaySignInUrl = configuration.getString("government-gateway-sign-in-url").getOrElse("")
@@ -80,41 +81,55 @@ class CBCRAuthenticationProvider (configuration: Configuration) extends Governme
 
   def loginURL: String = governmentGatewaySignInUrl
 }
-
-
-object CBCRPageVisibilityPredicate extends PageVisibilityPredicate {
-  def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageVisibilityResult] =
-    Future.successful(PageIsVisible)
-}
-
-object CBCRPageVisibilityIndividual extends PageVisibilityPredicate {
-  def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageBlocked] = {
-    implicit val r = request
-    Future.successful(PageBlocked(Future.successful
-    (Unauthorized(uk.gov.hmrc.cbcrfrontend.views.html.not_authorised_indivitial()))))
-  }
-}
-
-class AffinityGroupPredicate(restrictToUser: UserType)(implicit auth: AuthConnector, cache:CBCSessionCache, ec:ExecutionContext)
-  extends PageVisibilityPredicate {
-
-  private def errorPage(userType: Option[UserType] = None)(implicit request:Request[_]) ={
+trait UserTypeRedirect{
+  def errorPage(userType: Option[UserType] = None)(implicit request: Request[_]) = {
     userType match {
       case Some(Agent) => Future.successful(Unauthorized(notAuthorised(includes.asideBusiness(), includes.phaseBannerBeta())))
       case Some(Individual) => Future.successful(Unauthorized(not_authorised_indivitial()))
-      case _ =>   Future.successful(Unauthorized(notAuthorised(includes.asideBusiness(), includes.phaseBannerBeta())))
+      case _ => Future.successful(Unauthorized(notAuthorised(includes.asideBusiness(), includes.phaseBannerBeta())))
     }
-   }
+  }
+  def checkUser(userType: ServiceResponse[UserType],allowedUsers:Set[UserType])(implicit request: Request[_],ec: ExecutionContext) = {
+    userType.fold(_ => PageBlocked(errorPage()), { ut =>
+      if (allowedUsers.contains(ut)) {
+        PageIsVisible
+      } else {
+        PageBlocked(errorPage(Some(ut)))
+      }
+    })
+  }
+}
 
-  override def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageVisibilityResult] = {
+class CBCRPageVisibilityPredicate()(implicit auth: AuthConnector, cache: CBCSessionCache, ec: ExecutionContext) extends PageVisibilityPredicate with UserTypeRedirect{
+  def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageVisibilityResult] = {
 
     implicit val r = request
 
     implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
 
-    val userType: ServiceResponse[UserType] = getUserType(authContext)(cache,auth,hc(request),ec)
-    userType.fold( _ => PageBlocked(errorPage()),{ ut => if(ut == restrictToUser){PageIsVisible} else {
-      PageBlocked(errorPage(Some(ut)))}})
+    checkUser(getUserType(authContext)(cache, auth, hc(request), ec), Set(Agent, Organisation))
+  }
+}
+
+  object CBCRPageVisibilityIndividual extends PageVisibilityPredicate {
+    def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageBlocked] = {
+      implicit val r = request
+      Future.successful(PageBlocked(Future.successful
+      (Unauthorized(uk.gov.hmrc.cbcrfrontend.views.html.not_authorised_indivitial()))))
+    }
   }
 
-}
+  class AffinityGroupPredicate(restrictToUser: UserType)(implicit auth: AuthConnector, cache: CBCSessionCache, ec: ExecutionContext) extends PageVisibilityPredicate with UserTypeRedirect{
+
+
+    override def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageVisibilityResult] = {
+
+      implicit val r = request
+
+      implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
+
+      checkUser(getUserType(authContext)(cache, auth, hc(request), ec), Set(restrictToUser))
+    }
+  }
+
+
