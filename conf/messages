@@ -179,7 +179,7 @@ notAuthorised.mainHeading=Agents aren''t authorised to register for this service
 notAuthorised.message=Did you mean to
 notAuthorised.message.link=send a country by country report
 
-notAuthorised.individual.mainHeading=You aren''t authorized to use this service.
+notAuthorised.individual.mainHeading=You aren''t authorised to use this service.
 notAuthorised.individual.button=Close
 
 utrCheck.mainHeading=Enter the unique taxpayer reference of the UK-registered company or partnership that''s sending a report
