@@ -29,7 +29,6 @@ implicit request: Request[_], messages: Messages)
 @sidebarContent = { @asideCbc }
 
 @error = @{form.error("companyName").isDefined}
-@tags.formFieldDisplay
 @main_template(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
 <div class="grid-row">
     <div class="column-two-thirds">
