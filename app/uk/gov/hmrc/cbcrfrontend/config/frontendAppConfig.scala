@@ -69,5 +69,4 @@ object FrontendAppConfig extends AppConfig with ServicesConfig {
   lazy val whitelist = whitelistConfig("whitelist")
   lazy val whitelistExcluded = whitelistConfig("whitelist-excluded")
 
-
 }

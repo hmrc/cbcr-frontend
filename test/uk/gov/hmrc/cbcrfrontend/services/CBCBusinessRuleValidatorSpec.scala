@@ -32,6 +32,8 @@ import cats.instances.future._
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import org.mockito.Matchers.{eq => EQ, _}
 import uk.gov.hmrc.emailaddress.EmailAddress
+import play.api.Configuration
+
 /**
   * Created by max on 24/05/17.
   */
@@ -42,6 +44,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val docRefIdService = mock[DocRefIdService]
   val subscriptionDataService = mock[SubscriptionDataService]
   val reportingEntity = mock[ReportingEntityDataService]
+  val configuration = mock[Configuration]
 
 
   val docRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
@@ -52,8 +55,11 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val corrDocRefId2 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REPC").getOrElse(fail("bad docrefid"))
   val corrDocRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ADDC").getOrElse(fail("bad docrefid"))
 
+  val schemaVer: String = "1.0"
+
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](Some(submissionData))
+  when(configuration.getString("oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
   implicit val hc = HeaderCarrier()
   val extract = new XmlInfoExtract()
@@ -67,7 +73,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
     SubscriberContact("Brian","Lastname", "phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
   )
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration)
   "The CBCBusinessRuleValidator" should {
     "return the correct error" when {
       "messageRefId is empty and return the correct message and errorcode" in {
