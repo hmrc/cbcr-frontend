@@ -85,7 +85,6 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     var agent = false
 
     val http = mock[HttpGet with HttpPut with HttpDelete]
-//    val configuration = new Configuration(ConfigFactory.load("application.conf"))
 
     def apply(): CBCSessionCache = new SessionCache(configuration, http)
 
