@@ -73,6 +73,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   private def allowedToSubmit(authContext: AuthContext)(implicit hc: HeaderCarrier) = getUserType(authContext).semiflatMap {
     case Organisation => Monad[Future].ifM(enrol.alreadyEnrolled)(Future.successful(true), cache.read[CBCId].map(_.isDefined))
     case Agent        => Future.successful(true)
+    case Individual   => Future.successful(false)
   }
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>

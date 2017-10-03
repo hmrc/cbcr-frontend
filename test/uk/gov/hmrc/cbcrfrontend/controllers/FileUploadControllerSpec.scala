@@ -80,7 +80,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
     var succeed = true
     var agent = false
-
+    var individual = false
     val http = mock[HttpGet with HttpPut with HttpDelete]
     val configuration = new Configuration(ConfigFactory.load("application.conf"))
 
@@ -89,7 +89,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     private class SessionCache(_config:Configuration, _http:HttpGet with HttpPut with HttpDelete) extends CBCSessionCache(_config, _http) {
 
       override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] = universe.typeOf[T] match {
-        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" } else {"Organisation"})).asInstanceOf[Option[T]])
+        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"})).asInstanceOf[Option[T]])
         case t if t =:= universe.typeOf[CBCId] => Future.successful(None)
       }
 
@@ -159,6 +159,14 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
       TestSessionCache.agent = false
+
+    }
+    "redirect  when user is an individual" in {
+      TestSessionCache.individual = true
+      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(false)
+      val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
+      status(result) shouldBe Status.SEE_OTHER
+      TestSessionCache.individual = false
 
     }
     "return 500 when the is an error creating the envelope" in {
