@@ -244,10 +244,10 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   }
 
   //Turn a Case class into a map
-  private def getCCParams(cc: AnyRef): Map[String, String] =
-    (Map[String, String]() /: cc.getClass.getDeclaredFields) {(a, f) =>
-      f.setAccessible(true)
-      a + (f.getName -> f.get(cc).toString)
+  private[controllers] def getCCParams(cc: AnyRef): Map[String, String] =
+    (Map[String, String]() /: cc.getClass.getDeclaredFields) {(acc, field) =>
+      field.setAccessible(true)
+      acc + (field.getName -> field.get(cc).toString)
     }
 
   def auditFailedSubmission(authContext: AuthContext, reason:String) (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {

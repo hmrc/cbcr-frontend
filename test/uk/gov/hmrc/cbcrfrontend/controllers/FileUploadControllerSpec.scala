@@ -38,7 +38,7 @@ import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.Files
 import play.api.libs.Files.TemporaryFile
-import play.api.libs.json.{Format, JsNull, Reads}
+import play.api.libs.json.{Format, JsNull, JsString, Reads}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
@@ -48,6 +48,9 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.config.AppName
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpDelete, HttpGet, HttpPut}
 import uk.gov.hmrc.play.test.UnitSpec
 
