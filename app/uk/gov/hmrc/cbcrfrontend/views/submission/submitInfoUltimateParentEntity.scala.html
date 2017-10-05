@@ -33,6 +33,12 @@ implicit request: Request[_], messages: Messages)
 
     <div class="grid-row">
         <div class="column-two-thirds">
+            @if(form.hasErrors) {
+                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                    <h2 id="error-summary-heading" class="h3-heading">@Messages("submitInfoUltimateParentEntity.upe.error.header")</h2>
+                    @if(form.hasErrors){<p id="ultimateParentEntity-error-summary"><strong><a href="#ultimateParentEntity">@Messages("submitInfoUltimateParentEntity.upe.error")</a></strong></p>}
+                </div>
+            }
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUltimateParentEntity()){
                 <h1>
                     @Messages("submitInfoUltimateParentEntity.mainHeading")

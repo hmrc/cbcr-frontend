@@ -35,7 +35,7 @@ implicit request: Request[_], messages: Messages)
         @if(form.hasErrors) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                 <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCompanyName.form.error.header")</h2>
-                @if(form.hasErrors){<p><strong><a href="#companyName">@Messages("enterCompanyName.form.error")</a></strong></p>}
+                @if(form.hasErrors){<p id="companyName-error-summary"><strong><a href="#companyName">@Messages("enterCompanyName.form.error")</a></strong></p>}
             </div>
         }
         <h1>@Messages("enterCompanyName.mainHeading")</h1>
