@@ -236,7 +236,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
       verify(cache, times(2)).read(EQ(AffinityGroup.format),any(),any())
       verify(cache).read(EQ(XMLInfo.format),any(),any())
-      verify(cache,times(2)).save(any())(EQ(SubmitterInfo.format),any(),any())
+      verify(cache).save(any())(EQ(SubmitterInfo.format),any(),any())
       verify(cache).save(any())(EQ(CBCId.cbcIdFormat),any(),any())
 
     }

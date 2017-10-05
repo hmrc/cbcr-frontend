@@ -127,10 +127,10 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     }
 
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {surrmarydata =>
+    OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {summaryData =>
       (for {
             xml <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("Unable to read XMLInfo from cache"))
-            _   <- fus.uploadMetadataAndRoute(surrmarydata.submissionMetaData)
+            _   <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
             _   <- saveDocRefIds(xml).leftMap[CBCErrors]{ es =>
               Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
@@ -275,20 +275,16 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           ))),
           success => {
             val passStraightThrough = for {
-              straightThrough <- EitherT.right[Future, CBCErrors, Boolean](cache.read[CBCId].map(_.isDefined))
+              straightThrough <- right[Boolean](cache.read[CBCId].map(_.isDefined))
               ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
-              _               <- EitherT.right[Future, CBCErrors,CacheMap](cache.save(success.copy(affinityGroup = Some(ag))))
+              name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
+              _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
               xml             <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
               _               <- right(cache.save(xml.messageSpec.sendingEntityIn))
-              submitterInfo   <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))
-              name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
-              _               <- EitherT.right[Future, CBCErrors, CacheMap](cache.save[SubmitterInfo](
-                submitterInfo.copy(agencyBusinessName = Some(name))
-              ))
             } yield straightThrough
 
             passStraightThrough.fold(
-              error => errorRedirect(error),
+              error           => errorRedirect(error),
               straightThrough => userType match{
                 case Organisation =>
                   if (straightThrough) Redirect(routes.SubmissionController.submitSummary())
@@ -373,18 +369,18 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       }
     )
   }
-private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String):Email ={
-  val summitedInfo = data.submissionMetaData.submitterInfo
-  Email(List(summitedInfo.email.toString()),
-    "cbcr_report_confirmation",
-    Map(
-      "name" → summitedInfo.fullName,
-      "received_at" → formattedDate,
-      "hash"   → data.submissionMetaData.submissionInfo.hash.value
-  ))
-}
-  val filingHistory = Action.async { implicit request =>
-    Ok(views.html.submission.filingHistory(includes.phaseBannerBeta()))
+
+  private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String):Email ={
+    val submittedInfo = data.submissionMetaData.submitterInfo
+    Email(List(submittedInfo.email.toString()),
+      "cbcr_report_confirmation",
+      Map(
+        "name" → submittedInfo.fullName,
+        "received_at" → formattedDate,
+        "hash"   → data.submissionMetaData.submissionInfo.hash.value
+      ))
   }
+
+  val filingHistory = Action.async { implicit request => Ok(views.html.submission.filingHistory(includes.phaseBannerBeta())) }
 
 }
