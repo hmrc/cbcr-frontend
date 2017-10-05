@@ -252,9 +252,10 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
   def auditFailedSubmission(authContext: AuthContext, reason:String) (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
     for {
-      md <- right(cache.read[FileMetadata])
+      ggId   <- right(getUserGGId(authContext))
+      md     <- right(cache.read[FileMetadata])
       result <- EitherT[Future,CBCErrors,AuditResult.Success.type](audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
-        tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri) ++ md.map(getCCParams).getOrElse(Map.empty[String,String])
+        tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri, "ggId" -> ggId.authProviderId) ++ md.map(getCCParams).getOrElse(Map.empty[String,String])
       )).map {
         case AuditResult.Success => Right(AuditResult.Success)
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))

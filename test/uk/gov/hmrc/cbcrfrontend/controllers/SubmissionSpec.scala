@@ -40,7 +40,9 @@ import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, Servic
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.play.frontend.auth.connectors.domain.{Accounts, Authority, ConfidenceLevel, CredentialStrength}
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -74,8 +76,10 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
   val cbcId = CBCId.create(99).getOrElse(fail("failed to gen cbcid"))
 
+  val authContext = AuthContext(Authority("",Accounts(),None,None,CredentialStrength.Weak,ConfidenceLevel.L200,None,None,None,"oid"))
+
   implicit val hc = HeaderCarrier()
-  val controller = new SubmissionController(securedActions, cache, fus, docRefService,reportingEntity,auth,mockCBCIdService,mockEmailService) {
+  val controller = new SubmissionController(securedActions, fus, docRefService,reportingEntity,mockCBCIdService,mockEmailService)(ec,cache,auth) {
     override lazy val audit = auditMock
   }
 
@@ -121,7 +125,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the UTR, UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,reportingEntity, auth,mockCBCIdService,mockEmailService)
+      val controller = new SubmissionController(securedActions, fus, docRefService,reportingEntity,mockCBCIdService,mockEmailService)(ec,cache,auth)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -134,7 +138,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,reportingEntity,auth,mockCBCIdService,mockEmailService)
+      val controller = new SubmissionController(securedActions, fus, docRefService,reportingEntity,mockCBCIdService,mockEmailService)(ec,cache,auth)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))))
       when(cache.save[FilingType](any())(EQ(FilingType.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -143,7 +147,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     }
     "use the UTR and Filing type form the xml when the ReportingRole is CBC703" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(securedActions, cache, fus, docRefService,reportingEntity,auth,mockCBCIdService,mockEmailService) {
+      val controller = new SubmissionController(securedActions, fus, docRefService,reportingEntity,mockCBCIdService,mockEmailService)(ec,cache,auth){
         override lazy val audit = auditMock
       }
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
@@ -297,6 +301,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   "The submission controller" should {
     "provide a method to generate the metadata that"  should {
       "return a list of errors for each of the missing cache values" in {
+        when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(cache.read[BusinessPartnerRecord]) thenReturn Future.successful(None)
         when(cache.read[Utr]) thenReturn Future.successful(None)
         when(cache.read[CBCId]) thenReturn Future.successful(None)
@@ -308,19 +313,19 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[UltimateParentEntity]) thenReturn Future.successful(None)
         when(cache.read[FileMetadata]) thenReturn Future.successful(None)
 
-        Await.result(generateMetadataFile("gatewayId",cache),10.second).fold(
+        Await.result(generateMetadataFile(cache,authContext)(hc,ec,auth),10.second).fold(
           errors => errors.toList.size shouldBe 10,
           _ => fail("this should have failed")
         )
 
         when(cache.read[FileId]) thenReturn Future.successful(Some(FileId("fileId")))
-        Await.result(generateMetadataFile("gatewayId",cache),10.second).fold(
+        Await.result(generateMetadataFile(cache,authContext)(hc,ec,auth),10.second).fold(
           errors => errors.toList.size shouldBe 9,
           _ => fail("this should have failed")
         )
 
         when(cache.read[EnvelopeId]) thenReturn Future.successful(Some(EnvelopeId("yeah")))
-        Await.result(generateMetadataFile("gatewayId",cache),10.second).fold(
+        Await.result(generateMetadataFile(cache,authContext)(hc,ec,auth),10.second).fold(
           errors => errors.toList.size shouldBe 8,
           _ => fail("this should have failed")
         )
@@ -329,10 +334,11 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "return a failed future if any of the cache calls fails" in {
         when(cache.read[EnvelopeId]) thenReturn Future.failed(new Exception("Cache gone bad"))
         intercept[Exception] {
-          Await.result(generateMetadataFile("gatewayId",cache), 10.second)
+          Await.result(generateMetadataFile(cache,authContext)(hc,ec,auth),10.second)
         }
       }
       "return a Metadata object if all succeeds" in {
+        when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(cache.read[BusinessPartnerRecord]) thenReturn Future.successful(Some(bpr))
         when(cache.read[Utr]) thenReturn Future.successful(Some(Utr("utr")))
         when(cache.read[CBCId]) thenReturn Future.successful(CBCId.create(1).toOption)
@@ -344,7 +350,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[UltimateParentEntity]) thenReturn Future.successful(Some(UltimateParentEntity("yeah")))
         when(cache.read[FileMetadata]) thenReturn Future.successful(Some(FileMetadata("asdf","lkjasdf","lkj","lkj",10,"lkjasdf",JsNull,"")))
 
-        Await.result(generateMetadataFile("gatewayId",cache),10.second).leftMap(
+        Await.result(generateMetadataFile(cache,authContext)(hc,ec,auth),10.second).leftMap(
           errors => fail(s"There should be no errors: $errors")
         )
       }
@@ -352,6 +358,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
     "provide a 'submitSummary' Action that" should {
       val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSummary"))
       "return 500 if generating the metadata fails" in {
+        when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.failed(new Exception("argh"))
         when(auth.getIds[UserIds](any())(any(),any())) thenReturn Future.successful(UserIds("a","b"))
         status(Await.result(controller.submitSummary(fakeRequestSubmitSummary), 10.second)) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -364,6 +371,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       }
 
     "return 500 if the fileUploadService fails" in {
+      when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
       when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.successful(Some(bpr))
       when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("utr")))
@@ -385,6 +393,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
         val file = File.createTempFile("test","test")
 
+        when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
         when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.successful(Some(bpr))
         when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("utr")))
@@ -494,6 +503,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
+        when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -507,6 +517,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "will still return a 200 if the email fails" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+        when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](false)
@@ -522,6 +533,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
+        when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn Future.successful(Some(summaryData))
@@ -535,6 +547,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "not send the email if it has already been sent and not save to the cache" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+        when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
         when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -548,6 +561,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "returns a 200 otherwise" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+        when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
         when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
