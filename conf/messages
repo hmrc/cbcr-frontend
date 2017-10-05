@@ -105,7 +105,8 @@ submitInfoFilingType.localFiling.label=A report covering the UK only, for the UK
 
 submitInfoUltimateParentEntity.mainHeading=What group parent business are you reporting for?
 submitInfoUltimateParentEntity.upe.label=Group parent business name
-submitInfoUltimateParentEntity.upe.error=Please enter the name of group parent business
+submitInfoUltimateParentEntity.upe.error.header=You haven''t entered the name of the group parent business
+submitInfoUltimateParentEntity.upe.error=Enter the group parent business name
 
 submitSuccessReceipt.confirmationNumberLabel=Your confirmation number is:
 submitSuccessReceipt.submissionDateLabel=Your report was received on
@@ -184,4 +185,5 @@ notAuthorised.individual.button=Close
 
 utrCheck.mainHeading=Enter the unique taxpayer reference of the UK-registered company or partnership that''s sending a report
 utrCheck.label=Unique taxpayer reference
-utrCheck.error=This should contain 10 characters
+utrCheck.error=Enter a unique taxpayer reference of at least 10 characters
+utrCheck.error.header=The unique taxpayer reference must contain at least 10 characters
