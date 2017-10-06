@@ -58,9 +58,8 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                                      val businessRuleValidator: CBCBusinessRuleValidator,
                                      val enrol:EnrolmentsConnector,
                                      val fileUploadService:FileUploadService,
-                                     val xmlExtractor:XmlInfoExtract,
-                                     val validator:CBCRXMLValidator
-                                    )(implicit ec: ExecutionContext, cache:CBCSessionCache, auth:AuthConnector) extends FrontendController with ServicesConfig {
+                                     val xmlExtractor:XmlInfoExtract)
+                                    (implicit ec: ExecutionContext, cache:CBCSessionCache, auth:AuthConnector) extends FrontendController with ServicesConfig {
 
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
@@ -132,18 +131,19 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     ).flatten)
   }
 
+
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
 
     val result = for {
       file_metadata       <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId)).tupled
       _                   <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml",(),InvalidFileType(file_metadata._2.name))
-      schemaErrors        =  validator.validateSchema(file_metadata._1)
+      schemaErrors        =  schemaValidator.validateSchema(file_metadata._1)
       xmlErrors           = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
       schemaSize          = if(xmlErrors.errors.nonEmpty){ Some(getErrorFileSize(List(xmlErrors))) } else { None }
       _                   <- EitherT.right[Future,CBCErrors,CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
       _                   <- if(!schemaErrors.hasFatalErrors) EitherT.pure[Future,CBCErrors,Unit](())
                              else auditFailedSubmission(authContext, "schema validation errors").flatMap(_ =>
-                                  EitherT.left[Future,CBCErrors,Unit](Future.successful(FatalSchemaErrors(schemaSize)))
+                               EitherT.left[Future,CBCErrors,Unit](Future.successful(FatalSchemaErrors(schemaSize)))
                              )
       xml_bizErrors       <- validateBusinessRules(file_metadata)
       businessSize        =  if(xml_bizErrors._2.nonEmpty){ Some(getErrorFileSize(xml_bizErrors._2)) } else { None }
@@ -156,8 +156,9 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
     result.leftMap{
       case FatalSchemaErrors(size)=>
-        BadRequest(submission.fileupload.fileUploadResult(None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
-      case InvalidFileType(_)     => Redirect(routes.FileUploadController.fileInvalid())
+        Ok(submission.fileupload.fileUploadResult(None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
+      case InvalidFileType(_)     =>
+        Redirect(routes.FileUploadController.fileInvalid())
       case e:CBCErrors            =>
         Logger.error(e.toString)
         Redirect(routes.SharedController.technicalDifficulties())

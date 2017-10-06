@@ -24,7 +24,7 @@
 
 @sidebarContent = { @asideCbc }
 
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("notAuthorised.mainHeading"), sidebarLinks = Some(sidebarContent)) {
 
 <div class="grid-row">
     <div class="column-two-thirds">
@@ -32,7 +32,7 @@
         <div class="flash error-summary error-summary--show"
              id="error-summary-display"
              role="alert"
-             aria-labelledby="error-summary-heading"
+             aria-labelledby="error-summary-display"
              tabindex="-1">
         <p>@Messages("notAuthorised.message") <a href="@{routes.FileUploadController.chooseXMLFile()}">@Messages("notAuthorised.message.link")</a></p>
         </div>

@@ -18,15 +18,21 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json._
 
+case class Email(to: List[String], templateId: String, parameters: Map[String, String])
 
-case class UltimateParentEntity(ultimateParentEntity: String)
+//todo if anyone cant get this working as case object be my quest!
+case class SubscriptionEmailSent(defaultValue: String = "")
 
-object UltimateParentEntity {
-  implicit val format = new Format[UltimateParentEntity] {
-    override def reads(json: JsValue) = json.asOpt[String].map(s =>
-      JsSuccess(UltimateParentEntity(s))).getOrElse(JsError(s"Unable to parse $json as UltimateParentEntity")
-    )
+case object SubscriptionEmailSent {
+  implicit val SubscriptionEmailSentFormat: Format[SubscriptionEmailSent] = Json.format[SubscriptionEmailSent]
+}
 
-    override def writes(o: UltimateParentEntity) = JsString(o.ultimateParentEntity)
-  }
+case class ConfirmationEmailSent(defaultValue: String = "")
+
+case object ConfirmationEmailSent {
+  implicit val ConfirmationEmailSentFormat: Format[ConfirmationEmailSent] = Json.format[ConfirmationEmailSent]
+}
+
+object Email {
+  implicit val emailFormat: Format[Email] = Json.format[Email]
 }

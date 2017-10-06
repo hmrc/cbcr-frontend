@@ -31,7 +31,7 @@ implicit request: Request[_], messages: Messages)
 }
 
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
-@main_template("Country by Country Reporting", sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("enterCBCId.mainHeading"), sidebarLinks = Some(sidebarContent)) {
     <div class="grid-row">
         <div class="column-two-thirds">
 
@@ -40,11 +40,11 @@ implicit request: Request[_], messages: Messages)
                 <div class="flash error-summary error-summary--show"
                 id="error-summary-display"
                 role="alert"
-                aria-labelledby="error-summary-heading"
+                aria-labelledby="error-summary-display"
                 tabindex="-1">
                     <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCBCId.error.header")</h2>
                     <p>@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("enterCBCId.error.message.link")</a></p>
-                    </ul>
+                    <strong><a href="#txt-cbcID">@Messages("enterCBCId.error.message.invalid.id")</a></strong>
                 </div>
             }
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId()){
