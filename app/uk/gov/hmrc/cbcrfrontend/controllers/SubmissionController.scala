@@ -49,11 +49,10 @@ import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
-
+import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
-
 
 @Singleton
 class SubmissionController @Inject()(val sec: SecuredActions,
@@ -169,16 +168,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     )(UltimateParentEntity.apply)(UltimateParentEntity.unapply)
   )
 
-  val submitterInfoForm: Form[SubmitterInfo] = Form(
-    mapping(
-      "fullName"        -> nonEmptyText,
-      "contactPhone" -> nonEmptyText,
-      "email"       -> email.verifying(EmailAddress.isValid(_))
-    )((fullName: String, contactPhone:String, email: String) => {
-      SubmitterInfo(fullName, None, contactPhone, EmailAddress(email),None)
-    }
-    )(si => Some((si.fullName, si.contactPhone, si.email.value)))
-  )
+
 
   val reconfirmEmailForm : Form[EmailAddress] = Form(
     mapping(
