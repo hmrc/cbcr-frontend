@@ -20,112 +20,89 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import helper._
 
-@(phaseBannerBeta: Html, summaryData: SummaryData, form:Form[_])(
-implicit request: Request[_], messages: Messages)
+@(phaseBannerBeta: Html, summaryData: SummaryData)(
+        implicit request: Request[_], messages: Messages)
 
-@cbcDeclarationErrors = @{form.error("cbcDeclaration").isDefined}
 
-@main_template("Country by Country Reporting") {
+
+@main_template(Messages("submitSummary.mainHeading")) {
     <div class="grid-row">
         <div class="column-full">
             <h1>
-                @Messages("submitSummary.mainHeading")
+            @Messages("submitSummary.mainHeading")
             </h1>
             <table class="check-your-answers">
-                <thead>
-                <tr>
-                    <th>
-                    </th>
-                    <th>
-                    </th>
-                </tr>
-                </thead>
-
                 <tbody>
-                <tr>
-                    <th style="white-space:nowrap">
+                    <tr>
+                        <th style="white-space: nowrap">
                         @Messages("submitSummary.table.ultimateParent")
-                    </th>
-                    <td>
-                        @summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity<br />
-                    </td>
+                        </th>
+                        <td>
+                            @summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity <br />
+                        </td>
 
-                </tr>
-                <tr>
-                    <th style="white-space:nowrap">
+                    </tr>
+                    <tr>
+                        <th style="white-space: nowrap">
                         @Messages("submitSummary.table.utr")
-                    </th>
-                    <td>
-                        @summaryData.submissionMetaData.submissionInfo.utr.value<br />
-                    </td>
+                        </th>
+                        <td>
+                            @summaryData.submissionMetaData.submissionInfo.utr.value <br />
+                        </td>
 
-                </tr>
-                <tr>
-                    <th style="white-space:nowrap">
+                    </tr>
+                    <tr>
+                        <th style="white-space: nowrap">
                         @Messages("submitSummary.table.filedBy")
-                    </th>
-                    <td>
-                        @summaryData.submissionMetaData.submitterInfo.fullName<br />
-                        @summaryData.submissionMetaData.submitterInfo.agencyBusinessName.map(_.name)<br />
-                    </td>
+                        </th>
+                        <td>
+                            @summaryData.submissionMetaData.submitterInfo.agencyBusinessName.map(_.name) <br />
+                        </td>
 
-                </tr>
-                <tr>
-                    <th style="white-space:nowrap">
+                    </tr>
+                    <tr>
+                        <th style="white-space: nowrap">
                         @Messages("submitSummary.table.filingInfo")
-                    </th>
-                    <td>
-
-                        <span class="faded-text faded-text--small">Phone number:</span><br/>
-                        @summaryData.submissionMetaData.submitterInfo.contactPhone<br />
-                        <span class="faded-text faded-text--small">Email address:</span><br/>
-                        @summaryData.submissionMetaData.submitterInfo.email.value
-                    </td>
-                </tr>
-                <tr>
-                    <th style="white-space:nowrap">
+                        </th>
+                        <td>
+                            <span class="faded-text faded-text--small">Full name:</span><br/>
+                            @summaryData.submissionMetaData.submitterInfo.fullName<br />
+                            <span class="faded-text faded-text--small">Phone number:</span><br/>
+                            @summaryData.submissionMetaData.submitterInfo.contactPhone<br />
+                            <span class="faded-text faded-text--small">Email address:</span><br/>
+                            @summaryData.submissionMetaData.submitterInfo.email.value
+                        </td>
+                        <td><a></a><td/>
+                    </tr>
+                    <tr>
+                        <th style="white-space: nowrap">
                         @Messages("submitSummary.table.reportDetails")
-                    </th>
-                    <td>
-                        <div>
-                            <p><span class="faded-text faded-text--small">Filename:</span><br />
-                                @summaryData.submissionMetaData.fileInfo.name
-                            </p>
-                            <p><span class="faded-text faded-text--small">File size:</span><br />
-                                @summaryData.submissionMetaData.fileInfo.length KB
-                            </p>
-                            <p><span class="faded-text faded-text--small">ReportingPeriod:</span><br />
-                                @summaryData.xmlInfo.messageSpec.reportingPeriod
-                            </p>
-                            <p><span class="faded-text faded-text--small">Timestamp:</span><br />
-                                @summaryData.xmlInfo.messageSpec.timestamp
-                            </p>
-                      </div>
-                    </td>
+                        </th>
+                        <td>
+                            <div>
+                                <p><span class="faded-text faded-text--small">Filename:</span><br />
+                                    @summaryData.submissionMetaData.fileInfo.name
+                                </p>
+                                <p><span class="faded-text faded-text--small">File size:</span><br />
+                                    @summaryData.submissionMetaData.fileInfo.length KB
+                                </p>
+                                <p><span class="faded-text faded-text--small">ReportingPeriod:</span><br />
+                                    @summaryData.xmlInfo.messageSpec.reportingPeriod
+                                </p>
+                                <p><span class="faded-text faded-text--small">Timestamp:</span><br />
+                                    @summaryData.xmlInfo.messageSpec.timestamp
+                                </p>
+                            </div>
+                        </td>
 
-                </tr>
+                    </tr>
                 </tbody>
             </table>
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm()) {
-            @CSRF.formField
-
-            @if(form.error("cbcDeclaration").isDefined){
-            <div class="form-field--error">
-            <span class="error-notification">@Messages("submitSummary.declaration.error.text")</span>
-
-                <div class="multiple-choice">
-                    <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
-                    <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
-                </div>
-            </div>
-            } else {
-                <div class="multiple-choice">
-                    <input id="cbc-report-submit-declaration" name="cbcDeclaration" type="checkbox" value="true" style="float:left; margin-right:10px; margin-top:3px;">
-                    <label for="cbc-report-submit-declaration">@Messages("submitSummary.declaration.text")</label>
-                </div>
-            }
-
-
+                @CSRF.formField
+                    <div class="form-group">
+                        <p class="important-notice"> <strong> @Messages("submitSummary.declaration.text")</strong><p>
+                    </div>
                 <p>
                     <button type="submit" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
                 </p>

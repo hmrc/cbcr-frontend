@@ -31,11 +31,19 @@
  */
 package uk.gov.hmrc.cbcrfrontend
 
-import play.api.mvc.{ AnyContent, Request, Result }
+import cats.data.EitherT
+import cats.instances.all._
+import play.api.mvc.{AnyContent, Request, Result}
+import uk.gov.hmrc.cbcrfrontend.model.CBCErrors
 import uk.gov.hmrc.play.frontend.auth.AuthContext
-import scala.concurrent.Future
+
+import scala.concurrent.{ExecutionContext, Future}
 
 package object controllers {
   type AsyncUserRequest = AuthContext => Request[AnyContent] => Future[Result]
   type UserRequest = AuthContext => Request[AnyContent] => Result
+  //todo refactor everything to use these
+  def pure[A](a:A)(implicit ec:ExecutionContext) = EitherT.pure[Future,CBCErrors,A](a)
+  def right[A](a:Future[A])(implicit ec:ExecutionContext) = EitherT.right[Future,CBCErrors,A](a)
+  def fromEither[A,B](e:Either[A,B])(implicit ec:ExecutionContext)  = EitherT.fromEither[Future](e)
 }

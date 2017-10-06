@@ -41,6 +41,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val messageRefIdService = mock[MessageRefIdService]
   val docRefIdService = mock[DocRefIdService]
   val subscriptionDataService = mock[SubscriptionDataService]
+  val reportingEntity = mock[ReportingEntityDataService]
 
 
   val docRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
@@ -66,7 +67,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
     SubscriberContact("Brian","Lastname", "phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
   )
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity)
   "The CBCBusinessRuleValidator" should {
     "return the correct error" when {
       "messageRefId is empty and return the correct message and errorcode" in {
@@ -179,13 +180,14 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
       }
 
-      "ReportingRole is missing" in {
+      //TODO: In a when CBCR-435 is done, we'll need to mock a call to the backend to retrieve missing ReportingEntity data
+      "ReportingEntity is missing" in {
         val validFile = new File("test/resources/cbcr-noReportingEntity.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe InvalidXMLError("ReportingEntity.ReportingRole not found or invalid"),
-          _ => fail("No InvalidXMLError generated")
+          errors => errors.toList should contain(OriginalSubmissionNotFound),
+          _      => fail("No InvalidXMLError generated")
         )
       }
       "MessageTypeIndic is CBC402 and the DocTypeIndic's are invalid" when {
@@ -327,7 +329,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe CorrDocRefIdMissing,
+          errors => errors.toList should contain(CorrDocRefIdMissing),
           _ => fail("No InvalidXMLError generated")
         )
       }
@@ -336,7 +338,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe MessageTypeIndicDocTypeIncompatible,
+          errors => errors.toList should contain(MessageTypeIndicDocTypeIncompatible),
           _ => fail("No InvalidXMLError generated")
         )
 

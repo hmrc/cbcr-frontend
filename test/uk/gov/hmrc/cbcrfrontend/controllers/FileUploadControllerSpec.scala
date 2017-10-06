@@ -17,9 +17,12 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io.File
+import java.nio.file.StandardCopyOption._
+import java.nio.file.CopyOption
+import java.time.{LocalDate, LocalDateTime}
 
 import akka.actor.ActorSystem
-import cats.data.{EitherT, OptionT}
+import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.future._
 import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
@@ -34,6 +37,7 @@ import play.api.{Configuration, Environment}
 import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.Files
+import play.api.libs.Files.TemporaryFile
 import play.api.libs.json.{Format, JsNull, Reads}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
@@ -104,6 +108,21 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   implicit val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
 
+  val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
+  val xmlinfo = XMLInfo(
+      MessageSpec(
+        MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
+        "GB",
+        CBCId.create(99).getOrElse(fail("booo")),
+        LocalDateTime.now(),
+        LocalDate.parse("2017-01-30"),
+        None
+      ),
+      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),Utr("7000000002"),"name"),
+      Some(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
+      Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
+    )
+
   def right[A](a:Future[A]) : ServiceResponse[A] = EitherT.right[Future,CBCErrors, A](a)
   def left[A](s:String) : ServiceResponse[A] = EitherT.left[Future,CBCErrors, A](UnexpectedState(s))
   def pure[A](a:A) : ServiceResponse[A] = EitherT.pure[Future,CBCErrors, A](a)
@@ -114,13 +133,12 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
   val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
 
-  val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
+  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,TestSessionCache(),authCon)
+  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,cache,authCon)
 
-  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,validator)(ec,TestSessionCache(),authCon)
-  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,validator)(ec,cache,authCon)
-
-  val file = Files.TemporaryFile("","")
-  val validFile:File= new File("test/resources/cbcr-valid.xml")
+  val testFile:File= new File("test/resources/cbcr-valid.xml")
+  val tempFile:File=Files.TemporaryFile("test",".xml").file
+  val validFile = java.nio.file.Files.copy(testFile.toPath,tempFile.toPath,REPLACE_EXISTING).toFile
 
   "GET /upload-report" should {
     val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
@@ -210,6 +228,24 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
         verify(fuService).getFileMetaData(any(),any())(any(),any(),any())
         verify(cache,atLeastOnce()).save(any())(any(),any(),any())
       }
+    }
+    "return a 200 when the fileValidate call is successful and all dependant calls return successfully" in {
+      val evenMoreValidFile = java.nio.file.Files.copy(testFile.toPath,tempFile.toPath,REPLACE_EXISTING).toFile
+      val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+      when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn right(evenMoreValidFile)
+      when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
+      when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
+      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(new CacheMap("",Map.empty))
+      when(businessRulesValidator.validateBusinessRules(any(),any())(any())) thenReturn EitherT.right[Future,NonEmptyList[BusinessRuleErrors],XMLInfo](xmlinfo)
+      val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
+      val returnVal = status(result)
+      returnVal shouldBe Status.OK
+      verify(fuService).getFile(any(),any())(any(),any(),any())
+      verify(fuService).getFileMetaData(any(),any())(any(),any(),any())
+      verify(cache,atLeastOnce()).save(any())(any(),any(),any())
+      verify(businessRulesValidator).validateBusinessRules(any(),any())(any())
+      verify(schemaValidator).validateSchema(any())
+
     }
 
     "be redirected to an error page" when {
