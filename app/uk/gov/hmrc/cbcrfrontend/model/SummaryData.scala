@@ -21,7 +21,9 @@ import play.api.libs.json.Json
 case class SummaryData(businessPartnerRecord: BusinessPartnerRecord, submissionMetaData: SubmissionMetaData, xmlInfo: XMLInfo)
 
 object SummaryData {
-  implicit val submissionMetaDataFormat = Json.format[SubmissionMetaData]
+  implicit val submissionMetaDataWrites = SubmissionMetaData.writes
+  implicit val submissionMetaDataReads = Json.reads[SubmissionMetaData]
+//  implicit val submissionMetaDataFormat = Json.format[SubmissionMetaData]
   implicit val format = Json.format[SummaryData]
 }
 
