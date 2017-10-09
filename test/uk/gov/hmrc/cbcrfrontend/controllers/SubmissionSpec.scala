@@ -576,6 +576,13 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
       LocalDateTime.of(2017,12,1,23,59,59).format(controller.dateFormat) shouldEqual "01 December 2017 at 23:59"
     }
+    "display the audit information correctly" in {
+      val sd = SummaryData(bpr,submissionData,keyXMLInfo)
+      val sdj = Json.toJson(sd)
+      (sdj \ "submissionMetaData" \ "submissionInfo" \ "ultimateParentEntity").as[String] shouldEqual "ultimateParentEntity"
+      (sdj \ "submissionMetaData" \ "submissionInfo" \ "filingType").as[String] shouldEqual "PRIMARY"
+      (sdj \ "submissionMetaData" \ "submitterInfo" \ "affinityGroup").as[String] shouldEqual "Agent"
+    }
   }
 
   private def submissionData = {
@@ -597,7 +604,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
      FilingType(CBC701),
      UltimateParentEntity("ultimateParentEntity")
    )
-    val submitterInfo = SubmitterInfo("fullName", None, "contactPhone", EmailAddress("abc@abc.com"), None)
+    val submitterInfo = SubmitterInfo("fullName", Some(AgencyBusinessName("MyAgency")), "contactPhone", EmailAddress("abc@abc.com"), Some(AffinityGroup("Agent")))
     SubmissionMetaData(submissionInfo, submitterInfo, fileInfo)
 
   }
