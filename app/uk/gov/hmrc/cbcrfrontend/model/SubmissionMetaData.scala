@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.{JsValue, Json, Writes}
-import uk.gov.hmrc.emailaddress.EmailAddress
+import play.api.libs.json._ // JSON library
+import play.api.libs.json.Reads._ // Custom validation helpers
 import cats.syntax.show._
 
 /**
@@ -43,40 +43,40 @@ case class SubmissionInfo(gwCredId:String,
                           filingType:FilingType,
                           ultimateParentEntity:UltimateParentEntity)
 object SubmissionInfo{
-  implicit val format = Json.format[SubmissionInfo]
+  implicit val format = new Format[SubmissionInfo] {
+    override def reads(json: JsValue) = json match {
+      case JsObject(m) => for {
+        gwCredId   <- m.get("gwCredId").fold[JsResult[String]](JsError("gwCredId not found"))(_.validate[String])
+        cbcId      <- m.get("cbcId").fold[JsResult[CBCId]](JsError("cbcId not found"))(_.validate[CBCId])
+        bpSafeId   <- m.get("bpSafeId").fold[JsResult[String]](JsError("bpSafeId not found"))(_.validate[String])
+        hash       <- m.get("hash").fold[JsResult[Hash]](JsError("hash not found"))(_.validate[Hash])
+        ofdsRegime <- m.get("ofdsRegime").fold[JsResult[String]](JsError("ofdsRegime not found"))(_.validate[String])
+        utrs       <- m.get("utr").fold[JsResult[String]](JsError("Utr not found"))(_.validate[String])
+        utr        <- if(Utr(utrs).isValid){ JsSuccess(Utr(utrs))} else { JsError(s"utr invalid: $utrs") }
+        fts        <- m.get("filingType").fold[JsResult[String]](JsError("FilingType not found"))(_.validate[String])
+        ft         <- ReportingRole.parseFromString(fts).fold[JsResult[FilingType]](JsError(s"FilingType invalid: $fts"))(r => JsSuccess(FilingType(r)))
+        upe        <- m.get("ultimateParentEntity").fold[JsResult[String]](JsError("UPE not found"))(_.validate[String]).map(UltimateParentEntity(_))
+      } yield SubmissionInfo(gwCredId,cbcId,bpSafeId,hash,ofdsRegime,utr,ft,upe)
+      case _ => JsError(s"Unable to parse $json as SubmissionInfo")
+    }
+
+    override def writes(o: SubmissionInfo) = Json.obj(
+      "gwCredId" -> o.gwCredId,
+      "cbcId" -> o.cbcId,
+      "bpSafeId" ->  o.bpSafeId,
+      "hash" -> o.hash,
+      "ofdsRegime" -> o.ofdsRegime,
+      "utr" -> o.utr.utr,
+      "filingType" -> o.filingType.value.show,
+      "ultimateParentEntity" -> o.ultimateParentEntity.ultimateParentEntity
+    )
+  }
 }
 
 case class SubmissionMetaData(submissionInfo:SubmissionInfo,
                               submitterInfo:SubmitterInfo,
                               fileInfo:FileInfo)
 object SubmissionMetaData {
-  implicit val writes = new Writes[SubmissionMetaData] {
-    override def writes(o: SubmissionMetaData): JsValue = Json.obj(
-      "fileInfo" -> Json.obj(
-        "id" -> o.fileInfo.id,
-        "envelopeId" -> o.fileInfo.envelopeId,
-        "status" -> o.fileInfo.status,
-        "name" -> o.fileInfo.name,
-        "contentType" -> o.fileInfo.contentType,
-        "length" -> o.fileInfo.length,
-        "created" -> o.fileInfo.created
-      ),
-      "submissionInfo" -> Json.obj(
-        "gwCredId" -> o.submissionInfo.gwCredId,
-        "cbcId" -> o.submissionInfo.cbcId,
-        "bpSafeId" -> o.submissionInfo.bpSafeId,
-        "hash" -> o.submissionInfo.hash.value,
-        "ofdsRegime" -> o.submissionInfo.ofdsRegime,
-        "utr" -> o.submissionInfo.utr.value,
-        "filingType" -> o.submissionInfo.filingType.value.show,
-        "ultimateParentEntity" -> o.submissionInfo.ultimateParentEntity.ultimateParentEntity
-      ),
-      "submitterInfo" -> Json.obj(
-        "fullName" -> o.submitterInfo.fullName,
-        "agencyBusinessName" -> o.submitterInfo.agencyBusinessName.map(_.name),
-        "email" -> o.submitterInfo.email.value,
-        "affinityGroup" -> o.submitterInfo.affinityGroup.map(_.affinityGroup)
-      )
-    )
-  }
+
+  implicit val format = Json.format[SubmissionMetaData]
 }
