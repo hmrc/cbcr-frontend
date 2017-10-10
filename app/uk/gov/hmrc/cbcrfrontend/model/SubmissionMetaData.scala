@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json._ // JSON library
 import play.api.libs.json.Reads._ // Custom validation helpers
+import cats.syntax.show._
 
 /**
   * Created by max on 11/05/17.
@@ -66,7 +67,7 @@ object SubmissionInfo{
       "hash" -> o.hash,
       "ofdsRegime" -> o.ofdsRegime,
       "utr" -> o.utr.utr,
-      "filingType" -> o.filingType.value,
+      "filingType" -> o.filingType.value.show,
       "ultimateParentEntity" -> o.ultimateParentEntity.ultimateParentEntity
     )
   }
