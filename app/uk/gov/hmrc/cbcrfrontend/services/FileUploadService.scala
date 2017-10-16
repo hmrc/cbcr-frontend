@@ -28,7 +28,7 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
-import play.api.Logger
+import play.api.{Configuration, Logger}
 import play.api.http.Status
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
@@ -43,16 +43,17 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
-class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector,ws:WSClient)(implicit ac:ActorSystem) {
+class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector,ws:WSClient, configuration: Configuration)(implicit ac:ActorSystem) {
 
   implicit val materializer = ActorMaterializer()
+  val envelopeExpiryDays = configuration.getInt("envelope-expire-days").getOrElse(throw new Exception("Missing configuration key: envelope-expire-days"))
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext, fusUrl: ServiceUrl[FusUrl], cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[EnvelopeId] = {
     Logger.debug("Country by Country: Creating an envelope for file upload")
     val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
     def envelopeExpiryDate(numberOfDays: Int) = LocalDateTime.now.plusDays(numberOfDays).format(formatter)
 
-    EitherT(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl.url, envelopeExpiryDate(7)))).map(fusConnector.extractEnvelopId))
+    EitherT(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl.url, envelopeExpiryDate(envelopeExpiryDays)))).map(fusConnector.extractEnvelopId))
   }
 
   def uploadFile(xmlFile: java.io.File, envelopeId: String, fileId: String)(

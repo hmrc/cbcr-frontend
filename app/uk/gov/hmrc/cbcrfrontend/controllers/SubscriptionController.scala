@@ -219,14 +219,17 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   def createSuccessfulSubscriptionAuditEvent(authContext: AuthContext, subscriptionData: SubscriptionDetails)
                                             (implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
-    EitherT(audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRSubscription",
-      tags = hc.toAuditTags("CBCRSubscription", "N/A") + ("path" -> request.uri),
-      detail = Json.toJson(subscriptionData)
-    )).map {
-      case AuditResult.Success => Right(AuditResult.Success)
-      case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
-      case AuditResult.Disabled => Right(AuditResult.Success)
-    })
+    for {
+      ggId   <- right(getUserGGId(authContext))
+      result <- EitherT[Future,CBCErrors,AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRSubscription",
+        tags = hc.toAuditTags("CBCRSubscription", "N/A") + ("path" -> request.uri, "ggId" -> ggId.authProviderId),
+        detail = Json.toJson(subscriptionData)
+      )).map {
+        case AuditResult.Success => Right(AuditResult.Success)
+        case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
+        case AuditResult.Disabled => Right(AuditResult.Success)
+      })
+    } yield result
 
 
 }

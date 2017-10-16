@@ -73,6 +73,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   private def allowedToSubmit(authContext: AuthContext)(implicit hc: HeaderCarrier) = getUserType(authContext).semiflatMap {
     case Organisation => Monad[Future].ifM(enrol.alreadyEnrolled)(Future.successful(true), cache.read[CBCId].map(_.isDefined))
     case Agent        => Future.successful(true)
+    case Individual   => Future.successful(false)
   }
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
@@ -136,6 +137,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
     val result = for {
       file_metadata       <- (fileUploadService.getFile(envelopeId, fileId)  |@| getMetaData(envelopeId,fileId)).tupled
+      _                   <- right(cache.save(file_metadata._2))
       _                   <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml",(),InvalidFileType(file_metadata._2.name))
       schemaErrors        =  schemaValidator.validateSchema(file_metadata._1)
       xmlErrors           = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
@@ -241,14 +243,25 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     )
   }
 
+  //Turn a Case class into a map
+  private[controllers] def getCCParams(cc: AnyRef): Map[String, String] =
+    (Map[String, String]() /: cc.getClass.getDeclaredFields) {(acc, field) =>
+      field.setAccessible(true)
+      acc + (field.getName -> field.get(cc).toString)
+    }
+
   def auditFailedSubmission(authContext: AuthContext, reason:String) (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
-    EitherT(audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
-      tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri)
-    )).map {
-      case AuditResult.Success         => Right(AuditResult.Success)
-      case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
-      case AuditResult.Disabled        => Right(AuditResult.Success)
-    })
+    for {
+      ggId   <- right(getUserGGId(authContext))
+      md     <- right(cache.read[FileMetadata])
+      result <- EitherT[Future,CBCErrors,AuditResult.Success.type](audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
+        tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri, "ggId" -> ggId.authProviderId) ++ md.map(getCCParams).getOrElse(Map.empty[String,String])
+      )).map {
+        case AuditResult.Success => Right(AuditResult.Success)
+        case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
+        case AuditResult.Disabled => Right(AuditResult.Success)
+      })
+    } yield result
   }
 
 }

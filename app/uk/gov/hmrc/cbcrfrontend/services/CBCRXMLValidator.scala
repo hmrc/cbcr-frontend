@@ -25,6 +25,7 @@ import com.ctc.wstx.exc.WstxException
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
 import org.codehaus.stax2.validation._
 import play.api.{Environment, Logger}
+import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Exception.nonFatalCatch

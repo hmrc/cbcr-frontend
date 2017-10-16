@@ -29,22 +29,19 @@ implicit request: Request[_], messages: Messages)
 @sidebarContent = { @asideCbc }
 
 @error = @{form.error("companyName").isDefined}
-
-@main_template(Messages("enterCompanyName.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
 <div class="grid-row">
     <div class="column-two-thirds">
-
+        @if(form.hasErrors) {
+            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCompanyName.form.error.header")</h2>
+                @if(form.hasErrors){<p id="companyName-error-summary"><strong><a href="#companyName">@Messages("enterCompanyName.form.error")</a></strong></p>}
+            </div>
+        }
         <h1>@Messages("enterCompanyName.mainHeading")</h1>
         @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.saveCompanyName()){
         <fieldset>
-            <div class="form-group @if(error){form-field--error}">
-                <label for="companyName">
-                    <div>@Messages("enterCompanyName.formHintWhereYouGotIt")</div>
-                    <div class="form-hint">@Messages("enterCompanyName.formHint")</div>
-                </label>
-
-                <input type="text" class="input--medium input--cleared form-control" name="companyName" id="companyName"/>
-            </div>
+            @formFieldDisplay(error,"companyName",Some(Messages("enterCompanyName.form.error")),Messages("enterCompanyName.formHintWhereYouGotIt"),form,Some(Messages("enterCompanyName.formHint")))
         </fieldset>
         @csrf_token()
 

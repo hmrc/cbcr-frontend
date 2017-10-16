@@ -38,8 +38,9 @@ import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.Files
 import play.api.libs.Files.TemporaryFile
-import play.api.libs.json.{Format, JsNull, Reads}
+import play.api.libs.json.{Format, JsNull, JsString, Reads}
 import play.api.test.FakeRequest
+import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.auth._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -47,6 +48,9 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.config.AppName
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpDelete, HttpGet, HttpPut}
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -71,6 +75,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val extractor: XmlInfoExtract                        = new XmlInfoExtract()
   val enrol:EnrolmentsConnector                        = mock[EnrolmentsConnector]
 
+  val configuration = new Configuration(ConfigFactory.load("application.conf"))
+
   override protected def afterEach(): Unit = {
     reset(cache,businessRulesValidator,schemaValidator,fuService)
     super.afterEach()
@@ -80,16 +86,15 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
     var succeed = true
     var agent = false
-
+    var individual = false
     val http = mock[HttpGet with HttpPut with HttpDelete]
-    val configuration = new Configuration(ConfigFactory.load("application.conf"))
 
     def apply(): CBCSessionCache = new SessionCache(configuration, http)
 
     private class SessionCache(_config:Configuration, _http:HttpGet with HttpPut with HttpDelete) extends CBCSessionCache(_config, _http) {
 
       override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] = universe.typeOf[T] match {
-        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" } else {"Organisation"})).asInstanceOf[Option[T]])
+        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"})).asInstanceOf[Option[T]])
         case t if t =:= universe.typeOf[CBCId] => Future.successful(None)
       }
 
@@ -131,7 +136,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-  val schemaFile: File = new File("conf/schema/CbcXML_v1.0.xsd")
+  val schemaVer: String = configuration.getString("oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration oecd-schema-version"))
+  val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
 
   val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,TestSessionCache(),authCon)
   val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,cache,authCon)
@@ -159,6 +165,14 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
       TestSessionCache.agent = false
+
+    }
+    "redirect  when user is an individual" in {
+      TestSessionCache.individual = true
+      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(false)
+      val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
+      status(result) shouldBe Status.SEE_OTHER
+      TestSessionCache.individual = false
 
     }
     "return 500 when the is an error creating the envelope" in {

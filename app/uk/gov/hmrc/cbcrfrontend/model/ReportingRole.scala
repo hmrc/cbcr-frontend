@@ -27,9 +27,9 @@ case object CBC703 extends ReportingRole
 
 object ReportingRole {
   def parseFromString(s:String) :Option[ReportingRole] = s.toLowerCase.trim match {
-    case "cbc701" => Some(CBC701)
-    case "cbc702" => Some(CBC702)
-    case "cbc703" => Some(CBC703)
+    case "cbc701" | "primary"   => Some(CBC701)
+    case "cbc702" | "voluntary" => Some(CBC702)
+    case "cbc703" | "local"     =>Some(CBC703)
     case _        => None
   }
 
