@@ -34,8 +34,15 @@ implicit request: Request[_], messages: Messages)
 @contactPhoneErrors = @{form.error("contactPhone").isDefined}
 @emailErrors = @{form.error("email").isDefined}
 
-@main_template(Messages("submitterInfo.mainHeading"), sidebarLinks = Some(sidebarContent)) {
-
+@main_template(if(form.hasErrors){"Error: " + Messages("submitterInfo.mainHeading")}else{Messages("submitterInfo.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
+    @if(form.hasErrors) {
+        <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+            <h2 id="error-summary-heading" class="h3-heading">@Messages("submitterInfo.error.heading")</h2>
+            @if(fullNameErrors){<p id="fullName-error-summary"><strong><a href="#fullName">@Messages("submitterInfo.fullName.error")</a></strong></p>}
+            @if(contactPhoneErrors) {<p id="contactPhone-error-summary"><strong><a href="#contactPhone">@Messages("submitterInfo.phoneNumber.error")</a></strong></p>}
+            @if(emailErrors){<p id="email-error-summary"><strong><a href="#email">@Messages("submitterInfo.emailAddress.error")</a></strong></p>}
+        </div>
+    }
 <h1>
     @Messages("submitterInfo.mainHeading")
 </h1>

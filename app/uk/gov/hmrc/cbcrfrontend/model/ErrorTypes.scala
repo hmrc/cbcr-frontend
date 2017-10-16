@@ -158,7 +158,7 @@ object BusinessRuleErrors {
     case MessageTypeIndicDocTypeIncompatible => "Error DocTypeIndic (New): If MessageTypeIndic is provided and completed with \"CBC401\" DocTypeIndic must be \"OECD1\""
     case InvalidDocRefId       => "Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide."
     case InvalidCorrDocRefId   => "Error Code 8000 CorrDocRefId (format): The structure of the CorrDocRefID is not in the correct format, as set out in the User Guide."
-    case CbcOecdVersionError   => """CBC_OECD version must equal "1.0"""
+    case CbcOecdVersionError   => """CBC_OECD version must equal 1.0.1"""
     case XmlEncodingError      => """XML encoding must equal UTF8"""
     case OriginalSubmissionNotFound => "Original submission could not be identified"
     case i:InvalidXMLError     => i.toString

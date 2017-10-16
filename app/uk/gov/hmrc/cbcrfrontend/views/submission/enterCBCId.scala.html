@@ -29,13 +29,11 @@ implicit request: Request[_], messages: Messages)
 @sidebarContent = {
 @asideCbc
 }
-
+    @import tags.formFieldDisplay
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
-@main_template(Messages("enterCBCId.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(if(form.hasErrors){"Error: " + Messages("enterCBCId.mainHeading")}else {Messages("enterCBCId.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
     <div class="grid-row">
         <div class="column-two-thirds">
-
-            <h1>@Messages("enterCBCId.mainHeading")</h1>
             @if(errors){
                 <div class="flash error-summary error-summary--show"
                 id="error-summary-display"
@@ -44,18 +42,15 @@ implicit request: Request[_], messages: Messages)
                 tabindex="-1">
                     <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCBCId.error.header")</h2>
                     <p>@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("enterCBCId.error.message.link")</a></p>
-                    <strong><a href="#txt-cbcID">@Messages("enterCBCId.error.message.invalid.id")</a></strong>
+                    <p id="cbcId-error-summary"><strong><a href="#cbcId">@Messages("enterCBCId.error.message.invalid.id")</a></strong></p>
                 </div>
             }
+            <h1>@Messages("enterCBCId.mainHeading")</h1>
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId()){
             <fieldset>
-                <div class="form-group @if(errors){form-field--error}">
-                    <label for="txt-cbcID">
-                        <div>@Messages("enterCBCId.formHintWhereYouGotIt")</div>
-                        <div class="form-hint">@Messages("enterCBCId.formHint")</div>
-                    </label>
-
-                    <input type="text" class="@{if(errors){ "input--medium input--cleared form-control error-field" } else {"input--medium input--cleared form-control"} }" name="cbcId" id="txt-cbcID"/>
+                <div class="form-group">
+                    @formFieldDisplay(errors,"cbcId",Some(Messages("enterCBCId.error.message.invalid.id")),
+                        Messages("enterCBCId.formHintWhereYouGotIt"),form,Some(Messages("enterCBCId.error.header")))
                 </div>
             </fieldset>
             @csrf_token()

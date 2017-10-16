@@ -36,6 +36,15 @@
 
     <div class="grid-row">
         <div class="column-two-thirds">
+            @if(form.hasErrors) {
+                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                    <h2 id="error-summary-heading" class="h3-heading">@Messages("contactInfoSubscriber.errors")</h2>
+                    @if(firstNameErrors){<p id ="firstName-error-summary"><strong><a href="#firstName">@Messages("contactInfoSubscriber.firstName.error")</a></strong></p>}
+                    @if(lastNameErrors) {<p id ="lastName-error-summary"><strong><a href="#lastName">@Messages("contactInfoSubscriber.lastName.error")</a></strong></p>}
+                    @if(phoneNumberErrors){<p id ="phoneNumber-error-summary"><strong><a href="#phoneNumber">@Messages("contactInfoSubscriber.phoneNumber.error")</a></strong></p>}
+                    @if(emailErrors) {<p id ="email-error-summary"><strong><a href="#email">@Messages("contactInfoSubscriber.emailAddress.error")</a></strong></p>}
+                </div>
+            }
             <h1>
             @Messages("contactInfoSubscriber.updateHeading")
             </h1>

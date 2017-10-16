@@ -29,17 +29,17 @@ implicit request: Request[_], messages: Messages)
 
 <div class="grid-row">
     <div class="column-two-thirds">
+        @if(form.hasErrors) {
+            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                <h2 id="error-summary-heading" class="h3-heading">@Messages("utrCheck.error.header")</h2>
+                @if(form.hasErrors){<p id="utr-error-summary"><strong><a href="#utr">@Messages("utrCheck.error")</a></strong></p>}
+            </div>
+        }
         <h1>@Messages("utrCheck.mainHeading")</h1>
         @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
         @CSRF.formField
         <fieldset>
-            <div class="form-field @if(error){ form-field--error} else { form-field--tall }">
-                @if(form.error("utr").isDefined){
-                <span class="error-notification">@Messages("utrCheck.error")</span>
-                }
-                <label>@Messages("utrCheck.label")</label>
-                <input class="form-control--block" type="text" name="utr" id="utr" value=""/>
-            </div>
+            @formFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form)
         </fieldset>
         <p><button type="submit" class="button">@Messages("form.controls.continue")</button></p>
         }

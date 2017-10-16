@@ -16,14 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json._
+import play.api.libs.json.Json
 
-sealed trait UserType extends Product with Serializable
-case object Organisation extends UserType
-case object Agent extends UserType
-case object Individual extends UserType
-
-case class AffinityGroup(affinityGroup: String)
-object AffinityGroup{
-  implicit val format = Json.format[AffinityGroup]
-}
+case class GGId(authProviderType:String, authProviderId:String)
+object GGId{ implicit val format = Json.format[GGId] }

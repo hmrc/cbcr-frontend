@@ -57,13 +57,12 @@ import scala.util.control.NonFatal
 
 @Singleton
 class SubmissionController @Inject()(val sec: SecuredActions,
-                                     val cache:CBCSessionCache,
                                      val fus:FileUploadService,
                                      val docRefIdService: DocRefIdService,
                                      val reportingEntityDataService: ReportingEntityDataService,
-                                     val auth:AuthConnector,
                                      val cbidService: CBCIdService,
-                                     val emailService:EmailService)(implicit ec: ExecutionContext) extends FrontendController with ServicesConfig{
+                                     val emailService:EmailService)(implicit ec: ExecutionContext,cache:CBCSessionCache,auth:AuthConnector) extends FrontendController with ServicesConfig{
+
 
   implicit lazy val fusUrl   = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
@@ -128,10 +127,10 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     }
 
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {surrmarydata =>
+    OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {summaryData =>
       (for {
             xml <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("Unable to read XMLInfo from cache"))
-            _   <- fus.uploadMetadataAndRoute(surrmarydata.submissionMetaData)
+            _   <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
             _   <- saveDocRefIds(xml).leftMap[CBCErrors]{ es =>
               Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
@@ -147,14 +146,17 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   }
   def createSuccessfulSubmissionAuditEvent(authContext: AuthContext, summaryData:SummaryData)
                                           (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =
-    EitherT(audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
-      tags = hc.toAuditTags("CBCRFilingSuccessful", "N/A") + ("path" -> request.uri),
-      detail = Json.toJson(summaryData)
-    )).map{
+    for {
+      ggId   <- right(getUserGGId(authContext))
+      result <- EitherT[Future,CBCErrors,AuditResult.Success.type ](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
+        tags = hc.toAuditTags("CBCRFilingSuccessful", "N/A") + ("path" -> request.uri, "ggId" -> ggId.authProviderId),
+        detail = Json.toJson(summaryData)
+      )).map{
       case AuditResult.Success         => Right(AuditResult.Success)
       case AuditResult.Failure(msg,_)  => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
       case AuditResult.Disabled        => Right(AuditResult.Success)
     })
+    } yield result
 
   val utrForm:Form[Utr] = Form(
     mapping(
@@ -273,20 +275,16 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           ))),
           success => {
             val passStraightThrough = for {
-              straightThrough <- EitherT.right[Future, CBCErrors, Boolean](cache.read[CBCId].map(_.isDefined))
+              straightThrough <- right[Boolean](cache.read[CBCId].map(_.isDefined))
               ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
-              _               <- EitherT.right[Future, CBCErrors,CacheMap](cache.save(success.copy(affinityGroup = Some(ag))))
+              name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
+              _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
               xml             <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
               _               <- right(cache.save(xml.messageSpec.sendingEntityIn))
-              submitterInfo   <- OptionT(cache.read[SubmitterInfo]).toRight(UnexpectedState("Submitter Info not found in the cache"))
-              name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
-              _               <- EitherT.right[Future, CBCErrors, CacheMap](cache.save[SubmitterInfo](
-                submitterInfo.copy(agencyBusinessName = Some(name))
-              ))
             } yield straightThrough
 
             passStraightThrough.fold(
-              error => errorRedirect(error),
+              error           => errorRedirect(error),
               straightThrough => userType match{
                 case Organisation =>
                   if (straightThrough) Redirect(routes.SubmissionController.submitSummary())
@@ -308,10 +306,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   val submitSummary = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     val result = for {
-      userIds <- right(auth.getIds[UserIds](authContext))
-      smd     <- EitherT(generateMetadataFile(userIds.externalId, cache).map(_.toEither)).leftMap(errors =>
-        UnexpectedState(errors.toList.mkString("\n"))
-      )
+      smd     <- EitherT(generateMetadataFile(cache,authContext).map(_.toEither))
+        .leftMap(errors => UnexpectedState(errors.toList.mkString("\n")))
       sd      <- createSummaryData(smd)
     } yield Ok(views.html.submission.submitSummary(includes.phaseBannerBeta(), sd))
     result.fold(
@@ -373,18 +369,18 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       }
     )
   }
-private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String):Email ={
-  val summitedInfo = data.submissionMetaData.submitterInfo
-  Email(List(summitedInfo.email.toString()),
-    "cbcr_report_confirmation",
-    Map(
-      "name" → summitedInfo.fullName,
-      "received_at" → formattedDate,
-      "hash"   → data.submissionMetaData.submissionInfo.hash.value
-  ))
-}
-  val filingHistory = Action.async { implicit request =>
-    Ok(views.html.submission.filingHistory(includes.phaseBannerBeta()))
+
+  private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String):Email ={
+    val submittedInfo = data.submissionMetaData.submitterInfo
+    Email(List(submittedInfo.email.toString()),
+      "cbcr_report_confirmation",
+      Map(
+        "name" → submittedInfo.fullName,
+        "received_at" → formattedDate,
+        "hash"   → data.submissionMetaData.submissionInfo.hash.value
+      ))
   }
+
+  val filingHistory = Action.async { implicit request => Ok(views.html.submission.filingHistory(includes.phaseBannerBeta())) }
 
 }

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-
 import java.time.{LocalDate, LocalDateTime, Year}
 import javax.inject.Inject
 
@@ -24,16 +23,17 @@ import cats.Applicative
 import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.Logger
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.HeaderCarrier
+import play.api.{Configuration, Logger}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                                           docRefIdService: DocRefIdService,
                                           subscriptionDataService: SubscriptionDataService,
-                                          reportingEntityDataService: ReportingEntityDataService
+                                          reportingEntityDataService: ReportingEntityDataService,
+                                          configuration: Configuration
                                          )(implicit ec:ExecutionContext) {
 
   val oecd2Or3 = "OECD[23]"
@@ -129,7 +129,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   }
 
   private def validateCbcOecdVersion(cv:RawCbcVal):Validated[BusinessRuleErrors,Unit] = {
-    if(cv.cbcVer != "1.0"){
+    if(cv.cbcVer != configuration.getString("oecd-schema-version").getOrElse(throw new Exception("Missing configuration key: oecd-schema-version"))){
       CbcOecdVersionError.invalid
     } else {
       ().valid

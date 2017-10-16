@@ -19,56 +19,53 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
 
-@(asideCbc: Html, phaseBannerBeta: Html, knownFactsForm:Form[BPRKnownFacts], noMatchingBusiness:Boolean = false, userType:UserType)(
-implicit request: Request[_], messages: Messages)
-
+@(asideCbc: Html, phaseBannerBeta: Html, knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false, userType: UserType)(
+        implicit request: Request[_], messages: Messages)
+@import tags.formFieldDisplay
 @sidebarContent = {
 @asideCbc
 }
-@errors = @{knownFactsForm.hasErrors || noMatchingBusiness}
+@hasErrors = @{
+    knownFactsForm.hasErrors || noMatchingBusiness
+}
+@main_template(if(hasErrors){"Error: " + Messages("subscribeFirst.mainHeading")} else{ Messages("subscribeFirst.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
 
-@main_template(Messages("subscribeFirst.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+    <div class="grid-row">
+        <div class="column-two-thirds">
+            @if(hasErrors) {
+                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                    <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>
+                    <p>@Messages("subscribeFirst.noMatchingBusiness.suggestion") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.noMatchingBusiness.suggestion.link")</a></p>
+                    <p id="utr-error-summary"><strong><a href="#utr">@Messages("subscribeFirst.error.message.utr-empty")</a></strong></p>
+                    <p id="postCode-error-summary"><strong><a href="#postCode">@Messages("subscribeFirst.error.message.postcode-empty")</strong></a>
+                </div>
+            }
+            <h1>@Messages("subscribeFirst.mainHeading")</h1>
 
+            @form(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts()) {
+                <fieldset>
+                    <div class="form-field form-field--tall ">
+                        @formFieldDisplay(hasErrors, "utr",
+                            Some(Messages("subscribeFirst.error.message.utr-empty")),
+                            Messages("subscribeFirst.utr.label"),
+                            knownFactsForm, Some(Messages("subscribeFirst.utr.hint")))
+                    </div>
 
- <div class="grid-row">
-  <div class="column-two-thirds">
+                    <div class="form-field form-field--tall ">
+                        @formFieldDisplay(hasErrors, "postCode",
+                            Some(Messages("subscribeFirst.error.message.postcode-empty")),
+                            Messages("subscribeFirst.postcode.label"),
+                            knownFactsForm,
+                            None)
+                    </div>
+                </fieldset>
+                <p>
+                    <button type="submit" role="button">@Messages("form.controls.continue")</button>
+                </p>
 
-      <h1>@Messages("subscribeFirst.mainHeading")</h1>
+            }
 
-      @if(errors){
-              <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                  <h2 id="error-summary-heading" class="h3-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>
-                  <p>@Messages("subscribeFirst.noMatchingBusiness.suggestion") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.noMatchingBusiness.suggestion.link")</a></p>
-                  <p><strong><a href="#utr">@Messages("subscribeFirst.error.message.utr-empty")</a></strong></p>
-                  <p><strong><a href="#postCode">@Messages("subscribeFirst.error.message.postcode-empty")</strong></a>
-              </div>
-      }
-
-      @form(action=uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts()) {
-          <fieldset>
-              <div class="form-field form-field--tall  @if(errors){form-field--error}">
-
-                  <label for="utr">@Messages("subscribeFirst.utr.label")
-                  <span class="form-hint">@Messages("subscribeFirst.utr.hint")</span>
-                  <input class="form-control--block" type="text" name="utr" id="utr" />
-                  </label>
-              </div>
-
-              <div class="form-field form-field--tall  @if(errors){form-field--error}">
-
-                  <label for="postCode">@Messages("subscribeFirst.postcode.label")
-                  <input class="form-control--block" type="text" name="postCode" id="postCode" />
-                  </label>
-              </div>
-          </fieldset>
-
-          <p>
-              <button type="submit" role="button">@Messages("form.controls.continue")</button>
-          </p>
-
-      }
-
-  </div>
- </div>
+        </div>
+    </div>
 
 }
