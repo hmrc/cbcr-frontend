@@ -22,7 +22,7 @@ import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.Logger
+import play.api.Configuration
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -49,7 +49,8 @@ class SharedController @Inject()(val sec: SecuredActions,
                                  val subDataService: SubscriptionDataService,
                                  val enrolments:EnrolmentsConnector,
                                  val authConnector:AuthConnector,
-                                 val knownFactsService: BPRKnownFactsService)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
+                                 val knownFactsService: BPRKnownFactsService,
+                                 val configuration: Configuration)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
@@ -138,8 +139,9 @@ class SharedController @Inject()(val sec: SecuredActions,
   }
 
   def downloadGuide = Action.async{ implicit request =>
-    val file: Path = Paths.get("conf/downloads/cbcguide.pdf")
-    Future.successful(Ok.sendPath(file,inline = false,fileName = _ => "cbcGuide.pdf"))
+    val schemaVer: String = configuration.getString("oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration oecd-schema-version"))
+    val file: Path = Paths.get(s"conf/downloads/cbcguide-v${schemaVer}.pdf")
+    Future.successful(Ok.sendPath(file,inline = false,fileName = _ => s"cbcGuide-v${schemaVer}.pdf"))
   }
 
   def guidance =  Action.async { implicit request =>
