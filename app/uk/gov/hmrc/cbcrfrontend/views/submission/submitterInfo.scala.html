@@ -31,17 +31,46 @@ implicit request: Request[_], messages: Messages)
 @agencyBusinessNameErrors = @{form.error("agencyBusinessName").isDefined}
 @jobRoleErrors = @{form.error("jobRole").isDefined}
 
+@numberOfErrors = @{form.errors.length}
+@maybePhoneError =  @{form.error("contactPhone").map(_.message).getOrElse("")}
+@maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
+
 @contactPhoneErrors = @{form.error("contactPhone").isDefined}
 @emailErrors = @{form.error("email").isDefined}
 
 @main_template(if(form.hasErrors){"Error: " + Messages("submitterInfo.mainHeading")}else{Messages("submitterInfo.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
     @if(form.hasErrors) {
-        <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-            <h2 id="error-summary-heading" class="h3-heading">@Messages("submitterInfo.error.heading")</h2>
-            @if(fullNameErrors){<p id="fullName-error-summary"><strong><a href="#fullName">@Messages("submitterInfo.fullName.error")</a></strong></p>}
-            @if(contactPhoneErrors) {<p id="contactPhone-error-summary"><strong><a href="#contactPhone">@Messages("submitterInfo.phoneNumber.error")</a></strong></p>}
-            @if(emailErrors){<p id="email-error-summary"><strong><a href="#email">@Messages("submitterInfo.emailAddress.error")</a></strong></p>}
-        </div>
+        @if(numberOfErrors == 1) {
+            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+            @form.errors.map { error =>
+                <h2 id="error-summary-heading" class="h3-heading"> @error.messages.map(e => Messages(e + ".header")) </h2>
+            @if(maybeEmailError.contains("submitterInfo.emailAddress.error.invalid")) {
+                <p>@Messages("submitterInfo.emailAddress.error.invalid.header.l1")</p>
+            }
+            @if(maybeEmailError.contains("submitterInfo.emailAddress.error.invalid")) {
+                <p>@Messages("submitterInfo.emailAddress.error.invalid.header.l1")</p>
+            }
+                <p><strong><a href="#@error.key" id="@{
+                    error.key
+                }-error-summary">
+                @error.messages.map(x => Messages(x))</a></strong></p>
+
+            }
+            </div>
+        } else {
+            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                <h2 id="error-summary-heading" class="h3-heading">@Messages("submitterInfo.error.heading")</h2>
+                @if(fullNameErrors) {
+                    <p id="fullName-error-summary"><strong><a href="#fullName">@Messages("submitterInfo.fullName.error")</a></strong></p>
+                }
+                @if(contactPhoneErrors) {
+                    <p id="contactPhone-error-summary"><strong><a href="#contactPhone">@Messages(maybePhoneError)</a></strong></p>
+                }
+                @if(emailErrors) {
+                    <p id="email-error-summary"><strong><a href="#email">@Messages(maybeEmailError )</a></strong></p>
+                }
+            </div>
+        }
     }
 <h1>
     @Messages("submitterInfo.mainHeading")
@@ -49,8 +78,8 @@ implicit request: Request[_], messages: Messages)
 <div class="form-group">
     @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo()){
     @formFieldDisplay(fullNameErrors,"fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
-    @formFieldDisplay(contactPhoneErrors,"contactPhone", Some(Messages("submitterInfo.phoneNumber.error")),Messages("submitterInfo.phoneNumber"), form)
-    @formFieldDisplay(emailErrors,"email", Some(Messages("submitterInfo.emailAddress.error")),Messages("submitterInfo.emailAddress"), form)
+    @formFieldDisplay(contactPhoneErrors,"contactPhone", Some(Messages(maybePhoneError)),Messages("submitterInfo.phoneNumber"), form)
+    @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("submitterInfo.emailAddress"), form)
     @CSRF.formField
     <div class="form-field">
         <button role="button" type="submit" id="btn-continue">Continue</button>
