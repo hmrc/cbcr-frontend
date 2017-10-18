@@ -47,8 +47,8 @@ implicit request: Request[_], messages: Messages)
             @if(maybeEmailError.contains("submitterInfo.emailAddress.error.invalid")) {
                 <p>@Messages("submitterInfo.emailAddress.error.invalid.header.l1")</p>
             }
-            @if(maybeEmailError.contains("submitterInfo.emailAddress.error.invalid")) {
-                <p>@Messages("submitterInfo.emailAddress.error.invalid.header.l1")</p>
+            @if(maybePhoneError.contains("submitterInfo.phoneNumber.error.invalid")) {
+                <p>@Messages("submitterInfo.phoneNumber.error.invalid.header.l1")</p>
             }
                 <p><strong><a href="#@error.key" id="@{
                     error.key
