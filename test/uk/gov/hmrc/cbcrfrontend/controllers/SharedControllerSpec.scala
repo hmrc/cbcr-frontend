@@ -49,6 +49,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.duration._
 import akka.util.Timeout
 import play.Logger
+import play.api.Configuration
 import play.api.mvc.Result
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
@@ -67,6 +68,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   implicit val enrol = mock[EnrolmentsConnector]
   val subService = mock[SubscriptionDataService]
   val bprKF    = mock[BPRKnownFactsService]
+  val configuration = mock[Configuration]
 
   val id: CBCId = CBCId("XGCBC0000000001").getOrElse(fail("unable to create cbcid"))
 
@@ -92,7 +94,10 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
   when(enrol.getEnrolments(any())) thenReturn Future.successful(List.empty)
 
-  val controller = new SharedController(securedActions, subService, enrol,authCon,bprKF)
+  val schemaVer: String = "1.0"
+  when(configuration.getString("oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
+
+  val controller = new SharedController(securedActions, subService, enrol,authCon,bprKF,configuration)
 
   val subDetails = SubscriptionDetails(
     BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB")),

@@ -31,32 +31,49 @@
 @lastNameErrors = @{form.error("lastName").isDefined}
 @phoneNumberErrors = @{form.error("phoneNumber").isDefined}
 @emailErrors = @{form.error("email").isDefined}
+@numberOfErrors = @{form.errors.length}
+@maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
+@maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 
 @main_template(Messages("contactInfoSubscriber.updateHeading"), sidebarLinks = Some(sidebarContent)) {
-
     <div class="grid-row">
         <div class="column-two-thirds">
             @if(form.hasErrors) {
-                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                    <h2 id="error-summary-heading" class="h3-heading">@Messages("contactInfoSubscriber.errors")</h2>
-                    @if(firstNameErrors){<p id ="firstName-error-summary"><strong><a href="#firstName">@Messages("contactInfoSubscriber.firstName.error")</a></strong></p>}
-                    @if(lastNameErrors) {<p id ="lastName-error-summary"><strong><a href="#lastName">@Messages("contactInfoSubscriber.lastName.error")</a></strong></p>}
-                    @if(phoneNumberErrors){<p id ="phoneNumber-error-summary"><strong><a href="#phoneNumber">@Messages("contactInfoSubscriber.phoneNumber.error")</a></strong></p>}
-                    @if(emailErrors) {<p id ="email-error-summary"><strong><a href="#email">@Messages("contactInfoSubscriber.emailAddress.error")</a></strong></p>}
-                </div>
+                @if(numberOfErrors == 1) {
+                    <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                    @form.errors.map{  error =>
+                        <h2 id="error-summary-heading" class="h3-heading">@error.messages.map(e => Messages(e + ".header"))</h2>
+                            @if(maybeEmailError.contains("contactInfoSubscriber.emailAddress.error.invalid")) {
+                                <p>@Messages("contactInfoSubscriber.emailAddress.error.invalid.header.l1")</p>
+                            }
+                            @if(maybePhoneError.contains("contactInfoSubscriber.phoneNumber.error.invalid")) {
+                                <p>@Messages("contactInfoSubscriber.phoneNumber.error.invalid.header.l1")</p>
+                            }
+                            <p><strong><a href="#@error.key" id="@{error.key}-error-summary"> @error.messages.map(x => Messages(x))</a></strong></p>
+
+                        }
+                    </div>
+                } else {
+                    <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                        <h2 id="error-summary-heading" class="h3-heading">@Messages("contactInfoSubscriber.errors")</h2>
+                        @form.errors.map { error =><p><strong><a href="#@error.key" id="@{error.key}-error-summary">
+                            @error.messages.map(x => Messages(x))</a></strong></p>
+                        }
+                    </div>
+                }
             }
             <h1>
-            @Messages("contactInfoSubscriber.updateHeading")
+                @Messages("contactInfoSubscriber.updateHeading")
             </h1>
             <div class="form-group">
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.saveUpdatedInfoSubscriber()){
                 @formFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)
                 @formFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None)
-                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages("contactInfoSubscriber.phoneNumber.error")),Messages("contactInfoSubscriber.phoneNumber.label"), form, None)
-                @formFieldDisplay(emailErrors,"email", Some(Messages("contactInfoSubscriber.emailAddress.error")),Messages("contactInfoSubscriber.emailAddress.label"), form, None)
+                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"), form, None)
+                @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None)
                 @CSRF.formField
                 <div class="form-field">
-                    <button role="button" type="submit" id="continue">Save</button>
+                    <button role="button" type="submit" id="continue">Continue</button>
                 </div>
             }
             </div>
