@@ -205,10 +205,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           {
             case CBC701 =>
               errorRedirect(UnexpectedState("ReportingRole was CBC701 - we should never be here"))
-            case CBC702 =>
+            case CBC702 | CBC703 =>
               Redirect(routes.SubmissionController.utr())
-            case CBC703 =>
-              Redirect(routes.SubmissionController.enterCompanyName())
           })
       }
     )
@@ -235,19 +233,12 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
         case CBC701 =>
           for {
-            _ <- cache.save(kXml.reportingEntity.tin)
             _ <- cache.save(FilingType(CBC701))
             _ <- cache.save(UltimateParentEntity(kXml.reportingEntity.name))
           } yield ()
 
-        case CBC702 =>
+        case CBC702 | CBC703 =>
           cache.save(FilingType(CBC702))
-
-        case CBC703 =>
-          for {
-            _ <- cache.save(kXml.reportingEntity.tin)
-            _ <- cache.save(FilingType(CBC703))
-          } yield ()
 
       }).cata(
         errorRedirect(UnexpectedState("Unable to read KeyXMLFileInfo from cache")),
