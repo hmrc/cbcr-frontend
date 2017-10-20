@@ -45,7 +45,7 @@ case class RawReportingEntity(reportingRole: String,
                               name:String) extends RawXmlFields
 case class RawXMLInfo(messageSpec: RawMessageSpec,
                       reportingEntity: Option[RawReportingEntity],
-                      cbcReport: Option[RawCbcReports],
+                      cbcReport: List[RawCbcReports],
                       additionalInfo: Option[RawAdditionalInfo],
                       cbcVal: RawCbcVal,
                       xmlEncoding: RawXmlEncodingVal) extends RawXmlFields

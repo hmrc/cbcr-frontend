@@ -266,6 +266,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           success => {
             val result = for {
               straightThrough <- right[Boolean](cache.read[CBCId].map(_.isDefined))
+              _                = Logger.error(s"Straigh through: $straightThrough")
               ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
               name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
               _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
