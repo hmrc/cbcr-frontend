@@ -32,7 +32,7 @@ implicit request: Request[_], messages: Messages)
         <div class="column-two-thirds">
             <section>
                 <div class="transaction-banner--complete">
-                    <span class="transaction-banner__heading h1-heading">@Messages("subscribeSuccessCbcId.mainHeading") @companyName</span>
+                    <h1><span class="transaction-banner__heading h1-heading">@Messages("subscribeSuccessCbcId.mainHeading") @companyName</span></h1>
                     <p class="transaction-banner__heading">
                         @Messages("subscribeSuccessCbcId.subHeading")<br>
                         <strong class="heading-medium">@cbcId.value</strong>
@@ -41,7 +41,7 @@ implicit request: Request[_], messages: Messages)
             </section>
             <p><a href="#" onclick="window.print()" class="print-link">@Messages("subscribeSuccessCbcId.printThisButton")</a></p>
             <p>@Messages("subscribeSuccessCbcId.printThis1")</p>
-            <h3>@Messages("subscribeSuccessCbcId.next")</h3>
+            <h2>@Messages("subscribeSuccessCbcId.next")</h2>
             <p>@Messages("subscribeSuccessCbcId.email")</p>
             <p>@Messages("subscribeSuccessCbcId.next2")</p>
             <p>
