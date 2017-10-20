@@ -264,25 +264,26 @@ class SubmissionController @Inject()(val sec: SecuredActions,
             includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
           ))),
           success => {
-            val passStraightThrough = for {
+            val result = for {
               straightThrough <- right[Boolean](cache.read[CBCId].map(_.isDefined))
               ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
               name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
               _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
-              xml             <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
-              _               <- right(cache.save(xml.messageSpec.sendingEntityIn))
-            } yield straightThrough
-
-            passStraightThrough.fold(
-              error           => errorRedirect(error),
-              straightThrough => userType match{
+              result          <- userType match {
                 case Organisation =>
-                  if (straightThrough) Redirect(routes.SubmissionController.submitSummary())
-                  else Redirect(routes.SharedController.enterCBCId())
+                  if (straightThrough) right(Redirect(routes.SubmissionController.submitSummary()))
+                  else right(Redirect(routes.SharedController.enterCBCId()))
                 case Agent =>
-                  Redirect(routes.SharedController.verifyKnownFactsAgent())
+                  for {
+                    xml <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
+                    _   <- right(cache.save(xml.messageSpec.sendingEntityIn))
+                  } yield Redirect(routes.SharedController.verifyKnownFactsAgent())
               }
-            )
+
+            } yield result
+
+            result.leftMap(errorRedirect).merge
+
           }
         )
       }.fold(
