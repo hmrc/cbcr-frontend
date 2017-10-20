@@ -169,7 +169,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   )
 
 
-
+//todo remove this dead code
   val reconfirmEmailForm : Form[EmailAddress] = Form(
     mapping(
       "reconfirmEmail" -> email.verifying(EmailAddress.isValid(_))
@@ -196,17 +196,19 @@ class SubmissionController @Inject()(val sec: SecuredActions,
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
         val result = for {
-          _       <- OptionT.liftF(cache.save(success))
-          xmlInfo <- OptionT(cache.read[XMLInfo])
-        } yield xmlInfo.reportingEntity.reportingRole
+          _       <- OptionT.liftF(cache.save(success)).toRight(UnexpectedState("Could not save to cache"))
+          xmlInfo <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("Could not read XMLinfo from cache"))
+          userType <- getUserType(authContext)
+        } yield xmlInfo.reportingEntity.reportingRole -> userType
 
-        result.cata(
-          errorRedirect(UnexpectedState("Unable to find KeyXMLFileInfo in cache")),
+        result.fold(
+          e => errorRedirect(e),
           {
-            case CBC701 =>
+            case (CBC701,_) =>
               errorRedirect(UnexpectedState("ReportingRole was CBC701 - we should never be here"))
-            case CBC702 | CBC703 =>
-              Redirect(routes.SubmissionController.utr())
+            case (_,Organisation)  => Redirect(routes.SubmissionController.utr())
+            case (_,Agent)         => Redirect(routes.SubmissionController.enterCompanyName())
+            case (_,Individual)    => errorRedirect(UnexpectedState("Found Individual"))
           })
       }
     )
