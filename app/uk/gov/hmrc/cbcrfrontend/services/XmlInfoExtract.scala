@@ -122,7 +122,7 @@ class XmlInfoExtract {
     val ms = collectedData.collectFirst{ case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","","",None))
     val re = collectedData.collectFirst{ case re:RawReportingEntity => re}
     val ai = collectedData.collectFirst{ case ai:RawAdditionalInfo => ai}
-    val cr = collectedData.collectFirst{ case cr:RawCbcReports=> cr }
+    val cr = collectedData.collect{ case cr:RawCbcReports=> cr }
 
     RawXMLInfo(ms,re,cr,ai,cv,xe)
 
