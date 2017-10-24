@@ -44,8 +44,6 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   type ValidatedBusinessRuleApplicative[A] = ValidatedNel[BusinessRuleErrors, A]
   implicit val testApp = Applicative[Future] compose Applicative[ValidatedBusinessRuleApplicative]
 
-  type X[A] = ValidatedNel[BusinessRuleErrors,A]
-
   def validateBusinessRules(in: RawXMLInfo, fileName: String)(implicit hc: HeaderCarrier): EitherT[Future, NonEmptyList[BusinessRuleErrors], XMLInfo] = {
     EitherT(
       (validateMessageRefIdD(in.messageSpec) |@|
@@ -71,7 +69,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                 in.additionalInfo.map(_.docSpec)
               ).toValidatedNel |@|
               validateMessageTypeIndic(in).toValidatedNel |@|
-              in.cbcReport.map(r => validateCorrDocRefIdExists(Some(r.docSpec)).toValidatedNel).sequence[X,Unit] |@|
+              in.cbcReport.map(r => validateCorrDocRefIdExists(Some(r.docSpec)).toValidatedNel).sequence[({type λ[α] = ValidatedNel[BusinessRuleErrors,α]})#λ,Unit] |@|
               validateCorrDocRefIdExists(in.reportingEntity.map(_.docSpec)).toValidatedNel |@|
               validateCorrDocRefIdExists(in.additionalInfo.map(_.docSpec)).toValidatedNel |@|
               validateMessageTypeIndicCompatible(in).toValidatedNel |@|
