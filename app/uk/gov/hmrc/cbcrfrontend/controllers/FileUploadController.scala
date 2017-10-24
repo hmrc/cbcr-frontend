@@ -37,7 +37,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html._
-import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, sha256Hash, _}
+import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, getUserType, sha256Hash, _}
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
@@ -75,6 +75,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     case Agent        => Future.successful(true)
     case Individual   => Future.successful(false)
   }
+
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
@@ -154,11 +155,12 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                              else if(xml_bizErrors._2.nonEmpty) auditFailedSubmission(authContext,"business rules errors")
                              else EitherT.pure[Future,CBCErrors,Unit](())
       _                   = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
-    } yield Ok(submission.fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
+      userType            <- getUserType(authContext)
+    } yield Ok(submission.fileupload.fileUploadResult(Some(userType), Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
     result.leftMap{
       case FatalSchemaErrors(size)=>
-        Ok(submission.fileupload.fileUploadResult(None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
+        Ok(submission.fileupload.fileUploadResult(None, None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
       case InvalidFileType(_)     =>
         Redirect(routes.FileUploadController.fileInvalid())
       case e:CBCErrors            =>
