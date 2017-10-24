@@ -20,6 +20,7 @@ import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.all._
 import cats.instances.all._
 import play.api.libs.json._
+import play.api.libs.json.Json._
 
 
 /**
@@ -57,13 +58,12 @@ object PartialReportingEntityData {
   implicit def formatNEL[A:Format] = new Format[NonEmptyList[A]] {
     override def writes(o: NonEmptyList[A]) = JsArray(o.map(Json.toJson(_)).toList)
 
-    override def reads(json: JsValue) = json match {
-      case JsArray(a) => NonEmptyList.fromList(a.map(Json.fromJson(_)).toList)
-        .fold[JsResult[NonEmptyList[A]]](
-        JsError("Not about to de-serialise $json as NonEmptyList")
-      )(x => x.toList.sequence[JsResult,A])
-    }
+    override def reads(json: JsValue) = json.validate[List[A]].flatMap(l => NonEmptyList.fromList(l) match {
+      case None    => JsError(s"Unable to serialise $json as NonEmptyList")
+      case Some(a) => JsSuccess(a)
+    })
   }
+
   implicit val format = Json.format[PartialReportingEntityData]
   def extract(x:XMLInfo):PartialReportingEntityData =
     PartialReportingEntityData(
@@ -77,6 +77,8 @@ object PartialReportingEntityData {
 }
 
 object ReportingEntityData{
+
+  import PartialReportingEntityData.formatNEL
   implicit val format = Json.format[ReportingEntityData]
 
   def extract(x:XMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]=

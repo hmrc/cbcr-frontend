@@ -124,7 +124,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
         None
       ),
       ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),Utr("7000000002"),"name"),
-      Some(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
+      List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
       Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
     )
 
