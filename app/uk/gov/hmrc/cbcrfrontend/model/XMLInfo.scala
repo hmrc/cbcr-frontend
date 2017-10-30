@@ -45,14 +45,14 @@ case class RawReportingEntity(reportingRole: String,
                               name:String) extends RawXmlFields
 case class RawXMLInfo(messageSpec: RawMessageSpec,
                       reportingEntity: Option[RawReportingEntity],
-                      cbcReport: Option[RawCbcReports],
+                      cbcReport: List[RawCbcReports],
                       additionalInfo: Option[RawAdditionalInfo],
                       cbcVal: RawCbcVal,
                       xmlEncoding: RawXmlEncodingVal) extends RawXmlFields
 
 /** These models represent the type-validated data, derived from the raw data */
 class DocRefId private[model](val msgRefID:MessageRefID,
-                              val tin:Utr,
+                              val tin:String,
                               val docTypeIndic:DocTypeIndic,
                               val parentGroupElement:ParentGroupElement,
                               val uniq:String){
@@ -64,19 +64,18 @@ class DocRefId private[model](val msgRefID:MessageRefID,
 
 }
 object DocRefId {
-  val docRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(${Utr.utrRegex.toString.init.tail})(OECD[0123])(ENT|REP|ADD)(.{0,41})""".r
+  val docRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.*?)(OECD[0123])(ENT|REP|ADD)(.{0,41})""".r
   def apply(s:String) : Option[DocRefId] = s match {
     case docRefIdRegex(msgRef,_,_,_,_,_,_,tin,docType,pGroup,uniq) => for {
       m <- MessageRefID(msgRef).toOption
-      u <- if(Utr(tin).isValid) Some(Utr(tin)) else None
       o <- DocTypeIndic.fromString(docType)
       p <- ParentGroupElement.fromString(pGroup)
-    } yield new DocRefId(m,u,o,p,uniq)
+    } yield new DocRefId(m,tin,o,p,uniq)
     case _                                             => None
   }
 
   implicit val showDocRefId: Show[DocRefId] = Show.show[DocRefId](d =>
-    s"${d.msgRefID.show}_${d.tin.utr}${d.docTypeIndic}${d.parentGroupElement}${d.uniq}"
+    s"${d.msgRefID.show}_${d.tin}${d.docTypeIndic}${d.parentGroupElement}${d.uniq}"
   )
 
   implicit val format = new Format[DocRefId] {
@@ -133,5 +132,5 @@ object ReportingEntity{ implicit val format = Json.format[ReportingEntity] }
 case class CbcOecdInfo(cbcVer: String)
 object CbcOecdInfo{ implicit val format = Json.format[CbcOecdInfo] }
 
-case class XMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:Option[CbcReports], additionalInfo:Option[AdditionalInfo])
+case class XMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo])
 object XMLInfo { implicit val format = Json.format[XMLInfo] }

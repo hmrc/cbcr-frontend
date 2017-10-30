@@ -69,7 +69,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                 in.additionalInfo.map(_.docSpec)
               ).toValidatedNel |@|
               validateMessageTypeIndic(in).toValidatedNel |@|
-              validateCorrDocRefIdExists(in.cbcReport.map(_.docSpec)).toValidatedNel |@|
+              in.cbcReport.map(r => validateCorrDocRefIdExists(Some(r.docSpec)).toValidatedNel).sequence[({type λ[α] = ValidatedNel[BusinessRuleErrors,α]})#λ,Unit] |@|
               validateCorrDocRefIdExists(in.reportingEntity.map(_.docSpec)).toValidatedNel |@|
               validateCorrDocRefIdExists(in.additionalInfo.map(_.docSpec)).toValidatedNel |@|
               validateMessageTypeIndicCompatible(in).toValidatedNel |@|
@@ -102,8 +102,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
         (validateReportingRole(rre).toValidatedNel |@| validateTIN(rre).toValidatedNel |@| vds).map((rr, utr, ds) => ReportingEntity(rr, ds, utr, rre.name))
       }
     }.getOrElse {
-      val id = in.cbcReport.flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId)).flatMap(DocRefId(_))
-      val rr = in.cbcReport.map(_.docSpec.docType).orElse(in.additionalInfo.map(_.docSpec.docType)).flatMap(DocTypeIndic.fromString)
+      val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId)).flatMap(DocRefId(_))
+      val rr = in.cbcReport.headOption.map(_.docSpec.docType).orElse(in.additionalInfo.map(_.docSpec.docType)).flatMap(DocTypeIndic.fromString)
 
       (id |@| rr).map { (drid, dti) =>
         reportingEntityDataService.queryReportingEntityData(drid).leftMap{
@@ -140,9 +140,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
     lazy val docTypes = List(
       r.additionalInfo.map(_.docSpec.docType),
-      r.reportingEntity.map(_.docSpec.docType),
-      r.cbcReport.map(_.docSpec.docType)
-    ).flatten
+      r.reportingEntity.map(_.docSpec.docType)
+    ).flatten ++ r.cbcReport.map(_.docSpec.docType)
 
     if(r.messageSpec.messageType.contains(CBC401.toString) && docTypes.exists(_ != OECD1.toString)){
       MessageTypeIndicDocTypeIncompatible.invalid
@@ -151,8 +150,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     }
   }
 
-  private def crossValidateCorrDocRefIds(re:Option[RawDocSpec], cb:Option[RawDocSpec], ad:Option[RawDocSpec]) : Validated[BusinessRuleErrors,Unit] = {
-    val all = List(re.map(_.docType),cb.map(_.docType),ad.map(_.docType)).flatten.toSet
+  private def crossValidateCorrDocRefIds(re:List[RawDocSpec], cb:Option[RawDocSpec], ad:Option[RawDocSpec]) : Validated[BusinessRuleErrors,Unit] = {
+    val all = (List(cb.map(_.docType),ad.map(_.docType)).flatten ++ re.map(_.docType)).toSet
     if(all.size > 1 && all.contains(OECD1.toString)){
       IncompatibleOECDTypes.invalid
     } else {
@@ -172,8 +171,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
    }
   }.getOrElse(().valid)
 
-  private def crossValidateDocRefIds(re:Option[String],cb:Option[String],ad:Option[String]): Validated[BusinessRuleErrors,Unit] = {
-    val ids = List(re,cb,ad).flatten
+  private def crossValidateDocRefIds(re:Option[String],cb:List[String],ad:Option[String]): Validated[BusinessRuleErrors,Unit] = {
+    val ids = List(re,ad).flatten ++ cb
     Either.cond(ids.distinct.size == ids.size,(),DocRefIdDuplicate).toValidated
   }
 
@@ -252,10 +251,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
   private def validateTestDataPresent(in:RawXMLInfo) : Validated[BusinessRuleErrors,Unit] = {
     val docTypes = List(
-      in.cbcReport.map(_.docSpec.docType),
       in.additionalInfo.map(_.docSpec.docType),
       in.reportingEntity.map(_.docSpec.docType)
-    ).flatten
+    ).flatten ++ in.cbcReport.map(_.docSpec.docType)
 
     if(docTypes.exists(_.matches(testData))) {
       TestDataError.invalid

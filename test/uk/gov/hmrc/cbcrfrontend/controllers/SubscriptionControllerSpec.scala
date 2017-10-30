@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.time.LocalDateTime
 
+import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import org.mockito.Matchers.{eq => EQ, _}
@@ -27,10 +28,11 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
-import play.api.i18n.MessagesApi
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{AnyContent, Request}
+import play.api.mvc.Result
 import play.api.test.FakeRequest
+import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.model.{SubscriptionEmailSent, _}
@@ -42,14 +44,15 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
-import uk.gov.hmrc.cbcrfrontend.model.SubscriptionEmailSent.SubscriptionEmailSentFormat
+
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
-import uk.gov.hmrc.cbcrfrontend.model.ConfirmationEmailSent.ConfirmationEmailSentFormat
-class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector with BeforeAndAfterEach {
+class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneAppPerSuite  with CSRFTest with MockitoSugar with FakeAuthConnector with BeforeAndAfterEach {
+  val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
+  def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
-  implicit val messagesApi = app.injector.instanceOf[MessagesApi]
   implicit val authCon = authConnector(TestUsers.cbcrUser)
   val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
   val subService = mock[SubscriptionDataService]
@@ -63,6 +66,8 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
   val emailMock = mock[EmailService]
   implicit val cache = mock[CBCSessionCache]
 
+
+  implicit val timeout = Timeout(5 seconds)
   override protected def afterEach(): Unit = {
     reset(cache,subService,auditMock,dc,cbcId,bprKF,enrollments,cache,emailMock)
     super.afterEach()
@@ -196,7 +201,133 @@ class SubscriptionControllerSpec extends UnitSpec with ScalaFutures with OneAppP
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
-
+    "return a custom error message when the phone number is invalid" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
+        override lazy val audit = auditMock
+      }
+      val data = Json.obj(
+        "phoneNumber" -> "I'm not a phone number",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
+        "email" -> "blagh@blagh.com"
+      )
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
+      implicit val messages = getMessages(fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString =   contentAsString(result)
+      webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
+      webPageAsString should include("recognise the phone number")
+      webPageAsString should not include("found some errors")
+      webPageAsString should not include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty"))
+    }
+    "return a custom error message when the phone number is empty" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
+        override lazy val audit = auditMock
+      }
+      val data = Json.obj(
+        "phoneNumber" -> "",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
+        "email" -> "blagh@blagh.com"
+      )
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
+      implicit val messages = getMessages(fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString =   contentAsString(result)
+      webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty"))
+      webPageAsString should include("entered your phone number")
+      webPageAsString should not include("found some errors")
+      webPageAsString should not include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
+    }
+    "return a custom error message when the email  is invalid" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
+        override lazy val audit = auditMock
+      }
+      val data = Json.obj(
+        "phoneNumber" -> "07706641666",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
+        "email" -> "I am not a email"
+      )
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
+      implicit val messages = getMessages(fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString =   contentAsString(result)
+      webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.emailAddress.error.invalid"))
+      webPageAsString should include("recognise the email address")
+      webPageAsString should not include("found some errors")
+      webPageAsString should not include("entered your email address")
+    }
+    "return a custom error message when the frist name is empty" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
+        override lazy val audit = auditMock
+      }
+      val data = Json.obj(
+        "phoneNumber" -> "07706641666",
+        "firstName" -> "",
+        "lastName" -> "Jones",
+        "email" -> "colm.m.cavanagh@gmail.com"
+      )
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
+      implicit val messages = getMessages(fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString =   contentAsString(result)
+      webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.firstName.error"))
+      webPageAsString should not include("found some errors")
+    }
+    "return a custom error message when the last name is empty" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
+        override lazy val audit = auditMock
+      }
+      val data = Json.obj(
+        "phoneNumber" -> "07706641666",
+        "firstName" -> "Dave",
+        "lastName" -> "",
+        "email" -> "colm.m.cavanagh@gmail.com"
+      )
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
+      implicit val messages = getMessages(fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString =   contentAsString(result)
+      webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.lastName.error"))
+      webPageAsString should not include("found some errors")
+    }
+    "return a custom error message when the email is empty" in {
+      val subService = mock[SubscriptionDataService]
+      val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
+        override lazy val audit = auditMock
+      }
+      val data = Json.obj(
+        "phoneNumber" -> "07706641666",
+        "firstName" -> "Dave",
+        "lastName" -> "Jones",
+        "email" -> ""
+      )
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
+      implicit val messages = getMessages(fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString =   contentAsString(result)
+      webPageAsString should include("entered your email address")
+      webPageAsString should not include("found some errors")
+      webPageAsString should not include(getMessages(fakeRequest)("contactInfoSubscriber.emailAddress.error.invalid"))
+    }
     "return 500 when the SubscriptionDataService errors" in {
       val subService = mock[SubscriptionDataService]
       val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){

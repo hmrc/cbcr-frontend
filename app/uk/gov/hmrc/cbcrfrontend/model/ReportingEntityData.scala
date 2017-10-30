@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import cats.data.ValidatedNel
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.all._
 import cats.instances.all._
-import play.api.libs.json.Json
+import play.api.libs.json._
+import play.api.libs.json.Json._
 
 
 /**
@@ -36,7 +37,7 @@ import play.api.libs.json.Json
   * @param ultimateParentEntity The [[UltimateParentEntity]] from the [[ReportingEntity]] section of the XML document
   * @param reportingRole The [[ReportingRole]] from the [[ReportingEntity]] section of the XML document
   */
-case class ReportingEntityData(cbcReportsDRI:DocRefId,
+case class ReportingEntityData(cbcReportsDRI:NonEmptyList[DocRefId],
                                additionalInfoDRI:Option[DocRefId],
                                reportingEntityDRI:DocRefId,
                                utr:Utr,
@@ -46,7 +47,7 @@ case class ReportingEntityData(cbcReportsDRI:DocRefId,
 case class DocRefIdPair(docRefId: DocRefId,corrDocRefId: Option[CorrDocRefId])
 object DocRefIdPair{ implicit val format = Json.format[DocRefIdPair] }
 
-case class PartialReportingEntityData(cbcReportsDRI:Option[DocRefIdPair],
+case class PartialReportingEntityData(cbcReportsDRI:List[DocRefIdPair],
                                       additionalInfoDRI:Option[DocRefIdPair],
                                       reportingEntityDRI:DocRefIdPair,
                                       utr:Utr,
@@ -54,6 +55,15 @@ case class PartialReportingEntityData(cbcReportsDRI:Option[DocRefIdPair],
                                       reportingRole: ReportingRole)
 
 object PartialReportingEntityData {
+  implicit def formatNEL[A:Format] = new Format[NonEmptyList[A]] {
+    override def writes(o: NonEmptyList[A]) = JsArray(o.map(Json.toJson(_)).toList)
+
+    override def reads(json: JsValue) = json.validate[List[A]].flatMap(l => NonEmptyList.fromList(l) match {
+      case None    => JsError(s"Unable to serialise $json as NonEmptyList")
+      case Some(a) => JsSuccess(a)
+    }).orElse{ json.validate[A].map(a => NonEmptyList(a,Nil)) }
+  }
+
   implicit val format = Json.format[PartialReportingEntityData]
   def extract(x:XMLInfo):PartialReportingEntityData =
     PartialReportingEntityData(
@@ -67,12 +77,14 @@ object PartialReportingEntityData {
 }
 
 object ReportingEntityData{
+
+  import PartialReportingEntityData.formatNEL
   implicit val format = Json.format[ReportingEntityData]
 
   def extract(x:XMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]=
-    x.cbcReport.map(_.docSpec.docRefId).toValidNel(UnexpectedState("CBCReport DocRefId not found")).map{c =>
+    x.cbcReport.toNel.toValidNel(UnexpectedState("CBCReport DocRefId not found")).map{c =>
       ReportingEntityData(
-        c,x.additionalInfo.map(_.docSpec.docRefId),
+        c.map(_.docSpec.docRefId),x.additionalInfo.map(_.docSpec.docRefId),
         x.reportingEntity.docSpec.docRefId,
         x.reportingEntity.tin,
         UltimateParentEntity(x.reportingEntity.name),

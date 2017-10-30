@@ -124,7 +124,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
         None
       ),
       ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),Utr("7000000002"),"name"),
-      Some(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
+      List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
       Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
     )
 
@@ -250,6 +250,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
       when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(new CacheMap("",Map.empty))
+      when(cache.read(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Option(AffinityGroup("Organisation")))
       when(businessRulesValidator.validateBusinessRules(any(),any())(any())) thenReturn EitherT.right[Future,NonEmptyList[BusinessRuleErrors],XMLInfo](xmlinfo)
       val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
       val returnVal = status(result)
