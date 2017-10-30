@@ -1,0 +1,3 @@
+GET   /insertSubscription/:cbcId/:utr                      @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.insertSubscriptionData(cbcId: String, utr: String)
+GET   /deleteSubscription/:utr                             @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteSubscription(utr: String)
+GET   /deleteDocRefId/:docRefId                            @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteSingleDocRefId(docRefId: String)
