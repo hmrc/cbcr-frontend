@@ -76,7 +76,6 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     case Individual   => Future.successful(false)
   }
 
-
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
       allowedToSubmit(authContext).flatMap { canSubmit =>
@@ -167,9 +166,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
         Logger.error(e.toString)
         Redirect(routes.SharedController.technicalDifficulties())
     }.merge.recover{
-      case NonFatal(e) =>
-        Logger.error(e.getMessage,e)
-        Redirect(routes.SharedController.technicalDifficulties())
+      case NonFatal(e) => errorRedirect(UnexpectedState(e.getMessage()))
     }
 
  }

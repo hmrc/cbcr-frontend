@@ -10,5 +10,4 @@
 # Failing to follow this rule may result in test routes deployed in production.
 
 # Add all the application routes to the prod.routes file
-->         /                                                          prod.Routes
-->         /country-by-country-reporting-private-beta-1/test-only      test.Routes
+->         /                          prod.Routes
