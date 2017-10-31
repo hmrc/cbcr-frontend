@@ -155,7 +155,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   )
 
 
-//todo remove this dead code
+
   val reconfirmEmailForm : Form[EmailAddress] = Form(
     mapping(
       "reconfirmEmail" -> email.verifying(EmailAddress.isValid(_))
