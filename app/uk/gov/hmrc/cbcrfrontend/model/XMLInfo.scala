@@ -48,7 +48,7 @@ case class RawXMLInfo(messageSpec: RawMessageSpec,
                       cbcReport: List[RawCbcReports],
                       additionalInfo: Option[RawAdditionalInfo],
                       cbcVal: RawCbcVal,
-                      xmlEncoding: RawXmlEncodingVal) extends RawXmlFields
+                      xmlEncoding: Option[RawXmlEncodingVal]) extends RawXmlFields
 
 /** These models represent the type-validated data, derived from the raw data */
 class DocRefId private[model](val msgRefID:MessageRefID,

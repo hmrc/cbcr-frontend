@@ -120,13 +120,18 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       }
     }
 
-  private def validateXmlEncodingVal(xe:RawXmlEncodingVal):Validated[BusinessRuleErrors,Unit] ={
-    if(xe.xmlEncodingVal != "UTF-8"){
-      XmlEncodingError.invalid
-    } else {
-      ().valid
-    }
+  private def validateXmlEncodingVal(xe: Option[RawXmlEncodingVal]): Validated[BusinessRuleErrors, Unit] = {
+    xe.fold[Validated[BusinessRuleErrors, Unit]](().valid)(v =>
+      if (!v.xmlEncodingVal.equalsIgnoreCase("UTF-8")) {
+        XmlEncodingError.invalid
+      } else {
+        ().valid
+      }
+    )
   }
+
+
+
 
   private def validateCbcOecdVersion(cv:RawCbcVal):Validated[BusinessRuleErrors,Unit] = {
     if(cv.cbcVer != configuration.getString("oecd-schema-version").getOrElse(throw new Exception("Missing configuration key: oecd-schema-version"))){

@@ -38,7 +38,7 @@ class XmlInfoExtractSpec extends UnitSpec {
       e.messageSpec.reportingPeriod shouldBe "2016-03-31"
       e.messageSpec.timestamp shouldBe "2016-11-01T15:00:00"
 
-      e.xmlEncoding.xmlEncodingVal shouldBe "UTF-8"
+      e.xmlEncoding.get.xmlEncodingVal shouldBe "UTF-8"
       e.cbcVal.cbcVer shouldBe "1.0"
 
       val re = e.reportingEntity.get
