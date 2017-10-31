@@ -460,7 +460,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
-    }
     "return the KeyXmlInfo when everything is fine" in {
       val validFile = new File("test/resources/cbcr-valid.xml")
       val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
@@ -472,5 +471,22 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       )
     }
 
+      "should not create an error" when {
+        "Should not fail when utf-8 is lowercase" in {
+          
+          val validFile = new File("test/resources/lower-case-utf8-pre-amble.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+          result.fold(
+            _ => fail("Should not fail when utf-8 is lowercase"),
+            _ => ()
+          )
+        }
+      }
+    }
   }
+
+
+
+
 }
