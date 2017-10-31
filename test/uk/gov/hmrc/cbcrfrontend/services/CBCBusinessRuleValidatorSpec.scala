@@ -473,8 +473,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       "should not create an error" when {
         "Should not fail when utf-8 is lowercase" in {
-
-          //lower-case-utf8-pre-amble.xml cbcr-valid.xml
+          
           val validFile = new File("test/resources/lower-case-utf8-pre-amble.xml")
           val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
