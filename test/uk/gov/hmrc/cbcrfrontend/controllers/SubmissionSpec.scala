@@ -235,9 +235,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
 
       verify(cache, times(2)).read(EQ(AffinityGroup.format),any(),any())
-      verify(cache).read(EQ(XMLInfo.format),any(),any())
       verify(cache).save(any())(EQ(SubmitterInfo.format),any(),any())
-      verify(cache).save(any())(EQ(CBCId.cbcIdFormat),any(),any())
 
     }
 
@@ -622,7 +620,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         None
       ),
       ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),Utr("7000000002"),"name"),
-      Some(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None))),
+      List(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None))),
       Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None)))
     )
   }
