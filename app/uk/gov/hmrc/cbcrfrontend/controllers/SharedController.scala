@@ -90,10 +90,10 @@ class SharedController @Inject()(val sec: SecuredActions,
   } yield CBCEnrolment(cbcId,utr)
 
 
-  private def cacheSubscriptionDetails(s:SubscriptionDetails)(implicit hc:HeaderCarrier): Future[Unit] = for {
+  private def cacheSubscriptionDetails(s:SubscriptionDetails, id:CBCId)(implicit hc:HeaderCarrier): Future[Unit] = for {
     _ <- cache.save(s.utr)
     _ <- cache.save(s.businessPartnerRecord)
-    _ <- cache.save(s.cbcId)
+    _ <- cache.save(id)
   } yield ()
 
   val submitCBCId = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
@@ -110,7 +110,7 @@ class SharedController @Inject()(val sec: SecuredActions,
                 case error => errorRedirect(error)
               },
               _ => {
-                cacheSubscriptionDetails(subscriptionDetails).map(_ =>
+                cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                   Redirect(routes.SubmissionController.submitSummary())
                 )
               }

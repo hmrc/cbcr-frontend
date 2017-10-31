@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.{File, FileInputStream}
 
+import uk.gov.hmrc.cbcrfrontend.model.RawCbcReports
 import uk.gov.hmrc.play.test.UnitSpec
 
 class XmlInfoExtractSpec extends UnitSpec {
@@ -47,11 +48,19 @@ class XmlInfoExtractSpec extends UnitSpec {
       re.docSpec.docRefId shouldBe "String_DocRefId1"
       re.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId")
 
-      val r = e.cbcReport.get
+      val rs: List[RawCbcReports] = e.cbcReport
 
+      rs.size shouldBe 2
+
+      val r = rs.head
       r.docSpec.docType shouldBe "OECD1"
       r.docSpec.docRefId shouldBe "MyDocRefId"
       r.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId")
+
+      val r2 = rs.tail.head
+      r2.docSpec.docType shouldBe "OECD1"
+      r2.docSpec.docRefId shouldBe "MyDocRefId2"
+      r2.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId2")
 
       val a = e.additionalInfo.get
 

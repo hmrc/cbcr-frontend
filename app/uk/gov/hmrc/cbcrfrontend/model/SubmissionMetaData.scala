@@ -49,7 +49,7 @@ object SubmissionInfo{
         gwCredId   <- m.get("gwCredId").fold[JsResult[String]](JsError("gwCredId not found"))(_.validate[String])
         cbcId      <- m.get("cbcId").fold[JsResult[CBCId]](JsError("cbcId not found"))(_.validate[CBCId])
         bpSafeId   <- m.get("bpSafeId").fold[JsResult[String]](JsError("bpSafeId not found"))(_.validate[String])
-        hash       <- m.get("hash").fold[JsResult[Hash]](JsError("hash not found"))(_.validate[Hash])
+        hash       <- m.get("hash").fold[JsResult[Hash]](JsError("hash not found"))(_.validate[String].map(Hash(_)))
         ofdsRegime <- m.get("ofdsRegime").fold[JsResult[String]](JsError("ofdsRegime not found"))(_.validate[String])
         utrs       <- m.get("utr").fold[JsResult[String]](JsError("Utr not found"))(_.validate[String])
         utr        <- if(Utr(utrs).isValid){ JsSuccess(Utr(utrs))} else { JsError(s"utr invalid: $utrs") }
@@ -64,7 +64,7 @@ object SubmissionInfo{
       "gwCredId" -> o.gwCredId,
       "cbcId" -> o.cbcId,
       "bpSafeId" ->  o.bpSafeId,
-      "hash" -> o.hash,
+      "hash" -> o.hash.value,
       "ofdsRegime" -> o.ofdsRegime,
       "utr" -> o.utr.utr,
       "filingType" -> o.filingType.value.show,

@@ -33,14 +33,14 @@ implicit request: Request[_], messages: Messages)
             <section>
                 <div class="transaction-banner--complete">
 
-                    <div class="transaction-banner__heading h1-heading">@Messages("submitSuccessReceipt.submissionDateLabel")</div>
+                    <h1><div class="transaction-banner__heading h1-heading">@Messages("submitSuccessReceipt.submissionDateLabel")</div></h1>
                     <div class="transaction-banner__heading h1-heading">@submissionDateTime</div>
                     <p class="transaction-banner__heading">
                 </div>
             </section>
 
             <p><a href="#" onclick="window.print()" class="print-link">@Messages("submitSuccessReceipt.print")</a></p>
-            <h3>@Messages("submitSuccessReceipt.whatNext.heading")</h3>
+            <h2>@Messages("submitSuccessReceipt.whatNext.heading")</h2>
             <p>@Messages("submitSuccessReceipt.email")</p>
             <p>@Messages("submitSuccessReceipt.whatNext.info")</p>
             <p>

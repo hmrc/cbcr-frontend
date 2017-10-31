@@ -71,40 +71,26 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm")
 
   def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
+    val cbcReportIds      = x.cbcReport.map(reports      => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId)
+    val additionalInfoIds = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
+
+    val allIds            = cbcReportIds ++ List(additionalInfoIds).flatten
+
+    // The result of saving these DocRefIds/CorrDocRefIds from the cbcReports
+    val result = NonEmptyList.fromList(allIds).map(_.map{
+      case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+    }.sequence[({type λ[α] = OptionT[Future,α]})#λ,UnexpectedState]).getOrElse(OptionT.none[Future,NonEmptyList[UnexpectedState]])
+
     x.reportingEntity.docSpec.docType match {
-      case OECD0 =>
-        val reportIds = x.cbcReport.map { reports => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId }
-        val addIds = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
-
-        val crResult = OptionT.fromOption[Future](reportIds).flatMap {
-          case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
-        }
-        val addResult = OptionT.fromOption[Future](addIds).flatMap {
-          case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
-        }
-
-        EitherT((crResult.toLeft(()).toValidatedNel |@| addResult.toLeft(()).toValidatedNel).map(
-          (a, b) => (a |@| b).map((_, _) => ()).toEither)
-        )
+      case OECD0                 => result.toLeft(())
 
       case OECD1 | OECD2 | OECD3 =>
         val reDocRef = x.reportingEntity.docSpec.docRefId
-        val reCorr = x.reportingEntity.docSpec.corrDocRefId
-        val reportIds = x.cbcReport.map { reports => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId }
-        val addIds = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
+        val reCorr   = x.reportingEntity.docSpec.corrDocRefId
 
         val reResult = reCorr.map(c => docRefIdService.saveCorrDocRefID(c, reDocRef)).getOrElse(docRefIdService.saveDocRefId(reDocRef))
-        val crResult = OptionT.fromOption[Future](reportIds).flatMap {
-          case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
-        }
-        val addResult = OptionT.fromOption[Future](addIds).flatMap {
-          case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
-        }
 
-        EitherT((reResult.toLeft(()).toValidatedNel |@|
-          crResult.toLeft(()).toValidatedNel |@|
-          addResult.toLeft(()).toValidatedNel).map((a, b, c) => (a |@| b |@| c).map((_, _, _) => ()).toEither))
-
+        EitherT((result.toLeft(()).toValidated |@| reResult.toLeft(()).toValidatedNel).map((a,b) => (a |@| b).map((_,_) => ()).toEither))
     }
   }
 
@@ -264,25 +250,27 @@ class SubmissionController @Inject()(val sec: SecuredActions,
             includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
           ))),
           success => {
-            val passStraightThrough = for {
+            val result = for {
               straightThrough <- right[Boolean](cache.read[CBCId].map(_.isDefined))
+              _                = Logger.error(s"Straigh through: $straightThrough")
               ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
               name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
               _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
-              xml             <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
-              _               <- right(cache.save(xml.messageSpec.sendingEntityIn))
-            } yield straightThrough
-
-            passStraightThrough.fold(
-              error           => errorRedirect(error),
-              straightThrough => userType match{
+              result          <- userType match {
                 case Organisation =>
-                  if (straightThrough) Redirect(routes.SubmissionController.submitSummary())
-                  else Redirect(routes.SharedController.enterCBCId())
+                  if (straightThrough) right(Redirect(routes.SubmissionController.submitSummary()))
+                  else right(Redirect(routes.SharedController.enterCBCId()))
                 case Agent =>
-                  Redirect(routes.SharedController.verifyKnownFactsAgent())
+                  for {
+                    xml <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
+                    _   <- right(cache.save(xml.messageSpec.sendingEntityIn))
+                  } yield Redirect(routes.SharedController.verifyKnownFactsAgent())
               }
-            )
+
+            } yield result
+
+            result.leftMap(errorRedirect).merge
+
           }
         )
       }.fold(
