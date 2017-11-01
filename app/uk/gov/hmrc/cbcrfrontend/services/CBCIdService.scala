@@ -28,23 +28,24 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 @Singleton
 class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext){
 
-  def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : OptionT[Future,CBCId] = {
+  def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : OptionT[Future,CBCId] =
     OptionT(connector.subscribe(s).map { response =>
       response.status match {
         case Status.OK => CBCId((response.json \ "cbc-id").as[String])
         case _         => None
       }
-    }.recover{
-      case NonFatal(t) => {
-        Logger.error("Failed to call subscribe", t)
-        None
+      }.recover {
+        case NonFatal(t) => {
+          Logger.error("Failed to call subscribe", t)
+          None
+        }
       }
-    })
-  }
+      )
 
   def getETMPSubscriptionData(safeId:String)(implicit hc:HeaderCarrier) : OptionT[Future,ETMPSubscription] =
     OptionT(connector.getETMPSubscriptionData(safeId).map{ response =>
