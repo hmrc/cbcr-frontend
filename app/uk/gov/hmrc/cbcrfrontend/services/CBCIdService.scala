@@ -38,6 +38,11 @@ class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:Executi
         case Status.OK => CBCId((response.json \ "cbc-id").as[String])
         case _         => None
       }
+    }.recover{
+      case NonFatal(t) => {
+        Logger.error("Failed to call subscribe", t)
+        None
+      }
     })
   }
 
