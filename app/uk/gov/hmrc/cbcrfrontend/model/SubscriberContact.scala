@@ -89,7 +89,7 @@ object CBCId extends Modulus23Check {
     Invalid(new IllegalArgumentException("CBCId ranges from 0-999999"))
   } else {
     val sequenceNumber = i.formatted("%06d")
-    val id = s"CBC0000$sequenceNumber"
+    val id = s"CBC0100$sequenceNumber"
     val checkChar = calculateCheckCharacter(id)
     CBCId(s"X$checkChar" + id).fold[Validated[Throwable, CBCId]](
       Invalid(new Exception(s"Generated CBCId did not validate: $id"))

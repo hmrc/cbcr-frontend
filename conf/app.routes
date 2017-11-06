@@ -1,6 +1,5 @@
 # microservice specific routes
 
-
 GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
 GET        /cbc-id/entry-form                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
 POST       /cbc-id                                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.submitCBCId

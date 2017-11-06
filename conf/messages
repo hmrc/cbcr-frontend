@@ -1,4 +1,7 @@
 
+regenerate.mainHeading=Here is your new country-by-country ID
+regenerate.message=Please update your records with this new ID, updating any Agents working on your behalf
+
 notRegistered.heading=You aren''t registered to send a country-by-country report
 notRegistered.content=You''ll need to register to send a report.
 notRegistered.register=Register

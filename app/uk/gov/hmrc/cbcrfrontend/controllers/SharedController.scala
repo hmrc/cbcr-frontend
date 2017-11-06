@@ -31,16 +31,17 @@ import play.api.i18n.Messages.Implicits._
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
+import uk.gov.hmrc.cbcrfrontend.connectors.{EnrolmentsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.{BPRKnownFactsService, CBCSessionCache, SubscriptionDataService}
+import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.http
+import uk.gov.hmrc.play.http.{HeaderCarrier, HttpException, HttpResponse}
 
 import scala.concurrent.Future
 
@@ -50,7 +51,11 @@ class SharedController @Inject()(val sec: SecuredActions,
                                  val enrolments:EnrolmentsConnector,
                                  val authConnector:AuthConnector,
                                  val knownFactsService: BPRKnownFactsService,
-                                 val configuration: Configuration)(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
+                                 val configuration: Configuration,
+                                 val taxEnrolments:TaxEnrolmentsConnector,
+                                 val kfService: CBCKnownFactsService,
+                                 val rrService: DeEnrolReEnrolService
+                                )(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
@@ -76,20 +81,6 @@ class SharedController @Inject()(val sec: SecuredActions,
       Ok(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm))
   }
 
-  private def getCBCEnrolment(implicit hc:HeaderCarrier) : EitherT[Future,UnexpectedState,CBCEnrolment] = for {
-    enrolment <- OptionT(enrolments.getEnrolments.map(_.find(_.key == "HMRC-CBC-ORG")))
-      .toRight(UnexpectedState("Enrolment not found"))
-    cbcString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("cbcid")).map(_.value))
-      .toRight(UnexpectedState("Enrolment did not contain a cbcid"))
-    cbcId     <- OptionT.fromOption[Future](CBCId(cbcString))
-      .toRight(UnexpectedState(s"Enrolment contains an invalid cbcid: $cbcString"))
-    utrString <- OptionT.fromOption[Future](enrolment.identifiers.find(_.key.equalsIgnoreCase("utr")).map(_.value))
-      .toRight(UnexpectedState(s"Enrolment does not contain a utr"))
-    utr       <- OptionT.fromOption[Future](if(Utr(utrString).isValid){ Some(Utr(utrString)) } else { None })
-      .toRight(UnexpectedState(s"Enrolment contains an invalid utr $utrString"))
-  } yield CBCEnrolment(cbcId,utr)
-
-
   private def cacheSubscriptionDetails(s:SubscriptionDetails, id:CBCId)(implicit hc:HeaderCarrier): Future[Unit] = for {
     _ <- cache.save(s.utr)
     _ <- cache.save(s.businessPartnerRecord)
@@ -104,7 +95,7 @@ class SharedController @Inject()(val sec: SecuredActions,
             error => errorRedirect(error),
             details => details.fold[Future[Result]] {
               BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm, true))
-            }(subscriptionDetails => getCBCEnrolment.ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId)).fold[Future[Result]](
+            }(subscriptionDetails => enrolments.getCBCEnrolment.toRight(UnexpectedState("Could not find valid enrolment")).ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId)).fold[Future[Result]](
               {
                 case InvalidSession => BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm, false, true))
                 case error => errorRedirect(error)
@@ -152,9 +143,6 @@ class SharedController @Inject()(val sec: SecuredActions,
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.businessRules()))
   }
 
-  def alreadyEnrolled(implicit hc:HeaderCarrier): Future[Boolean] =
-    enrolments.getEnrolments.map(_.exists(_.key == "HMRC-CBC-ORG"))
-
   val verifyKnownFactsOrganisation = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
     implicit request => enterKnownFacts(authContext)
   }
@@ -163,19 +151,23 @@ class SharedController @Inject()(val sec: SecuredActions,
     implicit request => enterKnownFacts(authContext)
   }
 
+
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]) =
     getUserType(authContext).semiflatMap{ userType =>
-      alreadyEnrolled.flatMap(subscribed =>
-        if (subscribed) {
-          NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta()))
+      enrolments.getCBCEnrolment.semiflatMap( enrolment => {
+        if(isPrivateBetaCbcId(enrolment.cbcId)) {
+          rrService.deEnrolReEnrol(enrolment).fold[Result](
+            errors      => errorRedirect(errors),
+            (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(),id))
+          )
         } else {
-          Ok(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, false, userType))
+          Future.successful(NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
         }
+      }).cata(
+        Ok(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(),knownFactsForm,false,userType)),
+        (result: Result) => result
       )
-    }.fold(
-      (errors: CBCErrors) => errorRedirect(errors),
-      (result: Result)    => result
-    )
+    }.leftMap(errorRedirect).merge
 
   val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
