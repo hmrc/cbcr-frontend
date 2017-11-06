@@ -38,9 +38,9 @@ import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers.contentAsString
-import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector}
+import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.{BPRKnownFactsService, CBCSessionCache, SubscriptionDataService}
+import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
@@ -51,6 +51,8 @@ import akka.util.Timeout
 import play.Logger
 import play.api.Configuration
 import play.api.mvc.Result
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.model.AuditEvent
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
 import scala.concurrent.duration.Duration
@@ -59,18 +61,23 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector with MockitoSugar{
 
-  implicit val ec = app.injector.instanceOf[ExecutionContext]
-  implicit val messagesApi = app.injector.instanceOf[MessagesApi]
+  implicit val ec                     = app.injector.instanceOf[ExecutionContext]
+  implicit val messagesApi            = app.injector.instanceOf[MessagesApi]
+  implicit val authCon                = authConnector(TestUsers.cbcrUser)
 
-  implicit val authCon = authConnector(TestUsers.cbcrUser)
-  val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
-  implicit val cache = mock[CBCSessionCache]
-  implicit val enrol = mock[EnrolmentsConnector]
-  val subService = mock[SubscriptionDataService]
-  val bprKF    = mock[BPRKnownFactsService]
-  val configuration = mock[Configuration]
+  val securedActions                  = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
+  implicit val cache                  = mock[CBCSessionCache]
+  implicit val enrol                  = mock[EnrolmentsConnector]
+  val subService                      = mock[SubscriptionDataService]
+  val bprKF                           = mock[BPRKnownFactsService]
+  val configuration                   = mock[Configuration]
+  val tax:TaxEnrolmentsConnector      = mock[TaxEnrolmentsConnector]
+  val cbcKF:CBCKnownFactsService      = mock[CBCKnownFactsService]
+  val reDeEnrol:DeEnrolReEnrolService = mock[DeEnrolReEnrolService]
+  val auditC: AuditConnector          = mock[AuditConnector]
 
-  val id: CBCId = CBCId("XGCBC0000000001").getOrElse(fail("unable to create cbcid"))
+  val id: CBCId = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
+  val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
 
   val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
 
@@ -97,7 +104,9 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   val schemaVer: String = "1.0"
   when(configuration.getString("oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new SharedController(securedActions, subService, enrol,authCon,bprKF,configuration)
+  val controller = new SharedController(securedActions, subService, enrol,authCon,bprKF,configuration,tax,cbcKF,reDeEnrol){
+    override lazy val audit: AuditConnector = auditC
+  }
 
   val subDetails = SubscriptionDetails(
     BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB")),
@@ -133,13 +142,13 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
     }
     "return 403 if the CBCId has been registered but doesnt match the CBCId in the bearer token" in {
       when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
-      when(enrol.getEnrolments(any())) thenReturn Future.successful(List(Enrolment("HMRC-CBC-ORG",List(Identifier("cbcId","XLCBC0000000006"),Identifier("utr","7000000002")))))
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(Some(CBCEnrolment(id2,Utr("9000000001")))))
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.BAD_REQUEST
     }
     "return a redirect if successful" in {
       when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
-      when(enrol.getEnrolments(any())) thenReturn Future.successful(List(Enrolment("HMRC-CBC-ORG",List(Identifier("cbcId",id.value),Identifier("utr","7000000002")))))
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(Some(CBCEnrolment(id,Utr("9000000001")))))
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.SEE_OTHER
     }
@@ -157,17 +166,27 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
 
     }
   }
-   "GET /known-facts-check" should {
-   "return 406 if we have already subscribed" in {
-     when(enrol.getEnrolments(any())) thenReturn List(Enrolment("HMRC-CBC-ORG",List.empty))
-     val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
-     status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
+  "GET /known-facts-check" should {
+    "return 406 if we have already subscribed" in {
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(Some(CBCEnrolment(id,Utr("9000000001")))))
+      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
+      status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
 
-   }
+    }
     "return 200 if we haven't already subscribed" in {
-      when(enrol.getEnrolments(any())) thenReturn List.empty
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(None))
+      when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
+    }
+    "call the deEnrolReEnrolService if the user has a publicBetaCBCId" in {
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(Some(CBCEnrolment(CBCId("XGCBC0000000001").getOrElse(fail("bad cbcId")),Utr("9000000001")))))
+      when(reDeEnrol.deEnrolReEnrol(any())(any())) thenReturn right(id2)
+      when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
+      status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
+      verify(reDeEnrol).deEnrolReEnrol(any())(any())
+
     }
   }
 
