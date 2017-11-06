@@ -58,7 +58,9 @@ class ReRegisterServiceSpec extends UnitSpec with ScalaFutures with OneAppPerSui
 
   implicit val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
   implicit val hc = HeaderCarrier()
+
   val id = CBCId.create(99).toOption
+  val idOld = CBCId("XHCBC0000000002")
 
   val utr = Utr("7000000002")
 
@@ -69,7 +71,7 @@ class ReRegisterServiceSpec extends UnitSpec with ScalaFutures with OneAppPerSui
     utr
   )
 
-  val enrolment = CBCEnrolment(id.getOrElse(fail("bad cbid")),utr)
+  val enrolment = CBCEnrolment(idOld.getOrElse(fail("bad cbid")),utr)
 
   "The ReRegisterService" should {
     val rrs = new DeEnrolReEnrolService(subData, cbcKF, tax)

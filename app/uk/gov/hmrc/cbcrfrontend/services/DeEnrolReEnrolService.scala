@@ -51,7 +51,7 @@ class DeEnrolReEnrolService @Inject()(val subData: SubscriptionDataService,
   def deEnrolReEnrol(enrolment: CBCEnrolment)(implicit hc:HeaderCarrier): ServiceResponse[CBCId] = for {
     details <- subData.retrieveSubscriptionData(Left(enrolment.utr)).subflatMap(_.toRight(UnexpectedState("Could not retreive subscription data")))
     cbcId   <- EitherT.fromEither[Future](details.cbcId.toRight(UnexpectedState("No CBCId in subscription data found")))
-    _       <- EitherT.cond[Future](cbcId == enrolment.cbcId, (), UnexpectedState("CBCId in bearer token is the same as in mongo - already regenerated?"))
+    _       <- EitherT.cond[Future](cbcId != enrolment.cbcId, (), UnexpectedState("CBCId in bearer token is the same as in mongo - already regenerated?"))
     unenrol <- EitherT.right[Future, CBCErrors, HttpResponse](taxEnrolments.deEnrol.recover {
       case e: HttpException => http.HttpResponse(e.responseCode, responseString = Some(e.message))
     })
