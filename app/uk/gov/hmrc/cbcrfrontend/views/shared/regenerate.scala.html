@@ -30,10 +30,15 @@
             <h1>@Messages("regenerate.mainHeading")</h1>
             <p>
                 @Messages("regenerate.message")
+                <h2>@cbcId</h2>
             </p>
-            <h2>@cbcId</h2>
+            <p>@Messages("regenerate.message2")</p>
 
-            <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
+            <h2>@Messages("regenerate.next")</h2>
+            <p>
+                @Messages("regenerate.continue") <a href="@routes.FileUploadController.chooseXMLFile">@Messages("regenerate.continue.link1")</a> @Messages("regenerate.continue2") <a href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
+            </p>
+
         </div>
     </div>
 
