@@ -28,6 +28,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.Messages.Implicits._
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
@@ -36,7 +37,10 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
@@ -56,6 +60,8 @@ class SharedController @Inject()(val sec: SecuredActions,
                                  val kfService: CBCKnownFactsService,
                                  val rrService: DeEnrolReEnrolService
                                 )(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
+
+  lazy val audit: AuditConnector = FrontendAuditConnector
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
@@ -151,12 +157,28 @@ class SharedController @Inject()(val sec: SecuredActions,
     implicit request => enterKnownFacts(authContext)
   }
 
+  def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
+    EitherT(result.value.flatMap { e =>
+      audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
+        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
+          "path"     -> request.uri,
+          "newCBCId" -> e.map(_.value).getOrElse("Failed to get new CBCId"),
+          "oldCBCId" -> enrolment.cbcId.value,
+          "utr"      -> enrolment.utr.utr)
+      )).map {
+        case AuditResult.Success         => e
+        case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
+        case AuditResult.Disabled        => e
+      }
+    })
+  }
+
 
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]) =
     getUserType(authContext).semiflatMap{ userType =>
       enrolments.getCBCEnrolment.semiflatMap( enrolment => {
         if(isPrivateBetaCbcId(enrolment.cbcId)) {
-          rrService.deEnrolReEnrol(enrolment).fold[Result](
+          auditDeEnrolReEnrolEvent(enrolment,rrService.deEnrolReEnrol(enrolment)).fold[Result](
             errors      => errorRedirect(errors),
             (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(),id))
           )
