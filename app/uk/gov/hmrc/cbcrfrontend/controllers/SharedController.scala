@@ -28,24 +28,22 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.Messages.Implicits._
-import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.{EnrolmentsConnector, TaxEnrolmentsConnector}
+import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpException, HttpResponse}
+import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
 
@@ -56,8 +54,6 @@ class SharedController @Inject()(val sec: SecuredActions,
                                  val authConnector:AuthConnector,
                                  val knownFactsService: BPRKnownFactsService,
                                  val configuration: Configuration,
-                                 val taxEnrolments:TaxEnrolmentsConnector,
-                                 val kfService: CBCKnownFactsService,
                                  val rrService: DeEnrolReEnrolService
                                 )(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
@@ -177,7 +173,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]) =
     getUserType(authContext).semiflatMap{ userType =>
       enrolments.getCBCEnrolment.semiflatMap( enrolment => {
-        if(isPrivateBetaCbcId(enrolment.cbcId)) {
+        if(CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
           auditDeEnrolReEnrolEvent(enrolment,rrService.deEnrolReEnrol(enrolment)).fold[Result](
             errors      => errorRedirect(errors),
             (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(),id))

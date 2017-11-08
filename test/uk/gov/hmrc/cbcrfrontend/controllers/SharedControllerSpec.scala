@@ -71,8 +71,6 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   val subService                      = mock[SubscriptionDataService]
   val bprKF                           = mock[BPRKnownFactsService]
   val configuration                   = mock[Configuration]
-  val tax:TaxEnrolmentsConnector      = mock[TaxEnrolmentsConnector]
-  val cbcKF:CBCKnownFactsService      = mock[CBCKnownFactsService]
   val reDeEnrol:DeEnrolReEnrolService = mock[DeEnrolReEnrolService]
   val auditC: AuditConnector          = mock[AuditConnector]
 
@@ -104,7 +102,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   val schemaVer: String = "1.0"
   when(configuration.getString("oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new SharedController(securedActions, subService, enrol,authCon,bprKF,configuration,tax,cbcKF,reDeEnrol){
+  val controller = new SharedController(securedActions, subService, enrol,authCon,bprKF,configuration,reDeEnrol){
     override lazy val audit: AuditConnector = auditC
   }
 
