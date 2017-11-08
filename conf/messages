@@ -1,4 +1,12 @@
 
+regenerate.mainHeading=Your new country-by-country ID has been validated
+regenerate.message=Your new country-by-country ID is:
+regenerate.message2=Keep this ID safe, as you must use it from now on each time you send a country-by-country report.
+regenerate.next=What happens next?
+regenerate.continue=You''ll need to
+regenerate.continue2=and then continue whenever you need to submit a report.
+
+
 notRegistered.heading=You aren''t registered to send a country-by-country report
 notRegistered.content=You''ll need to register to send a report.
 notRegistered.register=Register
