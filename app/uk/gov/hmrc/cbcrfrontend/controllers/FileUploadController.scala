@@ -83,7 +83,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
       enrolment <- right[Option[CBCEnrolment]](enrol.getCBCEnrolment.value)
       canSubmit <- right[Boolean](allowedToSubmit(authContext, userType, enrolment.isDefined))
       result    <- (userType, enrolment) match {
-        case (Organisation, Some(e)) if isPrivateBetaCbcId(e.cbcId) =>
+        case (Organisation, Some(e)) if CBCId.isPrivateBetaCBCId(e.cbcId) =>
           rrService.deEnrolReEnrol(e).map(
             (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(), id))
           )
