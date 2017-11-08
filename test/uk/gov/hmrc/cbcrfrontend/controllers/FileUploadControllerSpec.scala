@@ -74,6 +74,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val cache: CBCSessionCache                           = mock[CBCSessionCache]
   val extractor: XmlInfoExtract                        = new XmlInfoExtract()
   val enrol:EnrolmentsConnector                        = mock[EnrolmentsConnector]
+  val deEnrolReEnrolService                            = mock[DeEnrolReEnrolService]
 
   val configuration = new Configuration(ConfigFactory.load("application.conf"))
 
@@ -139,8 +140,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val schemaVer: String = configuration.getString("oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration oecd-schema-version"))
   val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
 
-  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,TestSessionCache(),authCon)
-  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor)(ec,cache,authCon)
+  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,deEnrolReEnrolService)(ec,TestSessionCache(),authCon)
+  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,deEnrolReEnrolService)(ec,cache,authCon)
 
   val testFile:File= new File("test/resources/cbcr-valid.xml")
   val tempFile:File=Files.TemporaryFile("test",".xml").file
@@ -150,18 +151,18 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
 
     "return 200 when the envelope is created successfully" in {
-      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(true)
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(Some(CBCEnrolment(CBCId.create(10).getOrElse(fail("bad cbcId")),Utr("9000000001")))))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
     "redirect to not registered page if Organisation user has is not enrolled" in {
-      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(false)
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(None))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.SEE_OTHER
     }
     "allow agent to submit even when no enrolment" in {
       TestSessionCache.agent = true
-      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(false)
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(None))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
       TestSessionCache.agent = false
@@ -169,19 +170,32 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     }
     "redirect  when user is an individual" in {
       TestSessionCache.individual = true
-      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(false)
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(None))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.SEE_OTHER
       TestSessionCache.individual = false
 
     }
     "return 500 when the is an error creating the envelope" in {
-      when(enrol.alreadyEnrolled(any())) thenReturn Future.successful(true)
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(None))
+      TestSessionCache.agent = true
       TestSessionCache.succeed = false
       when(fuService.createEnvelope(any(), any(), any(), any())) thenReturn left[EnvelopeId]("server error")
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       TestSessionCache.succeed = true
+      TestSessionCache.agent = false
+    }
+    "return a 200 and call the DeEnrolReEnrolService if the user has a PrivateBeta cbcId in their bearer token" in {
+      TestSessionCache.agent = false
+      TestSessionCache.individual = false
+      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(Some(CBCEnrolment(CBCId("XGCBC0000000001").getOrElse(fail("bad cbcId")),Utr("9000000001")))))
+      when(deEnrolReEnrolService.deEnrolReEnrol(any())(any())) thenReturn right(CBCId.create(10).getOrElse(fail("bad cbcid")))
+      val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
+      status(result) shouldBe Status.OK
+
+      verify(deEnrolReEnrolService).deEnrolReEnrol(any())(any())
+
     }
   }
 
