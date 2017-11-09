@@ -18,6 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
+@import java.time.format.DateTimeFormatter
 @import helper._
 
 @(phaseBannerBeta: Html, summaryData: SummaryData)(
@@ -90,7 +91,7 @@
                                     @summaryData.xmlInfo.messageSpec.reportingPeriod
                                 </p>
                                 <p><span class="faded-text faded-text--small">Timestamp:</span><br />
-                                    @summaryData.xmlInfo.messageSpec.timestamp
+                                    @summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
                                 </p>
                             </div>
                         </td>

@@ -33,12 +33,12 @@ class XmlInfoExtractSpec extends UnitSpec {
 
       val e = xmlInfoExtract.extract(f)
 
-      e.messageSpec.messageRefID shouldBe "GB2016RGXVCBC0000000056CBC40120170311T090000X"
+      e.messageSpec.messageRefID shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X"
       e.messageSpec.receivingCountry shouldBe "GB"
       e.messageSpec.reportingPeriod shouldBe "2016-03-31"
       e.messageSpec.timestamp shouldBe "2016-11-01T15:00:00"
 
-      e.xmlEncoding.xmlEncodingVal shouldBe "UTF-8"
+      e.xmlEncoding.get.xmlEncodingVal shouldBe "UTF-8"
       e.cbcVal.cbcVer shouldBe "1.0"
 
       val re = e.reportingEntity.get

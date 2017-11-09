@@ -182,19 +182,19 @@ class SubmissionController @Inject()(val sec: SecuredActions,
         includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
       success => {
         val result = for {
-          _       <- OptionT.liftF(cache.save(success))
-          xmlInfo <- OptionT(cache.read[XMLInfo])
-        } yield xmlInfo.reportingEntity.reportingRole
+          _       <- OptionT.liftF(cache.save(success)).toRight(UnexpectedState("Could not save to cache"))
+          xmlInfo <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("Could not read XMLinfo from cache"))
+          userType <- getUserType(authContext)
+        } yield xmlInfo.reportingEntity.reportingRole -> userType
 
-        result.cata(
-          errorRedirect(UnexpectedState("Unable to find KeyXMLFileInfo in cache")),
+        result.fold(
+          e => errorRedirect(e),
           {
-            case CBC701 =>
+            case (CBC701,_) =>
               errorRedirect(UnexpectedState("ReportingRole was CBC701 - we should never be here"))
-            case CBC702 =>
-              Redirect(routes.SubmissionController.utr())
-            case CBC703 =>
-              Redirect(routes.SubmissionController.enterCompanyName())
+            case (_,Organisation)  => Redirect(routes.SubmissionController.utr())
+            case (_,Agent)         => Redirect(routes.SubmissionController.enterCompanyName())
+            case (_,Individual)    => errorRedirect(UnexpectedState("Found Individual"))
           })
       }
     )
@@ -221,19 +221,12 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
         case CBC701 =>
           for {
-            _ <- cache.save(kXml.reportingEntity.tin)
             _ <- cache.save(FilingType(CBC701))
             _ <- cache.save(UltimateParentEntity(kXml.reportingEntity.name))
           } yield ()
 
-        case CBC702 =>
+        case CBC702 | CBC703 =>
           cache.save(FilingType(CBC702))
-
-        case CBC703 =>
-          for {
-            _ <- cache.save(kXml.reportingEntity.tin)
-            _ <- cache.save(FilingType(CBC703))
-          } yield ()
 
       }).cata(
         errorRedirect(UnexpectedState("Unable to read KeyXMLFileInfo from cache")),

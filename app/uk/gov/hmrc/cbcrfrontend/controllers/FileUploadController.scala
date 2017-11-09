@@ -21,7 +21,6 @@ import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
-import cats.Monad
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
@@ -37,11 +36,11 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html._
-import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, sha256Hash, _}
+import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, getUserType, sha256Hash, _}
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.AuditExtensions._
-import uk.gov.hmrc.play.audit.http.connector.AuditResult
-import uk.gov.hmrc.play.audit.model.DataEvent
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.model.{DataEvent, ExtendedDataEvent}
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -58,7 +57,8 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                                      val businessRuleValidator: CBCBusinessRuleValidator,
                                      val enrol:EnrolmentsConnector,
                                      val fileUploadService:FileUploadService,
-                                     val xmlExtractor:XmlInfoExtract)
+                                     val xmlExtractor:XmlInfoExtract,
+                                     val rrService: DeEnrolReEnrolService)
                                     (implicit ec: ExecutionContext, cache:CBCSessionCache, auth:AuthConnector) extends FrontendController with ServicesConfig {
 
 
@@ -67,20 +67,42 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr") }
 
   lazy val hostName = FrontendAppConfig.cbcrFrontendHost
-  lazy val audit = FrontendAuditConnector
+  lazy val audit: AuditConnector = FrontendAuditConnector
   lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
 
-  private def allowedToSubmit(authContext: AuthContext)(implicit hc: HeaderCarrier) = getUserType(authContext).semiflatMap {
-    case Organisation => Monad[Future].ifM(enrol.alreadyEnrolled)(Future.successful(true), cache.read[CBCId].map(_.isDefined))
+  private def allowedToSubmit(authContext: AuthContext,userType: UserType, enrolled:Boolean)(implicit hc: HeaderCarrier) = userType match {
+    case Organisation => if(enrolled) { Future.successful(true) } else { cache.read[CBCId].map(_.isDefined) }
     case Agent        => Future.successful(true)
     case Individual   => Future.successful(false)
   }
 
+  def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
+    EitherT(result.value.flatMap { e =>
+      audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
+        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
+          "path"     -> request.uri,
+          "newCBCId" -> e.map(_.value).getOrElse("Failed to get new CBCId"),
+          "oldCBCId" -> enrolment.cbcId.value,
+          "utr"      -> enrolment.utr.utr)
+      )).map {
+        case AuditResult.Success         => e
+        case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
+        case AuditResult.Disabled        => e
+      }
+    })
+  }
+
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-      allowedToSubmit(authContext).flatMap { canSubmit =>
-
-        if (canSubmit) {
+    val result:EitherT[Future,CBCErrors,Result] = for {
+      userType  <- getUserType(authContext)
+      enrolment <- right[Option[CBCEnrolment]](enrol.getCBCEnrolment.value)
+      canSubmit <- right[Boolean](allowedToSubmit(authContext, userType, enrolment.isDefined))
+      result    <- (userType, enrolment) match {
+        case (Organisation, Some(e)) if CBCId.isPrivateBetaCBCId(e.cbcId) =>
+          auditDeEnrolReEnrolEvent(e,rrService.deEnrolReEnrol(e)).map(
+            (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(), id))
+          )
+        case (_, _) if canSubmit =>
           for {
             envelopeId      <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
             fileId          <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"): CBCErrors)
@@ -90,12 +112,14 @@ class FileUploadController @Inject()(val sec: SecuredActions,
               s"redirect-error-url=$fileUploadErrorRedirectUrl"
             fileName        = s"oecd-${LocalDateTime.now}-cbcr.xml"
           } yield Ok(submission.fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
+        case _ =>
+          pure(Redirect(routes.SubmissionController.notRegistered()))
+      }
+    } yield result
 
-        } else {
-          EitherT.right[Future, CBCErrors, Result](Future.successful(Redirect(routes.SubmissionController.notRegistered())))
-        }
 
-      }.valueOr(errorRedirect)
+    result.leftMap(errorRedirect).merge
+
   }
 
   def fileUploadProgress(envelopeId: String, fileId: String) = sec.AuthenticatedAction{ _ => implicit request =>
@@ -154,11 +178,12 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                              else if(xml_bizErrors._2.nonEmpty) auditFailedSubmission(authContext,"business rules errors")
                              else EitherT.pure[Future,CBCErrors,Unit](())
       _                   = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
-    } yield Ok(submission.fileupload.fileUploadResult(Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
+      userType            <- getUserType(authContext)
+    } yield Ok(submission.fileupload.fileUploadResult(Some(userType), Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
 
     result.leftMap{
       case FatalSchemaErrors(size)=>
-        Ok(submission.fileupload.fileUploadResult(None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
+        Ok(submission.fileupload.fileUploadResult(None, None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
       case InvalidFileType(_)     =>
         Redirect(routes.FileUploadController.fileInvalid())
       case e:CBCErrors            =>
