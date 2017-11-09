@@ -40,7 +40,7 @@ import play.api.libs.Files
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.json.{Format, JsNull, JsString, Reads}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
+import uk.gov.hmrc.cbcrfrontend.{FrontendAppConfig, FrontendAuditConnector}
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.auth._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -49,7 +49,7 @@ import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.config.AppName
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpDelete, HttpGet, HttpPut}
 import uk.gov.hmrc.play.test.UnitSpec
@@ -75,6 +75,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val extractor: XmlInfoExtract                        = new XmlInfoExtract()
   val enrol:EnrolmentsConnector                        = mock[EnrolmentsConnector]
   val deEnrolReEnrolService                            = mock[DeEnrolReEnrolService]
+  val auditC: AuditConnector                           = mock[AuditConnector]
 
   val configuration = new Configuration(ConfigFactory.load("application.conf"))
 
@@ -140,8 +141,12 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val schemaVer: String = configuration.getString("oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration oecd-schema-version"))
   val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
 
-  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,deEnrolReEnrolService)(ec,TestSessionCache(),authCon)
-  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,deEnrolReEnrolService)(ec,cache,authCon)
+  val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,deEnrolReEnrolService)(ec,TestSessionCache(),authCon){
+    override lazy val audit: AuditConnector = auditC
+  }
+  val controller = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,deEnrolReEnrolService)(ec,cache,authCon){
+    override lazy val audit: AuditConnector = auditC
+  }
 
   val testFile:File= new File("test/resources/cbcr-valid.xml")
   val tempFile:File=Files.TemporaryFile("test",".xml").file
@@ -189,6 +194,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     "return a 200 and call the DeEnrolReEnrolService if the user has a PrivateBeta cbcId in their bearer token" in {
       TestSessionCache.agent = false
       TestSessionCache.individual = false
+      when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(Some(CBCEnrolment(CBCId("XGCBC0000000001").getOrElse(fail("bad cbcId")),Utr("9000000001")))))
       when(deEnrolReEnrolService.deEnrolReEnrol(any())(any())) thenReturn right(CBCId.create(10).getOrElse(fail("bad cbcid")))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
