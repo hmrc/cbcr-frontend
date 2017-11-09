@@ -120,13 +120,18 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       }
     }
 
-  private def validateXmlEncodingVal(xe:RawXmlEncodingVal):Validated[BusinessRuleErrors,Unit] ={
-    if(xe.xmlEncodingVal != "UTF-8"){
-      XmlEncodingError.invalid
-    } else {
-      ().valid
-    }
+  private def validateXmlEncodingVal(xe: Option[RawXmlEncodingVal]): Validated[BusinessRuleErrors, Unit] = {
+    xe.fold[Validated[BusinessRuleErrors, Unit]](().valid)(v =>
+      if (!v.xmlEncodingVal.equalsIgnoreCase("UTF-8")) {
+        XmlEncodingError.invalid
+      } else {
+        ().valid
+      }
+    )
   }
+
+
+
 
   private def validateCbcOecdVersion(cv:RawCbcVal):Validated[BusinessRuleErrors,Unit] = {
     if(cv.cbcVer != configuration.getString("oecd-schema-version").getOrElse(throw new Exception("Missing configuration key: oecd-schema-version"))){
@@ -236,13 +241,19 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def validateSendingEntity(in:RawMessageSpec)(implicit hc:HeaderCarrier) : Future[ValidatedNel[BusinessRuleErrors,CBCId]] =
     CBCId(in.sendingEntityIn).fold[Future[ValidatedNel[BusinessRuleErrors,CBCId]]](
       Future.successful(SendingEntityError.invalidNel[CBCId]))(
-      cbcId => subscriptionDataService.retrieveSubscriptionData(Right(cbcId)).fold[ValidatedNel[BusinessRuleErrors,CBCId]](
-        (_: CBCErrors)                              => SendingEntityError.invalidNel,
-        (maybeDetails: Option[SubscriptionDetails]) => maybeDetails match {
-          case None    => SendingEntityError.invalidNel
-          case Some(_) => cbcId.validNel
+      cbcId => {
+        if (CBCId.isPrivateBetaCBCId(cbcId)) {
+          Future.successful(PrivateBetaCBCIdError.invalidNel[CBCId])
+        } else {
+          subscriptionDataService.retrieveSubscriptionData(Right(cbcId)).fold[ValidatedNel[BusinessRuleErrors, CBCId]](
+            (_: CBCErrors) => SendingEntityError.invalidNel,
+            (maybeDetails: Option[SubscriptionDetails]) => maybeDetails match {
+              case None => SendingEntityError.invalidNel
+              case Some(_) => cbcId.validNel
+            }
+          )
         }
-      )
+      }
     )
 
   private def validateReceivingCountry(in:RawMessageSpec) : Validated[BusinessRuleErrors,String] =

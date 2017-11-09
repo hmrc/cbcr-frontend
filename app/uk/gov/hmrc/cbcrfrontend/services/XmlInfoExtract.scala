@@ -47,12 +47,16 @@ class XmlInfoExtract {
     RawDocSpec(docType, docRefId, corrDocRefId)
   }
 
-  private def extractEncoding(input: File): RawXmlEncodingVal = {
+  private def extractEncoding(input: File): Option[RawXmlEncodingVal] = {
     val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
 
     val encodingVal: String = xmlStreamReader.getCharacterEncodingScheme
     xmlStreamReader.closeCompletely()
-    RawXmlEncodingVal(encodingVal)
+
+    encodingVal match {
+      case null => None
+      case _ => Some(RawXmlEncodingVal(encodingVal))
+    }
   }
 
   private def extractCbcVal(input: File): RawCbcVal = {

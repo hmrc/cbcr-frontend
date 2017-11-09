@@ -21,10 +21,12 @@
 @import uk.gov.hmrc.cbcrfrontend.model.CBC701
 @import uk.gov.hmrc.cbcrfrontend.model.CBC702
 @import uk.gov.hmrc.cbcrfrontend.model.CBC703
+@import uk.gov.hmrc.cbcrfrontend.model.{UserType, Organisation}
+
 @import java.nio.file._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@(fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], asideBusiness: Html, phaseBannerBeta: Html, reportingRole: Option[ReportingRole])(
+@(userType: Option[UserType], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], asideBusiness: Html, phaseBannerBeta: Html, reportingRole: Option[ReportingRole])(
         implicit request: Request[_], messages: Messages)
 
 @errors = @{
@@ -88,7 +90,11 @@ else {
                 </table>
                 <p>@Messages("fileUploadResult.notYetSubmitted")</p>
 
-                @if(reportingRole == Some(CBC701)) {
+
+                @if(reportingRole == Some(CBC701) && userType == Some(Organisation)) {
+                    <p><a class="button" href="@routes.SubmissionController.utr" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                }
+                @if(reportingRole == Some(CBC701) && userType != Some(Organisation)) {
                     <p><a class="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
                 }
                 @if(reportingRole == Some(CBC702) || reportingRole == Some(CBC703)) {
