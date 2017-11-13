@@ -73,6 +73,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   val configuration                   = mock[Configuration]
   val reDeEnrol:DeEnrolReEnrolService = mock[DeEnrolReEnrolService]
   val auditC: AuditConnector          = mock[AuditConnector]
+  val runMode                         = mock[RunMode]
 
   val id: CBCId = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
   val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
@@ -98,11 +99,12 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
   when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
   when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
   when(enrol.getEnrolments(any())) thenReturn Future.successful(List.empty)
+  when(runMode.env) thenReturn "Dev"
 
   val schemaVer: String = "1.0"
-  when(configuration.getString("oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
+  when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new SharedController(securedActions, subService, enrol,authCon,bprKF,configuration,reDeEnrol){
+  val controller = new SharedController(securedActions, subService, enrol,authCon,bprKF,configuration,reDeEnrol,runMode){
     override lazy val audit: AuditConnector = auditC
   }
 
