@@ -76,6 +76,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val enrol:EnrolmentsConnector                        = mock[EnrolmentsConnector]
   val deEnrolReEnrolService                            = mock[DeEnrolReEnrolService]
   val auditC: AuditConnector                           = mock[AuditConnector]
+  var runMode                                          = mock[RunMode]
 
   val configuration = new Configuration(ConfigFactory.load("application.conf"))
 
@@ -138,7 +139,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-  val schemaVer: String = configuration.getString("oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration oecd-schema-version"))
+  when(runMode.env) thenReturn "Dev"
+  val schemaVer: String = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration ${runMode.env}.oecd-schema-version"))
   val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
 
   val partiallyMockedController = new FileUploadController(securedActions, schemaValidator, businessRulesValidator, enrol,fuService, extractor,deEnrolReEnrolService)(ec,TestSessionCache(),authCon){

@@ -45,6 +45,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val subscriptionDataService = mock[SubscriptionDataService]
   val reportingEntity = mock[ReportingEntityDataService]
   val configuration = mock[Configuration]
+  val runMode = mock[RunMode]
 
 
   val docRefId1 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
@@ -61,7 +62,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](Some(submissionData))
-  when(configuration.getString("oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
+  when(runMode.env) thenReturn "Dev"
+  when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
   implicit val hc = HeaderCarrier()
   val extract = new XmlInfoExtract()
@@ -76,7 +78,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
     SubscriberContact("Brian","Lastname", "phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
   )
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode)
   "The CBCBusinessRuleValidator" should {
     "return the correct error" when {
       "messageRefId is empty" in {
