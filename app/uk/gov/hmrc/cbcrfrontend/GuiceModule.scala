@@ -40,7 +40,7 @@ class GuiceModule(environment: Environment,
 //    }
 
 val env2:String = "Dev"
-
+//Logger.info(s"env = ${env.toString}")
 
   override def configure(): Unit = {
 
@@ -51,10 +51,15 @@ val env2:String = "Dev"
     bind(classOf[BPRKnownFactsConnector])
 
     bind(classOf[XMLValidationSchema]).toInstance {
-      val schemaVer: String = configuration.getString(s"$env2.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Prod.oecd-schema-version"))
+      val schemaVerDev: String = configuration.getString("Dev.oecd-schema-version").getOrElse("")
+      val schemaVerProd: String = configuration.getString("Prod.oecd-schema-version").getOrElse("")
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
         XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-      val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
+      val schemaFile = env2 match {
+        case "Prod" => new File(s"conf/schema/${schemaVerProd}/CbcXML_v${schemaVerProd}.xsd")
+        case _ => new File(s"conf/schema/${schemaVerDev}/CbcXML_v${schemaVerDev}.xsd")
+      }
+//      val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
   }
