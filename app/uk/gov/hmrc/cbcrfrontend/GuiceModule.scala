@@ -43,8 +43,12 @@ class GuiceModule(environment: Environment,
 //    }
 
   private val conf = configuration.underlying.getConfig("Dev")
-  val schemaVer2: String = conf.get[String]("oecd-schema-version").value
-//  val switchVal:String = s"${environment.mode}.oecd-schema-version"
+  private val schemaVer2: String = conf.get[String]("oecd-schema-version").value
+  lazy val schemaFile: File = new File(s"conf/schema/${schemaVer2}/CbcXML_v${schemaVer2}.xsd")
+  private val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+
+  //  val switchVal:String = s"${environment.mode}.oecd-schema-version"
 //  val schemaVer:String = configuration.getString(s"${environment.mode}.oecd-schema-version").getOrElse("")
 //Logger.info(s"env = ${env.toString}")
 //  val schemaVer:String = configuration.getString("Dev.oecd-schema-version").getOrElse("")
@@ -58,9 +62,6 @@ class GuiceModule(environment: Environment,
     bind(classOf[BPRKnownFactsConnector])
 
     bind(classOf[XMLValidationSchema]).toInstance {
-      val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
-        XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-      lazy val schemaFile: File = new File(s"conf/schema/${schemaVer2}/CbcXML_v${schemaVer2}.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
   }
