@@ -63,7 +63,7 @@ class GuiceModule(environment: Environment,
     bind(classOf[BPRKnownFactsConnector])
 
     bind(classOf[XMLValidationSchema]).toInstance {
-      val conf = configuration.underlying.getConfig("Dev")
+//      val conf = configuration.underlying.getConfig("Dev")
       val schemaVer: String = configuration.underlying.get[String]("Dev.oecd-schema-version").value
       val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
