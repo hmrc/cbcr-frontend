@@ -54,6 +54,10 @@ class GuiceModule(environment: Environment,
 //Logger.info(s"env = ${env.toString}")
 //  val schemaVer:String = configuration.getString("Dev.oecd-schema-version").getOrElse("")
 
+  val runMode = new RunMode(configuration)
+  val gms:String = runMode.env
+  Thread.sleep(2000)
+
   override def configure(): Unit = {
 
     bind(classOf[HttpPost]).toInstance(WSHttp)
@@ -67,9 +71,6 @@ class GuiceModule(environment: Environment,
 //        case Prod => "Prod"
 //        case _ => "Dev"
 //      }
-      val runMode = new RunMode(configuration)
-      val gms:String = runMode.env
-      Thread.sleep(2000)
       val schemaVer: String = configuration.underlying.get[String](s"$gms.oecd-schema-version").valueOr(_ => throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
       val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
