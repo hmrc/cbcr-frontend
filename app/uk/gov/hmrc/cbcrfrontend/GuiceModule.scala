@@ -38,8 +38,7 @@ class GuiceModule(environment: Environment,
     bind(classOf[BPRKnownFactsConnector])
     bind(classOf[XMLValidationSchema]).toInstance{
       val runMode = new RunMode(configuration)
-      val env = runMode.env
-      val schemaVer: String = configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
+      val schemaVer: String = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration ${runMode.env}.oecd-schema-version"))
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
         XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
       val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
