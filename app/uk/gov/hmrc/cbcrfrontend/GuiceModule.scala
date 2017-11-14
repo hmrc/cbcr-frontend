@@ -20,6 +20,7 @@ import java.io.File
 
 import com.google.inject.AbstractModule
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
+import org.joda.time.Seconds
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.cbcrfrontend.auth.{SecuredActions, SecuredActionsImpl}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
@@ -28,6 +29,7 @@ import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.{HttpGet, HttpPost}
 import uk.gov.hmrc.cbcrfrontend.services.RunMode
 import play.api.Mode._
+
 
 class GuiceModule(environment: Environment,
                   configuration: Configuration) extends AbstractModule with ServicesConfig {
@@ -39,9 +41,10 @@ class GuiceModule(environment: Environment,
 //    case _      => configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
 //    }
 
-val env2:String = "Dev"
+  val bollox:String = configuration.getString(s"${environment.mode}.oecd-schema-version").get
 //Logger.info(s"env = ${env.toString}")
-
+  val schemaVer:String = configuration.getString("Dev.oecd-schema-version").get
+  
   override def configure(): Unit = {
 
     bind(classOf[HttpPost]).toInstance(WSHttp)
@@ -51,15 +54,9 @@ val env2:String = "Dev"
     bind(classOf[BPRKnownFactsConnector])
 
     bind(classOf[XMLValidationSchema]).toInstance {
-      val schemaVerDev: String = configuration.getString("Dev.oecd-schema-version").getOrElse("")
-      val schemaVerProd: String = configuration.getString("Prod.oecd-schema-version").getOrElse("")
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
         XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-      val schemaFile = env2 match {
-        case "Prod" => new File(s"conf/schema/${schemaVerProd}/CbcXML_v${schemaVerProd}.xsd")
-        case _ => new File(s"conf/schema/${schemaVerDev}/CbcXML_v${schemaVerDev}.xsd")
-      }
-//      val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
+      val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
   }
