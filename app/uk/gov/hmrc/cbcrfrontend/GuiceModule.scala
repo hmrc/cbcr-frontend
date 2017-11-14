@@ -64,7 +64,10 @@ class GuiceModule(environment: Environment,
 
     bind(classOf[XMLValidationSchema]).toInstance {
 //      val conf = configuration.underlying.getConfig("Dev")
-      val gms: String = environment.mode.toString
+      val gms: String = environment.mode match {
+        case Prod => "Prod"
+        case _ => "Dev"
+      }
       val schemaVer: String = configuration.underlying.get[String](s"$gms.oecd-schema-version").valueOr(_ => throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
       val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
