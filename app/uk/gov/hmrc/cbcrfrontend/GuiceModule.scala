@@ -32,7 +32,13 @@ class GuiceModule(environment: Environment,
                   configuration: Configuration) extends AbstractModule with ServicesConfig {
 
   val runMode = new RunMode(configuration)
-  val schemaVer: String = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration env.oecd-schema-version"))
+  val schemaVer: String = {
+    if (runMode.env == "Dev")
+      configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
+    else
+      configuration.getString(s"Prod.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Prod.oecd-schema-version"))
+  }
+
 
   override def configure(): Unit = {
     val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
