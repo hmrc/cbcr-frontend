@@ -30,9 +30,14 @@ import uk.gov.hmrc.cbcrfrontend.services.RunMode
 
 class GuiceModule(environment: Environment,
                   configuration: Configuration) extends AbstractModule with ServicesConfig {
+
+  val runMode = new RunMode(configuration)
+  val schemaVer: String = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration env.oecd-schema-version"))
+
   override def configure(): Unit = {
-    val runMode = new RunMode(configuration)
-    val envOecd:String = s"${runMode.env}.oecd-schema-version"
+    val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+      XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+    val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
 
     bind(classOf[HttpPost]).toInstance(WSHttp)
     bind(classOf[HttpGet]).toInstance(WSHttp)
@@ -40,10 +45,6 @@ class GuiceModule(environment: Environment,
     bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
     bind(classOf[BPRKnownFactsConnector])
     bind(classOf[XMLValidationSchema]).toInstance{
-      val schemaVer: String = configuration.getString("Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration env.oecd-schema-version"))
-      val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
-        XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-      val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
   }
