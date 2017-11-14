@@ -41,7 +41,8 @@ class GuiceModule(environment: Environment,
 //    case _      => configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
 //    }
 
-  val bollox:String = configuration.getString(s"${environment.mode}.oecd-schema-version").getOrElse("")
+  val switchVal:String = s"${environment.mode}.oecd-schema-version"
+//  val bollox:String = configuration.getString(s"${environment.mode}.oecd-schema-version").getOrElse("")
 //Logger.info(s"env = ${env.toString}")
   val schemaVer:String = configuration.getString("Dev.oecd-schema-version").getOrElse("")
 
