@@ -21,6 +21,7 @@ import java.io.File
 import com.google.inject.AbstractModule
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import org.joda.time.Seconds
+import configs.syntax._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.cbcrfrontend.auth.{SecuredActions, SecuredActionsImpl}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
@@ -41,7 +42,9 @@ class GuiceModule(environment: Environment,
 //    case _      => configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
 //    }
 
-  val switchVal:String = s"${environment.mode}.oecd-schema-version"
+  private val conf = configuration.underlying.getConfig("Dev")
+  private val schemaVer2: String = conf.get[String]("oecd-schema-version").value
+//  val switchVal:String = s"${environment.mode}.oecd-schema-version"
 //  val bollox:String = configuration.getString(s"${environment.mode}.oecd-schema-version").getOrElse("")
 //Logger.info(s"env = ${env.toString}")
   val schemaVer:String = configuration.getString("Dev.oecd-schema-version").getOrElse("")
