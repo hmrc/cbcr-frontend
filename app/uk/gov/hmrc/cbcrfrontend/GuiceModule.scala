@@ -37,8 +37,6 @@ class GuiceModule(environment: Environment,
     bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
     bind(classOf[BPRKnownFactsConnector])
     bind(classOf[XMLValidationSchema]).toInstance{
-//      val APP_RUNNING_LOCALY: String = "Dev"
-//      val env: String = configuration.getString("run.mode").getOrElse(APP_RUNNING_LOCALY)
       val runMode = new RunMode(configuration)
       val env = runMode.env
       val schemaVer: String = configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
