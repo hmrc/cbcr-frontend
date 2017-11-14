@@ -26,6 +26,7 @@ import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.http.{HttpGet, HttpPost}
+import uk.gov.hmrc.cbcrfrontend.services.RunMode
 
 class GuiceModule(environment: Environment,
                   configuration: Configuration) extends AbstractModule with ServicesConfig {
@@ -38,6 +39,8 @@ class GuiceModule(environment: Environment,
     bind(classOf[XMLValidationSchema]).toInstance{
 //      val APP_RUNNING_LOCALY: String = "Dev"
 //      val env: String = configuration.getString("run.mode").getOrElse(APP_RUNNING_LOCALY)
+      val runMode = new RunMode(configuration)
+      val env = runMode.env
       val schemaVer: String = configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
         XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
