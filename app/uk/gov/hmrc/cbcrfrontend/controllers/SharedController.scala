@@ -133,7 +133,7 @@ class SharedController @Inject()(val sec: SecuredActions,
 
   def downloadGuide = Action.async{ implicit request =>
     val schemaVer: String = configuration.getString("oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration oecd-schema-version"))
-    val file: Path = Paths.get(s"conf/downloads/cbcguide-v${schemaVer}.pdf")
+    val file: Path = Paths.get(s"conf/downloads/HMRC_CbC_XML_User_Guide_V${schemaVer}.pdf")
     Future.successful(Ok.sendPath(file,inline = false,fileName = _ => s"HMRC_CbC_XML_User_Guide_V${schemaVer}.pdf"))
   }
 
