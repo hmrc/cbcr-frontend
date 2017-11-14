@@ -32,18 +32,15 @@ class GuiceModule(environment: Environment,
                   configuration: Configuration) extends AbstractModule with ServicesConfig {
 
   val runMode = new RunMode(configuration)
-  val schemaVer: String = {
-    if (runMode.env == "Dev")
-      configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
-    else
-      configuration.getString(s"Prod.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Prod.oecd-schema-version"))
-  }
+//  val nowt: String = runMode.env match {
+//    case "Prod" => configuration.getString(s"Prod.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Prod.oecd-schema-version"))
+//    case _      => configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
+//    }
+
+  val schemaVer: String = configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
 
 
   override def configure(): Unit = {
-    val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
-      XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-    val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
 
     bind(classOf[HttpPost]).toInstance(WSHttp)
     bind(classOf[HttpGet]).toInstance(WSHttp)
@@ -51,6 +48,9 @@ class GuiceModule(environment: Environment,
     bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
     bind(classOf[BPRKnownFactsConnector])
     bind(classOf[XMLValidationSchema]).toInstance{
+      val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+        XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+      val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
   }
