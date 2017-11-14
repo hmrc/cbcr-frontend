@@ -42,11 +42,11 @@ class GuiceModule(environment: Environment,
 //    case _      => configuration.getString(s"Dev.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration Dev.oecd-schema-version"))
 //    }
 
-  private val conf = configuration.underlying.getConfig("Dev")
-  private val schemaVer2: String = conf.get[String]("oecd-schema-version").value
-  lazy val schemaFile: File = new File(s"conf/schema/${schemaVer2}/CbcXML_v${schemaVer2}.xsd")
-  private val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
-    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+//  val conf = configuration.underlying.getConfig("Dev")
+//  val schemaVer2: String = conf.get[String]("oecd-schema-version").value
+//  val schemaFile: File = new File(s"conf/schema/${schemaVer2}/CbcXML_v${schemaVer2}.xsd")
+//  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+//    XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
 
   //  val switchVal:String = s"${environment.mode}.oecd-schema-version"
 //  val schemaVer:String = configuration.getString(s"${environment.mode}.oecd-schema-version").getOrElse("")
@@ -62,6 +62,11 @@ class GuiceModule(environment: Environment,
     bind(classOf[BPRKnownFactsConnector])
 
     bind(classOf[XMLValidationSchema]).toInstance {
+      val conf = configuration.underlying.getConfig("Dev")
+      val schemaVer: String = conf.get[String]("oecd-schema-version").value
+      val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
+      val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+        XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
   }
