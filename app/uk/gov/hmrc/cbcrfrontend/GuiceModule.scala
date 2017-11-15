@@ -30,6 +30,9 @@ import uk.gov.hmrc.play.http.{HttpGet, HttpPost}
 
 class GuiceModule(environment: Environment,
                   configuration: Configuration) extends AbstractModule with ServicesConfig {
+  Logger.warn("In Guice Module")
+
+
   override def configure(): Unit = {
     bind(classOf[HttpPost]).toInstance(WSHttp)
     bind(classOf[HttpGet]).toInstance(WSHttp)
