@@ -39,7 +39,6 @@ class GuiceModule(environment: Environment,
     bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
     bind(classOf[BPRKnownFactsConnector])
     bind(classOf[XMLValidationSchema]).toInstance{
-      val env2 = environment.mode
       val runMode: RunMode = new RunMode(configuration)
       val env = runMode.env
       val path = s"$env.oecd-schema-version"
