@@ -98,19 +98,18 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
             case (id, bpr, utr) =>
 
               val result = for {
-                _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, Some(id), utr))
-                _ <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
-                _ <- EitherT.right[Future, CBCErrors, (CacheMap, CacheMap, CacheMap, CacheMap)](
+                _                     <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, Some(id), utr))
+                _                     <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
+                _                     <- EitherT.right[Future, CBCErrors, (CacheMap, CacheMap, CacheMap, CacheMap)](
                   (cache.save(id) |@| cache.save(data) |@| cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@| cache.save(Subscribed)).tupled
                 )
                 subscriptionEmailSent <- EitherT.right[Future, CBCErrors, Boolean](cache.read[SubscriptionEmailSent].map(_.isDefined))
-                emailSent ← if (!subscriptionEmailSent) EitherT.right[Future, CBCErrors, Option[Boolean]](emailService.sendEmail(makeSubEmail(data, id)).value)
-                else EitherT.pure[Future, CBCErrors, Option[Boolean]](None)
-                _ <- if (emailSent.getOrElse(false)) EitherT.right[Future, CBCErrors, CacheMap](cache.save(SubscriptionEmailSent()))
-                else EitherT.pure[Future, CBCErrors, Unit](())
-                _ <- createSuccessfulSubscriptionAuditEvent(authContext, SubscriptionDetails(bpr, data, Some(id), utr))
+                emailSent             <- if (!subscriptionEmailSent) EitherT.right[Future, CBCErrors, Option[Boolean]](emailService.sendEmail(makeSubEmail(data, id)).value)
+                                         else EitherT.pure[Future, CBCErrors, Option[Boolean]](None)
+                _                     <- if (emailSent.getOrElse(false)) EitherT.right[Future, CBCErrors, CacheMap](cache.save(SubscriptionEmailSent()))
+                                         else EitherT.pure[Future, CBCErrors, Unit](())
+                _                     <- createSuccessfulSubscriptionAuditEvent(authContext, SubscriptionDetails(bpr, data, Some(id), utr))
               } yield id
-
 
               result.fold[Future[Result]](
                 error => {

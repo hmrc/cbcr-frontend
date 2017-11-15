@@ -34,7 +34,7 @@ package uk.gov.hmrc.cbcrfrontend
 import cats.data.EitherT
 import cats.instances.all._
 import play.api.mvc.{AnyContent, Request, Result}
-import uk.gov.hmrc.cbcrfrontend.model.CBCErrors
+import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, CBCId}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 
 import scala.concurrent.{ExecutionContext, Future}

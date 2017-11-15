@@ -35,12 +35,5 @@ class GuiceModule(environment: Environment,
     bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
     bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
     bind(classOf[BPRKnownFactsConnector])
-    bind(classOf[XMLValidationSchema]).toInstance{
-      val schemaVer: String = configuration.getString("oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration oecd-schema-version"))
-      val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
-        XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-      val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
-      xmlValidationSchemaFactory.createSchema(schemaFile)
-    }
   }
 }

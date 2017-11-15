@@ -68,6 +68,7 @@ case object InvalidCorrDocRefId extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
+case object PrivateBetaCBCIdError extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -110,6 +111,7 @@ object BusinessRuleErrors {
       case CbcOecdVersionError       => JsString(CbcOecdVersionError.toString)
       case XmlEncodingError           => JsString(XmlEncodingError.toString)
       case OriginalSubmissionNotFound => JsString(OriginalSubmissionNotFound.toString)
+      case PrivateBetaCBCIdError     => JsString(PrivateBetaCBCIdError.toString)
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
@@ -134,6 +136,7 @@ object BusinessRuleErrors {
           case Some("cbcoecdversionerror")    => JsSuccess(CbcOecdVersionError)
           case Some("xmlencodingerror")       => JsSuccess(XmlEncodingError)
           case Some("originalsubmissionnotfound") => JsSuccess(OriginalSubmissionNotFound)
+          case Some("privatebetacbciderror")      => JsSuccess(PrivateBetaCBCIdError)
           case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^invalidxmlerror: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -161,6 +164,7 @@ object BusinessRuleErrors {
     case CbcOecdVersionError   => """CBC_OECD version must equal 1.0.1"""
     case XmlEncodingError      => """XML encoding must equal UTF8"""
     case OriginalSubmissionNotFound => "Original submission could not be identified"
+    case PrivateBetaCBCIdError => """ The country-by-country ID you entered has changed. You will need to use the new ID which we have emailed to you. If you are operating as an agent, contact your client for the new country-by-country ID."""
     case i:InvalidXMLError     => i.toString
   }
 }

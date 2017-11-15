@@ -45,37 +45,40 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val subscriptionDataService = mock[SubscriptionDataService]
   val reportingEntity = mock[ReportingEntityDataService]
   val configuration = mock[Configuration]
+  val runMode = mock[RunMode]
 
 
-  val docRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
-  val docRefId2 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").getOrElse(fail("bad docrefid"))
-  val docRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ADD").getOrElse(fail("bad docrefid"))
-  val docRefId4 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP2").getOrElse(fail("bad docrefid"))
+  val docRefId1 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
+  val docRefId2 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").getOrElse(fail("bad docrefid"))
+  val docRefId3 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD").getOrElse(fail("bad docrefid"))
+  val docRefId4 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP2").getOrElse(fail("bad docrefid"))
 
-  val corrDocRefId1 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTC").getOrElse(fail("bad docrefid"))
-  val corrDocRefId2 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REPC").getOrElse(fail("bad docrefid"))
-  val corrDocRefId3 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ADDC").getOrElse(fail("bad docrefid"))
-  val corrDocRefId4 = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP2C").getOrElse(fail("bad docrefid"))
+  val corrDocRefId1 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENTC").getOrElse(fail("bad docrefid"))
+  val corrDocRefId2 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC").getOrElse(fail("bad docrefid"))
+  val corrDocRefId3 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADDC").getOrElse(fail("bad docrefid"))
+  val corrDocRefId4 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP2C").getOrElse(fail("bad docrefid"))
 
   val schemaVer: String = "1.0"
 
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](Some(submissionData))
-  when(configuration.getString("oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
+  when(runMode.env) thenReturn "Dev"
+  when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
   implicit val hc = HeaderCarrier()
   val extract = new XmlInfoExtract()
   implicit def fileToXml(f:File) : RawXMLInfo = extract.extract(f)
 
   val cbcId = CBCId.create(56).toOption
-  val filename = "GB2016RGXVCBC0000000056CBC40120170311T090000X.xml"
+  val filename = "GB2016RGXLCBC0100000056CBC40120170311T090000X.xml"
+  val filenamePB = "GB2016RGXVCBC0000000056CBC40120170311T090000X.xml"
 
   val submissionData = SubscriptionDetails(
     BusinessPartnerRecord("SAFEID",Some(OrganisationResponse("blagh")),EtmpAddress("Line1",None,None,None,Some("TF3 XFE"),"GB")),
     SubscriberContact("Brian","Lastname", "phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
   )
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode)
   "The CBCBusinessRuleValidator" should {
     "return the correct error" when {
       "messageRefId is empty" in {
@@ -164,6 +167,17 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
             _ => fail("No TestDataError generated")
           )
         }
+      }
+
+      "SendingEntityIn is using a private beta CBCId" in {
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        val validFile = new File("test/resources/cbcr-privatebeta.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filenamePB).value, 5.seconds)
+
+        result.fold(
+          errors => errors.head shouldBe PrivateBetaCBCIdError,
+          _ => fail("No TestDataError generated")
+        )
       }
 
       "SendingEntityIn does not match any CBCId in the database" in {
