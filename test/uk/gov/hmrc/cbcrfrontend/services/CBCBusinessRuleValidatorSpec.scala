@@ -198,7 +198,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe ReceivingCountryError,
+          errors => errors.toList should contain(ReceivingCountryError),
           _ => fail("No TestDataError generated")
         )
       }
@@ -229,7 +229,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
           result.fold(
-            errors => errors.head shouldBe MessageTypeIndicError,
+            errors => errors.toList should contain(MessageTypeIndicError),
             _ => fail("No InvalidXMLError generated")
           )
         }
@@ -238,7 +238,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
           result.fold(
-            errors => errors.head shouldBe MessageTypeIndicError,
+            errors => errors.toList should contain(MessageTypeIndicError),
             _ => fail("No InvalidXMLError generated")
           )
         }
@@ -247,7 +247,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
           result.fold(
-            errors => errors.head shouldBe MessageTypeIndicError,
+            errors => errors.toList should contain(MessageTypeIndicError),
             _ => fail("No InvalidXMLError generated")
           )
         }
@@ -256,7 +256,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
           result.fold(
-            errors => errors.head shouldBe MessageTypeIndicError,
+            errors => errors.toList should contain(MessageTypeIndicError),
             _ => fail("No InvalidXMLError generated")
           )
 
@@ -473,21 +473,92 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
 
       }
+      "when the FilingType == CBC701" when {
+        "the TIN field is not a valid UTR" in {
+          val validFile = new File("test/resources/cbcr-CBC701-badTIN.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 
-    "return the KeyXmlInfo when everything is fine" in {
-      val validFile = new File("test/resources/cbcr-valid.xml")
-      val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+          result.fold(
+            errors => errors.toList should contain(
+              InvalidXMLError("ReportingEntity.Entity.TIN must be a valid UTR for filings issued in 'GB'")
+            ),
+            _ => fail("No InvalidXMLError generated for CBC701 invalid TIN check")
+          )
+
+        }
+        "the @issuedBy attribute of the TIN is not 'GB' " in {
+          val validFile = new File("test/resources/cbcr-CBC701-badTINAttribute.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for voluntary or primary filings")),
+            _ => fail("No InvalidXMLError generated for CBC701 invalid TIN issuedBy check")
+          )
+
+        }
+      }
+      "when the FilingType == CBC703" when {
+        "the TIN field is not a valid UTR" in {
+          val validFile = new File("test/resources/cbcr-CBC703-badTIN.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN must be a valid UTR for filings issued in 'GB'")),
+            _ => fail("No InvalidXMLError generated for CBC703 invalid TIN check")
+          )
+
+        }
+        "the @issuedBy attribute of the TIN is not 'GB' " in {
+          val validFile = new File("test/resources/cbcr-CBC703-badTINAttribute.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for voluntary or primary filings")),
+            _ => fail("No InvalidXMLError generated for CBC703 invalid TIN issuedBy check")
+          )
+
+        }
+
+      }
+
+      "when the FilingType == CBC702" when {
+        "the TIN field is unrestricted" in {
+          val validFile = new File("test/resources/cbcr-CBC702-badTIN.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+          result.fold(
+            errors => fail(s"CBC702 should handle non UTR in TIN field: ${errors.toList.mkString("\n")}"),
+            _      => ()
+          )
+
+        }
+        "the @issuedBy attribute of the TIN is unrestricted" in {
+          val validFile = new File("test/resources/cbcr-CBC702-badTINAttribute.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+          result.fold(
+            errors => fail(s"CBC703 should handle non GB issuedBy field: ${errors.toList.mkString("\n")}"),
+            _      => ()
+          )
+
+        }
+      }
 
 
-      result.fold(
-        errors => fail(s"Error were generated: $errors"),
-        x => x.cbcReport.size shouldBe 4
-      )
-    }
+      "return the KeyXmlInfo when everything is fine" in {
+        val validFile = new File("test/resources/cbcr-valid.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
+
+
+        result.fold(
+          errors => fail(s"Error were generated: $errors"),
+          x => x.cbcReport.size shouldBe 4
+        )
+      }
 
       "should not create an error" when {
         "Should not fail when utf-8 is lowercase" in {
-          
+
           val validFile = new File("test/resources/lower-case-utf8-pre-amble.xml")
           val result = Await.result(validator.validateBusinessRules(validFile, filename).value, 5.seconds)
 

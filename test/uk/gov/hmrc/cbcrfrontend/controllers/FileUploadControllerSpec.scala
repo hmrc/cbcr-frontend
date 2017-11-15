@@ -126,7 +126,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
         LocalDate.parse("2017-01-30"),
         None
       ),
-      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),Utr("7000000002"),"name"),
+      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),TIN("7000000002"),"name"),
       List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
       Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
     )

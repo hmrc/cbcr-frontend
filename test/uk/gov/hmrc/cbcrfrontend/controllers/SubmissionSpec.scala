@@ -621,7 +621,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         LocalDate.parse("2017-01-30"),
         None
       ),
-      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),Utr("7000000002"),"name"),
+      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),TIN("7000000002"),"name"),
       List(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None))),
       Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None)))
     )

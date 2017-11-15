@@ -40,6 +40,13 @@ case class Utr(utr: String) extends TaxIdentifier {
 }
 
 object Utr {
+
+  def safeApply(utr:String) : Option[Utr] = {
+    val u = Utr(utr)
+    if(u.isValid) Some(u)
+    else None
+  }
+
   implicit val pathFormat = new PathBindable[Utr] {
     override def bind(key: String, value: String): Either[String, Utr] =
       if(Utr(value).isValid){

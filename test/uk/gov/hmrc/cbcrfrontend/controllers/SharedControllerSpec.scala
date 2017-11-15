@@ -90,7 +90,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
         LocalDate.parse("2017-01-30"),
         None
       ),
-      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),Utr("7000000002"),"name"),
+      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),TIN("7000000002"),"name"),
       List(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None))),
       Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None)))
     )
@@ -259,7 +259,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
       when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent")))
-      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(tin = Utr("7000000003")))))
+      when(cache.read[XMLInfo](EQ(XMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(tin = TIN("7000000003")))))
       when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
