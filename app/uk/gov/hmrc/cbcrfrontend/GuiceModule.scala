@@ -20,7 +20,7 @@ import java.io.File
 
 import com.google.inject.AbstractModule
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
-import play.api.{Configuration, Environment}
+import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.cbcrfrontend.auth.{SecuredActions, SecuredActionsImpl}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.services.RunMode
@@ -37,11 +37,22 @@ class GuiceModule(environment: Environment,
     bind(classOf[SecuredActions]).to(classOf[SecuredActionsImpl])
     bind(classOf[BPRKnownFactsConnector])
     bind(classOf[XMLValidationSchema]).toInstance{
+      Logger.error("At beginning")
+      val env2 = environment.mode
+      Logger.error(s"val env2: $env2")
       val runMode: RunMode = new RunMode(configuration)
+      Logger.error("val runMOde")
       val env = runMode.env
-      val schemaVer: String = configuration.getString(s"${env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration ${env}.oecd-schema-version"))
+      Logger.error(s"val env: $env")
+      val path = s"$env.oecd-schema-version"
+      Logger.error(s"val path: $path")
+      val schemaVer: String = configuration.getString(path).getOrElse {
+        Logger.error(s"Failed to find $path in config")
+        throw new Exception(s"Missing configuration ${env}.oecd-schema-version")
+      }
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
         XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+      Logger.error("val xmlValidationSchemaFactory")
       val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
