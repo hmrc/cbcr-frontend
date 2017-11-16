@@ -33,9 +33,8 @@ implicit request: Request[_], messages: Messages)
             <section>
                 <div class="transaction-banner--complete">
                     <h1><span class="transaction-banner__heading h1-heading">@Messages("subscribeSuccessCbcId.mainHeading") @companyName</span></h1>
-                    <p>@Messages("subscribeSuccessCbcId.subHeading")<br>
-                        <strong class="heading-medium">@cbcId.value</strong>
-                    </p>
+                    <p><span class="heading-small">@Messages("subscribeSuccessCbcId.subHeading")</span>
+                    <strong class="heading-medium">@cbcId.value</strong></p>
                 </div>
             </section>
             <p><a href="#" onclick="window.print()" class="print-link">@Messages("subscribeSuccessCbcId.printThisButton")</a></p>
