@@ -53,7 +53,7 @@ subscribeSuccessCbcId.printThisButton=Print this page
 subscribeSuccessCbcId.printThis1=Keep this ID safe, as it must be included in the report.
 subscribeSuccessCbcId.next=What happens next?
 subscribeSuccessCbcId.email=We''ll send you a confirmation email for your records.
-subscribeSuccessCbcId.next2=If the report is ready to send, continue. Alternatively, sign out now and send the report when it's complete.
+subscribeSuccessCbcId.next2=If the report is ready to send, continue. Alternatively, sign out now and send the report when it''s complete.
 
 contactInfoSubscriber.mainHeading=Who should we contact about the content of the report?
 contactInfoSubscriber.errors=We''ve found some errors.
