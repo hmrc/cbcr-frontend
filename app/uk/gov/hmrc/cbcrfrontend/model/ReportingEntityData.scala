@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import cats.data.{NonEmptyList, ValidatedNel}
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.syntax.all._
 import cats.instances.all._
 import play.api.libs.json._
@@ -50,7 +50,7 @@ object DocRefIdPair{ implicit val format = Json.format[DocRefIdPair] }
 case class PartialReportingEntityData(cbcReportsDRI:List[DocRefIdPair],
                                       additionalInfoDRI:Option[DocRefIdPair],
                                       reportingEntityDRI:DocRefIdPair,
-                                      utr:Utr,
+                                      utr:Option[Utr],
                                       ultimateParentEntity: UltimateParentEntity,
                                       reportingRole: ReportingRole)
 
@@ -70,7 +70,7 @@ object PartialReportingEntityData {
       x.cbcReport.map(cr => DocRefIdPair(cr.docSpec.docRefId,cr.docSpec.corrDocRefId)),
       x.additionalInfo.map(ai => DocRefIdPair(ai.docSpec.docRefId, ai.docSpec.corrDocRefId)),
       DocRefIdPair(x.reportingEntity.docSpec.docRefId,x.reportingEntity.docSpec.corrDocRefId),
-      x.reportingEntity.tin,
+      Utr.safeApply(x.reportingEntity.tin.value),
       UltimateParentEntity(x.reportingEntity.name),
       x.reportingEntity.reportingRole
     )
@@ -81,17 +81,23 @@ object ReportingEntityData{
   import PartialReportingEntityData.formatNEL
   implicit val format = Json.format[ReportingEntityData]
 
-  def extract(x:XMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]=
-    x.cbcReport.toNel.toValidNel(UnexpectedState("CBCReport DocRefId not found")).map{c =>
+  def extract(x:XMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]= {
+    val utr:Validated[CBCErrors,Utr] = if(Utr(x.reportingEntity.tin.value).isValid) {
+      Utr(x.reportingEntity.tin.value).valid[CBCErrors]
+    } else {
+      UnexpectedState("TIN is not a valid UTR").invalid[Utr]
+    }
+    (utr.toValidatedNel |@| x.cbcReport.toNel.toValidNel(UnexpectedState("CBCReport DocRefId not found"))).map { (u,c) =>
       ReportingEntityData(
-        c.map(_.docSpec.docRefId),x.additionalInfo.map(_.docSpec.docRefId),
+        c.map(_.docSpec.docRefId), x.additionalInfo.map(_.docSpec.docRefId),
         x.reportingEntity.docSpec.docRefId,
-        x.reportingEntity.tin,
+        u,
         UltimateParentEntity(x.reportingEntity.name),
         x.reportingEntity.reportingRole
       )
 
     }
+  }
 
 }
 

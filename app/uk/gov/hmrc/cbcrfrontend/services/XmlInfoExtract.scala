@@ -97,11 +97,12 @@ class XmlInfoExtract {
     }
 
     case List("CBC_OECD", "CbcBody", "ReportingEntity") => re => {
-      val tin  = (re \ "Entity" \ "TIN").text
+      val tin    = (re \ "Entity" \ "TIN").text
+      val tinIB  = (re \ "Entity" \ "TIN") \@ "issuedBy"
       val name = (re \ "Entity" \ "Name").text
       val rr   = (re \ "ReportingRole").text
       val ds   = getDocSpec((re \ "DocSpec").head) //DocSpec is required in ReportingEntity so this will exist!
-      RawReportingEntity(rr,ds,tin,name)
+      RawReportingEntity(rr,ds,tin,tinIB,name)
     }
 
     case List("CBC_OECD", "CbcBody", "CbcReports", "DocSpec") => ds => RawCbcReports(getDocSpec(ds))
