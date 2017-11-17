@@ -55,31 +55,23 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
         (messageRefIdVal, reportingEntity, cbcDocSpec, addDocSpec, sendingEntity) =>
 
           val otherRules = (
-            validateTestDataPresent(in).toValidatedNel |@|
+            validateTestDataPresent(in).toValidatedNel *>
+              validateFileName(in.messageSpec, fileName).toValidatedNel *>
+              crossValidateDocRefIds( in.reportingEntity.map(_.docSpec.docRefId), in.cbcReport.map(_.docSpec.docRefId), in.additionalInfo.map(_.docSpec.docRefId) ).toValidatedNel *>
+              crossValidateCorrDocRefIds( in.cbcReport.map(_.docSpec), in.reportingEntity.map(_.docSpec), in.additionalInfo.map(_.docSpec) ).toValidatedNel *>
+              validateMessageTypeIndic(in).toValidatedNel *>
+              in.cbcReport.map(r => validateCorrDocRefIdExists(Some(r.docSpec)).toValidatedNel).sequence[({type λ[α] = ValidatedNel[BusinessRuleErrors,α]})#λ,Unit] *>
+              validateCorrDocRefIdExists(in.reportingEntity.map(_.docSpec)).toValidatedNel *>
+              validateCorrDocRefIdExists(in.additionalInfo.map(_.docSpec)).toValidatedNel *>
+              validateMessageTypeIndicCompatible(in).toValidatedNel *>
+              validateCbcOecdVersion(in.cbcVal).toValidatedNel *>
+              validateXmlEncodingVal(in.xmlEncoding).toValidatedNel *>
               validateReceivingCountry(in.messageSpec).toValidatedNel |@|
-              validateFileName(in.messageSpec, fileName).toValidatedNel |@|
-              validateMessageTypeIndic(in).toValidatedNel |@|
-              crossValidateDocRefIds(
-                in.reportingEntity.map(_.docSpec.docRefId),
-                in.cbcReport.map(_.docSpec.docRefId),
-                in.additionalInfo.map(_.docSpec.docRefId)
-              ).toValidatedNel |@|
-              crossValidateCorrDocRefIds(
-                in.cbcReport.map(_.docSpec),
-                in.reportingEntity.map(_.docSpec),
-                in.additionalInfo.map(_.docSpec)
-              ).toValidatedNel |@|
-              validateMessageTypeIndic(in).toValidatedNel |@|
-              in.cbcReport.map(r => validateCorrDocRefIdExists(Some(r.docSpec)).toValidatedNel).sequence[({type λ[α] = ValidatedNel[BusinessRuleErrors,α]})#λ,Unit] |@|
-              validateCorrDocRefIdExists(in.reportingEntity.map(_.docSpec)).toValidatedNel |@|
-              validateCorrDocRefIdExists(in.additionalInfo.map(_.docSpec)).toValidatedNel |@|
-              validateMessageTypeIndicCompatible(in).toValidatedNel |@|
-              validateCbcOecdVersion(in.cbcVal).toValidatedNel |@|
-              validateXmlEncodingVal(in.xmlEncoding).toValidatedNel
-            ).map((_, rc, _, mti, _, _, _, _, _, _, _, _, _) => (rc, mti))
+              validateMessageTypeIndic(in).toValidatedNel
+        ).tupled
 
 
-          (otherRules |@| messageRefIdVal |@| reportingEntity |@| cbcDocSpec |@| addDocSpec |@| sendingEntity |@| validateReportingPeriod(in.messageSpec).toValidatedNel).map(
+        (otherRules |@| messageRefIdVal |@| reportingEntity |@| cbcDocSpec |@| addDocSpec |@| sendingEntity |@| validateReportingPeriod(in.messageSpec).toValidatedNel).map(
             (values, msgRefId, reportingEntity, cbcDocSpec, addDocSpec, _, reportingPeriod) =>
               XMLInfo(
                 MessageSpec(
@@ -100,7 +92,14 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def validateReportingEntity(re: Option[RawReportingEntity], in: RawXMLInfo)(implicit hc: HeaderCarrier): Future[ValidatedNel[BusinessRuleErrors, ReportingEntity]] =
     re.map { rre =>
       validateDocSpec(rre.docSpec, ENT).map { vds =>
-        (validateReportingRole(rre).toValidatedNel |@| validateTIN(rre).toValidatedNel |@| vds).map((rr, utr, ds) => ReportingEntity(rr, ds, utr, rre.name))
+
+        val rr_tin = for {
+          rr <- validateReportingRole(rre)
+          tin <- validateTIN(rre,rr)
+        } yield (rr,tin)
+
+        (rr_tin.toValidatedNel |@| vds).map((rr_tin, ds) => ReportingEntity(rr_tin._1, ds, rr_tin._2, rre.name))
+
       }
     }.getOrElse {
       val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId)).flatMap(DocRefId(_))
@@ -113,7 +112,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
             throw new Exception(s"Error communicating with backend: $cbcErrors")
           }
         }.subflatMap{
-          case Some(red) => Right(ReportingEntity(red.reportingRole, DocSpec(OECD0, red.reportingEntityDRI, None), red.utr, red.ultimateParentEntity.ultimateParentEntity))
+          case Some(red) => Right(ReportingEntity(red.reportingRole, DocSpec(OECD0, red.reportingEntityDRI, None), TIN(red.utr.value), red.ultimateParentEntity.ultimateParentEntity))
           case None      => Left(OriginalSubmissionNotFound)
         }.toValidatedNel
       }.getOrElse{
@@ -227,13 +226,17 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
   }
 
-  private def validateTIN(in:RawReportingEntity) : Validated[BusinessRuleErrors, Utr] = {
-      if (Utr(in.tin).isValid) { Some(Utr(in.tin)) }
-      else { None }
-    }.toValid(InvalidXMLError("ReportingEntity.Entity.TIN field invalid"))
+  private def validateTIN(in:RawReportingEntity, rr:ReportingRole) : Either[BusinessRuleErrors, TIN] = {
+    rr match {
+      case CBC702                                                    => Right(TIN(in.tin))
+      case CBC701 | CBC703 if !in.tinIssuedBy.equalsIgnoreCase("gb") => Left(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for voluntary or primary filings"))
+      case CBC701 | CBC703 if !Utr(in.tin).isValid                   => Left(InvalidXMLError("ReportingEntity.Entity.TIN must be a valid UTR for filings issued in 'GB'"))
+      case _                                                         => Right(TIN(in.tin))
+    }
+  }
 
-  private def validateReportingRole(in:RawReportingEntity): Validated[BusinessRuleErrors, ReportingRole] =
-    ReportingRole.parseFromString(in.reportingRole).toValid(InvalidXMLError("ReportingEntity.ReportingRole not found or invalid"))
+  private def validateReportingRole(in:RawReportingEntity): Either[BusinessRuleErrors, ReportingRole] =
+    ReportingRole.parseFromString(in.reportingRole).toRight(InvalidXMLError("ReportingEntity.ReportingRole not found or invalid"))
 
   private def validateFileName(in:RawMessageSpec,fileName:String) : Validated[BusinessRuleErrors,Unit] =
     if(fileName.split("""\.""").headOption.contains(in.messageRefID)){ ().valid }
