@@ -48,7 +48,7 @@ subscribeMatchFound.businessDetails.utr=Unique taxpayer reference
 subscribeMatchFound.businessDetails.advice=If these details aren''t correct, go back and enter a different unique taxpayer reference and postcode.
 
 subscribeSuccessCbcId.mainHeading=Registration successful
-subscribeSuccessCbcId.subHeading=The country-by-country ID for this company or partnership is:
+subscribeSuccessCbcId.subHeading=The country-by-country ID is
 subscribeSuccessCbcId.printThisButton=Print this page
 subscribeSuccessCbcId.printThis1=Keep this ID safe, as it must be included in the report.
 subscribeSuccessCbcId.next=What happens next?
