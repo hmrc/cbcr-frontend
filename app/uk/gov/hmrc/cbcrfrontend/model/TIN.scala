@@ -16,11 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.{Reads, Writes}
-import uk.gov.hmrc.domain.{SimpleObjectReads, SimpleObjectWrites}
+import play.api.libs.json.Json
 
-case class TIN(value:String)
+case class TIN(value:String, issuedBy:String)
 object TIN{
-  implicit val utrFormat: Writes[TIN] = new SimpleObjectWrites[TIN](_.value)
-  implicit val utrRead: Reads[TIN] = new SimpleObjectReads[TIN]("utr", TIN.apply)
+  implicit val format = Json.format[TIN]
 }
