@@ -18,7 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.Json
 
-case class SummaryData(businessPartnerRecord: BusinessPartnerRecord, submissionMetaData: SubmissionMetaData, xmlInfo: XMLInfo)
+case class SummaryData(businessPartnerRecord: BusinessPartnerRecord, submissionMetaData: SubmissionMetaData, xmlInfo: CompleteXMLInfo)
 
 object SummaryData {
   implicit val format = Json.format[SummaryData]

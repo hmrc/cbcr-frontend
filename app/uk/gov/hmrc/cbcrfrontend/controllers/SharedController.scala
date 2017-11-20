@@ -198,7 +198,7 @@ class SharedController @Inject()(val sec: SecuredActions,
           bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
             NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
           )
-          cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.read[XMLInfo]).map(_.messageSpec.sendingEntityIn).value)
+          cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.read[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
           subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
           _                   <- EitherT.fromEither[Future](userType match {
             case Agent if subscriptionDetails.isEmpty =>
