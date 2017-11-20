@@ -16,9 +16,10 @@ cbc.entercbcid.label=CBC Id
 
 form.controls.continue=Continue
 form.controls.signOut=Sign out
+form.controls.finished=Finished
 
-enterCBCId.mainHeading=Enter your country-by-country ID
-enterCBCId.formHint=This is the 15-character ID you received when you registered, for example: XACBC0000999999.
+enterCBCId.mainHeading=Enter the registered country-by-country ID
+enterCBCId.formHint=This is the 15-character ID received when the company or partnership registered, for example:XACBC0000999999
 enterCBCId.formHintWhereYouGotIt=Country-by-country ID
 enterCBCId.dontHaveAnID.heading=Don''t have a Country by Country ID?
 enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
@@ -121,22 +122,22 @@ submitInfoFilingType.primaryFiling.label=A global report for a multinational ent
 submitInfoFilingType.voluntaryFiling.label=A global report for a multinational enterprise whose headquarters aren''t in the UK, via a subsidiary company
 submitInfoFilingType.localFiling.label=A report covering the UK only, for the UK subsidiary of a multinational enterprise whose headquarters aren''t in the UK
 
-submitInfoUltimateParentEntity.mainHeading=What group parent business are you reporting for?
-submitInfoUltimateParentEntity.upe.label=Group parent business name
+submitInfoUltimateParentEntity.mainHeading=What ultimate parent entity are you reporting for?
+submitInfoUltimateParentEntity.upe.label=Ultimate parent entity name
 submitInfoUltimateParentEntity.upe.error.header=You haven''t entered the name of the group parent business
 submitInfoUltimateParentEntity.upe.error=Enter the group parent business name
 
 submitSuccessReceipt.confirmationNumberLabel=Your confirmation number is:
-submitSuccessReceipt.submissionDateLabel=Your report was received on
+submitSuccessReceipt.submissionDateLabel=Report received on
 submitSuccessReceipt.digiSig=You can use this digital signature as a receipt for the report you''ve sent:
 submitSuccessReceipt.printInfo=Print this screen to keep a record of your report.
 submitSuccessReceipt.print=Print this page
 submitSuccessReceipt.print.text=Print this screen to keep a record of your report.
-submitSuccessReceipt.whatNext.heading=What happens next
+submitSuccessReceipt.whatNext.heading=What happens next?
 submitSuccessReceipt.email=We''ll send you a confirmation email for your records.
-submitSuccessReceipt.whatNext.info=We''ll check the information in your report and contact you if there are any issues.
+submitSuccessReceipt.whatNext.info=We’'ll check the information in the report and contact you if there are any issues.
 
-fileUploadProgress.mainHeading=We''re checking your report
+fileUploadProgress.mainHeading=We''re checking the report
 fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
 
 fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been submitted
@@ -156,7 +157,7 @@ fileUploadResult.error.FileTooLarge=The report you sent is larger than 50MB. You
 fileUploadResult.error.FileContainsVirus=The report you sent has failed our anti-virus checks. You''ll need to solve this issue before sending it again.
 fileUploadResult.error.FileNotXml=The report you sent is the wrong file type. Please send it as an XML file.
 
-fileUploadResult.notYetSubmitted=We''ll need some more information from you before accepting your report.
+fileUploadResult.notYetSubmitted=We''ll now ask you for more information before accepting the report.
 
 enterCompanyName.mainHeading=Enter the name of the company or partnership you work for
 enterCompanyName.formHintWhereYouGotIt=Company or partnership name
@@ -164,26 +165,26 @@ enterCompanyName.form.error.header=You haven''t entered the company or partnersh
 enterCompanyName.form.error=Enter a company or partnership name
 enterCompanyName.formHint=This isn''t necessarily the one you''re sending the report for
 
-submitSummary.mainHeading=Confirm your report details
-submitSummary.table.ultimateParent=Group parent business
+submitSummary.mainHeading=Confirm the report details
+submitSummary.table.ultimateParent=Ultimate parent entity
 submitSummary.table.utr=Unique taxpayer reference
 submitSummary.table.filedBy=Sent by
 submitSummary.table.filingInfo=Sender''s details
 submitSummary.table.reportDetails=Report details
 submitSummary.declaration.heading=Declaration
-submitSummary.declaration.text=By sending your report, you''re confirming that the information you''ve provided is correct and complete
+submitSummary.declaration.text=By sending the report, you''re confirming that the information provided is correct and complete.
 submitSummary.declaration.error.text=Please confirm
 submitSummary.submit=Confirm and send
 submitSummary.submitReport=Submit report
 
-uploadReport.mainHeading=Upload your report
-uploadReport.warning=Your report must be a valid XML file using the current OECD country-by-country XML schema.
-uploadReport.moreInfo=Get more information about the
-uploadReport.moreInfoLink=XML schema
+uploadReport.mainHeading=Upload a report
+uploadReport.warning=The report must be a valid XML file that uses the current OECD country-by-country XML schema and follows HMRC rules.
+uploadReport.moreInfo=Find out 
+uploadReport.moreInfoLink=how to complete a report
 uploadReport.wellCheck=After you''ve uploaded your report, we''ll check that it conforms with the XML schema and HMRC guidelines.
 uploadReport.inputField.label=Choose the file you want to upload:
-uploadReport.uploadButton=Upload
-uploadReport.error=You must select a file
+uploadReport.uploadButton=Upload and continue
+uploadReport.error=Choose file No file chosen
 
 submitterInfo.mainHeading=Enter your contact details, as the sender of the report
 submitterInfo.error.heading=We''ve found some errors.

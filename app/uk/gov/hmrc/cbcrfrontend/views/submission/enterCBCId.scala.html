@@ -50,7 +50,7 @@ implicit request: Request[_], messages: Messages)
             <fieldset>
                 <div class="form-group">
                     @formFieldDisplay(errors,"cbcId",Some(Messages("enterCBCId.error.message.invalid.id")),
-                        Messages("enterCBCId.formHintWhereYouGotIt"),form,Some(Messages("enterCBCId.error.header")))
+                        Messages("enterCBCId.formHintWhereYouGotIt"),form,Some(Messages("enterCBCId.formHint")))
                 </div>
             </fieldset>
             @csrf_token()
