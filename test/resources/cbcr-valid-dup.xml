@@ -142,8 +142,9 @@
         </ns1:CbcReports>
         <ns1:CbcReports>
             <ns1:DocSpec>
-                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
+                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP4</ns2:DocRefId>
+                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP5</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>
