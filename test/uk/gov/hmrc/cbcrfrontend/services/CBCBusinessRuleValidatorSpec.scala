@@ -351,6 +351,23 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           _ => fail("No InvalidXMLError generated")
         )
       }
+      "when a docRefId is a duplicate but the duplicate is in an Unchanged ReportingEntity section" in {
+        val validFile = new File("test/resources/cbcr-valid-dup-re-unchanged.xml")
+
+        when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+
+
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          _ => fail("No errors should be generated"),
+          _ =>  ()
+        )
+      }
       "when the DocType is OECD1 but there are CorrDocRefIds defined" in {
         when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
