@@ -45,28 +45,38 @@ class XmlInfoExtractSpec extends UnitSpec {
       re.name shouldBe "ABCCorp"
       re.tin shouldBe "7000000002"
       re.docSpec.docType shouldBe "OECD1"
-      re.docSpec.docRefId shouldBe "String_DocRefId1"
-      re.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId")
+      re.docSpec.docRefId shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT"
+      re.docSpec.corrDocRefId shouldBe None
 
       val rs: List[RawCbcReports] = e.cbcReport
 
-      rs.size shouldBe 2
+      rs.size shouldBe 4
 
       val r = rs.head
       r.docSpec.docType shouldBe "OECD1"
-      r.docSpec.docRefId shouldBe "MyDocRefId"
-      r.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId")
+      r.docSpec.docRefId shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP"
+      r.docSpec.corrDocRefId shouldBe None
 
       val r2 = rs.tail.head
       r2.docSpec.docType shouldBe "OECD1"
-      r2.docSpec.docRefId shouldBe "MyDocRefId2"
-      r2.docSpec.corrDocRefId shouldBe Some("String_CorrDocRefId2")
+      r2.docSpec.docRefId shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP"
+      r2.docSpec.corrDocRefId shouldBe None
+
+      val r3 = rs.tail.tail.head
+      r3.docSpec.docType shouldBe "OECD1"
+      r3.docSpec.docRefId shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP3"
+      r3.docSpec.corrDocRefId shouldBe None
+
+      val r4 = rs.tail.tail.tail.head
+      r4.docSpec.docType shouldBe "OECD2"
+      r4.docSpec.docRefId shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP4"
+      r4.docSpec.corrDocRefId shouldBe Some("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP5")
 
       val a = e.additionalInfo.get
 
       a.docSpec.docType shouldBe "OECD1"
-      a.docSpec.docRefId shouldBe "MyDocRefId"
-      a.docSpec.corrDocRefId shouldBe Some("MyCorrDocRefId")
+      a.docSpec.docRefId shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD"
+      a.docSpec.corrDocRefId shouldBe None
 
     }
   }
