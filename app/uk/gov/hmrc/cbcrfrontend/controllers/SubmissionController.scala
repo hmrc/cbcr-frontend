@@ -176,27 +176,9 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   }
 
   val submitUltimateParentEntity = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
     ultimateParentEntityForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.submission.submitInfoUltimateParentEntity(
-        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
-      success => {
-        val result = for {
-          _       <- OptionT.liftF(cache.save(success)).toRight(UnexpectedState("Could not save to cache"))
-          xmlInfo <- OptionT(cache.read[CompleteXMLInfo]).toRight(UnexpectedState("Could not read XMLinfo from cache"))
-          userType <- getUserType(authContext)
-        } yield xmlInfo.reportingEntity.reportingRole -> userType
-
-        result.fold(
-          e => errorRedirect(e),
-          {
-            case (CBC701,_) =>
-              errorRedirect(UnexpectedState("ReportingRole was CBC701 - we should never be here"))
-            case (_,Organisation)  => Redirect(routes.SubmissionController.utr())
-            case (_,Agent)         => Redirect(routes.SubmissionController.enterCompanyName())
-            case (_,Individual)    => errorRedirect(UnexpectedState("Found Individual"))
-          })
-      }
+      formWithErrors => BadRequest(views.html.submission.submitInfoUltimateParentEntity(includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors)),
+      success        => cache.save(success).map(_ => Redirect(routes.SubmissionController.enterCompanyName()))
     )
   }
 

@@ -187,11 +187,12 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                              else                       EitherT.pure[Future,CBCErrors,Unit](())
       _                   = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
       userType            <- getUserType(authContext)
-    } yield Ok(submission.fileupload.fileUploadResult(Some(userType), Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),result.map(_.reportingEntity.reportingRole).toOption))
+      straightThrough     <- right[Boolean](cache.read[CBCId].map(_.isDefined))
+    } yield Ok(submission.fileupload.fileUploadResult(Some(userType), Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),result.map(_.reportingEntity.reportingRole).toOption, straightThrough))
 
     result.leftMap{
       case FatalSchemaErrors(size)=>
-        Ok(submission.fileupload.fileUploadResult(None, None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None))
+        Ok(submission.fileupload.fileUploadResult(None, None, None, size, None, includes.asideBusiness(), includes.phaseBannerBeta(),None, false))
       case InvalidFileType(_)     =>
         Redirect(routes.FileUploadController.fileInvalid())
       case e:CBCErrors            =>
