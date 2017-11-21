@@ -20,6 +20,7 @@ import java.time.{LocalDate, LocalDateTime, Year}
 
 import cats.Show
 import cats.syntax.show._
+import play.api.Logger
 
 import scala.util.control.Exception._
 import play.api.libs.json._
@@ -62,6 +63,8 @@ class DocRefId private[model](val msgRefID:MessageRefID,
     case d:DocRefId => d.show == this.show
     case _          => false
   }
+
+  override def hashCode(): Int = this.show.hashCode()
 
 }
 object DocRefId {

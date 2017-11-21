@@ -125,7 +125,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       when(cache.read(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Option(AffinityGroup("Organisation")))
       when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       when(cache.save[FilingType](any())(EQ(FilingType.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.save[Utr](any())(EQ(Utr.utrFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.save[TIN](any())(EQ(TIN.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
     }
     "use the UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
@@ -303,7 +303,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "return a list of errors for each of the missing cache values" in {
         when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(cache.read[BusinessPartnerRecord]) thenReturn Future.successful(None)
-        when(cache.read[Utr]) thenReturn Future.successful(None)
+        when(cache.read[TIN]) thenReturn Future.successful(None)
         when(cache.read[CBCId]) thenReturn Future.successful(None)
         when(cache.read[Hash]) thenReturn Future.successful(None)
         when(cache.read[FileId]) thenReturn Future.successful(None)
@@ -340,7 +340,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "return a Metadata object if all succeeds" in {
         when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(cache.read[BusinessPartnerRecord]) thenReturn Future.successful(Some(bpr))
-        when(cache.read[Utr]) thenReturn Future.successful(Some(Utr("utr")))
+        when(cache.read[TIN]) thenReturn Future.successful(Some(TIN("utr","")))
         when(cache.read[CBCId]) thenReturn Future.successful(CBCId.create(1).toOption)
         when(cache.read[Hash]) thenReturn Future.successful(Some(Hash("hash")))
         when(cache.read[FileId]) thenReturn Future.successful(Some(FileId("yeah")))
@@ -374,7 +374,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
       when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.successful(Some(bpr))
-      when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("utr")))
+      when(cache.read[TIN](EQ(TIN.format),any(),any())) thenReturn Future.successful(Some(TIN("utr","")))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId.create(1).toOption)
       when(cache.read[Hash](EQ(Hash.format),any(),any())) thenReturn Future.successful(Some(Hash("hash")))
       when(cache.read[FileId](EQ(FileId.fileIdFormat),any(),any())) thenReturn Future.successful(Some(FileId("yeah")))
@@ -396,7 +396,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn Future.successful(Some(keyXMLInfo))
         when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn Future.successful(Some(bpr))
-        when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("utr")))
+        when(cache.read[TIN](EQ(TIN.format),any(),any())) thenReturn Future.successful(Some(TIN("utr","")))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn Future.successful(CBCId.create(1).toOption)
         when(cache.read[Hash](EQ(Hash.format),any(),any())) thenReturn Future.successful(Some(Hash("hash")))
         when(cache.read[FileId](EQ(FileId.fileIdFormat),any(),any())) thenReturn Future.successful(Some(FileId("yeah")))
@@ -600,7 +600,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
      "bpSafeId",
      Hash("hash"),
      "ofdsRegime",
-     Utr("utr"),
+     TIN("tin","GB"),
      FilingType(CBC701),
      UltimateParentEntity("ultimateParentEntity")
    )

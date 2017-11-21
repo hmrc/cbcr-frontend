@@ -100,7 +100,7 @@ package object cbcrfrontend {
     for {
       gatewayId <- getUserGGId(authContext)(cache,sec,hc,ec)
       bpr <- cache.read[BusinessPartnerRecord]
-      utr <- cache.read[Utr]
+      tin <- cache.read[TIN]
       hash <- cache.read[Hash]
       cbcId <- cache.read[CBCId]
       fileId <- cache.read[FileId]
@@ -110,10 +110,10 @@ package object cbcrfrontend {
       upe <- cache.read[UltimateParentEntity]
       fileMetadata <- cache.read[FileMetadata]
     } yield {
-      (errors(bpr) |@| errors(utr) |@| errors(hash) |@| errors(cbcId) |@| errors(fileId) |@|
+      (errors(bpr) |@| errors(tin) |@| errors(hash) |@| errors(cbcId) |@| errors(fileId) |@|
         errors(envelopeId) |@| errors(submitterInfo) |@| errors(filingType) |@|
         errors(upe) |@| errors(fileMetadata)
-        ).map { (record, utr, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
+        ).map { (record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
 
         SubmissionMetaData(
           SubmissionInfo(
@@ -122,7 +122,7 @@ package object cbcrfrontend {
             bpSafeId = record.safeId,
             hash = hash,
             ofdsRegime = "cbc",
-            utr = utr,
+            tin = tin,
             filingType = filingType,
             ultimateParentEntity = upe
           ),

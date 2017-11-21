@@ -85,7 +85,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   }
 
   private def cacheSubscriptionDetails(s:SubscriptionDetails, id:CBCId)(implicit hc:HeaderCarrier): Future[Unit] = for {
-    _ <- cache.save(s.utr)
+    _ <- cache.save(TIN(s.utr.value,""))
     _ <- cache.save(s.businessPartnerRecord)
     _ <- cache.save(id)
   } yield ()
@@ -210,7 +210,11 @@ class SharedController @Inject()(val sec: SecuredActions,
             case _                                             =>
               Right(())
           })
-          _                   <- EitherT.right[Future, Result, Unit]((cache.save(bpr) |@| cache.save(knownFacts.utr)).map((_,_) => ()))
+          _                   <- EitherT.right[Future,Result,Unit](
+                                       (cache.save(bpr) *>
+                                        cache.save(knownFacts.utr) *>
+                                        cache.save(TIN(knownFacts.utr.value,""))
+                                       ).map(_ => ()))
         } yield Redirect(routes.SharedController.knownFactsMatch())
 
       )
