@@ -26,7 +26,7 @@
 @import java.nio.file._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@(userType: Option[UserType], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], asideBusiness: Html, phaseBannerBeta: Html, reportingRole: Option[ReportingRole])(
+@(userType: Option[UserType], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], asideBusiness: Html, phaseBannerBeta: Html, reportingRole: Option[ReportingRole], straightThrough:Boolean)(
         implicit request: Request[_], messages: Messages)
 
 @errors = @{
@@ -91,14 +91,14 @@ else {
                 <p>@Messages("fileUploadResult.notYetSubmitted")</p>
 
 
-                @if(reportingRole == Some(CBC701) && userType == Some(Organisation)) {
+                @if(reportingRole == Some(CBC702) && userType == Some(Organisation) && !straightThrough) {
                     <p><a class="button" href="@routes.SubmissionController.utr" id="btn-continue">@Messages("form.controls.continue")</a></p>
-                }
-                @if(reportingRole == Some(CBC701) && userType != Some(Organisation)) {
-                    <p><a class="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
-                }
-                @if(reportingRole == Some(CBC702) || reportingRole == Some(CBC703)) {
-                    <p><a class="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                } else {
+                    @if(reportingRole == Some(CBC701) && userType != Some(Organisation)) {
+                        <p><a class="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    } else{
+                        <p><a class="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    }
                 }
 
             } else {
