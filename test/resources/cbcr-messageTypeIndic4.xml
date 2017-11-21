@@ -28,16 +28,16 @@
             </ns1:Entity>
             <ns1:ReportingRole>CBC703</ns1:ReportingRole>
             <ns1:DocSpec>
-                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD0</ns2:DocTypeIndic>
+                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENTC</ns2:CorrDocRefId>
+                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXMCBC0100000057CBC40120170311T090000X_7000000002OECD1ENT</ns2:CorrDocRefId>
             </ns1:DocSpec>
         </ns1:ReportingEntity>
         <ns1:CbcReports>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC</ns2:CorrDocRefId>
+                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXMCBC0100000057CBC40120170311T090000X_7000000002OECD1REP</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>
@@ -72,9 +72,8 @@
         </ns1:CbcReports>
         <ns1:AdditionalInfo>
             <ns1:DocSpec>
-                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
+                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADDC</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:OtherInfo>String_OtherInfo</ns1:OtherInfo>
             <ns1:ResCountryCode>GB</ns1:ResCountryCode>

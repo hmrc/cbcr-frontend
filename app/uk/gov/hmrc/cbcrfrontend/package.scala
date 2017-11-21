@@ -33,12 +33,22 @@ import uk.gov.hmrc.play.http.HeaderCarrier
 import _root_.play.api.mvc._
 import _root_.play.api.mvc.Results._
 import _root_.play.api.Logger
+import cats.{Applicative, Functor}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
 
 
 package object cbcrfrontend {
+
+
+  type ValidResult[A] = ValidatedNel[BusinessRuleErrors, A]
+  type FutureValidResult[A] = Future[ValidResult[A]]
+
+  implicit def applicativeInstance(implicit ec:ExecutionContext):Applicative[FutureValidResult] = Applicative[Future] compose Applicative[ValidResult]
+  implicit def functorInstance(implicit ec:ExecutionContext):Functor[FutureValidResult] = Functor[Future] compose Functor[ValidResult]
+
+  implicit def toTheFuture[A](a:ValidResult[A]):FutureValidResult[A] = Future.successful(a)
 
   implicit def resultFuture(r:Result):Future[Result] = Future.successful(r)
 
@@ -90,7 +100,7 @@ package object cbcrfrontend {
     for {
       gatewayId <- getUserGGId(authContext)(cache,sec,hc,ec)
       bpr <- cache.read[BusinessPartnerRecord]
-      utr <- cache.read[Utr]
+      tin <- cache.read[TIN]
       hash <- cache.read[Hash]
       cbcId <- cache.read[CBCId]
       fileId <- cache.read[FileId]
@@ -100,10 +110,10 @@ package object cbcrfrontend {
       upe <- cache.read[UltimateParentEntity]
       fileMetadata <- cache.read[FileMetadata]
     } yield {
-      (errors(bpr) |@| errors(utr) |@| errors(hash) |@| errors(cbcId) |@| errors(fileId) |@|
+      (errors(bpr) |@| errors(tin) |@| errors(hash) |@| errors(cbcId) |@| errors(fileId) |@|
         errors(envelopeId) |@| errors(submitterInfo) |@| errors(filingType) |@|
         errors(upe) |@| errors(fileMetadata)
-        ).map { (record, utr, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
+        ).map { (record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
 
         SubmissionMetaData(
           SubmissionInfo(
@@ -112,7 +122,7 @@ package object cbcrfrontend {
             bpSafeId = record.safeId,
             hash = hash,
             ofdsRegime = "cbc",
-            utr = utr,
+            tin = tin,
             filingType = filingType,
             ultimateParentEntity = upe
           ),

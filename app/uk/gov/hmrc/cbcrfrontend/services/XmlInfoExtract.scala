@@ -97,7 +97,7 @@ class XmlInfoExtract {
     }
 
     case List("CBC_OECD", "CbcBody", "ReportingEntity") => re => {
-      val tin    = (re \ "Entity" \ "TIN").text
+      val tin  = (re \ "Entity" \ "TIN").text
       val tinIB  = (re \ "Entity" \ "TIN") \@ "issuedBy"
       val name = (re \ "Entity" \ "Name").text
       val rr   = (re \ "ReportingRole").text
