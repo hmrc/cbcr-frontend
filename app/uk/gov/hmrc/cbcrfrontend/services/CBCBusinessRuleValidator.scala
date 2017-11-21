@@ -246,7 +246,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
   /** Ensure that the list of DocRefIds are unique */
   private def validateDistinctDocRefIds(ids:List[DocRefId]): ValidResult[Unit] =
-    Either.cond(ids.distinct.size == ids.size,(),DocRefIdDuplicate).toValidatedNel
+    Either.cond(ids.distinct.size == ids.size, (), DocRefIdDuplicate).toValidatedNel
 
   /** Do further validation on the DocSpec **/
   private def validateDocSpec(d:DocSpec)(implicit hc:HeaderCarrier) : FutureValidResult[DocSpec] =

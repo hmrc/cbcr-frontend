@@ -209,7 +209,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
     utrForm.bindFromRequest.fold[Future[Result]](
       (formWithErrors: Form[Utr]) => BadRequest(views.html.submission.utrCheck(includes.phaseBannerBeta(),formWithErrors)),
-      (utr: Utr)                  => cache.save(utr).map(_ => Redirect(routes.SubmissionController.enterCompanyName()))
+      (utr: Utr)                  => cache.save(TIN(utr.utr,"")).map(_ => Redirect(routes.SubmissionController.enterCompanyName()))
     )
 
   }

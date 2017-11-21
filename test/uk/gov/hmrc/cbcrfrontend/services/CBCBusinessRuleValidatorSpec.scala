@@ -326,6 +326,18 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
 
       }
+      "when a docRefId is a duplicate within the file" in {
+        val validFile = new File("test/resources/cbcr-valid-dup.xml")
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(DocRefIdDuplicate),
+          _ => fail("No InvalidXMLError generated")
+        )
+      }
       "when a docRefId is a duplicate" in {
         val validFile = new File("test/resources/cbcr-valid.xml")
         when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(Valid)
@@ -465,6 +477,77 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
 
       }
+      "when the FilingType == CBC701" when {
+        "the TIN field is not a valid UTR" in {
+          val validFile = new File("test/resources/cbcr-CBC701-badTIN.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(
+              InvalidXMLError("ReportingEntity.Entity.TIN must be a valid UTR for filings issued in 'GB'")
+            ),
+            _ => fail("No InvalidXMLError generated for CBC701 invalid TIN check")
+          )
+
+        }
+        "the @issuedBy attribute of the TIN is not 'GB' " in {
+          val validFile = new File("test/resources/cbcr-CBC701-badTINAttribute.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for voluntary or primary filings")),
+            _ => fail("No InvalidXMLError generated for CBC701 invalid TIN issuedBy check")
+          )
+
+        }
+      }
+      "when the FilingType == CBC703" when {
+        "the TIN field is not a valid UTR" in {
+          val validFile = new File("test/resources/cbcr-CBC703-badTIN.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN must be a valid UTR for filings issued in 'GB'")),
+            _ => fail("No InvalidXMLError generated for CBC703 invalid TIN check")
+          )
+
+        }
+        "the @issuedBy attribute of the TIN is not 'GB' " in {
+          val validFile = new File("test/resources/cbcr-CBC703-badTINAttribute.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for voluntary or primary filings")),
+            _ => fail("No InvalidXMLError generated for CBC703 invalid TIN issuedBy check")
+          )
+
+        }
+
+      }
+
+      "when the FilingType == CBC702" when {
+        "the TIN field is unrestricted" in {
+          val validFile = new File("test/resources/cbcr-CBC702-badTIN.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+          result.fold(
+            errors => fail(s"CBC702 should handle non UTR in TIN field: ${errors.toList.mkString("\n")}"),
+            _      => ()
+          )
+
+        }
+        "the @issuedBy attribute of the TIN is unrestricted" in {
+          val validFile = new File("test/resources/cbcr-CBC702-badTINAttribute.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+          result.fold(
+            errors => fail(s"CBC703 should handle non GB issuedBy field: ${errors.toList.mkString("\n")}"),
+            _      => ()
+          )
+
+        }
+      }
+
 
     "return the KeyXmlInfo when everything is fine" in {
       val validFile = new File("test/resources/cbcr-valid.xml")
