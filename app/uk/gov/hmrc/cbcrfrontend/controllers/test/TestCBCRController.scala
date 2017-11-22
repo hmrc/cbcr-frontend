@@ -21,19 +21,15 @@ import javax.inject.{Inject, Singleton}
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
-import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 @Singleton
 class TestCBCRController @Inject()(val sec: SecuredActions) extends FrontendController with ServicesConfig {
 
-  def insertSubscriptionData(cbcId: String, utr: String) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  def insertSubscriptionData(cbcId: String, utr: String) = sec.AsyncAuthenticatedAction() { _ =>
     implicit request =>
-      for {
-        _ <- TestCBCRConnector.insertSubscriptionData(defaultSubscriptionData(cbcId, utr))
-      } yield Ok("Data inserted")
-
+        TestCBCRConnector.insertSubscriptionData(defaultSubscriptionData(cbcId, utr)).map(_ => Ok("Data inserted"))
   }
 
   def defaultSubscriptionData(cbcId: String, utr: String): JsValue =
@@ -67,17 +63,13 @@ class TestCBCRController @Inject()(val sec: SecuredActions) extends FrontendCont
        """.stripMargin
     )
 
-  def deleteSubscription(utr: String) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  def deleteSubscription(utr: String) = sec.AsyncAuthenticatedAction() { _ =>
     implicit request =>
-      for {
-        _ <- TestCBCRConnector.deleteSubscription(utr)
-      } yield Ok("Record with the specific UTR deleted")
+      TestCBCRConnector.deleteSubscription(utr).map(_ => Ok("Record with the specific UTR deleted"))
   }
 
-  def deleteSingleDocRefId(docRefId: String) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  def deleteSingleDocRefId(docRefId: String) = sec.AsyncAuthenticatedAction() { _ =>
     implicit request =>
-      for {
-        _ <- TestCBCRConnector.deleteSingleDocRefId(docRefId)
-      } yield Ok("DocRefId has been deleted")
+      TestCBCRConnector.deleteSingleDocRefId(docRefId).map(_ => Ok("DocRefId has been deleted"))
   }
 }

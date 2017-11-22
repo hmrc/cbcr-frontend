@@ -33,7 +33,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                                           docRefIdService: DocRefIdService,
                                           subscriptionDataService: SubscriptionDataService,
                                           reportingEntityDataService: ReportingEntityDataService,
-                                          configuration: Configuration
+                                          configuration: Configuration,
+                                          runMode: RunMode
                                          )(implicit ec:ExecutionContext) {
 
   val oecd2Or3 = "OECD[23]"
@@ -134,7 +135,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
 
   private def validateCbcOecdVersion(cv:RawCbcVal):Validated[BusinessRuleErrors,Unit] = {
-    if(cv.cbcVer != configuration.getString("oecd-schema-version").getOrElse(throw new Exception("Missing configuration key: oecd-schema-version"))){
+    if(cv.cbcVer != configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration key: ${runMode.env}.oecd-schema-version"))){
       CbcOecdVersionError.invalid
     } else {
       ().valid
