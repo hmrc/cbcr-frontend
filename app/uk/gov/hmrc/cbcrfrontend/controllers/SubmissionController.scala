@@ -176,26 +176,42 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   }
 
   val submitUltimateParentEntity = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    ultimateParentEntityForm.bindFromRequest.fold(
-      formWithErrors => BadRequest(views.html.submission.submitInfoUltimateParentEntity(includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors)),
-      success        => cache.save(success).map(_ => Redirect(routes.SubmissionController.enterCompanyName()))
-    )
+    (for {
+      userType      <- getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext])
+      reportingRole <- OptionT(cache.read[CompleteXMLInfo]).map(_.reportingEntity.reportingRole).toRight(UnexpectedState("Unable to read CompleteXMLInfo from cache"))
+      redirect      <- right(ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
+        formWithErrors => BadRequest(views.html.submission.submitInfoUltimateParentEntity(includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors)),
+        success        => cache.save(success).map { _ =>
+          (userType, reportingRole) match {
+            case (_,            CBC702) => Redirect(routes.SubmissionController.utr())
+            case (Agent,        CBC703) => Redirect(routes.SubmissionController.enterCompanyName())
+            case (Organisation, CBC703) => Redirect(routes.SubmissionController.submitterInfo())
+            case _                      => errorRedirect(UnexpectedState(s"Unexpected userType/ReportingRole combination: $userType $reportingRole"))
+          }
+        }
+      ))
+    } yield redirect).leftMap(errorRedirect).merge
   }
-
 
   val utr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     Ok(views.html.submission.utrCheck( includes.phaseBannerBeta(),utrForm ))
   }
 
   val submitUtr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    utrForm.bindFromRequest.fold[Future[Result]](
-      (formWithErrors: Form[Utr]) => BadRequest(views.html.submission.utrCheck(includes.phaseBannerBeta(),formWithErrors)),
-      (utr: Utr)                  => cache.save(TIN(utr.utr,"")).map(_ => Redirect(routes.SubmissionController.enterCompanyName()))
-    )
+      getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext]).semiflatMap { userType =>
+        utrForm.bindFromRequest.fold[Future[Result]](
+          errors => BadRequest(views.html.submission.utrCheck(includes.phaseBannerBeta(), errors)),
+          utr    => cache.save(TIN(utr.utr, "")).map { _ =>
+            userType match {
+              case Organisation => Redirect(routes.SubmissionController.submitterInfo())
+              case Agent        => Redirect(routes.SubmissionController.enterCompanyName())
+              case _            => errorRedirect(UnexpectedState("Indiviual usertype"))
+            }
+          }
+        )
+      }.leftMap(errorRedirect).merge
 
   }
-
 
   val submitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
@@ -227,7 +243,6 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           success => {
             val result = for {
               straightThrough <- right[Boolean](cache.read[CBCId].map(_.isDefined))
-              _                = Logger.error(s"Straigh through: $straightThrough")
               ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
               name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
               _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
