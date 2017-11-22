@@ -184,7 +184,7 @@ uploadReport.moreInfoLink=how to complete a report
 uploadReport.wellCheck=After you''ve uploaded your report, we''ll check that it conforms with the XML schema and HMRC guidelines.
 uploadReport.inputField.label=Choose the file you want to upload:
 uploadReport.uploadButton=Upload and continue
-uploadReport.error=No file chosen
+uploadReport.error=You must select a file
 
 submitterInfo.mainHeading=Enter your contact details, as the sender of the report
 submitterInfo.error.heading=We''ve found some errors.
