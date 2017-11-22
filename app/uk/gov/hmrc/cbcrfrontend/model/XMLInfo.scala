@@ -20,6 +20,7 @@ import java.time.{LocalDate, LocalDateTime, Year}
 
 import cats.Show
 import cats.syntax.show._
+import play.api.Logger
 
 import scala.util.control.Exception._
 import play.api.libs.json._
@@ -42,6 +43,7 @@ case class RawMessageSpec(messageRefID: String,
 case class RawReportingEntity(reportingRole: String,
                               docSpec:RawDocSpec,
                               tin: String,
+                              tinIssuedBy: String,
                               name:String) extends RawXmlFields
 case class RawXMLInfo(messageSpec: RawMessageSpec,
                       reportingEntity: Option[RawReportingEntity],
@@ -61,6 +63,8 @@ class DocRefId private[model](val msgRefID:MessageRefID,
     case d:DocRefId => d.show == this.show
     case _          => false
   }
+
+  override def hashCode(): Int = this.show.hashCode()
 
 }
 object DocRefId {
@@ -127,11 +131,17 @@ object MessageSpec{
   implicit val format = Json.format[MessageSpec]
 }
 
-case class ReportingEntity(reportingRole: ReportingRole, docSpec:DocSpec, tin: Utr, name: String)
+case class ReportingEntity(reportingRole: ReportingRole, docSpec:DocSpec, tin: TIN, name: String)
 object ReportingEntity{ implicit val format = Json.format[ReportingEntity] }
 
 case class CbcOecdInfo(cbcVer: String)
 object CbcOecdInfo{ implicit val format = Json.format[CbcOecdInfo] }
 
-case class XMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo])
+case class XMLInfo(messageSpec: MessageSpec, reportingEntity: Option[ReportingEntity], cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo])
 object XMLInfo { implicit val format = Json.format[XMLInfo] }
+
+case class CompleteXMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo])
+object CompleteXMLInfo {
+  def apply(x:XMLInfo,reportingEntity: ReportingEntity): CompleteXMLInfo = CompleteXMLInfo(x.messageSpec,reportingEntity,x.cbcReport,x.additionalInfo)
+  implicit val format = Json.format[CompleteXMLInfo]
+}
