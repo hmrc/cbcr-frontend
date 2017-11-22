@@ -147,14 +147,22 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
   } yield metadata
 
-  def validateBusinessRules(file_metadata:(File,FileMetadata))(implicit hc:HeaderCarrier): ServiceResponse[(Option[XMLInfo],List[BusinessRuleErrors])] = {
+  def validateBusinessRules(file_metadata:(File,FileMetadata))(implicit hc:HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors],CompleteXMLInfo]] = {
     val rawXmlInfo  = xmlExtractor.extract(file_metadata._1)
-    val xmlInfo     = businessRuleValidator.validateBusinessRules(rawXmlInfo, file_metadata._2.name)
-    EitherT.right(xmlInfo.fold(
-      errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => None -> errors.toList),
-      info   => cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file_metadata._1))).map(_ => Some(info) -> List.empty))
+
+    val result = for {
+      xmlInfo         <- EitherT(businessRuleValidator.validateBusinessRules(rawXmlInfo, file_metadata._2.name).map(_.toEither))
+      completeXI      <- EitherT(businessRuleValidator.recoverReportingEntity(xmlInfo).map(_.toEither))
+    } yield completeXI
+
+    EitherT.right[Future,CBCErrors,Either[NonEmptyList[BusinessRuleErrors],CompleteXMLInfo]](result.fold(
+      errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => Left(errors)),
+      info   => cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file_metadata._1))).map(_ => Right(info)))
     ).flatten)
   }
+
+  def calculateFileSize(md:FileMetadata) :  BigDecimal =
+    (md.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
 
 
   def fileValidate(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
@@ -171,15 +179,15 @@ class FileUploadController @Inject()(val sec: SecuredActions,
                              else auditFailedSubmission(authContext, "schema validation errors").flatMap(_ =>
                                EitherT.left[Future,CBCErrors,Unit](Future.successful(FatalSchemaErrors(schemaSize)))
                              )
-      xml_bizErrors       <- validateBusinessRules(file_metadata)
-      businessSize        =  if(xml_bizErrors._2.nonEmpty){ Some(getErrorFileSize(xml_bizErrors._2)) } else { None }
-      length              = (file_metadata._2.length/1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+      result              <- validateBusinessRules(file_metadata)
+      businessSize        =  result.fold(e => Some(getErrorFileSize(e.toList)),_ => None)
+      length              =  calculateFileSize(file_metadata._2)
       _                   <- if(schemaErrors.hasErrors) auditFailedSubmission(authContext,"schema validation errors")
-                             else if(xml_bizErrors._2.nonEmpty) auditFailedSubmission(authContext,"business rules errors")
-                             else EitherT.pure[Future,CBCErrors,Unit](())
+                             else if(result.isLeft)     auditFailedSubmission(authContext,"business rules errors")
+                             else                       EitherT.pure[Future,CBCErrors,Unit](())
       _                   = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
       userType            <- getUserType(authContext)
-    } yield Ok(submission.fileupload.fileUploadResult(Some(userType), Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),xml_bizErrors._1.map(_.reportingEntity.reportingRole)))
+    } yield Ok(submission.fileupload.fileUploadResult(Some(userType), Some(file_metadata._2.name), Some(length), schemaSize, businessSize, includes.asideBusiness(), includes.phaseBannerBeta(),result.map(_.reportingEntity.reportingRole).toOption))
 
     result.leftMap{
       case FatalSchemaErrors(size)=>

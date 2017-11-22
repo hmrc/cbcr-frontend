@@ -18,7 +18,7 @@
         <ns1:ReportingEntity>
             <ns1:Entity>
                 <ns1:ResCountryCode>GB</ns1:ResCountryCode>
-                <ns1:TIN issuedBy="GB">7000000002</ns1:TIN>
+                <ns1:TIN issuedBy="GB">This ain't a UTR</ns1:TIN>
                 <ns1:IN INType="2001" issuedBy="GB">TEST</ns1:IN>
                 <ns1:Name>ABCCorp</ns1:Name>
                 <ns1:Address legalAddressType="OECD303">
@@ -26,7 +26,7 @@
                     <ns1:AddressFree>Free Text</ns1:AddressFree>
                 </ns1:Address>
             </ns1:Entity>
-            <ns1:ReportingRole>CBC703</ns1:ReportingRole>
+            <ns1:ReportingRole>CBC701</ns1:ReportingRole>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT</ns2:DocRefId>
@@ -71,7 +71,7 @@
         <ns1:CbcReports>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP</ns2:DocRefId>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP2</ns2:DocRefId>
             </ns1:DocSpec>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>
@@ -142,9 +142,8 @@
         </ns1:CbcReports>
         <ns1:CbcReports>
             <ns1:DocSpec>
-                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
+                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP4</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP5</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>

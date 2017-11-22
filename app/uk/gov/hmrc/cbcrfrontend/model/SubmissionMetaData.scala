@@ -39,7 +39,7 @@ case class SubmissionInfo(gwCredId:String,
                           bpSafeId:String,
                           hash:Hash,
                           ofdsRegime:String,
-                          utr:Utr,
+                          tin:TIN,
                           filingType:FilingType,
                           ultimateParentEntity:UltimateParentEntity)
 object SubmissionInfo{
@@ -51,12 +51,11 @@ object SubmissionInfo{
         bpSafeId   <- m.get("bpSafeId").fold[JsResult[String]](JsError("bpSafeId not found"))(_.validate[String])
         hash       <- m.get("hash").fold[JsResult[Hash]](JsError("hash not found"))(_.validate[String].map(Hash(_)))
         ofdsRegime <- m.get("ofdsRegime").fold[JsResult[String]](JsError("ofdsRegime not found"))(_.validate[String])
-        utrs       <- m.get("utr").fold[JsResult[String]](JsError("Utr not found"))(_.validate[String])
-        utr        <- if(Utr(utrs).isValid){ JsSuccess(Utr(utrs))} else { JsError(s"utr invalid: $utrs") }
+        tin       <- m.get("tin").fold[JsResult[String]](JsError("TIN not found"))(_.validate[String])
         fts        <- m.get("filingType").fold[JsResult[String]](JsError("FilingType not found"))(_.validate[String])
         ft         <- ReportingRole.parseFromString(fts).fold[JsResult[FilingType]](JsError(s"FilingType invalid: $fts"))(r => JsSuccess(FilingType(r)))
         upe        <- m.get("ultimateParentEntity").fold[JsResult[String]](JsError("UPE not found"))(_.validate[String]).map(UltimateParentEntity(_))
-      } yield SubmissionInfo(gwCredId,cbcId,bpSafeId,hash,ofdsRegime,utr,ft,upe)
+      } yield SubmissionInfo(gwCredId,cbcId,bpSafeId,hash,ofdsRegime,TIN(tin,""),ft,upe)
       case _ => JsError(s"Unable to parse $json as SubmissionInfo")
     }
 
@@ -66,7 +65,7 @@ object SubmissionInfo{
       "bpSafeId" ->  o.bpSafeId,
       "hash" -> o.hash.value,
       "ofdsRegime" -> o.ofdsRegime,
-      "utr" -> o.utr.utr,
+      "tin" -> o.tin.value,
       "filingType" -> o.filingType.value.show,
       "ultimateParentEntity" -> o.ultimateParentEntity.ultimateParentEntity
     )
