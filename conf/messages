@@ -135,7 +135,7 @@ submitSuccessReceipt.print=Print this page
 submitSuccessReceipt.print.text=Print this screen to keep a record of your report.
 submitSuccessReceipt.whatNext.heading=What happens next?
 submitSuccessReceipt.email=We''ll send you a confirmation email for your records.
-submitSuccessReceipt.whatNext.info=We’'ll check the information in the report and contact you if there are any issues.
+submitSuccessReceipt.whatNext.info=We''ll check the information in the report and contact you if there are any issues.
 
 fileUploadProgress.mainHeading=We''re checking the report
 fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
