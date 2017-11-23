@@ -243,18 +243,16 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           success => {
             val result = for {
               straightThrough <- right[Boolean](cache.read[CBCId].map(_.isDefined))
+              xml             <- OptionT(cache.read[CompleteXMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
               ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
-              name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
+              name            <- right(OptionT(cache.read[AgencyBusinessName]).getOrElse(AgencyBusinessName(xml.reportingEntity.name)))
               _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
               result          <- userType match {
                 case Organisation =>
                   if (straightThrough) right(Redirect(routes.SubmissionController.submitSummary()))
                   else right(Redirect(routes.SharedController.enterCBCId()))
                 case Agent =>
-                  for {
-                    xml <- OptionT(cache.read[CompleteXMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
-                    _   <- right(cache.save(xml.messageSpec.sendingEntityIn))
-                  } yield Redirect(routes.SharedController.verifyKnownFactsAgent())
+                    right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ => Redirect(routes.SharedController.verifyKnownFactsAgent()))
               }
 
             } yield result
