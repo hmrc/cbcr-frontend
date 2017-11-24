@@ -37,6 +37,7 @@ implicit request: Request[_], messages: Messages)
                 <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCompanyName.form.error.header")</h2>
                 @if(form.hasErrors){<p id="companyName-error-summary"><strong><a href="#companyName">@Messages("enterCompanyName.form.error")</a></strong></p>}
             </div>
+            @errorFocus()
         }
         <h1>@Messages("enterCompanyName.mainHeading")</h1>
         @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.saveCompanyName()){
