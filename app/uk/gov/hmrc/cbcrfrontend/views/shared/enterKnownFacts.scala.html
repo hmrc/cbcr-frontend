@@ -21,7 +21,7 @@
 
 @(asideCbc: Html, phaseBannerBeta: Html, knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false, userType: UserType)(
         implicit request: Request[_], messages: Messages)
-@import tags.formFieldDisplay
+@import tags._
 @sidebarContent = {
 @asideCbc
 }
@@ -39,6 +39,7 @@
                     <p id="utr-error-summary"><strong><a href="#utr">@Messages("subscribeFirst.error.message.utr-empty")</a></strong></p>
                     <p id="postCode-error-summary"><strong><a href="#postCode">@Messages("subscribeFirst.error.message.postcode-empty")</a></strong></p>
                 </div>
+            @errorFocus()
             }
             <h1>@Messages("subscribeFirst.mainHeading")</h1>
 
