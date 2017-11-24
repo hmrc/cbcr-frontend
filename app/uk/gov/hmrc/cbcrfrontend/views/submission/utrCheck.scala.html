@@ -34,6 +34,7 @@ implicit request: Request[_], messages: Messages)
                 <h2 id="error-summary-heading" class="h3-heading">@Messages("utrCheck.error.header")</h2>
                 @if(form.hasErrors){<p id="utr-error-summary"><strong><a href="#utr">@Messages("utrCheck.error")</a></strong></p>}
             </div>
+            @errorFocus()
         }
         <h1>@Messages("utrCheck.mainHeading")</h1>
         @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
