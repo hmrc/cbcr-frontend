@@ -173,19 +173,28 @@ class SharedController @Inject()(val sec: SecuredActions,
 
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]) =
     getUserType(authContext).semiflatMap{ userType =>
-      enrolments.getCBCEnrolment.semiflatMap( enrolment => {
-        if(CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
-          auditDeEnrolReEnrolEvent(enrolment,rrService.deEnrolReEnrol(enrolment)).fold[Result](
-            errors      => errorRedirect(errors),
-            (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(),id))
-          )
-        } else {
-          Future.successful(NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
-        }
-      }).cata(
-        Ok(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(),knownFactsForm,false,userType)),
-        (result: Result) => result
-      )
+      for {
+        postCode <- cache.read[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
+        utr      <- cache.read[Utr].map(_.map(_.utr))
+        result   <- enrolments.getCBCEnrolment.semiflatMap(enrolment => {
+          if (CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
+            auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).fold[Result](
+              errors => errorRedirect(errors),
+              (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(), id))
+            )
+          } else {
+            Future.successful(NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
+          }
+        }).cata(
+          {
+            val form = (utr |@| postCode).map((utr: String, postCode: String) =>
+              knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode))
+            ).getOrElse(knownFactsForm)
+            Ok(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), form, false, userType))
+          },
+          (result: Result) => result
+        )
+      } yield result
     }.leftMap(errorRedirect).merge
 
   val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
