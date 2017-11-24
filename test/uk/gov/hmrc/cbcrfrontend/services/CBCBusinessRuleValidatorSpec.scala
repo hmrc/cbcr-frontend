@@ -512,7 +512,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for voluntary or primary filings")),
+            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for local or primary filings")),
             _ => fail("No InvalidXMLError generated for CBC701 invalid TIN issuedBy check")
           )
 
@@ -534,7 +534,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for voluntary or primary filings")),
+            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for local or primary filings")),
             _ => fail("No InvalidXMLError generated for CBC703 invalid TIN issuedBy check")
           )
 
