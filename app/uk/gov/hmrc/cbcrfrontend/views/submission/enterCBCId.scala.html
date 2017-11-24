@@ -44,6 +44,7 @@ implicit request: Request[_], messages: Messages)
                     <p>@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("enterCBCId.error.message.link")</a></p>
                     <p id="cbcId-error-summary"><strong><a href="#cbcId">@Messages("enterCBCId.error.message.invalid.id")</a></strong></p>
                 </div>
+                @errorFocus()
             }
             <h1>@Messages("enterCBCId.mainHeading")</h1>
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId()){
