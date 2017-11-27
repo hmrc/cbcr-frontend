@@ -33,14 +33,14 @@ import play.api.libs.json.Json._
   * @param cbcReportsDRI The [[DocRefId]] from the [[CbcReports]] section of the XML document
   * @param additionalInfoDRI The [[DocRefId]] from the [[AdditionalInfo]] section of the XML document
   * @param reportingEntityDRI The [[DocRefId]] from the [[ReportingEntity]] section of the XML document
-  * @param utr The [[Utr]] from the [[ReportingEntity]] section of the XML document
+  * @param tin The [[Utr]] (or other tax identifier) from the [[ReportingEntity]] section of the XML document
   * @param ultimateParentEntity The [[UltimateParentEntity]] from the [[ReportingEntity]] section of the XML document
   * @param reportingRole The [[ReportingRole]] from the [[ReportingEntity]] section of the XML document
   */
 case class ReportingEntityData(cbcReportsDRI:NonEmptyList[DocRefId],
                                additionalInfoDRI:Option[DocRefId],
                                reportingEntityDRI:DocRefId,
-                               utr:Utr,
+                               tin:TIN,
                                ultimateParentEntity: UltimateParentEntity,
                                reportingRole: ReportingRole)
 
@@ -50,7 +50,7 @@ object DocRefIdPair{ implicit val format = Json.format[DocRefIdPair] }
 case class PartialReportingEntityData(cbcReportsDRI:List[DocRefIdPair],
                                       additionalInfoDRI:Option[DocRefIdPair],
                                       reportingEntityDRI:DocRefIdPair,
-                                      utr:Utr,
+                                      tin:TIN,
                                       ultimateParentEntity: UltimateParentEntity,
                                       reportingRole: ReportingRole)
 
@@ -65,7 +65,7 @@ object PartialReportingEntityData {
   }
 
   implicit val format = Json.format[PartialReportingEntityData]
-  def extract(x:XMLInfo):PartialReportingEntityData =
+  def extract(x:CompleteXMLInfo):PartialReportingEntityData =
     PartialReportingEntityData(
       x.cbcReport.map(cr => DocRefIdPair(cr.docSpec.docRefId,cr.docSpec.corrDocRefId)),
       x.additionalInfo.map(ai => DocRefIdPair(ai.docSpec.docRefId, ai.docSpec.corrDocRefId)),
@@ -81,7 +81,7 @@ object ReportingEntityData{
   import PartialReportingEntityData.formatNEL
   implicit val format = Json.format[ReportingEntityData]
 
-  def extract(x:XMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]=
+  def extract(x:CompleteXMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]=
     x.cbcReport.toNel.toValidNel(UnexpectedState("CBCReport DocRefId not found")).map{c =>
       ReportingEntityData(
         c.map(_.docSpec.docRefId),x.additionalInfo.map(_.docSpec.docRefId),
@@ -92,6 +92,7 @@ object ReportingEntityData{
       )
 
     }
+
 
 }
 

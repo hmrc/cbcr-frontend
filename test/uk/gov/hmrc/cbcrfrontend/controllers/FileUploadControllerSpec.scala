@@ -22,6 +22,7 @@ import java.nio.file.CopyOption
 import java.time.{LocalDate, LocalDateTime}
 
 import akka.actor.ActorSystem
+import cats.data.Validated.Valid
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.future._
 import com.typesafe.config.ConfigFactory
@@ -126,10 +127,12 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
         LocalDate.parse("2017-01-30"),
         None
       ),
-      ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),Utr("7000000002"),"name"),
+      Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),TIN("7000000002","gb"),"name")),
       List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
       Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
     )
+
+  val completeXmlInfo = CompleteXMLInfo(xmlinfo,ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),TIN("7000000002","gb"),"name"))
 
   def right[A](a:Future[A]) : ServiceResponse[A] = EitherT.right[Future,CBCErrors, A](a)
   def left[A](s:String) : ServiceResponse[A] = EitherT.left[Future,CBCErrors, A](UnexpectedState(s))
@@ -273,7 +276,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(new CacheMap("",Map.empty))
       when(cache.read(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Option(AffinityGroup("Organisation")))
-      when(businessRulesValidator.validateBusinessRules(any(),any())(any())) thenReturn EitherT.right[Future,NonEmptyList[BusinessRuleErrors],XMLInfo](xmlinfo)
+      when(businessRulesValidator.validateBusinessRules(any(),any())(any())) thenReturn Future.successful(Valid(xmlinfo))
+      when(businessRulesValidator.recoverReportingEntity(any())(any())) thenReturn Future.successful(Valid(completeXmlInfo))
       val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
       val returnVal = status(result)
       returnVal shouldBe Status.OK

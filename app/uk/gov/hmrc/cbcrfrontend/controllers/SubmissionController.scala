@@ -70,7 +70,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm")
 
-  def saveDocRefIds(x:XMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
+  def saveDocRefIds(x:CompleteXMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
     val cbcReportIds      = x.cbcReport.map(reports      => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId)
     val additionalInfoIds = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
 
@@ -94,7 +94,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     }
   }
 
-  def storeOrUpdateReportingEntityData(xml:XMLInfo)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
+  def storeOrUpdateReportingEntityData(xml:CompleteXMLInfo)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
     xml.reportingEntity.docSpec.docType match {
       // RESENT| NEW
       case OECD1 =>
@@ -114,7 +114,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     OptionT(cache.read[SummaryData]).toRight(InternalServerError(FrontendGlobal.internalServerErrorTemplate)).flatMap {summaryData =>
       (for {
-            xml <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("Unable to read XMLInfo from cache"))
+            xml <- OptionT(cache.read[CompleteXMLInfo]).toRight(UnexpectedState("Unable to read XMLInfo from cache"))
             _   <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
             _   <- saveDocRefIds(xml).leftMap[CBCErrors]{ es =>
               Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
@@ -176,48 +176,46 @@ class SubmissionController @Inject()(val sec: SecuredActions,
   }
 
   val submitUltimateParentEntity = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    ultimateParentEntityForm.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest(views.html.submission.submitInfoUltimateParentEntity(
-        includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors))),
-      success => {
-        val result = for {
-          _       <- OptionT.liftF(cache.save(success)).toRight(UnexpectedState("Could not save to cache"))
-          xmlInfo <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("Could not read XMLinfo from cache"))
-          userType <- getUserType(authContext)
-        } yield xmlInfo.reportingEntity.reportingRole -> userType
-
-        result.fold(
-          e => errorRedirect(e),
-          {
-            case (CBC701,_) =>
-              errorRedirect(UnexpectedState("ReportingRole was CBC701 - we should never be here"))
-            case (_,Organisation)  => Redirect(routes.SubmissionController.utr())
-            case (_,Agent)         => Redirect(routes.SubmissionController.enterCompanyName())
-            case (_,Individual)    => errorRedirect(UnexpectedState("Found Individual"))
-          })
-      }
-    )
+    (for {
+      userType      <- getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext])
+      reportingRole <- OptionT(cache.read[CompleteXMLInfo]).map(_.reportingEntity.reportingRole).toRight(UnexpectedState("Unable to read CompleteXMLInfo from cache"))
+      redirect      <- right(ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
+        formWithErrors => BadRequest(views.html.submission.submitInfoUltimateParentEntity(includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors)),
+        success        => cache.save(success).map { _ =>
+          (userType, reportingRole) match {
+            case (_,            CBC702) => Redirect(routes.SubmissionController.utr())
+            case (Agent,        CBC703) => Redirect(routes.SubmissionController.enterCompanyName())
+            case (Organisation, CBC703) => Redirect(routes.SubmissionController.submitterInfo())
+            case _                      => errorRedirect(UnexpectedState(s"Unexpected userType/ReportingRole combination: $userType $reportingRole"))
+          }
+        }
+      ))
+    } yield redirect).leftMap(errorRedirect).merge
   }
-
 
   val utr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     Ok(views.html.submission.utrCheck( includes.phaseBannerBeta(),utrForm ))
   }
 
   val submitUtr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-
-    utrForm.bindFromRequest.fold[Future[Result]](
-      (formWithErrors: Form[Utr]) => BadRequest(views.html.submission.utrCheck(includes.phaseBannerBeta(),formWithErrors)),
-      (utr: Utr)                  => cache.save(utr).map(_ => Redirect(routes.SubmissionController.enterCompanyName()))
-    )
+      getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext]).semiflatMap { userType =>
+        utrForm.bindFromRequest.fold[Future[Result]](
+          errors => BadRequest(views.html.submission.utrCheck(includes.phaseBannerBeta(), errors)),
+          utr    => cache.save(TIN(utr.utr, "")).map { _ =>
+            userType match {
+              case Organisation => Redirect(routes.SubmissionController.submitterInfo())
+              case Agent        => Redirect(routes.SubmissionController.enterCompanyName())
+              case _            => errorRedirect(UnexpectedState("Indiviual usertype"))
+            }
+          }
+        )
+      }.leftMap(errorRedirect).merge
 
   }
 
-
   val submitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-      OptionT(cache.read[XMLInfo]).map(kXml => kXml.reportingEntity.reportingRole match {
+      OptionT(cache.read[CompleteXMLInfo]).map(kXml => kXml.reportingEntity.reportingRole match {
 
         case CBC701 =>
           for {
@@ -245,19 +243,16 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           success => {
             val result = for {
               straightThrough <- right[Boolean](cache.read[CBCId].map(_.isDefined))
-              _                = Logger.error(s"Straigh through: $straightThrough")
+              xml             <- OptionT(cache.read[CompleteXMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
               ag              <- OptionT(cache.read[AffinityGroup]).toRight(UnexpectedState("Affinity group not found in cache"))
-              name            <- OptionT(cache.read[AgencyBusinessName]).toRight(UnexpectedState("Agency/BusinessName not found in cache"))
+              name            <- right(OptionT(cache.read[AgencyBusinessName]).getOrElse(AgencyBusinessName(xml.reportingEntity.name)))
               _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
               result          <- userType match {
                 case Organisation =>
                   if (straightThrough) right(Redirect(routes.SubmissionController.submitSummary()))
                   else right(Redirect(routes.SharedController.enterCBCId()))
                 case Agent =>
-                  for {
-                    xml <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
-                    _   <- right(cache.save(xml.messageSpec.sendingEntityIn))
-                  } yield Redirect(routes.SharedController.verifyKnownFactsAgent())
+                    right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ => Redirect(routes.SharedController.verifyKnownFactsAgent()))
               }
 
             } yield result
@@ -295,7 +290,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   def createSummaryData(submissionMetaData: SubmissionMetaData)(implicit hc:HeaderCarrier) : ServiceResponse[SummaryData] = {
     for {
-      keyXMLFileInfo <- OptionT(cache.read[XMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
+      keyXMLFileInfo <- OptionT(cache.read[CompleteXMLInfo]).toRight(UnexpectedState("XMLInfo not found in cache"))
       bpr            <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("BPR not found in cache"))
       summaryData    = SummaryData(bpr, submissionMetaData, keyXMLFileInfo)
       _              <- right(cache.save[SummaryData](summaryData))
