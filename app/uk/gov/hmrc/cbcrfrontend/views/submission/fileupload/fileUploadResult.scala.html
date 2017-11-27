@@ -46,12 +46,10 @@ else {
 },
     sidebarLinks = Some(sidebarContent)) {
 
-    <div class="grid-row">
-        <div class="column-two-thirds">
+    <div class="grid-row column-two-thirds">
             @if(!errors) {
-                @Messages("fileUploadResult.mainHeading.ok")
+        <h1>@Messages("fileUploadResult.mainHeading.ok")</h1>
             } else {
-                <div>
                     @if(schemaErrors.isDefined && busErrors.isDefined) {
                         <h1>@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
                     } else {
@@ -78,7 +76,6 @@ else {
                             <li><p>@Messages("fileUploadResult.error.data.message")</p></li>
                         }
                     </ol>
-                </div>
             }
             @if(!errors) {
                 <table class="table--top-border" id="table-successReport">
@@ -111,7 +108,5 @@ else {
                 <p><a href="#">@Messages("fileUploadResult.error.guidance")</a></p>
                 <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.returnToStart")</a>
             }
-
-        </div>
     </div>
 }
