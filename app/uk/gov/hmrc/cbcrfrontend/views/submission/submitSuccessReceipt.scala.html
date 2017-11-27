@@ -32,10 +32,8 @@ implicit request: Request[_], messages: Messages)
         <div class="column-two-thirds">
             <section>
                 <div class="transaction-banner--complete">
-
-                    <h1><div class="transaction-banner__heading h1-heading">@Messages("submitSuccessReceipt.submissionDateLabel")</div></h1>
-                    <div class="transaction-banner__heading h1-heading">@submissionDateTime</div>
-                    <p class="transaction-banner__heading">
+                    <h1 class="transaction-banner__heading">@Messages("submitSuccessReceipt.submissionDateLabel")</h1>
+                    <p><strong>@submissionDateTime</strong></p>
                 </div>
             </section>
 
@@ -44,7 +42,7 @@ implicit request: Request[_], messages: Messages)
             <p>@Messages("submitSuccessReceipt.email")</p>
             <p>@Messages("submitSuccessReceipt.whatNext.info")</p>
             <p>
-                <a class="button" href="@routes.SharedController.signOut()" id="btn-close">@Messages("form.controls.signOut")</a>
+                <a class="button" href="@routes.SharedController.signOut()" id="btn-close">@Messages("form.controls.finished")</a>
             </p>
         </div>
     </div>
