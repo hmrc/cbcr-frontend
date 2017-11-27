@@ -7,8 +7,10 @@ regenerate.continue=You''ll need to
 regenerate.continue2=and then continue whenever you need to submit a report.
 
 
-notRegistered.heading=You aren''t registered to send a country-by-country report
-notRegistered.content=You''ll need to register to send a report.
+notRegistered.heading=Registration required
+notRegistered.message.start=You''ll need to
+notRegistered.message.link=register
+notRegistered.message.end=to send a report.
 notRegistered.register=Register
 cbc.button.fileupload.report=Upload Report
 cbc.button.continue=Continue
@@ -17,6 +19,7 @@ cbc.entercbcid.label=CBC Id
 form.controls.continue=Continue
 form.controls.signOut=Sign out
 form.controls.finished=Finished
+form.controls.returnToStart=Return to start page
 
 enterCBCId.mainHeading=Enter the registered country-by-country ID
 enterCBCId.formHint=This is the 15-character ID received when the company or partnership registered, for example:XACBC0000999999
@@ -143,21 +146,26 @@ fileUploadProgress.message=This screen will change once the file has been succes
 fileUploadResult.notYetSubmitted=Please note that your report hasn''t yet been submitted
 fileUploadResult.mainHeading.ok=The report format is correct
 fileUploadResult.mainHeading.error=There are errors in the report you sent
+fileUploadResult.mainHeading.xmlError=There are XML errors in the report
+fileUploadResult.mainHeading.dataError=There are data errors in the report
+fileUploadResult.mainHeading.xmlDataError=There are XML and data errors in the report
+fileUploadResult.whatToDo=What to do now
 fileUploadResult.fileName=Filename
 fileUploadResult.fileSize=Size
 
-fileUploadResult.error=Your report has not been uploaded
-fileUploadResult.error.data.link=data error report
-fileUploadResult.error.data.message=Give it to your XML creator to correct the errors before you send the country-by-country report again.
-fileUploadResult.error.xml.link=XML error report
-fileUploadResult.error.xml.message=Make sure the errors are corrected before you send the country-by-country report again.
+fileUploadResult.error=The report has not been uploaded
+fileUploadResult.error.report=Download the
+fileUploadResult.error.data.link=data error summary
+fileUploadResult.error.data.message=Make sure the errors are corrected before uploading the report again.
+fileUploadResult.error.xml.link=XML error summary
+fileUploadResult.error.xml.message=Give it to your XML creator to correct before uploading the report again
 fileUploadResult.error.guidance=Check formatting guidance
 
-fileUploadResult.error.FileTooLarge=The report you sent is larger than 50MB. You''ll need to solve this issue before sending it again.
-fileUploadResult.error.FileContainsVirus=The report you sent has failed our anti-virus checks. You''ll need to solve this issue before sending it again.
-fileUploadResult.error.FileNotXml=The report you sent is the wrong file type. Please send it as an XML file.
+fileUploadResult.error.FileTooLarge=The report is larger than 50MB. You'll need to fix this issue before uploading it again.
+fileUploadResult.error.FileContainsVirus=The report has failed our anti-virus checks. You''ll need to fix this issue before uploading it again.
+fileUploadResult.error.FileNotXml=The report is the wrong file type. You must send it as an XML file.
 
-fileUploadResult.notYetSubmitted=We''ll now ask you for more information before accepting the report.
+oldfileUploadResult.notYetSubmitted=We''ll now ask you for more information before accepting the report.
 
 enterCompanyName.mainHeading=Enter the name of the company or partnership you work for
 enterCompanyName.formHintWhereYouGotIt=Company or partnership name
@@ -205,11 +213,15 @@ submitterInfo.emailAddress.error.invalid=Enter a valid email address
 submitterInfo.emailAddress.error.invalid.header=We didn''t recognise the email address
 
 notAuthorised.mainHeading=Agents aren''t authorised to register for this service
-notAuthorised.message=Did you mean to
-notAuthorised.message.link=send a country by country report
+notAuthorised.message.start=To use this service, you''ll need to
+notAuthorised.message.link=register as an Organisation
+notAuthorised.message.end=with the Government Gateway.
 
-notAuthorised.individual.mainHeading=You aren''t authorised to use this service.
-notAuthorised.individual.button=Close
+notAuthorised.individual.mainHeading=You aren''t authorised to use this service
+notAuthorised.Individual.message.start=To use this service, you'll need to
+notAuthorised.Individual.message.link=register as an Organisation
+notAuthorised.Individual.message.end=with the Government Gateway.
+notAuthorised.individual.button=Return to start page
 
 utrCheck.mainHeading=Enter the unique taxpayer reference of the UK-registered company or partnership that''s sending a report
 utrCheck.label=Unique taxpayer reference

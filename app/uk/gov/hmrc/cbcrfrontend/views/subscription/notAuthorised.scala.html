@@ -26,16 +26,12 @@
 
 @main_template(Messages("notAuthorised.mainHeading"), sidebarLinks = Some(sidebarContent)) {
 
-<div class="grid-row">
-    <div class="column-two-thirds">
-        <h1>@Messages("notAuthorised.mainHeading")</h1>
-        <div class="flash error-summary error-summary--show"
-             id="error-summary-display"
-             role="alert"
-             aria-labelledby="error-summary-display"
-             tabindex="-1">
-        <p>@Messages("notAuthorised.message") <a href="@{routes.FileUploadController.chooseXMLFile()}">@Messages("notAuthorised.message.link")</a></p>
+    <div class="grid-row">
+        <div class="column-two-thirds">
+            <h1>@Messages("notAuthorised.mainHeading")</h1>
+            <p>@Messages("notAuthorised.message.start") <a href="@{routes.SharedController.register()}">@Messages("notAuthorised.message.link")</a>
+                @messages("notAuthorised.message.end")</p>
         </div>
     </div>
-</div>
+    <p><a class="button" role="button" href="@routes.SharedController.guidance()">@Messages("notAuthorised.individual.button")</a></p>
 }
