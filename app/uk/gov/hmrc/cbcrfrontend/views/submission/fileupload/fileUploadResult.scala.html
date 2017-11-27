@@ -51,30 +51,35 @@ else {
             @if(!errors) {
                 @Messages("fileUploadResult.mainHeading.ok")
             } else {
-                @Messages("fileUploadResult.mainHeading.error")
-            }
-            </h1>
-
-            @schemaErrors.map { size =>
-                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                    <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link")
-                        (TXT:@{
-                        size
-                    }KB)</a>.</p>
-                    <p>@Messages("fileUploadResult.error.xml.message")</p>
+                <div>
+                    @if(schemaErrors.isDefined && busErrors.isDefined) {
+                        <h1>@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
+                    } else {
+                        @if(schemaErrors.isDefined) {
+                            <h1>@messages("fileUploadResult.mainHeading.xmlError")</h1>
+                        } else {
+                            <h1>@messages("fileUploadResult.mainHeading.dataError")</h1>
+                        }
+                    }
+                    <h2>@messages("fileUploadResult.whatToDo")</h2>
+                    <ol style="margin-left: 15px;">
+                        @schemaErrors.map { size =>
+                            <li><p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link")
+                                (Text, @{
+                                size
+                            }KB)</a>.</p></li>
+                            <li><p>@Messages("fileUploadResult.error.xml.message")</p></li>
+                        }
+                        @busErrors.map { size =>
+                            <li><p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
+                                (Text, @{
+                                size
+                            }KB)</a>.</p></li>
+                            <li><p>@Messages("fileUploadResult.error.data.message")</p></li>
+                        }
+                    </ol>
                 </div>
-
             }
-            @busErrors.map { size =>
-                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                    <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
-                        (TXT:@{
-                        size
-                    }KB)</a>.</p>
-                    <p>@Messages("fileUploadResult.error.data.message")</p>
-                </div>
-            }
-            <br>
             @if(!errors) {
                 <table class="table--top-border" id="table-successReport">
                     <tbody>
@@ -103,7 +108,7 @@ else {
 
             } else {
                 <p><a href="#">@Messages("fileUploadResult.error.guidance")</a></p>
-                <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
+                <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.returnToStart")</a>
             }
 
         </div>
