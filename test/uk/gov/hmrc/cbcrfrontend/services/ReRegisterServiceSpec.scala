@@ -36,7 +36,7 @@ import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
+import uk.gov.hmrc.cbcrfrontend.controllers.auth.{TestSecuredActions, TestUsers}
 import cats.data.OptionT
 import cats.data.EitherT
 import cats.instances.future._

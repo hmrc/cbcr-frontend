@@ -205,11 +205,20 @@ submitterInfo.emailAddress.error.invalid=Enter a valid email address
 submitterInfo.emailAddress.error.invalid.header=We didn''t recognise the email address
 
 notAuthorised.mainHeading=Agents aren''t authorised to register for this service
-notAuthorised.message=Did you mean to
-notAuthorised.message.link=send a country by country report
+notAuthorised.message.start=To use this service, you''ll need to
+notAuthorised.message.link=register as an Organisation
+notAuthorised.message.end=with the Government Gateway.
 
-notAuthorised.individual.mainHeading=You aren''t authorised to use this service.
-notAuthorised.individual.button=Close
+notAuthorised.individual.mainHeading=You aren''t authorised to use this service
+notAuthorised.individual.message.start=To use this service, you'll need to
+notAuthorised.individual.message.link=register as an Organisation
+notAuthorised.individual.message.end=with the Government Gateway.
+notAuthorised.individual.button=Return to start page
+
+notAuthorised.assistant.mainHeading=You aren''t authorised to use this service
+notAuthorised.assistant.message=To use this service, you must sign in to the Government Gateway as an Administrator for your Organisation.
+notAuthorised.assistant.button=Return to start page
+
 
 utrCheck.mainHeading=Enter the unique taxpayer reference of the UK-registered company or partnership that''s sending a report
 utrCheck.label=Unique taxpayer reference
