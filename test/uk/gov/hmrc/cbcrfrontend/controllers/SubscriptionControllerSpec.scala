@@ -341,8 +341,11 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
       when(cache.read[Subscribed.type](EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("700000002")))
+      when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
+      when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(subService).clearSubscriptionData(any())(any(),any())
+      verify(auditMock).sendEvent(any())(any(),any())
     }
     "return 500 when the getCbcId call errors out" in {
       val subService = mock[SubscriptionDataService]
@@ -372,9 +375,12 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
       when(cache.read[Subscribed.type](EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
+      when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
+      when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       when(subService.clearSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[String]](None)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
       verify(subService).clearSubscriptionData(any())(any(),any())
+      verify(auditMock).sendEvent(any())(any(),any())
     }
     "return 303 (see_other) when all params are present and valid and the SubscriptionDataService returns Ok and send an email " in {
       val subService = mock[SubscriptionDataService]
