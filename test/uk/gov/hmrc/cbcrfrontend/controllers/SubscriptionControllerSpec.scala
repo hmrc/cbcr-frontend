@@ -60,7 +60,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
 
   val dc = mock[BPRKnownFactsConnector]
   val cbcId = mock[CBCIdService]
-  val cbcKF = mock[CBCKnownFactsService]
+  val cbcKF = mock[EnrolmentsService]
   val bprKF = mock[BPRKnownFactsService]
   val enrollments  = mock[EnrolmentsConnector]
   val emailMock = mock[EmailService]
@@ -368,7 +368,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,CBCErrors, String](Future.successful(UnexpectedState("oops")))
       when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
-      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.left[Future,CBCErrors, Unit](UnexpectedState("oops"))
+      when(cbcKF.enrol(anyObject())(anyObject())) thenReturn EitherT.left[Future,CBCErrors, Unit](UnexpectedState("oops"))
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
       when(cache.read[Subscribed.type](EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
@@ -386,7 +386,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,CBCErrors, String]("done")
       when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
       when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
-      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,CBCErrors, Unit](())
+      when(cbcKF.enrol(anyObject())(anyObject())) thenReturn EitherT.pure[Future,CBCErrors, Unit](())
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
       when(cache.read[Subscribed.type](EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
@@ -410,7 +410,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
       when(cache.read[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,CBCErrors, String]("done")
       when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
-      when(cbcKF.addKnownFactsToGG(anyObject())(anyObject())) thenReturn EitherT.pure[Future,CBCErrors, Unit](())
+      when(cbcKF.enrol(anyObject())(anyObject())) thenReturn EitherT.pure[Future,CBCErrors, Unit](())
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn Future.successful(Some(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))))
       when(cache.read[Utr](EQ(Utr.utrRead),EQ(utrTag),any())) thenReturn Future.successful(Some(Utr("123456789")))
       when(cache.read[Subscribed.type](EQ(Implicits.format),any(),any())) thenReturn Future.successful(None)
