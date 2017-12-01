@@ -50,8 +50,10 @@ implicit request: Request[_], messages: Messages)
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId()){
             <fieldset>
                 <div class="form-group">
-                    @formFieldDisplay(errors,"cbcId",Some(Messages("enterCBCId.error.message.invalid.id")),
-                        Messages("enterCBCId.formHintWhereYouGotIt"),form,Some(Messages("enterCBCId.formHint")))
+                    <h3>@Messages("enterCBCId.formHintWhereYouGotIt")</h3>
+                    <p class="form-hint [modifier class]">@Messages("enterCBCId.formHint")</p>
+                    @formFieldDisplay(errors,"cbcId",None,
+                        Messages("enterCBCId.error.message.invalid.id"),form,None)
                 </div>
             </fieldset>
             @csrf_token()
