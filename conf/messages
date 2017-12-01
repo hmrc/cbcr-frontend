@@ -216,8 +216,8 @@ submitterInfo.emailAddress.error.invalid.header.l1=Check the email address and t
 submitterInfo.emailAddress.error.invalid=Enter a valid email address
 submitterInfo.emailAddress.error.invalid.header=We didn''t recognise your email address
 
-notAuthorised.mainHeading=Registration required
-notAuthorised.message.start=You must
+notAuthorised.mainHeading=Agents are not authorised to register for this service
+notAuthorised.message.start=The company or partnership will need to register.
 notAuthorised.message.link=register with the Government Gateway as an Organisation
 notAuthorised.message.end=to use this service.
 
