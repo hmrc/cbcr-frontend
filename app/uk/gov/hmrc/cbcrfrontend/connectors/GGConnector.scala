@@ -28,7 +28,7 @@ import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
-@Singleton
+@Singleton @deprecated("Use the TaxEnrolmentsConnector and the EnrolmentsService","release/25.0")
 class GGConnector @Inject() (http:HttpPost,config:Configuration){
 
   val conf = config.underlying.get[Config]("microservice.services.gg").value
