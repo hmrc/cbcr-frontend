@@ -24,7 +24,7 @@ import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
 
-class SecuredActionsTest(authContext: AuthContext, val authConnector: AuthConnector) extends SecuredActions {
+class TestSecuredActions(authContext: AuthContext, val authConnector: AuthConnector) extends SecuredActions {
 
   def AuthenticatedAction(r: UserRequest): Action[AnyContent] = Action {
     r(authContext)

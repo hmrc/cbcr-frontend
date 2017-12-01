@@ -42,7 +42,7 @@ class EnrolController @Inject()(val sec: SecuredActions, val config:Configuratio
 
 
 
-  def deEnrol() = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
+  def deEnrol() = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext => implicit request =>
     enrolConnector.deEnrol.map(r => Ok(r.body)).recover{
       case NonFatal(e) => InternalServerError(e.getMessage)
     }

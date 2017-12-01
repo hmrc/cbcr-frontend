@@ -90,7 +90,7 @@ class SharedController @Inject()(val sec: SecuredActions,
     _ <- cache.save(id)
   } yield ()
 
-  val submitCBCId = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
+  val submitCBCId = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext => implicit request =>
       cbcIdForm.bindFromRequest().fold[Future[Result]](
         errors => BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
         id     => {
@@ -146,7 +146,7 @@ class SharedController @Inject()(val sec: SecuredActions,
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.businessRules()))
   }
 
-  val verifyKnownFactsOrganisation = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val verifyKnownFactsOrganisation = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request => enterKnownFacts(authContext)
   }
 
@@ -171,7 +171,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   }
 
 
-  def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]) =
+  def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]): Future[Result] =
     getUserType(authContext).semiflatMap{ userType =>
       for {
         postCode <- cache.read[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
@@ -210,11 +210,11 @@ class SharedController @Inject()(val sec: SecuredActions,
           cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.read[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
           subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
           _                   <- EitherT.fromEither[Future](userType match {
-            case Agent if subscriptionDetails.isEmpty =>
+            case Agent() if subscriptionDetails.isEmpty =>
               Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
-            case Agent if subscriptionDetails.flatMap(_.cbcId) != cbcId || cbcId.isEmpty =>
+            case Agent() if subscriptionDetails.flatMap(_.cbcId) != cbcId || cbcId.isEmpty =>
               Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
-            case Organisation if subscriptionDetails.isDefined =>
+            case Organisation(_) if subscriptionDetails.isDefined =>
               Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
             case _                                             =>
               Right(())

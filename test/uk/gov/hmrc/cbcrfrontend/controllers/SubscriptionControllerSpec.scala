@@ -34,7 +34,7 @@ import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector}
-import uk.gov.hmrc.cbcrfrontend.controllers.auth.{SecuredActionsTest, TestUsers}
+import uk.gov.hmrc.cbcrfrontend.controllers.auth.{TestSecuredActions, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.model.{SubscriptionEmailSent, _}
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
@@ -54,7 +54,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val authCon = authConnector(TestUsers.cbcrUser)
-  val securedActions = new SecuredActionsTest(TestUsers.cbcrUser, authCon)
+  val securedActions = new TestSecuredActions(TestUsers.cbcrUser, authCon)
   val subService = mock[SubscriptionDataService]
   val auditMock = mock[AuditConnector]
 
@@ -72,7 +72,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
     reset(cache,subService,auditMock,dc,cbcId,bprKF,enrollments,cache,emailMock)
     super.afterEach()
   }
-  when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation")))
+  when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
 
   val controller = new SubscriptionController(securedActions, subService,dc,cbcId,emailMock,cbcKF,enrollments,bprKF){
     override lazy val audit = auditMock
@@ -512,7 +512,6 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
         val data = Json.obj(
           "phoneNumber" -> "0891505050",
           "email" -> "blagh@blagh.com",
-//          "firstName" -> "Dave",
           "lastName" -> "Jones"
         )
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
@@ -524,7 +523,6 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
           "phoneNumber" -> "0891505050",
           "email" -> "blagh@blagh.com",
           "firstName" -> "Dave"
-//          "lastName" -> "Jones"
         )
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
         val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
@@ -533,7 +531,6 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
       }
       "the phone number is not provided" in {
         val data = Json.obj(
-//          "phoneNumber" -> "I'm not a phone number",
           "email" -> "blagh@blagh.com",
           "firstName" -> "Dave",
           "lastName" -> "Jones"
@@ -557,7 +554,6 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
       "the email is not provided" in {
         val data = Json.obj(
           "phoneNumber" -> "0891505050",
-//          "email" -> "blagh.com",
           "firstName" -> "Dave",
           "lastName" -> "Jones"
         )
