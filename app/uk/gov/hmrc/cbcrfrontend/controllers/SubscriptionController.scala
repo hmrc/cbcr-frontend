@@ -69,13 +69,13 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   lazy val audit: AuditConnector = FrontendAuditConnector
 
-  val alreadySubscribed = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val alreadySubscribed = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       Future.successful(Ok(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
   }
 
 
-  val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       Logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm.bindFromRequest.fold(
@@ -140,13 +140,13 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
   }
 
 
-  val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm))
   }
 
 
-  val updateInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val updateInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
 
       val subscriptionData: ServiceResponse[ETMPSubscription] = for {
@@ -173,7 +173,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   }
 
-  val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit requests =>
       subscriptionDataForm.bindFromRequest.fold(
         errors => BadRequest(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
@@ -193,7 +193,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       )
   }
 
-  def subscribeSuccessCbcId(id: String) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  def subscribeSuccessCbcId(id: String) = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       CBCId(id).fold[Future[Result]](
         InternalServerError(FrontendGlobal.internalServerErrorTemplate)
@@ -202,7 +202,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       )
   }
 
-  def clearSubscriptionData(u: Utr) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  def clearSubscriptionData(u: Utr) = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       if (CbcrSwitches.clearSubscriptionDataRoute.enabled) {
         subscriptionDataService.clearSubscriptionData(u).fold(

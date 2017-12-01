@@ -49,18 +49,18 @@ class SecuredActionsImpl @Inject()(configuration: Configuration)(implicit cache:
 
   private val normalAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), new CBCRPageVisibilityPredicate())
 
-  private val organisationAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), new AffinityGroupPredicate(Organisation))
+  private val organisationAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), new AffinityGroupPredicate(Organisation(true)))
 
-  private val agentAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), new AffinityGroupPredicate(Agent))
+  private val agentAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), new AffinityGroupPredicate(Agent()))
 
   private val individualAuth = AuthenticatedBy(new CBCRAuthenticationProvider(configuration), CBCRPageVisibilityIndividual)
 
   override def AuthenticatedAction(r: UserRequest) = normalAuth(r)
 
   override def AsyncAuthenticatedAction(u: Option[UserType] = None)(r: AsyncUserRequest) = u match {
-    case Some(Agent) => agentAuth.async(r)
-    case Some(Organisation) => organisationAuth.async(r)
-    case Some(Individual) => individualAuth.async(r)
+    case Some(Agent()) => agentAuth.async(r)
+    case Some(Organisation(_)) => organisationAuth.async(r)
+    case Some(Individual()) => individualAuth.async(r)
     case None => normalAuth.async(r)
   }
 
@@ -84,8 +84,9 @@ class CBCRAuthenticationProvider(configuration: Configuration) extends Governmen
 trait UserTypeRedirect{
   def errorPage(userType: Option[UserType] = None)(implicit request: Request[_]) = {
     userType match {
-      case Some(Agent) => Future.successful(Unauthorized(notAuthorised(includes.asideBusiness(), includes.phaseBannerBeta())))
-      case Some(Individual) => Future.successful(Unauthorized(not_authorised_indivitial()))
+      case Some(Agent()) => Future.successful(Unauthorized(notAuthorised(includes.asideBusiness(), includes.phaseBannerBeta())))
+      case Some(Individual()) => Future.successful(Unauthorized(not_authorised_individual()))
+      case Some(Organisation(false)) => Future.successful(Unauthorized(not_authorised_assistant()))
       case _ => Future.successful(Unauthorized(notAuthorised(includes.asideBusiness(), includes.phaseBannerBeta())))
     }
   }
@@ -107,29 +108,29 @@ class CBCRPageVisibilityPredicate()(implicit auth: AuthConnector, cache: CBCSess
 
     implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
 
-    checkUser(getUserType(authContext)(cache, auth, hc(request), ec), Set(Agent, Organisation))
+    checkUser(getUserType(authContext)(cache, auth, hc(request), ec), Set(Agent(), Organisation(true)))
   }
 }
 
-  object CBCRPageVisibilityIndividual extends PageVisibilityPredicate {
-    def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageBlocked] = {
-      implicit val r = request
-      Future.successful(PageBlocked(Future.successful
-      (Unauthorized(uk.gov.hmrc.cbcrfrontend.views.html.not_authorised_indivitial()))))
-    }
+object CBCRPageVisibilityIndividual extends PageVisibilityPredicate {
+  def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageBlocked] = {
+    implicit val r = request
+    Future.successful(PageBlocked(Future.successful
+    (Unauthorized(uk.gov.hmrc.cbcrfrontend.views.html.not_authorised_individual()))))
   }
+}
 
-  class AffinityGroupPredicate(restrictToUser: UserType)(implicit auth: AuthConnector, cache: CBCSessionCache, ec: ExecutionContext) extends PageVisibilityPredicate with UserTypeRedirect{
+class AffinityGroupPredicate(restrictToUser: UserType)(implicit auth: AuthConnector, cache: CBCSessionCache, ec: ExecutionContext) extends PageVisibilityPredicate with UserTypeRedirect{
 
 
-    override def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageVisibilityResult] = {
+  override def apply(authContext: AuthContext, request: Request[AnyContent]): Future[PageVisibilityResult] = {
 
-      implicit val r = request
+    implicit val r = request
 
-      implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
+    implicit def hc(implicit request: Request[_]): HeaderCarrier = HeaderCarrier.fromHeadersAndSession(request.headers, Some(request.session))
 
-      checkUser(getUserType(authContext)(cache, auth, hc(request), ec), Set(restrictToUser))
-    }
+    checkUser(getUserType(authContext)(cache, auth, hc(request), ec), Set(restrictToUser))
   }
+}
 
 

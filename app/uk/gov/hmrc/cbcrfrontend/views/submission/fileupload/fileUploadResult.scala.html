@@ -92,7 +92,7 @@ else {
 
 
                 @if(reportingRole == Some(CBC701)){
-                   @if(userType == Some(Organisation)){
+                   @if(userType == Some(Organisation(true)) || userType == Some(Organisation(false))){
                         <p><a class="button" href="@routes.SubmissionController.submitterInfo" id="btn-continue">@Messages("form.controls.continue")</a></p>
                     } else {
                         <p><a class="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
