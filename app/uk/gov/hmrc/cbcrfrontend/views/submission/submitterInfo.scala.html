@@ -79,7 +79,7 @@ implicit request: Request[_], messages: Messages)
 <div class="form-group">
     @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo()){
     @formFieldDisplay(fullNameErrors,"fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
-    @formFieldDisplay(contactPhoneErrors,"contactPhone", Some(Messages(maybePhoneError)),Messages("submitterInfo.phoneNumber"), form)
+    @formFieldDisplay(contactPhoneErrors,"contactPhone", Some(Messages(maybePhoneError)),Messages("submitterInfo.phoneNumber"), form, Some(Messages("submitterInfo.phoneNumber.hint")))
     @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("submitterInfo.emailAddress"), form)
     @CSRF.formField
     <div class="form-field">
