@@ -18,12 +18,24 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json._
 
-sealed trait UserType extends Product with Serializable
-case object Organisation extends UserType
-case object Agent extends UserType
-case object Individual extends UserType
+trait UserType {
 
-case class AffinityGroup(affinityGroup: String)
-object AffinityGroup{
+}
+
+/**
+  * Represents the Affinity Group of Organisation
+  * @param admin true if an Admin and not an Assistant. false if not an Admin and therefore an Assistsant
+  */
+case class Organisation(admin: Boolean) extends UserType
+case class Agent() extends UserType
+case class Individual() extends UserType
+
+/**
+  * AffinityGroup
+  * @param affinityGroup "Individual" | "Agent" | "Organisation"
+  * @param credentialRole "admin" | "assistant" https://github.tools.tax.service.gov.uk/HMRC/user-details#get-user-detailsidid
+  */
+case class AffinityGroup(affinityGroup: String, credentialRole: Option[String])
+object AffinityGroup {
   implicit val format = Json.format[AffinityGroup]
 }

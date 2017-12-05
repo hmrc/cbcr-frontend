@@ -36,10 +36,10 @@
             </h1>
 
             @userType match {
-                case Organisation => {
+                case Organisation(_) => {
                     <p><a class ="back-link" href="@routes.SharedController.verifyKnownFactsOrganisation">Back</a></p>
                 }
-                case Agent => {
+                case Agent() => {
                     <p><a class ="back-link" href="@routes.SharedController.verifyKnownFactsAgent">Back</a></p>
                 }
             }
@@ -61,10 +61,10 @@
             </table>
 
             @userType match {
-                case Organisation => {
+                case Organisation(_) => {
                     <p><a class="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
-                case Agent => {
+                case Agent() => {
                     <p><a class="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
             }
