@@ -71,9 +71,9 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
 
   private def allowedToSubmit(authContext: AuthContext,userType: UserType, enrolled:Boolean)(implicit hc: HeaderCarrier) = userType match {
-    case Organisation => if(enrolled) { Future.successful(true) } else { cache.read[CBCId].map(_.isDefined) }
-    case Agent        => Future.successful(true)
-    case Individual   => Future.successful(false)
+    case Organisation(_) => if(enrolled) { Future.successful(true) } else { cache.read[CBCId].map(_.isDefined) }
+    case Agent()        => Future.successful(true)
+    case Individual()   => Future.successful(false)
   }
 
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
@@ -98,7 +98,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
       enrolment <- right[Option[CBCEnrolment]](enrol.getCBCEnrolment.value)
       canSubmit <- right[Boolean](allowedToSubmit(authContext, userType, enrolment.isDefined))
       result    <- (userType, enrolment) match {
-        case (Organisation, Some(e)) if CBCId.isPrivateBetaCBCId(e.cbcId) =>
+        case (Organisation(_), Some(e)) if CBCId.isPrivateBetaCBCId(e.cbcId) =>
           auditDeEnrolReEnrolEvent(e,rrService.deEnrolReEnrol(e)).map(
             (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(), id))
           )

@@ -58,10 +58,11 @@ package object cbcrfrontend {
   }
 
   def affinityGroupToUserType(a: AffinityGroup): Either[CBCErrors, UserType] = {
+    val admin: Boolean =  a.credentialRole.exists(credentialRole => !credentialRole.equalsIgnoreCase("assistant"))
     a.affinityGroup.toLowerCase.trim match {
-      case "agent"        => Right(Agent)
-      case "organisation" => Right(Organisation)
-      case "individual"   => Right(Individual)
+      case "agent" => Right(Agent())
+      case "organisation" => Right(Organisation(admin))
+      case "individual"   => Right(Individual())
       case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
     }
   }

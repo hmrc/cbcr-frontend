@@ -27,7 +27,7 @@ import play.api.Play._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages.Implicits._
-import play.api.libs.json.Json
+import play.api.libs.json.{JsString, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import play.mvc.Http
 import uk.gov.hmrc.cbcrfrontend._
@@ -69,13 +69,13 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   lazy val audit: AuditConnector = FrontendAuditConnector
 
-  val alreadySubscribed = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val alreadySubscribed = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       Future.successful(Ok(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
   }
 
 
-  val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val submitSubscriptionData: Action[AnyContent] = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       Logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm.bindFromRequest.fold(
@@ -117,7 +117,8 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
               result.fold[Future[Result]](
                 error => {
                   Logger.error(error.show)
-                  subscriptionDataService.clearSubscriptionData(id).fold(
+                  (createFailedSubscriptionAuditEvent(authContext,id,bpr,utr) *>
+                   subscriptionDataService.clearSubscriptionData(id)).fold(
                     errorRedirect,
                     _ => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
                   )
@@ -139,13 +140,13 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
   }
 
 
-  val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val contactInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       Ok(subscription.contactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), subscriptionDataForm))
   }
 
 
-  val updateInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val updateInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
 
       val subscriptionData: ServiceResponse[ETMPSubscription] = for {
@@ -172,7 +173,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   }
 
-  val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit requests =>
       subscriptionDataForm.bindFromRequest.fold(
         errors => BadRequest(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
@@ -192,7 +193,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       )
   }
 
-  def subscribeSuccessCbcId(id: String) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  def subscribeSuccessCbcId(id: String) = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       CBCId(id).fold[Future[Result]](
         InternalServerError(FrontendGlobal.internalServerErrorTemplate)
@@ -201,7 +202,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       )
   }
 
-  def clearSubscriptionData(u: Utr) = sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext =>
+  def clearSubscriptionData(u: Utr) = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
       if (CbcrSwitches.clearSubscriptionDataRoute.enabled) {
         subscriptionDataService.clearSubscriptionData(u).fold(
@@ -215,6 +216,25 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       }
   }
 
+  def createFailedSubscriptionAuditEvent(authContext: AuthContext, cbcId:CBCId, bpr:BusinessPartnerRecord,utr:Utr)
+                                            (implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
+    for {
+      ggId   <- right(getUserGGId(authContext))
+      result <- EitherT[Future,CBCErrors,AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFailedSubscription",
+        tags = hc.toAuditTags("CBCRFailedSubscription", "N/A") + ("ggId" -> ggId.authProviderId),
+        detail = Json.obj(
+          "cbcId"                 -> JsString(cbcId.value),
+          "businessPartnerRecord" -> Json.toJson(bpr),
+          "utr"                   -> JsString(utr.value))
+      )).map {
+        case AuditResult.Disabled        => Right(AuditResult.Success)
+        case AuditResult.Success         => Right(AuditResult.Success)
+        case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed subscription: $msg"))
+      })
+    } yield result
+
+
+
   def createSuccessfulSubscriptionAuditEvent(authContext: AuthContext, subscriptionData: SubscriptionDetails)
                                             (implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
@@ -225,7 +245,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
       )).map {
         case AuditResult.Disabled        => Right(AuditResult.Success)
         case AuditResult.Success         => Right(AuditResult.Success)
-        case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
+        case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful subscription: $msg"))
       })
     } yield result
 

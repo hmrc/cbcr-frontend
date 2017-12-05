@@ -126,7 +126,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     }.merge
   }
 
-  def notRegistered =  sec.AsyncAuthenticatedAction(Some(Organisation)) { authContext => implicit request =>
+  def notRegistered =  sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext => implicit request =>
     Ok(views.html.submission.notRegistered(includes.asideBusiness(), includes.phaseBannerBeta()))
   }
   def createSuccessfulSubmissionAuditEvent(authContext: AuthContext, summaryData:SummaryData)
@@ -184,8 +184,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
         success        => cache.save(success).map { _ =>
           (userType, reportingRole) match {
             case (_,            CBC702) => Redirect(routes.SubmissionController.utr())
-            case (Agent,        CBC703) => Redirect(routes.SubmissionController.enterCompanyName())
-            case (Organisation, CBC703) => Redirect(routes.SubmissionController.submitterInfo())
+            case (Agent(),        CBC703) => Redirect(routes.SubmissionController.enterCompanyName())
+            case (Organisation(_), CBC703) => Redirect(routes.SubmissionController.submitterInfo())
             case _                      => errorRedirect(UnexpectedState(s"Unexpected userType/ReportingRole combination: $userType $reportingRole"))
           }
         }
@@ -203,8 +203,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           errors => BadRequest(views.html.submission.utrCheck(includes.phaseBannerBeta(), errors)),
           utr    => cache.save(TIN(utr.utr, "")).map { _ =>
             userType match {
-              case Organisation => Redirect(routes.SubmissionController.submitterInfo())
-              case Agent        => Redirect(routes.SubmissionController.enterCompanyName())
+              case Organisation(_) => Redirect(routes.SubmissionController.submitterInfo())
+              case Agent()        => Redirect(routes.SubmissionController.enterCompanyName())
               case _            => errorRedirect(UnexpectedState("Indiviual usertype"))
             }
           }
@@ -248,10 +248,10 @@ class SubmissionController @Inject()(val sec: SecuredActions,
               name            <- right(OptionT(cache.read[AgencyBusinessName]).getOrElse(AgencyBusinessName(xml.reportingEntity.name)))
               _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
               result          <- userType match {
-                case Organisation =>
+                case Organisation(_) =>
                   if (straightThrough) right(Redirect(routes.SubmissionController.submitSummary()))
                   else right(Redirect(routes.SharedController.enterCBCId()))
-                case Agent =>
+                case Agent() =>
                     right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ => Redirect(routes.SharedController.verifyKnownFactsAgent()))
               }
 
