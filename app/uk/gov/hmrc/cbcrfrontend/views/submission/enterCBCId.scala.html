@@ -51,9 +51,8 @@ implicit request: Request[_], messages: Messages)
             <fieldset>
                 <div class="form-group">
                     <h3>@Messages("enterCBCId.formHintWhereYouGotIt")</h3>
-                    <p class="form-hint [modifier class]">@Messages("enterCBCId.formHint")</p>
                     @formFieldDisplay(errors,"cbcId",None,
-                        Messages("enterCBCId.error.message.invalid.id"),form,None)
+                        Messages("enterCBCId.error.message.invalid.id"),form,Some(Messages("enterCBCId.formHint")))
                 </div>
             </fieldset>
             @csrf_token()
