@@ -280,6 +280,17 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         }
       }
 
+      "MessageTypeIndic is not provided" in {
+        val validFile = new File("test/resources/cbcr-noMessageTypeIndic.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList shouldNot contain(MessageTypeIndicError),
+          _ => ()
+        )
+
+      }
+
       "File is not a valid xml file" in {
         val validFile = new File("test/resources/actually_a_jpg.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
