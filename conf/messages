@@ -28,7 +28,7 @@ enterCBCId.formHintWhereYouGotIt=Country-by-country ID
 enterCBCId.dontHaveAnID.heading=Don''t have a Country by Country ID?
 enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
 enterCBCId.dontHaveAnID.link.text=Register online
-enterCBCId.error.header=The country-by-country ID doesn''t match the one created for this company or partnership.
+enterCBCId.error.header=The country-by-country ID doesn''t match the one created for this company or partnership
 enterCBCId.error.message=Try again, or email
 enterCBCId.error.message.link=digitalservice.cbc@hmrc.gsi.gov.uk
 enterCBCId.error.message.invalid.id=Enter a valid country-by-country ID
@@ -128,7 +128,7 @@ submitInfoFilingType.primaryFiling.label=A global report for a multinational ent
 submitInfoFilingType.voluntaryFiling.label=A global report for a multinational enterprise whose headquarters aren''t in the UK, via a subsidiary company
 submitInfoFilingType.localFiling.label=A report covering the UK only, for the UK subsidiary of a multinational enterprise whose headquarters aren''t in the UK
 
-submitInfoUltimateParentEntity.mainHeading=What ultimate parent entity are you reporting for?
+submitInfoUltimateParentEntity.mainHeading=What Ultimate Parent Entity are you reporting for?
 submitInfoUltimateParentEntity.upe.label=Ultimate Parent Entity name
 submitInfoUltimateParentEntity.upe.error.header=You haven''t entered the name of the group parent business
 submitInfoUltimateParentEntity.upe.error=Enter the group parent business name
@@ -164,7 +164,7 @@ fileUploadResult.error.xml.link=XML error summary
 fileUploadResult.error.xml.message=Give it to your XML creator to correct the errors
 fileUploadResult.error.guidance=Check formatting guidance
 
-fileUploadResult.error.FileTooLarge=The report is larger than 50MB. You'll need to fix this issue before uploading it again.
+fileUploadResult.error.FileTooLarge=The report is larger than 50MB. You''ll need to fix this issue before uploading it again.
 fileUploadResult.error.FileContainsVirus=The report has failed our anti-virus checks. You''ll need to fix this issue before uploading it again.
 fileUploadResult.error.FileNotXml=The report is the wrong file type. You must send it as an XML file.
 
