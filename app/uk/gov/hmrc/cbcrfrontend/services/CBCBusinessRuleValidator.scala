@@ -304,11 +304,10 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     )
 
     xmlInfo.messageSpec.messageType match {
-      case Some(CBC401)                                       => xmlInfo.validNel
       case Some(CBC402) if CBCReportsAreNotAllCorrectionsOrDeletions
         || AdditionalInfoIsNotCorrectionsOrDeletions
         || ReportingEntityIsNotCorrectionsOrDeletionsOrResent => MessageTypeIndicError.invalidNel
-      case Some(CBC402)                                       => xmlInfo.validNel
+      case _                                                  => xmlInfo.validNel
     }
 
   }
