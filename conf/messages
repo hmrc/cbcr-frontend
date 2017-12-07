@@ -227,6 +227,10 @@ notAuthorised.Individual.message.link=register as an Organisation with the Gover
 notAuthorised.Individual.message.end=with the Government Gateway.
 notAuthorised.individual.button=Return to start page
 
+notAuthorised.assistant.mainHeading=You aren''t authorised to use this service
+notAuthorised.assistant.message=To use this service, you must sign in to the Government Gateway as an Administrator for your Organisation.
+notAuthorised.assistant.button=Return to start page
+
 utrCheck.mainHeading=Enter the Unique Taxpayer Reference of the UK-registered company or partnership that''s sending a report
 utrCheck.label=Unique Taxpayer Reference
 utrCheck.error=Enter a unique taxpayer reference of at least 10 characters
