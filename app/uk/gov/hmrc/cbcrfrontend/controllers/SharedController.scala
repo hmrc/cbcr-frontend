@@ -205,15 +205,15 @@ class SharedController @Inject()(val sec: SecuredActions,
         formWithErrors => EitherT.left(BadRequest(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))),
         knownFacts =>  for {
           bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
-            NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
+            NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType))
           )
           cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.read[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
           subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
           _                   <- EitherT.fromEither[Future](userType match {
             case Agent() if subscriptionDetails.isEmpty =>
-              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
+              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType)))
             case Agent() if subscriptionDetails.flatMap(_.cbcId) != cbcId || cbcId.isEmpty =>
-              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
+              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType)))
             case Organisation(_) if subscriptionDetails.isDefined =>
               Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
             case _                                             =>
