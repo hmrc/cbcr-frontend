@@ -31,10 +31,6 @@
     <div class="grid-row">
         <div class="column-two-thirds">
 
-            <h1>
-            @Messages("subscribeMatchFound.mainHeading")
-            </h1>
-
             @userType match {
                 case Organisation(_) => {
                     <p><a class ="back-link" href="@routes.SharedController.verifyKnownFactsOrganisation">Back</a></p>
@@ -43,6 +39,11 @@
                     <p><a class ="back-link" href="@routes.SharedController.verifyKnownFactsAgent">Back</a></p>
                 }
             }
+
+            <h1>
+            @Messages("subscribeMatchFound.mainHeading")
+            </h1>
+
             <table class="form-group">
                 <tbody>
                     <tr>
@@ -50,12 +51,12 @@
                         <td>@name</td>
                     </tr>
                     <tr>
-                        <th>@Messages("subscribeMatchFound.businessDetails.postcode")</th>
-                        <td>@postCode</td>
-                    </tr>
-                    <tr>
                         <th>@Messages("subscribeMatchFound.businessDetails.utr")</th>
                         <td>@utr</td>
+                    </tr>
+                    <tr>
+                        <th>@Messages("subscribeMatchFound.businessDetails.postcode")</th>
+                        <td>@postCode</td>
                     </tr>
                 </tbody>
             </table>
