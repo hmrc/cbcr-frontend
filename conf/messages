@@ -1,3 +1,16 @@
+survey.mainHeading=You''re now signed out
+survey.header=You''re now signed out
+survey.intro=By answering the following questions, you''ll help to improve our service.
+survey.question1=How satisfied are you with this service?
+survey.one=Very satisfied
+survey.two=Satisfied
+survey.three=Neither satisfied or dissatisfied
+survey.four=Dissatisfied
+survey.five=Very dissatisfied
+survey.question2=How could we improve the service?
+survey.question2.hint=Don''t include any confidential information, for example your country-by-country ID
+survey.send=Send feedback
+survey.required=This section is required
 
 regenerate.mainHeading=Your new country-by-country ID has been validated
 regenerate.message=Your new country-by-country ID is:
