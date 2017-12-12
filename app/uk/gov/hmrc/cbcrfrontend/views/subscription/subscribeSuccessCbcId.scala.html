@@ -41,7 +41,7 @@ implicit request: Request[_], messages: Messages)
             <p>@Messages("subscribeSuccessCbcId.printThis1")</p>
             <h2>@Messages("subscribeSuccessCbcId.next")</h2>
             <p>@Messages("subscribeSuccessCbcId.email")</p>
-            <p>@Messages("subscribeSuccessCbcId.next2")<a href="@routes.SharedController.signOut()"> @messages("subscribeSuccessCbcId.nextLink")</a></p>
+            <p>@Messages("subscribeSuccessCbcId.next2")<a href="@routes.SharedController.signOutSurvey()"> @messages("subscribeSuccessCbcId.nextLink")</a></p>
             <p>
                 <a class="button" href="@routes.FileUploadController.chooseXMLFile()">@Messages("cbc.button.continue")</a>
             </p>
