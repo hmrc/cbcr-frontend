@@ -116,7 +116,12 @@ class SharedController @Inject()(val sec: SecuredActions,
 
 
   val signOut = sec.AsyncAuthenticatedAction() { authContext => implicit request => {
-    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${routes.SharedController.guidance.url}"
+    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${routes.SharedController.guidance().url}"
+    Future.successful(Redirect(s"${FrontendAppConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
+  }}
+
+  val signOutSurvey = sec.AsyncAuthenticatedAction() { authContext => implicit request => {
+    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey().url}"
     Future.successful(Redirect(s"${FrontendAppConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
   }}
 
