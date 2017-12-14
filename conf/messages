@@ -1,3 +1,7 @@
+sessionExpired.mainHeading=Your session has expired
+sessionExpired.continue=Please begin your journey again from the
+sessionExpired.link=start
+
 survey.mainHeading=You''re now signed out
 survey.header=You''re now signed out
 survey.intro=By answering the following questions, you''ll help to improve our service.

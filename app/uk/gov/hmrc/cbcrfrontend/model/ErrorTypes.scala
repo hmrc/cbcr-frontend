@@ -28,6 +28,7 @@ object CBCErrors {
     case UnexpectedState(errorMsg,_) => errorMsg
     case v:ValidationErrors          => v.show
     case InvalidSession              => InvalidSession.toString
+    case ExpiredSession(msg)         => msg
   }
 }
 
@@ -36,6 +37,7 @@ object UnexpectedState{
   implicit val invalidStateFormat: OFormat[UnexpectedState] = Json.format[UnexpectedState]
 }
 
+case class ExpiredSession(msg:String) extends CBCErrors
 case object InvalidSession extends CBCErrors
 sealed trait ValidationErrors extends CBCErrors
 
