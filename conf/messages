@@ -211,7 +211,7 @@ uploadReport.uploadButton=Upload and continue
 uploadReport.error=You must select a file
 
 submitterInfo.mainHeading=Enter your contact details, as the sender of the report
-submitterInfo.error.heading=We''ve found some errors.
+submitterInfo.error.heading=There is a problem
 submitterInfo.fullName=Your name
 submitterInfo.fullName.error=Enter your full name
 submitterInfo.fullName.error.header=You haven''t entered your full name
