@@ -41,7 +41,7 @@ implicit request: Request[_], messages: Messages)
                 @if(numberOfErrors == 1) {
                     <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                     @form.errors.map{  error =>
-                        <h2 id="error-summary-heading" class="h3-heading">@error.messages.map(e => Messages(e + ".header"))</h2>
+                        <h2 id="error-summary-heading" class="h2-heading">@error.messages.map(e => Messages(e + ".header"))</h2>
                             @if(maybeEmailError.contains("contactInfoSubscriber.emailAddress.error.invalid")) {
                                 <p>@Messages("contactInfoSubscriber.emailAddress.error.invalid.header.l1")</p>
                             }
@@ -54,12 +54,13 @@ implicit request: Request[_], messages: Messages)
                     </div>
                 } else {
                     <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                        <h2 id="error-summary-heading" class="h3-heading">@Messages("contactInfoSubscriber.errors")</h2>
+                        <h2 id="error-summary-heading" class="h2-heading">@Messages("contactInfoSubscriber.errors")</h2>
                         @form.errors.map { error =><p><strong><a href="#@error.key" id="@{error.key}-error-summary">
                             @error.messages.map(x => Messages(x))</a></strong></p>
                         }
                     </div>
                 }
+                @errorFocus()
             }
             <h1>
                 @Messages("contactInfoSubscriber.mainHeading")
@@ -68,7 +69,7 @@ implicit request: Request[_], messages: Messages)
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.submitSubscriptionData()){
                 @formFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)
                 @formFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None)
-                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"), form, None)
+                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"),form, Some(Messages("contactInfoSubscriber.phoneNumber.hint")))
                 @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None)
                 @CSRF.formField
                 <div class="form-field">

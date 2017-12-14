@@ -1,10 +1,14 @@
 # microservice specific routes
 
+GET        /exit-survey                                   @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.doSurvey
+POST       /exit-survey/submit                            @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.submit
+
 GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
 GET        /cbc-id/entry-form                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
 POST       /cbc-id                                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.submitCBCId
 GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
 GET        /sign-out                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOut
+GET        /sign-out-survey                               @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOutSurvey
 GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.guidance
 GET        /guidance/register                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.register
 GET        /guidance/volunteer                            @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.volunteer

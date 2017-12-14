@@ -26,10 +26,10 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, CBCKnownFacts, UnexpectedState}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
-@Singleton
+@Singleton @deprecated("Use the EnrolmentsService instead","release/25.0")
 class CBCKnownFactsService @Inject() (connector:GGConnector)(implicit ec:ExecutionContext) {
 
   private def httpResponseToEither(res:HttpResponse) : Either[CBCErrors,String] =

@@ -40,17 +40,21 @@ implicit request: Request[_], messages: Messages)
                 role="alert"
                 aria-labelledby="error-summary-display"
                 tabindex="-1">
-                    <h2 id="error-summary-heading" class="h3-heading">@Messages("enterCBCId.error.header")</h2>
-                    <p>@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("enterCBCId.error.message.link")</a></p>
+                    <h2 id="error-summary-heading" class="h2-heading">@Messages("enterCBCId.error.header")</h2>
+                    <p>@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk">@Messages("enterCBCId.error.message.link")</a></p>
                     <p id="cbcId-error-summary"><strong><a href="#cbcId">@Messages("enterCBCId.error.message.invalid.id")</a></strong></p>
                 </div>
+                @errorFocus()
             }
             <h1>@Messages("enterCBCId.mainHeading")</h1>
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId()){
             <fieldset>
                 <div class="form-group">
-                    @formFieldDisplay(errors,"cbcId",Some(Messages("enterCBCId.error.message.invalid.id")),
-                        Messages("enterCBCId.formHintWhereYouGotIt"),form,Some(Messages("enterCBCId.formHint")))
+                    @formFieldDisplay(errors,"cbcId",
+                        Some(Messages("enterCBCId.error.message.invalid.id")),
+                        Messages("enterCBCId.formHintWhereYouGotIt"),
+                        form,
+                        Some(Messages("enterCBCId.formHint")))
                 </div>
             </fieldset>
             @csrf_token()

@@ -32,7 +32,7 @@ import play.api.mvc.{Action, AnyContent, Request, Result}
 import play.mvc.Http
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector}
+import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector, TaxEnrolmentsConnector}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
@@ -60,7 +60,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                                        val connector: BPRKnownFactsConnector,
                                        val cbcIdService: CBCIdService,
                                        val emailService: EmailService,
-                                       val kfService: CBCKnownFactsService,
+                                       val enrolService: EnrolmentsService,
                                        val enrollments: EnrolmentsConnector,
                                        val knownFactsService: BPRKnownFactsService)
                                       (implicit ec: ExecutionContext,
@@ -99,7 +99,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
               val result = for {
                 _                     <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, Some(id), utr))
-                _                     <- kfService.addKnownFactsToGG(CBCKnownFacts(utr, id))
+                _                     <- enrolService.enrol(CBCKnownFacts(utr, id))
                 _                     <- right(
                   (cache.save(id)                                            |@|
                    cache.save(data)                                          |@|

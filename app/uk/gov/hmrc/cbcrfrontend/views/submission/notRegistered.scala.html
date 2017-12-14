@@ -33,17 +33,10 @@
     <div class="column-two-thirds">
         <h1>@Messages("notRegistered.heading")</h1>
 
-        <div class="flash error-summary error-summary--show"
-             id="error-summary-display"
-             role="alert"
-             aria-labelledby="error-summary-display"
-             tabindex="-1">
+            <p>@Messages("notRegistered.message.start") <a href="@routes.SharedController.verifyKnownFactsOrganisation()">@messages("notRegistered.message.link")</a>
+            @messages("notRegistered.message.end")</p>
 
-            <p>@Messages("notRegistered.content")</p>
-        </div>
-
-
-        <a class="button" href="@routes.SharedController.verifyKnownFactsOrganisation()">@Messages("notRegistered.register")</a>
+        <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.returnToStart")</a>
     </div>
 </div>
 

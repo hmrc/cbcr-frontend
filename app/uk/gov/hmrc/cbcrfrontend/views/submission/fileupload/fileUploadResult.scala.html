@@ -22,6 +22,7 @@
 @import uk.gov.hmrc.cbcrfrontend.model.CBC702
 @import uk.gov.hmrc.cbcrfrontend.model.CBC703
 @import uk.gov.hmrc.cbcrfrontend.model.{UserType, Organisation}
+@import tags._
 
 @import java.nio.file._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
@@ -45,36 +46,37 @@ else {
 },
     sidebarLinks = Some(sidebarContent)) {
 
-    <div class="grid-row">
-        <div class="column-two-thirds">
-            <h1>
+    <div class="grid-row column-two-thirds">
             @if(!errors) {
-                @Messages("fileUploadResult.mainHeading.ok")
+        <h1>@Messages("fileUploadResult.mainHeading.ok")</h1>
             } else {
-                @Messages("fileUploadResult.mainHeading.error")
+                    @if(schemaErrors.isDefined && busErrors.isDefined) {
+                        <h1>@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
+                    } else {
+                        @if(schemaErrors.isDefined) {
+                            <h1>@messages("fileUploadResult.mainHeading.xmlError")</h1>
+                        } else {
+                            <h1>@messages("fileUploadResult.mainHeading.dataError")</h1>
+                        }
+                    }
+                    <h2>@messages("fileUploadResult.whatToDo")</h2>
+                    <ol style="margin-left: 15px;">
+                        @schemaErrors.map { size =>
+                            <li><p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link")
+                                (Text, @{
+                                size
+                            }KB)</a>.</p></li>
+                            <li><p>@Messages("fileUploadResult.error.xml.message")</p></li>
+                        }
+                        @busErrors.map { size =>
+                            <li><p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
+                                (Text, @{
+                                size
+                            }KB)</a>.</p></li>
+                            <li><p>@Messages("fileUploadResult.error.data.message")</p></li>
+                        }
+                    </ol>
             }
-            </h1>
-
-            @schemaErrors.map { size =>
-                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                    <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link")
-                        (TXT:@{
-                        size
-                    }KB)</a>.</p>
-                    <p>@Messages("fileUploadResult.error.xml.message")</p>
-                </div>
-
-            }
-            @busErrors.map { size =>
-                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                    <p>@Messages("fileUploadResult.error") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
-                        (TXT:@{
-                        size
-                    }KB)</a>.</p>
-                    <p>@Messages("fileUploadResult.error.data.message")</p>
-                </div>
-            }
-            <br>
             @if(!errors) {
                 <table class="table--top-border" id="table-successReport">
                     <tbody>
@@ -102,10 +104,8 @@ else {
                 }
 
             } else {
-                <p><a href="#">@Messages("fileUploadResult.error.guidance")</a></p>
-                <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
+                @errorFocus()
+                <a class="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@Messages("form.controls.returnToStart")</a>
             }
-
-        </div>
     </div>
 }
