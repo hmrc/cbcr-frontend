@@ -28,18 +28,11 @@
 <div class="grid-row">
     <div class="column-two-thirds">
         <h1>@Messages("fileUploadResult.error")</h1>
-
-        <div class="flash error-summary error-summary--show"
-             id="error-summary-display"
-             role="alert"
-             aria-labelledby="error-summary-display"
-             tabindex="-1">
             @defining("fileUploadResult.error." + errorType.toString) { key =>
                 <p>@Messages(key)</p>
             }
-        </div>
 
-        <a class="button" href="@routes.SharedController.signOut()">Sign out</a>
+        <a class="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@messages("form.controls.returnToStart")</a>
     </div>
 </div>
 }

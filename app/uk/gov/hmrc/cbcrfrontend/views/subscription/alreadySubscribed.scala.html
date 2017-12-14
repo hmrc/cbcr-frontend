@@ -29,21 +29,21 @@ implicit request: Request[_], messages: Messages)
 @asideCbc
 }
 
-@main_template(Messages("subscribeFirst.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("subscribeFirst.alreadyRegistered.heading"), sidebarLinks = Some(sidebarContent)) {
 <div class="grid-row">
     <div class="column-two-thirds">
 
-        <h1>@Messages("subscribeFirst.mainHeading")</h1>
+        <h1>@Messages("subscribeFirst.alreadyRegistered.heading")</h1>
             <div class="flash error-summary error-summary--show"
              id="error-summary-display"
              role="alert"
              aria-labelledby="error-summary-heading"
              tabindex="-1">
              <p>@Messages("subscribeFirst.alreadyRegistered")</p>
-             <p>@Messages("subscribeFirst.alreadyRegistered2") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.alreadyRegistered2.link")</a></p>
+             <p><a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.alreadyRegistered2")</a></p>
             </div>
 
-        <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.signOut")</a>
+        <a class="button" href="@routes.SharedController.signOutSurvey()">@Messages("form.controls.returnToStart")</a>
     </div>
 </div>
 }

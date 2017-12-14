@@ -32,7 +32,7 @@ case class Individual() extends UserType
 
 /**
   * AffinityGroup
-  * @param affinityGroup "Individual" | "Agnet" | "Organisation"
+  * @param affinityGroup "Individual" | "Agent" | "Organisation"
   * @param credentialRole "admin" | "assistant" https://github.tools.***REMOVED***/HMRC/user-details#get-user-detailsidid
   */
 case class AffinityGroup(affinityGroup: String, credentialRole: Option[String])

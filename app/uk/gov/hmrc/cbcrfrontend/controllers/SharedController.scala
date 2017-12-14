@@ -116,7 +116,12 @@ class SharedController @Inject()(val sec: SecuredActions,
 
 
   val signOut = sec.AsyncAuthenticatedAction() { authContext => implicit request => {
-    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${routes.SharedController.guidance.url}"
+    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${routes.SharedController.guidance().url}"
+    Future.successful(Redirect(s"${FrontendAppConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
+  }}
+
+  val signOutSurvey = sec.AsyncAuthenticatedAction() { authContext => implicit request => {
+    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey().url}"
     Future.successful(Redirect(s"${FrontendAppConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
   }}
 
@@ -173,19 +178,28 @@ class SharedController @Inject()(val sec: SecuredActions,
 
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]): Future[Result] =
     getUserType(authContext).semiflatMap{ userType =>
-      enrolments.getCBCEnrolment.semiflatMap( enrolment => {
-        if(CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
-          auditDeEnrolReEnrolEvent(enrolment,rrService.deEnrolReEnrol(enrolment)).fold[Result](
-            errors      => errorRedirect(errors),
-            (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(),id))
-          )
-        } else {
-          Future.successful(NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
-        }
-      }).cata(
-        Ok(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(),knownFactsForm,false,userType)),
-        (result: Result) => result
-      )
+      for {
+        postCode <- cache.read[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
+        utr      <- cache.read[Utr].map(_.map(_.utr))
+        result   <- enrolments.getCBCEnrolment.semiflatMap(enrolment => {
+          if (CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
+            auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).fold[Result](
+              errors => errorRedirect(errors),
+              (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(), id))
+            )
+          } else {
+            Future.successful(NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
+          }
+        }).cata(
+          {
+            val form = (utr |@| postCode).map((utr: String, postCode: String) =>
+              knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode))
+            ).getOrElse(knownFactsForm)
+            Ok(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), form, false, userType))
+          },
+          (result: Result) => result
+        )
+      } yield result
     }.leftMap(errorRedirect).merge
 
   val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
@@ -196,15 +210,15 @@ class SharedController @Inject()(val sec: SecuredActions,
         formWithErrors => EitherT.left(BadRequest(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))),
         knownFacts =>  for {
           bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
-            NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType))
+            NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType))
           )
           cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.read[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
           subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
           _                   <- EitherT.fromEither[Future](userType match {
             case Agent() if subscriptionDetails.isEmpty =>
-              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
+              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType)))
             case Agent() if subscriptionDetails.flatMap(_.cbcId) != cbcId || cbcId.isEmpty =>
-              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm, noMatchingBusiness = true, userType)))
+              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType)))
             case Organisation(_) if subscriptionDetails.isDefined =>
               Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
             case _                                             =>
