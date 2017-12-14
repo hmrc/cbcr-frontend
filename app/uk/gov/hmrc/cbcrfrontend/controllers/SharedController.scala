@@ -80,6 +80,10 @@ class SharedController @Inject()(val sec: SecuredActions,
     InternalServerError(FrontendGlobal.internalServerErrorTemplate)
   }
 
+  val sessionExpired = Action{ implicit request =>
+    Ok(shared.sessionExpired(includes.asideCbc(), includes.phaseBannerBeta()))
+  }
+
   val enterCBCId = sec.AsyncAuthenticatedAction(){ _ => implicit request =>
       Ok(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm))
   }
@@ -179,8 +183,8 @@ class SharedController @Inject()(val sec: SecuredActions,
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]): Future[Result] =
     getUserType(authContext).semiflatMap{ userType =>
       for {
-        postCode <- cache.read[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
-        utr      <- cache.read[Utr].map(_.map(_.utr))
+        postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
+        utr      <- cache.readOption[Utr].map(_.map(_.utr))
         result   <- enrolments.getCBCEnrolment.semiflatMap(enrolment => {
           if (CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
             auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).fold[Result](
@@ -212,7 +216,7 @@ class SharedController @Inject()(val sec: SecuredActions,
           bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
             NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType))
           )
-          cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.read[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
+          cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
           subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
           _                   <- EitherT.fromEither[Future](userType match {
             case Agent() if subscriptionDetails.isEmpty =>
@@ -238,8 +242,8 @@ class SharedController @Inject()(val sec: SecuredActions,
   def knownFactsMatch = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
     val result:ServiceResponse[Result] = for {
       userType <- getUserType(authContext)
-      bpr      <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("Unable to read BusinessPartnerRecord from cache"))
-      utr      <- OptionT(cache.read[Utr]).toRight(UnexpectedState("Unable to read Utr from cache"):CBCErrors)
+      bpr      <- cache.read[BusinessPartnerRecord]
+      utr      <- cache.read[Utr]
     } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), bpr.address.postalCode.orEmpty, utr.value , userType))
 
     result.leftMap(errorRedirect).merge

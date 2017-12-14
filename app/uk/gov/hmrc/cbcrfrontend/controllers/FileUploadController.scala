@@ -33,6 +33,7 @@ import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -71,7 +72,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
 
   private def allowedToSubmit(authContext: AuthContext,userType: UserType, enrolled:Boolean)(implicit hc: HeaderCarrier) = userType match {
-    case Organisation(_) => if(enrolled) { Future.successful(true) } else { cache.read[CBCId].map(_.isDefined) }
+    case Organisation(_) => if(enrolled) { Future.successful(true) } else { cache.readOption[CBCId].map(_.isDefined) }
     case Agent()        => Future.successful(true)
     case Individual()   => Future.successful(false)
   }
@@ -93,7 +94,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   }
 
   val chooseXMLFile = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    val result:EitherT[Future,CBCErrors,Result] = for {
+    val result:ServiceResponse[Result] = for {
       userType  <- getUserType(authContext)
       enrolment <- right[Option[CBCEnrolment]](enrol.getCBCEnrolment.value)
       canSubmit <- right[Boolean](allowedToSubmit(authContext, userType, enrolment.isDefined))
@@ -222,7 +223,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   }
 
   def getBusinessRuleErrors = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    OptionT(cache.read[AllBusinessRuleErrors]).map(x => errorsToFile(x.errors,"BusinessRuleErrors")
+    OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => errorsToFile(x.errors,"BusinessRuleErrors")
     ).fold(
       NoContent
     )((file: File) =>
@@ -231,7 +232,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   }
 
   def getXmlSchemaErrors = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    OptionT(cache.read[XMLErrors]).map(x => errorsToFile(List(x),"XMLSchemaErrors")
+    OptionT(cache.readOption[XMLErrors]).map(x => errorsToFile(List(x),"XMLSchemaErrors")
     ).fold(
       NoContent
     )((file: File) =>
@@ -286,8 +287,8 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   def auditFailedSubmission(authContext: AuthContext, reason:String) (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
     for {
       ggId   <- right(getUserGGId(authContext))
-      md     <- right(cache.read[FileMetadata])
-      result <- EitherT[Future,CBCErrors,AuditResult.Success.type](audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
+      md     <- right(cache.readOption[FileMetadata])
+      result <- eitherT[AuditResult.Success.type](audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
         tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri, "ggId" -> ggId.authProviderId) ++ md.map(getCCParams).getOrElse(Map.empty[String,String])
       )).map {
         case AuditResult.Success => Right(AuditResult.Success)

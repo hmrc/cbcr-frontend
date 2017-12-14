@@ -45,6 +45,7 @@ package object controllers {
   //todo refactor everything to use these
   def pure[A](a:A)(implicit ec:ExecutionContext) = EitherT.pure[Future,CBCErrors,A](a)
   def right[A](a:Future[A])(implicit ec:ExecutionContext) = EitherT.right[Future,CBCErrors,A](a)
+  def left[A](e:CBCErrors)(implicit ec:ExecutionContext) = EitherT.left[Future,CBCErrors,A](Future.successful(e))
   def fromEither[A,B](e:Either[A,B])(implicit ec:ExecutionContext)  = EitherT.fromEither[Future](e)
   def eitherT[A](a:Future[Either[CBCErrors,A]]) = EitherT[Future,CBCErrors,A](a)
 }
