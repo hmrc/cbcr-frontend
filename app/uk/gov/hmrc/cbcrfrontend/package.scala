@@ -19,9 +19,10 @@ package uk.gov.hmrc
 import java.io.{File, FileInputStream, InputStream}
 import java.nio.file.Files
 
-import cats.data.{EitherT, OptionT, ValidatedNel}
+import cats.data.{EitherT, NonEmptyList, OptionT, ValidatedNel}
 import cats.instances.future._
 import cats.syntax.option._
+import cats.syntax.validated._
 import cats.syntax.cartesian._
 import cats.syntax.show._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -34,33 +35,43 @@ import _root_.play.api.mvc._
 import _root_.play.api.mvc.Results._
 import _root_.play.api.Logger
 import cats.{Applicative, Functor}
+import uk.gov.hmrc.cbcrfrontend.controllers._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
+import scala.util.control.NonFatal
 
 
 package object cbcrfrontend {
 
 
-  type ValidResult[A] = ValidatedNel[BusinessRuleErrors, A]
-  type FutureValidResult[A] = Future[ValidResult[A]]
+  type ValidResult[A]               = ValidatedNel[CBCErrors, A]
+  type CacheResult[A]               = ValidatedNel[ExpiredSession, A]
+  type FutureValidResult[A]         = Future[ValidResult[A]]
+  type FutureCacheResult[A]         = Future[CacheResult[A]]
+  type ValidBusinessResult[A]       = ValidatedNel[BusinessRuleErrors, A]
+  type FutureValidBusinessResult[A] = Future[ValidBusinessResult[A]]
 
-  implicit def applicativeInstance(implicit ec:ExecutionContext):Applicative[FutureValidResult] = Applicative[Future] compose Applicative[ValidResult]
-  implicit def functorInstance(implicit ec:ExecutionContext):Functor[FutureValidResult] = Functor[Future] compose Functor[ValidResult]
+  implicit def applicativeInstance(implicit ec:ExecutionContext):Applicative[FutureValidBusinessResult] = Applicative[Future] compose Applicative[ValidBusinessResult]
+  implicit def applicativeInstance2(implicit ec:ExecutionContext):Applicative[FutureCacheResult] = Applicative[Future] compose Applicative[CacheResult]
+  implicit def functorInstance(implicit ec:ExecutionContext):Functor[FutureValidBusinessResult] = Functor[Future] compose Functor[ValidBusinessResult]
 
-  implicit def toTheFuture[A](a:ValidResult[A]):FutureValidResult[A] = Future.successful(a)
+  implicit def toTheFuture[A](a:ValidBusinessResult[A]):FutureValidBusinessResult[A] = Future.successful(a)
 
   implicit def resultFuture(r:Result):Future[Result] = Future.successful(r)
 
   def errorRedirect(error:CBCErrors)(implicit request:Request[_]): Result = {
     Logger.error(error.show)
-    InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+    error match {
+      case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())
+      case _                 => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+    }
   }
 
   def affinityGroupToUserType(a: AffinityGroup): Either[CBCErrors, UserType] = {
     val admin: Boolean =  a.credentialRole.exists(credentialRole => !credentialRole.equalsIgnoreCase("assistant"))
     a.affinityGroup.toLowerCase.trim match {
-      case "agent" => Right(Agent())
+      case "agent"        => Right(Agent())
       case "organisation" => Right(Organisation(admin))
       case "individual"   => Right(Individual())
       case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
@@ -71,7 +82,7 @@ package object cbcrfrontend {
   implicit def cbcToRight(c:CBCId): Either[Utr, CBCId] = Right[Utr,CBCId](c)
 
   def getUserType(ac: AuthContext)(implicit cache: CBCSessionCache, sec: AuthConnector, hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[UserType] =
-    EitherT(OptionT(cache.read[AffinityGroup])
+    EitherT(OptionT(cache.readOption[AffinityGroup])
       .getOrElseF {
         sec.getUserDetails[AffinityGroup](ac)
           .flatMap(ag => cache.save[AffinityGroup](ag)
@@ -81,7 +92,7 @@ package object cbcrfrontend {
     )
 
   def getUserGGId(ac:AuthContext)(implicit cache:CBCSessionCache, sec:AuthConnector,hc:HeaderCarrier,ec:ExecutionContext) : Future[GGId] =
-    OptionT(cache.read[GGId])
+    OptionT(cache.readOption[GGId])
       .getOrElseF{
         sec.getUserDetails[GGId](ac)
           .flatMap(ag => cache.save[GGId](ag)
@@ -93,28 +104,22 @@ package object cbcrfrontend {
       org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
     )))
 
-  def generateMetadataFile(cache: CBCSessionCache, authContext: AuthContext)(implicit hc: HeaderCarrier, ec: ExecutionContext, sec:AuthConnector): Future[ValidatedNel[String, SubmissionMetaData]] = {
+  def generateMetadataFile(cache: CBCSessionCache, authContext: AuthContext)(implicit hc: HeaderCarrier, ec: ExecutionContext, sec:AuthConnector): Future[ValidatedNel[ExpiredSession,SubmissionMetaData]] = {
 
-    def errors[T: TypeTag](v: Option[T]): ValidatedNel[String, T] =
-      v.toValidNel(s"Could not find data for ${typeOf[T].toString} in cache")
+    val ggId: FutureCacheResult[GGId] = EitherT.right[Future, ExpiredSession, GGId](getUserGGId(authContext)(cache, sec, hc, ec)).toValidatedNel
 
-    for {
-      gatewayId <- getUserGGId(authContext)(cache,sec,hc,ec)
-      bpr <- cache.read[BusinessPartnerRecord]
-      tin <- cache.read[TIN]
-      hash <- cache.read[Hash]
-      cbcId <- cache.read[CBCId]
-      fileId <- cache.read[FileId]
-      envelopeId <- cache.read[EnvelopeId]
-      submitterInfo <- cache.read[SubmitterInfo]
-      filingType <- cache.read[FilingType]
-      upe <- cache.read[UltimateParentEntity]
-      fileMetadata <- cache.read[FileMetadata]
-    } yield {
-      (errors(bpr) |@| errors(tin) |@| errors(hash) |@| errors(cbcId) |@| errors(fileId) |@|
-        errors(envelopeId) |@| errors(submitterInfo) |@| errors(filingType) |@|
-        errors(upe) |@| errors(fileMetadata)
-        ).map { (record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
+    (ggId |@|
+      cache.read[BusinessPartnerRecord].toValidatedNel |@|
+      cache.read[TIN].toValidatedNel |@|
+      cache.read[Hash].toValidatedNel |@|
+      cache.read[CBCId].toValidatedNel |@|
+      cache.read[FileId].toValidatedNel |@|
+      cache.read[EnvelopeId].toValidatedNel |@|
+      cache.read[SubmitterInfo].toValidatedNel |@|
+      cache.read[FilingType].toValidatedNel |@|
+      cache.read[UltimateParentEntity].toValidatedNel |@|
+      cache.read[FileMetadata].toValidatedNel)
+      .map { (gatewayId, record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
 
         SubmissionMetaData(
           SubmissionInfo(
@@ -131,8 +136,6 @@ package object cbcrfrontend {
           FileInfo(fileId, envelopeId, metadata.status, metadata.name, metadata.contentType, metadata.length, metadata.created)
         )
       }
-    }
   }
-
 
 }

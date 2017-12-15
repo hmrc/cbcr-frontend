@@ -91,10 +91,10 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     super.afterEach()
   }
 
-  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation",Some("admin"))))
+  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(AffinityGroup("Organisation",Some("admin")))
   private val affinityGroupOrgansiation = AffinityGroup("Organisation", Some("admin"))
 
-  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn Future.successful(Some(affinityGroupOrgansiation))
+  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(affinityGroupOrgansiation)
   when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
   when(enrol.getEnrolments(any())) thenReturn Future.successful(List.empty)
   when(runMode.env) thenReturn "Dev"
