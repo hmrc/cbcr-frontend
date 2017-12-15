@@ -16,26 +16,16 @@
 
 package uk.gov.hmrc.cbcrfrontend.auth
 
-import akka.stream.Materializer
-import org.mockito.Matchers.any
+import org.mockito.Matchers.{any, eq => EQ}
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
-import play.api.mvc.{Action, Controller}
-import play.api.test.FakeRequest
-import uk.gov.hmrc.cbcrfrontend.controllers.{AsyncUserRequest, CSRFTest, FakeAuthConnector}
+import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.model.AffinityGroup
-import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, WithConfigFakeApplication}
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.auth.connectors.domain.Accounts
-import uk.gov.hmrc.play.frontend.auth.connectors.domain.ConfidenceLevel.L500
-import uk.gov.hmrc.play.frontend.auth.connectors.domain.CredentialStrength.Strong
-import uk.gov.hmrc.play.frontend.auth._
 import uk.gov.hmrc.play.test.UnitSpec
-import org.mockito.Matchers.{eq => EQ}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class CBCRPageVisibilityPredicateSpec  extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector with TestPredicate {
 
@@ -44,7 +34,7 @@ class CBCRPageVisibilityPredicateSpec  extends UnitSpec with ScalaFutures with O
   "A CBCRPageVisibilityPredicate " should {
     "should return true if the Organisation is an admin" in {
 
-      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
+      when(cache.readOption[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
 
       val result = await(new CBCRPageVisibilityPredicate()(authConnector, cache, ec).apply(authContext, request))
       result.isVisible shouldBe true
@@ -52,7 +42,7 @@ class CBCRPageVisibilityPredicateSpec  extends UnitSpec with ScalaFutures with O
 
     "should return false if the Organisation is not an admin" in {
 
-      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", None)))
+      when(cache.readOption[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", None)))
 
       val result = await(new CBCRPageVisibilityPredicate()(authConnector, cache, ec).apply(authContext, request))
       result.isVisible shouldBe false

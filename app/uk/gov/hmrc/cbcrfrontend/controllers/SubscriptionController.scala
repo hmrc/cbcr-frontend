@@ -84,14 +84,11 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
         },
         data => {
           val id_bpr_utr: ServiceResponse[(CBCId, BusinessPartnerRecord, Utr)] = for {
-            subscribed <- right[Boolean](cache.read[Subscribed.type].map(_.isDefined))
+            subscribed <- right[Boolean](cache.readOption[Subscribed.type].map(_.isDefined))
             _          <- EitherT.cond[Future](!subscribed, (), UnexpectedState("Already subscribed"))
-            bpr_utr    <- (
-                eitherT(cache.read[BusinessPartnerRecord].map(_.toRight(UnexpectedState("BPR record not found")))) |@|
-                eitherT(cache.read[Utr].map(_.toRight(UnexpectedState("UTR record not found"))))
-              ).tupled
+            bpr_utr    <- ( cache.read[BusinessPartnerRecord] |@| cache.read[Utr] ).tupled
             subDetails = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
-            id        <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
+            id         <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
           } yield Tuple3(id, bpr_utr._1, bpr_utr._2)
 
           id_bpr_utr.semiflatMap {
@@ -106,7 +103,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                    cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@|
                    cache.save(Subscribed)).tupled
                 )
-                subscriptionEmailSent <- right(cache.read[SubscriptionEmailSent].map(_.isDefined))
+                subscriptionEmailSent <- right(cache.readOption[SubscriptionEmailSent].map(_.isDefined))
                 emailSent             <- if (!subscriptionEmailSent) right(emailService.sendEmail(makeSubEmail(data, id)).value)
                                          else pure[Option[Boolean]](None)
                 _                     <- if (emailSent.getOrElse(false)) right(cache.save(SubscriptionEmailSent()))
@@ -179,8 +176,8 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
         errors => BadRequest(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
         data => {
           (for {
-            bpr     <- OptionT(cache.read[BusinessPartnerRecord]).toRight(UnexpectedState("No BPR found in cache"))
-            cbcId   <- OptionT(cache.read[CBCId]).toRight(UnexpectedState("No CBCId found in cache"))
+            bpr     <- cache.read[BusinessPartnerRecord]
+            cbcId   <- cache.read[CBCId]
             details = CorrespondenceDetails(bpr.address, ContactDetails(data.email, data.phoneNumber), ContactName(data.firstName, data.lastName))
             _       <- cbcIdService.updateETMPSubscriptionData(bpr.safeId, details)
             _       <- subscriptionDataService.updateSubscriptionData(cbcId, SubscriberContact(data.firstName, data.lastName, data.phoneNumber, data.email))
@@ -220,7 +217,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                                             (implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
       ggId   <- right(getUserGGId(authContext))
-      result <- EitherT[Future,CBCErrors,AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFailedSubscription",
+      result <- eitherT[AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFailedSubscription",
         tags = hc.toAuditTags("CBCRFailedSubscription", "N/A") + ("ggId" -> ggId.authProviderId),
         detail = Json.obj(
           "cbcId"                 -> JsString(cbcId.value),
@@ -239,7 +236,7 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
                                             (implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
       ggId   <- right(getUserGGId(authContext))
-      result <- EitherT[Future,CBCErrors,AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRSubscription",
+      result <- eitherT[AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRSubscription",
         tags = hc.toAuditTags("CBCRSubscription", "N/A") + ("path" -> request.uri, "ggId" -> ggId.authProviderId),
         detail = Json.toJson(subscriptionData)
       )).map {

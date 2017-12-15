@@ -1,8 +1,10 @@
 # microservice specific routes
 
+
 GET        /exit-survey                                   @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.doSurvey
 POST       /exit-survey/submit                            @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.submit
 
+GET        /session-expired                               @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.sessionExpired
 GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
 GET        /cbc-id/entry-form                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
 POST       /cbc-id                                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.submitCBCId
