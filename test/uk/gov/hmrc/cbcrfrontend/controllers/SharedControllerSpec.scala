@@ -36,7 +36,6 @@ import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{TestSecuredActions, TestUsers}
-import uk.gov.hmrc.cbcrfrontend.controllers.right
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.emailaddress.EmailAddress
@@ -92,10 +91,10 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
     super.afterEach()
   }
 
-  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn right(AffinityGroup("Organisation",Some("admin")))
+  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(AffinityGroup("Organisation",Some("admin")))
   private val affinityGroupOrgansiation = AffinityGroup("Organisation", Some("admin"))
 
-  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn right(affinityGroupOrgansiation)
+  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(affinityGroupOrgansiation)
   when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
   when(enrol.getEnrolments(any())) thenReturn Future.successful(List.empty)
   when(runMode.env) thenReturn "Dev"

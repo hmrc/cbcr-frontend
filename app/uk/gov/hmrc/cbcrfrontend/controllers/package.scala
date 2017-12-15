@@ -34,7 +34,7 @@ package uk.gov.hmrc.cbcrfrontend
 import cats.data.EitherT
 import cats.instances.all._
 import play.api.mvc.{AnyContent, Request, Result}
-import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, CBCId}
+import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, CBCId, ExpiredSession}
 import uk.gov.hmrc.play.frontend.auth.AuthContext
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,7 +45,9 @@ package object controllers {
   //todo refactor everything to use these
   def pure[A](a:A)(implicit ec:ExecutionContext) = EitherT.pure[Future,CBCErrors,A](a)
   def right[A](a:Future[A])(implicit ec:ExecutionContext) = EitherT.right[Future,CBCErrors,A](a)
+  def rightE[A](a:Future[A])(implicit ec:ExecutionContext) = EitherT.right[Future,ExpiredSession,A](a)
   def left[A](e:CBCErrors)(implicit ec:ExecutionContext) = EitherT.left[Future,CBCErrors,A](Future.successful(e))
+  def leftE[A](e:ExpiredSession)(implicit ec:ExecutionContext) = EitherT.left[Future,ExpiredSession,A](Future.successful(e))
   def fromEither[A,B](e:Either[A,B])(implicit ec:ExecutionContext)  = EitherT.fromEither[Future](e)
   def eitherT[A](a:Future[Either[CBCErrors,A]]) = EitherT[Future,CBCErrors,A](a)
 }

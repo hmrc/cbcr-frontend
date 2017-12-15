@@ -243,7 +243,7 @@ class SharedController @Inject()(val sec: SecuredActions,
     val result:ServiceResponse[Result] = for {
       userType <- getUserType(authContext)
       bpr      <- cache.read[BusinessPartnerRecord]
-      utr      <- cache.read[Utr]
+      utr      <- cache.read[Utr].leftMap(s => s:CBCErrors)
     } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), bpr.address.postalCode.orEmpty, utr.value , userType))
 
     result.leftMap(errorRedirect).merge
