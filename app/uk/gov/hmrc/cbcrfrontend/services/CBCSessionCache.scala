@@ -52,8 +52,9 @@ class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with
   def save[T:Writes:TypeTag](body:T)(implicit hc:HeaderCarrier): Future[CacheMap] =
     cache(stripPackage(typeOf[T].toString),body)
 
-  def read[T:Reads:TypeTag](implicit hc:HeaderCarrier): ServiceResponse[T] =
-    eitherT(fetchAndGetEntry(stripPackage(typeOf[T].toString)).map(_.toRight(ExpiredSession(s"Unable to read ${typeOf[T]} from cache"))))
+  def read[T:Reads:TypeTag](implicit hc:HeaderCarrier): EitherT[Future,ExpiredSession,T] = EitherT[Future,ExpiredSession,T](
+    fetchAndGetEntry(stripPackage(typeOf[T].toString)).map(_.toRight(ExpiredSession(s"Unable to read ${typeOf[T]} from cache")))
+  )
 
   def readOption[T:Reads:TypeTag](implicit hc:HeaderCarrier): Future[Option[T]] =
     fetchAndGetEntry(stripPackage(typeOf[T].toString))

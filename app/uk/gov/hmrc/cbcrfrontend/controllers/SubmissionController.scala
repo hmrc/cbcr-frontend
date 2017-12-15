@@ -268,12 +268,10 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
 
 
-  //TODO: fix this
   val submitSummary = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
     val result = for {
-      smd     <- EitherT(generateMetadataFile(cache,authContext).map(_.toEither))
-        .leftMap(errors => UnexpectedState(errors.toList.mkString("\n")))
+      smd     <- EitherT(generateMetadataFile(cache,authContext).map(_.toEither)).leftMap(_.head)
       sd      <- createSummaryData(smd)
     } yield Ok(views.html.submission.submitSummary(includes.phaseBannerBeta(), sd))
     result.fold(
@@ -282,7 +280,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     ).recover{
       case NonFatal(e) =>
         Logger.error(e.getMessage,e)
-        InternalServerError
+        errorRedirect(UnexpectedState(e.getMessage))
     }
 
 

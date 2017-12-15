@@ -45,16 +45,18 @@ import scala.util.control.NonFatal
 package object cbcrfrontend {
 
 
-  type ValidResult[A] = ValidatedNel[BusinessRuleErrors, A]
-  type ValidResultC[A] = ValidatedNel[CBCErrors, A]
-  type FutureValidResultC[A] = Future[ValidResultC[A]]
-  type FutureValidResult[A] = Future[ValidResult[A]]
+  type ValidResult[A]               = ValidatedNel[CBCErrors, A]
+  type CacheResult[A]               = ValidatedNel[ExpiredSession, A]
+  type FutureValidResult[A]         = Future[ValidResult[A]]
+  type FutureCacheResult[A]         = Future[CacheResult[A]]
+  type ValidBusinessResult[A]       = ValidatedNel[BusinessRuleErrors, A]
+  type FutureValidBusinessResult[A] = Future[ValidBusinessResult[A]]
 
-  implicit def applicativeInstance(implicit ec:ExecutionContext):Applicative[FutureValidResult] = Applicative[Future] compose Applicative[ValidResult]
-  implicit def applicativeInstance2(implicit ec:ExecutionContext):Applicative[FutureValidResultC] = Applicative[Future] compose Applicative[ValidResultC]
-  implicit def functorInstance(implicit ec:ExecutionContext):Functor[FutureValidResult] = Functor[Future] compose Functor[ValidResult]
+  implicit def applicativeInstance(implicit ec:ExecutionContext):Applicative[FutureValidBusinessResult] = Applicative[Future] compose Applicative[ValidBusinessResult]
+  implicit def applicativeInstance2(implicit ec:ExecutionContext):Applicative[FutureCacheResult] = Applicative[Future] compose Applicative[CacheResult]
+  implicit def functorInstance(implicit ec:ExecutionContext):Functor[FutureValidBusinessResult] = Functor[Future] compose Functor[ValidBusinessResult]
 
-  implicit def toTheFuture[A](a:ValidResult[A]):FutureValidResult[A] = Future.successful(a)
+  implicit def toTheFuture[A](a:ValidBusinessResult[A]):FutureValidBusinessResult[A] = Future.successful(a)
 
   implicit def resultFuture(r:Result):Future[Result] = Future.successful(r)
 
@@ -102,12 +104,11 @@ package object cbcrfrontend {
       org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
     )))
 
-  //TODO: this
-  def generateMetadataFile(cache: CBCSessionCache, authContext: AuthContext)(implicit hc: HeaderCarrier, ec: ExecutionContext, sec:AuthConnector): FutureValidResultC[SubmissionMetaData] = {
+  def generateMetadataFile(cache: CBCSessionCache, authContext: AuthContext)(implicit hc: HeaderCarrier, ec: ExecutionContext, sec:AuthConnector): Future[ValidatedNel[ExpiredSession,SubmissionMetaData]] = {
 
-    val a: FutureValidResultC[GGId] =  right(getUserGGId(authContext)(cache, sec, hc, ec)).toValidatedNel
+    val ggId: FutureCacheResult[GGId] = EitherT.right[Future, ExpiredSession, GGId](getUserGGId(authContext)(cache, sec, hc, ec)).toValidatedNel
 
-    (a |@|
+    (ggId |@|
       cache.read[BusinessPartnerRecord].toValidatedNel |@|
       cache.read[TIN].toValidatedNel |@|
       cache.read[Hash].toValidatedNel |@|
@@ -134,13 +135,7 @@ package object cbcrfrontend {
           info,
           FileInfo(fileId, envelopeId, metadata.status, metadata.name, metadata.contentType, metadata.length, metadata.created)
         )
-      }.recover{
-      case NonFatal(t) =>
-        Logger.error("Failed to generate metadatafile", t)
-        Future.successful((UnexpectedState(s"Failed to generate metadatafile: ${t.getMessage}"):CBCErrors).invalidNel[SubmissionMetaData])
-
-    }
+      }
   }
-
 
 }

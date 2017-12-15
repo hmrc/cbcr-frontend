@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 import cats.Show
+import cats.kernel.Semigroup
 import cats.syntax.show._
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
@@ -24,6 +25,7 @@ import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
 sealed trait CBCErrors extends Product with Serializable
 
 object CBCErrors {
+
   implicit val show = Show.show[CBCErrors]{
     case UnexpectedState(errorMsg,_) => errorMsg
     case v:ValidationErrors          => v.show

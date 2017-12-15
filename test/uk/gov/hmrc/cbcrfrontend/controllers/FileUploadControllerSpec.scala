@@ -97,9 +97,9 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
     private class SessionCache(_config:Configuration, _http:HttpGet with HttpPut with HttpDelete) extends CBCSessionCache(_config, _http) {
 
-      override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): ServiceResponse[T] = universe.typeOf[T] match {
-        case t if t =:= universe.typeOf[AffinityGroup] => pure(AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None).asInstanceOf[T])
-        case t if t =:= universe.typeOf[CBCId] => left[T]("meh")
+      override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): EitherT[Future,ExpiredSession,T] = universe.typeOf[T] match {
+        case t if t =:= universe.typeOf[AffinityGroup] => EitherT.pure[Future,ExpiredSession,T](AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None).asInstanceOf[T])
+        case t if t =:= universe.typeOf[CBCId] => leftE[T](ExpiredSession("meh"))
       }
 
       override def readOption[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] = universe.typeOf[T] match {
@@ -299,7 +299,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
         when(fuService.getFile(any(),any())(any(),any(),any())) thenReturn right(validFile)
         when(fuService.getFileMetaData(any(),any())(any(),any(),any())) thenReturn right[Option[FileMetadata]](Some(md.copy(name = "bad.zip")))
-        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn right(CBCId.create(1).getOrElse(fail("baaa")))
+        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn rightE(CBCId.create(1).getOrElse(fail("baaa")))
         when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache",Map.empty))
         val result = Await.result(controller.fileValidate("test","test")(request), 5.second)
         result.header.headers("Location") should endWith("invalid-file-type")
