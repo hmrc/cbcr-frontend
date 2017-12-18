@@ -64,7 +64,7 @@ subscribeMatchFound.mainHeading=Check the company or partnership details
 subscribeMatchFound.businessDetails.name=UK-registered company or partnership
 subscribeMatchFound.businessDetails.postcode=Postcode
 subscribeMatchFound.businessDetails.utr=Unique Taxpayer Reference
-subscribeMatchFound.businessDetails.advice=If these details aren''t correct, go back and enter a different unique taxpayer reference and postcode.
+subscribeMatchFound.businessDetails.advice=If these details aren''t correct, go back and enter a different Unique Taxpayer Reference and postcode.
 
 subscribeSuccessCbcId.mainHeading=Registration successful
 subscribeSuccessCbcId.subHeading=The country-by-country ID is
@@ -144,7 +144,7 @@ submitInfoFilingType.localFiling.label=A report covering the UK only, for the UK
 submitInfoUltimateParentEntity.mainHeading=What Ultimate Parent Entity are you reporting for?
 submitInfoUltimateParentEntity.upe.label=Ultimate Parent Entity name
 submitInfoUltimateParentEntity.upe.error.header=You haven''t entered the name of the group parent business
-submitInfoUltimateParentEntity.upe.error=Enter the group parent business name
+submitInfoUltimateParentEntity.upe.error=Enter the Ultimate Parent Entity name
 
 submitSuccessReceipt.confirmationNumberLabel=Your confirmation number is:
 submitSuccessReceipt.submissionDateLabel=Report received on
@@ -246,5 +246,5 @@ notAuthorised.assistant.button=Return to start page
 
 utrCheck.mainHeading=Enter the Unique Taxpayer Reference of the UK-registered company or partnership that''s sending a report
 utrCheck.label=Unique Taxpayer Reference
-utrCheck.error=Enter a unique taxpayer reference of at least 10 characters
-utrCheck.error.header=The unique taxpayer reference must contain at least 10 characters
+utrCheck.error=Enter a Unique Taxpayer Reference of at least 10 characters
+utrCheck.error.header=The Unique Taxpayer Reference must contain at least 10 characters
