@@ -1,6 +1,6 @@
-sessionExpired.mainHeading=Your session has expired
-sessionExpired.continue=Please begin your journey again from the
-sessionExpired.link=start
+sessionExpired.mainHeading=Your session has ended
+sessionExpired.continue=As you've been inactive for 20 minutes, you''ll need to start again.
+sessionExpired.link=Return to start page
 
 survey.mainHeading=You''re now signed out
 survey.header=You''re now signed out
