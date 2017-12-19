@@ -142,9 +142,9 @@ class SharedController @Inject()(val sec: SecuredActions,
   }
 
   def downloadGuide = Action.async{ implicit request =>
-    val schemaVer: String = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration ${runMode.env}.oecd-schema-version"))
-    val file: Path = Paths.get(s"conf/downloads/HMRC_CbC_XML_User_Guide_V${schemaVer}.pdf")
-    Future.successful(Ok.sendPath(file,inline = false,fileName = _ => s"HMRC_CbC_XML_User_Guide_V${schemaVer}.pdf"))
+    val guideVer: String = configuration.getString(s"${runMode.env}.oecd-guide-version").getOrElse(throw new Exception(s"Missing configuration ${runMode.env}.oecd-guide-version"))
+    val file: Path = Paths.get(s"conf/downloads/HMRC_CbC_XML_User_Guide_V$guideVer.pdf")
+    Future.successful(Ok.sendPath(file,inline = false,fileName = _ => s"HMRC_CbC_XML_User_Guide_V$guideVer.pdf"))
   }
 
   def guidance =  Action.async { implicit request =>
