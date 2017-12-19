@@ -216,7 +216,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
     val b = Files.TemporaryFile(name, ".txt")
     val writer = new PrintWriter(b.file)
-    writer.write(e.map(_.show).mkString("\n"))
+    writer.write(e.map(_.show).mkString("\r\n"))
     writer.flush()
     writer.close()
     b.file
