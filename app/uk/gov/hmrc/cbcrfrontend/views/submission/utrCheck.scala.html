@@ -40,7 +40,7 @@ implicit request: Request[_], messages: Messages)
         @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
         @CSRF.formField
         <fieldset>
-            @formFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form)
+            @formFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form, Some(Messages("utrCheck.hint")))
         </fieldset>
         <p><button type="submit" class="button">@Messages("form.controls.continue")</button></p>
         }

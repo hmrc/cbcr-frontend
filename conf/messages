@@ -59,7 +59,7 @@ subscribeFirst.alreadyRegistered=If the company or partnership is not registered
 subscribeFirst.alreadyRegistered2=digitalservice.cbc@hmrc.gsi.gov.uk
 subscribeFirst.alreadyRegistered2.link=contact HMRC
 subscribeFirst.utr.label=Unique Taxpayer Reference
-subscribeFirst.utr.hint=This can be for Corporation Tax, or Self Assessment for a business partnership
+subscribeFirst.utr.hint=This can be for Corporation Tax, or Self-Assessment for a business partnership. Enter the last 10 digits, with no spaces.
 subscribeFirst.postcode.label=UK postcode
 subscribeFirst.error.message.utr-empty=Enter a Unique Taxpayer Reference
 subscribeFirst.error.message.postcode-empty=Enter a UK postcode
@@ -250,5 +250,7 @@ notAuthorised.assistant.button=Return to start page
 
 utrCheck.mainHeading=Enter the Unique Taxpayer Reference of the UK-registered company or partnership that''s sending a report
 utrCheck.label=Unique Taxpayer Reference
-utrCheck.error=Enter a Unique Taxpayer Reference of at least 10 characters
-utrCheck.error.header=The Unique Taxpayer Reference must contain at least 10 characters
+
+utrCheck.hint=This can be for Corporation Tax, or Self-Assessment for a business partnership. Enter the last 10 digits, with no spaces.
+utrCheck.error=Enter a unique taxpayer reference of at least 10 characters
+utrCheck.error.header=The unique taxpayer reference must contain at least 10 characters
