@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 import cats.Show
+import cats.kernel.Semigroup
 import cats.syntax.show._
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
@@ -24,10 +25,12 @@ import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
 sealed trait CBCErrors extends Product with Serializable
 
 object CBCErrors {
+
   implicit val show = Show.show[CBCErrors]{
     case UnexpectedState(errorMsg,_) => errorMsg
     case v:ValidationErrors          => v.show
     case InvalidSession              => InvalidSession.toString
+    case ExpiredSession(msg)         => msg
   }
 }
 
@@ -36,6 +39,7 @@ object UnexpectedState{
   implicit val invalidStateFormat: OFormat[UnexpectedState] = Json.format[UnexpectedState]
 }
 
+case class ExpiredSession(msg:String) extends CBCErrors
 case object InvalidSession extends CBCErrors
 sealed trait ValidationErrors extends CBCErrors
 
