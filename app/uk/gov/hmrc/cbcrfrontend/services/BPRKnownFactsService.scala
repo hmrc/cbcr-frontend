@@ -18,24 +18,20 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.{EitherT, OptionT}
+import cats.data.OptionT
 import cats.instances.future._
 import play.api.Logger
 import play.api.libs.json.Json
-import play.api.mvc.Request
-import uk.gov.hmrc.cbcrfrontend.{FrontendAuditConnector, getUserGGId}
+import uk.gov.hmrc.cbcrfrontend.FrontendAuditConnector
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
-import uk.gov.hmrc.cbcrfrontend.controllers.{eitherT, right}
-import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import uk.gov.hmrc.play.frontend.auth.AuthContext
 import uk.gov.hmrc.play.http.{HeaderCarrier, NotFoundException}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import uk.gov.hmrc.play.audit.AuditExtensions._
 
 /**
   * Use the provided KnownFactsConnector to query a UTR
