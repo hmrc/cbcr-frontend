@@ -16,13 +16,18 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import javax.inject.{Inject,Singleton}
+import javax.inject.{Inject, Singleton}
 
 import cats.data.OptionT
 import cats.instances.future._
+import play.api.Logger
 import play.api.libs.json.Json
+import uk.gov.hmrc.cbcrfrontend.FrontendAuditConnector
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
-import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, BusinessPartnerRecord}
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.play.audit.AuditExtensions._
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.http.{HeaderCarrier, NotFoundException}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -36,11 +41,16 @@ import scala.concurrent.Future
 @Singleton
 class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector) {
 
+  lazy val audit: AuditConnector = FrontendAuditConnector
+  private val AUDIT_TAG = "CBCRBPRKnowFacts"
+
   private def sanitisePostCode(s:String) : String = s.toLowerCase.replaceAll("\\s", "")
 
   def checkBPRKnownFacts(kf:BPRKnownFacts)(implicit hc:HeaderCarrier) : OptionT[Future,BusinessPartnerRecord] = {
     val response = OptionT(dc.lookup(kf.utr.value).map { response =>
-      Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
+      val bpr: Option[BusinessPartnerRecord] = Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
+      auditBpr(bpr, kf)
+      bpr
     }.recover{
       case _:NotFoundException=> None
     })
@@ -51,6 +61,21 @@ class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector) {
       if(postCodeMatches) Some(r)
       else None
     }
+  }
+
+  private def auditBpr(bpr: Option[BusinessPartnerRecord], kf:BPRKnownFacts)
+              (implicit hc: HeaderCarrier): Future[Unit] = {
+
+    bpr.fold(Future.successful(Logger.error("Des Connector did not return anything from lookup")))(bpr =>
+      audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", AUDIT_TAG,
+        tags = hc.toAuditTags(AUDIT_TAG, "N/A") + ("utr" -> kf.utr.utr, "postcode" -> kf.postCode),
+        detail = Json.toJson(bpr)
+      )).map {
+        case AuditResult.Disabled => Logger.info("Audit disabled for BPRKnownFactsService")
+        case AuditResult.Success => Logger.info("Successful Audit for BPRKnownFactsService")
+        case AuditResult.Failure(msg, _) => Logger.error(s"Unable to audit a BPRKnowFacts lookup: $msg")
+      }
+    )
   }
 
 }
