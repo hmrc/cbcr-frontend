@@ -27,31 +27,31 @@ class AffinityGroupPredicateSpec extends TestPredicate {
 
   "A AffinityGroupPredicate " should {
     "return true for an Organisation as an Admin" in {
-      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
+      when(cache.readOption[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
       val result =  await(new AffinityGroupPredicate(Organisation(true))(authConnector, cache, ec).apply(authContext, request))
       result.isVisible shouldBe true
     }
 
     "return false for an Organisation as an Admin" in {
-      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", None)))
+      when(cache.readOption[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", None)))
       val result =  await(new AffinityGroupPredicate(Organisation(true))(authConnector, cache, ec).apply(authContext, request))
       result.isVisible shouldBe false
     }
 
     "return false for an Individual" in {
-      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Individual", None)))
+      when(cache.readOption[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Individual", None)))
       val result =  await(new AffinityGroupPredicate(Organisation(true))(authConnector, cache, ec).apply(authContext, request))
       result.isVisible shouldBe false
     }
 
     "return true for an Individual" in {
-      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Individual", None)))
+      when(cache.readOption[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Individual", None)))
       val result =  await(new AffinityGroupPredicate(Individual())(authConnector, cache, ec).apply(authContext, request))
       result.isVisible shouldBe true
     }
 
     "return true for an Agent" in {
-      when(cache.read[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent", None)))
+      when(cache.readOption[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent", None)))
       val result =  await(new AffinityGroupPredicate(Agent())(authConnector, cache, ec).apply(authContext, request))
       result.isVisible shouldBe true
     }

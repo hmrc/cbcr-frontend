@@ -32,6 +32,7 @@ import javax.inject.Singleton
 import play.api.Logger
 import uk.gov.hmrc.play.config.ServicesConfig
 import cats.instances.future._
+import uk.gov.hmrc.cbcrfrontend.controllers._
 @Singleton
 class SubscriptionDataService extends ServicesConfig{
 
@@ -45,7 +46,7 @@ class SubscriptionDataService extends ServicesConfig{
       utr => url.url + s"/cbcr/subscription-data/utr/${utr.utr}",
       id  => url.url + s"/cbcr/subscription-data/cbc-id/$id"
     )
-    EitherT[Future,CBCErrors, Option[SubscriptionDetails]](
+    eitherT[Option[SubscriptionDetails]](
       WSHttp.GET[HttpResponse](fullUrl).map { response =>
         response.json.validate[SubscriptionDetails].fold(
           errors  => Left[CBCErrors,Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
@@ -62,7 +63,7 @@ class SubscriptionDataService extends ServicesConfig{
   }
   def updateSubscriptionData(cbcId:CBCId,data:SubscriberContact)(implicit hc: HeaderCarrier, ec:ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data/$cbcId"
-    EitherT[Future,CBCErrors, String](
+    eitherT(
       WSHttp.PUT[SubscriberContact,HttpResponse](fullUrl,data).map { response =>
         response.status match {
           case Status.OK => Right[CBCErrors,String](response.body)
@@ -76,7 +77,7 @@ class SubscriptionDataService extends ServicesConfig{
 
   def saveSubscriptionData(data:SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data"
-    EitherT[Future,CBCErrors, String](
+    eitherT(
       WSHttp.POST[SubscriptionDetails,HttpResponse](fullUrl,data).map { response =>
         response.status match {
           case Status.OK => Right[CBCErrors,String](response.body)
@@ -98,7 +99,7 @@ class SubscriptionDataService extends ServicesConfig{
         id  => EitherT.pure[Future,CBCErrors,Option[CBCId]](Some(id))
       )
       result <- cbc.fold(EitherT.pure[Future,CBCErrors,Option[String]](None))(id =>
-        EitherT[Future, CBCErrors, Option[String]](
+        eitherT(
           WSHttp.DELETE[HttpResponse](fullUrl(id)).map { response =>
             Right[CBCErrors, Option[String]](Some(response.body))
           }.recover {
