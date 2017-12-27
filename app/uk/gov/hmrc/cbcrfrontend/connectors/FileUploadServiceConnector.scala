@@ -16,37 +16,23 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import java.io.{File, InputStream}
-
 import play.api.Logger
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.core.CBCErrorOr
-import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.HttpResponse
-
-import scala.xml.Source
 
 class FileUploadServiceConnector() {
 
   val EnvelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
 
 
-  def envelopeRequest(cbcrsUrl: String, expiryDate: String): JsObject = {
+  def envelopeRequest(cbcrsUrl: String, expiryDate: Option[String]): JsObject = {
 
-    Logger.debug("CBCR URL: "+cbcrsUrl)
-
-    Json.obj(
-      "callbackUrl" -> s"$cbcrsUrl/cbcr/file-upload-response",
-      "expiryDate" -> s"$expiryDate",
-      "metadata" -> Json.obj(
-        "application" -> "Country By Country Reporting Service"
-      ),
-      "constraints" -> 	Json.obj(
-        "maxSize"-> "50MB",
-        "maxSizePerItem"-> "50MB"
-      )
-    )
+    val jsObject = Json.toJson(EnvelopeRequest(cbcrsUrl, expiryDate, MetaData(), Constraints())).as[JsObject]
+    Logger.info(s"Envelope Request built as $jsObject")
+    jsObject
   }
 
   def extractEnvelopId(resp: HttpResponse): CBCErrorOr[EnvelopeId] = {
@@ -83,3 +69,6 @@ class FileUploadServiceConnector() {
     }
   }
 }
+
+
+
