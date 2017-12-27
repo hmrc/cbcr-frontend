@@ -46,15 +46,23 @@ import scala.concurrent.{ExecutionContext, Future}
 class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector,ws:WSClient, configuration: Configuration)(implicit ac:ActorSystem) {
 
   implicit val materializer = ActorMaterializer()
-  val envelopeExpiryDays = configuration.getInt("envelope-expire-days").getOrElse(throw new Exception("Missing configuration key: envelope-expire-days"))
+
+
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext, fusUrl: ServiceUrl[FusUrl], cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[EnvelopeId] = {
-    Logger.debug("Country by Country: Creating an envelope for file upload")
+
+    val envelopeExpiryDays: Option[Int] = configuration.getInt("envelope-expire-days")
+
     val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-    def envelopeExpiryDate(numberOfDays: Int) = LocalDateTime.now.plusDays(numberOfDays).format(formatter)
+
+     def envelopeExpiryDate(numberOfDays: Option[Int]) = numberOfDays match  {
+      case Some(n) => Some(LocalDateTime.now.plusDays(n).format(formatter))
+      case _ => None
+    }
 
     EitherT(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl.url, envelopeExpiryDate(envelopeExpiryDays)))).map(fusConnector.extractEnvelopId))
   }
+
 
   def uploadFile(xmlFile: java.io.File, envelopeId: String, fileId: String)(
                       implicit
