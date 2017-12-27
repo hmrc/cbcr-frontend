@@ -22,33 +22,55 @@ import java.time.format.DateTimeFormatter
 import org.scalatest.{EitherValues, FlatSpec, Matchers}
 import play.api.libs.json.Json
 import uk.gov.hmrc.play.http.HttpResponse
+import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.io.Source
 
 
-class FileUploadControllerServiceConnectorSpec extends FlatSpec with Matchers with EitherValues {
+class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers with EitherValues {
 
 
 
-  "envelopeRequest" should "return the expected Json Object" in {
-    val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-    val envelopeExpiryDate = LocalDateTime.now.plusDays(7).format(formatter)
+  "A FileUploadControllerServiceConnectorSpec " should {
+    "create the expected Json Object when the expiry Date is specified" in {
+      val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+      val envelopeExpiryDate = LocalDateTime.now.plusDays(7).format(formatter)
 
-    val expectedEnvelopeRequest = Json.obj(
-      "callbackUrl" -> "http://localhost:9797/cbcr/file-upload-response",
-      "expiryDate" -> s"$envelopeExpiryDate",
-      "metadata" -> Json.obj(
-        "application" -> "Country By Country Reporting Service"
-      ),
-      "constraints" -> 	Json.obj(
-        "maxSize"-> "50MB",
-        "maxSizePerItem"-> "50MB"
+      val expectedEnvelopeRequest = Json.obj(
+        "callbackUrl" -> "http://localhost:9797/cbcr/file-upload-response",
+        "expiryDate" -> s"$envelopeExpiryDate",
+        "metadata" -> Json.obj(
+          "application" -> "Country By Country Reporting Service"
+        ),
+        "constraints" -> Json.obj(
+          "maxSize" -> "50MB",
+          "maxSizePerItem" -> "50MB"
+        )
       )
-    )
 
-    val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", envelopeExpiryDate)
+      val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797/cbcr/file-upload-response", Some(envelopeExpiryDate))
 
-    actualEnvelopeRequest should be (expectedEnvelopeRequest)
+      actualEnvelopeRequest should be(expectedEnvelopeRequest)
+    }
+
+    "return the expected Json Object when the expiry Date is Not specified" in {
+      val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+      val envelopeExpiryDate = LocalDateTime.now.plusDays(7).format(formatter)
+
+      val expectedEnvelopeRequest = Json.obj(
+        "callbackUrl" -> "http://localhost:9797/cbcr/file-upload-response",
+        "metadata" -> Json.obj(
+          "application" -> "Country By Country Reporting Service"
+        ),
+        "constraints" -> Json.obj(
+          "maxSize" -> "50MB",
+          "maxSizePerItem" -> "50MB"
+        )
+      )
+
+      val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797/cbcr/file-upload-response", None)
+
+      actualEnvelopeRequest should be(expectedEnvelopeRequest)
+    }
   }
-
 }
