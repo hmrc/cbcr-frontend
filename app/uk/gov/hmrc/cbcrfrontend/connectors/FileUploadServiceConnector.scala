@@ -30,7 +30,8 @@ class FileUploadServiceConnector() {
 
   def envelopeRequest(cbcrsUrl: String, expiryDate: Option[String]): JsObject = {
 
-    val jsObject = Json.toJson(EnvelopeRequest(cbcrsUrl, expiryDate, MetaData(), Constraints())).as[JsObject]
+    //@todo refactor the hardcode of the /cbcr/file-upload-response
+    val jsObject = Json.toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints())).as[JsObject]
     Logger.info(s"Envelope Request built as $jsObject")
     jsObject
   }

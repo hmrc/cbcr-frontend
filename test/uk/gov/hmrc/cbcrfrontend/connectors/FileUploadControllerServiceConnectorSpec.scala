@@ -48,7 +48,7 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
         )
       )
 
-      val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797/cbcr/file-upload-response", Some(envelopeExpiryDate))
+      val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", Some(envelopeExpiryDate))
 
       actualEnvelopeRequest should be(expectedEnvelopeRequest)
     }
@@ -68,7 +68,7 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
         )
       )
 
-      val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797/cbcr/file-upload-response", None)
+      val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", None)
 
       actualEnvelopeRequest should be(expectedEnvelopeRequest)
     }
