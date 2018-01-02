@@ -18,7 +18,6 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.{File, FileInputStream}
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
@@ -28,10 +27,12 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
-import play.api.{Configuration, Logger}
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import play.api.http.Status
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
+import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
@@ -46,15 +47,23 @@ import scala.concurrent.{ExecutionContext, Future}
 class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector,ws:WSClient, configuration: Configuration)(implicit ac:ActorSystem) {
 
   implicit val materializer = ActorMaterializer()
-  val envelopeExpiryDays = configuration.getInt("envelope-expire-days").getOrElse(throw new Exception("Missing configuration key: envelope-expire-days"))
+
+
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext, fusUrl: ServiceUrl[FusUrl], cbcrsUrl: ServiceUrl[CbcrsUrl] ): ServiceResponse[EnvelopeId] = {
-    Logger.debug("Country by Country: Creating an envelope for file upload")
-    val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-    def envelopeExpiryDate(numberOfDays: Int) = LocalDateTime.now.plusDays(numberOfDays).format(formatter)
+
+    val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+
+    val envelopeExpiryDays: Option[Int] = configuration.getInt("envelope-expire-days")
+
+     def envelopeExpiryDate(numberOfDays: Option[Int]) = numberOfDays match  {
+      case Some(n) => Some(formatter.print(new DateTime().plusDays(n)))
+      case _ => None
+    }
 
     EitherT(HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl.url, envelopeExpiryDate(envelopeExpiryDays)))).map(fusConnector.extractEnvelopId))
   }
+
 
   def uploadFile(xmlFile: java.io.File, envelopeId: String, fileId: String)(
                       implicit
@@ -63,6 +72,7 @@ class FileUploadService @Inject() (fusConnector: FileUploadServiceConnector,ws:W
                       fusFeUrl: ServiceUrl[FusFeUrl]
                 ): ServiceResponse[String] = {
 
+    //@todo replace this wit the Joda Equivalent
     val fileNamePrefix = s"oecd-${LocalDateTime.now}"
     val xmlByteArray: Array[Byte] = org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(xmlFile))
 
