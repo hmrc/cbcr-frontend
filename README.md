@@ -10,4 +10,3 @@ This code is open source software licensed under the [Apache 2.0 License]("http:
 ### Submission Metadata
 
 A sample submission metadata json can be found [here](docs/metadata.json)
- 
