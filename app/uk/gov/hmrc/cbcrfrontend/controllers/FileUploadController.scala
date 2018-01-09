@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,8 +113,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
               s"redirect-error-url=$fileUploadErrorRedirectUrl"
             fileName        = s"oecd-${LocalDateTime.now}-cbcr.xml"
           } yield Ok(submission.fileupload.chooseFile(fileUploadUrl, fileName, includes.asideBusiness(), includes.phaseBannerBeta()))
-        case _ =>
-          pure(Redirect(routes.SubmissionController.notRegistered()))
+        case _ => pure(Redirect(routes.SubmissionController.notRegistered()))
       }
     } yield result
 
@@ -123,11 +122,21 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
   }
 
-  def fileUploadProgress(envelopeId: String, fileId: String) = sec.AuthenticatedAction{ _ => implicit request =>
-    val hostName = FrontendAppConfig.cbcrFrontendHost
+  def fileUploadProgress(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ _ => implicit request =>
+    val hostName             = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
-    Ok(submission.fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
-      envelopeId, fileId, hostName, assetsLocationPrefix))
+
+    cache.read[EnvelopeId].subflatMap{ e =>
+      if(e.value != envelopeId) {
+        Logger.error("BAD_ENVELOPE_ID")
+        cache.remove()
+        Left(UnexpectedState(s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
+      } else {
+        Right(Ok(submission.fileupload.fileUploadProgress(includes.asideBusiness(), includes.phaseBannerBeta(),
+          envelopeId, fileId, hostName, assetsLocationPrefix)))
+      }
+    }.leftMap(errorRedirect).merge
+
   }
 
 
