@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     private class SessionCache(_config:Configuration, _http:HttpGet with HttpPut with HttpDelete) extends CBCSessionCache(_config, _http) {
 
       override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): EitherT[Future,ExpiredSession,T] = universe.typeOf[T] match {
+        case t if t =:= universe.typeOf[EnvelopeId] => EitherT.pure[Future,ExpiredSession,T](EnvelopeId("test").asInstanceOf[T])
         case t if t =:= universe.typeOf[AffinityGroup] => EitherT.pure[Future,ExpiredSession,T](AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None).asInstanceOf[T])
         case t if t =:= universe.typeOf[CBCId] => leftE[T](ExpiredSession("meh"))
       }
@@ -110,7 +111,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       override def readOrCreate[T: Format : universe.TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] = universe.typeOf[T] match {
         case t if t =:= universe.typeOf[FileId] => OptionT.some[Future, FileId](FileId("fileId")).asInstanceOf[OptionT[Future, T]]
         case t if t =:= universe.typeOf[EnvelopeId] => succeed match {
-          case true =>  OptionT.some[Future, EnvelopeId](EnvelopeId("envId")).asInstanceOf[OptionT[Future, T]]
+          case true =>  OptionT.some[Future, EnvelopeId](EnvelopeId("test")).asInstanceOf[OptionT[Future, T]]
           case false => OptionT.none
         }
       }
@@ -238,6 +239,11 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       val request = addToken(FakeRequest("GET", "fileUploadProgress/envelopeId/fileId"))
       val result = partiallyMockedController.fileUploadProgress("test","test")(request)
       status(result) shouldBe Status.OK
+    }
+    "return a 500 if the envelopeId doesn't match with the cache" in {
+      val request = addToken(FakeRequest("GET", "fileUploadProgress/envelopeId/fileId"))
+      val result = partiallyMockedController.fileUploadProgress("test2","test")(request)
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
     "direct to technical-difficulties" when {
       "the call to get the file metadata fails" in{
