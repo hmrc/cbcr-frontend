@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.model
 import cats.Show
 import cats.kernel.Semigroup
 import cats.syntax.show._
+import play.api.Logger
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
 
@@ -50,7 +51,12 @@ sealed trait BusinessRuleErrors extends ValidationErrors
 
 
 case object OriginalSubmissionNotFound extends BusinessRuleErrors
-case object FileNameError extends BusinessRuleErrors
+
+case class FileNameError(foundName:String, expectedName:String) extends BusinessRuleErrors
+object FileNameError {
+  implicit val format = Json.format[FileNameError]
+}
+
 case object TestDataError extends BusinessRuleErrors
 case object SendingEntityError extends BusinessRuleErrors
 case object ReceivingCountryError extends BusinessRuleErrors
@@ -98,7 +104,7 @@ object BusinessRuleErrors {
       case TestDataError             => JsString(TestDataError.toString)
       case SendingEntityError        => JsString(SendingEntityError.toString)
       case ReceivingCountryError     => JsString(ReceivingCountryError.toString)
-      case FileNameError             => JsString(FileNameError.toString)
+      case fne:FileNameError         => Json.toJson(fne)
       case MessageTypeIndicError     => JsString(MessageTypeIndicError.toString)
       case m:InvalidXMLError         => JsString(m.toString)
       case InvalidDocRefId           => JsString(InvalidDocRefId.toString)
@@ -119,10 +125,11 @@ object BusinessRuleErrors {
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
-      Json.fromJson[MessageRefIDError](json).orElse[BusinessRuleErrors]{
+      Json.fromJson[MessageRefIDError](json)
+        .orElse[BusinessRuleErrors](Json.fromJson(json)(FileNameError.format))
+        .orElse[BusinessRuleErrors]{
         json.asOpt[String].map(_.toLowerCase.trim) match {
           case Some("messagetypeindicerror") => JsSuccess(MessageTypeIndicError)
-          case Some("filenameerror")         => JsSuccess(FileNameError)
           case Some("testdataerror")         => JsSuccess(TestDataError)
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
           case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
@@ -152,7 +159,7 @@ object BusinessRuleErrors {
     case TestDataError         => "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD11OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
     case SendingEntityError    => "The CBCId in the SendingEntityIN field has not been registered"
     case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
-    case FileNameError         => "MessageRefID must match filename"
+    case FileNameError(f,e)         => s"The filename and messageRefID should match." +"\r\n" + s"You entered this filename: $f" +"\r\n" + s"It should read: $e"
     case MessageTypeIndicError => "Error DocTypeIndic (Correction): If MessageTypeIndic is provided and completed with \"CBC402\" message can only contain DocTypeIndic \"OECD2\" or \"OECD3\". (With 1 execption ReportingEntity can contain DocTypeIndic \"OECD0\" where ReportingEntity information is unchanged. \"OECD0\" cannot be used in DocSpec\\DocTypeIndic for CbCReports or AdditionalInfo)"
     case CorrDocRefIdInvalidRecord => "Error Code 80003 CorrDocRefId (record no longer valid): The corrected record is no longer valid (invalidated or outdated by a previous correction message). As a consequence, no further information should have been received on this version of the record."
     case CorrDocRefIdUnknownRecord => "Error Code 80002 CorrDocRefId (unknown record): The CorrDocRefId refers to an unknown record"
