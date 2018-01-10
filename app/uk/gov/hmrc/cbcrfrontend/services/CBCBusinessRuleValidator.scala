@@ -325,7 +325,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   /** Ensure the provided filename matches the given MessageRefID (minus the extension) */
   private def validateFileName(in:XMLInfo, fileName:String) : ValidBusinessResult[XMLInfo] =
     if(fileName.split("""\.""").headOption.contains(in.messageSpec.messageRefID.show)) in.validNel
-    else { FileNameError.invalidNel }
+    else { FileNameError(fileName, s"${in.messageSpec.messageRefID.show}.xml").invalidNel }
 
   /**
     * Ensure SendingEntityIn CBCId is:
