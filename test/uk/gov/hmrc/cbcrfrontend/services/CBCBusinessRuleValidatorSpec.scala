@@ -222,10 +222,11 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       "Filename does not match MessageRefId" in {
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, "INVALID" + filename), 5.seconds)
+        val invalidFilename = "INVALID" + filename
+        val result = Await.result(validator.validateBusinessRules(validFile, invalidFilename), 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe FileNameError,
+          errors => errors.head shouldBe FileNameError(invalidFilename, filename),
           _ => fail("No FileNameError generated")
         )
       }
