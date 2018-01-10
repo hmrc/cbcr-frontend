@@ -41,20 +41,20 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuit
 
   val bodyKnownFact1: String =
     """{
-      |    "safeId": "XX0000114342996",
+      |    "safeId": "XX0000114342888",
       |    "organisation": {
-      |      "organisationName": "TEVA PHARMA HOLDINGS LIMITED"
+      |      "organisationName": "Foo Ltd"
       |    },
       |    "address": {
-      |      "addressLine1": "RIDINGS POINT WHISTLER DRIVE",
-      |      "addressLine2": "CASTLEFORD",
+      |      "addressLine1": "1 The Street",
+      |      "addressLine2": "HOVE",
       |      "addressLine3": "ENGLAND",
-      |      "postalCode": "WF10 5HX",
+      |      "postalCode": "BN5 4ZZ",
       |      "countryCode": "GB"
       |    }}""".stripMargin
 
   val businessPartnerRecord1: BusinessPartnerRecord = Json.parse(bodyKnownFact1).validate[BusinessPartnerRecord].asOpt.get
-  val kf1 = BPRKnownFacts(Utr("5525118664"), "WF10 5HX")
+  val kf1 = BPRKnownFacts(Utr("7000000002"), "BN5 4ZZ")
 
 
 
@@ -77,7 +77,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuit
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
       when(result.body).thenReturn(bodyKnownFact1)
 
-      val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("5525118664"), "BN3 5XB")).value, 2.second)
+      val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN3 5XB")).value, 2.second)
 
       maybeKnownFact.isDefined shouldBe false
 
@@ -89,7 +89,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuit
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
       when(result.body).thenReturn(bodyKnownFact1)
 
-      val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("5525118664"), "WF105HX")).value, 2.second)
+      val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value, 2.second)
 
       maybeKnownFact.isDefined shouldBe true
 
