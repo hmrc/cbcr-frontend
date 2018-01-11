@@ -29,7 +29,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.json.Json
-import play.api.mvc.{Action, Request, Result}
+import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -50,6 +50,7 @@ import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
@@ -212,6 +213,20 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   }
 
+  def enterSubmitterInfo(authContext: AuthContext)(implicit request:Request[AnyContent]): Future[Result] = {
+
+    cache.readOption[SubmitterInfo].map{ osi =>
+
+      val form = (osi.map(_.fullName) |@| osi.map(_.contactPhone) |@| osi.map(_.email)).map{(name,phone,email) =>
+        submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
+      }.getOrElse(submitterInfoForm)
+
+      Ok(views.html.submission.submitterInfo(includes.asideBusiness(), includes.phaseBannerBeta(), form))
+
+    }
+  }
+
+
   val submitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
       cache.read[CompleteXMLInfo].map(kXml => kXml.reportingEntity.reportingRole match {
@@ -225,10 +240,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
         case CBC702 | CBC703 =>
           cache.save(FilingType(CBC702))
 
-      }).fold(
-        error => errorRedirect(error),
-        _     => Ok(views.html.submission.submitterInfo(includes.asideBusiness(), includes.phaseBannerBeta(), submitterInfoForm))
-      )
+      }).semiflatMap(_ => enterSubmitterInfo(authContext)).leftMap(errorRedirect).merge
+
   }
 
 
