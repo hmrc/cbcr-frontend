@@ -182,10 +182,10 @@ class SharedController @Inject()(val sec: SecuredActions,
 
   def auditBPRKnowFactsFailure(cbcIdFromXml: Option[CBCId], bpr: BusinessPartnerRecord, bPRKnownFacts: BPRKnownFacts)(implicit request:Request[AnyContent]): Unit ={
 
-    val cBCRKnownFactsFailure = "CBCRKnownFactsFailure"
+    val cbcrKnownFactsFailure = "CBCRKnownFactsFailure"
 
-    audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", cBCRKnownFactsFailure,
-        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
+    audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", cbcrKnownFactsFailure,
+        tags = hc.toAuditTags(cbcrKnownFactsFailure, "N/A") + (
           "path"     -> request.uri,
           "cbcIdFromXml" -> cbcIdFromXml.map(cbcid => cbcid.value).getOrElse("No CBCId present"),
           "safeId" -> bpr.safeId,
@@ -194,7 +194,7 @@ class SharedController @Inject()(val sec: SecuredActions,
         )
       )).map {
         case AuditResult.Success         => ()
-        case AuditResult.Failure(msg, _) => Logger.error(s"Failed to audit $cBCRKnownFactsFailure")
+        case AuditResult.Failure(msg, _) => Logger.error(s"Failed to audit $cbcrKnownFactsFailure")
         case AuditResult.Disabled        => ()
       }
   }
