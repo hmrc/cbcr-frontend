@@ -22,7 +22,7 @@ import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -180,6 +180,26 @@ class SharedController @Inject()(val sec: SecuredActions,
   }
 
 
+  def auditBPRKnowFactsFailure(cbcIdFromXml: Option[CBCId], bpr: BusinessPartnerRecord, bPRKnownFacts: BPRKnownFacts)(implicit request:Request[AnyContent]): Unit ={
+
+    val cBCRKnownFactsFailure = "CBCRKnownFactsFailure"
+
+    audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", cBCRKnownFactsFailure,
+        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
+          "path"     -> request.uri,
+          "cbcIdFromXml" -> cbcIdFromXml.map(cbcid => cbcid.value).getOrElse("No CBCId present"),
+          "safeId" -> bpr.safeId,
+          "utr"      -> bPRKnownFacts.utr.utr,
+          "postcode" -> bPRKnownFacts.postCode
+        )
+      )).map {
+        case AuditResult.Success         => ()
+        case AuditResult.Failure(msg, _) => Logger.error(s"Failed to audit $cBCRKnownFactsFailure")
+        case AuditResult.Disabled        => ()
+      }
+  }
+
+
   def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]): Future[Result] =
     getUserType(authContext).semiflatMap{ userType =>
       for {
@@ -206,33 +226,47 @@ class SharedController @Inject()(val sec: SecuredActions,
       } yield result
     }.leftMap(errorRedirect).merge
 
-  val checkKnownFacts = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+
+  val checkKnownFacts: Action[AnyContent] = sec.AsyncAuthenticatedAction() { authContext =>implicit request =>
+
+    def NotFoundView(knownFacts:BPRKnownFacts, userType: UserType): Result = {
+      NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType))
+    }
 
     getUserType(authContext).leftMap(errorRedirect).flatMap { userType =>
 
       knownFactsForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
         formWithErrors => EitherT.left(BadRequest(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))),
         knownFacts =>  for {
-          bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight(
-            NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType))
-          )
-          cbcId               <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
+          bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight{
+            Logger.warn("The BPR was not found when looking it up with the knownFactsService")
+            NotFoundView(knownFacts, userType)
+          }
+          cbcIdFromXml        <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
           subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
           _                   <- EitherT.fromEither[Future](userType match {
             case Agent() if subscriptionDetails.isEmpty =>
-              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType)))
-            case Agent() if subscriptionDetails.flatMap(_.cbcId) != cbcId || cbcId.isEmpty =>
-              Left(NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType)))
+              Logger.error(s"Agent supplying known facts for a UTR that is not registered. Check for an internal error!")
+              Left(NotFoundView(knownFacts, userType))
+            case Agent() if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined => {
+              Logger.warn(s"Agent submitting Xml where the CBCId associated with the UTR does not match that in the Xml File. Request the original Xml File and Known Facts from the Agent")
+              auditBPRKnowFactsFailure(cbcIdFromXml, bpr, knownFacts)
+              Left(NotFoundView(knownFacts, userType))
+            }
+            case Agent() if cbcIdFromXml.isEmpty => {
+              Logger.error(s"Agent submitting Xml where the CBCId is not in the Xml. Check for an internal error!")
+              Left(NotFoundView(knownFacts, userType))
+            }
             case Organisation(_) if subscriptionDetails.isDefined =>
               Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
             case _                                             =>
               Right(())
           })
           _                   <- EitherT.right[Future,Result,Unit](
-                                       (cache.save(bpr) *>
-                                        cache.save(knownFacts.utr) *>
-                                        cache.save(TIN(knownFacts.utr.value,""))
-                                       ).map(_ => ()))
+            (cache.save(bpr) *>
+              cache.save(knownFacts.utr) *>
+              cache.save(TIN(knownFacts.utr.value,""))
+              ).map(_ => ()))
         } yield Redirect(routes.SharedController.knownFactsMatch())
 
       )
