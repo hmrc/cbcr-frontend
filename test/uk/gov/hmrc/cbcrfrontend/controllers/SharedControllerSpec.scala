@@ -268,7 +268,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
     "return 303 when the utr and postcode are valid" in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/chehttps://github.com/hmrc/cbcr/pull/14ckKnownFacts").withJsonBody(Json.toJson(kf)))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
       when(cache.readOption[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation",Some("admin"))))
       when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
@@ -280,7 +280,23 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuit
       result.header.headers("Location") should endWith("/known-facts/match")
     }
 
-    "return 303 when CBCId in KF does not match CBCId in submitted XML"  in {
+
+    "return 303 when the utr and postcode are valid and the postcode is blank" in {
+      val kf = BPRKnownFacts(Utr("7000000002"), "")
+      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("I live far away")), EtmpAddress("Line1", None, None, None, None, "NL"))
+      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checknownFacts").withJsonBody(Json.toJson(kf)))
+      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
+      when(cache.readOption[AffinityGroup](EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation",Some("admin"))))
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
+      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn Future.successful(None)
+      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](None)
+      val result = controller.checkKnownFacts(fakeRequestSubscribe)
+      status(result) shouldBe Status.SEE_OTHER
+      result.header.headers("Location") should endWith("/known-facts/match")
+    }
+
+    "return 404 when CBCId in KF does not match CBCId in submitted XML"  in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
