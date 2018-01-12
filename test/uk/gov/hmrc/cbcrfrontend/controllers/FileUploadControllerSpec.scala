@@ -219,19 +219,19 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   "GET /fileUploadResponse/envelopeId/fileId" should {
     val fakeRequestGetFileUploadResponse  = addToken(FakeRequest("GET", "/fileUploadResponse/envelopeId/fileId"))
     "return 202 when the file is available" in {
-      when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right(Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE", None)):Option[FileUploadCallbackResponse])
-      val result = partiallyMockedController.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse)
+      when(fuService.getFileUploadResponse(any())(any(), any(), any())) thenReturn right(Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE", None)):Option[FileUploadCallbackResponse])
+      val result = partiallyMockedController.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse)
       status(result) shouldBe Status.ACCEPTED
     }
     "return 204" when {
       "the FUS hasn't updated the backend yet" in {
-        when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](None)
-        val result = partiallyMockedController.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse).futureValue
+        when(fuService.getFileUploadResponse(any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](None)
+        val result = partiallyMockedController.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse).futureValue
         status(result) shouldBe Status.NO_CONTENT
       }
       "file is not yet available" in {
-        when(fuService.getFileUploadResponse(any(), any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED",None)): Option[FileUploadCallbackResponse])
-        val result = partiallyMockedController.fileUploadResponse("envelopeId", "fileId")(fakeRequestGetFileUploadResponse).futureValue
+        when(fuService.getFileUploadResponse(any())(any(), any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED",None)): Option[FileUploadCallbackResponse])
+        val result = partiallyMockedController.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse).futureValue
         status(result) shouldBe Status.NO_CONTENT
       }
     }
