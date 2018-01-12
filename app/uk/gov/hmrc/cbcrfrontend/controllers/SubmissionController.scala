@@ -123,6 +123,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       }
       _           <- right(cache.save(SubmissionDate(LocalDateTime.now)))
       _           <- storeOrUpdateReportingEntityData(xml)
+      _           <- createSuccessfulSubmissionAuditEvent(authContext,summaryData)
     } yield Redirect(routes.SubmissionController.submitSuccessReceipt())).leftMap(errorRedirect).merge
   }
 
@@ -321,7 +322,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    val data: EitherT[Future, CBCErrors, (SummaryData, String)] =
+    val data: EitherT[Future, CBCErrors, (Hash, String)] =
       for {
         dataTuple          <- (cache.read[SummaryData] |@| cache.read[SubmissionDate]).tupled
         data               = dataTuple._1
@@ -332,18 +333,14 @@ class SubmissionController @Inject()(val sec: SecuredActions,
                               else  pure(None)
         _                  <- if(sentEmail.getOrElse(false))right(cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
                               else pure(())
-      } yield (data, formattedDate)
+        hash                = data.submissionMetaData.submissionInfo.hash
+      } yield (hash, formattedDate)
 
 
 
-    data.flatMap(t =>
-      createSuccessfulSubmissionAuditEvent(authContext,t._1).map(_ => {
-      (t._1.submissionMetaData.submissionInfo.hash, t._2)
-    })).fold(
+    data.fold[Result](
       (error: CBCErrors) => errorRedirect(error),
-      (tuple: (Hash, String))  => {
-        Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple._2, tuple._1.value))
-      }
+      tuple              => Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple._2, tuple._1.value))
     )
   }
 
