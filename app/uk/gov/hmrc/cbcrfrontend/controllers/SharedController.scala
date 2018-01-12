@@ -68,7 +68,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   val knownFactsForm = Form(
     mapping(
       "utr" -> nonEmptyText.verifying(utrConstraint),
-      "postCode" -> nonEmptyText
+      "postCode" -> text
     )((u,p) => BPRKnownFacts(Utr(u),p))((facts: BPRKnownFacts) => Some(facts.utr.value -> facts.postCode))
   )
 
