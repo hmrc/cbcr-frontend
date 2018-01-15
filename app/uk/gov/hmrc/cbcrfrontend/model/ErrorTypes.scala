@@ -70,6 +70,7 @@ case object CorrDocRefIdMissing extends BusinessRuleErrors
 case object CorrDocRefIdNotNeeded extends BusinessRuleErrors
 case object CorrDocRefIdUnknownRecord extends BusinessRuleErrors
 case object CorrDocRefIdInvalidRecord extends BusinessRuleErrors
+case object CorrDocRefIdDuplicate extends BusinessRuleErrors
 case object DocRefIdDuplicate extends BusinessRuleErrors
 case object DocRefIdInvalidParentGroupElement extends BusinessRuleErrors
 case object CorrDocRefIdInvalidParentGroupElement extends BusinessRuleErrors
@@ -116,6 +117,7 @@ object BusinessRuleErrors {
       case CorrDocRefIdInvalidParentGroupElement => JsString(CorrDocRefIdInvalidParentGroupElement.toString)
       case CorrDocRefIdMissing       => JsString(CorrDocRefIdMissing.toString)
       case CorrDocRefIdNotNeeded     => JsString(CorrDocRefIdNotNeeded.toString)
+      case CorrDocRefIdDuplicate     => JsString(CorrDocRefIdDuplicate.toString)
       case IncompatibleOECDTypes     => JsString(IncompatibleOECDTypes.toString)
       case MessageTypeIndicDocTypeIncompatible => JsString(MessageTypeIndicDocTypeIncompatible.toString)
       case CbcOecdVersionError       => JsString(CbcOecdVersionError.toString)
@@ -137,6 +139,7 @@ object BusinessRuleErrors {
           case Some("invalidcorrdocrefid")       => JsSuccess(InvalidCorrDocRefId)
           case Some("corrdocrefidinvalidrecord") => JsSuccess(CorrDocRefIdInvalidRecord)
           case Some("corrdocrefidunknownrecord") => JsSuccess(CorrDocRefIdUnknownRecord)
+          case Some("corrdocrefidduplicate")     => JsSuccess(CorrDocRefIdDuplicate)
           case Some("docrefidduplicate")         => JsSuccess(DocRefIdDuplicate)
           case Some("docrefidinvalidparentgroupelement") => JsSuccess(DocRefIdInvalidParentGroupElement)
           case Some("corrdocrefidinvalidparentgroupelement") => JsSuccess(CorrDocRefIdInvalidParentGroupElement)
@@ -176,6 +179,7 @@ object BusinessRuleErrors {
     case XmlEncodingError      => """XML encoding must equal UTF8"""
     case OriginalSubmissionNotFound => "Original submission could not be identified"
     case PrivateBetaCBCIdError => """ The country-by-country ID you entered has changed. You will need to use the new ID which we have emailed to you. If you are operating as an agent, contact your client for the new country-by-country ID."""
+    case CorrDocRefIdDuplicate => """Error Code 80011 CorrDocRefId (Duplicate):The same DocRefID cannot be corrected or deleted twice in the same message."""
     case i:InvalidXMLError     => i.toString
   }
 }
