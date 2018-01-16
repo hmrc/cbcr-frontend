@@ -229,7 +229,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     functorInstance.map(
       allDocSpecs.map(validateDocSpec).sequence[FutureValidBusinessResult, DocSpec] *>
       validateDocTypes(allDocSpecs) *>
-      validateDistinctDocRefIds(allDocSpecs.map(_.docRefId))
+      validateDistinctDocRefIds(allDocSpecs.map(_.docRefId)) *>
+      validateDistinctCorrDocRefIds(allDocSpecs.map(_.corrDocRefId).flatten)
     )(_ => in)
 
   }
@@ -244,9 +245,13 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     case _                                       => d.validNel
   }
 
+  /** Ensure that the list of CorrDocRefIds are unique */
+  private def validateDistinctCorrDocRefIds(ids:List[CorrDocRefId]): ValidBusinessResult[Unit] =
+    Either.cond(ids.distinct.lengthCompare(ids.size) == 0, (), CorrDocRefIdDuplicate).toValidatedNel
+
   /** Ensure that the list of DocRefIds are unique */
   private def validateDistinctDocRefIds(ids:List[DocRefId]): ValidBusinessResult[Unit] =
-    Either.cond(ids.distinct.size == ids.size, (), DocRefIdDuplicate).toValidatedNel
+    Either.cond(ids.distinct.lengthCompare(ids.size) == 0, (), DocRefIdDuplicate).toValidatedNel
 
   /** Do further validation on the DocSpec **/
   private def validateDocSpec(d:DocSpec)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[DocSpec] =
@@ -325,7 +330,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   /** Ensure the provided filename matches the given MessageRefID (minus the extension) */
   private def validateFileName(in:XMLInfo, fileName:String) : ValidBusinessResult[XMLInfo] =
     if(fileName.split("""\.""").headOption.contains(in.messageSpec.messageRefID.show)) in.validNel
-    else { FileNameError.invalidNel }
+    else { FileNameError(fileName, s"${in.messageSpec.messageRefID.show}.xml").invalidNel }
 
   /**
     * Ensure SendingEntityIn CBCId is:
