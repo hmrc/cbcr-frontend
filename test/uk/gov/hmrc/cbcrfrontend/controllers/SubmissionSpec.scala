@@ -120,8 +120,18 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   }
 
   "GET /submitter-info" should {
-    "return a 200" in {
+    "return a 200 when SubmitterInfo is populated in cache" in {
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(Some(SubmitterInfo("A Name", None,"0123456",EmailAddress("email@org.com"),None)))
+      when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
+      when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn rightE(keyXMLInfo)
+      when(cache.save[FilingType](any())(EQ(FilingType.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(cache.save[TIN](any())(EQ(TIN.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
+    }
+    "return a 200 when SubmitterInfo is NOT in cache" in {
+      val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
       when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
       when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn rightE(keyXMLInfo)
       when(cache.save[FilingType](any())(EQ(FilingType.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -132,6 +142,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val cache = mock[CBCSessionCache]
       val controller = new SubmissionController(securedActions, fus, docRefService,reportingEntity,mockCBCIdService,mockEmailService)(ec,cache,auth)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
       when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
       when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn rightE(keyXMLInfo)
       when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -144,6 +155,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       val cache = mock[CBCSessionCache]
       val controller = new SubmissionController(securedActions, fus, docRefService,reportingEntity,mockCBCIdService,mockEmailService)(ec,cache,auth)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
       when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn rightE(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702)))
       when(cache.save[FilingType](any())(EQ(FilingType.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
@@ -155,6 +167,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         override lazy val audit = auditMock
       }
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
+      when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
       when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn rightE(keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703)))
       when(cache.save[FilingType](any())(EQ(FilingType.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
       status(controller.submitterInfo(fakeRequestSubmit)) shouldBe Status.OK
@@ -447,6 +460,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
           when(reportingEntity.saveReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Unit](())
           when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
+          when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
           verify(reportingEntity).saveReportingEntityData(any())(any())
         }
@@ -462,6 +477,8 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
           when(reportingEntity.updateReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Unit](())
           when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
+          when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
           verify(reportingEntity).updateReportingEntityData(any())(any())
 
@@ -503,7 +520,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
 
         when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
-        when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
@@ -516,7 +532,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-        when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](false)
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
@@ -531,7 +546,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
         when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
-        when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
@@ -546,7 +560,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
-        when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(Some(ConfirmationEmailSent("yep")))
@@ -560,7 +573,6 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
-        when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)

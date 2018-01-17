@@ -55,9 +55,8 @@ class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector) {
       case _:NotFoundException=> None
     })
     response.subflatMap{ r =>
-      val postCodeMatches = r.address.postalCode.exists{ pc =>
-        sanitisePostCode(pc) == sanitisePostCode(kf.postCode)
-      }
+      val bprPostCode = r.address.postalCode.getOrElse("")
+      val postCodeMatches = sanitisePostCode(bprPostCode) == sanitisePostCode(kf.postCode)
       if(postCodeMatches) Some(r)
       else None
     }

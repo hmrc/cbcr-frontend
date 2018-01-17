@@ -222,10 +222,11 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       "Filename does not match MessageRefId" in {
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, "INVALID" + filename), 5.seconds)
+        val invalidFilename = "INVALID" + filename
+        val result = Await.result(validator.validateBusinessRules(validFile, invalidFilename), 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe FileNameError,
+          errors => errors.head shouldBe FileNameError(invalidFilename, filename),
           _ => fail("No FileNameError generated")
         )
       }
@@ -502,6 +503,26 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         result.fold(
           errors => errors.toList should contain(CorrDocRefIdInvalidParentGroupElement),
           _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+      "when the same CorrDocRefId is used multiple times" in {
+        val validFile = new File("test/resources/cbcr-withCorrRefIdDup.xml")
+        when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(EQ(docRefId4))(any())) thenReturn Future.successful(DoesNotExist)
+
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId4))(any())) thenReturn Future.successful(DoesNotExist)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(CorrDocRefIdDuplicate),
+          _ => fail("No CorrDocRefIdDuplicate error generated")
         )
 
       }

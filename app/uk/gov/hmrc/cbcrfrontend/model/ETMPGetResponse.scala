@@ -31,7 +31,7 @@ class PhoneNumber private(val number:String)
 ***REMOVED***
 object PhoneNumber {
 
-  val pattern = "^[A-Z0-9 )/(-*#]+$"
+  val pattern = "^[0-9 )/(-*#]+$"
 
   def apply(number: String): Option[PhoneNumber] =
     if (number.matches(pattern)) {

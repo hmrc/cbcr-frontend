@@ -20,6 +20,7 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import java.time.format.DateTimeFormatter
 @import helper._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @(phaseBannerBeta: Html, summaryData: SummaryData)(
         implicit request: Request[_], messages: Messages)
@@ -32,78 +33,71 @@
             <h1>
             @Messages("submitSummary.mainHeading")
             </h1>
-            <table class="check-your-answers">
-                <tbody>
-                    <tr>
-                        <th style="white-space: nowrap">
-                        @Messages("submitSummary.table.ultimateParent")
-                        </th>
-                        <td>
-                            @summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity <br />
-                        </td>
 
-                    </tr>
-                    <tr>
-                        <th style="white-space: nowrap">
-                        @Messages("submitSummary.table.utr")
-                        </th>
-                        <td>
-                            @summaryData.submissionMetaData.submissionInfo.tin.value <br />
-                        </td>
+            <div class="tabular-data__entry divider--bottom">
+                <h2 class="tabular-data__heading tabular-data__heading--label">@Messages("submitSummary.companyDetails.heading")</h2>
+                <div class="tabular-data__data-1"></div>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.companyDetails.cbcId")</span>
+                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submissionInfo.cbcId</div>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.companyDetails.companyName")</span>
+                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity</div>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.companyDetails.utr")</span>
+                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submissionInfo.tin.value</div>
+            </div>
+            <br>
 
-                    </tr>
-                    <tr>
-                        <th style="white-space: nowrap">
-                        @Messages("submitSummary.table.filedBy")
-                        </th>
-                        <td>
-                            @summaryData.submissionMetaData.submitterInfo.agencyBusinessName.map(_.name) <br />
-                        </td>
+            <div class="tabular-data__entry divider--bottom">
+                <h2 class="tabular-data__heading tabular-data__heading--label">@Messages("submitSummary.contactDetails.heading")</h2>
+                <a class="tabular-data__data-2" href="@routes.SubmissionController.submitterInfo()">@Messages("submitSummary.contactDetails.change")</a>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.name")</span>
+                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submitterInfo.fullName</div>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.phone")</span>
+                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submitterInfo.contactPhone</div>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.email")</span>
+                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submitterInfo.email.value</div>
+            </div>
+            <br>
 
-                    </tr>
-                    <tr>
-                        <th style="white-space: nowrap">
-                        @Messages("submitSummary.table.filingInfo")
-                        </th>
-                        <td>
-                            <span class="faded-text faded-text--small">Full name:</span><br/>
-                            @summaryData.submissionMetaData.submitterInfo.fullName<br />
-                            <span class="faded-text faded-text--small">Phone number:</span><br/>
-                            @summaryData.submissionMetaData.submitterInfo.contactPhone<br />
-                            <span class="faded-text faded-text--small">Email address:</span><br/>
-                            @summaryData.submissionMetaData.submitterInfo.email.value
-                        </td>
-                        <td><a></a><td/>
-                    </tr>
-                    <tr>
-                        <th style="white-space: nowrap">
-                        @Messages("submitSummary.table.reportDetails")
-                        </th>
-                        <td>
-                            <div>
-                                <p><span class="faded-text faded-text--small">Filename:</span><br />
-                                    @summaryData.submissionMetaData.fileInfo.name
-                                </p>
-                                <p><span class="faded-text faded-text--small">File size:</span><br />
-                                    @summaryData.submissionMetaData.fileInfo.length KB
-                                </p>
-                                <p><span class="faded-text faded-text--small">ReportingPeriod:</span><br />
-                                    @summaryData.xmlInfo.messageSpec.reportingPeriod
-                                </p>
-                                <p><span class="faded-text faded-text--small">Timestamp:</span><br />
-                                    @summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                                </p>
-                            </div>
-                        </td>
+            <div class="tabular-data__entry divider--bottom">
+                <h2 class="tabular-data__heading tabular-data__heading--label">@Messages("submitSummary.reportDetails.heading")</h2>
+                <div class="tabular-data__data-1"></div>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.filename")</span>
+                <div style="word-break: break-all; word-wrap: break-word;" class="tabular-data__data-1">@summaryData.submissionMetaData.fileInfo.name</div>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.fileSize")</span>
+                <div class="tabular-data__data-1">@summaryData.submissionMetaData.fileInfo.length KB</div>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.period")</span>
+                <div class="tabular-data__data-1">@summaryData.xmlInfo.messageSpec.reportingPeriod</div>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.timestamp")</span>
+                <div class="tabular-data__data-1">@summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))</div>
+            </div>
+            <br>
 
-                    </tr>
-                </tbody>
-            </table>
+
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm()) {
                 @CSRF.formField
-                    <div class="form-group">
-                        <p class="important-notice"> <strong> @Messages("submitSummary.declaration.text")</strong><p>
-                    </div>
+                <div class="form-group">
+                    <p>@Messages("submitSummary.declaration.text")<p>
+                </div>
                 <p>
                     <button type="submit" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
                 </p>

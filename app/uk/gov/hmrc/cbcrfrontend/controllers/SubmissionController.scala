@@ -29,7 +29,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.json.Json
-import play.api.mvc.{Action, Request, Result}
+import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -50,6 +50,7 @@ import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
@@ -122,6 +123,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       }
       _           <- right(cache.save(SubmissionDate(LocalDateTime.now)))
       _           <- storeOrUpdateReportingEntityData(xml)
+      _           <- createSuccessfulSubmissionAuditEvent(authContext,summaryData)
     } yield Redirect(routes.SubmissionController.submitSuccessReceipt())).leftMap(errorRedirect).merge
   }
 
@@ -212,6 +214,20 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   }
 
+  def enterSubmitterInfo(authContext: AuthContext)(implicit request:Request[AnyContent]): Future[Result] = {
+
+    cache.readOption[SubmitterInfo].map{ osi =>
+
+      val form = (osi.map(_.fullName) |@| osi.map(_.contactPhone) |@| osi.map(_.email)).map{(name,phone,email) =>
+        submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
+      }.getOrElse(submitterInfoForm)
+
+      Ok(views.html.submission.submitterInfo(includes.asideBusiness(), includes.phaseBannerBeta(), form))
+
+    }
+  }
+
+
   val submitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
       cache.read[CompleteXMLInfo].map(kXml => kXml.reportingEntity.reportingRole match {
@@ -225,10 +241,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
         case CBC702 | CBC703 =>
           cache.save(FilingType(CBC702))
 
-      }).fold(
-        error => errorRedirect(error),
-        _     => Ok(views.html.submission.submitterInfo(includes.asideBusiness(), includes.phaseBannerBeta(), submitterInfoForm))
-      )
+      }).semiflatMap(_ => enterSubmitterInfo(authContext)).leftMap(errorRedirect).merge
+
   }
 
 
@@ -308,7 +322,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    val data: EitherT[Future, CBCErrors, (SummaryData, String)] =
+    val data: EitherT[Future, CBCErrors, (Hash, String)] =
       for {
         dataTuple          <- (cache.read[SummaryData] |@| cache.read[SubmissionDate]).tupled
         data               = dataTuple._1
@@ -319,18 +333,14 @@ class SubmissionController @Inject()(val sec: SecuredActions,
                               else  pure(None)
         _                  <- if(sentEmail.getOrElse(false))right(cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
                               else pure(())
-      } yield (data, formattedDate)
+        hash                = data.submissionMetaData.submissionInfo.hash
+      } yield (hash, formattedDate)
 
 
 
-    data.flatMap(t =>
-      createSuccessfulSubmissionAuditEvent(authContext,t._1).map(_ => {
-      (t._1.submissionMetaData.submissionInfo.hash, t._2)
-    })).fold(
+    data.fold[Result](
       (error: CBCErrors) => errorRedirect(error),
-      (tuple: (Hash, String))  => {
-        Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple._2, tuple._1.value))
-      }
+      tuple              => Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple._2, tuple._1.value))
     )
   }
 
