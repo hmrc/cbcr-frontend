@@ -122,6 +122,14 @@ class FileUploadController @Inject()(val sec: SecuredActions,
 
   }
 
+  /**
+    * Prepare the page to use to embedded the poller js function. This will have been the redirect url passed to
+    * FileUpload during the client side POST.
+    *
+    * @param envelopeId the envelope just uploaded to.
+    * @param fileId the Id of the Xml File just uploaded.
+    * @return the view to display the poller.
+    */
   def fileUploadProgress(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction(){ _ => implicit request =>
     val hostName             = FrontendAppConfig.cbcrFrontendHost
     val assetsLocationPrefix = FrontendAppConfig.assetsPrefix
@@ -272,9 +280,15 @@ class FileUploadController @Inject()(val sec: SecuredActions,
     }
   }
 
-  def fileUploadResponse(envelopeId: String, fileId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+  /**
+    * Provided for the poller js function see if FileUpload have called us back and the file is ready for the next
+    * stage (validate)
+    * @param envelopeId
+    * @return
+    */
+  def fileUploadResponse(envelopeId: String) = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
     Logger.info(s"Received a file-upload-response query for $envelopeId")
-    fileUploadService.getFileUploadResponse(envelopeId,fileId).fold(
+    fileUploadService.getFileUploadResponse(envelopeId).fold(
       error    => {
         Logger.info(s"File not ready: $error")
         NoContent
