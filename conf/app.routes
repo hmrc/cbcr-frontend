@@ -24,7 +24,7 @@ GET        /known-facts/organisation/verify-form          @uk.gov.hmrc.cbcrfront
 
 GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileValidate(envelopeId: String, fileId:String)
 GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadProgress(envelopeId: String, fileId: String)
-GET        /file-upload-response/:envelopeId/             @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadResponse(envelopeId: String)
+GET        /file-upload-response/:envelopeId              @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadResponse(envelopeId: String)
 GET        /report/upload-form                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.chooseXMLFile
 GET        /business-rule-errors                          @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.getBusinessRuleErrors
 GET        /xml-schema-errors                             @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.getXmlSchemaErrors
