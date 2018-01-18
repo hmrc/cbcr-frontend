@@ -1,3 +1,10 @@
+
+start.mainHeading=Welcome to the country-by-country reporting service
+start.intro=Choose what you want to do from the following options. Sign out at any time to exit the service.
+start.choice.one=Check and send a country-by-country report
+start.choice.two=Change registration contact details
+start.button=Start
+
 sessionExpired.mainHeading=Your session has ended
 sessionExpired.continue=As you've been inactive for 20 minutes, you''ll need to start again.
 sessionExpired.link=Return to start page
