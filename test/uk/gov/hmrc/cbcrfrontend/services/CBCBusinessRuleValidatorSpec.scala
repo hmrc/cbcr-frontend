@@ -417,7 +417,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           _ => fail("No InvalidXMLError generated")
         )
       }
-      "when the messageTypeIndic is CBC401 but doctypeIndic is not OECD1" in {
+      "when the messageTypeIndic is CBC401 but ADD or ENT doctypeIndic is not OECD1" in {
         val validFile = new File("test/resources/cbcr-OECD2-Incompatible-messageTypes.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 
@@ -427,6 +427,34 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
 
       }
+      "when the messageTypeIndic is CBC401 but REP doctypeIndic is OECD1 or OECD0" in {
+        val validFile = new File("test/resources/cbcr-OECD0[1]-valid.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => fail(s"errors generated: $errors"),
+          _      =>  ()
+        )
+
+        val validFile2 = new File("test/resources/cbcr-OECD0[1]-valid2.xml")
+        val result2 = Await.result(validator.validateBusinessRules(validFile2, filename), 5.seconds)
+
+        result2.fold(
+          errors => fail(s"errors generated: $errors"),
+          _      =>  ()
+        )
+      }
+
+      "when the messageTypeIndic is CBC401 but REP doctypeIndic is not OECD1 or OECD0" in {
+        val validFile = new File("test/resources/cbcr-OECD0[1]-invalid.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(IncompatibleOECDTypes),
+          _      => fail("No errors generated")
+        )
+      }
+
       "when there are a mixture of OECD1 and OECD[23] docTypeIndics" in {
         val validFile = new File("test/resources/cbcr-docTypeIndicMixture.xml")
 
