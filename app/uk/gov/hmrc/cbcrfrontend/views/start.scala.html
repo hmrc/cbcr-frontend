@@ -37,6 +37,7 @@
 @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.StartController.submit()){
 
 <div class="form-group @if(isError){form-field-group--error}">
+    @if(isError){ <span class="error-notification">@Messages("start.required")</span> }
     <fieldset>
         <div class="multiple-choice">
             <input id="radio-1" type="radio" name="choice" value="upload">
