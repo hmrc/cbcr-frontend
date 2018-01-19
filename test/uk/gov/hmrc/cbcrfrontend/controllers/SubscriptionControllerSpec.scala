@@ -594,7 +594,8 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
       when(cbcId.updateETMPSubscriptionData(any(),any())(any())) thenReturn EitherT.right[Future,CBCErrors,UpdateResponse](UpdateResponse(LocalDateTime.now()))
       when(subService.updateSubscriptionData(any(),any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors,String]("Ok")
       val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
-      status(result) shouldEqual Status.OK
+      result.header.headers("Location") should endWith("/contact-info-subscriber/updated")
+      status(result) shouldEqual Status.SEE_OTHER
 
     }
 
