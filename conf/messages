@@ -1,9 +1,15 @@
+contactDetailsUpdate.mainHeading=The registration contact details have been updated
+contactDetailsUpdate.printThisButton=Print this page
+contactDetailsUpdate.next=What happens next?
+contactDetailsUpdate.email=We''ll send you a confirmation email to the updated address.
+contactDetailsUpdate.next2=Return to start page
 
 start.mainHeading=Welcome to the country-by-country reporting service
 start.intro=Choose what you want to do from the following options. Sign out at any time to exit the service.
 start.choice.one=Check and send a country-by-country report
 start.choice.two=Change registration contact details
 start.button=Start
+start.required=Select an option
 
 sessionExpired.mainHeading=Your session has ended
 sessionExpired.continue=As you've been inactive for 20 minutes, you''ll need to start again.
@@ -21,7 +27,7 @@ survey.five=Very dissatisfied
 survey.question2=How could we improve the service?
 survey.question2.hint=Don''t include any confidential information, for example your country-by-country ID
 survey.send=Send feedback
-survey.required=This section is required
+survey.required=Select an answer
 
 regenerate.mainHeading=Your new country-by-country ID has been validated
 regenerate.message=Your new country-by-country ID is:
