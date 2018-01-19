@@ -181,13 +181,17 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
             details = CorrespondenceDetails(bpr.address, ContactDetails(data.email, data.phoneNumber), ContactName(data.firstName, data.lastName))
             _       <- cbcIdService.updateETMPSubscriptionData(bpr.safeId, details)
             _       <- subscriptionDataService.updateSubscriptionData(cbcId, SubscriberContact(data.firstName, data.lastName, data.phoneNumber, data.email))
-          } yield Ok("Saved")
+          } yield Redirect(routes.SubscriptionController.savedUpdatedInfoSubscriber())
             ).fold(
             errors => errorRedirect(errors),
             result => result
           )
         }
       )
+  }
+
+  val savedUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(){ _ => implicit request =>
+    Ok(views.html.update.contactDetailsUpdated(includes.asideCbc(), includes.phaseBannerBeta()))
   }
 
   def subscribeSuccessCbcId(id: String) = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
