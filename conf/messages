@@ -151,7 +151,9 @@ submitInfoUltimateParentEntity.upe.error.header=You haven''t entered the name of
 submitInfoUltimateParentEntity.upe.error=Enter the Ultimate Parent Entity name
 
 submitSuccessReceipt.confirmationNumberLabel=Your confirmation number is:
-submitSuccessReceipt.submissionDateLabel=Report received on
+submitSuccessReceipt.submissionDateLabel=Report received
+submitSuccessReceipt.reportForCBC=The report for country-by-country ID
+submitSuccessReceipt.receivedOn=was received on
 submitSuccessReceipt.digiSig=You can use this digital signature as a receipt for the report you''ve sent:
 submitSuccessReceipt.printInfo=Print this screen to keep a record of your report.
 submitSuccessReceipt.print=Print this page
