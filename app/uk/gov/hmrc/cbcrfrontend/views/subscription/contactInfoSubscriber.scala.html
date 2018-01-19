@@ -65,6 +65,7 @@ implicit request: Request[_], messages: Messages)
             <h1>
                 @Messages("contactInfoSubscriber.mainHeading")
             </h1>
+            <p>@Messages("contactInfoSubscriber.additionalInfo")</p>
             <div class="form-group">
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.submitSubscriptionData()){
                 @formFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)

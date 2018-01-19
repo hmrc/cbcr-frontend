@@ -80,6 +80,7 @@ subscribeSuccessCbcId.next2=Continue if the report is ready to send, or
 subscribeSuccessCbcId.nextLink=return to start page
 
 contactInfoSubscriber.mainHeading=Who should we contact about the content of the report?
+contactInfoSubscriber.additionalInfo=This must be someone with a detailed knowledge of the information in the report.
 contactInfoSubscriber.errors=There is a problem
 contactInfoSubscriber.subHeading=Enter the name of the person we should contact if there are any questions about the information contained in the Country by Country report.
 contactInfoSubscriber.firstName.label=First name
