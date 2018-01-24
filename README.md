@@ -10,7 +10,7 @@ uploading of financial reports for multinational companies with a gross turnover
 
 ## Dependencies
 
-This service relies on the [CBCR](/hmrc/cbcr) protected service for access to its domain and forms part of its bounded context. 
+This service relies on the [CBCR](https://github.com/hmrc/cbcr) protected service for access to its domain and forms part of its bounded context. 
 
 ## Running
 
