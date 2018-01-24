@@ -20,10 +20,12 @@ Use default JVM settings
 sbt 'run -DwhiteListDisabled=true -Dapplication.router=testOnlyDoNotUseInAppConf.Routes'
 ```
 
+### Submission Metadata
+
+A sample submission metadata json can be found [here](conf/docs/metadata.json)
+
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
 
-### Submission Metadata
 
-A sample submission metadata json can be found [here](conf/docs/metadata.json)
