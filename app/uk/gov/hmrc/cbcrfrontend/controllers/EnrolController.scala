@@ -20,18 +20,24 @@ import javax.inject.{Inject, Singleton}
 
 import com.typesafe.config.Config
 import configs.syntax._
-import play.api.Configuration
-import play.api.libs.ws.WSClient
-import play.api.libs.json._
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.{EnrolmentsConnector, TaxEnrolmentsConnector}
-import uk.gov.hmrc.cbcrfrontend.model.Organisation
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import play.api.{Configuration, Environment}
+import play.api.libs.json.Json
+import play.api.mvc.Action
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrievals}
+import uk.gov.hmrc.cbcrfrontend.auth.{CBCRAuthFunctions, CBCRAuthFunctions2}
+import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.util.control.NonFatal
+import scala.concurrent.{ExecutionContext, Future}
+
 @Singleton
-class EnrolController @Inject()(val sec: SecuredActions, val config:Configuration, ws:WSClient, auth:EnrolmentsConnector, enrolConnector: TaxEnrolmentsConnector) extends FrontendController {
+class EnrolController @Inject()(val config:Configuration,
+                                val enrolConnector: TaxEnrolmentsConnector,
+                                val authConnector: AuthConnector,
+                                val env:Environment)(implicit ec:ExecutionContext) extends FrontendController with CBCRAuthFunctions{
 
+  implicit val format = uk.gov.hmrc.cbcrfrontend.controllers.enrolmentsFormat
   val conf = config.underlying.get[Config]("microservice.services.gg-proxy").value
 
   val url: String = (for {
@@ -40,16 +46,16 @@ class EnrolController @Inject()(val sec: SecuredActions, val config:Configuratio
     service <- conf.get[String]("url")
   } yield s"http://$host:$port/$service").value
 
-
-
-  def deEnrol() = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext => implicit request =>
-    enrolConnector.deEnrol.map(r => Ok(r.body)).recover{
-      case NonFatal(e) => InternalServerError(e.getMessage)
+  def deEnrol() = Action.async{ implicit request =>
+    authorised(AffinityGroup.Organisation and (User or Admin)){
+      enrolConnector.deEnrol.map(r => Ok(r.body))
     }
   }
 
-  def getEnrolments = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
-    auth.getEnrolments.map(e => Ok(Json.toJson(e)))
+  def getEnrolments = Action.async{ implicit request =>
+    authorised().retrieve(Retrievals.allEnrolments) { e =>
+      Future.successful(Ok(Json.toJson(e)))
+    }
   }
 
 }

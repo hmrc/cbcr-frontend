@@ -21,7 +21,6 @@ import java.time.format.DateTimeFormatter
 
 import org.scalatest.{EitherValues, FlatSpec, Matchers}
 import play.api.libs.json.Json
-import uk.gov.hmrc.play.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.io.Source

@@ -15,18 +15,13 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@(asideBusiness: Html, phaseBannerBeta: Html, submissionDateTime: String, hash: String)(
-implicit request: Request[_], messages: Messages)
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(submissionDateTime: String, hash: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@sidebarContent = {
-@asideBusiness
-}
-
-@main_template(Messages("submitSuccessReceipt.submissionDateLabel"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("submitSuccessReceipt.submissionDateLabel")) {
 
     <div class="grid-row">
         <div class="column-two-thirds">

@@ -41,7 +41,6 @@ POST       /utr                                           @uk.gov.hmrc.cbcrfront
 GET        /utr/entry-form                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.utr
 GET        /submission/summary                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSummary
 GET        /submission/receipt                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSuccessReceipt
-GET        /filing-history                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.filingHistory
 POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.confirm
 POST       /company-name                                  @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.saveCompanyName
 GET        /company-name/entry-form                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.enterCompanyName

@@ -29,9 +29,9 @@ import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
 import uk.gov.hmrc.cbcrfrontend.functorInstance
 import uk.gov.hmrc.cbcrfrontend.applicativeInstance
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.HeaderCarrier
 
 /**
   * This class exposes two methods:

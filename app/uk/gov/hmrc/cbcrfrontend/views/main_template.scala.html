@@ -14,12 +14,13 @@
  * limitations under the License.
  *@
 
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @(title: String,
   sidebarLinks: Option[Html] = None,
   contentHeader: Option[Html] = None,
   bodyClasses: Option[String] = None,
   mainClass: Option[String] = None,
-  scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages)
+  scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, conf: FrontendAppConfig)
 
 @import uk.gov.hmrc.play.views.html.layouts
 @import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -33,8 +34,7 @@
 }
 
 
-@govuk_wrapper(appConfig = uk.gov.hmrc.cbcrfrontend.FrontendAppConfig,
-               title = title,
+@govuk_wrapper(title = title,
                mainClass = mainClass,
                bodyClasses = bodyClasses,
                sidebar = sidebar,

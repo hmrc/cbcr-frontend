@@ -16,26 +16,23 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors.test
 
+import javax.inject.{Inject, Singleton}
+
+import play.api.{Configuration, Environment}
+import play.api.Mode.Mode
 import play.api.libs.json.JsValue
-import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http._
 
 import scala.concurrent.Future
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-trait TestRegistrationConnector {
-  def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier) : Future[HttpResponse]
-
-  def deleteSubscription(utr: String)(implicit hc: HeaderCarrier) : Future[HttpResponse]
-
-  def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse]
-}
-
-
-object TestCBCRConnector extends TestRegistrationConnector with ServicesConfig{
+@Singleton
+class TestCBCRConnector @Inject() (val environment: Environment,
+                                   val runModeConfiguration: Configuration,
+                                   val http: HttpPost with HttpDelete) extends ServicesConfig{
 
   val cbcrUrl = baseUrl("cbcr")
-  val http = WSHttp
 
   def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
     http.POST[JsValue, HttpResponse](s"$cbcrUrl/cbcr/test-only/insertSubscriptionData", jsonData)
@@ -48,4 +45,7 @@ object TestCBCRConnector extends TestRegistrationConnector with ServicesConfig{
   def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
     http.DELETE[HttpResponse](s"$cbcrUrl/cbcr/test-only/deleteDocRefId/$docRefId")
   }
+
+  override protected def mode: Mode = environment.mode
+
 }

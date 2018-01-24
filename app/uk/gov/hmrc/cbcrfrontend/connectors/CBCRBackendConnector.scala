@@ -24,12 +24,14 @@ import configs.syntax._
 import play.api.Configuration
 import play.api.libs.json.JsNull
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPut, HttpResponse, _}
 import uk.gov.hmrc.cbcrfrontend.model.Email
-import scala.concurrent.Future
+
+import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 @Singleton
-class CBCRBackendConnector @Inject()(http: HttpGet with HttpPut with HttpPost, config: Configuration) {
+class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec:ExecutionContext) {
 
   val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 

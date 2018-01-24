@@ -24,10 +24,10 @@ import play.api.Logger
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, PartialReportingEntityData, ReportingEntityData, UnexpectedState}
-import uk.gov.hmrc.play.http.{HeaderCarrier, NotFoundException}
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
+import uk.gov.hmrc.http.{ HeaderCarrier, NotFoundException }
 
 @Singleton
 class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {

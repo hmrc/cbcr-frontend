@@ -15,7 +15,7 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
@@ -23,13 +23,11 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 
 
-@(asideCbc: Html, phaseBannerBeta: Html, form:Form[_])(
-implicit request: Request[_], messages: Messages)
-
-@sidebarContent = { @asideCbc }
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @error = @{form.error("companyName").isDefined}
-@main_template(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
+@main_template(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}) {
 <div class="grid-row">
     <div class="column-two-thirds">
         @if(form.hasErrors) {

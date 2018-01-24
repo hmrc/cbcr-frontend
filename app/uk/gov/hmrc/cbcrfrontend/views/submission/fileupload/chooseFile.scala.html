@@ -15,18 +15,14 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@(fileUploadUrl: String, fileName: String, asideBusiness: Html, phaseBannerBeta: Html)(
-implicit request: Request[_], messages: Messages)
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(fileUploadUrl: String, fileName: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@sidebarContent = {
-@asideBusiness
-}
-
-@main_template(Messages("uploadReport.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("uploadReport.mainHeading")) {
     <div class="grid-row">
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-two-thirds">

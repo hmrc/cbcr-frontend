@@ -15,27 +15,24 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model.ReportingRole
 @import uk.gov.hmrc.cbcrfrontend.model.CBC701
 @import uk.gov.hmrc.cbcrfrontend.model.CBC702
 @import uk.gov.hmrc.cbcrfrontend.model.CBC703
-@import uk.gov.hmrc.cbcrfrontend.model.{UserType, Organisation}
+@import uk.gov.hmrc.auth.core.AffinityGroup
+@import uk.gov.hmrc.auth.core.AffinityGroup.{Organisation,Agent}
 @import tags._
 
 @import java.nio.file._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@(userType: Option[UserType], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], asideBusiness: Html, phaseBannerBeta: Html, reportingRole: Option[ReportingRole])(
-        implicit request: Request[_], messages: Messages)
+@(userType: Option[AffinityGroup], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], reportingRole: Option[ReportingRole])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @errors = @{
     schemaErrors.isDefined || busErrors.isDefined
-}
-
-@sidebarContent = {
-@asideBusiness
 }
 
 @main_template(if(!errors) {
@@ -44,7 +41,7 @@
 else {
     Messages("fileUploadResult.mainHeading.error")
 },
-    sidebarLinks = Some(sidebarContent)) {
+    sidebarLinks = None) {
 
     <div class="grid-row column-two-thirds">
             @if(!errors) {
@@ -94,7 +91,7 @@ else {
 
 
                 @if(reportingRole == Some(CBC701)){
-                   @if(userType == Some(Organisation(true)) || userType == Some(Organisation(false))){
+                   @if(userType == Some(Organisation) || userType == Some(Organisation)){
                         <p><a class="button" href="@routes.SubmissionController.submitterInfo" id="btn-continue">@Messages("form.controls.continue")</a></p>
                     } else {
                         <p><a class="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>

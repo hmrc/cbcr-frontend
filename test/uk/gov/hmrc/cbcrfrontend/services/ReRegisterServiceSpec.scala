@@ -28,7 +28,6 @@ import uk.gov.hmrc.cbcrfrontend.controllers.{CSRFTest, FakeAuthConnector}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.connectors._
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse, NotFoundException}
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.duration._
@@ -43,6 +42,7 @@ import cats.instances.future._
 import org.scalatest.BeforeAndAfterEach
 import play.api.test.FakeRequest
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 class ReRegisterServiceSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector with BeforeAndAfterEach with Eventually{
   val subData: SubscriptionDataService = mock[SubscriptionDataService]

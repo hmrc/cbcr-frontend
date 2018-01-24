@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,30 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import play.api.i18n.Messages.Implicits._
-@import play.api.Play.current
-@()(implicit request: Request[_])
+package uk.gov.hmrc.cbcrfrontend
 
-@uk.gov.hmrc.cbcrfrontend.views.html.main_template(Messages("cbcHistory.mainHeading"), bodyClasses = None) {
-<div align="center">
+import javax.inject.Inject
 
-<h1>@Messages("cbcHistory.mainHeading")</h1>
+import play.api.i18n.MessagesApi
+import play.api.mvc.Request
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
 
-</br>
-</br>
+class CBCRErrorHandler @Inject()(val messagesApi: MessagesApi)(implicit val config:FrontendAppConfig) extends FrontendErrorHandler {
 
-<p>
-<div id="message">
-@Messages("cbcHistory.top.message")
-</div>
-</p>
-
-</br>
-</br>
-<div class="form-group">
-    <a id="btn-fileUpload" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.chooseXMLFile()">@Messages("cbc.button.fileupload")</a>
-</div>
-</div>
+override def standardErrorTemplate (pageTitle: String, heading: String, message: String) (implicit request: Request[_] ) =
+  uk.gov.hmrc.cbcrfrontend.views.html.error_template (pageTitle, heading, message)
 }

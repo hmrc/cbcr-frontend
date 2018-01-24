@@ -21,15 +21,16 @@ import javax.inject.{Inject, Singleton}
 import com.typesafe.config.Config
 import play.api.Configuration
 import uk.gov.hmrc.cbcrfrontend.model.CBCKnownFacts
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost, HttpResponse}
 import configs.syntax._
 import play.api.http.Status
 import play.api.libs.json.Json
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpPost, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 @Singleton @deprecated("Use the TaxEnrolmentsConnector and the EnrolmentsService","release/25.0")
-class GGConnector @Inject() (http:HttpPost,config:Configuration){
+class GGConnector @Inject()(http:HttpClient, config:Configuration)(implicit ec:ExecutionContext){
 
   val conf = config.underlying.get[Config]("microservice.services.gg").value
 

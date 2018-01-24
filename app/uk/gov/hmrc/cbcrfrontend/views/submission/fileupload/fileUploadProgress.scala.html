@@ -15,17 +15,14 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, envelopeId: String, fileId: String, hostName: String, assetsLocationPrefix: String)(
-implicit request: Request[_], messages: Messages)
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(envelopeId: String, fileId: String, hostName: String, assetsLocationPrefix: String)(
+implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@sidebarContent = {
-@asideBusiness
-}
-
-@main_template(Messages("fileUploadProgress.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("fileUploadProgress.mainHeading")) {
 <script src='@routes.Assets.versioned("javascripts/jquery-3.1.1.min.js")' ></script>
 <script src='@routes.Assets.versioned("javascripts/poller.js")' type="text/javascript"></script>
 

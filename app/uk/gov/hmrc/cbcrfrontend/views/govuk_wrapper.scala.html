@@ -14,8 +14,9 @@
  * limitations under the License.
  *@
 
-@(appConfig: uk.gov.hmrc.cbcrfrontend.AppConfig,
-  title: String,
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+
+@(title: String,
   mainClass: Option[String] = None,
   mainDataAttributes: Option[Html] = None,
   bodyClasses: Option[String] = None,
@@ -24,7 +25,7 @@
   mainContent: Html = HtmlFormat.empty,
   serviceInfoContent: Html = HtmlFormat.empty,
   scriptElem: Option[Html] = None
-)(implicit request: Request[_], messages: Messages)
+)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @import layouts.{govuk_template => hmrcGovUkTemplate}
 @import uk.gov.hmrc.play.views.html.{layouts => uiLayouts}
@@ -61,11 +62,11 @@
 
 @bodyEnd = {
     @uiLayouts.footer(
-      analyticsToken = Some(appConfig.analyticsToken),
-      analyticsHost = appConfig.analyticsHost,
+      analyticsToken = Some(config.analyticsToken),
+      analyticsHost = config.analyticsHost,
       ssoUrl = None,
       scriptElem = scriptElem,
-      gaCalls = Option((a,b) => analyticsCode("", appConfig.analyticsToken))
+      gaCalls = Option((a,b) => analyticsCode("", config.analyticsToken))
     )
 }
 
@@ -80,19 +81,21 @@
 }
 
 @betaBanner = {
-    @uiLayouts.betaBanner(false, appConfig.betaFeedbackUrlNoAuth, appConfig.betaFeedbackUrlNoAuth, true, true)
+        @uiLayouts.betaBanner(false,config.betaFeedbackUrlNoAuth,config.betaFeedbackUrlNoAuth, true, true)
 }
+
 
 @serviceInfoContent = {
     @uiLayouts.serviceInfo(betaBanner, false, Option.empty, false)
 }
+
 @mainContentHeader = {
     @if(contentHeader.isDefined) {
         @uiLayouts.main_content_header(contentHeader = contentHeader.get)
     }
 }
 
-@getHelpForm = @{uiHelpers.reportAProblemLink(appConfig.reportAProblemPartialUrl, appConfig.reportAProblemNonJSUrl)}
+@getHelpForm = @{uiHelpers.reportAProblemLink(config.reportAProblemPartialUrl, config.reportAProblemNonJSUrl)}
 
 @content = {
     @uiLayouts.main_content(

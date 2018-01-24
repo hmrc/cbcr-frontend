@@ -15,17 +15,13 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(
-implicit request: Request[_], messages: Messages)
-
-@sidebarContent = {
-@asideBusiness
-}
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
 @agencyBusinessNameErrors = @{form.error("agencyBusinessName").isDefined}
@@ -38,7 +34,7 @@ implicit request: Request[_], messages: Messages)
 @contactPhoneErrors = @{form.error("contactPhone").isDefined}
 @emailErrors = @{form.error("email").isDefined}
 
-@main_template(if(form.hasErrors){"Error: " + Messages("submitterInfo.mainHeading")}else{Messages("submitterInfo.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
+@main_template(if(form.hasErrors){"Error: " + Messages("submitterInfo.mainHeading")}else{Messages("submitterInfo.mainHeading")}) {
     @if(form.hasErrors) {
         @if(numberOfErrors == 1) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">

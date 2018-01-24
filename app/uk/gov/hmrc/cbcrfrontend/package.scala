@@ -16,34 +16,39 @@
 
 package uk.gov.hmrc
 
-import java.io.{File, FileInputStream, InputStream}
-import java.nio.file.Files
+import java.io.{File, FileInputStream}
 
-import cats.data.{EitherT, NonEmptyList, OptionT, ValidatedNel}
+import _root_.play.api.Logger
+import _root_.play.api.mvc.Results._
+import _root_.play.api.mvc._
+import _root_.play.api.libs.json.Json
+import _root_.play.api.libs.json.Reads
+import cats.data.ValidatedNel
 import cats.instances.future._
-import cats.syntax.option._
-import cats.syntax.validated._
 import cats.syntax.cartesian._
 import cats.syntax.show._
-import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
+import cats.{Applicative, Functor}
+import uk.gov.hmrc.auth.core.{Enrolment, Enrolments}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, SimpleRetrieval}
+import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.play.frontend.auth.AuthContext
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.http.HeaderCarrier
-import _root_.play.api.mvc._
-import _root_.play.api.mvc.Results._
-import _root_.play.api.Logger
-import cats.{Applicative, Functor}
-import uk.gov.hmrc.cbcrfrontend.controllers._
+import uk.gov.hmrc.http.HeaderCarrier
+import scala.language.implicitConversions
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.runtime.universe._
-import scala.util.control.NonFatal
 
 
 package object cbcrfrontend {
 
+  val cbcEnrolment: Retrieval[Option[CBCEnrolment]] = SimpleRetrieval("allEnrolments", Reads.set[Enrolment].map{ e =>
+    for {
+      value      <- e.find(_.key == "HMRC-CBC-ORG")
+      id         <- value.identifiers.find(_.key == "cbcId")
+      utr        <- value.identifiers.find(_.key == "UTR")
+      cbcId      <- CBCId(id.value)
+    } yield CBCEnrolment(cbcId,Utr(utr.value))
+  })
 
   type ValidResult[A]               = ValidatedNel[CBCErrors, A]
   type CacheResult[A]               = ValidatedNel[ExpiredSession, A]
@@ -64,52 +69,21 @@ package object cbcrfrontend {
     Logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())
-      case _                 => InternalServerError(FrontendGlobal.internalServerErrorTemplate)
-    }
-  }
-
-  def affinityGroupToUserType(a: AffinityGroup): Either[CBCErrors, UserType] = {
-    val admin: Boolean =  a.credentialRole.exists(credentialRole => !credentialRole.equalsIgnoreCase("assistant"))
-    a.affinityGroup.toLowerCase.trim match {
-      case "agent"        => Right(Agent())
-      case "organisation" => Right(Organisation(admin))
-      case "individual"   => Right(Individual())
-      case other          => Left(UnexpectedState(s"Unknown affinity group: $other"))
+      case _                 => sys.error("Error: " + error.show)
     }
   }
 
   implicit def utrToLeft(u:Utr): Either[Utr, CBCId] = Left[Utr,CBCId](u)
   implicit def cbcToRight(c:CBCId): Either[Utr, CBCId] = Right[Utr,CBCId](c)
 
-  def getUserType(ac: AuthContext)(implicit cache: CBCSessionCache, sec: AuthConnector, hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[UserType] =
-    EitherT(OptionT(cache.readOption[AffinityGroup])
-      .getOrElseF {
-        sec.getUserDetails[AffinityGroup](ac)
-          .flatMap(ag => cache.save[AffinityGroup](ag)
-            .map(_ => ag))
-      }
-      .map(affinityGroupToUserType)
-    )
-
-  def getUserGGId(ac:AuthContext)(implicit cache:CBCSessionCache, sec:AuthConnector,hc:HeaderCarrier,ec:ExecutionContext) : Future[GGId] =
-    OptionT(cache.readOption[GGId])
-      .getOrElseF{
-        sec.getUserDetails[GGId](ac)
-          .flatMap(ag => cache.save[GGId](ag)
-            .map(_ => ag))
-      }
-
   def sha256Hash(file: File): String =
     String.format("%064x", new java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(
       org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
     )))
 
-  def generateMetadataFile(cache: CBCSessionCache, authContext: AuthContext)(implicit hc: HeaderCarrier, ec: ExecutionContext, sec:AuthConnector): Future[ValidatedNel[ExpiredSession,SubmissionMetaData]] = {
+  def generateMetadataFile(cache: CBCSessionCache, creds: Credentials)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[ValidatedNel[ExpiredSession,SubmissionMetaData]] = {
 
-    val ggId: FutureCacheResult[GGId] = EitherT.right[Future, ExpiredSession, GGId](getUserGGId(authContext)(cache, sec, hc, ec)).toValidatedNel
-
-    (ggId |@|
-      cache.read[BusinessPartnerRecord].toValidatedNel |@|
+    ((cache.read[BusinessPartnerRecord].toValidatedNel:FutureCacheResult[BusinessPartnerRecord]) |@|
       cache.read[TIN].toValidatedNel |@|
       cache.read[Hash].toValidatedNel |@|
       cache.read[CBCId].toValidatedNel |@|
@@ -119,11 +93,11 @@ package object cbcrfrontend {
       cache.read[FilingType].toValidatedNel |@|
       cache.read[UltimateParentEntity].toValidatedNel |@|
       cache.read[FileMetadata].toValidatedNel)
-      .map { (gatewayId, record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
+      .map { (record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
 
         SubmissionMetaData(
           SubmissionInfo(
-            gwCredId = gatewayId.authProviderId,
+            gwCredId = creds.toString,
             cbcId = id,
             bpSafeId = record.safeId,
             hash = hash,

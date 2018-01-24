@@ -26,10 +26,10 @@ import org.mockito.Matchers._
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, BusinessPartnerRecord, Utr}
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 
 class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuite with MockitoSugar {

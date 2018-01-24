@@ -15,7 +15,7 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
@@ -23,12 +23,10 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@(asideCbc: Html, phaseBannerBeta: Html)(implicit request: Request[_], messages: Messages)
-
-@sidebarContent = { @asideCbc }
-
-@main_template(Messages("notRegistered.heading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("notRegistered.heading")) {
 <div class="grid-row">
     <div class="column-two-thirds">
         <h1>@Messages("notRegistered.heading")</h1>

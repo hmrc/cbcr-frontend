@@ -23,7 +23,6 @@ import cats.data.EitherT
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -34,6 +33,7 @@ import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, 
 import org.mockito.Matchers.{eq => EQ, _}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import play.api.Configuration
+import uk.gov.hmrc.http.HeaderCarrier
 
 /**
   * Created by max on 24/05/17.

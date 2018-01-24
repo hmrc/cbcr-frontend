@@ -33,7 +33,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
-import uk.gov.hmrc.cbcrfrontend.connectors.{BPRKnownFactsConnector, EnrolmentsConnector}
+import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{TestSecuredActions, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.model.{SubscriptionEmailSent, _}
 import uk.gov.hmrc.cbcrfrontend.services._
@@ -42,12 +42,12 @@ import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
+import uk.gov.hmrc.http.HeaderCarrier
 class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneAppPerSuite  with CSRFTest with MockitoSugar with FakeAuthConnector with BeforeAndAfterEach {
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)

@@ -27,6 +27,7 @@ import uk.gov.hmrc.play.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpException, NotFoundException, Upstream4xxResponse }
 
 @Singleton
 class DocRefIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {
