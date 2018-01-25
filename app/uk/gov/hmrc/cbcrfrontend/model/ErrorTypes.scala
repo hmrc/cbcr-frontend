@@ -76,6 +76,7 @@ case object DocRefIdInvalidParentGroupElement extends BusinessRuleErrors
 case object CorrDocRefIdInvalidParentGroupElement extends BusinessRuleErrors
 case object InvalidDocRefId extends BusinessRuleErrors
 case object InvalidCorrDocRefId extends BusinessRuleErrors
+case object ResentDataIsUnknownError extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
@@ -124,6 +125,7 @@ object BusinessRuleErrors {
       case XmlEncodingError           => JsString(XmlEncodingError.toString)
       case OriginalSubmissionNotFound => JsString(OriginalSubmissionNotFound.toString)
       case PrivateBetaCBCIdError     => JsString(PrivateBetaCBCIdError.toString)
+      case ResentDataIsUnknownError => JsString(ResentDataIsUnknownError.toString)
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
@@ -151,6 +153,7 @@ object BusinessRuleErrors {
           case Some("xmlencodingerror")       => JsSuccess(XmlEncodingError)
           case Some("originalsubmissionnotfound") => JsSuccess(OriginalSubmissionNotFound)
           case Some("privatebetacbciderror")      => JsSuccess(PrivateBetaCBCIdError)
+          case Some("resentdataisunknownerror")   => JsSuccess(ResentDataIsUnknownError)
           case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^invalidxmlerror: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -180,6 +183,7 @@ object BusinessRuleErrors {
     case OriginalSubmissionNotFound => "Original submission could not be identified"
     case PrivateBetaCBCIdError => """ The country-by-country ID you entered has changed. You will need to use the new ID which we have emailed to you. If you are operating as an agent, contact your client for the new country-by-country ID."""
     case CorrDocRefIdDuplicate => """Error Code 80011 CorrDocRefId (Duplicate):The same DocRefID cannot be corrected or deleted twice in the same message."""
+    case ResentDataIsUnknownError => """OECD0 must be used for resent data, but a previous submission with this DocRefID has not been received"""
     case i:InvalidXMLError     => i.toString
   }
 }
