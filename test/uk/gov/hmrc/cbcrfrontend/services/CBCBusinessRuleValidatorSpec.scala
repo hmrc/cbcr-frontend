@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
 
-import cats.data.EitherT
+import cats.data.{EitherT, NonEmptyList}
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -81,6 +81,11 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
 
   val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
+
+  val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
+
+  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701)
+
   val xmlinfo = XMLInfo(
     MessageSpec(
       MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
@@ -241,6 +246,46 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           _ => fail("No InvalidXMLError generated")
         )
       }
+      "CBCReports.docTypeIndic is OECD0" in {
+        val validFile = new File("test/resources/cbcr-cbcReportsOECD0.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(MessageTypeIndicError),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+      "AdditionalInfo.docTypeInidc is OECD0" in {
+        val validFile = new File("test/resources/cbcr-additionalInfoOECD0.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(MessageTypeIndicError),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+      "MessageTypeIndic is blank and AdditionalInfo.docTypeInidc is OECD0" in {
+        val validFile = new File("test/resources/cbcr-additionalInfoOECD0-2.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(MessageTypeIndicError),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+      "MessageTypeIndic is blank and CBCReports.docTypeInidc is OECD0" in {
+        val validFile = new File("test/resources/cbcr-cbcReportsOECD0-2.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(MessageTypeIndicError),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
       "MessageTypeIndic is CBC402 and the DocTypeIndic's are invalid" when {
         "CBCReports.docTypeIndic isn't OECD2 or OECD3" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndic.xml")
@@ -318,7 +363,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe CorrDocRefIdUnknownRecord,
+          errors => errors.toList should contain(CorrDocRefIdUnknownRecord),
           _ => fail("No InvalidXMLError generated")
         )
       }
@@ -333,7 +378,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 
         result.fold(
-          errors => errors.head shouldBe CorrDocRefIdInvalidRecord,
+          errors => errors.toList should contain(CorrDocRefIdInvalidRecord),
           _ => fail("No InvalidXMLError generated")
         )
 
@@ -371,6 +416,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+        when(reportingEntity.queryReportingEntityDataDocRefId(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(red))
 
 
         val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
@@ -451,6 +497,17 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
         result.fold(
           errors => errors.toList should contain(IncompatibleOECDTypes),
+          _      => fail("No errors generated")
+        )
+      }
+
+      "when the messageTypeIndic is CBC401 and REP doctypeIndic OECD0 but is not a known docrefid" in {
+        val validFile = new File("test/resources/cbcr-OECD0[1]-valid.xml")
+        when(reportingEntity.queryReportingEntityDataDocRefId(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityData]](Future.successful(None))
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(ResentDataIsUnknownError),
           _      => fail("No errors generated")
         )
       }
