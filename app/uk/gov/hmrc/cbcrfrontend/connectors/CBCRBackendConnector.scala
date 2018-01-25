@@ -21,15 +21,17 @@ import javax.inject.{Inject, Singleton}
 import cats.syntax.show._
 import com.typesafe.config.Config
 import configs.syntax._
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.libs.json.JsNull
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpPut, HttpResponse, _}
 import uk.gov.hmrc.cbcrfrontend.model.Email
+
 import scala.concurrent.Future
 
 @Singleton
-class CBCRBackendConnector @Inject()(http: HttpGet with HttpPut with HttpPost, config: Configuration) {
+class CBCRBackendConnector @Inject()(http: HttpGet with HttpPut with HttpPost with HttpPatch, config: Configuration) {
+
 
   val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
@@ -73,6 +75,9 @@ class CBCRBackendConnector @Inject()(http: HttpGet with HttpPut with HttpPost, c
 
   def reportingEntityDataUpdate(r:PartialReportingEntityData)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
     http.PUT[PartialReportingEntityData,HttpResponse](url+ "/reporting-entity",r)
+
+  def reportingEntityDataAdditionalUpdate(r: PartialReportingEntityData)(implicit hc:HeaderCarrier)  : Future[HttpResponse] =
+    http.PATCH[PartialReportingEntityData, HttpResponse](url + "/reporting-entity", r)
 
   def reportingEntityDataQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/${d.show}")
