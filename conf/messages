@@ -26,6 +26,7 @@ survey.four=Dissatisfied
 survey.five=Very dissatisfied
 survey.question2=How could we improve the service?
 survey.question2.hint=Don''t include any confidential information, for example your country-by-country ID
+survey.enterFeedback=Enter feedback
 survey.send=Send feedback
 survey.required=Select an answer
 
