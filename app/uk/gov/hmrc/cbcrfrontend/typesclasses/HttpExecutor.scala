@@ -65,56 +65,56 @@ object RouteEnvelopeRequest {
 
 trait HttpExecutor[U, P, I] {
   def makeCall(
-                url: ServiceUrl[U],
-                obj: P
-              )(
-                implicit
-                hc: HeaderCarrier,
-                wts: Writes[I],
-                rds: HttpReads[HttpResponse],
-                getBody: GetBody[P, I],
-                http:HttpPost,
-                http2:HttpPut
+    url: ServiceUrl[U],
+    obj: P
+  )(
+    implicit
+    hc: HeaderCarrier,
+    wts: Writes[I],
+    rds: HttpReads[HttpResponse],
+    getBody: GetBody[P, I],
+    http:HttpPost,
+    http2:HttpPut
 
-              ): Future[HttpResponse]
+  ): Future[HttpResponse]
 }
 
 object HttpExecutor {
   implicit object createEnvelope extends HttpExecutor[FusUrl, CreateEnvelope, JsObject] {
     def makeCall(
-                  fusUrl: ServiceUrl[FusUrl],
-                  obj: CreateEnvelope
-                )(
-                  implicit
-                  hc: HeaderCarrier,
-                  wts: Writes[JsObject],
-                  rds: HttpReads[HttpResponse],
-                  getBody: GetBody[CreateEnvelope, JsObject],
-                  http: HttpPost,
-                  http2: HttpPut
-                ): Future[HttpResponse] = {
+      fusUrl: ServiceUrl[FusUrl],
+      obj: CreateEnvelope
+    )(
+      implicit
+      hc: HeaderCarrier,
+      wts: Writes[JsObject],
+      rds: HttpReads[HttpResponse],
+      getBody: GetBody[CreateEnvelope, JsObject],
+      http: HttpPost,
+      http2: HttpPut
+    ): Future[HttpResponse] = {
       http.POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", getBody(obj))
     }
   }
 
   implicit object uploadFile extends HttpExecutor[FusFeUrl, UploadFile, Array[Byte]]{
     def makeCall(
-                  fusFeUrl: ServiceUrl[FusFeUrl],
-                  obj: UploadFile
-                )(
-                  implicit
-                  hc: HeaderCarrier,
-                  wts: Writes[Array[Byte]],
-                  rds: HttpReads[HttpResponse],
-                  getBody: GetBody[UploadFile, Array[Byte]],
-                  http: HttpPost,
-                  http2: HttpPut
-                ): Future[HttpResponse] = {
+      fusFeUrl: ServiceUrl[FusFeUrl],
+      obj: UploadFile
+    )(
+      implicit
+      hc: HeaderCarrier,
+      wts: Writes[Array[Byte]],
+      rds: HttpReads[HttpResponse],
+      getBody: GetBody[UploadFile, Array[Byte]],
+      http: HttpPost,
+      http2: HttpPut
+    ): Future[HttpResponse] = {
       import obj._
       val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
       //TODO: make this call work
-      //      http2.PUT[JsObject,HttpResponse](url, Json.obj("body" -> "some stuff"))
-      //      http.POST[JsObject, HttpResponse](url, )
+//      http2.PUT[JsObject,HttpResponse](url, Json.obj("body" -> "some stuff"))
+//      http.POST[JsObject, HttpResponse](url, )
       FileUploadFrontEndWS.doFormPartPost(url, fileName, contentType, ByteString.fromArray(getBody(obj)), Seq("CSRF-token" -> "nocheck"))
 
     }
@@ -158,18 +158,18 @@ object HttpExecutor {
   }
 
   def apply[U, P, I](
-                      url: ServiceUrl[U],
-                      obj: P
-                    )(
-                      implicit
-                      hc: HeaderCarrier,
-                      ec: ExecutionContext,
-                      httpExecutor: HttpExecutor[U, P, I],
-                      wts: Writes[I],
-                      getBody: GetBody[P, I],
-                      http:HttpPost,
-                      http2: HttpPut
-                    ): Future[HttpResponse] = {
+    url: ServiceUrl[U],
+    obj: P
+  )(
+    implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    httpExecutor: HttpExecutor[U, P, I],
+    wts: Writes[I],
+    getBody: GetBody[P, I],
+    http:HttpPost,
+    http2: HttpPut
+  ): Future[HttpResponse] = {
     httpExecutor.makeCall(url, obj)
   }
 }
