@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.typesclasses
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import play.Logger
 import play.api.libs.json.{JsObject, Json, Writes}
 import play.api.mvc.MultipartFormData.FilePart
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
@@ -25,6 +26,9 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.{ExecutionContext, Future}
+import java.net.URLEncoder._
+
+import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 
 trait GetBody[O, T] {
   def apply(obj: O): T
@@ -69,7 +73,9 @@ trait HttpExecutor[U, P, I] {
     wts: Writes[I],
     rds: HttpReads[HttpResponse],
     getBody: GetBody[P, I],
-    http:HttpPost
+    http:HttpPost,
+    http2:HttpPut
+
   ): Future[HttpResponse]
 }
 
@@ -84,7 +90,8 @@ object HttpExecutor {
       wts: Writes[JsObject],
       rds: HttpReads[HttpResponse],
       getBody: GetBody[CreateEnvelope, JsObject],
-      http: HttpPost
+      http: HttpPost,
+      http2: HttpPut
     ): Future[HttpResponse] = {
       http.POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", getBody(obj))
     }
@@ -100,13 +107,15 @@ object HttpExecutor {
       wts: Writes[Array[Byte]],
       rds: HttpReads[HttpResponse],
       getBody: GetBody[UploadFile, Array[Byte]],
-      http: HttpPost
+      http: HttpPost,
+      http2: HttpPut
     ): Future[HttpResponse] = {
       import obj._
       val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
-
       //TODO: make this call work
-      http.POST[JsObject,HttpResponse](url,Json.obj,Seq("CSRF-token" -> "nocheck", "Content-Type" -> "application/json; charset=UTF-8"))
+//      http2.PUT[JsObject,HttpResponse](url, Json.obj("body" -> "some stuff"))
+//      http.POST[JsObject, HttpResponse](url, )
+      FileUploadFrontEndWS.doFormPartPost(url, fileName, contentType, ByteString.fromArray(getBody(obj)), Seq("CSRF-token" -> "nocheck"))
 
     }
   }
@@ -122,7 +131,8 @@ object HttpExecutor {
                   wts: Writes[JsObject],
                   rds: HttpReads[HttpResponse],
                   getBody: GetBody[FUCallbackResponse, JsObject],
-                  http: HttpPost
+                  http: HttpPost,
+                  http2: HttpPut
                 ): Future[HttpResponse] = {
       http.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", getBody(obj))
     }
@@ -140,7 +150,8 @@ object HttpExecutor {
                   wts: Writes[RouteEnvelopeRequest],
                   rds: HttpReads[HttpResponse],
                   getBody: GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest],
-                  http: HttpPost
+                  http: HttpPost,
+                  http2: HttpPut
                 ): Future[HttpResponse] = {
       http.POST[RouteEnvelopeRequest, HttpResponse](s"${fusUrl.url}/file-routing/requests", getBody(obj))
     }
@@ -156,7 +167,8 @@ object HttpExecutor {
     httpExecutor: HttpExecutor[U, P, I],
     wts: Writes[I],
     getBody: GetBody[P, I],
-    http:HttpPost
+    http:HttpPost,
+    http2: HttpPut
   ): Future[HttpResponse] = {
     httpExecutor.makeCall(url, obj)
   }

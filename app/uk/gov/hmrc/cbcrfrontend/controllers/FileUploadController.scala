@@ -49,7 +49,8 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future, duration}
 import scala.util.control.NonFatal
 
 
@@ -94,13 +95,18 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     })
   }
 
-
+  private def isEn()(implicit hc: HeaderCarrier):Future[Boolean] = {
+    val enrolled = cache.readOption[CBCId].map(_.isDefined)
+    enrolled
+  }
 
 
   val chooseXMLFile = Action.async{ implicit request =>
     authorised(AffinityGroup.Organisation or AffinityGroup.Agent).retrieve(Retrievals.affinityGroup and cbcEnrolment){
       case None               ~ _                    => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
-      case Some(Organisation) ~ None                 => Redirect(routes.SubmissionController.notRegistered())
+      case Some(Organisation) ~ None
+        if Await.result(cache.readOption[CBCId].map(_.isEmpty
+        ), Duration(5, "seconds")) => Redirect(routes.SubmissionController.notRegistered())
       case Some(Organisation) ~ Some(enrolment)
         if CBCId.isPrivateBetaCBCId(enrolment.cbcId) =>
         auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).map(
@@ -135,6 +141,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
           cache.remove()
           Left(UnexpectedState(s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
         } else {
+          Logger.info(s"------------------------------------ fileUploadProgress - envelopId: $envelopeId, fileId: $fileId")
           Right(Ok(submission.fileupload.fileUploadProgress(
             envelopeId, fileId, hostName, assetsLocation)))
         }

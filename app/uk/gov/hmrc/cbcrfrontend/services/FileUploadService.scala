@@ -78,7 +78,7 @@ class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,ws:WS
     val fileNamePrefix = s"oecd-${LocalDateTime.now}"
     val xmlByteArray: Array[Byte] = org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(xmlFile))
 
-    Logger.debug("Country by Country: FileUpload service: Uploading the file to the envelope")
+    Logger.debug(s"Country by Country: FileUpload service: Uploading the file to the envelope - fileId = $fileId")
     fromFutureOptA(HttpExecutor(fusFeUrl,
       UploadFile(EnvelopeId(envelopeId),
         FileId(fileId), s"$fileNamePrefix-cbcr.xml ", "application/xml;charset=UTF-8", xmlByteArray)).map(fusConnector.extractFileUploadMessage))
@@ -139,10 +139,11 @@ class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,ws:WS
 
     val metadataFileId = UUID.randomUUID.toString
     val envelopeId = metaData.fileInfo.envelopeId
+    val fileId = metaData.fileInfo.id
 
     for {
       _ <- EitherT.right(HttpExecutor(fusFeUrl, UploadFile(envelopeId,
-        FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", Json.toJson(metaData).toString().getBytes)
+        fileId, "metadata.json ", " application/json; charset=UTF-8", Json.toJson(metaData).toString().getBytes)
       ))
       resourceUrl <- EitherT.right(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")))
     } yield resourceUrl.body
