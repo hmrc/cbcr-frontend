@@ -21,12 +21,13 @@ import javax.inject.{Inject, Singleton}
 
 import cats.data.EitherT
 import play.api.Logger
+import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, PartialReportingEntityData, ReportingEntityData, UnexpectedState}
-import uk.gov.hmrc.play.http.{HeaderCarrier, NotFoundException}
+import uk.gov.hmrc.play.http.{HeaderCarrier, NotFoundException, Upstream4xxResponse}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
@@ -65,5 +66,16 @@ class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(impl
       }
     )
 
+
+  def queryReportingEntityDataDocRefId(d:DocRefId)(implicit hc:HeaderCarrier) : ServiceResponse[Option[ReportingEntityData]] =
+    EitherT(connector.reportingEntityDocRefId(d).map(response =>
+      response.json.validate[ReportingEntityData].fold(
+        failed => Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+        data   => Right(Some(data))
+      )
+    ).recover{
+      case _:NotFoundException => Right(None)
+      case NonFatal(e)         => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+    })
 
 }
