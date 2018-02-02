@@ -23,7 +23,6 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
-import cats.{Applicative, Functor}
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
 import uk.gov.hmrc.cbcrfrontend.functorInstance
@@ -196,7 +195,10 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       val docRefId = if(re.docSpec.docType == OECD0) { ensureDocRefIdExists(re.docSpec.docRefId) }
                      else { Future.successful(re.docSpec.docRefId.validNel) }
 
-      (validateDocSpec(re.docSpec) *> docRefId *> validateTIN(re.tin, re.reportingRole)).map(_ => in.validNel)
+      (validateDocSpec(re.docSpec) *>
+        docRefId *>
+        validateTIN(re.tin, re.reportingRole)).map(_.andThen(_ => in.validNel))
+
     }.getOrElse(Future.successful(in.validNel))
 
   private def ensureDocRefIdExists(docRefId: DocRefId)(implicit hc:HeaderCarrier): FutureValidBusinessResult[DocRefId] = {
@@ -206,7 +208,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       throw new Exception(s"Error communicating with backend: $cbcErrors")
     }).subflatMap{
       case Some(_) => Right(docRefId)
-      case None    => Left(MessageTypeIndicDocTypeIncompatible)
+      case None    => Left(ResentDataIsUnknownError)
     }.toValidatedNel
   }
 
