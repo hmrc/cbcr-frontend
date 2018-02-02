@@ -192,12 +192,23 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   }
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
-    in.reportingEntity.map(re =>
-      validateDocSpec(re.docSpec).map(vds =>
-        (vds |@| validateTIN(re.tin, re.reportingRole)).map((_, _) => in)
-      )
-    ).getOrElse(Future.successful(in.validNel))
+    in.reportingEntity.map { re =>
+      val docRefId = if(re.docSpec.docType == OECD0) { ensureDocRefIdExists(re.docSpec.docRefId) }
+                     else { Future.successful(re.docSpec.docRefId.validNel) }
 
+      (validateDocSpec(re.docSpec) *> docRefId *> validateTIN(re.tin, re.reportingRole)).map(_ => in.validNel)
+    }.getOrElse(Future.successful(in.validNel))
+
+  private def ensureDocRefIdExists(docRefId: DocRefId)(implicit hc:HeaderCarrier): FutureValidBusinessResult[DocRefId] = {
+    reportingEntityDataService.queryReportingEntityDataDocRefId(docRefId).leftMap(
+    cbcErrors => {
+      Logger.error(s"Got error back: $cbcErrors")
+      throw new Exception(s"Error communicating with backend: $cbcErrors")
+    }).subflatMap{
+      case Some(_) => Right(docRefId)
+      case None    => Left(MessageTypeIndicDocTypeIncompatible)
+    }.toValidatedNel
+  }
 
   /** Ensure that if the messageType is [[CBC401]] there are no [[DocTypeIndic]] other than [[OECD1]]*/
   private def validateMessageTypes(r:XMLInfo):ValidBusinessResult[XMLInfo] = {
@@ -293,6 +304,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   /** Ensure the messageTypes and docTypes are valid and not in conflict */
   private def validateMessageTypeIndic(xmlInfo: XMLInfo) : ValidBusinessResult[XMLInfo] = {
 
+    lazy val CBCReportsAreNeverResent: Boolean = xmlInfo.cbcReport.forall(r => r.docSpec.docType != OECD0 )
+    lazy val AdditionalInfoIsNeverResent: Boolean = xmlInfo.additionalInfo.forall(r => r.docSpec.docType != OECD0)
+
     lazy val CBCReportsAreNotAllCorrectionsOrDeletions: Boolean = !xmlInfo.cbcReport.forall(r =>
       r.docSpec.docType == OECD2 ||
       r.docSpec.docType == OECD3
@@ -312,8 +326,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     xmlInfo.messageSpec.messageType match {
       case Some(CBC402) if CBCReportsAreNotAllCorrectionsOrDeletions
         || AdditionalInfoIsNotCorrectionsOrDeletions
-        || ReportingEntityIsNotCorrectionsOrDeletionsOrResent => MessageTypeIndicError.invalidNel
-      case _                                                  => xmlInfo.validNel
+        || ReportingEntityIsNotCorrectionsOrDeletionsOrResent           => MessageTypeIndicError.invalidNel
+      case _ if CBCReportsAreNeverResent && AdditionalInfoIsNeverResent => xmlInfo.validNel
+      case _                                                            => MessageTypeIndicError.invalidNel
     }
 
   }
