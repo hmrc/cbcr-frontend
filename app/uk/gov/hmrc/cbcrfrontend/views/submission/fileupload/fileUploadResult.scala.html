@@ -90,7 +90,7 @@ else {
                         </tr>
                     </tbody>
                 </table>
-                <p>@Messages("fileUploadResult.notYetSubmitted")</p>
+        <p>@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey()">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
 
 
                 @if(reportingRole == Some(CBC701)){
