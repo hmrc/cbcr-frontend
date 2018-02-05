@@ -1,3 +1,16 @@
+contactDetailsUpdate.mainHeading=The registration contact details have been updated
+contactDetailsUpdate.printThisButton=Print this page
+contactDetailsUpdate.next=What happens next?
+contactDetailsUpdate.email=We''ll send you a confirmation email to the updated address.
+contactDetailsUpdate.next2=Return to start page
+
+start.mainHeading=Welcome to the country-by-country reporting service
+start.intro=Choose what you want to do from the following options. Sign out at any time to exit the service.
+start.choice.one=Check and send a country-by-country report
+start.choice.two=Change registration contact details
+start.button=Start
+start.required=Select an option
+
 sessionExpired.mainHeading=Your session has ended
 sessionExpired.continue=As you've been inactive for 20 minutes, you''ll need to start again.
 sessionExpired.link=Return to start page
@@ -13,8 +26,9 @@ survey.four=Dissatisfied
 survey.five=Very dissatisfied
 survey.question2=How could we improve the service?
 survey.question2.hint=Don''t include any confidential information, for example your country-by-country ID
+survey.enterFeedback=Enter feedback
 survey.send=Send feedback
-survey.required=This section is required
+survey.required=Select an answer
 
 regenerate.mainHeading=Your new country-by-country ID has been validated
 regenerate.message=Your new country-by-country ID is:
@@ -80,6 +94,7 @@ subscribeSuccessCbcId.next2=Continue if the report is ready to send, or
 subscribeSuccessCbcId.nextLink=return to start page
 
 contactInfoSubscriber.mainHeading=Who should we contact about the content of the report?
+contactInfoSubscriber.additionalInfo=This must be someone with a detailed knowledge of the information in the report.
 contactInfoSubscriber.errors=There is a problem
 contactInfoSubscriber.subHeading=Enter the name of the person we should contact if there are any questions about the information contained in the Country by Country report.
 contactInfoSubscriber.firstName.label=First name
@@ -151,7 +166,9 @@ submitInfoUltimateParentEntity.upe.error.header=You haven''t entered the name of
 submitInfoUltimateParentEntity.upe.error=Enter the Ultimate Parent Entity name
 
 submitSuccessReceipt.confirmationNumberLabel=Your confirmation number is:
-submitSuccessReceipt.submissionDateLabel=Report received on
+submitSuccessReceipt.submissionDateLabel=Report received
+submitSuccessReceipt.reportForCBC=The report for country-by-country ID
+submitSuccessReceipt.receivedOn=was received on
 submitSuccessReceipt.digiSig=You can use this digital signature as a receipt for the report you''ve sent:
 submitSuccessReceipt.printInfo=Print this screen to keep a record of your report.
 submitSuccessReceipt.print=Print this page
@@ -160,10 +177,12 @@ submitSuccessReceipt.whatNext.heading=What happens next
 submitSuccessReceipt.email=We''ll send you a confirmation email for your records.
 submitSuccessReceipt.whatNext.info=We''ll check the information in the report and contact you if there are any issues.
 
-fileUploadProgress.mainHeading=We''re checking the report
+fileUploadProgress.mainHeading=We''re checking the report...
 fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.
 
-fileUploadResult.notYetSubmitted=We''ll now ask you for more information before accepting the report.
+fileUploadResult.notYetSubmitted=You can
+fileUploadResult.notYetSubmitted.link=exit
+fileUploadResult.notYetSubmitted2=and send the report later, or continue to send the report now.
 fileUploadResult.mainHeading.ok=The report format is correct
 fileUploadResult.mainHeading.error=The report has not been uploaded
 fileUploadResult.mainHeading.xmlError=The report has not been uploaded
@@ -220,13 +239,10 @@ submitSummary.declaration.error.text=Please confirm
 submitSummary.submit=Confirm and send report
 submitSummary.submitReport=Submit report
 
-uploadReport.mainHeading=Upload a report
-uploadReport.warning=The report must be a valid XML file that uses the current OECD country-by-country XML schema and follows HMRC rules.
-uploadReport.moreInfo=Find out 
-uploadReport.moreInfoLink=how to complete a report
-uploadReport.wellCheck=After you''ve uploaded your report, we''ll check that it conforms with the XML schema and HMRC guidelines.
-uploadReport.inputField.label=Choose the file you want to upload:
-uploadReport.uploadButton=Upload and continue
+uploadReport.mainHeading=Check the report
+uploadReport.moreInfo=If the report is ready to send, you can choose to send it now or later.
+uploadReport.inputField.label=Choose the file you want to check:
+uploadReport.uploadButton=Check report
 uploadReport.error=You must select a file
 
 submitterInfo.mainHeading=Enter your contact details, as the sender of the report

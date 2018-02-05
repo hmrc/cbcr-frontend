@@ -109,7 +109,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
         )
 
       // UPDATE| DELETE
-      case OECD0 | OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
+      case OECD0 => reportingEntityDataService.updateReportingEntityAdditionalData(PartialReportingEntityData.extract(xml))
+      case OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
     }
 
   def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
@@ -322,36 +323,38 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    val data: EitherT[Future, CBCErrors, (Hash, String)] =
+    val data: EitherT[Future, CBCErrors, (Hash, String, String)] =
       for {
-        dataTuple          <- (cache.read[SummaryData] |@| cache.read[SubmissionDate]).tupled
+        dataTuple          <- (cache.read[SummaryData] |@| cache.read[SubmissionDate] |@| cache.read[CBCId]).tupled
         data               = dataTuple._1
         date               = dataTuple._2
+        cbcId              = dataTuple._3
         formattedDate      <- fromEither((nonFatalCatch opt date.date.format(dateFormat)).toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")))
         emailSentAlready   <- right(cache.readOption[ConfirmationEmailSent].map(_.isDefined))
-        sentEmail          <- if(!emailSentAlready)right(emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate)).value)
+        sentEmail          <- if(!emailSentAlready)right(emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
                               else  pure(None)
         _                  <- if(sentEmail.getOrElse(false))right(cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
                               else pure(())
         hash                = data.submissionMetaData.submissionInfo.hash
-      } yield (hash, formattedDate)
+      } yield (hash, formattedDate, cbcId.value)
 
 
 
     data.fold[Result](
       (error: CBCErrors) => errorRedirect(error),
-      tuple              => Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple._2, tuple._1.value))
+      tuple3              => Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple3._2, tuple3._1.value, tuple3._3))
     )
   }
 
-  private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String):Email ={
+  private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String,cbcId: CBCId):Email ={
     val submittedInfo = data.submissionMetaData.submitterInfo
     Email(List(submittedInfo.email.toString()),
       "cbcr_report_confirmation",
       Map(
         "name" → submittedInfo.fullName,
         "received_at" → formattedDate,
-        "hash"   → data.submissionMetaData.submissionInfo.hash.value
+        "hash"   → data.submissionMetaData.submissionInfo.hash.value,
+        "cbcrId" -> cbcId.value
       ))
   }
 
