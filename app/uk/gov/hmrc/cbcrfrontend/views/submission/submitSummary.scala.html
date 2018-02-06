@@ -54,7 +54,7 @@
 
             <div class="tabular-data__entry divider--bottom">
                 <h2 class="tabular-data__heading tabular-data__heading--label">@Messages("submitSummary.contactDetails.heading")</h2>
-                <a class="tabular-data__data-2" href="@routes.SubmissionController.submitterInfo()">@Messages("submitSummary.contactDetails.change")</a>
+                <a class="tabular-data__data-2" id="change-contact-details" href="@routes.SubmissionController.submitterInfo()">@Messages("submitSummary.contactDetails.change")</a>
             </div>
             <div class="tabular-data__entry divider--bottom">
                 <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.name")</span>
@@ -101,6 +101,7 @@
                 <p>
                     <button type="submit" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
                 </p>
+                <script>document.getElementById("change-contact-details").focus();</script>
             }
 
         </div>
