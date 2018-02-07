@@ -16,23 +16,23 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
-import uk.gov.hmrc.cbcrfrontend.connectors.GGConnector
-import uk.gov.hmrc.cbcrfrontend.controllers.{CSRFTest, FakeAuthConnector}
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, CBCKnownFacts, Utr}
-import uk.gov.hmrc.play.test.UnitSpec
-import org.mockito.Mockito._
-import org.mockito.Matchers._
 import play.api.http.Status
+import uk.gov.hmrc.cbcrfrontend.connectors.GGConnector
+import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, CBCKnownFacts, Utr}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import scala.concurrent.duration._
 
-class CBCKnownFactsServiceSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
+class CBCKnownFactsServiceSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar {
 
   val connector = mock[GGConnector]
   val service = new CBCKnownFactsService(connector)

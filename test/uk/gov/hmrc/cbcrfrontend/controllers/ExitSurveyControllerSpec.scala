@@ -19,25 +19,23 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.time.{LocalDate, LocalDateTime}
 
 import akka.util.Timeout
-import cats.data.{EitherT, OptionT}
-import cats.instances.future._
 import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
-import play.Logger
 import play.api.Configuration
 import play.api.http.Status
 import play.api.i18n.MessagesApi
-import play.api.libs.json.{JsNull, JsValue, Json}
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import uk.gov.hmrc.cbcrfrontend.controllers.auth.{TestSecuredActions, TestUsers}
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.test.UnitSpec
@@ -45,18 +43,15 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
-import uk.gov.hmrc.http.HeaderCarrier
 
-class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with FakeAuthConnector with MockitoSugar with BeforeAndAfterEach{
+class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach{
 
 
   implicit val ec                     = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi            = app.injector.instanceOf[MessagesApi]
-  implicit val authCon                = authConnector(TestUsers.cbcrUser)
+  implicit val authCon                = mock[AuthConnector]
 
-  val securedActions                  = new TestSecuredActions(TestUsers.cbcrUser, authCon)
   implicit val cache                  = mock[CBCSessionCache]
-  implicit val enrol                  = mock[EnrolmentsConnector]
   val subService                      = mock[SubscriptionDataService]
   val bprKF                           = mock[BPRKnownFactsService]
   val configuration                   = mock[Configuration]
@@ -86,25 +81,19 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   }
 
   override protected def afterEach(): Unit = {
-    reset(cache,enrol,subService,bprKF,reDeEnrol,auditC,runMode)
+    reset(cache,subService,bprKF,reDeEnrol,auditC,runMode)
     super.afterEach()
   }
 
-  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(AffinityGroup("Organisation",Some("admin")))
-  private val affinityGroupOrgansiation = AffinityGroup("Organisation", Some("admin"))
+  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(AffinityGroup.Organisation)
 
-  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(affinityGroupOrgansiation)
   when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
-  when(enrol.getEnrolments(any())) thenReturn Future.successful(List.empty)
   when(runMode.env) thenReturn "Dev"
 
   val schemaVer: String = "1.0"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new ExitSurveyController(securedActions, configuration){
-    override lazy val audit: AuditConnector = auditC
-  }
-
+  val controller = new ExitSurveyController(configuration, auditC)
 
   val utr = Utr("7000000001")
   val bpr = BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))

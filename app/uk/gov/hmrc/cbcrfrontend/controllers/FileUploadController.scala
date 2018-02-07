@@ -56,7 +56,7 @@ import scala.util.control.NonFatal
 
 @Singleton
 class FileUploadController @Inject()(val messagesApi:MessagesApi,
-                                      val authConnector:AuthConnector,
+                                     val authConnector:AuthConnector,
                                      val schemaValidator: CBCRXMLValidator,
                                      val businessRuleValidator: CBCBusinessRuleValidator,
                                      val fileUploadService:FileUploadService,

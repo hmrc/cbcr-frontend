@@ -16,27 +16,26 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.data.OptionT
-import org.scalatest.{Matchers, WordSpec}
-import org.scalatest.mock.MockitoSugar
-import org.scalatestplus.play.OneAppPerSuite
-import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{Matchers, WordSpec}
+import org.scalatestplus.play.OneAppPerSuite
 import play.api.libs.json.Json
+import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, BusinessPartnerRecord, Utr}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 
 class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuite with MockitoSugar {
 
 
   val mockConnector = mock[BPRKnownFactsConnector]
-  val bprKnownFactsService = new BPRKnownFactsService(mockConnector)
+  val mockAudit = mock[AuditConnector]
+  val bprKnownFactsService = new BPRKnownFactsService(mockConnector,mockAudit)
   implicit val hc = HeaderCarrier()
 
   val bodyKnownFact1: String =
