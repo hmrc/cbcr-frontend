@@ -76,6 +76,9 @@ implicit request: Request[_], messages: Messages)
                 <div class="form-field">
                     <button role="button" type="submit" id="continue">Continue</button>
                 </div>
+                @if(!form.hasErrors) {
+                    <script>document.getElementById("firstName").focus();</script>
+                }
             }
             </div>
         </div>
