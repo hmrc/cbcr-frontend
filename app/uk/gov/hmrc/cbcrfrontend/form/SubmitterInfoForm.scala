@@ -28,7 +28,7 @@ object SubmitterInfoForm {
     mapping(
       "fullName" -> text.verifying("submitterInfo.fullName.error", _.trim != ""),
       "contactPhone" -> text.verifying("submitterInfo.phoneNumber.error.empty", _.trim != "")
-        .verifying("submitterInfo.phoneNumber.error.invalid", x => condTrue(x.trim != "", x.matches("""^[A-Z0-9 )/(-*#]{1,24}$"""))),
+        .verifying("submitterInfo.phoneNumber.error.invalid", x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))),
       "email" -> text.verifying("submitterInfo.emailAddress.error.empty", _.trim != "")
         .verifying("submitterInfo.emailAddress.error.invalid", x => condTrue(x.trim != "", EmailAddress.isValid(x)))
     )((fullName: String, contactPhone: String, email: String) => {
