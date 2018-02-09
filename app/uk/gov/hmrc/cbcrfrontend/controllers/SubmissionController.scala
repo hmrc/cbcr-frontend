@@ -30,10 +30,9 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
-import uk.gov.hmrc.auth.core.{Admin, AffinityGroup, AuthConnector, User}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrievals}
 import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.auth.CBCRAuthFunctions
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService}
@@ -68,7 +67,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
                                     (implicit ec: ExecutionContext,
                                      cache:CBCSessionCache,
                                      val config: Configuration,
-                                     feConfig:FrontendAppConfig) extends FrontendController with CBCRAuthFunctions with I18nSupport{
+                                     feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport{
 
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat

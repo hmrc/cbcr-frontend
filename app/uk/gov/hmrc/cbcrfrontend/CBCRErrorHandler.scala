@@ -18,13 +18,20 @@ package uk.gov.hmrc.cbcrfrontend
 
 import javax.inject.Inject
 
+import play.api.{Configuration, Environment}
 import play.api.i18n.MessagesApi
-import play.api.mvc.Request
+import play.api.mvc.{Request, RequestHeader}
+import uk.gov.hmrc.auth.core.NoActiveSession
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
 import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
 
-class CBCRErrorHandler @Inject()(val messagesApi: MessagesApi)(implicit val config:FrontendAppConfig) extends FrontendErrorHandler {
+class CBCRErrorHandler @Inject()(val messagesApi: MessagesApi, val env:Environment, val config:Configuration)(implicit val feConfig:FrontendAppConfig) extends FrontendErrorHandler with AuthRedirects{
 
-override def standardErrorTemplate (pageTitle: String, heading: String, message: String) (implicit request: Request[_] ) =
+  override def resolveError(rh: RequestHeader, ex: Throwable) = ex match {
+    case _:NoActiveSession => toGGLogin(rh.uri)
+  }
+
+  override def standardErrorTemplate (pageTitle: String, heading: String, message: String) (implicit request: Request[_] ) =
   uk.gov.hmrc.cbcrfrontend.views.html.error_template (pageTitle, heading, message)
 }

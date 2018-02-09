@@ -18,20 +18,18 @@ package uk.gov.hmrc.cbcrfrontend.controllers.test
 
 import javax.inject.{Inject, Singleton}
 
-import play.api.{Configuration, Environment}
 import play.api.libs.json._
 import play.api.mvc.Action
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.cbcrfrontend.auth.CBCRAuthFunctions
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
-import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 @Singleton
 class TestCBCRController @Inject()(val authConnector:AuthConnector,
                                    val testCBCRConnector: TestCBCRConnector,
                                    val config:Configuration,
-                                   val env:Environment) extends FrontendController with CBCRAuthFunctions{
+                                   val env:Environment) extends FrontendController with AuthorisedFunctions{
 
   def insertSubscriptionData(cbcId: String, utr: String) = Action.async{ implicit request =>
     authorised() {

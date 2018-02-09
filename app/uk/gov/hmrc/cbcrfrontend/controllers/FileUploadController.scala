@@ -32,9 +32,8 @@ import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 import uk.gov.hmrc.auth.core.retrieve._
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, MissingBearerToken, NoActiveSession}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.auth.CBCRAuthFunctions
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -64,7 +63,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
                                      val audit: AuditConnector,
                                      val rrService: DeEnrolReEnrolService,
                                      val env:Environment)
-                                    (implicit ec: ExecutionContext, cache:CBCSessionCache, val config:Configuration, feConfig:FrontendAppConfig) extends FrontendController with CBCRAuthFunctions with I18nSupport{
+                                    (implicit ec: ExecutionContext, cache:CBCSessionCache, val config:Configuration, feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport{
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 

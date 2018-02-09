@@ -39,6 +39,7 @@ import play.api.libs.json.{Format, JsNull, Reads}
 import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
@@ -71,7 +72,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   var runMode                                          = mock[RunMode]
   val authConnector                                    = mock[AuthConnector]
 
-  val configuration = new Configuration(ConfigFactory.load("application.conf"))
+  implicit val configuration = new Configuration(ConfigFactory.load("application.conf"))
+  implicit val feConfig = mock[FrontendAppConfig]
 
   override protected def afterEach(): Unit = {
     reset(cache,businessRulesValidator,schemaValidator,fuService)
@@ -91,12 +93,12 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
       override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): EitherT[Future,ExpiredSession,T] = universe.typeOf[T] match {
         case t if t =:= universe.typeOf[EnvelopeId] => EitherT.pure[Future,ExpiredSession,T](EnvelopeId("test").asInstanceOf[T])
-        case t if t =:= universe.typeOf[AffinityGroup] => EitherT.pure[Future,ExpiredSession,T](AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None))//.asInstanceOf[T])
+//        case t if t =:= universe.typeOf[AffinityGroup] => EitherT.pure[Future,ExpiredSession,T](AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None))//.asInstanceOf[T])
         case t if t =:= universe.typeOf[CBCId] => leftE[T](ExpiredSession("meh"))
       }
 
       override def readOption[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] = universe.typeOf[T] match {
-        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None) ).asInstanceOf[Option[T]])
+//        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None) ).asInstanceOf[Option[T]])
         case t if t =:= universe.typeOf[CBCId] => Future.successful(None)
       }
 
@@ -144,8 +146,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val schemaVer: String = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration ${runMode.env}.oecd-schema-version"))
   val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
 
-  val partiallyMockedController = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,deEnrolReEnrolService,env)(ec,TestSessionCache())
-  val controller = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,deEnrolReEnrolService,env)(ec,cache)
+  val partiallyMockedController = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,deEnrolReEnrolService,env)(ec,TestSessionCache(), configuration, feConfig)
+  val controller = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,deEnrolReEnrolService,env)(ec,cache, configuration, feConfig)
 
   val testFile:File= new File("test/resources/cbcr-valid.xml")
   val tempFile:File=Files.TemporaryFile("test",".xml").file
@@ -274,7 +276,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       when(fuService.getFileMetaData(any(),any())(any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
       when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(new CacheMap("",Map.empty))
-      when(cache.readOption(EQ(AffinityGroup.jsonFormat),any(),any())) thenReturn Future.successful(Option(AffinityGroup("Organisation", Some("admin"))))
+      when(cache.readOption(EQ(AffinityGroup.jsonFormat),any(),any())) thenReturn Future.successful(Option(AffinityGroup.Organisation))
       when(businessRulesValidator.validateBusinessRules(any(),any())(any())) thenReturn Future.successful(Valid(xmlinfo))
       when(businessRulesValidator.recoverReportingEntity(any())(any())) thenReturn Future.successful(Valid(completeXmlInfo))
       val result = Await.result(controller.fileValidate("test","test")(request), 2.second)

@@ -19,24 +19,25 @@ package uk.gov.hmrc
 import java.io.{File, FileInputStream}
 
 import _root_.play.api.Logger
+import _root_.play.api.i18n.Messages
+import _root_.play.api.libs.json.Reads
 import _root_.play.api.mvc.Results._
 import _root_.play.api.mvc._
-import _root_.play.api.libs.json.Json
-import _root_.play.api.libs.json.Reads
 import cats.data.ValidatedNel
 import cats.instances.future._
 import cats.syntax.cartesian._
 import cats.syntax.show._
 import cats.{Applicative, Functor}
-import uk.gov.hmrc.auth.core.{Enrolment, Enrolments}
+import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, SimpleRetrieval}
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.http.HeaderCarrier
-import scala.language.implicitConversions
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.implicitConversions
 
 
 package object cbcrfrontend {
@@ -65,11 +66,13 @@ package object cbcrfrontend {
 
   implicit def resultFuture(r:Result):Future[Result] = Future.successful(r)
 
-  def errorRedirect(error:CBCErrors)(implicit request:Request[_]): Result = {
+  def errorRedirect(error:CBCErrors)(implicit request:Request[_],  msgs:Messages, feConfig:FrontendAppConfig): Result = {
     Logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())
-      case _                 => sys.error("Error: " + error.show)
+      case _                 => InternalServerError(
+        views.html.error_template ("Internal Server Error", "Internal Server Error", "Something went wrong")
+      )
     }
   }
 

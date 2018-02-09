@@ -32,6 +32,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Result
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.emailaddress.EmailAddress
@@ -50,8 +51,9 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   implicit val ec                     = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi            = app.injector.instanceOf[MessagesApi]
   implicit val authCon                = mock[AuthConnector]
+  implicit val conf                   = mock[FrontendAppConfig]
 
-  implicit val cache                  = mock[CBCSessionCache]
+  implicit val cache                  = app.injector.instanceOf[CBCSessionCache]
   val subService                      = mock[SubscriptionDataService]
   val bprKF                           = mock[BPRKnownFactsService]
   val configuration                   = mock[Configuration]
@@ -85,7 +87,7 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     super.afterEach()
   }
 
-  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(AffinityGroup.Organisation)
+//  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(AffinityGroup.Organisation)
 
   when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
   when(runMode.env) thenReturn "Dev"
