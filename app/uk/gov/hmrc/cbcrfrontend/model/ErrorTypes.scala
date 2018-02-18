@@ -59,6 +59,7 @@ object FileNameError {
 
 case object TestDataError extends BusinessRuleErrors
 case object SendingEntityError extends BusinessRuleErrors
+case object SendingEntityOrganisationMatchError extends BusinessRuleErrors
 case object ReceivingCountryError extends BusinessRuleErrors
 case object MessageTypeIndicError extends BusinessRuleErrors
 case class InvalidXMLError(error:String) extends BusinessRuleErrors {
@@ -105,6 +106,7 @@ object BusinessRuleErrors {
       case m:MessageRefIDError       => Json.toJson[MessageRefIDError](m)(MessageRefIDError.format)
       case TestDataError             => JsString(TestDataError.toString)
       case SendingEntityError        => JsString(SendingEntityError.toString)
+      case SendingEntityOrganisationMatchError        => JsString(SendingEntityOrganisationMatchError.toString)
       case ReceivingCountryError     => JsString(ReceivingCountryError.toString)
       case fne:FileNameError         => Json.toJson(fne)
       case MessageTypeIndicError     => JsString(MessageTypeIndicError.toString)
@@ -164,6 +166,7 @@ object BusinessRuleErrors {
     case m:MessageRefIDError => m.show
     case TestDataError         => "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD11OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
     case SendingEntityError    => "The CBCId in the SendingEntityIN field has not been registered"
+    case SendingEntityOrganisationMatchError => "The CBCId in the SendingEntityIN does not match that of the Organisation"
     case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
     case FileNameError(f,e)         => s"The filename and messageRefID should match." +"\r\n" + s"You entered this filename: $f" +"\r\n" + s"It should read: $e"
     case MessageTypeIndicError => "Error DocTypeIndic (Correction): If MessageTypeIndic is provided and completed with \"CBC402\" message can only contain DocTypeIndic \"OECD2\" or \"OECD3\". (With 1 execption ReportingEntity can contain DocTypeIndic \"OECD0\" where ReportingEntity information is unchanged. \"OECD0\" cannot be used in DocSpec\\DocTypeIndic for CbCReports or AdditionalInfo)"

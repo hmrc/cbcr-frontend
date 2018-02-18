@@ -47,6 +47,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val reportingEntity = mock[ReportingEntityDataService]
   val configuration = mock[Configuration]
   val runMode = mock[RunMode]
+  val cache: CBCSessionCache = mock[CBCSessionCache]
 
 
   val docRefId1 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
@@ -65,6 +66,14 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](Some(submissionData))
   when(runMode.env) thenReturn "Dev"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
+  def makeTheUserAnAgent =
+    when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())).thenReturn(Future.successful(None))
+
+  makeTheUserAnAgent
+
+  def makeTheUserAnOrganisation(cbcid:String) =
+    when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())).thenReturn(Future.successful(CBCId(cbcid)))
+
 
   implicit val hc = HeaderCarrier()
   val extract = new XmlInfoExtract()
@@ -75,8 +84,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val filenamePB = "GB2016RGXVCBC0000000056CBC40120170311T090000X.xml"
 
   val submissionData = SubscriptionDetails(
-    BusinessPartnerRecord("SAFEID",Some(OrganisationResponse("blagh")),EtmpAddress("Line1",None,None,None,Some("TF3 XFE"),"GB")),
-    SubscriberContact("Brian","Lastname", "phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
+  BusinessPartnerRecord("SAFEID",Some(OrganisationResponse("blagh")),EtmpAddress("Line1",None,None,None,Some("TF3 XFE"),"GB")),
+  SubscriberContact("Brian","Lastname", "phonenum",EmailAddress("test@test.com")),cbcId,Utr("7000000002")
   )
 
 
@@ -87,21 +96,25 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701)
 
   val xmlinfo = XMLInfo(
-    MessageSpec(
-      MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
-      "GB",
-      CBCId.create(99).getOrElse(fail("booo")),
-      LocalDateTime.now(),
-      LocalDate.parse("2017-01-30"),
-      None
-    ),
-    None,
-    List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
-    Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
+  MessageSpec(
+  MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
+  "GB",
+  CBCId.create(99).getOrElse(fail("booo")),
+  LocalDateTime.now(),
+  LocalDate.parse("2017-01-30"),
+  None
+  ),
+  None,
+  List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
+  Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
   )
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode, cache)
+
+
   "The CBCBusinessRuleValidator" should {
+
+
     "return the correct error" when {
       "messageRefId is empty" in {
         val missingMessageRefID = new File("test/resources/cbcr-invalid-empty-messageRefID.xml")
@@ -140,6 +153,20 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           _ => fail("No MessageRefIDCBCIdMismatch error generated")
         )
       }
+
+      "the Organisation user has a CBCId that does not match that in the SendingEntityIn field" in {
+        makeTheUserAnOrganisation("XTCBC0100000001")
+
+        val validFile = new File("test/resources/cbcr-valid.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+        result.fold(
+          errors => errors.toList should contain(SendingEntityOrganisationMatchError),
+          _ => fail("No Sending Entity Organisation Match Error")
+        )
+
+        makeTheUserAnAgent
+      }
+
       "messageRefId contains a Reporting Year that doesn't match the year in the ReportingPeriod field" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-reportingYear-messageRefID.xml")
@@ -410,7 +437,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when a docRefId is a duplicate but the duplicate is in an Unchanged ReportingEntity section" in {
         val validFile = new File("test/resources/cbcr-valid-dup-re-unchanged.xml")
-
         when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
