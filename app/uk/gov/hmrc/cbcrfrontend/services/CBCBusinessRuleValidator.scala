@@ -23,14 +23,14 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
+import configs.Result.Success
 import play.api.{Configuration, Logger}
-import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
-import uk.gov.hmrc.cbcrfrontend.functorInstance
-import uk.gov.hmrc.cbcrfrontend.applicativeInstance
+import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult, applicativeInstance, functorInstance, model}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Failure
 
 /**
   * This class exposes two methods:
@@ -55,8 +55,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                                           subscriptionDataService: SubscriptionDataService,
                                           reportingEntityDataService: ReportingEntityDataService,
                                           configuration: Configuration,
-                                          runMode: RunMode
-                                         )(implicit ec:ExecutionContext) {
+                                          runMode: RunMode,
+                                          cache:CBCSessionCache
+                                         )(implicit ec:ExecutionContext, hc:HeaderCarrier) {
 
   private val testData = "OECD1[0123]"
 
@@ -187,7 +188,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     validateMessageTypes(x) *>
     validateDocSpecs(x) *>
     validateMessageTypeIndic(x) *>
-    validateFileName(x,fileName)
+    validateFileName(x,fileName) *>
+    validateOrganisationCBCId(x)
   }
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
@@ -371,6 +373,16 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def validateCBCId(messageRefID: MessageRefID, messageSpec: MessageSpec) : ValidBusinessResult[MessageRefID] =
     if(messageRefID.cBCId == messageSpec.sendingEntityIn) { messageRefID.validNel}
     else MessageRefIDCBCIdMismatch.invalidNel
+
+  /** If the User is an enrolled Organisation, ensure their CBCId matches the  CBCId in the Sending Entity **/
+  private def validateOrganisationCBCId(in:XMLInfo) : FutureValidBusinessResult[XMLInfo]  =
+    cache.readOption[CBCId].map { (maybeCBCId: Option[CBCId]) =>
+      maybeCBCId match {
+        case Some(organisationCBCId) => if (organisationCBCId == in.messageSpec.sendingEntityIn) in.validNel
+                                        else SendingEntityOrganisationMatchError.invalidNel
+        case None => in.validNel
+      }
+    }
 
   /** Ensure the reportingPeriod in the [[MessageRefID]] matches the reportingPeriod field in the MessageSpec */
   private def validateReportingPeriodMatches(messageRefID: MessageRefID,messageSpec:MessageSpec) : ValidBusinessResult[MessageRefID] =
