@@ -47,7 +47,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val reportingEntity = mock[ReportingEntityDataService]
   val configuration = mock[Configuration]
   val runMode = mock[RunMode]
-  val cache: CBCSessionCache = mock[CBCSessionCache]
+  implicit val cache: CBCSessionCache = mock[CBCSessionCache]
 
 
   val docRefId1 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
@@ -109,7 +109,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
   )
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode, cache)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode)
 
 
   "The CBCBusinessRuleValidator" should {
