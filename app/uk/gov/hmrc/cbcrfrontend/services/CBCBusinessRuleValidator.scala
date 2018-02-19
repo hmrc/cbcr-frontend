@@ -55,9 +55,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                                           subscriptionDataService: SubscriptionDataService,
                                           reportingEntityDataService: ReportingEntityDataService,
                                           configuration: Configuration,
-                                          runMode: RunMode,
-                                          cache:CBCSessionCache
-                                         )(implicit ec:ExecutionContext, hc:HeaderCarrier) {
+                                          runMode: RunMode
+                                         )(implicit ec:ExecutionContext, val cache:CBCSessionCache) {
 
   private val testData = "OECD1[0123]"
 
@@ -375,7 +374,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     else MessageRefIDCBCIdMismatch.invalidNel
 
   /** If the User is an enrolled Organisation, ensure their CBCId matches the  CBCId in the Sending Entity **/
-  private def validateOrganisationCBCId(in:XMLInfo) : FutureValidBusinessResult[XMLInfo]  =
+  private def validateOrganisationCBCId(in:XMLInfo)(implicit hc: HeaderCarrier) : FutureValidBusinessResult[XMLInfo]  =
     cache.readOption[CBCId].map { (maybeCBCId: Option[CBCId]) =>
       maybeCBCId match {
         case Some(organisationCBCId) => if (organisationCBCId == in.messageSpec.sendingEntityIn) in.validNel
