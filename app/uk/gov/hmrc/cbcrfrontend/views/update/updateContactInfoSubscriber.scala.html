@@ -19,8 +19,9 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
+@import uk.gov.hmrc.cbcrfrontend.model.CBCId
 
-@(asideCbc: Html, phaseBannerBeta: Html, form:Form[_], cbcId:String)(
+@(asideCbc: Html, phaseBannerBeta: Html, form:Form[_], cBCId: CBCId)(
         implicit request: Request[_], messages: Messages)
 
 @sidebarContent = {
@@ -67,7 +68,7 @@
                 @Messages("contactInfoSubscriber.updateHeading")
             </h1>
             <p>
-                @Messages("contactInfoSubscriber.cbcId") @cbcId
+                @Messages("contactInfoSubscriber.cbcId") @cBCId.value
             </p>
             <div class="form-group">
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.saveUpdatedInfoSubscriber()){
