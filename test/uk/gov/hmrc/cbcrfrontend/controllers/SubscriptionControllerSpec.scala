@@ -585,7 +585,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
         val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
       }
-      "data error AND no cbcId retrieved" in {
+      "no cbcId retrieved" in {
         val data = Json.obj(
           "email" -> "blagh@blagh.com",
           "firstName" -> "Dave",
@@ -594,7 +594,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
         when(enrollments.getCbcId(any())) thenReturn OptionT.none[Future,CBCId]
         val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
-        status(result) shouldEqual Status.BAD_REQUEST
+        status(result) shouldEqual Status.INTERNAL_SERVER_ERROR
       }
     }
     "call update on the ETMPSubscription data api and the internal subscription data api on the backend" in {
