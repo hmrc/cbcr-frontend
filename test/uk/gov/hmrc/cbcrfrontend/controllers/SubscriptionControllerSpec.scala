@@ -593,11 +593,6 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
         )
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
         when(enrollments.getCbcId(any())) thenReturn OptionT.none[Future,CBCId]
-//        when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),EQ(bprTag),any())) thenReturn rightE(BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB")))
-//        when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn rightE(CBCId("XGCBC0000000001").getOrElse(fail("lsadkjf")))
-//        when(cbcId.updateETMPSubscriptionData(any(),any())(any())) thenReturn EitherT.right[Future,CBCErrors,UpdateResponse](UpdateResponse(LocalDateTime.now()))
-//        when(subService.updateSubscriptionData(any(),any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors,String]("Ok")
-//        when(enrollments.getCbcId(any())) thenReturn OptionT.pure[Future,CBCId](CBCId.create(1).getOrElse(fail("oops")))
         val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
       }
