@@ -521,6 +521,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
           "lastName" -> "Jones"
         )
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
+        when(enrollments.getCbcId(any())) thenReturn OptionT.pure[Future,CBCId](CBCId.create(1).getOrElse(fail("oops")))
         val result = controller.saveUpdatedInfoSubscriber(fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
       }
@@ -531,6 +532,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
           "firstName" -> "Dave"
         )
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
+        when(enrollments.getCbcId(any())) thenReturn OptionT.pure[Future,CBCId](CBCId.create(1).getOrElse(fail("oops")))
         val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
 
@@ -542,6 +544,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
           "lastName" -> "Jones"
         )
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
+        when(enrollments.getCbcId(any())) thenReturn OptionT.pure[Future,CBCId](CBCId.create(1).getOrElse(fail("oops")))
         val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
 
@@ -554,6 +557,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
           "lastName" -> "Jones"
         )
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
+        when(enrollments.getCbcId(any())) thenReturn OptionT.pure[Future,CBCId](CBCId.create(1).getOrElse(fail("oops")))
         val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
       }
@@ -564,6 +568,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
           "lastName" -> "Jones"
         )
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
+        when(enrollments.getCbcId(any())) thenReturn OptionT.pure[Future,CBCId](CBCId.create(1).getOrElse(fail("oops")))
         val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
 
@@ -576,8 +581,20 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
           "lastName" -> "Jones"
         )
         val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
+        when(enrollments.getCbcId(any())) thenReturn OptionT.pure[Future,CBCId](CBCId.create(1).getOrElse(fail("oops")))
         val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
+      }
+      "no cbcId retrieved" in {
+        val data = Json.obj(
+          "email" -> "blagh@blagh.com",
+          "firstName" -> "Dave",
+          "lastName" -> "Jones"
+        )
+        val fakeRequest = addToken(FakeRequest("POST","contact-info-subscriber").withJsonBody(data))
+        when(enrollments.getCbcId(any())) thenReturn OptionT.none[Future,CBCId]
+        val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
+        status(result) shouldEqual Status.INTERNAL_SERVER_ERROR
       }
     }
     "call update on the ETMPSubscription data api and the internal subscription data api on the backend" in {
@@ -593,6 +610,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneApp
       when(cache.read[CBCId] (EQ(CBCId.cbcIdFormat),any(),any())) thenReturn rightE(CBCId("XGCBC0000000001").getOrElse(fail("lsadkjf")))
       when(cbcId.updateETMPSubscriptionData(any(),any())(any())) thenReturn EitherT.right[Future,CBCErrors,UpdateResponse](UpdateResponse(LocalDateTime.now()))
       when(subService.updateSubscriptionData(any(),any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors,String]("Ok")
+      when(enrollments.getCbcId(any())) thenReturn OptionT.pure[Future,CBCId](CBCId.create(1).getOrElse(fail("oops")))
       val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
       result.header.headers("Location") should endWith("/contact-info-subscriber/updated")
       status(result) shouldEqual Status.SEE_OTHER
