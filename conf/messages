@@ -52,7 +52,6 @@ form.controls.signOut=Sign out
 form.controls.finished=Finished
 form.controls.returnToStart=Return to start page
 form.controls.confirmAndContinue=Confirm and continue
-form.controls.save=Save
 
 enterCBCId.mainHeading=Enter your country-by-country ID
 enterCBCId.formHint=This must contain the 15-character ID you received when you registered, for example: XACBC0000999999.
@@ -120,8 +119,7 @@ contactInfoSubscriber.emailAddress.error.invalid.header.l1= Check the email addr
 contactInfoSubscriber.emailAddress.error.invalid=Enter a valid email address
 contactInfoSubscriber.emailAddress.error.empty.header=You haven''t entered your email address
 contactInfoSubscriber.emailAddress.error.empty=Enter you'r email address
-contactInfoSubscriber.updateHeading=Change who we should contact about the content of the report
-contactInfoSubscriber.cbcId=Country-by-country ID:
+contactInfoSubscriber.updateHeading=Update your details
 
 contactInfoSubscriber.reconfirm.email.mainHeading=Is this your correct email address?
 contactInfoSubscriber.reconfirm.email.label=Email address

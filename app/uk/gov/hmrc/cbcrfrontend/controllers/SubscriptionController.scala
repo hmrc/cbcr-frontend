@@ -19,7 +19,6 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
@@ -147,27 +146,25 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
   val updateInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit request =>
 
-      val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
+      val subscriptionData: ServiceResponse[ETMPSubscription] = for {
         cbcId           <- enrollments.getCbcId.toRight(UnexpectedState("Couldn't get CBCId"))
         optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
         details         <- EitherT.fromOption[Future](optionalDetails, UnexpectedState("No SubscriptionDetails"))
         bpr             =  details.businessPartnerRecord
         _               <- right(cache.save(bpr) *> cache.save(cbcId))
         subData         <- cbcIdService.getETMPSubscriptionData(bpr.safeId).toRight(UnexpectedState("No ETMP Subscription Data"): CBCErrors)
-      } yield Tuple2(subData,cbcId)
+      } yield subData
 
-      subscriptionData.fold[Result](
-        (error: CBCErrors) => BadRequest(error.toString),
-        tuple2 => {
-          val subData: ETMPSubscription = tuple2._1
-          val cbcId: CBCId = tuple2._2
+      subscriptionData.fold(
+        error => BadRequest(error.toString),
+        data => {
           val prepopulatedForm = subscriptionDataForm.bind(Map(
-            "firstName" -> subData.names.name1,
-            "lastName" -> subData.names.name2,
-            "email" -> subData.contact.email.value,
-            "phoneNumber" -> subData.contact.phoneNumber
+            "firstName" -> data.names.name1,
+            "lastName" -> data.names.name2,
+            "email" -> data.contact.email.value,
+            "phoneNumber" -> data.contact.phoneNumber
           ))
-          Ok(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm, cbcId))
+          Ok(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), prepopulatedForm))
         }
       )
 
@@ -175,17 +172,8 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
 
   val saveUpdatedInfoSubscriber = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
     implicit requests =>
-
-      val ci: ServiceResponse[CBCId] = for {
-        cbcId           <- enrollments.getCbcId.toRight(UnexpectedState("Couldn't get CBCId"): CBCErrors)
-      } yield cbcId
-
       subscriptionDataForm.bindFromRequest.fold(
-        errors => {
-          ci.fold((error: CBCErrors) => errorRedirect(error), cbcId => {
-            BadRequest(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors, cbcId))
-          })
-        },
+        errors => BadRequest(update.updateContactInfoSubscriber(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
         data => {
           (for {
             bpr     <- cache.read[BusinessPartnerRecord]
