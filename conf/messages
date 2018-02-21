@@ -91,8 +91,8 @@ subscribeSuccessCbcId.printThisButton=Print this page
 subscribeSuccessCbcId.printThis1=Keep this ID safe, as it must be included in the report.
 subscribeSuccessCbcId.next=What happens next
 subscribeSuccessCbcId.email=We''ll send you a confirmation email for your records.
-subscribeSuccessCbcId.next2=Continue if the report is ready to send, or
-subscribeSuccessCbcId.nextLink=return to start page
+subscribeSuccessCbcId.next2=Continue if the report is ready to check and send, or
+subscribeSuccessCbcId.nextLink=exit
 
 contactInfoSubscriber.mainHeading=Who should we contact about the content of the report?
 contactInfoSubscriber.additionalInfo=This must be someone with a detailed knowledge of the information in the report.
