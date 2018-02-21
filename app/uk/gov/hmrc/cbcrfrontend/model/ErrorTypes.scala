@@ -138,6 +138,7 @@ object BusinessRuleErrors {
           case Some("messagetypeindicerror") => JsSuccess(MessageTypeIndicError)
           case Some("testdataerror")         => JsSuccess(TestDataError)
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
+          case Some("sendingentityorganisationmatcherror") =>JsSuccess(SendingEntityOrganisationMatchError)
           case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
           case Some("invaliddocrefid")       => JsSuccess(InvalidDocRefId)
           case Some("invalidcorrdocrefid")       => JsSuccess(InvalidCorrDocRefId)
