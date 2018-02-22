@@ -42,7 +42,7 @@ implicit request: Request[_], messages: Messages)
         <h1>@Messages("enterCompanyName.mainHeading")</h1>
         @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.saveCompanyName()){
         <fieldset>
-            @formFieldDisplay(error,"companyName",Some(Messages("enterCompanyName.form.error")),Messages("enterCompanyName.formHintWhereYouGotIt"),form,Some(Messages("enterCompanyName.formHint")))
+            @formFieldDisplay(error,"companyName",Some(Messages("enterCompanyName.form.error")),Messages("enterCompanyName.formHintWhereYouGotIt"),form,None)
         </fieldset>
         @csrf_token()
 
