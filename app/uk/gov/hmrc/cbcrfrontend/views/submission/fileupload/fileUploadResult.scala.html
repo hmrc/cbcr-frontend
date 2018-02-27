@@ -62,7 +62,7 @@ else {
                     <h2>@messages("fileUploadResult.whatToDo")</h2>
                     <ol style="margin-left: 15px;">
                         @schemaErrors.map { size =>
-                            <li><p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.data.link")
+                            <li><p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.xml.link")
                                 (Text, @{
                                 size
                             }KB)</a>.</p></li>
