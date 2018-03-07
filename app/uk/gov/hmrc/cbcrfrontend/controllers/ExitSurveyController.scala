@@ -60,11 +60,9 @@ class ExitSurveyController @Inject()(val sec: SecuredActions, val config:Configu
       errors  => Future.successful(BadRequest(survey.exitSurvey(includes.asideBusiness(), includes.phaseBannerBeta(), errors))),
       answers => auditSurveyAnswers(answers).fold(
         errors => {
-          Logger.error(errors.toString)
-//          Redirect(routes.SharedController.guidance())
+          Logger.error(errors.toString)//          Redirect(routes.SharedController.guidance())
           Redirect(routes.ExitSurveyController.surveyAcknowledge())
         },
-//        _      => Redirect(routes.SharedController.guidance())
         _      => Redirect(routes.ExitSurveyController.surveyAcknowledge())
       )
     )
