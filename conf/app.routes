@@ -6,6 +6,7 @@ POST       /                                              @uk.gov.hmrc.cbcrfront
 
 GET        /exit-survey                                   @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.doSurvey
 POST       /exit-survey/submit                            @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.submit
+GET        /exit-survey/acknowledge                       @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.surveyAcknowledge
 
 GET        /session-expired                               @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.sessionExpired
 GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
