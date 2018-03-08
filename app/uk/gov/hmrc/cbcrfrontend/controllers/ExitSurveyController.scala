@@ -50,18 +50,28 @@ class ExitSurveyController @Inject()(val sec: SecuredActions, val config:Configu
     Ok(survey.exitSurvey(includes.asideBusiness(), includes.phaseBannerBeta(), SurveyForm.surveyForm))
   }
 
+  val surveyAcknowledge =  Action { implicit request =>
+    Ok(survey.exitSurveyComplete(includes.phaseBannerBeta()))
+  }
+
+
   val submit = Action.async{ implicit request =>
     SurveyForm.surveyForm.bindFromRequest().fold(
       errors  => Future.successful(BadRequest(survey.exitSurvey(includes.asideBusiness(), includes.phaseBannerBeta(), errors))),
       answers => auditSurveyAnswers(answers).fold(
         errors => {
-          Logger.error(errors.toString)
-          Redirect(routes.SharedController.guidance())
+          Logger.error(errors.toString)//          Redirect(routes.SharedController.guidance())
+          Redirect(routes.ExitSurveyController.surveyAcknowledge())
         },
-        _      => Redirect(routes.SharedController.guidance())
+        _      => Redirect(routes.ExitSurveyController.surveyAcknowledge())
       )
     )
   }
+
+//  val continue = Action.async{ implicit request =>
+//    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.guidanceOverviewQa()))
+//  }
+
 
   def auditSurveyAnswers(answers: SurveyAnswers)(implicit request:Request[_]) : ServiceResponse[AuditResult.Success.type ] = {
     eitherT[AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRExitSurvey",

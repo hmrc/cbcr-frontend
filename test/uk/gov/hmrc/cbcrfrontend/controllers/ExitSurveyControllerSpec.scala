@@ -126,6 +126,8 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
   val fakeRequest  = addToken(FakeRequest("GET", "/exit-survey"))
 
+  val fakeAcknowledge  = addToken(FakeRequest("GET", "/exit-survey/acknowledge"))
+
   "GET /exit-survey" should {
     "return 200" in {
       val result: Result = Await.result(controller.doSurvey(fakeRequest), 5.second)
@@ -142,7 +144,7 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       status(result) shouldBe 400
       verify(auditC, times(0)).sendEvent(any())(any(),any())
     }
-    "return a 303 to the guidance page if satisfied selection is provided and should audit" in {
+    "return a 303 to the acknowledgement page if satisfied selection is provided and should audit" in {
       when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       val result = Await.result(
         controller.submit(fakeSubmit.withJsonBody(Json.toJson(SurveyAnswers("splendid","")))),
@@ -150,8 +152,15 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       )
       status(result) shouldBe 303
       val redirect = result.header.headers.getOrElse("location", "")
-      redirect should endWith("guidance")
+      redirect should endWith("acknowledge")
       verify(auditC, times(1)).sendEvent(any())(any(),any())
+    }
+  }
+
+  "GET exit-survey/acknowledge" should {
+    "return 200" in {
+      val result: Result = Await.result(controller.surveyAcknowledge(fakeAcknowledge), 5.second)
+      status(result) shouldBe Status.OK
     }
   }
 

@@ -29,6 +29,9 @@ survey.question2.hint=Don''t include any confidential information, for example y
 survey.enterFeedback=Enter feedback
 survey.send=Send feedback
 survey.required=Select an answer
+survey.acknowledge.header=Thank you
+survey.acknowledge.message=Your replies will help us improve the country-by-country service.
+
 
 regenerate.mainHeading=Your new country-by-country ID has been validated
 regenerate.message=Your new country-by-country ID is:
