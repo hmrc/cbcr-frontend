@@ -29,6 +29,9 @@ survey.question2.hint=Don''t include any confidential information, for example y
 survey.enterFeedback=Enter feedback
 survey.send=Send feedback
 survey.required=Select an answer
+survey.acknowledge.header=Thank you
+survey.acknowledge.message=Your replies will help us improve the country-by-country service.
+
 
 regenerate.mainHeading=Your new country-by-country ID has been validated
 regenerate.message=Your new country-by-country ID is:
@@ -275,11 +278,11 @@ notAuthorised.individual.mainHeading=You aren''t authorised to use this service
 notAuthorised.Individual.message.start=To use this service, you must
 notAuthorised.Individual.message.link=register as an Organisation with the Government Gateway
 notAuthorised.Individual.message.end=with the Government Gateway.
-notAuthorised.individual.button=Return to start page
+notAuthorised.individual.button=Finished
 
 notAuthorised.assistant.mainHeading=You aren''t authorised to use this service
 notAuthorised.assistant.message=To use this service, you must sign in to the Government Gateway as an Administrator for your Organisation.
-notAuthorised.assistant.button=Return to start page
+notAuthorised.assistant.button=Finished
 
 utrCheck.mainHeading=Enter the Unique Taxpayer Reference of the UK-registered company or partnership sending the report
 utrCheck.label=Unique Taxpayer Reference

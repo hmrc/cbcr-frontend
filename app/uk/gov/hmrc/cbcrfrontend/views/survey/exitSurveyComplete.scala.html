@@ -16,28 +16,20 @@
 
 @import uk.gov.hmrc.play.views.html.helpers._
 @import uk.gov.hmrc.cbcrfrontend.AppConfig
-@import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
-@import tags._
-@import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
+@(phaseBannerBeta: Html)(implicit request: Request[_], messages: Messages)
 
-@(asideCbc: Html, phaseBannerBeta: Html)(implicit request: Request[_], messages: Messages)
 
-@sidebarContent = { @asideCbc }
+@main_template(Messages("survey.acknowledge.header")) {
 
-@main_template(Messages("notRegistered.heading"), sidebarLinks = Some(sidebarContent)) {
-<div class="grid-row">
-    <div class="column-two-thirds">
-        <h1>@Messages("notRegistered.heading")</h1>
-
-            <p>@Messages("notRegistered.message.start") <a href="@routes.SharedController.verifyKnownFactsOrganisation()">@messages("notRegistered.message.link")</a>
-            @messages("notRegistered.message.end")</p>
-
-        <a class="button" href="@routes.SharedController.signOut()">@Messages("form.controls.finished")</a>
+    <div class="grid-row">
+        <div class="column-two-thirds">
+            <h1>@Messages("survey.acknowledge.header")</h1>
+        </div>
+        <p>@messages("survey.acknowledge.message")</p>
     </div>
-</div>
-
+    <p><a class="button" role="button" href="@routes.SharedController.guidance()">@Messages("form.controls.finished")</a></p>
 }
