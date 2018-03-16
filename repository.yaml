@@ -1,0 +1,3 @@
+leakDetectionExemptions:
+ - ruleId: 'app-conf'
+   filePath: '/conf/application.conf'
