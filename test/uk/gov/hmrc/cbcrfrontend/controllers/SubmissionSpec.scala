@@ -538,6 +538,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
         status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
         verify(mockEmailService,times(1)).sendEmail(any())(any())
         verify(cache,times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
@@ -552,6 +553,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
         status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
         verify(mockEmailService,times(1)).sendEmail(any())(any())
         verify(cache,times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
@@ -568,6 +570,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
         status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
         verify(mockEmailService,times(1)).sendEmail(any())(any())
         verify(cache,times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
@@ -582,6 +585,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(Some(ConfirmationEmailSent("yep")))
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
         status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
         verify(mockEmailService,times(0)).sendEmail(any())(any())
         verify(cache,times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
@@ -596,6 +600,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
         status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
         verify(cache,times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
       }
