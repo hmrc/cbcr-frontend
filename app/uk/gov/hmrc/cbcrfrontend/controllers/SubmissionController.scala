@@ -26,7 +26,7 @@ import cats.syntax.all._
 import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
-import play.api.data.Forms._
+import play.api.data.Forms.{date, _}
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Request, Result}
@@ -35,7 +35,7 @@ import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService}
-import uk.gov.hmrc.cbcrfrontend.model.{ConfirmationEmailSent, SummaryData, _}
+//import uk.gov.hmrc.cbcrfrontend.model.{ConfirmationEmailSent, SummaryData, _}
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html.includes
@@ -54,6 +54,7 @@ import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
+import play.api.http.Status._
 
 @Singleton
 class SubmissionController @Inject()(val sec: SecuredActions,
@@ -323,7 +324,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-      val data: EitherT[Future, CBCErrors, (Hash, String, String, UserType)] =
+      val data: EitherT[Future, CBCErrors, (Hash, String, String, UserType, Boolean)] =
         for {
           dataTuple <- (cache.read[SummaryData] |@| cache.read[SubmissionDate] |@| cache.read[CBCId]).tupled
           data = dataTuple._1
@@ -337,12 +338,16 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           else pure(())
           hash = data.submissionMetaData.submissionInfo.hash
           userType <- getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext])
-        } yield (hash, formattedDate, cbcId.value, userType)
+          cacheCleared <- right(cache.clear)
+        } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)
 
-//val userType = getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext]).semiflatMap
+
       data.fold[Result](
         (error: CBCErrors) => errorRedirect(error),
-        tuple4 => Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple4._2, tuple4._1.value, tuple4._3, tuple4._4))
+          tuple5 => {
+            Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple5._2, tuple5._1.value, tuple5._3, tuple5._4, tuple5._5))
+          }
+
       )
   }
 
