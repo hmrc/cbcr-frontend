@@ -26,7 +26,7 @@ import cats.syntax.all._
 import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
-import play.api.data.Forms._
+import play.api.data.Forms.{date, _}
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Request, Result}
@@ -35,7 +35,7 @@ import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService}
-import uk.gov.hmrc.cbcrfrontend.model.{ConfirmationEmailSent, SummaryData, _}
+//import uk.gov.hmrc.cbcrfrontend.model.{ConfirmationEmailSent, SummaryData, _}
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html.includes
@@ -54,6 +54,7 @@ import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
+import play.api.http.Status._
 
 @Singleton
 class SubmissionController @Inject()(val sec: SecuredActions,
@@ -323,27 +324,31 @@ class SubmissionController @Inject()(val sec: SecuredActions,
 
   def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
 
-    val data: EitherT[Future, CBCErrors, (Hash, String, String)] =
-      for {
-        dataTuple          <- (cache.read[SummaryData] |@| cache.read[SubmissionDate] |@| cache.read[CBCId]).tupled
-        data               = dataTuple._1
-        date               = dataTuple._2
-        cbcId              = dataTuple._3
-        formattedDate      <- fromEither((nonFatalCatch opt date.date.format(dateFormat)).toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")))
-        emailSentAlready   <- right(cache.readOption[ConfirmationEmailSent].map(_.isDefined))
-        sentEmail          <- if(!emailSentAlready)right(emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
-                              else  pure(None)
-        _                  <- if(sentEmail.getOrElse(false))right(cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
-                              else pure(())
-        hash                = data.submissionMetaData.submissionInfo.hash
-      } yield (hash, formattedDate, cbcId.value)
+      val data: EitherT[Future, CBCErrors, (Hash, String, String, UserType, Boolean)] =
+        for {
+          dataTuple <- (cache.read[SummaryData] |@| cache.read[SubmissionDate] |@| cache.read[CBCId]).tupled
+          data = dataTuple._1
+          date = dataTuple._2
+          cbcId = dataTuple._3
+          formattedDate <- fromEither((nonFatalCatch opt date.date.format(dateFormat)).toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")))
+          emailSentAlready <- right(cache.readOption[ConfirmationEmailSent].map(_.isDefined))
+          sentEmail <- if (!emailSentAlready) right(emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
+          else pure(None)
+          _ <- if (sentEmail.getOrElse(false)) right(cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
+          else pure(())
+          hash = data.submissionMetaData.submissionInfo.hash
+          userType <- getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext])
+          cacheCleared <- right(cache.clear)
+        } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)
 
 
+      data.fold[Result](
+        (error: CBCErrors) => errorRedirect(error),
+          tuple5 => {
+            Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple5._2, tuple5._1.value, tuple5._3, tuple5._4, tuple5._5))
+          }
 
-    data.fold[Result](
-      (error: CBCErrors) => errorRedirect(error),
-      tuple3              => Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple3._2, tuple3._1.value, tuple3._3))
-    )
+      )
   }
 
   private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String,cbcId: CBCId):Email ={
