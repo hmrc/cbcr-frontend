@@ -28,7 +28,7 @@ import play.api.libs.functional.syntax._ // Combinator syntax
 class PhoneNumber private(val number:String)
 
 //Must match telephone type from API docs
-***REMOVED***
+//***REMOVED***
 object PhoneNumber {
 
   val pattern = "^[0-9 )/(-*#]+$"

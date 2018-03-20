@@ -136,8 +136,7 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     for {
       ggId   <- right(getUserGGId(authContext))
       result <- eitherT[AuditResult.Success.type ](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
-        tags = hc.toAuditTags("CBCRFilingSuccessful", "N/A") + ("path" -> request.uri, "ggId" -> ggId.authProviderId),
-        detail = Json.toJson(summaryData)
+        detail = Json.toJson(Json.obj("path" -> request.uri, "ggId" -> ggId.authProviderId).toString() + Json.toJson(summaryData).toString())
       )).map{
       case AuditResult.Success         => Right(AuditResult.Success)
       case AuditResult.Failure(msg,_)  => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
