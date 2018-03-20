@@ -29,6 +29,7 @@ class PhoneNumber private(val number:String)
 
 //Must match telephone type from API docs
 //***REMOVED***
+
 object PhoneNumber {
 
   val pattern = "^[0-9 )/(-*#]+$"
