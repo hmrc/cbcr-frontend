@@ -12,7 +12,7 @@ start.button=Start
 start.required=Select an option
 
 sessionExpired.mainHeading=Your session has ended
-sessionExpired.continue=As you've been inactive for 20 minutes, you''ll need to start again.
+sessionExpired.continue=As you''ve been inactive for 20 minutes, you''ll need to start again.
 sessionExpired.link=Return to start page
 
 survey.mainHeading=You''re now signed out
