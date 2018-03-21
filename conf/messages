@@ -12,7 +12,7 @@ start.button=Start
 start.required=Select an option
 
 sessionExpired.mainHeading=Your session has ended
-sessionExpired.continue=As you've been inactive for 20 minutes, you''ll need to start again.
+sessionExpired.continue=As you''ve been inactive for 20 minutes, you''ll need to start again.
 sessionExpired.link=Return to start page
 
 survey.mainHeading=You''re now signed out
@@ -181,6 +181,7 @@ submitSuccessReceipt.print.text=Print this screen to keep a record of your repor
 submitSuccessReceipt.whatNext.heading=What happens next
 submitSuccessReceipt.email=We''ll send you a confirmation email for your records.
 submitSuccessReceipt.whatNext.info=We''ll check the information in the report and contact you if there are any issues.
+submitSuccessReceipt.sendAnotherReport.link=Send another report
 
 fileUploadProgress.mainHeading=We''re checking the report...
 fileUploadProgress.message=This screen will change once the file has been successfully checked and uploaded.

@@ -20,6 +20,7 @@ import java.io.File
 import java.time.{LocalDate, LocalDateTime, Year}
 
 import akka.actor.ActorSystem
+import akka.util.Timeout
 import cats.instances.future._
 import cats.data.{EitherT, OptionT}
 import org.mockito.Matchers.{eq => EQ, _}
@@ -28,9 +29,11 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mock.MockitoSugar
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
-import play.api.i18n.MessagesApi
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsNull, JsValue, Json}
+import play.api.mvc.Result
 import play.api.test.FakeRequest
+import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.controllers.auth.{TestSecuredActions, TestUsers}
 import uk.gov.hmrc.cbcrfrontend.model.{CompleteXMLInfo, FileId, _}
@@ -53,11 +56,14 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector with BeforeAndAfterEach {
 
 
+
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]
+  def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
   val authCon = authConnector(TestUsers.cbcrUser)
   val securedActions = new TestSecuredActions(TestUsers.cbcrUser, authCon)
   implicit val as = app.injector.instanceOf[ActorSystem]
+  implicit val timeout = Timeout(5 seconds)
 
   val cache = mock[CBCSessionCache]
   val fus  = mock[FileUploadService]
@@ -529,18 +535,21 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "sends an email" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
-
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-
         when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
         when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
-        status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
+        when(cache.clear(any())) thenReturn Future.successful(true)
+        val result: Future[Result] = controller.submitSuccessReceipt(fakeRequestSubmitSummary)
+        status(result) shouldBe Status.OK
         verify(mockEmailService,times(1)).sendEmail(any())(any())
         verify(cache,times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
+        val webPageAsString =   contentAsString(result)
+        webPageAsString should not include(getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
       }
       "will still return a 200 if the email fails" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
@@ -552,9 +561,14 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-        status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
+        when(cache.clear(any())) thenReturn Future.successful(true)
+        val result: Future[Result] = controller.submitSuccessReceipt(fakeRequestSubmitSummary)
+        status(result) shouldBe Status.OK
         verify(mockEmailService,times(1)).sendEmail(any())(any())
         verify(cache,times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
+        val webPageAsString =   contentAsString(result)
+        webPageAsString should not include(getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
       }
       "will write  a ConfirmationEmailSent to the cache if an email is sent" in {
 
@@ -568,9 +582,14 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-        status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
+        when(cache.clear(any())) thenReturn Future.successful(true)
+        val result: Future[Result] = controller.submitSuccessReceipt(fakeRequestSubmitSummary)
+        status(result) shouldBe Status.OK
         verify(mockEmailService,times(1)).sendEmail(any())(any())
         verify(cache,times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
+        val webPageAsString =   contentAsString(result)
+        webPageAsString should not include(getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
       }
       "not send the email if it has already been sent and not save to the cache" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
@@ -582,9 +601,15 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(Some(ConfirmationEmailSent("yep")))
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
+        when(cache.clear(any())) thenReturn Future.successful(true)
+        val result: Future[Result] = controller.submitSuccessReceipt(fakeRequestSubmitSummary)
+        status(result) shouldBe Status.OK
         status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
         verify(mockEmailService,times(0)).sendEmail(any())(any())
         verify(cache,times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
+        val webPageAsString =   contentAsString(result)
+        webPageAsString should not include(getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
       }
       "returns a 200 otherwise" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
@@ -596,8 +621,64 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-        status(controller.submitSuccessReceipt(fakeRequestSubmitSummary)) shouldBe Status.OK
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
+        when(cache.clear(any())) thenReturn Future.successful(true)
+        val result: Future[Result] = controller.submitSuccessReceipt(fakeRequestSubmitSummary)
+        status(result) shouldBe Status.OK
         verify(cache,times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())
+        val webPageAsString =   contentAsString(result)
+        webPageAsString should not include(getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
+      }
+      "show show link to submit another report if AffinityGroup is Agent and cache.clear succeeds" in {
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+        when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
+        when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
+        when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+        when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
+        when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
+        when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
+        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent", None)))
+        when(cache.clear(any())) thenReturn Future.successful(true)
+        val result: Future[Result] = controller.submitSuccessReceipt(fakeRequestSubmitSummary)
+        status(result) shouldBe Status.OK
+        val webPageAsString =   contentAsString(result)
+        webPageAsString should include(getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
+      }
+      "show NOT show link to submit another reportf AffinityGroup is Agent but cache.clear fails" in {
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+        when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
+        when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
+        when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+        when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
+        when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
+        when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
+        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Agent", None)))
+        when(cache.clear(any())) thenReturn Future.successful(false)
+        val result: Future[Result] = controller.submitSuccessReceipt(fakeRequestSubmitSummary)
+        status(result) shouldBe Status.OK
+        val webPageAsString =   contentAsString(result)
+        webPageAsString should not include(getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
+      }
+      "show NOT show link to submit another report if AffinityGroup is NOT Agent and cache.clear succeeds" in {
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
+        when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
+        when(mockEmailService.sendEmail(any())(any())) thenReturn  OptionT.pure[Future,Boolean](true)
+        when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+        when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
+        when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
+        when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
+        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
+        when(cache.readOption(EQ(AffinityGroup.format),any(),any())) thenReturn Future.successful(Some(AffinityGroup("Organisation", Some("admin"))))
+        when(cache.clear(any())) thenReturn Future.successful(true)
+        val result: Future[Result] = controller.submitSuccessReceipt(fakeRequestSubmitSummary)
+        status(result) shouldBe Status.OK
+        val webPageAsString =   contentAsString(result)
+        webPageAsString should not include(getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
       }
     }
     "contain a valid dateformat" in {
