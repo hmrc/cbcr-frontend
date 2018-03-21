@@ -46,6 +46,8 @@ import uk.gov.hmrc.play.frontend.controller.FrontendController
 import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.Future
+import play.api.libs.json.Json
+
 
 @Singleton
 class SharedController @Inject()(val sec: SecuredActions,
@@ -166,11 +168,11 @@ class SharedController @Inject()(val sec: SecuredActions,
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
     EitherT(result.value.flatMap { e =>
       audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
-        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
+        detail = Json.toJson(Map(
           "path"     -> request.uri,
-          "newCBCId" -> e.map(_.value).getOrElse("Failed to get new CBCId"),
+          "newCBCId" -> (e.map(_.value).getOrElse("Failed to get new CBCId")),
           "oldCBCId" -> enrolment.cbcId.value,
-          "utr"      -> enrolment.utr.utr)
+          "utr"      -> enrolment.utr.utr))
       )).map {
         case AuditResult.Success         => e
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
@@ -185,13 +187,13 @@ class SharedController @Inject()(val sec: SecuredActions,
     val cbcrKnownFactsFailure = "CBCRKnownFactsFailure"
 
     audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", cbcrKnownFactsFailure,
-        tags = hc.toAuditTags(cbcrKnownFactsFailure, "N/A") + (
+        detail = Json.toJson(Map(
           "path"     -> request.uri,
           "cbcIdFromXml" -> cbcIdFromXml.map(cbcid => cbcid.value).getOrElse("No CBCId present"),
           "safeId" -> bpr.safeId,
           "utr"      -> bPRKnownFacts.utr.utr,
           "postcode" -> bPRKnownFacts.postCode
-        )
+        ))
       )).map {
         case AuditResult.Success         => ()
         case AuditResult.Failure(msg, _) => Logger.error(s"Failed to audit $cbcrKnownFactsFailure")
