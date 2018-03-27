@@ -136,10 +136,10 @@ object ReportingEntity{ implicit val format = Json.format[ReportingEntity] }
 case class CbcOecdInfo(cbcVer: String)
 object CbcOecdInfo{ implicit val format = Json.format[CbcOecdInfo] }
 
-case class XMLInfo(messageSpec: MessageSpec, reportingEntity: Option[ReportingEntity], cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo], creationDate:Option[LocalDateTime])
+case class XMLInfo(messageSpec: MessageSpec, reportingEntity: Option[ReportingEntity], cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo], creationDate:Option[LocalDate])
 object XMLInfo { implicit val format = Json.format[XMLInfo] }
 
-case class CompleteXMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo], creationDate:Option[LocalDateTime])
+case class CompleteXMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo], creationDate:Option[LocalDate])
 object CompleteXMLInfo {
   def apply(x:XMLInfo,reportingEntity: ReportingEntity): CompleteXMLInfo = CompleteXMLInfo(x.messageSpec,reportingEntity,x.cbcReport,x.additionalInfo,x.creationDate)
   implicit val format = Json.format[CompleteXMLInfo]
