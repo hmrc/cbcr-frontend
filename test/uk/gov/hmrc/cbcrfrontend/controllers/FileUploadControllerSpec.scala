@@ -38,7 +38,9 @@ import play.api.libs.Files
 import play.api.libs.json.{Format, JsNull, Reads}
 import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
+import uk.gov.hmrc.auth.core.authorise.Predicate
+import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -152,12 +154,16 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val testFile:File= new File("test/resources/cbcr-valid.xml")
   val tempFile:File=Files.TemporaryFile("test",".xml").file
   val validFile = java.nio.file.Files.copy(testFile.toPath,tempFile.toPath,REPLACE_EXISTING).toFile
+  val newEnrolments = Set(Enrolment("HMRC-CBC-ORG", Seq(EnrolmentIdentifier("cbcId", (CBCId.create(99).getOrElse(fail("booo"))).toString), EnrolmentIdentifier("UTR", Utr("1234567890").utr)),state = "",delegatedAuthRule = None))
+  val newCBCEnrolment = CBCEnrolment(CBCId.create(99).getOrElse(fail("booo")), Utr("1234567890"))
 
   "GET /upload-report" should {
     val fakeRequestChooseXMLFile = addToken(FakeRequest("GET", "/upload-report"))
 
     "return 200 when the envelope is created successfully" in {
-//      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(Some(CBCEnrolment(CBCId.create(10).getOrElse(fail("bad cbcId")),Utr("9000000001")))))
+      when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
+        .thenReturn(Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))))
+      when(cache.readOrCreate[EnvelopeId](any())) thenReturn OptionT[Future(EnvelopeId]]("12345678"))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
