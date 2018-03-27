@@ -428,14 +428,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     )
 
     if (CBCReportsAreContainsCorrectionsOrDeletions || AdditionalInfoContainsCorrectionsOrDeletions || ReportingEntityContainsCorrectionsOrDeletionsOrResent) {
-      reportingEntityDataService.queryReportingEntityDataDocRefId(xmlInfo.).leftMap(
-        cbcErrors => {
-          Logger.error(s"Got error back: $cbcErrors")
-          throw new Exception(s"Error communicating with backend: $cbcErrors")
-        }).subflatMap{
-        case Some(_) => Right(docRefId)
-        case None    => Left(ResentDataIsUnknownError)
-      }.toValidatedNel
+
       Future.successful(CorrectedFileToOld.invalidNel)
     } else {
       xmlInfo.validNel
