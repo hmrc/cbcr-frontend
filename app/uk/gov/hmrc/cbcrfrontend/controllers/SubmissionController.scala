@@ -18,8 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
@@ -28,7 +28,7 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms.{date, _}
 import play.api.i18n.Messages.Implicits._
-import play.api.libs.json.Json
+import play.api.libs.json.{JsString, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
@@ -137,7 +137,8 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     for {
       ggId   <- right(getUserGGId(authContext))
       result <- eitherT[AuditResult.Success.type ](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
-        detail = Json.toJson(Json.obj("path" -> request.uri, "ggId" -> ggId.authProviderId).toString() + Json.toJson(summaryData).toString())
+        tags = hc.toAuditTags("CBCRFilingSuccessful", "N/A"),
+        detail = Json.toJson(Map("path" -> JsString(request.uri), "ggId" -> JsString(ggId.authProviderId), "Summary Date" -> Json.toJson(summaryData)))
       )).map{
       case AuditResult.Success         => Right(AuditResult.Success)
       case AuditResult.Failure(msg,_)  => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))

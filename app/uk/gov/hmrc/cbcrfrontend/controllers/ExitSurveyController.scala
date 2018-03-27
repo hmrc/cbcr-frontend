@@ -75,7 +75,8 @@ class ExitSurveyController @Inject()(val sec: SecuredActions, val config:Configu
 
   def auditSurveyAnswers(answers: SurveyAnswers)(implicit request:Request[_]) : ServiceResponse[AuditResult.Success.type ] = {
     eitherT[AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRExitSurvey",
-      detail = Json.toJson(answers)
+      tags = hc.toAuditTags("CBCRExitSurvey", "N/A"),
+      detail = Json.toJson(Map("answers" -> Json.toJson(answers)))
     )).map {
       case AuditResult.Disabled        => Right(AuditResult.Success)
       case AuditResult.Success         => Right(AuditResult.Success)

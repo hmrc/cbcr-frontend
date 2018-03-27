@@ -17,11 +17,10 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
-
 import cats.data.OptionT
 import cats.instances.future._
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.FrontendAuditConnector
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -67,7 +66,8 @@ class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector) {
 
     bpr.fold(Future.successful(Logger.error("Des Connector did not return anything from lookup")))(bpr =>
       audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", AUDIT_TAG,
-        detail = Json.toJson(Json.toJson(bpr).toString() + Json.obj("utr" -> kf.utr.utr, "postcode" -> kf.postCode).toString())
+        tags = hc.toAuditTags(AUDIT_TAG, "N/A"),
+        detail = Json.toJson(Map("BusinessPartnerRecord" -> Json.toJson(bpr), "utr" -> JsString(kf.utr.utr), "postcode" -> JsString(kf.postCode)))
       )).map {
         case AuditResult.Disabled => Logger.info("Audit disabled for BPRKnownFactsService")
         case AuditResult.Success => Logger.info("Successful Audit for BPRKnownFactsService")
