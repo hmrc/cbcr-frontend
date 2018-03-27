@@ -168,6 +168,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
     EitherT(result.value.flatMap { e =>
       audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
+        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A"),
         detail = Json.toJson(Map(
           "path"     -> request.uri,
           "newCBCId" -> (e.map(_.value).getOrElse("Failed to get new CBCId")),
@@ -187,7 +188,8 @@ class SharedController @Inject()(val sec: SecuredActions,
     val cbcrKnownFactsFailure = "CBCRKnownFactsFailure"
 
     audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", cbcrKnownFactsFailure,
-        detail = Json.toJson(Map(
+      tags = hc.toAuditTags(cbcrKnownFactsFailure, "N/A"),
+      detail = Json.toJson(Map(
           "path"     -> request.uri,
           "cbcIdFromXml" -> cbcIdFromXml.map(cbcid => cbcid.value).getOrElse("No CBCId present"),
           "safeId" -> bpr.safeId,

@@ -81,6 +81,7 @@ class FileUploadController @Inject()(val sec: SecuredActions,
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
     EitherT(result.value.flatMap { e =>
       audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
+        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A"),
         detail = Json.toJson(Map(
           "path"     -> request.uri,
           "newCBCId" -> e.map(_.value).getOrElse("Failed to get new CBCId"),
@@ -313,7 +314,8 @@ class FileUploadController @Inject()(val sec: SecuredActions,
       ggId   <- right(getUserGGId(authContext))
       md     <- right(cache.readOption[FileMetadata])
       result <- eitherT[AuditResult.Success.type](audit.sendEvent(DataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
-        tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri, "ggId" -> ggId.authProviderId) ++ md.map(getCCParams).getOrElse(Map.empty[String,String])
+        tags = hc.toAuditTags("CBCRFilingFailed", "N/A"),
+        detail = Map("reason" -> reason, "path" -> request.uri, "ggId" -> ggId.authProviderId, "FileMetaData" -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])).toString)
       )).map {
         case AuditResult.Success => Right(AuditResult.Success)
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))

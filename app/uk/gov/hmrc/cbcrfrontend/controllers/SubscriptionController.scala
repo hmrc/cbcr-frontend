@@ -234,8 +234,9 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
     for {
       ggId   <- right(getUserGGId(authContext))
       result <- eitherT[AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFailedSubscription",
-        tags = hc.toAuditTags("CBCRFailedSubscription", "N/A") + ("ggId" -> ggId.authProviderId),
+        tags = hc.toAuditTags("CBCRFailedSubscription", "N/A") ,
         detail = Json.obj(
+          "ggId"                  -> JsString(ggId.authProviderId),
           "cbcId"                 -> JsString(cbcId.value),
           "businessPartnerRecord" -> Json.toJson(bpr),
           "utr"                   -> JsString(utr.value))
@@ -253,8 +254,8 @@ class SubscriptionController @Inject()(val sec: SecuredActions,
     for {
       ggId   <- right(getUserGGId(authContext))
       result <- eitherT[AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRSubscription",
-        tags = hc.toAuditTags("CBCRSubscription", "N/A") + ("path" -> request.uri, "ggId" -> ggId.authProviderId),
-        detail = Json.toJson(subscriptionData)
+        tags = hc.toAuditTags("CBCRSubscription", "N/A"),
+        detail = Json.toJson(Map("path" -> JsString(request.uri), "ggId" -> JsString(ggId.authProviderId), "subscriptionData" -> Json.toJson(subscriptionData)))
       )).map {
         case AuditResult.Disabled        => Right(AuditResult.Success)
         case AuditResult.Success         => Right(AuditResult.Success)
