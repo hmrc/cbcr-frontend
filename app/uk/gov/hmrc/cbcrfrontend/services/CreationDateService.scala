@@ -37,22 +37,21 @@ class CreationDateService @Inject()(connector:CBCRBackendConnector,
                                     reportingEntityDataService: ReportingEntityDataService)(implicit ec:ExecutionContext) {
 
   def checkDate(in:XMLInfo)(implicit hc:HeaderCarrier) : Future[Boolean] = {
-  val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId))
-    id.map {drid =>
-    reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap{
-      cbcErrors => {
-        Logger.error(s"Got error back: $cbcErrors")
-        throw new Exception(s"Error communicating with backend: $cbcErrors")
-      }
-    }.subflatMap{
-      case Some(red) => {
-        val result:Boolean = ((new Period(red.creationDate.getOrElse(LocalDate.of(2017,2,1)), in.creationDate)).getYears < 4)
-        Right(result)
-      }
-      case None      => Left(Future.successful(false))
+    val id: Option[CorrDocRefId] = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId))
+    id.map{ drid =>
+      reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap(
+        cbcErrors => UnexpectedState(s"Error communicating with backend: $cbcErrors")
+      ).fold(
+        error => {
+          Logger.error(error.errorMsg)
+          false
+        },{
+          case Some(red) => new Period(red.creationDate.getOrElse(LocalDate.of(2017, 2, 1)), in.creationDate).getYears < 4
+          case None      => false
+        }
+      )
     }.getOrElse(Future.successful(false))
   }
-}
 
 
 //  def checkDate(in:XMLInfo)(implicit hc:HeaderCarrier) : Future[Boolean] = {
