@@ -163,7 +163,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
     "return 200 when the envelope is created successfully" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))))
-      when(cache.readOrCreate[EnvelopeId](any())) thenReturn OptionT[Future(EnvelopeId]]("12345678"))
+      when(cache.readOrCreate[EnvelopeId](any())) thenReturn OptionT.some[Future,EnvelopeId](EnvelopeId("12345678"))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
