@@ -61,6 +61,9 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val auditC: AuditConnector          = mock[AuditConnector]
   val runMode                         = mock[RunMode]
 
+  when(conf.analyticsHost) thenReturn "host"
+  when(conf.analyticsToken) thenReturn "token"
+
   val id: CBCId = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
   val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
 
@@ -83,13 +86,13 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   }
 
   override protected def afterEach(): Unit = {
-    reset(cache,subService,bprKF,reDeEnrol,auditC,runMode)
+    reset(subService,bprKF,reDeEnrol,auditC,runMode)
     super.afterEach()
   }
 
 //  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(AffinityGroup.Organisation)
 
-  when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
+//  when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
   when(runMode.env) thenReturn "Dev"
 
   val schemaVer: String = "1.0"
@@ -133,7 +136,7 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       verify(auditC, times(0)).sendEvent(any())(any(),any())
     }
     "return a 303 to the guidance page if satisfied selection is provided and should audit" in {
-      when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(auditC.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       val result = Await.result(
         controller.submit(fakeSubmit.withJsonBody(Json.toJson(SurveyAnswers("splendid","")))),
         5.seconds
@@ -141,7 +144,7 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
       status(result) shouldBe 303
       val redirect = result.header.headers.getOrElse("location", "")
       redirect should endWith("guidance")
-      verify(auditC, times(1)).sendEvent(any())(any(),any())
+      verify(auditC, times(1)).sendExtendedEvent(any())(any(),any())
     }
   }
 

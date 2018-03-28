@@ -156,15 +156,10 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
   }
 
   val verifyKnownFactsOrganisation = Action.async{ implicit request =>
-    authorised(){ enterKnownFacts(None) }.recover{
-      case e:NoActiveSession =>
-        Logger.error(e.getMessage,e)
-        Ok("bad")
-    }
-  }
+    authorised(AffinityGroup.Organisation).retrieve(cbcEnrolment){ enrolment => enterKnownFacts(enrolment)} }
 
-  val verifyKnownFactsAgent = Action.async{
-    implicit request => authorised(AffinityGroup.Agent).retrieve(cbcEnrolment)(enterKnownFacts)
+  val verifyKnownFactsAgent = Action.async{ implicit request =>
+    authorised(AffinityGroup.Agent)(enterKnownFacts(None))
   }
 
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {

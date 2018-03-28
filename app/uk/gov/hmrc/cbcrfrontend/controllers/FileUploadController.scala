@@ -19,8 +19,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.io._
 import java.time.LocalDateTime
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
@@ -30,7 +30,7 @@ import play.api.libs.Files
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
-import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+import uk.gov.hmrc.auth.core.AffinityGroup.{Individual, Organisation}
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend._
@@ -105,12 +105,13 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       case None               ~ _                    => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
       case Some(Organisation) ~ None
         if Await.result(cache.readOption[CBCId].map(_.isEmpty
-        ), Duration(5, "seconds")) => Redirect(routes.SubmissionController.notRegistered())
+        ), Duration(5, "seconds"))                   => Redirect(routes.SubmissionController.notRegistered())
       case Some(Organisation) ~ Some(enrolment)
         if CBCId.isPrivateBetaCBCId(enrolment.cbcId) =>
         auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).map(
           (id: CBCId) => Ok(shared.regenerate(id))
         ).leftMap(errorRedirect).merge
+      case Some(Individual) ~ _                      => Redirect(routes.SubmissionController.noIndividuals())
       case _ ~ _                                     => (for {
         envelopeId <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
         fileId     <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"): CBCErrors)

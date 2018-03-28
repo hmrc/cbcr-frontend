@@ -133,8 +133,14 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
   }
 
   def notRegistered =  Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Individual) {
       Ok(views.html.submission.notRegistered())
+    }
+  }
+
+  def noIndividuals =  Action.async { implicit request =>
+    authorised(AffinityGroup.Organisation and (User or Admin)) {
+      Ok(views.html.not_authorised_individual())
     }
   }
 
