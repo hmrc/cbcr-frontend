@@ -732,15 +732,15 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
       "created"
     )
     val submissionInfo =   SubmissionInfo(
-     "gwGredId",
-     CBCId("XVCBC0000000056").get,
-     "bpSafeId",
-     Hash("hash"),
-     "ofdsRegime",
-     TIN("tin","GB"),
-     FilingType(CBC701),
-     UltimateParentEntity("ultimateParentEntity")
-   )
+      "gwGredId",
+      CBCId("XVCBC0000000056").get,
+      "bpSafeId",
+      Hash("hash"),
+      "ofdsRegime",
+      TIN("tin","GB"),
+      FilingType(CBC701),
+      UltimateParentEntity("ultimateParentEntity")
+    )
     val submitterInfo = SubmitterInfo("fullName", Some(AgencyBusinessName("MyAgency")), "contactPhone", EmailAddress("abc@abc.com"), Some(AffinityGroup.Agent))
     SubmissionMetaData(submissionInfo, submitterInfo, fileInfo)
 

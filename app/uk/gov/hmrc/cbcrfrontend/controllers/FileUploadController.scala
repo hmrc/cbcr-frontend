@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.io._
 import java.time.LocalDateTime
 import java.util.UUID
+
 import javax.inject.{Inject, Singleton}
 import cats.data._
 import cats.instances.all._
@@ -107,7 +108,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       case None               ~ _                    => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
       case Some(Organisation) ~ None
         if Await.result(cache.readOption[CBCId].map(_.isEmpty
-        ), Duration(5, "seconds")) => Redirect(routes.SubmissionController.notRegistered())
+        ), Duration(5, "seconds"))                   => Redirect(routes.SubmissionController.notRegistered())
       case Some(Organisation) ~ Some(enrolment)
         if CBCId.isPrivateBetaCBCId(enrolment.cbcId) =>
         auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).map(
