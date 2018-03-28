@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
+import org.mockito.Matchers.any
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
@@ -24,7 +25,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, BusinessPartnerRecord, Utr}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -62,6 +63,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuit
 
       val result: HttpResponse = mock[HttpResponse]
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(kf1).value, 2.second)
@@ -74,6 +76,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuit
 
       val result: HttpResponse = mock[HttpResponse]
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN3 5XB")).value, 2.second)
@@ -86,6 +89,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuit
 
       val result: HttpResponse = mock[HttpResponse]
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value, 2.second)
