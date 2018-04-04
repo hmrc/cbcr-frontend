@@ -88,6 +88,7 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
 
   val cbcId = CBCId.create(99).getOrElse(fail("failed to gen cbcid"))
 
+
   implicit val hc = HeaderCarrier()
   val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
 
