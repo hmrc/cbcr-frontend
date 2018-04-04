@@ -22,14 +22,13 @@ import javax.inject.{Inject, Singleton}
 import cats.data.EitherT
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.{Configuration, Environment, Logger}
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.{Configuration, Environment, Logger}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrievals}
-import uk.gov.hmrc.auth.core.{Admin, AffinityGroup, AuthConnector, User}
 import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.auth.CBCRAuthFunctions
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -44,7 +43,6 @@ import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -62,7 +60,7 @@ class SubscriptionController @Inject()(val messagesApi:MessagesApi,
                                       (implicit ec: ExecutionContext,
                                        val cache: CBCSessionCache,
                                        val config:Configuration,
-                                       feConfig:FrontendAppConfig) extends FrontendController with CBCRAuthFunctions with I18nSupport{
+                                       feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport{
 
 
 

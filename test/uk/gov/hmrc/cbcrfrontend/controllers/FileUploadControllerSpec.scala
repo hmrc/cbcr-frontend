@@ -100,12 +100,12 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
 
       override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): EitherT[Future,ExpiredSession,T] = universe.typeOf[T] match {
         case t if t =:= universe.typeOf[EnvelopeId] => EitherT.pure[Future,ExpiredSession,T](EnvelopeId("test").asInstanceOf[T])
-        //        case t if t =:= universe.typeOf[AffinityGroup] => EitherT.pure[Future,ExpiredSession,T](AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None))//.asInstanceOf[T])
+        case t if t =:= universe.typeOf[AffinityGroup] => EitherT.pure[Future,ExpiredSession,T](AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None))//.asInstanceOf[T])
         case t if t =:= universe.typeOf[CBCId] => leftE[T](ExpiredSession("meh"))
       }
 
       override def readOption[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] = universe.typeOf[T] match {
-        //        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None) ).asInstanceOf[Option[T]])
+        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None) ).asInstanceOf[Option[T]])
         case t if t =:= universe.typeOf[CBCId] => Future.successful(None)
       }
 

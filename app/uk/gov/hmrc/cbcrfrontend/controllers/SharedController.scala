@@ -17,37 +17,33 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.nio.file.{Path, Paths}
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.{Configuration, Environment, Logger}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.i18n.Messages.Implicits._
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.{Configuration, Environment, Logger}
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
-import play.api.libs.json.Json
-
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.Retrievals
-import uk.gov.hmrc.cbcrfrontend.auth.CBCRAuthFunctions
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 
 @Singleton
@@ -60,7 +56,7 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
                                  val authConnector:AuthConnector
                                 )(implicit val cache:CBCSessionCache,
                                   val config: Configuration,
-                                  feConfig:FrontendAppConfig) extends FrontendController with CBCRAuthFunctions with I18nSupport {
+                                  feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport {
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
@@ -159,18 +155,6 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
   def businessRules = Action.async{ implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.businessRules()))
   }
-
-//  val verifyKnownFactsOrganisation = Action.async{ implicit request =>
-//    authorised(){ enterKnownFacts(None) }.recover{
-//      case e:NoActiveSession =>
-//        Logger.error(e.getMessage,e)
-//        Ok("bad")
-//    }
-//  }
-//
-//  val verifyKnownFactsAgent = Action.async{
-//    implicit request => authorised(AffinityGroup.Agent).retrieve(cbcEnrolment)(enterKnownFacts)
-//  }
 
   val verifyKnownFactsOrganisation = Action.async{ implicit request =>
     authorised(AffinityGroup.Organisation).retrieve(cbcEnrolment){ enrolment => enterKnownFacts(enrolment)} }

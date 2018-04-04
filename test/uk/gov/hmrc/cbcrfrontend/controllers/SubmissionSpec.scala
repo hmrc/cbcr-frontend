@@ -80,9 +80,9 @@ class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with Mo
   val mockEmailService        = mock[EmailService]
   val reportingEntity         = mock[ReportingEntityDataService]
 
-  implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload"}
-  implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
-  implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
+  implicit lazy val fusUrl    = new ServiceUrl[FusUrl] { val url = "file-upload"}
+  implicit lazy val fusFeUrl  = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
+  implicit lazy val cbcrsUrl  = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
 
   val bpr = BusinessPartnerRecord("safeId",None, EtmpAddress("Line1",None,None,None,None,"GB"))
 
