@@ -19,19 +19,26 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 import java.net.URL
 import javax.inject.{Inject, Singleton}
 
+import play.api.{Configuration, Environment}
+import play.api.Mode.Mode
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpGet, HttpResponse}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 @Singleton
-class BPRKnownFactsConnector @Inject()(http:HttpGet) extends ServicesConfig{
+class BPRKnownFactsConnector @Inject()(http:HttpClient)(implicit ec:ExecutionContext,
+                                                        val runModeConfiguration:Configuration,
+                                                        val environment:Environment) extends ServicesConfig{
 
-  implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+  implicit lazy val url = baseUrl("cbcr")
 
-  def lookup(utr:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(generateUrl(url.url,utr).toString)
+  def lookup(utr:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(generateUrl(url,utr).toString)
 
   private def generateUrl(baseUrl:String,utr:String) : URL = new URL(s"$baseUrl/cbcr/business-partner-record/$utr")
+
+  override protected def mode: Mode = environment.mode
 
 }

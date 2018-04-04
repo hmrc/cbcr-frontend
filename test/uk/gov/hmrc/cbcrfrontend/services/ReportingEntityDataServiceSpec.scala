@@ -25,16 +25,16 @@ import org.scalatestplus.play.OneAppPerSuite
 import play.api.http.Status
 import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
-import uk.gov.hmrc.cbcrfrontend.controllers.{CSRFTest, FakeAuthConnector}
+import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, NotFoundException}
 import uk.gov.hmrc.play.test.UnitSpec
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
-class ReportingEntityDataServiceSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar with FakeAuthConnector {
+class ReportingEntityDataServiceSpec extends UnitSpec with ScalaFutures with OneAppPerSuite with CSRFTest with MockitoSugar {
 
   val connector = mock[CBCRBackendConnector]
   val reds = new ReportingEntityDataService(connector)

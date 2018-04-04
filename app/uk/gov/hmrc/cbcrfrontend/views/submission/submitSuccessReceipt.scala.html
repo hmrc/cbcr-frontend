@@ -15,20 +15,16 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.auth.core.AffinityGroup
 
-@import uk.gov.hmrc.cbcrfrontend.model.UserType
-@import uk.gov.hmrc.cbcrfrontend.model.Agent
-@(asideBusiness: Html, phaseBannerBeta: Html, submissionDateTime: String, hash: String, cbcId: String, userType: UserType, cacheCleared: Boolean)(
-implicit request: Request[_], messages: Messages)
 
-@sidebarContent = {
-@asideBusiness
-}
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@main_template(Messages("submitSuccessReceipt.submissionDateLabel"), sidebarLinks = Some(sidebarContent)) {
+@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@main_template(Messages("submitSuccessReceipt.submissionDateLabel")) {
 
     <div class="grid-row">
         <div class="column-two-thirds">
@@ -46,7 +42,7 @@ implicit request: Request[_], messages: Messages)
             <h2>@Messages("submitSuccessReceipt.whatNext.heading")</h2>
             <p>@Messages("submitSuccessReceipt.email")</p>
             <p>@Messages("submitSuccessReceipt.whatNext.info")</p>
-            @if(userType == Agent() && cacheCleared){<p><a href="@routes.FileUploadController.chooseXMLFile()">@Messages("submitSuccessReceipt.sendAnotherReport.link")</a></p>}
+            @if(userType == "Agent" && cacheCleared){<p><a href="@routes.FileUploadController.chooseXMLFile()">@Messages("submitSuccessReceipt.sendAnotherReport.link")</a></p>}
             <p>
                 <a class="button" href="@routes.SharedController.signOutSurvey()" id="btn-close">@Messages("form.controls.finished")</a>
             </p>

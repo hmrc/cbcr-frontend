@@ -1,9 +1,6 @@
 # microservice specific routes
 
 
-GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.StartController.start
-POST       /                                              @uk.gov.hmrc.cbcrfrontend.controllers.StartController.submit
-
 GET        /exit-survey                                   @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.doSurvey
 POST       /exit-survey/submit                            @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.submit
 GET        /exit-survey/acknowledge                       @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.surveyAcknowledge
@@ -44,12 +41,12 @@ POST       /submitter-info                                @uk.gov.hmrc.cbcrfront
 POST       /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUtr
 GET        /utr/entry-form                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.utr
 GET        /submission/summary                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSummary
-GET        /submission/receipt                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSuccessReceipt
-GET        /filing-history                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.filingHistory
+GET        /submission/receipt                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSuccessReceipt(userType: String)
 POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.confirm
 POST       /company-name                                  @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.saveCompanyName
 GET        /company-name/entry-form                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.enterCompanyName
 GET        /not-registered                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.notRegistered
+GET        /no-individuals                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.noIndividuals
 
 GET        /already-subscribed                            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.alreadySubscribed
 GET        /contact-info-subscriber                       @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber

@@ -24,10 +24,10 @@ import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.GGConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, CBCKnownFacts, UnexpectedState}
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 @Singleton @deprecated("Use the EnrolmentsService instead","release/25.0")
 class CBCKnownFactsService @Inject() (connector:GGConnector)(implicit ec:ExecutionContext) {

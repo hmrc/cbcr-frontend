@@ -15,23 +15,20 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
-@import play.api.i18n.Messages.Implicits._
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.model._
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
 
-@(asideCbc: Html, phaseBannerBeta: Html, form:Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(
-implicit request: Request[_], messages: Messages)
+@(form:Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(
+implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@sidebarContent = {
-@asideCbc
-}
-    @import tags.formFieldDisplay
+@import tags.formFieldDisplay
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
-@main_template(if(form.hasErrors){"Error: " + Messages("enterCBCId.mainHeading")}else {Messages("enterCBCId.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
+@main_template(if(form.hasErrors){"Error: " + Messages("enterCBCId.mainHeading")}else {Messages("enterCBCId.mainHeading")}) {
     <div class="grid-row">
         <div class="column-two-thirds">
             @if(errors){

@@ -20,18 +20,19 @@ import javax.inject.{Inject, Singleton}
 
 import com.typesafe.config.Config
 import play.api.Configuration
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpPost, HttpPut, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 import configs.syntax._
 import play.api.libs.json.{JsArray, Json}
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 /**
   * Created by max on 23/05/17.
   */
 @Singleton
-class TaxEnrolmentsConnector @Inject()(http: HttpPost with HttpPut, config:Configuration)(implicit ec:ExecutionContext) {
+class TaxEnrolmentsConnector @Inject()(http: HttpClient, config:Configuration)(implicit ec:ExecutionContext) {
 
   val conf = config.underlying.get[Config]("microservice.services.tax-enrolments").value
 

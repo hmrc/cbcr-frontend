@@ -21,22 +21,22 @@ import javax.inject.{Inject, Singleton}
 import cats.data.EitherT
 import cats.instances.all._
 import play.api.Logger
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.cbcrfrontend.connectors._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, _}
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpException, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
 
 
 @Singleton
 class DeEnrolReEnrolService @Inject()(val subData: SubscriptionDataService,
                                       val kfService: CBCKnownFactsService,
                                       val taxEnrolments:TaxEnrolmentsConnector)
-                                     (implicit ec: ExecutionContext, auth:AuthConnector) extends FrontendController {
+                                     (implicit ec: ExecutionContext) extends FrontendController {
 
   /**
     * Given a CBCEnrolment:

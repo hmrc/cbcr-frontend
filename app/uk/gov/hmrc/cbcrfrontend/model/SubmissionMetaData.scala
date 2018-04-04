@@ -51,7 +51,7 @@ object SubmissionInfo{
         bpSafeId   <- m.get("bpSafeId").fold[JsResult[String]](JsError("bpSafeId not found"))(_.validate[String])
         hash       <- m.get("hash").fold[JsResult[Hash]](JsError("hash not found"))(_.validate[String].map(Hash(_)))
         ofdsRegime <- m.get("ofdsRegime").fold[JsResult[String]](JsError("ofdsRegime not found"))(_.validate[String])
-        tin       <- m.get("tin").fold[JsResult[String]](JsError("TIN not found"))(_.validate[String])
+        tin        <- m.get("tin").fold[JsResult[String]](JsError("TIN not found"))(_.validate[String])
         fts        <- m.get("filingType").fold[JsResult[String]](JsError("FilingType not found"))(_.validate[String])
         ft         <- ReportingRole.parseFromString(fts).fold[JsResult[FilingType]](JsError(s"FilingType invalid: $fts"))(r => JsSuccess(FilingType(r)))
         upe        <- m.get("ultimateParentEntity").fold[JsResult[String]](JsError("UPE not found"))(_.validate[String]).map(UltimateParentEntity(_))

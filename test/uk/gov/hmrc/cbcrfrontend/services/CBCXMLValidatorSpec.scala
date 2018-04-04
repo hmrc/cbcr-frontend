@@ -26,9 +26,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.cbcrfrontend.services.RunMode
-import uk.gov.hmrc.cbcrfrontend.services.CBCRXMLValidator
-import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
+import uk.gov.hmrc.cbcrfrontend.services.{CBCRXMLValidator, RunMode}
 
 class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite with MockitoSugar {
 

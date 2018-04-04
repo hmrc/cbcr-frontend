@@ -15,12 +15,12 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-
-@()(implicit request: Request[_], messages: Messages)
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 
 @main_template(Messages("notAuthorised.assistant.mainHeading")) {

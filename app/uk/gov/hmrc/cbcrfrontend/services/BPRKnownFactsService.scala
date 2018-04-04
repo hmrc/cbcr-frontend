@@ -22,16 +22,15 @@ import cats.data.OptionT
 import cats.instances.future._
 import play.api.Logger
 import play.api.libs.json.Json
-import uk.gov.hmrc.cbcrfrontend.FrontendAuditConnector
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import uk.gov.hmrc.play.http.{HeaderCarrier, NotFoundException}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import uk.gov.hmrc.http.{ HeaderCarrier, NotFoundException }
 
 /**
   * Use the provided KnownFactsConnector to query a UTR
@@ -39,9 +38,8 @@ import scala.concurrent.Future
   * the same postcode as the provided [[BPRKnownFacts]]
   */
 @Singleton
-class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector) {
+class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector, audit:AuditConnector) {
 
-  lazy val audit: AuditConnector = FrontendAuditConnector
   private val AUDIT_TAG = "CBCRBPRKnowFacts"
 
   private def sanitisePostCode(s:String) : String = s.toLowerCase.replaceAll("\\s", "")
@@ -66,7 +64,7 @@ class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector) {
               (implicit hc: HeaderCarrier): Future[Unit] = {
 
     bpr.fold(Future.successful(Logger.error("Des Connector did not return anything from lookup")))(bpr =>
-      audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", AUDIT_TAG,
+      audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", AUDIT_TAG,
         detail = Json.toJson(Json.toJson(bpr).toString() + Json.obj("utr" -> kf.utr.utr, "postcode" -> kf.postCode).toString())
       )).map {
         case AuditResult.Disabled => Logger.info("Audit disabled for BPRKnownFactsService")

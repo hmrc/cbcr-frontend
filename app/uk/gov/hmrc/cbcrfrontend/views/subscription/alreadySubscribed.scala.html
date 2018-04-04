@@ -15,21 +15,17 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
 
-@(asideCbc: Html, phaseBannerBeta: Html)(
-implicit request: Request[_], messages: Messages)
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@sidebarContent = {
-@asideCbc
-}
-
-@main_template(Messages("subscribeFirst.alreadyRegistered.heading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("subscribeFirst.alreadyRegistered.heading")) {
 <div class="grid-row">
     <div class="column-two-thirds">
 
