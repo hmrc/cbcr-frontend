@@ -17,8 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.nio.file.{Path, Paths}
-
 import javax.inject.{Inject, Singleton}
+
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
@@ -166,11 +166,11 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
     EitherT(result.value.flatMap { e =>
       audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
-        detail = Json.toJson(Map(
+        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
           "path"     -> request.uri,
-          "newCBCId" -> (e.map(_.value).getOrElse("Failed to get new CBCId")),
+          "newCBCId" -> e.map(_.value).getOrElse("Failed to get new CBCId"),
           "oldCBCId" -> enrolment.cbcId.value,
-          "utr"      -> enrolment.utr.utr))
+          "utr"      -> enrolment.utr.utr)
       )).map {
         case AuditResult.Success         => e
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
@@ -185,13 +185,13 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     val cbcrKnownFactsFailure = "CBCRKnownFactsFailure"
 
     audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", cbcrKnownFactsFailure,
-        detail = Json.toJson(Map(
+        tags = hc.toAuditTags(cbcrKnownFactsFailure, "N/A") + (
           "path"     -> request.uri,
           "cbcIdFromXml" -> cbcIdFromXml.map(cbcid => cbcid.value).getOrElse("No CBCId present"),
           "safeId" -> bpr.safeId,
           "utr"      -> bPRKnownFacts.utr.utr,
           "postcode" -> bPRKnownFacts.postCode
-        ))
+        )
       )).map {
         case AuditResult.Success         => ()
         case AuditResult.Failure(msg, _) => Logger.error(s"Failed to audit $cbcrKnownFactsFailure")

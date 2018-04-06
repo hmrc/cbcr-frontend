@@ -52,6 +52,7 @@ import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
+import uk.gov.hmrc.http.HeaderCarrier
 import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -145,7 +146,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
   }
 
   def noIndividuals =  Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Individual) {
       Ok(views.html.not_authorised_individual())
     }
   }

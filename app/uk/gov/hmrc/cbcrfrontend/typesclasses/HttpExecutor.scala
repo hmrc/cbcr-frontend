@@ -114,7 +114,7 @@ object HttpExecutor {
       val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
       //TODO: make this call work
 //      http2.PUT[JsObject,HttpResponse](url, Json.obj("body" -> "some stuff"))
-//      http.POST[JsObject, HttpResponse](url, ByteString.fromArray(getBody(obj)))
+//      http.POST[JsObject, HttpResponse](url, )
       FileUploadFrontEndWS.doFormPartPost(url, fileName, contentType, ByteString.fromArray(getBody(obj)), Seq("CSRF-token" -> "nocheck"))
 
     }

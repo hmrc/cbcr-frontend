@@ -65,7 +65,8 @@ class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector, audit:AuditConn
 
     bpr.fold(Future.successful(Logger.error("Des Connector did not return anything from lookup")))(bpr =>
       audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", AUDIT_TAG,
-        detail = Json.toJson(Json.toJson(bpr).toString() + Json.obj("utr" -> kf.utr.utr, "postcode" -> kf.postCode).toString())
+        tags = hc.toAuditTags(AUDIT_TAG, "N/A") + ("utr" -> kf.utr.utr, "postcode" -> kf.postCode),
+        detail = Json.toJson(bpr)
       )).map {
         case AuditResult.Disabled => Logger.info("Audit disabled for BPRKnownFactsService")
         case AuditResult.Success => Logger.info("Successful Audit for BPRKnownFactsService")

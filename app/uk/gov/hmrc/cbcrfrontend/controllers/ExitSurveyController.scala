@@ -63,11 +63,6 @@ class ExitSurveyController @Inject()(val config:Configuration,
     )
   }
 
-//  val continue = Action.async{ implicit request =>
-//    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.guidanceOverviewQa()))
-//  }
-
-
   def auditSurveyAnswers(answers: SurveyAnswers)(implicit request:Request[_]) : ServiceResponse[AuditResult.Success.type ] = {
     eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRExitSurvey",
       tags = hc.toAuditTags("CBCRExitSurvey", "N/A"),
