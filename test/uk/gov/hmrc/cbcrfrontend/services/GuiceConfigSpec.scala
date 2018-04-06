@@ -23,12 +23,12 @@ import org.scalatest.{FlatSpec, Matchers}
 import com.kenshoo.play.metrics.PlayModule
 import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Environment
 
 
 
-class GuiceConfigSpec extends FlatSpec with WithConfigFakeApplication with Matchers with OneAppPerSuite{
+class GuiceConfigSpec extends FlatSpec with WithConfigFakeApplication with Matchers with GuiceOneAppPerSuite{
 
   override def configFile: String = "fakeConfig.conf"
   implicit val env = app.injector.instanceOf[Environment]

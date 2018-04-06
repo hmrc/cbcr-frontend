@@ -25,9 +25,8 @@ import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mock.MockitoSugar
-//import org.scalatest.mockito.MockitoSugar
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 //import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.{Configuration, Environment}
 import play.api.http.Status
@@ -53,7 +52,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
 import uk.gov.hmrc.http.HeaderCarrier
-class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with OneAppPerSuite  with CSRFTest with MockitoSugar with BeforeAndAfterEach {
+class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite  with CSRFTest with MockitoSugar with BeforeAndAfterEach {
   val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 

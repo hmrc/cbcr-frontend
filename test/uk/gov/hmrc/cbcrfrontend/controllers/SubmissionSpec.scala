@@ -25,8 +25,7 @@ import cats.instances.future._
 import org.mockito.Matchers.{eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mock.MockitoSugar
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatest.mockito.MockitoSugar
 import play.api.{Configuration, Environment}
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
@@ -51,9 +50,10 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import akka.util.Timeout
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 
-class SubmissionSpec  extends UnitSpec with OneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
+class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
 
 
   implicit val ec             = app.injector.instanceOf[ExecutionContext]

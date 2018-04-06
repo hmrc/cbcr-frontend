@@ -18,9 +18,9 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import org.mockito.Matchers.any
 import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, BusinessPartnerRecord, Utr}
@@ -31,7 +31,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 
-class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuite with MockitoSugar {
+class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
 
 
   val mockConnector = mock[BPRKnownFactsConnector]
