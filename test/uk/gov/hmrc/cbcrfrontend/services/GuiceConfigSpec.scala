@@ -21,6 +21,7 @@ import java.io.File
 import akka.actor.ActorSystem
 import org.scalatest.{FlatSpec, Matchers}
 import com.kenshoo.play.metrics.PlayModule
+import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import org.scalatestplus.play.OneAppPerSuite
 import play.api.Environment
@@ -30,7 +31,6 @@ import play.api.Environment
 class GuiceConfigSpec extends FlatSpec with WithConfigFakeApplication with Matchers with OneAppPerSuite{
 
   override def configFile: String = "fakeConfig.conf"
-
   implicit val env = app.injector.instanceOf[Environment]
   implicit val as = app.injector.instanceOf[ActorSystem]
 

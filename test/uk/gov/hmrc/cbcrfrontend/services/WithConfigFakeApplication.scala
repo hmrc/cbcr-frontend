@@ -27,7 +27,7 @@ trait WithConfigFakeApplication extends BeforeAndAfterAll {
 
     def configFile: String
 
-    lazy val fakeApplication = new GuiceApplicationBuilder()
+    lazy val Application = new GuiceApplicationBuilder()
       .loadConfig(new Configuration(ConfigFactory.load(configFile)))
       .bindings(bindModules:_*).build()
 
@@ -35,20 +35,20 @@ trait WithConfigFakeApplication extends BeforeAndAfterAll {
 
     override def beforeAll() {
       super.beforeAll()
-      Play.start(fakeApplication)
+      Play.start(Application)
     }
 
     override def afterAll() {
       super.afterAll()
-      Play.stop(fakeApplication)
+      Play.stop(Application)
     }
 
     def getString(tag: String): String = {
-      fakeApplication.configuration.getString(tag).getOrElse(tag+" does not exist")
+      Application.configuration.getString(tag).getOrElse(tag+" does not exist")
     }
 
     def evaluateUsingPlay[T](block: => T): T = {
-      running(fakeApplication) {
+      running(Application) {
         block
       }
     }

@@ -17,6 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.StandardCopyOption._
 import java.time.{LocalDate, LocalDateTime}
 
@@ -157,7 +158,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with OneAppPer
   val controller = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,deEnrolReEnrolService,env)(ec,cache, configuration, feConfig)
 
   val testFile:File= new File("test/resources/cbcr-valid.xml")
-  val tempFile:File=Files.TemporaryFile("test",".xml").file
+//  val tempFile:File=Files.TemporaryFile("test",".xml").file
+  val tempFile:File=File.createTempFile("test",".xml")
   val validFile = java.nio.file.Files.copy(testFile.toPath,tempFile.toPath,REPLACE_EXISTING).toFile
   val newEnrolments = Set(Enrolment("HMRC-CBC-ORG", Seq(EnrolmentIdentifier("cbcId", (CBCId.create(99).getOrElse(fail("booo"))).toString), EnrolmentIdentifier("UTR", Utr("1234567890").utr)),state = "",delegatedAuthRule = None))
   val newCBCEnrolment = CBCEnrolment(CBCId.create(99).getOrElse(fail("booo")), Utr("1234567890"))
