@@ -49,11 +49,11 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient, config:Configuration)(i
     http.PUT(url + "/service/HMRC-CBC-ORG/enrolment",Json.obj(
       "identifiers" -> JsArray(List(
         Json.obj(
-          "key" -> "UTR",
-          "value" -> utr.value),
-        Json.obj(
           "key" -> "cbcId",
-          "value" -> cBCId.value)
+          "value" -> cBCId.value),
+        Json.obj(
+          "key" -> "UTR",
+          "value" -> utr.value)
       )),
       "verifiers" -> JsArray()
     ))

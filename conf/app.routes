@@ -1,5 +1,7 @@
 # microservice specific routes
 
+GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.StartController.start
+POST       /                                              @uk.gov.hmrc.cbcrfrontend.controllers.StartController.submit
 
 GET        /exit-survey                                   @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.doSurvey
 POST       /exit-survey/submit                            @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.submit
