@@ -162,7 +162,7 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
   val pred = AffinityGroup.Organisation and (User or Admin)
 
   val verifyKnownFactsOrganisation = Action.async{ implicit request =>
-    authorised(AffinityGroup.Organisation).retrieve(cbcEnrolment){ enrolment => enterKnownFacts(enrolment)} }
+    authorised(pred).retrieve(cbcEnrolment){ enrolment => enterKnownFacts(enrolment)} }
 
   val verifyKnownFactsAgent = Action.async{ implicit request =>
     authorised(AffinityGroup.Agent)(enterKnownFacts(None))
@@ -294,12 +294,9 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     authorised().retrieve(Retrievals.affinityGroup) {
       case None => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
       case Some(Individual) => {
-        Logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++individual++++++++++++++++++++++++++++++++++++++++++++++++++")
         Unauthorized(views.html.not_authorised_individual())
       }
-      //      case Some(Agent)      => Redirect(routes.SubmissionController.notRegistered())
       case Some(Agent) => {
-        Logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++Agent++++++++++++++++++++++++++++++++++++++++++++++++++")
         Unauthorized(views.html.subscription.notAuthorised())
       }
     }
