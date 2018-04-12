@@ -24,7 +24,6 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-//import play.api.mvc.Action
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.auth.core.retrieve._
@@ -50,22 +49,12 @@ class StartController @Inject()(val messagesApi: MessagesApi,
 
   def start =  Action.async{ implicit request =>
     authorised().retrieve(Retrievals.affinityGroup and cbcEnrolment) {
-        case Some(Agent)   ~ _    =>  Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
-        case Some(Organisation) ~ Some(enrolment)  => Ok(views.html.start(startForm))
-        case Some(Organisation) ~ None => Redirect(routes.SharedController.verifyKnownFactsOrganisation())
-        case Some(Individual) ~ _     =>  Future.successful(errorRedirect(UnexpectedState("Individuals are not permitted to use this service")))
+        case Some(Agent)   ~ _                    =>  Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
+        case Some(Organisation) ~ Some(enrolment) => Ok(views.html.start(startForm))
+        case Some(Organisation) ~ None            => Redirect(routes.SharedController.verifyKnownFactsOrganisation())
+        case Some(Individual) ~ _                 =>  Future.successful(errorRedirect(UnexpectedState("Individuals are not permitted to use this service")))
     }
   }
-//    getUserType(authContext).semiflatMap{
-//      case Agent()         => Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
-//      case Organisation(_) => enrolmentsConnector.getCbcId.cata(
-//        Redirect(routes.SharedController.verifyKnownFactsOrganisation()),
-//        (_: CBCId) => Ok(views.html.start(includes.asideCbc(), includes.phaseBannerBeta(), startForm))
-//      )
-//      case Individual()    => Future.successful(errorRedirect(UnexpectedState("Individuals are not permitted to use this service")))
-//    }.leftMap(errorRedirect).merge
-//
-//  }
 
   def submit = Action.async { implicit request =>
     authorised() {

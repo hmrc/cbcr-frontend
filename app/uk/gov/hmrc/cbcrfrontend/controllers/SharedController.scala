@@ -17,8 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.nio.file.{Path, Paths}
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
@@ -27,8 +27,10 @@ import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Json
+import play.api.mvc.Results.Unauthorized
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import play.api.{Configuration, Environment, Logger}
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
@@ -42,6 +44,7 @@ import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.cbcrfrontend.views.html.subscription.notAuthorised
 
 import scala.concurrent.Future
 
@@ -156,6 +159,8 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.businessRules()))
   }
 
+  val pred = AffinityGroup.Organisation and (User or Admin)
+
   val verifyKnownFactsOrganisation = Action.async{ implicit request =>
     authorised(AffinityGroup.Organisation).retrieve(cbcEnrolment){ enrolment => enterKnownFacts(enrolment)} }
 
@@ -200,27 +205,29 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
   }
 
 
-  def enterKnownFacts(cbcEnrolment:Option[CBCEnrolment])(implicit request:Request[AnyContent]): Future[Result] =
-      for {
-        postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
-        utr      <- cache.readOption[Utr].map(_.map(_.utr))
-        result   <- cbcEnrolment.map(enrolment =>
-          if (CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
-            auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).fold[Result](
-              errors => errorRedirect(errors),
-              (id: CBCId) => Ok(shared.regenerate( id))
-            )
-          } else {
-            Future.successful(NotAcceptable(subscription.alreadySubscribed()))
-          }
-        ).fold[Future[Result]](
-          {
-            val form = (utr |@| postCode).map((utr: String, postCode: String) =>
-              knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode))
-            ).getOrElse(knownFactsForm)
-            Ok(shared.enterKnownFacts( form, false))
-          })((result: Future[Result]) => result)
-      } yield result
+  def enterKnownFacts(cbcEnrolment:Option[CBCEnrolment])(implicit request:Request[AnyContent]): Future[Result] = {
+    Logger.info("in enterKnownFacts")
+    for {
+      postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
+      utr <- cache.readOption[Utr].map(_.map(_.utr))
+      result <- cbcEnrolment.map(enrolment =>
+        if (CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
+          auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).fold[Result](
+            errors => errorRedirect(errors),
+            (id: CBCId) => Ok(shared.regenerate(id))
+          )
+        } else {
+          Future.successful(NotAcceptable(subscription.alreadySubscribed()))
+        }
+      ).fold[Future[Result]](
+        {
+          val form = (utr |@| postCode).map((utr: String, postCode: String) =>
+            knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode))
+          ).getOrElse(knownFactsForm)
+          Ok(shared.enterKnownFacts(form, false))
+        })((result: Future[Result]) => result)
+    } yield result
+  }
 
   def NotFoundView(knownFacts:BPRKnownFacts)(implicit request:Request[_]): Result =
     NotFound(shared.enterKnownFacts( knownFactsForm.fill(knownFacts), noMatchingBusiness = true))
@@ -280,6 +287,23 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
 
         result.leftMap(errorRedirect).merge
     }
+  }
+
+  def unsupportedAffinityGroup = Action.async { implicit request => {
+    Logger.info("bollox")
+    authorised().retrieve(Retrievals.affinityGroup) {
+      case None => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
+      case Some(Individual) => {
+        Logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++individual++++++++++++++++++++++++++++++++++++++++++++++++++")
+        Unauthorized(views.html.not_authorised_individual())
+      }
+      //      case Some(Agent)      => Redirect(routes.SubmissionController.notRegistered())
+      case Some(Agent) => {
+        Logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++Agent++++++++++++++++++++++++++++++++++++++++++++++++++")
+        Unauthorized(views.html.subscription.notAuthorised())
+      }
+    }
+  }
   }
 
 }

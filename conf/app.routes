@@ -24,6 +24,7 @@ GET        /known-facts/agent/verify-form                 @uk.gov.hmrc.cbcrfront
 POST       /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.checkKnownFacts
 GET        /known-facts/match                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.knownFactsMatch
 GET        /known-facts/organisation/verify-form          @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsOrganisation
+GET        /unsupportedAffinityGroup                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.unsupportedAffinityGroup
 
 GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileValidate(envelopeId: String, fileId:String)
 GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadProgress(envelopeId: String, fileId: String)
@@ -49,6 +50,7 @@ POST       /company-name                                  @uk.gov.hmrc.cbcrfront
 GET        /company-name/entry-form                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.enterCompanyName
 GET        /not-registered                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.notRegistered
 GET        /no-individuals                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.noIndividuals
+GET        /no-assistants                                 @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.noAssistants
 
 GET        /already-subscribed                            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.alreadySubscribed
 GET        /contact-info-subscriber                       @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber

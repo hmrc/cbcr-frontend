@@ -150,6 +150,11 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
       Ok(views.html.not_authorised_individual())
     }
   }
+  def noAssistants =  Action.async { implicit request =>
+    authorised(AffinityGroup.Organisation and (Assistant)) {
+      Ok(views.html.not_authorised_assistant())
+    }
+  }
 
   def createSuccessfulSubmissionAuditEvent(creds:Credentials,summaryData:SummaryData)
                                           (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =

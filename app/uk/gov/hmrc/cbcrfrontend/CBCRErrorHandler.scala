@@ -16,22 +16,43 @@
 
 package uk.gov.hmrc.cbcrfrontend
 
-import javax.inject.Inject
-
-import play.api.{Configuration, Environment}
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Request, RequestHeader}
-import uk.gov.hmrc.auth.core.NoActiveSession
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+import uk.gov.hmrc.cbcrfrontend.controllers.routes
+import uk.gov.hmrc.auth.core.{NoActiveSession, UnsupportedAffinityGroup, UnsupportedCredentialRole}
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
 import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
+import play.api.{Configuration, Environment, Logger}
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+import javax.inject.{Inject, Singleton}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.mvc._
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual}
+import uk.gov.hmrc.auth.core.retrieve.Retrievals
+import uk.gov.hmrc.cbcrfrontend.model.UnexpectedState
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-class CBCRErrorHandler @Inject()(val messagesApi: MessagesApi, val env:Environment, val config:Configuration)(implicit val feConfig:FrontendAppConfig) extends FrontendErrorHandler with AuthRedirects{
+import scala.concurrent.Future
+
+
+class CBCRErrorHandler @Inject()(val messagesApi: MessagesApi, val env:Environment, val config:Configuration,
+                                 val authConnector:AuthConnector)(implicit val feConfig:FrontendAppConfig)
+  extends FrontendErrorHandler with AuthorisedFunctions with I18nSupport with AuthRedirects with FrontendController{
 
   override def resolveError(rh: RequestHeader, ex: Throwable) = ex match {
-    case _:NoActiveSession => toGGLogin(rh.uri)
+    case _:NoActiveSession            => toGGLogin(rh.uri)
+    case _:UnsupportedCredentialRole  => {
+      Logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++ CBCError individual ++++++++++++++++++++++++++++++++++++++++++++++++++")
+      Redirect(routes.SubmissionController.noAssistants())
+    }
+    case _:UnsupportedAffinityGroup   => {
+      Logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++ CBCError Agent ++++++++++++++++++++++++++++++++++++++++++++++++++")
+      Redirect(routes.SharedController.unsupportedAffinityGroup())
+    }
+    case _                            => super.resolveError(rh,ex)
   }
 
   override def standardErrorTemplate (pageTitle: String, heading: String, message: String) (implicit request: Request[_] ) =
   uk.gov.hmrc.cbcrfrontend.views.html.error_template (pageTitle, heading, message)
+
+
 }
