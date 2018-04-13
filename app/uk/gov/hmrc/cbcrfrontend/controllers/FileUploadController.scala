@@ -84,11 +84,12 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
     EitherT(result.value.flatMap { e =>
       audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
-        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
-          "path"     -> request.uri,
-          "newCBCId" -> e.map(_.value).getOrElse("Failed to get new CBCId"),
-          "oldCBCId" -> enrolment.cbcId.value,
-          "utr"      -> enrolment.utr.utr)
+        detail = Json.obj(
+          "path"     -> JsString(request.uri),
+          "newCBCId" -> JsString(e.map(_.value).getOrElse("Failed to get new CBCId")),
+          "oldCBCId" -> JsString(enrolment.cbcId.value),
+          "utr"      -> JsString(enrolment.utr.utr)
+        )
       )).map {
         case AuditResult.Success         => e
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
@@ -323,8 +324,12 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     for {
       md     <- right(cache.readOption[FileMetadata])
       result <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
-        tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri) ++ md.map(getCCParams).getOrElse(Map.empty[String,String]),
-        detail = Json.toJson(creds)
+        detail = Json.obj(
+          "reason"        -> JsString(reason),
+          "path"          -> JsString(request.uri),
+          "file metadata" -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
+          "creds"         -> Json.toJson(creds)
+        )
       )).map {
         case AuditResult.Success => Right(AuditResult.Success)
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
