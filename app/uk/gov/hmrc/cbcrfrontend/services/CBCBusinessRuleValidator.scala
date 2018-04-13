@@ -23,13 +23,15 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
-import configs.Result.Success
+import cats.{Applicative, Functor}
 import play.api.{Configuration, Logger}
-import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult, applicativeInstance, functorInstance, model}
+import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
+import uk.gov.hmrc.cbcrfrontend.functorInstance
+import uk.gov.hmrc.cbcrfrontend.applicativeInstance
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.HeaderCarrier
 import scala.util.Failure
 
 /**
@@ -56,7 +58,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                                           reportingEntityDataService: ReportingEntityDataService,
                                           configuration: Configuration,
                                           runMode: RunMode
-                                         )(implicit ec:ExecutionContext, val cache:CBCSessionCache) {
+                                         )(implicit ec:ExecutionContext, cache:CBCSessionCache) {
 
   private val testData = "OECD1[0123]"
 

@@ -15,17 +15,13 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
 
-@(asideCbc: Html, phaseBannerBeta: Html, form:Form[_])(
-implicit request: Request[_], messages: Messages)
-
-@sidebarContent = {
-@asideCbc
-}
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @firstNameErrors = @{form.error("firstName").isDefined}
 @lastNameErrors = @{form.error("lastName").isDefined}
@@ -34,7 +30,7 @@ implicit request: Request[_], messages: Messages)
 @numberOfErrors = @{form.errors.length}
 @maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
-@main_template(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.mainHeading")}else{Messages("contactInfoSubscriber.mainHeading")}, sidebarLinks = Some(sidebarContent)) {
+@main_template(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.mainHeading")}else{Messages("contactInfoSubscriber.mainHeading")}) {
     <div class="grid-row">
         <div class="column-two-thirds">
             @if(form.hasErrors) {

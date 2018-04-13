@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//package uk.gov.hmrc.cbcrfrontend.services
+package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.File
 
@@ -22,15 +22,13 @@ import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import org.mockito.Mockito.when
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import org.scalatestplus.play.OneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.cbcrfrontend.services.RunMode
-import uk.gov.hmrc.cbcrfrontend.services.CBCRXMLValidator
-import uk.gov.hmrc.cbcrfrontend.FrontendAppConfig
+import uk.gov.hmrc.cbcrfrontend.services.{CBCRXMLValidator, RunMode}
 
-class CBCXMLValidatorSpec extends WordSpec with Matchers with OneAppPerSuite with MockitoSugar {
+class CBCXMLValidatorSpec extends WordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
 
   private def loadFile(filename: String) = new File(s"test/resources/$filename")
 

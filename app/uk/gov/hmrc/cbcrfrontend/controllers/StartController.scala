@@ -17,52 +17,56 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
-
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import play.api.data.Forms._
+import play.api.data._
+import play.api.Configuration
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
+import uk.gov.hmrc.auth.core.retrieve.Retrievals
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+import play.api.mvc.{Action, AnyContent, Request, Result}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
-import cats.instances.future._
-import play.api.data._
-import play.api.data.Forms._
-import play.api.Play.current
-import play.api.i18n.Messages.Implicits._
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
 
 @Singleton
-class StartController @Inject()(val sec: SecuredActions,val enrolmentsConnector: EnrolmentsConnector)(implicit val cache:CBCSessionCache, val auth:AuthConnector) extends FrontendController {
+class StartController @Inject()(val messagesApi: MessagesApi,
+                                val authConnector:AuthConnector)(implicit val cache:CBCSessionCache,
+                                                                 val auth:AuthConnector,
+                                                                 val config: Configuration,
+                                                                 feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport {
 
 
   val startForm: Form[String] = Form(
     single("choice" -> nonEmptyText)
   )
 
-  def start =  sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
-    getUserType(authContext).semiflatMap{
-      case Agent()         => Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
-      case Organisation(_) => enrolmentsConnector.getCbcId.cata(
-        Redirect(routes.SharedController.verifyKnownFactsOrganisation()),
-        (_: CBCId) => Ok(views.html.start(includes.asideCbc(), includes.phaseBannerBeta(), startForm))
-      )
-      case Individual()    => Future.successful(errorRedirect(UnexpectedState("Individuals are not permitted to use this service")))
-    }.leftMap(errorRedirect).merge
-
+  def start =  Action.async{ implicit request =>
+    authorised().retrieve(Retrievals.affinityGroup and cbcEnrolment) {
+        case Some(Agent)   ~ _                    =>  Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
+        case Some(Organisation) ~ Some(enrolment) => Ok(views.html.start(startForm))
+        case Some(Organisation) ~ None            => Redirect(routes.SharedController.verifyKnownFactsOrganisation())
+        case Some(Individual) ~ _                 =>  Future.successful(errorRedirect(UnexpectedState("Individuals are not permitted to use this service")))
+    }
   }
 
-  def submit = sec.AsyncAuthenticatedAction(Some(Organisation(true))){ _ => implicit request =>
-    startForm.bindFromRequest().fold(
-      errors        => BadRequest(views.html.start(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
-      (str: String) => str match {
-        case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile())
-        case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber())
-        case _                    => BadRequest(views.html.start(includes.asideCbc(), includes.phaseBannerBeta(), startForm))
-      }
-    )
+  def submit = Action.async { implicit request =>
+    authorised() {
+      startForm.bindFromRequest().fold(
+        errors => BadRequest(views.html.start(errors)),
+        (str: String) => str match {
+          case "upload" => Redirect(routes.FileUploadController.chooseXMLFile())
+          case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber())
+          case _ => BadRequest(views.html.start(startForm))
+        }
+      )
+    }
   }
 
 }

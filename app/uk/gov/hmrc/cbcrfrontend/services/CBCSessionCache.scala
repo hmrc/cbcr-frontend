@@ -17,28 +17,25 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
-
 import cats.data.{EitherT, OptionT}
-
-import scala.reflect.runtime.universe._
+import cats.instances.future._
 import com.typesafe.config.Config
 import configs.syntax._
 import play.api.{Configuration, Logger}
 import play.api.libs.json.{Format, Reads, Writes}
-import cats.instances.future._
-import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
-import uk.gov.hmrc.play.http._
-import play.api.http.Status
-import play.api.libs.openid.Errors.AUTH_CANCEL
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.reflect.runtime.universe._
 import scala.util.control.NonFatal
+import play.api.http.Status
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 @Singleton
-class CBCSessionCache @Inject() (val config:Configuration, val http:HttpGet with HttpPut with HttpDelete)(implicit ec: ExecutionContext) extends SessionCache {
+class CBCSessionCache @Inject()(val config:Configuration, val http:HttpClient)(implicit ec: ExecutionContext) extends SessionCache {
 
   val conf: Config = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
 

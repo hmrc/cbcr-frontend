@@ -14,12 +14,12 @@
  * limitations under the License.
  *@
 
-@import play.api.i18n.Messages.Implicits._
-@import play.api.Play.current
+@import play.api.i18n.Messages
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@()(implicit request: Request[_])
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@()(implicit request: Request[_], config:FrontendAppConfig, messages:Messages)
 
 
 @mainContent =  {
@@ -140,4 +140,4 @@
    reporting</A>         </SPAN></SPAN></P></DIV></DIV>
 }
 
-@govuk_wrapper(appConfig = uk.gov.hmrc.cbcrfrontend.FrontendAppConfig, title = "Guidance", mainContent = mainContent)
+@govuk_wrapper(title = "Guidance", mainContent = mainContent)

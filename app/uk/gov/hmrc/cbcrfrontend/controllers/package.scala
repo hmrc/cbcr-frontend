@@ -33,16 +33,18 @@ package uk.gov.hmrc.cbcrfrontend
 
 import cats.data.EitherT
 import cats.instances.all._
-import play.api.mvc.{AnyContent, Request, Result}
-import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, CBCId, ExpiredSession}
-import uk.gov.hmrc.play.frontend.auth.AuthContext
+import play.api.libs.json.Json
+import uk.gov.hmrc.auth.core.Enrolments
+import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, ExpiredSession}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 package object controllers {
-  type AsyncUserRequest = AuthContext => Request[AnyContent] => Future[Result]
-  type UserRequest = AuthContext => Request[AnyContent] => Result
-  //todo refactor everything to use these
+
+  val enrolmentsFormat = Json.format[Enrolments]
+  val credentialsFormat = Json.format[Credentials]
+
   def pure[A](a:A)(implicit ec:ExecutionContext) = EitherT.pure[Future,CBCErrors,A](a)
   def right[A](a:Future[A])(implicit ec:ExecutionContext) = EitherT.right[Future,CBCErrors,A](a)
   def rightE[A](a:Future[A])(implicit ec:ExecutionContext) = EitherT.right[Future,ExpiredSession,A](a)

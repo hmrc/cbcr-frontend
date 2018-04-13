@@ -18,23 +18,26 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.EitherT
 import play.api.http.Status
-import uk.gov.hmrc.cbcrfrontend.WSHttp
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.http.NotFoundException
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import javax.inject.Singleton
+import javax.inject.{Inject, Singleton}
 
-import play.api.Logger
+import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.play.config.ServicesConfig
 import cats.instances.future._
 import uk.gov.hmrc.cbcrfrontend.controllers._
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 @Singleton
-class SubscriptionDataService extends ServicesConfig{
+class SubscriptionDataService @Inject()(environment:Environment,
+                                        val runModeConfiguration:Configuration,
+                                        http:HttpClient) extends ServicesConfig{
+
+  val mode = environment.mode
 
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
 
@@ -47,7 +50,7 @@ class SubscriptionDataService extends ServicesConfig{
       id  => url.url + s"/cbcr/subscription-data/cbc-id/$id"
     )
     eitherT[Option[SubscriptionDetails]](
-      WSHttp.GET[HttpResponse](fullUrl).map { response =>
+      http.GET[HttpResponse](fullUrl).map { response =>
         response.json.validate[SubscriptionDetails].fold(
           errors  => Left[CBCErrors,Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
           details => Right[CBCErrors,Option[SubscriptionDetails]](Some(details))
@@ -64,7 +67,7 @@ class SubscriptionDataService extends ServicesConfig{
   def updateSubscriptionData(cbcId:CBCId,data:SubscriberContact)(implicit hc: HeaderCarrier, ec:ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data/$cbcId"
     eitherT(
-      WSHttp.PUT[SubscriberContact,HttpResponse](fullUrl,data).map { response =>
+      http.PUT[SubscriberContact,HttpResponse](fullUrl,data).map { response =>
         response.status match {
           case Status.OK => Right[CBCErrors,String](response.body)
           case _         => Left[CBCErrors,String](UnexpectedState(response.body))
@@ -78,7 +81,7 @@ class SubscriptionDataService extends ServicesConfig{
   def saveSubscriptionData(data:SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data"
     eitherT(
-      WSHttp.POST[SubscriptionDetails,HttpResponse](fullUrl,data).map { response =>
+      http.POST[SubscriptionDetails,HttpResponse](fullUrl,data).map { response =>
         response.status match {
           case Status.OK => Right[CBCErrors,String](response.body)
           case _         => Left[CBCErrors,String](UnexpectedState(response.body))
@@ -100,7 +103,7 @@ class SubscriptionDataService extends ServicesConfig{
       )
       result <- cbc.fold(EitherT.pure[Future,CBCErrors,Option[String]](None))(id =>
         eitherT(
-          WSHttp.DELETE[HttpResponse](fullUrl(id)).map { response =>
+          http.DELETE[HttpResponse](fullUrl(id)).map { response =>
             Right[CBCErrors, Option[String]](Some(response.body))
           }.recover {
             case _:NotFoundException => Right[CBCErrors, Option[String]](None)

@@ -16,36 +16,42 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors.test
 
-import play.api.libs.json.JsValue
-import uk.gov.hmrc.cbcrfrontend.WSHttp
-import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http._
+import javax.inject.{Inject, Singleton}
+import cats.syntax.show._
+import com.typesafe.config.Config
+import configs.syntax._
+import play.api.Configuration
+import play.api.libs.json.{JsNull, JsValue}
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.Email
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
-trait TestRegistrationConnector {
-  def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier) : Future[HttpResponse]
-
-  def deleteSubscription(utr: String)(implicit hc: HeaderCarrier) : Future[HttpResponse]
-
-  def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse]
-}
+@Singleton
+class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec:ExecutionContext){
 
 
-object TestCBCRConnector extends TestRegistrationConnector with ServicesConfig{
+  val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
-  val cbcrUrl = baseUrl("cbcr")
-  val http = WSHttp
+  val url: String = (for {
+    proto <- conf.get[String]("protocol")
+    host <- conf.get[String]("host")
+    port <- conf.get[Int]("port")
+  } yield s"$proto://$host:$port/cbcr").value
 
   def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.POST[JsValue, HttpResponse](s"$cbcrUrl/cbcr/test-only/insertSubscriptionData", jsonData)
+    http.POST[JsValue, HttpResponse](s"$url/test-only/insertSubscriptionData", jsonData)
   }
 
   def deleteSubscription(utr: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.DELETE[HttpResponse](s"$cbcrUrl/cbcr/test-only/deleteSubscription/$utr")
+    http.DELETE[HttpResponse](s"$url/test-only/deleteSubscription/$utr")
   }
 
   def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.DELETE[HttpResponse](s"$cbcrUrl/cbcr/test-only/deleteDocRefId/$docRefId")
+    http.DELETE[HttpResponse](s"$url/test-only/deleteDocRefId/$docRefId")
   }
+
 }

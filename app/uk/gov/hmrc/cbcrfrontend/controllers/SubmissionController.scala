@@ -23,19 +23,20 @@ import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.Logger
-import play.api.Play.current
+import play.api.{Configuration, Environment, Logger}
 import play.api.data.Form
-import play.api.data.Forms.{date, _}
-import play.api.i18n.Messages.Implicits._
+import play.api.data.Forms._
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, Request, Result}
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrievals}
 import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService}
-//import uk.gov.hmrc.cbcrfrontend.model.{ConfirmationEmailSent, SummaryData, _}
+import uk.gov.hmrc.cbcrfrontend.model.{ConfirmationEmailSent, SummaryData, _}
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.views.html.includes
@@ -45,30 +46,33 @@ import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.frontend.auth.AuthContext
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
+import uk.gov.hmrc.http.HeaderCarrier
 import play.api.http.Status._
+import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
-class SubmissionController @Inject()(val sec: SecuredActions,
+class SubmissionController @Inject()(val messagesApi: MessagesApi,
                                      val fus:FileUploadService,
                                      val docRefIdService: DocRefIdService,
                                      val reportingEntityDataService: ReportingEntityDataService,
                                      val cbidService: CBCIdService,
-                                     val emailService:EmailService)(implicit ec: ExecutionContext,cache:CBCSessionCache,auth:AuthConnector) extends FrontendController with ServicesConfig{
+                                     val audit: AuditConnector,
+                                     val env:Environment,
+                                     val authConnector:AuthConnector,
+                                     val emailService:EmailService)
+                                    (implicit ec: ExecutionContext,
+                                     cache:CBCSessionCache,
+                                     val config: Configuration,
+                                     feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport{
 
 
-  implicit lazy val fusUrl   = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload")}
-  implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend")}
-  implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
-  lazy val audit: AuditConnector = FrontendAuditConnector
+  implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
   val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm")
 
@@ -114,35 +118,55 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       case OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
     }
 
-  def confirm = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    (for {
-      summaryData <- cache.read[SummaryData]
-      xml         <- cache.read[CompleteXMLInfo]
-      _           <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
-      _           <- saveDocRefIds(xml).leftMap[CBCErrors]{ es =>
-        Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
-        UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
-      }
-      _           <- right(cache.save(SubmissionDate(LocalDateTime.now)))
-      _           <- storeOrUpdateReportingEntityData(xml)
-      _           <- createSuccessfulSubmissionAuditEvent(authContext,summaryData)
-    } yield Redirect(routes.SubmissionController.submitSuccessReceipt())).leftMap(errorRedirect).merge
+  def confirm = Action.async{ implicit request =>
+    authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrieval =>
+      (for {
+        summaryData <- cache.read[SummaryData]
+        xml <- cache.read[CompleteXMLInfo]
+        _ <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+        _ <- saveDocRefIds(xml).leftMap[CBCErrors] { es =>
+          Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
+          UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
+        }
+        _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
+        _ <- storeOrUpdateReportingEntityData(xml)
+        _ <- createSuccessfulSubmissionAuditEvent(retrieval.a, summaryData)
+        userType = retrieval.b match {
+          case Some(Agent) => "Agent"
+          case _           => "Other"
+        }
+      } yield Redirect(routes.SubmissionController.submitSuccessReceipt(userType))).leftMap(errorRedirect).merge
+    }
   }
 
-  def notRegistered =  sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext => implicit request =>
-    Ok(views.html.submission.notRegistered(includes.asideBusiness(), includes.phaseBannerBeta()))
+  def notRegistered =  Action.async { implicit request =>
+    authorised(AffinityGroup.Organisation and (User or Admin)) {
+      Ok(views.html.submission.notRegistered())
+    }
   }
-  def createSuccessfulSubmissionAuditEvent(authContext: AuthContext, summaryData:SummaryData)
+
+  def noIndividuals =  Action.async { implicit request =>
+    authorised(AffinityGroup.Individual) {
+      Ok(views.html.not_authorised_individual())
+    }
+  }
+  def noAssistants =  Action.async { implicit request =>
+    authorised(AffinityGroup.Organisation and (Assistant)) {
+      Ok(views.html.not_authorised_assistant())
+    }
+  }
+
+  def createSuccessfulSubmissionAuditEvent(creds:Credentials,summaryData:SummaryData)
                                           (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
-      ggId   <- right(getUserGGId(authContext))
-      result <- eitherT[AuditResult.Success.type ](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
-        detail = Json.toJson(Json.obj("path" -> request.uri, "ggId" -> ggId.authProviderId).toString() + Json.toJson(summaryData).toString())
+      result <- eitherT[AuditResult.Success.type ](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
+        tags = hc.toAuditTags("CBCRFilingSuccessful", "N/A") + ("path" -> request.uri),
+        detail = Json.obj("summaryData" -> Json.toJson(summaryData), "creds" -> Json.toJson(creds))
       )).map{
-      case AuditResult.Success         => Right(AuditResult.Success)
-      case AuditResult.Failure(msg,_)  => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
-      case AuditResult.Disabled        => Right(AuditResult.Success)
-    })
+        case AuditResult.Success         => Right(AuditResult.Success)
+        case AuditResult.Failure(msg,_)  => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
+        case AuditResult.Disabled        => Right(AuditResult.Success)
+      })
     } yield result
 
   val utrForm:Form[Utr] = Form(
@@ -171,51 +195,56 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     ).transform[AgencyBusinessName](AgencyBusinessName(_),_.name)
   )
 
-  val upe = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Future.successful(Ok(views.html.submission.submitInfoUltimateParentEntity(
-      includes.asideBusiness(), includes.phaseBannerBeta(), ultimateParentEntityForm
-    )))
-  }
-
-  val submitUltimateParentEntity = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    (for {
-      userType      <- getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext])
-      reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
-      redirect      <- right(ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
-        formWithErrors => BadRequest(views.html.submission.submitInfoUltimateParentEntity(includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors)),
-        success        => cache.save(success).map { _ =>
-          (userType, reportingRole) match {
-            case (_,            CBC702)    => Redirect(routes.SubmissionController.utr())
-            case (Agent(),        CBC703)  => Redirect(routes.SubmissionController.enterCompanyName())
-            case (Organisation(_), CBC703) => Redirect(routes.SubmissionController.submitterInfo())
-            case _                         => errorRedirect(UnexpectedState(s"Unexpected userType/ReportingRole combination: $userType $reportingRole"))
-          }
-        }
+  val upe = Action.async{ implicit request =>
+    authorised() {
+      Ok(views.html.submission.submitInfoUltimateParentEntity(
+         ultimateParentEntityForm
       ))
-    } yield redirect).leftMap(errorRedirect).merge
+    }
   }
 
-  val utr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Ok(views.html.submission.utrCheck( includes.phaseBannerBeta(),utrForm ))
-  }
-
-  val submitUtr = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-      getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext]).semiflatMap { userType =>
-        utrForm.bindFromRequest.fold[Future[Result]](
-          errors => BadRequest(views.html.submission.utrCheck(includes.phaseBannerBeta(), errors)),
-          utr    => cache.save(TIN(utr.utr, "")).map { _ =>
-            userType match {
-              case Organisation(_) => Redirect(routes.SubmissionController.submitterInfo())
-              case Agent()        => Redirect(routes.SubmissionController.enterCompanyName())
-              case _            => errorRedirect(UnexpectedState("Indiviual usertype"))
+  val submitUltimateParentEntity = Action.async{ implicit request =>
+    authorised().retrieve(Retrievals.affinityGroup) { userType =>
+      (for {
+        reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
+        redirect      <- right(ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
+          formWithErrors => BadRequest(views.html.submission.submitInfoUltimateParentEntity( formWithErrors)),
+          success        => cache.save(success).map { _ =>
+            (userType, reportingRole) match {
+              case (_,                  CBC702) => Redirect(routes.SubmissionController.utr())
+              case (Some(Agent),        CBC703) => Redirect(routes.SubmissionController.enterCompanyName())
+              case (Some(Organisation), CBC703) => Redirect(routes.SubmissionController.submitterInfo())
+              case _                            => errorRedirect(UnexpectedState(s"Unexpected userType/ReportingRole combination: $userType $reportingRole"))
             }
           }
-        )
-      }.leftMap(errorRedirect).merge
-
+        ))
+      } yield redirect).leftMap(errorRedirect).merge
+    }
   }
 
-  def enterSubmitterInfo(authContext: AuthContext)(implicit request:Request[AnyContent]): Future[Result] = {
+  val utr = Action.async { implicit request =>
+    authorised() {
+      Ok(views.html.submission.utrCheck(utrForm))
+    }
+  }
+
+  val submitUtr = Action.async { implicit request =>
+    authorised().retrieve(Retrievals.affinityGroup) { userType =>
+      utrForm.bindFromRequest.fold[Future[Result]](
+        errors => BadRequest(views.html.submission.utrCheck(errors)),
+        utr    => cache.save(TIN(utr.utr, "")).map { _ =>
+          userType match {
+            case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo())
+            case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName())
+            case _                  => errorRedirect(UnexpectedState(s"Bad affinityGroup: $userType"))
+          }
+        }
+      )
+    }
+  }
+
+
+  def enterSubmitterInfo()(implicit request:Request[AnyContent]): Future[Result] = {
 
     cache.readOption[SubmitterInfo].map{ osi =>
 
@@ -223,81 +252,73 @@ class SubmissionController @Inject()(val sec: SecuredActions,
         submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
       }.getOrElse(submitterInfoForm)
 
-      Ok(views.html.submission.submitterInfo(includes.asideBusiness(), includes.phaseBannerBeta(), form))
+      Ok(views.html.submission.submitterInfo( form))
 
     }
   }
 
 
-  val submitterInfo = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+  val submitterInfo = Action.async{ implicit request =>
+    authorised() {
 
       cache.read[CompleteXMLInfo].map(kXml => kXml.reportingEntity.reportingRole match {
 
         case CBC701 =>
-          for {
-            _ <- cache.save(FilingType(CBC701))
-            _ <- cache.save(UltimateParentEntity(kXml.reportingEntity.name))
-          } yield ()
+          (cache.save(FilingType(CBC701)) *>
+            cache.save(UltimateParentEntity(kXml.reportingEntity.name))).map(_ => ())
 
         case CBC702 | CBC703 =>
           cache.save(FilingType(CBC702))
 
-      }).semiflatMap(_ => enterSubmitterInfo(authContext)).leftMap(errorRedirect).merge
+      }).semiflatMap(_ => enterSubmitterInfo()).leftMap(errorRedirect).merge
+    }
 
   }
 
 
-  val submitSubmitterInfo = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request =>
-      getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext]).semiflatMap { userType =>
+  val submitSubmitterInfo = Action.async{ implicit request =>
+    authorised().retrieve(Retrievals.affinityGroup){ userType =>
         submitterInfoForm.bindFromRequest.fold(
           formWithErrors => Future.successful(BadRequest(views.html.submission.submitterInfo(
-            includes.asideBusiness(), includes.phaseBannerBeta(), formWithErrors
+             formWithErrors
           ))),
           success => {
             val result = for {
               straightThrough <- right[Boolean](cache.readOption[CBCId].map(_.isDefined))
               xml             <- cache.read[CompleteXMLInfo]
-              ag              <- cache.read[AffinityGroup]
               name            <- right(OptionT(cache.readOption[AgencyBusinessName]).getOrElse(AgencyBusinessName(xml.reportingEntity.name)))
-              _               <- right[CacheMap](cache.save(success.copy( affinityGroup = Some(ag), agencyBusinessName = Some(name))))
+              _               <- right[CacheMap](cache.save(success.copy( affinityGroup = userType, agencyBusinessName = Some(name))))
               result          <- userType match {
-                case Organisation(_) =>
-                  if (straightThrough) right(Redirect(routes.SubmissionController.submitSummary()))
-                  else right(Redirect(routes.SharedController.enterCBCId()))
-                case Agent() =>
-                    right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ => Redirect(routes.SharedController.verifyKnownFactsAgent()))
+                case Some(Organisation) if straightThrough => pure(Redirect(routes.SubmissionController.submitSummary()))
+                case Some(Organisation)                    => pure(Redirect(routes.SharedController.enterCBCId()))
+                case Some(Agent)                           => right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ => Redirect(routes.SharedController.verifyKnownFactsAgent()))
+                case _                                     => left[Result](UnexpectedState(s"Invalid affinityGroup: $userType"))
               }
-
             } yield result
 
             result.leftMap(errorRedirect).merge
 
           }
         )
-      }.fold(
-        error => errorRedirect(error),
-        result => result
-      )
+      }
   }
 
 
 
-  val submitSummary = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+  val submitSummary = Action.async { implicit request =>
+    authorised().retrieve(Retrievals.credentials) { credentials =>
 
-    val result = for {
-      smd     <- EitherT(generateMetadataFile(cache,authContext).map(_.toEither)).leftMap(_.head)
-      sd      <- createSummaryData(smd)
-    } yield Ok(views.html.submission.submitSummary(includes.phaseBannerBeta(), sd))
-    result.fold(
-      errors => errorRedirect(errors),
-      result => result
-    ).recover{
-      case NonFatal(e) =>
-        Logger.error(e.getMessage,e)
-        errorRedirect(UnexpectedState(e.getMessage))
+      val result = for {
+        smd <- EitherT(generateMetadataFile(cache, credentials).map(_.toEither)).leftMap(_.head)
+        sd  <- createSummaryData(smd)
+      } yield Ok(views.html.submission.submitSummary(sd))
+
+      result.leftMap(errors => errorRedirect(errors)).merge.recover {
+        case NonFatal(e) =>
+          Logger.error(e.getMessage, e)
+          errorRedirect(UnexpectedState(e.getMessage))
+      }
     }
-
 
   }
 
@@ -310,20 +331,25 @@ class SubmissionController @Inject()(val sec: SecuredActions,
     } yield summaryData
   }
 
-  def enterCompanyName = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    Ok(views.html.submission.enterCompanyName(includes.asideBusiness(),includes.phaseBannerBeta(),enterCompanyNameForm))
+  def enterCompanyName = Action.async{ implicit request =>
+    authorised() {
+      Ok(views.html.submission.enterCompanyName( enterCompanyNameForm))
+    }
   }
 
-  def saveCompanyName = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
-    enterCompanyNameForm.bindFromRequest().fold(
-      errors => BadRequest(views.html.submission.enterCompanyName(includes.asideBusiness(),includes.phaseBannerBeta(), errors)),
-      name   => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
-    )
+  def saveCompanyName = Action.async { implicit request =>
+    authorised() {
+      enterCompanyNameForm.bindFromRequest().fold(
+        errors => BadRequest(views.html.submission.enterCompanyName( errors)),
+        name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
+      )
+    }
   }
 
-  def submitSuccessReceipt = sec.AsyncAuthenticatedAction() { authContext => implicit request =>
+  def submitSuccessReceipt(userType: String) = Action.async { implicit request =>
+    authorised() {
 
-      val data: EitherT[Future, CBCErrors, (Hash, String, String, UserType, Boolean)] =
+      val data: EitherT[Future, CBCErrors, (Hash, String, String, String, Boolean)] =
         for {
           dataTuple <- (cache.read[SummaryData] |@| cache.read[SubmissionDate] |@| cache.read[CBCId]).tupled
           data = dataTuple._1
@@ -336,18 +362,17 @@ class SubmissionController @Inject()(val sec: SecuredActions,
           _ <- if (sentEmail.getOrElse(false)) right(cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
           else pure(())
           hash = data.submissionMetaData.submissionInfo.hash
-          userType <- getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext])
           cacheCleared <- right(cache.clear)
         } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)
 
 
       data.fold[Result](
         (error: CBCErrors) => errorRedirect(error),
-          tuple5 => {
-            Ok(views.html.submission.submitSuccessReceipt(includes.asideBusiness(), includes.phaseBannerBeta(), tuple5._2, tuple5._1.value, tuple5._3, tuple5._4, tuple5._5))
-          }
-
+        tuple5 => {
+          Ok(views.html.submission.submitSuccessReceipt(tuple5._2, tuple5._1.value, tuple5._3, tuple5._4, tuple5._5))
+        }
       )
+    }
   }
 
   private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String,cbcId: CBCId):Email ={
@@ -362,6 +387,5 @@ class SubmissionController @Inject()(val sec: SecuredActions,
       ))
   }
 
-  val filingHistory = Action.async { implicit request => Ok(views.html.submission.filingHistory(includes.phaseBannerBeta())) }
 
 }

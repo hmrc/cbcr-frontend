@@ -15,31 +15,20 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.auth.core.AffinityGroup
+@import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+@import uk.gov.hmrc.auth.core.AffinityGroup.Agent
 
-@(asideCbc: Html, phaseBannerBeta: Html, name: String, postCode: String, utr: String, userType: UserType)(
-        implicit request: Request[_], messages: Messages)
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@sidebarContent = {
-@asideCbc
-}
-
-@main_template(Messages("subscribeMatchFound.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("subscribeMatchFound.mainHeading")) {
     <div class="grid-row">
         <div class="column-two-thirds">
-
-            @userType match {
-                case Organisation(_) => {
-                    <p><a class ="back-link" href="@routes.SharedController.verifyKnownFactsOrganisation">Back</a></p>
-                }
-                case Agent() => {
-                    <p><a class ="back-link" href="@routes.SharedController.verifyKnownFactsAgent">Back</a></p>
-                }
-            }
-
             <h1>
             @Messages("subscribeMatchFound.mainHeading")
             </h1>
@@ -66,10 +55,10 @@
             </table>
 
             @userType match {
-                case Organisation(_) => {
+                case Organisation => {
                     <p><a class="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
-                case Agent() => {
+                case Agent => {
                     <p><a class="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
             }

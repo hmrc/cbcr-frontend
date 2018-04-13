@@ -15,14 +15,14 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import helper._
 @import tags._
 
-@(phaseBannerBeta: Html, form:Form[_])(
-implicit request: Request[_], messages: Messages)
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @error = @{form.error("utr").isDefined}
 @main_template(Messages("utrCheck.mainHeading")) {

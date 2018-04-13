@@ -23,10 +23,10 @@ import play.api.Logger
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model.Email
-import uk.gov.hmrc.play.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
 class EmailService  @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {

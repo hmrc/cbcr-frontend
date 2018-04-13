@@ -15,15 +15,15 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import tags.formFieldDisplay
 
-@(asideCbc: Html, phaseBannerBeta: Html)(implicit request: Request[_], messages: Messages)
-@sidebarContent = { @asideCbc }
-@main_template(Messages("sessionExpired.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@main_template(Messages("sessionExpired.mainHeading")) {
 
 <div class="grid-row">
     <div class="column-two-thirds">
