@@ -90,9 +90,6 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
     super.afterEach()
   }
 
-//  when(cache.read[AffinityGroup](any(),any(),any())) thenReturn rightE(AffinityGroup.Organisation)
-
-//  when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
   when(runMode.env) thenReturn "Dev"
 
   val schemaVer: String = "1.0"

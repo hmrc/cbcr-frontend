@@ -41,11 +41,9 @@ class CBCRErrorHandler @Inject()(val messagesApi: MessagesApi, val env:Environme
   override def resolveError(rh: RequestHeader, ex: Throwable) = ex match {
     case _:NoActiveSession            => toGGLogin(rh.uri)
     case _:UnsupportedCredentialRole  => {
-      Logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++ CBCError individual ++++++++++++++++++++++++++++++++++++++++++++++++++")
       Redirect(routes.SubmissionController.noAssistants())
     }
     case _:UnsupportedAffinityGroup   => {
-      Logger.info("++++++++++++++++++++++++++++++++++++++++++++++++++ CBCError Agent ++++++++++++++++++++++++++++++++++++++++++++++++++")
       Redirect(routes.SharedController.unsupportedAffinityGroup())
     }
     case _                            => super.resolveError(rh,ex)

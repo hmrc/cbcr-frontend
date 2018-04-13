@@ -38,27 +38,13 @@ class GuiceModule(environment: Environment,
 
     bind(classOf[MessagesApi]).to(classOf[DefaultMessagesApi])
 
-//    bind(classOf[HttpPost]).toInstance(new HttpPost with WSPost {
-//      override val hooks: Seq[HttpHook] = NoneRequired
-//    })
-//    bind(classOf[HttpGet]).toInstance(new HttpGet with WSGet {
-//      override val hooks: Seq[HttpHook] = NoneRequired
-//    })
-//    bind(classOf[HttpPut]).toInstance(new HttpPut with WSPut {
-//      override val hooks: Seq[HttpHook] = NoneRequired
-//    })
-//    bind(classOf[HttpDelete]).toInstance(new HttpDelete with WSDelete {
-//      override val hooks: Seq[HttpHook] = NoneRequired
-//    })
-//    bind(classOf[AuthConnector]).to(classOf[FrontendAuthConnector])
-//    bind(classOf[BPRKnownFactsConnector])
     bind(classOf[XMLValidationSchema]).toInstance{
       val runMode: RunMode = new RunMode(configuration)
       val env = runMode.env
       val path = s"$env.oecd-schema-version"
       val schemaVer: String = configuration.getString(path).getOrElse {
         Logger.error(s"Failed to find $path in config")
-        throw new Exception(s"Missing configuration $env.oecd-schema-version")
+        throw new Exception(s"Missing configuration $path")
       }
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
         XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)

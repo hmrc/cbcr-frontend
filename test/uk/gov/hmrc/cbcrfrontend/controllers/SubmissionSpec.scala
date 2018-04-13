@@ -198,7 +198,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
       val submitterInfo = SubmitterInfo("", None,  "07923456708", EmailAddress("abc@xyz.com"),None)
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      //      when(cache.readOption(EQ(AffinityGroup.jsonFormat),any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       val returnVal = status(controller.submitSubmitterInfo(fakeRequestSubmit))
       returnVal shouldBe Status.BAD_REQUEST
@@ -206,7 +205,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     "return 400 when the all data exists but Contact Phone" in {
       val submitterInfo = SubmitterInfo("Fullname", None, "", EmailAddress("abc@xyz.com"),None)
       when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      //      when(cache.readOption(EQ(AffinityGroup.jsonFormat),any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
@@ -220,7 +218,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
       )
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      //      when(cache.readOption(EQ(AffinityGroup.jsonFormat),any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
@@ -233,7 +230,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
 
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      //      when(cache.readOption(EQ(AffinityGroup.jsonFormat),any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
@@ -245,7 +241,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
       )
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
       when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      //      when(cache.readOption(EQ(AffinityGroup.jsonFormat),any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
@@ -444,8 +439,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
       "returns a 500 when the call to file-upload fails" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-//        when(auth.authorise[Option[AffinityGroup]](any(),any[Retrieval[Option[AffinityGroup]]]())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-//        when(auth.authorise[Credentials](any(),any[Retrieval[Credentials]]())(any(),any())) thenReturn Future.successful(creds)
         when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
           .thenReturn(Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
         when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn rightE(summaryData)
@@ -458,7 +451,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
       "returns a 500 when the call to save the docRefIds fail" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-//        when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(creds)
         when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
           .thenReturn(Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
         when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn rightE(summaryData)
@@ -473,7 +465,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
         "call saveReportingEntityData when the submissionType is OECD1" in {
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-//          when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(creds)
           when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
             .thenReturn(Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
           when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn rightE(summaryData)
@@ -493,7 +484,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
           lazy val updateXml = keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(docSpec = keyXMLInfo.reportingEntity.docSpec.copy(docType = OECD2)))
-//          when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(creds)
           when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
             .thenReturn(Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
           when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn rightE(summaryData)
@@ -565,7 +555,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
         when(cache.save[ConfirmationEmailSent](any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-//        when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
         when(cache.clear(any())) thenReturn Future.successful(true)
         val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
@@ -585,7 +574,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-//        when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
         when(cache.clear(any())) thenReturn Future.successful(true)
         val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
@@ -605,7 +593,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-//        when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
         when(cache.clear(any())) thenReturn Future.successful(true)
         val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
@@ -625,7 +612,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(Some(ConfirmationEmailSent("yep")))
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-//        when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
         when(cache.clear(any())) thenReturn Future.successful(true)
         val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
@@ -646,7 +632,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-//        when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
         when(cache.clear(any())) thenReturn Future.successful(true)
         val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
@@ -665,7 +650,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-//        when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Agent))
         when(cache.clear(any())) thenReturn Future.successful(true)
         val result: Future[Result] = controller.submitSuccessReceipt("Agent")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
@@ -683,7 +667,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-//        when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Agent))
         when(cache.clear(any())) thenReturn Future.successful(false)
         val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
@@ -701,7 +684,6 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
         when(cache.readOption[ConfirmationEmailSent](EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())) thenReturn Future.successful(None)
         when(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn rightE(SubmissionDate(LocalDateTime.now()))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn  rightE(CBCId.create(1).getOrElse(fail("argh")))
-//        when(auth.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
         when(cache.clear(any())) thenReturn Future.successful(true)
         val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK

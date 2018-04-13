@@ -101,12 +101,10 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
 
       override def read[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): EitherT[Future,ExpiredSession,T] = universe.typeOf[T] match {
         case t if t =:= universe.typeOf[EnvelopeId] => EitherT.pure[Future,ExpiredSession,T](EnvelopeId("test").asInstanceOf[T])
-//        case t if t =:= universe.typeOf[AffinityGroup] => EitherT.pure[Future,ExpiredSession,T](AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None))//.asInstanceOf[T])
         case t if t =:= universe.typeOf[CBCId] => leftE[T](ExpiredSession("meh"))
       }
 
       override def readOption[T: Reads : universe.TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] = universe.typeOf[T] match {
-//        case t if t =:= universe.typeOf[AffinityGroup] => Future.successful(Some(AffinityGroup(if(agent){ "Agent" }else if(individual){"Individual"} else {"Organisation"}, None) ).asInstanceOf[Option[T]])
         case t if t =:= universe.typeOf[CBCId] => Future.successful(None)
       }
 
@@ -158,7 +156,6 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   val controller = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,deEnrolReEnrolService,env)(ec,cache, configuration, feConfig)
 
   val testFile:File= new File("test/resources/cbcr-valid.xml")
-//  val tempFile:File=Files.TemporaryFile("test",".xml").file
   val tempFile:File=File.createTempFile("test",".xml")
   val validFile = java.nio.file.Files.copy(testFile.toPath,tempFile.toPath,REPLACE_EXISTING).toFile
   val newEnrolments = Set(Enrolment("HMRC-CBC-ORG", Seq(EnrolmentIdentifier("cbcId", (CBCId.create(99).getOrElse(fail("booo"))).toString), EnrolmentIdentifier("UTR", Utr("1234567890").utr)),state = "",delegatedAuthRule = None))
@@ -175,35 +172,26 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       status(result) shouldBe Status.OK
     }
     "redirect to not registered page if Organisation user has is not enrolled" in {
-      //      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(None))
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None)))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.SEE_OTHER
     }
     "allow agent to submit even when no enrolment" in {
-      //      TestSessionCache.agent = true
-      //      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(None))
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
-//      TestSessionCache.agent = false
 
     }
     "redirect  when user is an individual" in {
-//      TestSessionCache.individual = true
-//      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(None))
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None)))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.SEE_OTHER
-//      TestSessionCache.individual = false
 
     }
     "return 500 when the is an error creating the envelope" in {
-//      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(None))
-//      TestSessionCache.agent = true
       TestSessionCache.succeed = false
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))))
@@ -211,13 +199,9 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       TestSessionCache.succeed = true
-//      TestSessionCache.agent = false
     }
     "return a 200 and call the DeEnrolReEnrolService if the user has a PrivateBeta cbcId in their bearer token" in {
-//      TestSessionCache.agent = false
-//      TestSessionCache.individual = false
       when(auditC.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-//      when(enrol.getCBCEnrolment(any())) thenReturn OptionT[Future,CBCEnrolment](Future.successful(Some(CBCEnrolment(CBCId("XGCBC0000000001").getOrElse(fail("bad cbcId")),Utr("9000000001")))))
       when(deEnrolReEnrolService.deEnrolReEnrol(any())(any())) thenReturn right(CBCId.create(10).getOrElse(fail("bad cbcid")))
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(CBCEnrolment(CBCId("XGCBC0000000001").getOrElse(fail("bad cbcId")),Utr("9000000001"))))))

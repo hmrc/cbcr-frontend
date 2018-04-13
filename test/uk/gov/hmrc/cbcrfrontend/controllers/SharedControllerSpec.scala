@@ -54,13 +54,9 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
   implicit val ec                     = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi            = app.injector.instanceOf[MessagesApi]
-//  implicit val authCon                = authConnector(TestUsers.cbcrUser)
-
-//  val securedActions                  = new TestSecuredActions(TestUsers.cbcrUser, authCon)
   implicit val cache                  = mock[CBCSessionCache]
   implicit val config                 = app.injector.instanceOf[Configuration]
   implicit val feConfig               = mock[FrontendAppConfig]
-//  implicit val enrol                  = mock[EnrolmentsConnector]
   val subService                      = mock[SubscriptionDataService]
   val bprKF                           = mock[BPRKnownFactsService]
   val configuration                   = mock[Configuration]

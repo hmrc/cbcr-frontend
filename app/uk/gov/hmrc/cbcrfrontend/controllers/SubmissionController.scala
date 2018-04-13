@@ -363,12 +363,6 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
           else pure(())
           hash = data.submissionMetaData.submissionInfo.hash
           cacheCleared <- right(cache.clear)
-//          ut = userType match {
-//            case Some(Agent) => "Agent"
-//            case _           => "Other"
-//          }
-////          userType <- getUserType(authContext)(cache, auth, implicitly[HeaderCarrier], implicitly[ExecutionContext])
-
         } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)
 
 

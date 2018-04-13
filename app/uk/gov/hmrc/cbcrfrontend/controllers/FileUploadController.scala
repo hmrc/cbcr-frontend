@@ -144,7 +144,6 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
           cache.remove()
           Left(UnexpectedState(s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
         } else {
-          Logger.info(s"------------------------------------ fileUploadProgress - envelopId: $envelopeId, fileId: $fileId")
           Right(Ok(submission.fileupload.fileUploadProgress(
             envelopeId, fileId, hostName, assetsLocation)))
         }
@@ -302,7 +301,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       Logger.info(s"Received a file-upload-response query for $envelopeId")
       fileUploadService.getFileUploadResponse(envelopeId).fold(
         error => {
-          Logger.info(s"File not ready: $error")
+          Logger.error(s"File not ready: $error")
           NoContent
         },
         response => {

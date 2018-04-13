@@ -27,7 +27,6 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-//import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.{Configuration, Environment}
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}

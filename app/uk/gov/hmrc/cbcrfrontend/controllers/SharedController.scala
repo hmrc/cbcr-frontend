@@ -206,7 +206,6 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
 
 
   def enterKnownFacts(cbcEnrolment:Option[CBCEnrolment])(implicit request:Request[AnyContent]): Future[Result] = {
-    Logger.info("in enterKnownFacts")
     for {
       postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
       utr <- cache.readOption[Utr].map(_.map(_.utr))
@@ -290,7 +289,6 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
   }
 
   def unsupportedAffinityGroup = Action.async { implicit request => {
-    Logger.info("bollox")
     authorised().retrieve(Retrievals.affinityGroup) {
       case None => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
       case Some(Individual) => {
