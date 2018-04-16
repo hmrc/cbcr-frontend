@@ -231,11 +231,12 @@ class SubscriptionController @Inject()(val messagesApi:MessagesApi,
                                             (implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
       result <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFailedSubscription",
-        tags = hc.toAuditTags("CBCRFailedSubscription", "N/A") + (credentials.providerType -> credentials.providerId),
         detail = Json.obj(
-          "cbcId"                 -> JsString(cbcId.value),
-          "businessPartnerRecord" -> Json.toJson(bpr),
-          "utr"                   -> JsString(utr.value))
+          "cbcId"                            -> JsString(cbcId.value),
+          credentials.providerType           -> JsString(credentials.providerId),
+          "businessPartnerRecord"            -> Json.toJson(bpr),
+          "utr"                              -> JsString(utr.value)
+        )
       )).map {
         case AuditResult.Disabled        => Right(AuditResult.Success)
         case AuditResult.Success         => Right(AuditResult.Success)
@@ -249,8 +250,11 @@ class SubscriptionController @Inject()(val messagesApi:MessagesApi,
                                             (implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
       result <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRSubscription",
-        tags = hc.toAuditTags("CBCRSubscription", "N/A") + ("path" -> request.uri, credentials.providerType -> credentials.providerId),
-        detail = Json.toJson(subscriptionData)
+        detail = Json.obj(
+          "path"                   -> JsString(request.uri),
+          credentials.providerType -> JsString(credentials.providerId),
+          "subscriptionData"       -> Json.toJson(subscriptionData)
+        )
       )).map {
         case AuditResult.Disabled        => Right(AuditResult.Success)
         case AuditResult.Success         => Right(AuditResult.Success)

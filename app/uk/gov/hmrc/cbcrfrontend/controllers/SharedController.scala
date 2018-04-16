@@ -26,7 +26,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsString, Json}
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import play.api.{Configuration, Environment, Logger}
@@ -171,11 +171,12 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
     EitherT(result.value.flatMap { e =>
       audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
-        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
-          "path"     -> request.uri,
-          "newCBCId" -> e.map(_.value).getOrElse("Failed to get new CBCId"),
-          "oldCBCId" -> enrolment.cbcId.value,
-          "utr"      -> enrolment.utr.utr)
+        detail = Json.obj(
+          "path"     -> JsString(request.uri),
+          "newCBCId" -> JsString(e.map(_.value).getOrElse("Failed to get new CBCId")),
+          "oldCBCId" -> JsString(enrolment.cbcId.value),
+          "utr"      -> JsString(enrolment.utr.utr)
+        )
       )).map {
         case AuditResult.Success         => e
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
@@ -190,12 +191,12 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     val cbcrKnownFactsFailure = "CBCRKnownFactsFailure"
 
     audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", cbcrKnownFactsFailure,
-        tags = hc.toAuditTags(cbcrKnownFactsFailure, "N/A") + (
-          "path"     -> request.uri,
-          "cbcIdFromXml" -> cbcIdFromXml.map(cbcid => cbcid.value).getOrElse("No CBCId present"),
-          "safeId" -> bpr.safeId,
-          "utr"      -> bPRKnownFacts.utr.utr,
-          "postcode" -> bPRKnownFacts.postCode
+      detail = Json.obj(
+          "path"         -> JsString(request.uri),
+          "cbcIdFromXml" -> JsString(cbcIdFromXml.map(cbcid => cbcid.value).getOrElse("No CBCId present")),
+          "safeId"       -> JsString(bpr.safeId),
+          "utr"          -> JsString(bPRKnownFacts.utr.utr),
+          "postcode"     -> JsString(bPRKnownFacts.postCode)
         )
       )).map {
         case AuditResult.Success         => ()
