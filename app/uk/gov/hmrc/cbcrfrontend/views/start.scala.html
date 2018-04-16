@@ -15,19 +15,18 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import helper._
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import tags._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(implicit request: Request[_], messages: Messages)
+@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@sidebarContent = { @asideBusiness }
 @isError= @{form.hasErrors}
 
-@main_template(Messages("start.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("start.mainHeading")) {
 
 <h1>@Messages("start.mainHeading")</h1>
 @Messages("start.intro")

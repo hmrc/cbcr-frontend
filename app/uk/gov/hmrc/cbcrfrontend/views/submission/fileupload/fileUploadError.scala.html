@@ -15,16 +15,15 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@(asideBusiness: Html, phaseBannerBeta: Html, errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages)
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@sidebarContent = {@asideBusiness}
-
-@main_template(Messages("fileUploadResult.error"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("fileUploadResult.error")) {
 <div class="grid-row">
     <div class="column-two-thirds">
         <h1>@Messages("fileUploadResult.error")</h1>
@@ -32,7 +31,7 @@
                 <p>@Messages(key)</p>
             }
 
-        <a class="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@messages("form.controls.returnToStart")</a>
+        <a class="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@messages("form.controls.finished")</a>
     </div>
 </div>
 }

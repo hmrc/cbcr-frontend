@@ -36,7 +36,7 @@ class XmlInfoExtract {
   private val xmlInputFactory: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
 
   implicit class NodeSeqPimp(n: NodeSeq) {
-    def textOption: Option[String] = n map (_.text) headOption
+    def textOption: Option[String] = n.map(_.text).headOption
     def text: String = textOption.orEmpty
   }
 

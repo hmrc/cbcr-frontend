@@ -21,11 +21,11 @@ import javax.inject.{Inject, Singleton}
 import cats.data.OptionT
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model.{MessageRefID, UnexpectedState}
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpException, NotFoundException}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import cats.syntax.show._
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpException, NotFoundException }
 
 @Singleton
 class MessageRefIdService @Inject() (connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {

@@ -16,27 +16,27 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.data.OptionT
-import org.scalatest.{Matchers, WordSpec}
-import org.scalatest.mock.MockitoSugar
-import org.scalatestplus.play.OneAppPerSuite
-import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
+import org.mockito.Matchers.any
 import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{Matchers, WordSpec}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
+import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, BusinessPartnerRecord, Utr}
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 
-class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuite with MockitoSugar {
+class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
 
 
   val mockConnector = mock[BPRKnownFactsConnector]
-  val bprKnownFactsService = new BPRKnownFactsService(mockConnector)
+  val mockAudit = mock[AuditConnector]
+  val bprKnownFactsService = new BPRKnownFactsService(mockConnector,mockAudit)
   implicit val hc = HeaderCarrier()
 
   val bodyKnownFact1: String =
@@ -63,6 +63,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuit
 
       val result: HttpResponse = mock[HttpResponse]
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(kf1).value, 2.second)
@@ -75,6 +76,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuit
 
       val result: HttpResponse = mock[HttpResponse]
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN3 5XB")).value, 2.second)
@@ -87,6 +89,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with OneAppPerSuit
 
       val result: HttpResponse = mock[HttpResponse]
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value, 2.second)

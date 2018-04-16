@@ -14,15 +14,22 @@
  * limitations under the License.
  *@
 
+@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import helper._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@contentHeader = {
-  <h1>@heading</h1>
+@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+
+@main_template(Messages("survey.acknowledge.header")) {
+
+    <div class="grid-row">
+        <div class="column-two-thirds">
+            <h1>@Messages("survey.acknowledge.header")</h1>
+        </div>
+        <p>@messages("survey.acknowledge.message")</p>
+    </div>
+    <p><a class="button" role="button" href="@routes.SharedController.guidance()">@Messages("form.controls.finished")</a></p>
 }
-
-@mainContent = {
-  <p>@message</p>
-}
-
-@govuk_wrapper(title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent)

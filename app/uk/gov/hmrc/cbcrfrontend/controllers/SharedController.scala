@@ -17,48 +17,49 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.nio.file.{Path, Paths}
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.{Configuration, Logger}
-import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
-import play.api.i18n.Messages.Implicits._
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.libs.json.Json
+import play.api.mvc.Results.Unauthorized
 import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.{Configuration, Environment, Logger}
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual}
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import uk.gov.hmrc.cbcrfrontend.connectors.EnrolmentsConnector
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.frontend.auth.AuthContext
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.cbcrfrontend.views.html.subscription.notAuthorised
 
 import scala.concurrent.Future
 
-@Singleton
-class SharedController @Inject()(val sec: SecuredActions,
-                                 val subDataService: SubscriptionDataService,
-                                 val enrolments:EnrolmentsConnector,
-                                 val authConnector:AuthConnector,
-                                 val knownFactsService: BPRKnownFactsService,
-                                 val configuration: Configuration,
-                                 val rrService: DeEnrolReEnrolService,
-                                 runMode: RunMode
-                                )(implicit val auth:AuthConnector, val cache:CBCSessionCache)  extends FrontendController with ServicesConfig {
 
-  lazy val audit: AuditConnector = FrontendAuditConnector
+@Singleton
+class SharedController @Inject()(val messagesApi: MessagesApi,
+                                 val subDataService: SubscriptionDataService,
+                                 val knownFactsService: BPRKnownFactsService,
+                                 val rrService: DeEnrolReEnrolService,
+                                 val audit: AuditConnector,
+                                 val env:Environment,
+                                 val authConnector:AuthConnector
+                                )(implicit val cache:CBCSessionCache,
+                                  val config: Configuration,
+                                  feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport {
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
@@ -77,57 +78,60 @@ class SharedController @Inject()(val sec: SecuredActions,
   )
 
   val technicalDifficulties = Action{ implicit request =>
-    InternalServerError(FrontendGlobal.internalServerErrorTemplate)
+    InternalServerError(uk.gov.hmrc.cbcrfrontend.views.html.error_template ("Internal Server Error", "Internal Server Error", "Something went wrong"))
   }
 
   val sessionExpired = Action{ implicit request =>
-    Ok(shared.sessionExpired(includes.asideCbc(), includes.phaseBannerBeta()))
+    Ok(shared.sessionExpired())
   }
 
-  val enterCBCId = sec.AsyncAuthenticatedAction(){ _ => implicit request =>
-      Ok(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm))
+  val enterCBCId = Action.async{ implicit request =>
+    authorised(){
+      Ok(submission.enterCBCId( cbcIdForm))
+    }
   }
 
-  private def cacheSubscriptionDetails(s:SubscriptionDetails, id:CBCId)(implicit hc:HeaderCarrier): Future[Unit] = for {
-    _ <- cache.save(TIN(s.utr.value,""))
-    _ <- cache.save(s.businessPartnerRecord)
-    _ <- cache.save(id)
-  } yield ()
+  private def cacheSubscriptionDetails(s:SubscriptionDetails, id:CBCId)(implicit hc:HeaderCarrier): Future[Unit] =
+    (cache.save(TIN(s.utr.value,"")) *> cache.save(s.businessPartnerRecord) *> cache.save(id)).map(_ => ())
 
-  val submitCBCId = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext => implicit request =>
+  val submitCBCId = Action.async { implicit request => authorised(AffinityGroup.Organisation).retrieve(cbcEnrolment) { cbcEnrolment =>
       cbcIdForm.bindFromRequest().fold[Future[Result]](
-        errors => BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), errors)),
-        id     => {
+        errors => BadRequest(submission.enterCBCId( errors)),
+        id => {
           subDataService.retrieveSubscriptionData(id).value.flatMap(_.fold(
             error => errorRedirect(error),
             details => details.fold[Future[Result]] {
-              BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm, true))
-            }(subscriptionDetails => enrolments.getCBCEnrolment.toRight(UnexpectedState("Could not find valid enrolment")).ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId)).fold[Future[Result]](
+              BadRequest(submission.enterCBCId( cbcIdForm, true))
+            }(subscriptionDetails => cbcEnrolment.toRight(UnexpectedState("Could not find valid enrolment")).ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId)).fold[Future[Result]](
               {
-                case InvalidSession => BadRequest(submission.enterCBCId(includes.asideCbc(), includes.phaseBannerBeta(), cbcIdForm, false, true))
+                case InvalidSession => BadRequest(submission.enterCBCId( cbcIdForm, false, true))
                 case error => errorRedirect(error)
               },
-              _ => {
-                cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
-                  Redirect(routes.SubmissionController.submitSummary())
-                )
-              }
-            ).flatten)
+              _ => cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
+                Redirect(routes.SubmissionController.submitSummary())
+              )
+
+            ))
           ))
         }
       )
+    }
   }
 
 
-  val signOut = sec.AsyncAuthenticatedAction() { authContext => implicit request => {
-    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${routes.SharedController.guidance().url}"
-    Future.successful(Redirect(s"${FrontendAppConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
-  }}
+  val signOut = Action.async { implicit request =>
+    authorised() {
+      val continue = s"?continue=${feConfig.cbcrFrontendHost}${routes.SharedController.guidance().url}"
+      Future.successful(Redirect(s"${feConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
+    }
+  }
 
-  val signOutSurvey = sec.AsyncAuthenticatedAction() { authContext => implicit request => {
-    val continue = s"?continue=${FrontendAppConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey().url}"
-    Future.successful(Redirect(s"${FrontendAppConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
-  }}
+  val signOutSurvey = Action.async { implicit request =>
+    authorised() {
+      val continue = s"?continue=${feConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey().url}"
+      Future.successful(Redirect(s"${feConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
+    }
+  }
 
   def volunteer = Action.async{ implicit request =>
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.volunteer()))
@@ -142,7 +146,7 @@ class SharedController @Inject()(val sec: SecuredActions,
   }
 
   def downloadGuide = Action.async{ implicit request =>
-    val guideVer: String = configuration.getString(s"${runMode.env}.oecd-guide-version").getOrElse(throw new Exception(s"Missing configuration ${runMode.env}.oecd-guide-version"))
+    val guideVer: String = config.getString(s"${env.mode}.oecd-guide-version").getOrElse(throw new Exception(s"Missing configuration ${env.mode}.oecd-guide-version"))
     val file: Path = Paths.get(s"conf/downloads/HMRC_CbC_XML_User_Guide_V$guideVer.pdf")
     Future.successful(Ok.sendPath(file,inline = false,fileName = _ => s"HMRC_CbC_XML_User_Guide_V$guideVer.pdf"))
   }
@@ -155,17 +159,18 @@ class SharedController @Inject()(val sec: SecuredActions,
     Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.businessRules()))
   }
 
-  val verifyKnownFactsOrganisation = sec.AsyncAuthenticatedAction(Some(Organisation(true))) { authContext =>
-    implicit request => enterKnownFacts(authContext)
-  }
+  val pred = AffinityGroup.Organisation and (User or Admin)
 
-  val verifyKnownFactsAgent = sec.AsyncAuthenticatedAction() { authContext =>
-    implicit request => enterKnownFacts(authContext)
+  val verifyKnownFactsOrganisation = Action.async{ implicit request =>
+    authorised(pred).retrieve(cbcEnrolment){ enrolment => enterKnownFacts(enrolment)} }
+
+  val verifyKnownFactsAgent = Action.async{ implicit request =>
+    authorised(AffinityGroup.Agent)(enterKnownFacts(None))
   }
 
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
     EitherT(result.value.flatMap { e =>
-      audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
+      audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
         tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
           "path"     -> request.uri,
           "newCBCId" -> e.map(_.value).getOrElse("Failed to get new CBCId"),
@@ -184,7 +189,7 @@ class SharedController @Inject()(val sec: SecuredActions,
 
     val cbcrKnownFactsFailure = "CBCRKnownFactsFailure"
 
-    audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", cbcrKnownFactsFailure,
+    audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", cbcrKnownFactsFailure,
         tags = hc.toAuditTags(cbcrKnownFactsFailure, "N/A") + (
           "path"     -> request.uri,
           "cbcIdFromXml" -> cbcIdFromXml.map(cbcid => cbcid.value).getOrElse("No CBCId present"),
@@ -200,87 +205,100 @@ class SharedController @Inject()(val sec: SecuredActions,
   }
 
 
-  def enterKnownFacts(authContext: AuthContext)(implicit request:Request[AnyContent]): Future[Result] =
-    getUserType(authContext).semiflatMap{ userType =>
-      for {
-        postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
-        utr      <- cache.readOption[Utr].map(_.map(_.utr))
-        result   <- enrolments.getCBCEnrolment.semiflatMap(enrolment => {
-          if (CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
-            auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).fold[Result](
-              errors => errorRedirect(errors),
-              (id: CBCId) => Ok(shared.regenerate(includes.asideCbc(), includes.phaseBannerBeta(), id))
-            )
-          } else {
-            Future.successful(NotAcceptable(subscription.alreadySubscribed(includes.asideCbc(), includes.phaseBannerBeta())))
-          }
-        }).cata(
-          {
-            val form = (utr |@| postCode).map((utr: String, postCode: String) =>
-              knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode))
-            ).getOrElse(knownFactsForm)
-            Ok(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), form, false, userType))
-          },
-          (result: Result) => result
-        )
-      } yield result
-    }.leftMap(errorRedirect).merge
-
-
-  val checkKnownFacts: Action[AnyContent] = sec.AsyncAuthenticatedAction() { authContext =>implicit request =>
-
-    def NotFoundView(knownFacts:BPRKnownFacts, userType: UserType): Result = {
-      NotFound(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType))
-    }
-
-    getUserType(authContext).leftMap(errorRedirect).flatMap { userType =>
-
-      knownFactsForm.bindFromRequest.fold[EitherT[Future,Result,Result]](
-        formWithErrors => EitherT.left(BadRequest(shared.enterKnownFacts(includes.asideCbc(), includes.phaseBannerBeta(), formWithErrors, false, userType))),
-        knownFacts =>  for {
-          bpr                 <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight{
-            Logger.warn("The BPR was not found when looking it up with the knownFactsService")
-            NotFoundView(knownFacts, userType)
-          }
-          cbcIdFromXml        <- EitherT.right[Future,Result,Option[CBCId]](OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
-          subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
-          _                   <- EitherT.fromEither[Future](userType match {
-            case Agent() if subscriptionDetails.isEmpty =>
-              Logger.error(s"Agent supplying known facts for a UTR that is not registered. Check for an internal error!")
-              Left(NotFoundView(knownFacts, userType))
-            case Agent() if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined => {
-              Logger.warn(s"Agent submitting Xml where the CBCId associated with the UTR does not match that in the Xml File. Request the original Xml File and Known Facts from the Agent")
-              auditBPRKnowFactsFailure(cbcIdFromXml, bpr, knownFacts)
-              Left(NotFoundView(knownFacts, userType))
-            }
-            case Agent() if cbcIdFromXml.isEmpty => {
-              Logger.error(s"Agent submitting Xml where the CBCId is not in the Xml. Check for an internal error!")
-              Left(NotFoundView(knownFacts, userType))
-            }
-            case Organisation(_) if subscriptionDetails.isDefined =>
-              Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
-            case _                                             =>
-              Right(())
-          })
-          _                   <- EitherT.right[Future,Result,Unit](
-            (cache.save(bpr) *>
-              cache.save(knownFacts.utr) *>
-              cache.save(TIN(knownFacts.utr.value,""))
-              ).map(_ => ()))
-        } yield Redirect(routes.SharedController.knownFactsMatch())
-
-      )
-    }.merge
+  def enterKnownFacts(cbcEnrolment:Option[CBCEnrolment])(implicit request:Request[AnyContent]): Future[Result] = {
+    for {
+      postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
+      utr <- cache.readOption[Utr].map(_.map(_.utr))
+      result <- cbcEnrolment.map(enrolment =>
+        if (CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
+          auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).fold[Result](
+            errors => errorRedirect(errors),
+            (id: CBCId) => Ok(shared.regenerate(id))
+          )
+        } else {
+          Future.successful(NotAcceptable(subscription.alreadySubscribed()))
+        }
+      ).fold[Future[Result]](
+        {
+          val form = (utr |@| postCode).map((utr: String, postCode: String) =>
+            knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode))
+          ).getOrElse(knownFactsForm)
+          Ok(shared.enterKnownFacts(form, false))
+        })((result: Future[Result]) => result)
+    } yield result
   }
 
-  def knownFactsMatch = sec.AsyncAuthenticatedAction(){ authContext => implicit request =>
-    val result:ServiceResponse[Result] = for {
-      userType <- getUserType(authContext)
-      bpr      <- cache.read[BusinessPartnerRecord]
-      utr      <- cache.read[Utr].leftMap(s => s:CBCErrors)
-    } yield Ok(subscription.subscribeMatchFound(includes.asideCbc(), includes.phaseBannerBeta(), bpr.organisation.map(_.organisationName).getOrElse(""), bpr.address.postalCode.orEmpty, utr.value , userType))
+  def NotFoundView(knownFacts:BPRKnownFacts)(implicit request:Request[_]): Result =
+    NotFound(shared.enterKnownFacts( knownFactsForm.fill(knownFacts), noMatchingBusiness = true))
 
-    result.leftMap(errorRedirect).merge
+  val checkKnownFacts: Action[AnyContent] = Action.async { implicit request =>
+    authorised().retrieve(Retrievals.affinityGroup) {
+      case None => errorRedirect(UnexpectedState("Could not retrieve affinityGroup"))
+      case Some(userType) => {
+
+
+        knownFactsForm.bindFromRequest.fold[EitherT[Future, Result, Result]](
+          formWithErrors => EitherT.left(BadRequest(shared.enterKnownFacts( formWithErrors, false))),
+          knownFacts => for {
+            bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight {
+              Logger.warn("The BPR was not found when looking it up with the knownFactsService")
+              NotFoundView(knownFacts)
+            }
+            cbcIdFromXml <- EitherT.right[Future, Result, Option[CBCId]](OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
+            subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
+            _ <- EitherT.fromEither[Future](userType match {
+              case AffinityGroup.Agent if subscriptionDetails.isEmpty =>
+                Logger.error(s"Agent supplying known facts for a UTR that is not registered. Check for an internal error!")
+                Left(NotFoundView(knownFacts))
+              case AffinityGroup.Agent if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined => {
+                Logger.warn(s"Agent submitting Xml where the CBCId associated with the UTR does not match that in the Xml File. Request the original Xml File and Known Facts from the Agent")
+                auditBPRKnowFactsFailure(cbcIdFromXml, bpr, knownFacts)
+                Left(NotFoundView(knownFacts))
+              }
+              case AffinityGroup.Agent if cbcIdFromXml.isEmpty => {
+                Logger.error(s"Agent submitting Xml where the CBCId is not in the Xml. Check for an internal error!")
+                Left(NotFoundView(knownFacts))
+              }
+              case AffinityGroup.Organisation if subscriptionDetails.isDefined =>
+                Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
+              case _ =>
+                Right(())
+            })
+            _ <- EitherT.right[Future, Result, Unit](
+              (cache.save(bpr) *>
+                cache.save(knownFacts.utr) *>
+                cache.save(TIN(knownFacts.utr.value, ""))
+                ).map(_ => ()))
+          } yield Redirect(routes.SharedController.knownFactsMatch())
+
+        )
+      }.merge
+    }
+  }
+
+  def knownFactsMatch = Action.async { implicit request =>
+    authorised().retrieve(Retrievals.affinityGroup) {
+      case None           => errorRedirect(UnexpectedState("Unable to get AffinityGroup"))
+      case Some(userType) => val result: ServiceResponse[Result] = for {
+        bpr <- cache.read[BusinessPartnerRecord]
+        utr <- cache.read[Utr].leftMap(s => s: CBCErrors)
+      } yield Ok(subscription.subscribeMatchFound(bpr.organisation.map(_.organisationName).getOrElse(""), bpr.address.postalCode.orEmpty, utr.value, userType))
+
+        result.leftMap(errorRedirect).merge
+    }
+  }
+
+  def unsupportedAffinityGroup = Action.async { implicit request => {
+    authorised().retrieve(Retrievals.affinityGroup) {
+      case None => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
+      case Some(Individual) => {
+        Unauthorized(views.html.not_authorised_individual())
+      }
+      case Some(Agent) => {
+        Unauthorized(views.html.subscription.notAuthorised())
+      }
+    }
+  }
   }
 
 }

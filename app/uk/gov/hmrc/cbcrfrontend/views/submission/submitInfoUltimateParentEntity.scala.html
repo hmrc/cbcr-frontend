@@ -15,21 +15,17 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
 
-@(asideBusiness: Html, phaseBannerBeta: Html, form:Form[_])(
-implicit request: Request[_], messages: Messages)
-
-@sidebarContent = {
-@asideBusiness
-}
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @ultimateParentEntityErrors = @{form.error("ultimateParentEntity").isDefined}
 
-@main_template(Messages("submitInfoUltimateParentEntity.mainHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("submitInfoUltimateParentEntity.mainHeading")) {
 
     <div class="grid-row">
         <div class="column-two-thirds">
@@ -50,7 +46,7 @@ implicit request: Request[_], messages: Messages)
                     <div class="form-field form-field--tall">
                         <div class="form-group">
                             @formFieldDisplay(ultimateParentEntityErrors,"ultimateParentEntity", Some(Messages("submitInfoUltimateParentEntity.upe.error")),Messages("submitInfoUltimateParentEntity.upe.label"), form)
-                            @CSRF.formField
+                            @csrf_token()
                         </div>
                     </div>
                 </fieldset>

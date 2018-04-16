@@ -1,11 +1,11 @@
 # microservice specific routes
 
-
 GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.StartController.start
 POST       /                                              @uk.gov.hmrc.cbcrfrontend.controllers.StartController.submit
 
 GET        /exit-survey                                   @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.doSurvey
 POST       /exit-survey/submit                            @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.submit
+GET        /exit-survey/acknowledge                       @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.surveyAcknowledge
 
 GET        /session-expired                               @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.sessionExpired
 GET        /technical-difficulties                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
@@ -24,6 +24,7 @@ GET        /known-facts/agent/verify-form                 @uk.gov.hmrc.cbcrfront
 POST       /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.checkKnownFacts
 GET        /known-facts/match                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.knownFactsMatch
 GET        /known-facts/organisation/verify-form          @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsOrganisation
+GET        /unsupportedAffinityGroup                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.unsupportedAffinityGroup
 
 GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileValidate(envelopeId: String, fileId:String)
 GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadProgress(envelopeId: String, fileId: String)
@@ -43,12 +44,13 @@ POST       /submitter-info                                @uk.gov.hmrc.cbcrfront
 POST       /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUtr
 GET        /utr/entry-form                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.utr
 GET        /submission/summary                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSummary
-GET        /submission/receipt                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSuccessReceipt
-GET        /filing-history                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.filingHistory
+GET        /submission/receipt                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSuccessReceipt(userType: String)
 POST       /confirm                                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.confirm
 POST       /company-name                                  @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.saveCompanyName
 GET        /company-name/entry-form                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.enterCompanyName
 GET        /not-registered                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.notRegistered
+GET        /no-individuals                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.noIndividuals
+GET        /no-assistants                                 @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.noAssistants
 
 GET        /already-subscribed                            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.alreadySubscribed
 GET        /contact-info-subscriber                       @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.contactInfoSubscriber

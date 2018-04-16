@@ -19,17 +19,22 @@ package uk.gov.hmrc.cbcrfrontend.controllers.test
 import javax.inject.{Inject, Singleton}
 
 import play.api.libs.json._
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
+import play.api.mvc.Action
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
-import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 @Singleton
-class TestCBCRController @Inject()(val sec: SecuredActions) extends FrontendController with ServicesConfig {
+class TestCBCRController @Inject()(val authConnector:AuthConnector,
+                                   val testCBCRConnector: TestCBCRConnector,
+                                   val config:Configuration,
+                                   val env:Environment) extends FrontendController with AuthorisedFunctions{
 
-  def insertSubscriptionData(cbcId: String, utr: String) = sec.AsyncAuthenticatedAction() { _ =>
-    implicit request =>
-        TestCBCRConnector.insertSubscriptionData(defaultSubscriptionData(cbcId, utr)).map(_ => Ok("Data inserted"))
+  def insertSubscriptionData(cbcId: String, utr: String) = Action.async{ implicit request =>
+    authorised() {
+      testCBCRConnector.insertSubscriptionData(defaultSubscriptionData(cbcId, utr)).map(_ => Ok("Data inserted"))
+    }
   }
 
   def defaultSubscriptionData(cbcId: String, utr: String): JsValue =
@@ -57,19 +62,22 @@ class TestCBCRController @Inject()(val sec: SecuredActions) extends FrontendCont
          |      "phoneNumber":"1234577",
          |      "email":"vbla@email.com"
          |   },
-         |   "cbcId":"${cbcId}",
-         |   "utr":"${utr}"
+         |   "cbcId":"$cbcId",
+         |   "utr":"$utr"
          |}
        """.stripMargin
     )
 
-  def deleteSubscription(utr: String) = sec.AsyncAuthenticatedAction() { _ =>
-    implicit request =>
-      TestCBCRConnector.deleteSubscription(utr).map(_ => Ok("Record with the specific UTR deleted"))
+  def deleteSubscription(utr: String) = Action.async{ implicit request =>
+    authorised() {
+      testCBCRConnector.deleteSubscription(utr).map(_ => Ok("Record with the specific UTR deleted"))
+    }
   }
 
-  def deleteSingleDocRefId(docRefId: String) = sec.AsyncAuthenticatedAction() { _ =>
-    implicit request =>
-      TestCBCRConnector.deleteSingleDocRefId(docRefId).map(_ => Ok("DocRefId has been deleted"))
+  def deleteSingleDocRefId(docRefId: String) = Action.async{ implicit request =>
+    authorised() {
+      testCBCRConnector.deleteSingleDocRefId(docRefId).map(_ => Ok("DocRefId has been deleted"))
+    }
   }
+
 }

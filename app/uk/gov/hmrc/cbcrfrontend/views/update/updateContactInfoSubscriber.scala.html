@@ -15,18 +15,15 @@
  *@
 
 @import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.AppConfig
+
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
 
-@(asideCbc: Html, phaseBannerBeta: Html, form:Form[_], cBCId: CBCId)(
-        implicit request: Request[_], messages: Messages)
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@sidebarContent = {
-@asideCbc
-}
+@(form:Form[_], cBCId:CBCId)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @firstNameErrors = @{form.error("firstName").isDefined}
 @lastNameErrors = @{form.error("lastName").isDefined}
@@ -36,7 +33,7 @@
 @maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 
-@main_template(Messages("contactInfoSubscriber.updateHeading"), sidebarLinks = Some(sidebarContent)) {
+@main_template(Messages("contactInfoSubscriber.updateHeading")) {
     <div class="grid-row">
         <div class="column-two-thirds">
             @if(form.hasErrors) {

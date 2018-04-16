@@ -21,7 +21,7 @@ import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.core.CBCErrorOr
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.play.http.HttpResponse
+import uk.gov.hmrc.http.HttpResponse
 
 class FileUploadServiceConnector() {
 

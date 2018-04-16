@@ -18,53 +18,53 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.EitherT
-import com.typesafe.config.Config
-import uk.gov.hmrc.cbcrfrontend.views.html._
-import play.api.{Configuration, Logger}
-import uk.gov.hmrc.cbcrfrontend.auth.SecuredActions
-import play.api.Play.current
-import play.api.i18n.Messages.Implicits._
-import configs.syntax._
+import cats.instances.future._
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Request}
-import uk.gov.hmrc.cbcrfrontend.FrontendAuditConnector
+import play.api.{Configuration, Logger}
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SurveyForm
-import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, SurveyAnswers, UnexpectedState}
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend.views.html.includes
-import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
+import uk.gov.hmrc.cbcrfrontend.model.{SurveyAnswers, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.audit.AuditExtensions._
-import cats.instances.future._
+import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
 
 @Singleton
-class ExitSurveyController @Inject()(val sec: SecuredActions, val config:Configuration) extends FrontendController {
-
-  lazy val audit: AuditConnector = FrontendAuditConnector
+class ExitSurveyController @Inject()(val config:Configuration,
+                                     val audit:AuditConnector)
+                                    (implicit conf:FrontendAppConfig,
+                                     val messagesApi:MessagesApi) extends FrontendController with I18nSupport{
 
   val doSurvey = Action{ implicit request =>
-    Ok(survey.exitSurvey(includes.asideBusiness(), includes.phaseBannerBeta(), SurveyForm.surveyForm))
+    Ok(survey.exitSurvey( SurveyForm.surveyForm))
   }
+
+  val surveyAcknowledge =  Action { implicit request =>
+    Ok(survey.exitSurveyComplete())
+  }
+
 
   val submit = Action.async{ implicit request =>
     SurveyForm.surveyForm.bindFromRequest().fold(
-      errors  => Future.successful(BadRequest(survey.exitSurvey(includes.asideBusiness(), includes.phaseBannerBeta(), errors))),
+      errors  => Future.successful(BadRequest(survey.exitSurvey( errors))),
       answers => auditSurveyAnswers(answers).fold(
         errors => {
-          Logger.error(errors.toString)
-          Redirect(routes.SharedController.guidance())
+          Logger.error(errors.toString)//          Redirect(routes.SharedController.guidance())
+          Redirect(routes.ExitSurveyController.surveyAcknowledge())
         },
-        _      => Redirect(routes.SharedController.guidance())
+        _      => Redirect(routes.ExitSurveyController.surveyAcknowledge())
       )
     )
   }
 
   def auditSurveyAnswers(answers: SurveyAnswers)(implicit request:Request[_]) : ServiceResponse[AuditResult.Success.type ] = {
-    eitherT[AuditResult.Success.type](audit.sendEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRExitSurvey",
+    eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRExitSurvey",
       tags = hc.toAuditTags("CBCRExitSurvey", "N/A"),
       detail = Json.toJson(answers)
     )).map {
