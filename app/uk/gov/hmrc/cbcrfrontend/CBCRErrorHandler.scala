@@ -39,15 +39,19 @@ class CBCRErrorHandler @Inject()(val messagesApi: MessagesApi, val env:Environme
   extends FrontendErrorHandler with AuthorisedFunctions with I18nSupport with AuthRedirects with FrontendController{
 
   override def resolveError(rh: RequestHeader, ex: Throwable) = ex match {
-    case _:NoActiveSession            => toGGLogin(rh.uri)
-    case _:UnsupportedCredentialRole  => {
+    case _:NoActiveSession            =>
+      toGGLogin(rh.uri)
+    case _:UnsupportedCredentialRole  =>
       Redirect(routes.SubmissionController.noAssistants())
-    }
-    case _:UnsupportedAffinityGroup   => {
+    case _:UnsupportedAffinityGroup   =>
       Redirect(routes.SharedController.unsupportedAffinityGroup())
-    }
-    case _                            => super.resolveError(rh,ex)
+    case _                            =>
+      Logger.error(s"Unresolved error: ${ex.getMessage}", ex)
+      super.resolveError(rh,ex)
   }
+
+  override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
+    resolveError(request,exception)
 
   override def standardErrorTemplate (pageTitle: String, heading: String, message: String) (implicit request: Request[_] ) =
   uk.gov.hmrc.cbcrfrontend.views.html.error_template (pageTitle, heading, message)
