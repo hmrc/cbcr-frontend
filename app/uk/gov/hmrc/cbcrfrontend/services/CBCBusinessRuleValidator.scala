@@ -70,12 +70,15 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
   /** Top level extraction method */
   private def extractXMLInfo(in:RawXMLInfo) : ValidBusinessResult[XMLInfo] =
-    (extractCbcOecdVersion(in.cbcVal) *>
-      in.xmlEncoding.map(extractXmlEncodingVal).sequence[ValidBusinessResult,Unit] *>
-      extractMessageSpec(in.messageSpec)                                                   |@|
-      in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult,ReportingEntity] |@|
-      in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult,CbcReports]                 |@|
-      in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult,AdditionalInfo]).map(XMLInfo(_,_,_,_))
+    if(in.numBodies > 1) MultipleCbcBodies.invalidNel[XMLInfo]
+    else {
+      (extractCbcOecdVersion(in.cbcVal) *>
+        in.xmlEncoding.map(extractXmlEncodingVal).sequence[ValidBusinessResult, Unit] *>
+        extractMessageSpec(in.messageSpec) |@|
+        in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult, ReportingEntity] |@|
+        in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult, CbcReports] |@|
+        in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult, AdditionalInfo]).map(XMLInfo(_, _, _, _))
+    }
 
   private def extractMessageSpec(in:RawMessageSpec) : ValidBusinessResult[MessageSpec] =
     (

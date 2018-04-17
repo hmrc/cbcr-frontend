@@ -29,6 +29,7 @@ import play.api.libs.json._
 /** These models represent the raw data extracted from the XML file*/
 sealed trait RawXmlFields extends Product with Serializable
 
+case object RawBody extends RawXmlFields
 case class RawAdditionalInfo(docSpec: RawDocSpec) extends RawXmlFields
 case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
 case class RawDocSpec(docType:String, docRefId:String, corrDocRefId:Option[String]) extends RawXmlFields
@@ -50,7 +51,8 @@ case class RawXMLInfo(messageSpec: RawMessageSpec,
                       cbcReport: List[RawCbcReports],
                       additionalInfo: Option[RawAdditionalInfo],
                       cbcVal: RawCbcVal,
-                      xmlEncoding: Option[RawXmlEncodingVal]) extends RawXmlFields
+                      xmlEncoding: Option[RawXmlEncodingVal],
+                      numBodies: Int) extends RawXmlFields
 
 /** These models represent the type-validated data, derived from the raw data */
 class DocRefId private[model](val msgRefID:MessageRefID,
