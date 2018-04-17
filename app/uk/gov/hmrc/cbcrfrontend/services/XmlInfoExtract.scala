@@ -34,6 +34,8 @@ import play.api.Logger
 class XmlInfoExtract {
 
   private val xmlInputFactory: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
+  xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false)
+  xmlInputFactory.setProperty("javax.xml.stream.isSupportingExternalEntities", false)
 
   implicit class NodeSeqPimp(n: NodeSeq) {
     def textOption: Option[String] = n.map(_.text).headOption
