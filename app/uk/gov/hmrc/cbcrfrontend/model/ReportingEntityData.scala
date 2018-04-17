@@ -17,6 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.model
 
 import java.time.LocalDateTime
+import java.time.LocalDate
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.all._
@@ -45,7 +46,7 @@ case class ReportingEntityData(cbcReportsDRI:NonEmptyList[DocRefId],
                                tin:TIN,
                                ultimateParentEntity: UltimateParentEntity,
                                reportingRole: ReportingRole,
-                               creationDate: Option[LocalDateTime])
+                               creationDate: Option[LocalDate])
 
 case class DocRefIdPair(docRefId: DocRefId,corrDocRefId: Option[CorrDocRefId])
 object DocRefIdPair{ implicit val format = Json.format[DocRefIdPair] }
@@ -56,7 +57,7 @@ case class PartialReportingEntityData(cbcReportsDRI:List[DocRefIdPair],
                                       tin:TIN,
                                       ultimateParentEntity: UltimateParentEntity,
                                       reportingRole: ReportingRole,
-                                      creationDate: Option[LocalDateTime])
+                                      creationDate: Option[LocalDate])
 
 object PartialReportingEntityData {
   implicit def formatNEL[A:Format] = new Format[NonEmptyList[A]] {

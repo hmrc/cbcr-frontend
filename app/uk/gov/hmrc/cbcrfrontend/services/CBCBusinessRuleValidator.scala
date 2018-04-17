@@ -28,10 +28,11 @@ import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
 import uk.gov.hmrc.cbcrfrontend.functorInstance
 import uk.gov.hmrc.cbcrfrontend.applicativeInstance
-import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
+
 import scala.util.Failure
 
 /**
@@ -57,7 +58,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                                           subscriptionDataService: SubscriptionDataService,
                                           reportingEntityDataService: ReportingEntityDataService,
                                           configuration: Configuration,
-                                          runMode: RunMode
+                                          runMode: RunMode,
+                                          creationDateService: CreationDateService
                                          )(implicit ec:ExecutionContext, cache:CBCSessionCache) {
 
   private val testData = "OECD1[0123]"
@@ -75,7 +77,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       extractMessageSpec(in.messageSpec)                                                   |@|
       in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult,ReportingEntity] |@|
       in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult,CbcReports]                 |@|
-      in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult,AdditionalInfo]).map(XMLInfo(_,_,_,_,Some(LocalDateTime.now())))
+      in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult,AdditionalInfo]).map(XMLInfo(_,_,_,_,Some(LocalDate.now())))
 
   private def extractMessageSpec(in:RawMessageSpec) : ValidBusinessResult[MessageSpec] =
     (
@@ -428,7 +430,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     )
 
     if (CBCReportsAreContainsCorrectionsOrDeletions || AdditionalInfoContainsCorrectionsOrDeletions || ReportingEntityContainsCorrectionsOrDeletionsOrResent) {
-
+      creationDateService.checkDate(xmlInfo).map(result =>
+        if(result) xmlInfo.validNel else CorrectedFileToOld.invalidNel
+      )
       Future.successful(CorrectedFileToOld.invalidNel)
     } else {
       xmlInfo.validNel
