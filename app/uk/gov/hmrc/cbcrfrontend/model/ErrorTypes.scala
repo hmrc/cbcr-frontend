@@ -78,6 +78,7 @@ case object CorrDocRefIdInvalidParentGroupElement extends BusinessRuleErrors
 case object InvalidDocRefId extends BusinessRuleErrors
 case object InvalidCorrDocRefId extends BusinessRuleErrors
 case object ResentDataIsUnknownError extends BusinessRuleErrors
+case object MultipleCbcBodies extends BusinessRuleErrors
 case object CorrectedFileToOld extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
@@ -128,6 +129,8 @@ object BusinessRuleErrors {
       case XmlEncodingError           => JsString(XmlEncodingError.toString)
       case OriginalSubmissionNotFound => JsString(OriginalSubmissionNotFound.toString)
       case PrivateBetaCBCIdError     => JsString(PrivateBetaCBCIdError.toString)
+      case ResentDataIsUnknownError => JsString(ResentDataIsUnknownError.toString)
+      case MultipleCbcBodies         => JsString(MultipleCbcBodies.toString)
       case ResentDataIsUnknownError  => JsString(ResentDataIsUnknownError.toString)
       case CorrectedFileToOld        => JsString(CorrectedFileToOld.toString)
     }
@@ -137,6 +140,7 @@ object BusinessRuleErrors {
         .orElse[BusinessRuleErrors](Json.fromJson(json)(FileNameError.format))
         .orElse[BusinessRuleErrors]{
         json.asOpt[String].map(_.toLowerCase.trim) match {
+          case Some("multiplecbcbodies")     => JsSuccess(MultipleCbcBodies)
           case Some("messagetypeindicerror") => JsSuccess(MessageTypeIndicError)
           case Some("testdataerror")         => JsSuccess(TestDataError)
           case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
@@ -191,6 +195,7 @@ object BusinessRuleErrors {
     case PrivateBetaCBCIdError => """ The country-by-country ID you entered has changed. You will need to use the new ID which we have emailed to you. If you are operating as an agent, contact your client for the new country-by-country ID."""
     case CorrDocRefIdDuplicate => """Error Code 80011 CorrDocRefId (Duplicate):The same DocRefID cannot be corrected or deleted twice in the same message."""
     case ResentDataIsUnknownError => """OECD0 must be used for resent data, but a previous submission with this DocRefID has not been received"""
+    case MultipleCbcBodies        => """File contains multiple occurrences of CbcBody: Only 1 occurrence of CbcBody is allowed per XML message"""
     case CorrectedFileToOld    => "Corrections only allowed upto 3 years after the initial submission date for the Reporting Period"
     case i:InvalidXMLError     => i.toString
   }
