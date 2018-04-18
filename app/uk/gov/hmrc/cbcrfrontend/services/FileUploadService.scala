@@ -139,11 +139,10 @@ class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,ws:WS
 
     val metadataFileId = UUID.randomUUID.toString
     val envelopeId = metaData.fileInfo.envelopeId
-    val fileId = metaData.fileInfo.id
 
     for {
       _ <- EitherT.right(HttpExecutor(fusFeUrl, UploadFile(envelopeId,
-        fileId, "metadata.json ", " application/json; charset=UTF-8", Json.toJson(metaData).toString().getBytes)
+        FileId(s"json-$metadataFileId"), "metadata.json ", " application/json; charset=UTF-8", Json.toJson(metaData).toString().getBytes)
       ))
       resourceUrl <- EitherT.right(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")))
     } yield resourceUrl.body
