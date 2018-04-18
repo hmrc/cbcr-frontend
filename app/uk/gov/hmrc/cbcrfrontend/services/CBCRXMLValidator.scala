@@ -34,6 +34,8 @@ class CBCRXMLValidator @Inject()(env:Environment, xmlValidationSchema: XMLValida
 
 
   val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
+  xmlInputFactory2.setProperty(XMLInputFactory.SUPPORT_DTD, false)
+  xmlInputFactory2.setProperty("javax.xml.stream.isSupportingExternalEntities", false)
 
   def validateSchema(input: File): XmlErrorHandler = {
     val xmlErrorHandler = new XmlErrorHandler()
