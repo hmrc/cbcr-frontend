@@ -74,6 +74,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
   val cache                   = mock[CBCSessionCache]
   val fus                     = mock[FileUploadService]
   val docRefService           = mock[DocRefIdService]
+  val messageRefIdService     = mock[MessageRefIdService]
   val auth                    = mock[AuthConnector]
   val auditMock               = mock[AuditConnector]
   val mockCBCIdService        = mock[CBCIdService]
@@ -90,7 +91,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
 
 
   implicit val hc = HeaderCarrier()
-  val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+  val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
 
   override protected def afterEach(): Unit = {
     reset(cache,fus,docRefService,reportingEntity,mockEmailService, auth)
@@ -150,7 +151,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "use the UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
@@ -163,7 +164,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
@@ -174,7 +175,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "use the Filing type form the xml when the ReportingRole is CBC703" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
@@ -475,6 +476,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
           when(reportingEntity.saveReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Unit](())
           when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(messageRefIdService.saveMessageRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
           when(auditMock.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
@@ -494,6 +496,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
           when(reportingEntity.updateReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Unit](())
           when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(messageRefIdService.saveMessageRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
           when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER

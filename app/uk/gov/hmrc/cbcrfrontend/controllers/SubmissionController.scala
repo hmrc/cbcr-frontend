@@ -61,6 +61,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
                                      val fus:FileUploadService,
                                      val docRefIdService: DocRefIdService,
                                      val reportingEntityDataService: ReportingEntityDataService,
+                                     val messageRefIdService: MessageRefIdService,
                                      val cbidService: CBCIdService,
                                      val audit: AuditConnector,
                                      val env:Environment,
@@ -127,6 +128,10 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
         _ <- saveDocRefIds(xml).leftMap[CBCErrors] { es =>
           Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
           UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
+        }
+        _ <- messageRefIdService.saveMessageRefId(xml.messageSpec.messageRefID).toLeft {
+          Logger.error(s"Errors saving MessageRefId")
+          UnexpectedState("Errors in saving MessageRefId aborting submission")
         }
         _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
         _ <- storeOrUpdateReportingEntityData(xml)
