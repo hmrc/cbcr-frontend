@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 import cats.syntax.show._
 import com.typesafe.config.Config
 import configs.syntax._
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.libs.json.{JsNull, JsValue}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.Email
@@ -52,6 +52,11 @@ class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(impli
 
   def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
     http.DELETE[HttpResponse](s"$url/test-only/deleteDocRefId/$docRefId")
+  }
+
+  def deleteSingleMessageRefId(messageRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
+    Logger.info(s"calling backend to delete MessageRefId: $messageRefId")
+    http.DELETE[HttpResponse](s"$url/test-only/deleteMessageRefId/$messageRefId")
   }
 
 }
