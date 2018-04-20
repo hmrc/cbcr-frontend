@@ -192,23 +192,23 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
       val result = for {
         file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
-        _ <- right(cache.save(file_metadata._2))
-        _ <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml", (), InvalidFileType(file_metadata._2.name))
-        schemaErrors = schemaValidator.validateSchema(file_metadata._1)
-        xmlErrors    = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
-        schemaSize   = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
-        _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
-        _ <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
-        else auditFailedSubmission(creds, "schema validation errors").flatMap(_ =>
-          EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize)))
-        )
-        result       <- validateBusinessRules(file_metadata)
-        businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
-        length       = calculateFileSize(file_metadata._2)
-        _ <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, "schema validation errors")
-        else if (result.isLeft) auditFailedSubmission(creds, "business rules errors")
-        else EitherT.pure[Future, CBCErrors, Unit](())
-        _            = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
+        _             <- right(cache.save(file_metadata._2))
+        _             <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml", (), InvalidFileType(file_metadata._2.name))
+        schemaErrors   = schemaValidator.validateSchema(file_metadata._1)
+        xmlErrors      = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
+        schemaSize     = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
+        _             <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
+        _             <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
+                         else auditFailedSubmission(creds, "schema validation errors").flatMap(_ =>
+                           EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize)))
+                         )
+        result        <- validateBusinessRules(file_metadata)
+        businessSize   = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
+        length         = calculateFileSize(file_metadata._2)
+        _             <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, "schema validation errors")
+                         else if (result.isLeft) auditFailedSubmission(creds, "business rules errors")
+                         else EitherT.pure[Future, CBCErrors, Unit](())
+        _              = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
       } yield Ok(submission.fileupload.fileUploadResult(affinity, Some(file_metadata._2.name), Some(length), schemaSize, businessSize,  result.map(_.reportingEntity.reportingRole).toOption))
 
 

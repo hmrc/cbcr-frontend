@@ -54,4 +54,7 @@ class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(impli
     http.DELETE[HttpResponse](s"$url/test-only/deleteDocRefId/$docRefId")
   }
 
+  def deleteReportingEntityData(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
+    http.DELETE(s"$url/test-only/reportingEntityData/$docRefId")
+
 }
