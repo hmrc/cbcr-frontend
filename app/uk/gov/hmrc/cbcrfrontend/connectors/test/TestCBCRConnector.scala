@@ -55,7 +55,6 @@ class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(impli
   }
 
   def deleteSingleMessageRefId(messageRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    Logger.info(s"calling backend to delete MessageRefId: $messageRefId")
     http.DELETE[HttpResponse](s"$url/test-only/deleteMessageRefId/$messageRefId")
   }
 

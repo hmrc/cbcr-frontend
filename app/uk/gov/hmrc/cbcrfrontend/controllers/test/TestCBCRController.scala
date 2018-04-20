@@ -81,7 +81,6 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
 
   def deleteSingleMessageRefId(messageRefId: String) = Action.async{ implicit request =>
     authorised() {
-      Logger.info(s"deleting MessageRefId: $messageRefId")
       testCBCRConnector.deleteSingleMessageRefId(messageRefId).map(_ => Ok("MessageRefId has been deleted"))
     }
   }
