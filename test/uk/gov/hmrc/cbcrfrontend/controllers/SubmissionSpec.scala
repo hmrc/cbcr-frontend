@@ -74,6 +74,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
   val cache                   = mock[CBCSessionCache]
   val fus                     = mock[FileUploadService]
   val docRefService           = mock[DocRefIdService]
+  val messageRefIdService     = mock[MessageRefIdService]
   val auth                    = mock[AuthConnector]
   val auditMock               = mock[AuditConnector]
   val mockCBCIdService        = mock[CBCIdService]
@@ -90,10 +91,10 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
 
 
   implicit val hc = HeaderCarrier()
-  val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+  val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
 
   override protected def afterEach(): Unit = {
-    reset(cache,fus,docRefService,reportingEntity,mockEmailService, auth)
+    reset(cache,fus,docRefService,reportingEntity,mockEmailService, auth, messageRefIdService)
     super.afterEach()
   }
 
@@ -150,7 +151,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "use the UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
@@ -163,7 +164,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
@@ -174,7 +175,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "use the Filing type form the xml when the ReportingRole is CBC703" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
@@ -475,10 +476,12 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
           when(reportingEntity.saveReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Unit](())
           when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(messageRefIdService.saveMessageRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
           when(auditMock.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
           verify(reportingEntity).saveReportingEntityData(any())(any())
+          verify(messageRefIdService,times(1)).saveMessageRefId(any())(any())
         }
         "call updateReportingEntityData when the submissionType is OECD[023]" in {
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
@@ -494,11 +497,32 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
           when(reportingEntity.updateReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Unit](())
           when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(messageRefIdService.saveMessageRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
           when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
           when(auditMock.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
           verify(reportingEntity).updateReportingEntityData(any())(any())
-
+          verify(messageRefIdService,times(1)).saveMessageRefId(any())(any())
+        }
+        "return 500 if saveMessageRefId fails and does NOT callsaveReportingEntityData " in {
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+          val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
+          when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
+            .thenReturn(Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
+          when(cache.read[SummaryData](EQ(SummaryData.format),any(),any())) thenReturn rightE(summaryData)
+          when(fus.uploadMetadataAndRoute(any())(any(),any())) thenReturn EitherT[Future,CBCErrors,String](Future.successful(Right("routed")))
+          when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn rightE(keyXMLInfo)
+          when(cache.save[SubmissionDate](any())(EQ(SubmissionDate.format),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+          when(fus.uploadMetadataAndRoute(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,String]("ok")
+          when(reportingEntity.saveReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Unit](())
+          when(docRefService.saveCorrDocRefID(any(),any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future,UnexpectedState]
+          when(messageRefIdService.saveMessageRefId(any())(any())) thenReturn OptionT.some[Future,UnexpectedState](UnexpectedState("fails!"))
+          when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
+          when(auditMock.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+          status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
+          verify(reportingEntity,times(0)).saveReportingEntityData(any())(any())
+          verify(messageRefIdService,times(1)).saveMessageRefId(any())(any())
         }
       }
 

@@ -17,12 +17,12 @@
 package uk.gov.hmrc.cbcrfrontend.controllers.test
 
 import javax.inject.{Inject, Singleton}
-
 import play.api.libs.json._
 import play.api.mvc.Action
-import play.api.{Configuration, Environment}
+import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
+import uk.gov.hmrc.http.{HttpException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 @Singleton
@@ -77,6 +77,20 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
   def deleteSingleDocRefId(docRefId: String) = Action.async{ implicit request =>
     authorised() {
       testCBCRConnector.deleteSingleDocRefId(docRefId).map(_ => Ok("DocRefId has been deleted"))
+    }
+  }
+
+  def deleteReportingEntityData(docRefId:String) = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.deleteReportingEntityData(docRefId).map(_ => Ok("Reporting entity data deleted")).recover{
+        case _:NotFoundException => Ok("Reporting entity data deleted")
+      }
+    }
+  }
+
+  def deleteSingleMessageRefId(messageRefId: String) = Action.async{ implicit request =>
+    authorised() {
+      testCBCRConnector.deleteSingleMessageRefId(messageRefId).map(_ => Ok("MessageRefId has been deleted"))
     }
   }
 
