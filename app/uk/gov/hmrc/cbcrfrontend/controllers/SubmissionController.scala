@@ -276,7 +276,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
             cache.save(UltimateParentEntity(kXml.reportingEntity.name))).map(_ => ())
 
         case CBC702 | CBC703 =>
-          cache.save(FilingType(CBC702))
+          cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
       }).semiflatMap(_ => enterSubmitterInfo()).leftMap(errorRedirect).merge
     }
