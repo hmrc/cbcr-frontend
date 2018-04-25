@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
+import java.time.LocalDate
+
 import cats.data.NonEmptyList
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -41,7 +43,7 @@ class ReportingEntityDataServiceSpec extends UnitSpec with ScalaFutures with Gui
   val docRefId=DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").get
 
 
-  val red = ReportingEntityData(NonEmptyList(docRefId,Nil),Some(docRefId),docRefId,TIN("90000000001",""),UltimateParentEntity("Foo Corp"),CBC701)
+  val red = ReportingEntityData(NonEmptyList(docRefId,Nil),Some(docRefId),docRefId,TIN("90000000001",""),UltimateParentEntity("Foo Corp"),CBC701,Some(LocalDate.now()))
 
   implicit val hc:HeaderCarrier = HeaderCarrier()
 

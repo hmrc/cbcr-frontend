@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.time.LocalDate
+import java.time.{LocalDate, LocalDateTime}
+
 import javax.inject.Inject
 
 import cats.data.Validated.{Invalid, Valid}
@@ -28,10 +29,11 @@ import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
 import uk.gov.hmrc.cbcrfrontend.functorInstance
 import uk.gov.hmrc.cbcrfrontend.applicativeInstance
-import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
+
 import scala.util.Failure
 
 /**
@@ -57,7 +59,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                                           subscriptionDataService: SubscriptionDataService,
                                           reportingEntityDataService: ReportingEntityDataService,
                                           configuration: Configuration,
-                                          runMode: RunMode
+                                          runMode: RunMode,
+                                          creationDateService: CreationDateService
                                          )(implicit ec:ExecutionContext, cache:CBCSessionCache) {
 
   private val testData = "OECD1[0123]"
@@ -75,7 +78,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       extractMessageSpec(in.messageSpec)                                                   |@|
       in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult,ReportingEntity] |@|
       in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult,CbcReports]                 |@|
-      in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult,AdditionalInfo]).map(XMLInfo(_,_,_,_))
+      in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult,AdditionalInfo]).map(XMLInfo(_,_,_,_,Some(LocalDate.now())))
 
   private def extractMessageSpec(in:RawMessageSpec) : ValidBusinessResult[MessageSpec] =
     (
@@ -190,7 +193,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     validateDocSpecs(x) *>
     validateMessageTypeIndic(x) *>
     validateFileName(x,fileName) *>
-    validateOrganisationCBCId(x)
+    validateOrganisationCBCId(x) *>
+    validateCreationDate(x)
   }
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
@@ -409,6 +413,33 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     validateReportingPeriodMatches(messageSpec.messageRefID, messageSpec)
   }
 
+  private def validateCreationDate(xmlInfo: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] ={
+    lazy val CBCReportsAreContainsCorrectionsOrDeletions: Boolean = xmlInfo.cbcReport.exists(r =>
+      r.docSpec.docType == OECD2 ||
+      r.docSpec.docType == OECD3
+    )
+
+    lazy val AdditionalInfoContainsCorrectionsOrDeletions: Boolean = xmlInfo.additionalInfo.exists(r =>
+      r.docSpec.docType == OECD2 ||
+      r.docSpec.docType == OECD3
+    )
+
+    lazy val ReportingEntityContainsCorrectionsOrDeletionsOrResent: Boolean = xmlInfo.reportingEntity.exists(r =>
+      r.docSpec.docType == OECD2 ||
+      r.docSpec.docType == OECD3 ||
+      r.docSpec.docType == OECD0
+    )
+
+    if (CBCReportsAreContainsCorrectionsOrDeletions || AdditionalInfoContainsCorrectionsOrDeletions || ReportingEntityContainsCorrectionsOrDeletionsOrResent) {
+      creationDateService.checkDate(xmlInfo).map(result =>
+        if(result) xmlInfo.validNel else CorrectedFileToOld.invalidNel
+      )
+    } else {
+      xmlInfo.validNel
+    }
+
+  }
+
   def validateBusinessRules(in: RawXMLInfo, fileName: String)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     extractXMLInfo(in).flatMap{
       case Valid(v)   => validateXMLInfo(v,fileName)
@@ -416,7 +447,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     }
 
   def recoverReportingEntity(in:XMLInfo)(implicit hc: HeaderCarrier) : FutureValidBusinessResult[CompleteXMLInfo] = in.reportingEntity match {
-    case Some(re) => Future.successful(CompleteXMLInfo(in.messageSpec,re,in.cbcReport,in.additionalInfo).validNel)
+    case Some(re) => Future.successful(CompleteXMLInfo(in.messageSpec,re,in.cbcReport,in.additionalInfo, in.creationDate).validNel)
     case None     =>
       val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId))
       val rr = in.cbcReport.headOption.map(_.docSpec.docType).orElse(in.additionalInfo.map(_.docSpec.docType))

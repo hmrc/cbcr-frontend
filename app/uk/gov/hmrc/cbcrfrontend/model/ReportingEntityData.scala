@@ -16,6 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
+import java.time.LocalDateTime
+import java.time.LocalDate
+
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.all._
 import cats.instances.all._
@@ -42,7 +45,8 @@ case class ReportingEntityData(cbcReportsDRI:NonEmptyList[DocRefId],
                                reportingEntityDRI:DocRefId,
                                tin:TIN,
                                ultimateParentEntity: UltimateParentEntity,
-                               reportingRole: ReportingRole)
+                               reportingRole: ReportingRole,
+                               creationDate: Option[LocalDate])
 
 case class DocRefIdPair(docRefId: DocRefId,corrDocRefId: Option[CorrDocRefId])
 object DocRefIdPair{ implicit val format = Json.format[DocRefIdPair] }
@@ -52,7 +56,8 @@ case class PartialReportingEntityData(cbcReportsDRI:List[DocRefIdPair],
                                       reportingEntityDRI:DocRefIdPair,
                                       tin:TIN,
                                       ultimateParentEntity: UltimateParentEntity,
-                                      reportingRole: ReportingRole)
+                                      reportingRole: ReportingRole,
+                                      creationDate: Option[LocalDate])
 
 object PartialReportingEntityData {
   implicit def formatNEL[A:Format] = new Format[NonEmptyList[A]] {
@@ -72,7 +77,8 @@ object PartialReportingEntityData {
       DocRefIdPair(x.reportingEntity.docSpec.docRefId,x.reportingEntity.docSpec.corrDocRefId),
       x.reportingEntity.tin,
       UltimateParentEntity(x.reportingEntity.name),
-      x.reportingEntity.reportingRole
+      x.reportingEntity.reportingRole,
+      x.creationDate
     )
 }
 
@@ -88,7 +94,8 @@ object ReportingEntityData{
         x.reportingEntity.docSpec.docRefId,
         x.reportingEntity.tin,
         UltimateParentEntity(x.reportingEntity.name),
-        x.reportingEntity.reportingRole
+        x.reportingEntity.reportingRole,
+        x.creationDate
       )
 
     }
