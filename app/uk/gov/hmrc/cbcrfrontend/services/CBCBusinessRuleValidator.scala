@@ -434,7 +434,6 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       creationDateService.checkDate(xmlInfo).map(result =>
         if(result) xmlInfo.validNel else CorrectedFileToOld.invalidNel
       )
-//      Future.successful(CorrectedFileToOld.invalidNel)
     } else {
       xmlInfo.validNel
     }
