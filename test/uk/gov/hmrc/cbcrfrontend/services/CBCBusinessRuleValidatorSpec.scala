@@ -47,6 +47,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val reportingEntity = mock[ReportingEntityDataService]
   val configuration = mock[Configuration]
   val runMode = mock[RunMode]
+  val creationDateService = mock[CreationDateService]
   implicit val cache: CBCSessionCache = mock[CBCSessionCache]
 
 
@@ -59,6 +60,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val corrDocRefId2 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC").getOrElse(fail("bad docrefid"))
   val corrDocRefId3 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADDC").getOrElse(fail("bad docrefid"))
   val corrDocRefId4 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP2C").getOrElse(fail("bad docrefid"))
+  val corrDocRefId5 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC2").getOrElse(fail("bad docrefid"))
 
   val schemaVer: String = "1.0"
 
@@ -66,6 +68,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](Some(submissionData))
   when(runMode.env) thenReturn "Dev"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
+
   def makeTheUserAnAgent =
     when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())).thenReturn(Future.successful(None))
 
@@ -73,6 +76,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   def makeTheUserAnOrganisation(cbcid:String) =
     when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())).thenReturn(Future.successful(CBCId(cbcid)))
+
+  when(creationDateService.checkDate(any())(any())) thenReturn Future.successful(true)
 
 
   implicit val hc = HeaderCarrier()
@@ -93,7 +98,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
 
-  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701)
+  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()))
 
   val xmlinfo = XMLInfo(
   MessageSpec(
@@ -106,10 +111,11 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   ),
   None,
   List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
-  Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None)))
+  Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None))),
+    Some(LocalDate.now())
   )
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode,creationDateService)
 
 
   "The CBCBusinessRuleValidator" should {
@@ -752,6 +758,39 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
           result.fold(
             _ => fail("Should not fail when utf-8 is lowercase"),
+            _ => ()
+          )
+        }
+      }
+      "when the submission contains a correction" when {
+        "the original submission was created > 3 years ago" in {
+          when(creationDateService.checkDate(any())(any())) thenReturn Future.successful(false)
+          val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(CorrectedFileToOld),
+            _ => fail("No CorrectedFileToOld generated out of date correction")
+          )
+
+        }
+        "the original submission was < 3 years ago" in {
+          when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId4))(any())) thenReturn Future.successful(DoesNotExist)
+
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(Valid)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId5))(any())) thenReturn Future.successful(Valid)
+
+          when(creationDateService.checkDate(any())(any())) thenReturn Future.successful(true)
+          val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
+
+          result.fold(
+            errors => fail(s"Error were generated: $errors"),
             _ => ()
           )
         }

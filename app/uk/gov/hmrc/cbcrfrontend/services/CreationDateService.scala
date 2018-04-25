@@ -22,16 +22,33 @@ import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HeaderCarrier
+
 import scala.concurrent.{ExecutionContext, Future}
 import java.time.{LocalDate, Period}
+
 import cats.instances.all._
+import play.api.Configuration
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
 
 @Singleton
 class CreationDateService @Inject()(connector:CBCRBackendConnector,
+                                    configuration: Configuration,
+                                    runMode: RunMode,
                                     reportingEntityDataService: ReportingEntityDataService)(implicit ec:ExecutionContext) {
+
+  val env: String = runMode.env
+  private val creationDay = configuration.getInt(s"${runMode.env}.default-creation-date.day").getOrElse(
+    throw new Exception(s"Missing configuration key: ${runMode.env}.default-creation-date.day")
+  )
+  private val creationMonth = configuration.getInt(s"${runMode.env}.default-creation-date.month").getOrElse(
+    throw new Exception(s"Missing configuration key: ${runMode.env}.default-creation-date.month")
+  )
+  private val creationYear = configuration.getInt(s"${runMode.env}.default-creation-date.year").getOrElse(
+    throw new Exception(s"Missing configuration key: ${runMode.env}.default-creation-date.year")
+  )
 
   def checkDate(in:XMLInfo)(implicit hc:HeaderCarrier) : Future[Boolean] = {
     val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId))
@@ -43,9 +60,9 @@ class CreationDateService @Inject()(connector:CBCRBackendConnector,
         }
       }.subflatMap{
           case Some(red) => {
-            val cd: LocalDate = red.creationDate.getOrElse(LocalDate.of(2017, 2, 1))
+            val cd: LocalDate = red.creationDate.getOrElse(LocalDate.of(creationYear, creationMonth, creationDay))
             val lcd: LocalDate = in.creationDate.getOrElse(LocalDate.now())
-            val result:Boolean = Period.between(cd, lcd).getYears < 4
+            val result:Boolean = Period.between(cd, lcd).getYears < 3
             Right(result)
           }
           case None      => Left(false)

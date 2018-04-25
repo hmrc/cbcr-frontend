@@ -18,8 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
@@ -27,7 +27,7 @@ import play.api.{Configuration, Environment, Logger}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsString, Json}
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
@@ -61,6 +61,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
                                      val fus:FileUploadService,
                                      val docRefIdService: DocRefIdService,
                                      val reportingEntityDataService: ReportingEntityDataService,
+                                     val messageRefIdService: MessageRefIdService,
                                      val cbidService: CBCIdService,
                                      val audit: AuditConnector,
                                      val env:Environment,
@@ -128,6 +129,10 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
           Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
           UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
         }
+        _ <- messageRefIdService.saveMessageRefId(xml.messageSpec.messageRefID).toLeft {
+          Logger.error(s"Errors saving MessageRefId")
+          UnexpectedState("Errors in saving MessageRefId aborting submission")
+        }
         _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
         _ <- storeOrUpdateReportingEntityData(xml)
         _ <- createSuccessfulSubmissionAuditEvent(retrieval.a, summaryData)
@@ -160,8 +165,11 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
                                           (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
       result <- eitherT[AuditResult.Success.type ](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
-        tags = hc.toAuditTags("CBCRFilingSuccessful", "N/A") + ("path" -> request.uri),
-        detail = Json.obj("summaryData" -> Json.toJson(summaryData), "creds" -> Json.toJson(creds))
+        detail = Json.obj(
+          "path"        -> JsString(request.uri),
+          "summaryData" -> Json.toJson(summaryData),
+          "creds"       -> Json.toJson(creds)
+        )
       )).map{
         case AuditResult.Success         => Right(AuditResult.Success)
         case AuditResult.Failure(msg,_)  => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))

@@ -84,11 +84,12 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
     EitherT(result.value.flatMap { e =>
       audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
-        tags = hc.toAuditTags("CBCR-DeEnrolReEnrol", "N/A") + (
-          "path"     -> request.uri,
-          "newCBCId" -> e.map(_.value).getOrElse("Failed to get new CBCId"),
-          "oldCBCId" -> enrolment.cbcId.value,
-          "utr"      -> enrolment.utr.utr)
+        detail = Json.obj(
+          "path"     -> JsString(request.uri),
+          "newCBCId" -> JsString(e.map(_.value).getOrElse("Failed to get new CBCId")),
+          "oldCBCId" -> JsString(enrolment.cbcId.value),
+          "utr"      -> JsString(enrolment.utr.utr)
+        )
       )).map {
         case AuditResult.Success         => e
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
@@ -192,23 +193,23 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
       val result = for {
         file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
-        _ <- right(cache.save(file_metadata._2))
-        _ <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml", (), InvalidFileType(file_metadata._2.name))
-        schemaErrors = schemaValidator.validateSchema(file_metadata._1)
-        xmlErrors    = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
-        schemaSize   = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
-        _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
-        _ <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
-        else auditFailedSubmission(creds, "schema validation errors").flatMap(_ =>
-          EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize)))
-        )
-        result       <- validateBusinessRules(file_metadata)
-        businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
-        length       = calculateFileSize(file_metadata._2)
-        _ <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, "schema validation errors")
-        else if (result.isLeft) auditFailedSubmission(creds, "business rules errors")
-        else EitherT.pure[Future, CBCErrors, Unit](())
-        _            = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
+        _             <- right(cache.save(file_metadata._2))
+        _             <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml", (), InvalidFileType(file_metadata._2.name))
+        schemaErrors   = schemaValidator.validateSchema(file_metadata._1)
+        xmlErrors      = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
+        schemaSize     = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
+        _             <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
+        _             <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
+                         else auditFailedSubmission(creds, "schema validation errors").flatMap(_ =>
+                           EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize)))
+                         )
+        result        <- validateBusinessRules(file_metadata)
+        businessSize   = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
+        length         = calculateFileSize(file_metadata._2)
+        _             <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, "schema validation errors")
+                         else if (result.isLeft) auditFailedSubmission(creds, "business rules errors")
+                         else EitherT.pure[Future, CBCErrors, Unit](())
+        _              = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
       } yield Ok(submission.fileupload.fileUploadResult(affinity, Some(file_metadata._2.name), Some(length), schemaSize, businessSize,  result.map(_.reportingEntity.reportingRole).toOption))
 
 
@@ -323,8 +324,12 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     for {
       md     <- right(cache.readOption[FileMetadata])
       result <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
-        tags = hc.toAuditTags("CBCRFilingFailed", "N/A") ++ Map("reason" -> reason, "path" -> request.uri) ++ md.map(getCCParams).getOrElse(Map.empty[String,String]),
-        detail = Json.toJson(creds)
+        detail = Json.obj(
+          "reason"        -> JsString(reason),
+          "path"          -> JsString(request.uri),
+          "file metadata" -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
+          "creds"         -> Json.toJson(creds)
+        )
       )).map {
         case AuditResult.Success => Right(AuditResult.Success)
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))

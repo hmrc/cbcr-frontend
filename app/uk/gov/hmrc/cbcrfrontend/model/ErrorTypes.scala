@@ -191,7 +191,7 @@ object BusinessRuleErrors {
     case PrivateBetaCBCIdError => """ The country-by-country ID you entered has changed. You will need to use the new ID which we have emailed to you. If you are operating as an agent, contact your client for the new country-by-country ID."""
     case CorrDocRefIdDuplicate => """Error Code 80011 CorrDocRefId (Duplicate):The same DocRefID cannot be corrected or deleted twice in the same message."""
     case ResentDataIsUnknownError => """OECD0 must be used for resent data, but a previous submission with this DocRefID has not been received"""
-    case CorrectedFileToOld    => "A correction cannot be submitted for a an original report submitted over 3 years ago"
+    case CorrectedFileToOld    => "Corrections only allowed upto 3 years after the initial submission date for the Reporting Period"
     case i:InvalidXMLError     => i.toString
   }
 }
