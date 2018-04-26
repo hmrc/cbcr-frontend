@@ -67,6 +67,13 @@ class CreationDateService @Inject()(connector:CBCRBackendConnector,
           }
           case None      => Left(false)
         }.merge
-    }.getOrElse{Future.successful(false)}
+    }.getOrElse{
+      /************************************************
+      *                                               *
+      *    If we reach this then the submitted file   *
+      *    is an addition and NOT a correction        *
+      *                                               *
+      ************************************************/
+      Future.successful(true)}
   }
 }
