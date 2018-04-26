@@ -49,6 +49,17 @@ class XmlInfoExtract {
     RawDocSpec(docType, docRefId, corrDocRefId)
   }
 
+  // sorry but speed
+  private def countBodys(input:File): Int ={
+    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
+    var count = 0
+    while(xmlStreamReader.hasNext) {
+      val event = xmlStreamReader.next()
+      if(event == XMLStreamConstants.START_ELEMENT && xmlStreamReader.getLocalName().equalsIgnoreCase("CbcBody")) count = count + 1
+    }
+    count
+  }
+
   private def extractEncoding(input: File): Option[RawXmlEncodingVal] = {
     val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
 
@@ -66,7 +77,7 @@ class XmlInfoExtract {
 
     val value = nonFatalCatch either {
       RawCbcVal(
-        if(xmlStreamReader.hasNext()) {
+        if(xmlStreamReader.hasNext) {
           xmlStreamReader.nextTag()
           xmlStreamReader.getAttributeValue("","version")
         } else ""
@@ -112,26 +123,20 @@ class XmlInfoExtract {
 
   }
 
-  private val bodyCount: XmlElementExtractor[RawBody.type] = XmlElementExtractor{
-    case List("CBC_OECD", "CbcBody") => re => RawBody
-  }
-
   def extract(file:File): RawXMLInfo = {
 
     val collectedData: (List[RawXmlFields],Int) = {
 
       val xmlEventReader = nonFatalCatch opt xmlInputFactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
-      val xmlEventReader2 = nonFatalCatch opt xmlInputFactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
 
       try {
         val fields    = xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten
-        val numBodies = xmlEventReader2.map(_.toIterator.scanCollect(bodyCount.Scan).toList).toList.flatten.size
+        val numBodies = countBodys(file)
         (fields,numBodies)
       }
 
       finally {
         xmlEventReader.foreach(_.close())
-        xmlEventReader2.foreach(_.close())
       }
     }
 
