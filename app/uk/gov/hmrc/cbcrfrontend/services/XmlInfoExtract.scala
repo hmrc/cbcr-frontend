@@ -17,8 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.{File, InputStream}
-import javax.xml.stream.{XMLInputFactory, XMLStreamConstants}
 
+import javax.xml.stream.{XMLInputFactory, XMLStreamConstants}
 import cats.instances.all._
 import cats.syntax.all._
 import com.scalawilliam.xs4s.Implicits._
@@ -30,6 +30,8 @@ import scala.util.control.Exception.nonFatalCatch
 import scala.xml.{Node, NodeSeq}
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
 import play.api.Logger
+
+import scala.util.control.NonFatal
 
 class XmlInfoExtract {
 
@@ -53,9 +55,13 @@ class XmlInfoExtract {
   private def countBodys(input:File): Int ={
     val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
     var count = 0
-    while(xmlStreamReader.hasNext) {
-      val event = xmlStreamReader.next()
-      if(event == XMLStreamConstants.START_ELEMENT && xmlStreamReader.getLocalName().equalsIgnoreCase("CbcBody")) count = count + 1
+    try {
+      while (xmlStreamReader.hasNext) {
+        val event = xmlStreamReader.next()
+        if (event == XMLStreamConstants.START_ELEMENT && xmlStreamReader.getLocalName().equalsIgnoreCase("CbcBody")) count = count + 1
+      }
+    } catch {
+      case NonFatal(e)  => Logger.warn(s"Error counting CBCBody elements: ${e.getMessage}")
     }
     count
   }
