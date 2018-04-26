@@ -122,6 +122,18 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
 
     "return the correct error" when {
+
+      "there are multiple CbcBody elements" in {
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        val multipleCbcBodies = new File("test/resources/cbcr-valid-multiple-bodies.xml")
+        val result = Await.result(validator.validateBusinessRules(multipleCbcBodies, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(MultipleCbcBodies),
+          _ => fail("No MultipleCbcBodies error generated")
+        )
+
+      }
       "messageRefId is empty" in {
         val missingMessageRefID = new File("test/resources/cbcr-invalid-empty-messageRefID.xml")
         val result = Await.result(validator.validateBusinessRules(missingMessageRefID, filename), 5.seconds)

@@ -17,8 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.{File, InputStream}
-import javax.xml.stream.{XMLInputFactory, XMLStreamConstants}
 
+import javax.xml.stream.{XMLInputFactory, XMLStreamConstants}
 import cats.instances.all._
 import cats.syntax.all._
 import com.scalawilliam.xs4s.Implicits._
@@ -30,6 +30,8 @@ import scala.util.control.Exception.nonFatalCatch
 import scala.xml.{Node, NodeSeq}
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
 import play.api.Logger
+
+import scala.util.control.NonFatal
 
 class XmlInfoExtract {
 
@@ -49,6 +51,21 @@ class XmlInfoExtract {
     RawDocSpec(docType, docRefId, corrDocRefId)
   }
 
+  // sorry but speed
+  private def countBodys(input:File): Int ={
+    val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
+    var count = 0
+    try {
+      while (xmlStreamReader.hasNext) {
+        val event = xmlStreamReader.next()
+        if (event == XMLStreamConstants.START_ELEMENT && xmlStreamReader.getLocalName().equalsIgnoreCase("CbcBody")) count = count + 1
+      }
+    } catch {
+      case NonFatal(e)  => Logger.warn(s"Error counting CBCBody elements: ${e.getMessage}")
+    }
+    count
+  }
+
   private def extractEncoding(input: File): Option[RawXmlEncodingVal] = {
     val xmlStreamReader: XMLStreamReader2  = xmlInputFactory.createXMLStreamReader(input)
 
@@ -66,7 +83,7 @@ class XmlInfoExtract {
 
     val value = nonFatalCatch either {
       RawCbcVal(
-        if(xmlStreamReader.hasNext()) {
+        if(xmlStreamReader.hasNext) {
           xmlStreamReader.nextTag()
           xmlStreamReader.getAttributeValue("","version")
         } else ""
@@ -84,7 +101,6 @@ class XmlInfoExtract {
     )
 
   }
-
 
   private val splitter: XmlElementExtractor[RawXmlFields] = XmlElementExtractor{
 
@@ -115,23 +131,29 @@ class XmlInfoExtract {
 
   def extract(file:File): RawXMLInfo = {
 
-    val collectedData: List[RawXmlFields] = {
+    val collectedData: (List[RawXmlFields],Int) = {
 
       val xmlEventReader = nonFatalCatch opt xmlInputFactory.createXMLEventReader(Source.fromFile(file).bufferedReader())
 
-      try xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten
-      finally xmlEventReader.foreach(_.close())
-    }
+      try {
+        val fields    = xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten
+        val numBodies = countBodys(file)
+        (fields,numBodies)
+      }
 
+      finally {
+        xmlEventReader.foreach(_.close())
+      }
+    }
 
     val xe = extractEncoding(file)
     val cv = extractCbcVal(file)
-    val ms = collectedData.collectFirst{ case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","","",None))
-    val re = collectedData.collectFirst{ case re:RawReportingEntity => re}
-    val ai = collectedData.collectFirst{ case ai:RawAdditionalInfo => ai}
-    val cr = collectedData.collect{ case cr:RawCbcReports=> cr }
+    val ms = collectedData._1.collectFirst{ case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","","",None))
+    val re = collectedData._1.collectFirst{ case re:RawReportingEntity => re}
+    val ai = collectedData._1.collect{ case ai:RawAdditionalInfo => ai}
+    val cr = collectedData._1.collect{ case cr:RawCbcReports=> cr }
 
-    RawXMLInfo(ms,re,cr,ai,cv,xe)
+    RawXMLInfo(ms,re,cr,ai.headOption,cv,xe, collectedData._2)
 
   }
 
