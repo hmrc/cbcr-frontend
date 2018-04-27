@@ -94,4 +94,20 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
+  def updateReportingEntityCreationDate(docRefId:String, createDate: String) = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.updateReportingEntityCreationDate(docRefId, createDate).map(_ => Ok("Reporting entity createDate updated")).recover{
+        case _:NotFoundException => Ok("Reporting entity createDate updated")
+      }
+    }
+  }
+
+  def deleteReportingEntityCreationDate(docRefId:String) = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.deleteReportingEntityCreationDate(docRefId).map(_ => Ok("Reporting entity createDate deleted")).recover{
+        case _:NotFoundException => Ok("Reporting entity createDate deleted")
+      }
+    }
+  }
+
 }
