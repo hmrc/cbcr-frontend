@@ -25,6 +25,8 @@ import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
 import uk.gov.hmrc.http.{HttpException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
+import scala.concurrent.Future
+
 @Singleton
 class TestCBCRController @Inject()(val authConnector:AuthConnector,
                                    val testCBCRConnector: TestCBCRConnector,
@@ -96,22 +98,28 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
 
   def updateReportingEntityCreationDate(docRefId:String, createDate: String) = Action.async{implicit request =>
     authorised() {
-      testCBCRConnector.updateReportingEntityCreationDate(docRefId, createDate).map{
-        case NotModified => Ok("Reporting entity createDate NOT updated")
-        case _ => Ok("Reporting entity createDate updated")
+      testCBCRConnector.updateReportingEntityCreationDate(docRefId, createDate).map{s =>
+        s.status match {
+          case OK           => Ok("Reporting entity createDate updated")
+          case NOT_MODIFIED => Ok("Reporting entity createDate NOT updated")
+          case _            => Ok("Something went wrong")
+        }
       }.recover{
-        case _:NotFoundException => Ok("Reporting entity createDate NOT updated")
+        case _:NotFoundException => Ok("Reporting entity not found")
       }
     }
   }
 
   def deleteReportingEntityCreationDate(docRefId:String) = Action.async{implicit request =>
     authorised() {
-      testCBCRConnector.deleteReportingEntityCreationDate(docRefId).map{
-        case NotModified => Ok("Reporting entity createDate NOT deleted")
-        case _ => Ok("Reporting entity createDate deleted")
+      testCBCRConnector.deleteReportingEntityCreationDate(docRefId).map{s =>
+        s.status match {
+          case OK           => Ok("Reporting entity createDate deleted")
+          case NOT_MODIFIED => Ok("Reporting entity createDate NOT deleted")
+          case _            => Ok("Something went wrong")
+        }
       }.recover{
-        case _:NotFoundException => Ok("Reporting entity createDate NOT deleted")
+        case _:NotFoundException => Ok("Reporting entity not found")
       }
     }
   }
