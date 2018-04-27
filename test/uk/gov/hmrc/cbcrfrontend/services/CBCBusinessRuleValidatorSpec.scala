@@ -77,7 +77,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   def makeTheUserAnOrganisation(cbcid:String) =
     when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())).thenReturn(Future.successful(CBCId(cbcid)))
 
-  when(creationDateService.checkDate(any())(any())) thenReturn Future.successful(true)
+  when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(true)
 
 
   implicit val hc = HeaderCarrier()
@@ -112,7 +112,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   None,
   List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
   Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None))),
-    Some(LocalDate.now())
+    Some(LocalDate.now()),
+    List.empty[String]
   )
 
   val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode,creationDateService)
@@ -123,6 +124,29 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
     "return the correct error" when {
 
+      "the reportingEntity name is an empty string" in {
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        val multipleCbcBodies = new File("test/resources/cbcr-valid-reporting-entity-name.xml")
+        val result = Await.result(validator.validateBusinessRules(multipleCbcBodies, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(ReportingEntityOrConstituentEntityEmpty),
+          _ => fail("No ReportingEntityName error generated")
+        )
+
+      }
+
+      "the constEntity name is an empty string" in {
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        val multipleCbcBodies = new File("test/resources/cbcr-valid-const-entity-name.xml")
+        val result = Await.result(validator.validateBusinessRules(multipleCbcBodies, filename), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(ReportingEntityOrConstituentEntityEmpty),
+          _ => fail("No ConstentityName error generated")
+        )
+
+      }
       "there are multiple CbcBody elements" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
         val multipleCbcBodies = new File("test/resources/cbcr-valid-multiple-bodies.xml")
@@ -192,7 +216,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         val validFile = new File("test/resources/cbcr-valid.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
         result.fold(
-          errors => fail(s"The CBCId should match that in the SendingEntityIn field: ${errors.toList}"),
+          errors => fail(s"Errors were generated ${errors.toList}"),
           _ => ()
         )
 
@@ -776,7 +800,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
       "when the submission contains a correction" when {
         "the original submission was created > 3 years ago" in {
-          when(creationDateService.checkDate(any())(any())) thenReturn Future.successful(false)
+          when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(false)
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
           val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 
@@ -797,7 +821,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
           when(docRefIdService.queryDocRefId(EQ(corrDocRefId5))(any())) thenReturn Future.successful(Valid)
 
-          when(creationDateService.checkDate(any())(any())) thenReturn Future.successful(true)
+          when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(true)
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
           val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 

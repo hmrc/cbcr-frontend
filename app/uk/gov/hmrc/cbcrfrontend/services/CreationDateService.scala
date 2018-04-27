@@ -40,17 +40,18 @@ class CreationDateService @Inject()(connector:CBCRBackendConnector,
                                     reportingEntityDataService: ReportingEntityDataService)(implicit ec:ExecutionContext) {
 
   val env: String = runMode.env
-  private val creationDay = configuration.getInt(s"${runMode.env}.default-creation-date.day").getOrElse(
-    throw new Exception(s"Missing configuration key: ${runMode.env}.default-creation-date.day")
+
+  private val creationDay = configuration.getInt(s"$env.default-creation-date.day").getOrElse(
+    throw new Exception(s"Missing configuration key: $env.default-creation-date.day")
   )
-  private val creationMonth = configuration.getInt(s"${runMode.env}.default-creation-date.month").getOrElse(
-    throw new Exception(s"Missing configuration key: ${runMode.env}.default-creation-date.month")
+  private val creationMonth = configuration.getInt(s"$env.default-creation-date.month").getOrElse(
+    throw new Exception(s"Missing configuration key: $env.default-creation-date.month")
   )
-  private val creationYear = configuration.getInt(s"${runMode.env}.default-creation-date.year").getOrElse(
-    throw new Exception(s"Missing configuration key: ${runMode.env}.default-creation-date.year")
+  private val creationYear = configuration.getInt(s"$env.default-creation-date.year").getOrElse(
+    throw new Exception(s"Missing configuration key: $env.default-creation-date.year")
   )
 
-  def checkDate(in:XMLInfo)(implicit hc:HeaderCarrier) : Future[Boolean] = {
+  def isDateValid(in:XMLInfo)(implicit hc:HeaderCarrier) : Future[Boolean] = {
     val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId)).orElse(in.reportingEntity.flatMap(_.docSpec.corrDocRefId))
     id.map { drid =>
       reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap {

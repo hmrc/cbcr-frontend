@@ -57,7 +57,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name/>
+                    <ns1:Name>asdlfkj</ns1:Name>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -93,7 +93,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name/>
+                    <ns1:Name>asdf</ns1:Name>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -129,7 +129,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name/>
+                    <ns1:Name>asdlfkj</ns1:Name>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -165,7 +165,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name/>
+                    <ns1:Name>asdf</ns1:Name>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>

@@ -125,6 +125,8 @@ class XmlInfoExtract {
 
     case List("CBC_OECD", "CbcBody", "CbcReports", "DocSpec") => ds => RawCbcReports(getDocSpec(ds))
 
+    case List("CBC_OECD", "CbcBody", "CbcReports", "ConstEntities", "ConstEntity", "Name") => ds => RawConstEntityName(ds.text)
+
     case List("CBC_OECD", "CbcBody", "AdditionalInfo", "DocSpec") => ds => RawAdditionalInfo(getDocSpec(ds))
 
   }
@@ -152,8 +154,9 @@ class XmlInfoExtract {
     val re = collectedData._1.collectFirst{ case re:RawReportingEntity => re}
     val ai = collectedData._1.collect{ case ai:RawAdditionalInfo => ai}
     val cr = collectedData._1.collect{ case cr:RawCbcReports=> cr }
+    val cen = collectedData._1.collect{ case cen:RawConstEntityName => cen.name}
 
-    RawXMLInfo(ms,re,cr,ai.headOption,cv,xe, collectedData._2)
+    RawXMLInfo(ms,re,cr,ai.headOption,cv,xe, collectedData._2, cen)
 
   }
 
