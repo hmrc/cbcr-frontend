@@ -124,4 +124,18 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
+  def confirmReportingEntityCreationDate(docRefId:String, createDate: String) = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.confirmReportingEntityCreationDate(docRefId, createDate).map{s =>
+        s.status match {
+          case OK           => Ok("Reporting entity createDate correct")
+          case NOT_FOUND    => Ok("Reporting entity createDate NOT correct")
+          case _            => Ok("Something went wrong")
+        }
+      }.recover{
+        case _:NotFoundException => Ok("Reporting entity not found")
+      }
+    }
+  }
+
 }
