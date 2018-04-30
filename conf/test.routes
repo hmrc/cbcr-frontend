@@ -5,3 +5,4 @@ GET     /deleteMessageRefId/:messageRefId                         @uk.gov.hmrc.c
 GET     /deleteReportingEntityData/:docRefId                      @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteReportingEntityData(docRefId: String)
 GET     /updateReportingEntityCreationDate/:docRefId/:createDate  @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.updateReportingEntityCreationDate(docRefId: String, createDate: String)
 GET     /deleteReportingEntityCreationDate/:docRefId              @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteReportingEntityCreationDate(docRefId: String)
+GET     /confirmReportingEntityCreationDate/:docRefId/:createDate @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.confirmReportingEntityCreationDate(docRefId: String, createDate: String)
