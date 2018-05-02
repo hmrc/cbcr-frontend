@@ -10,14 +10,5 @@
 # Failing to follow this rule may result in test routes deployed in production.
 
 # Add all the application routes to the prod.routes file
-
-GET     /insertSubscription/:cbcId/:utr                           @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.insertSubscriptionData(cbcId: String, utr: String)
-GET     /deleteSubscription/:utr                                  @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteSubscription(utr: String)
-GET     /deleteDocRefId/:docRefId                                 @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteSingleDocRefId(docRefId: String)
-GET     /deleteMessageRefId/:messageRefId                         @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteSingleMessageRefId(messageRefId: String)
-GET     /deleteReportingEntityData/:docRefId                      @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteReportingEntityData(docRefId: String)
-GET     /updateReportingEntityCreationDate/:docRefId/:createDate  @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.updateReportingEntityCreationDate(docRefId: String, createDate: String)
-GET     /deleteReportingEntityCreationDate/:docRefId              @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteReportingEntityCreationDate(docRefId: String)
-GET     /confirmReportingEntityCreationDate/:docRefId/:createDate @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.confirmReportingEntityCreationDate(docRefId: String, createDate: String)
-
 ->         /                                                          prod.Routes
+->         /country-by-country-reporting/test-only      test.Routes
