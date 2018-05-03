@@ -121,8 +121,7 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
 
   val signOut = Action.async { implicit request =>
     authorised() {
-      val continue = s"?continue=${feConfig.cbcrFrontendHost}${routes.SharedController.guidance().url}"
-      Future.successful(Redirect(s"${feConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
+      Future.successful(Redirect(s"${feConfig.governmentGatewaySignOutUrl}/gg/sign-out?continue=${feConfig.cbcrGuidanceUrl}"))
     }
   }
 
@@ -133,17 +132,6 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     }
   }
 
-  def volunteer = Action.async{ implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.volunteer()))
-  }
-
-  def register = Action.async{ implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.register()))
-  }
-
-  def report = Action.async{ implicit request =>
-   Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.report()))
-  }
 
   def downloadGuide = Action.async{ implicit request =>
     val guideVer: String = config.getString(s"${env.mode}.oecd-guide-version").getOrElse(throw new Exception(s"Missing configuration ${env.mode}.oecd-guide-version"))
@@ -151,18 +139,11 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     Future.successful(Ok.sendPath(file,inline = false,fileName = _ => s"HMRC_CbC_XML_User_Guide_V$guideVer.pdf"))
   }
 
-  def guidance =  Action.async { implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.guidanceOverviewQa()))
-  }
-
-  def businessRules = Action.async{ implicit request =>
-    Future.successful(Ok(uk.gov.hmrc.cbcrfrontend.views.html.guidance.businessRules()))
-  }
-
   val pred = AffinityGroup.Organisation and (User or Admin)
 
   val verifyKnownFactsOrganisation = Action.async{ implicit request =>
-    authorised(pred).retrieve(cbcEnrolment){ enrolment => enterKnownFacts(enrolment)} }
+    authorised(pred).retrieve(cbcEnrolment){ enrolment => enterKnownFacts(enrolment)}
+  }
 
   val verifyKnownFactsAgent = Action.async{ implicit request =>
     authorised(AffinityGroup.Agent)(enterKnownFacts(None))
