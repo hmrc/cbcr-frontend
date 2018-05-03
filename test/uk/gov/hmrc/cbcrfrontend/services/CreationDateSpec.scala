@@ -77,7 +77,8 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
     None,
     List(CbcReports(DocSpec(OECD2,DocRefId(docRefId + "ENT").get,Some(CorrDocRefId(actualDocRefId))))),
     Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None))),
-    Some(LocalDate.now())
+    Some(LocalDate.now()),
+    List.empty[String]
   )
 
   override protected def afterEach(): Unit = {
@@ -90,19 +91,19 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
     "return true" when {
       "repotingEntity creationDate is Null and default date of 2017/12/23 is less than 3 years ago" in {
         when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(redNoCreationDate))
-       val result = Await.result(cds.checkDate(xmlinfo), 5.seconds)
+       val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
         result shouldBe true
       }
       "repotingEntity creationDate is less than 3 years ago" in {
         when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(red))
-        val result = Await.result(cds.checkDate(xmlinfo), 5.seconds)
+        val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
         result shouldBe true
       }
     }
     "return false" when {
       "reportingEntity creationDate is older than 3 years ago" in {
         when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(redOldCreationDate))
-        val result = Await.result(cds.checkDate(xmlinfo), 5.seconds)
+        val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
         result shouldBe false
       }
       "repotingEntity creationDate is Null and default date is more than 3 years ago" in {when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(Some(2017))
@@ -111,7 +112,7 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
         when(configuration.getInt(s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(Some(23))
         when(configuration.getInt(s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(Some(12))
         val cds2 = new CreationDateService(connector,configuration,runMode,reportingEntity)
-        val result = Await.result(cds2.checkDate(xmlinfo), 5.seconds)
+        val result = Await.result(cds2.isDateValid(xmlinfo), 5.seconds)
         result shouldBe false
       }
     }

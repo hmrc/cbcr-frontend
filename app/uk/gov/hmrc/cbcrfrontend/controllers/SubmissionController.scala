@@ -113,10 +113,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
           },
           (data: ReportingEntityData) => reportingEntityDataService.saveReportingEntityData(data)
         )
-
-      // UPDATE| DELETE
-      case OECD0 => reportingEntityDataService.updateReportingEntityAdditionalData(PartialReportingEntityData.extract(xml))
-      case OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
+      case OECD0 | OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
     }
 
   def confirm = Action.async{ implicit request =>

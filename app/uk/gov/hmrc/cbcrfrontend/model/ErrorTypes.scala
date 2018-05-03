@@ -80,6 +80,7 @@ case object InvalidCorrDocRefId extends BusinessRuleErrors
 case object ResentDataIsUnknownError extends BusinessRuleErrors
 case object MultipleCbcBodies extends BusinessRuleErrors
 case object CorrectedFileToOld extends BusinessRuleErrors
+case object ReportingEntityOrConstituentEntityEmpty extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
@@ -131,8 +132,8 @@ object BusinessRuleErrors {
       case PrivateBetaCBCIdError     => JsString(PrivateBetaCBCIdError.toString)
       case ResentDataIsUnknownError => JsString(ResentDataIsUnknownError.toString)
       case MultipleCbcBodies         => JsString(MultipleCbcBodies.toString)
-      case ResentDataIsUnknownError  => JsString(ResentDataIsUnknownError.toString)
       case CorrectedFileToOld        => JsString(CorrectedFileToOld.toString)
+      case ReportingEntityOrConstituentEntityEmpty => JsString(ReportingEntityOrConstituentEntityEmpty.toString)
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
@@ -164,6 +165,7 @@ object BusinessRuleErrors {
           case Some("privatebetacbciderror")      => JsSuccess(PrivateBetaCBCIdError)
           case Some("resentdataisunknownerror")   => JsSuccess(ResentDataIsUnknownError)
           case Some("correctedfiletoold")         => JsSuccess(CorrectedFileToOld)
+          case Some("reportingentityorconstituententityempty") => JsSuccess(ReportingEntityOrConstituentEntityEmpty)
           case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^invalidxmlerror: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -197,6 +199,7 @@ object BusinessRuleErrors {
     case ResentDataIsUnknownError => """OECD0 must be used for resent data, but a previous submission with this DocRefID has not been received"""
     case MultipleCbcBodies        => """File contains multiple occurrences of CbcBody: Only 1 occurrence of CbcBody is allowed per XML message"""
     case CorrectedFileToOld    => "Corrections only allowed upto 3 years after the initial submission date for the Reporting Period"
+    case ReportingEntityOrConstituentEntityEmpty => """Organisation Name: The Name of the Reporting Entity or Constituent Entity cannot be an empty string"""
     case i:InvalidXMLError     => i.toString
   }
 }

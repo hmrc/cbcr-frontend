@@ -291,13 +291,9 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
 
   def unsupportedAffinityGroup = Action.async { implicit request => {
     authorised().retrieve(Retrievals.affinityGroup) {
-      case None => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
-      case Some(Individual) => {
-        Unauthorized(views.html.not_authorised_individual())
-      }
-      case Some(Agent) => {
-        Unauthorized(views.html.subscription.notAuthorised())
-      }
+      case None             => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
+      case Some(Individual) => Unauthorized(views.html.not_authorised_individual())
+      case _                => Unauthorized(views.html.subscription.notAuthorised())
     }
   }
   }
