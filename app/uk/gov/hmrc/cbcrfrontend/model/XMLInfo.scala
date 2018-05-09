@@ -29,10 +29,12 @@ import play.api.libs.json._
 /** These models represent the raw data extracted from the XML file*/
 sealed trait RawXmlFields extends Product with Serializable
 
+case object RawBody extends RawXmlFields
 case class RawAdditionalInfo(docSpec: RawDocSpec) extends RawXmlFields
 case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
 case class RawDocSpec(docType:String, docRefId:String, corrDocRefId:Option[String]) extends RawXmlFields
 case class RawCbcVal(cbcVer:String) extends RawXmlFields
+case class RawConstEntityName(name:String) extends RawXmlFields
 case class RawXmlEncodingVal(xmlEncodingVal: String) extends RawXmlFields
 case class RawMessageSpec(messageRefID: String,
                           receivingCountry:String,
@@ -50,7 +52,9 @@ case class RawXMLInfo(messageSpec: RawMessageSpec,
                       cbcReport: List[RawCbcReports],
                       additionalInfo: Option[RawAdditionalInfo],
                       cbcVal: RawCbcVal,
-                      xmlEncoding: Option[RawXmlEncodingVal]) extends RawXmlFields
+                      xmlEncoding: Option[RawXmlEncodingVal],
+                      numBodies: Int,
+                      constEntityNames:List[String]) extends RawXmlFields
 
 /** These models represent the type-validated data, derived from the raw data */
 class DocRefId private[model](val msgRefID:MessageRefID,
@@ -136,11 +140,11 @@ object ReportingEntity{ implicit val format = Json.format[ReportingEntity] }
 case class CbcOecdInfo(cbcVer: String)
 object CbcOecdInfo{ implicit val format = Json.format[CbcOecdInfo] }
 
-case class XMLInfo(messageSpec: MessageSpec, reportingEntity: Option[ReportingEntity], cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo])
+case class XMLInfo(messageSpec: MessageSpec, reportingEntity: Option[ReportingEntity], cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo], creationDate:Option[LocalDate], constEntityNames:List[String])
 object XMLInfo { implicit val format = Json.format[XMLInfo] }
 
-case class CompleteXMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo])
+case class CompleteXMLInfo(messageSpec: MessageSpec, reportingEntity: ReportingEntity, cbcReport:List[CbcReports], additionalInfo:Option[AdditionalInfo], creationDate:Option[LocalDate], constEntityNames:List[String])
 object CompleteXMLInfo {
-  def apply(x:XMLInfo,reportingEntity: ReportingEntity): CompleteXMLInfo = CompleteXMLInfo(x.messageSpec,reportingEntity,x.cbcReport,x.additionalInfo)
+  def apply(x:XMLInfo,reportingEntity: ReportingEntity): CompleteXMLInfo = CompleteXMLInfo(x.messageSpec,reportingEntity,x.cbcReport,x.additionalInfo,x.creationDate, x.constEntityNames)
   implicit val format = Json.format[CompleteXMLInfo]
 }

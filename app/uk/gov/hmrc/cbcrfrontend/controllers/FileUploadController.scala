@@ -17,13 +17,14 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io._
-import java.time.LocalDateTime
+import java.time.{Duration, LocalDateTime}
 import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
+import org.joda.time.Period
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.Files
@@ -48,12 +49,12 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future, duration}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
 import play.api.libs.json.Json
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration => SDuration}
+import scala.util.{Failure, Success}
 
 
 @Singleton
@@ -109,7 +110,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       case None               ~ _                    => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
       case Some(Organisation) ~ None
         if Await.result(cache.readOption[CBCId].map(_.isEmpty
-        ), Duration(5, "seconds"))                   => Redirect(routes.SubmissionController.notRegistered())
+        ), SDuration(5, "seconds"))                   => Redirect(routes.SubmissionController.notRegistered())
       case Some(Organisation) ~ Some(enrolment)
         if CBCId.isPrivateBetaCBCId(enrolment.cbcId) =>
         auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).map(
@@ -171,12 +172,24 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   } yield metadata
 
   def validateBusinessRules(file_metadata:(File,FileMetadata))(implicit hc:HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors],CompleteXMLInfo]] = {
+    val startValidation = LocalDateTime.now()
+
     val rawXmlInfo  = xmlExtractor.extract(file_metadata._1)
 
     val result = for {
       xmlInfo         <- EitherT(businessRuleValidator.validateBusinessRules(rawXmlInfo, file_metadata._2.name).map(_.toEither))
       completeXI      <- EitherT(businessRuleValidator.recoverReportingEntity(xmlInfo).map(_.toEither))
     } yield completeXI
+
+    result.value.onComplete{
+      case Failure(_) =>
+        val endValidation = LocalDateTime.now()
+        Logger.info(s"File validation failed for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation,endValidation).toMillis} milliseconds ")
+      case Success(_) =>
+        val endValidation = LocalDateTime.now()
+        Logger.info(s"File validation succeeded for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation,endValidation).toMillis} milliseconds ")
+
+    }
 
     EitherT.right[Future,CBCErrors,Either[NonEmptyList[BusinessRuleErrors],CompleteXMLInfo]](result.fold(
       errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => Left(errors)),

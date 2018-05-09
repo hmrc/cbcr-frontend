@@ -78,6 +78,9 @@ case object CorrDocRefIdInvalidParentGroupElement extends BusinessRuleErrors
 case object InvalidDocRefId extends BusinessRuleErrors
 case object InvalidCorrDocRefId extends BusinessRuleErrors
 case object ResentDataIsUnknownError extends BusinessRuleErrors
+case object MultipleCbcBodies extends BusinessRuleErrors
+case object CorrectedFileToOld extends BusinessRuleErrors
+case object ReportingEntityOrConstituentEntityEmpty extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
@@ -128,44 +131,54 @@ object BusinessRuleErrors {
       case OriginalSubmissionNotFound => JsString(OriginalSubmissionNotFound.toString)
       case PrivateBetaCBCIdError     => JsString(PrivateBetaCBCIdError.toString)
       case ResentDataIsUnknownError => JsString(ResentDataIsUnknownError.toString)
+      case MultipleCbcBodies         => JsString(MultipleCbcBodies.toString)
+      case CorrectedFileToOld        => JsString(CorrectedFileToOld.toString)
+      case ReportingEntityOrConstituentEntityEmpty => JsString(ReportingEntityOrConstituentEntityEmpty.toString)
+    }
+
+    implicit class CaseInsensitiveRegex(sc: StringContext) {
+      def ci = ( "(?i)" + sc.parts.mkString ).r
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
       Json.fromJson[MessageRefIDError](json)
         .orElse[BusinessRuleErrors](Json.fromJson(json)(FileNameError.format))
         .orElse[BusinessRuleErrors]{
-        json.asOpt[String].map(_.toLowerCase.trim) match {
-          case Some("messagetypeindicerror") => JsSuccess(MessageTypeIndicError)
-          case Some("testdataerror")         => JsSuccess(TestDataError)
-          case Some("sendingentityerror")    => JsSuccess(SendingEntityError)
-          case Some("sendingentityorganisationmatcherror") =>JsSuccess(SendingEntityOrganisationMatchError)
-          case Some("receivingcountryerror") => JsSuccess(ReceivingCountryError)
-          case Some("invaliddocrefid")       => JsSuccess(InvalidDocRefId)
-          case Some("invalidcorrdocrefid")       => JsSuccess(InvalidCorrDocRefId)
-          case Some("corrdocrefidinvalidrecord") => JsSuccess(CorrDocRefIdInvalidRecord)
-          case Some("corrdocrefidunknownrecord") => JsSuccess(CorrDocRefIdUnknownRecord)
-          case Some("corrdocrefidduplicate")     => JsSuccess(CorrDocRefIdDuplicate)
-          case Some("docrefidduplicate")         => JsSuccess(DocRefIdDuplicate)
-          case Some("docrefidinvalidparentgroupelement") => JsSuccess(DocRefIdInvalidParentGroupElement)
-          case Some("corrdocrefidinvalidparentgroupelement") => JsSuccess(CorrDocRefIdInvalidParentGroupElement)
-          case Some("corrdocrefidmissing")       => JsSuccess(CorrDocRefIdMissing)
-          case Some("corrdocrefidnotneeded")     => JsSuccess(CorrDocRefIdNotNeeded)
-          case Some("incompatibleoecdtypes")     => JsSuccess(IncompatibleOECDTypes)
-          case Some("messagetypeindicdoctypeincompatible") => JsSuccess(MessageTypeIndicDocTypeIncompatible)
-          case Some("cbcoecdversionerror")    => JsSuccess(CbcOecdVersionError)
-          case Some("xmlencodingerror")       => JsSuccess(XmlEncodingError)
-          case Some("originalsubmissionnotfound") => JsSuccess(OriginalSubmissionNotFound)
-          case Some("privatebetacbciderror")      => JsSuccess(PrivateBetaCBCIdError)
-          case Some("resentdataisunknownerror")   => JsSuccess(ResentDataIsUnknownError)
-          case Some(otherError) if otherError.startsWith("invalidxmlerror: ") =>
-            JsSuccess(InvalidXMLError(otherError.replaceAll("^invalidxmlerror: ", "")))
+        json.asOpt[String] match {
+          case Some(ci"multiplecbcbodies")     => JsSuccess(MultipleCbcBodies)
+          case Some(ci"messagetypeindicerror") => JsSuccess(MessageTypeIndicError)
+          case Some(ci"testdataerror")         => JsSuccess(TestDataError)
+          case Some(ci"sendingentityerror")    => JsSuccess(SendingEntityError)
+          case Some(ci"sendingentityorganisationmatcherror") =>JsSuccess(SendingEntityOrganisationMatchError)
+          case Some(ci"receivingcountryerror") => JsSuccess(ReceivingCountryError)
+          case Some(ci"invaliddocrefid")       => JsSuccess(InvalidDocRefId)
+          case Some(ci"invalidcorrdocrefid")       => JsSuccess(InvalidCorrDocRefId)
+          case Some(ci"corrdocrefidinvalidrecord") => JsSuccess(CorrDocRefIdInvalidRecord)
+          case Some(ci"corrdocrefidunknownrecord") => JsSuccess(CorrDocRefIdUnknownRecord)
+          case Some(ci"corrdocrefidduplicate")     => JsSuccess(CorrDocRefIdDuplicate)
+          case Some(ci"docrefidduplicate")         => JsSuccess(DocRefIdDuplicate)
+          case Some(ci"docrefidinvalidparentgroupelement") => JsSuccess(DocRefIdInvalidParentGroupElement)
+          case Some(ci"corrdocrefidinvalidparentgroupelement") => JsSuccess(CorrDocRefIdInvalidParentGroupElement)
+          case Some(ci"corrdocrefidmissing")       => JsSuccess(CorrDocRefIdMissing)
+          case Some(ci"corrdocrefidnotneeded")     => JsSuccess(CorrDocRefIdNotNeeded)
+          case Some(ci"incompatibleoecdtypes")     => JsSuccess(IncompatibleOECDTypes)
+          case Some(ci"messagetypeindicdoctypeincompatible") => JsSuccess(MessageTypeIndicDocTypeIncompatible)
+          case Some(ci"cbcoecdversionerror")    => JsSuccess(CbcOecdVersionError)
+          case Some(ci"xmlencodingerror")       => JsSuccess(XmlEncodingError)
+          case Some(ci"originalsubmissionnotfound") => JsSuccess(OriginalSubmissionNotFound)
+          case Some(ci"privatebetacbciderror")      => JsSuccess(PrivateBetaCBCIdError)
+          case Some(ci"resentdataisunknownerror")   => JsSuccess(ResentDataIsUnknownError)
+          case Some(ci"correctedfiletoold")         => JsSuccess(CorrectedFileToOld)
+          case Some(ci"reportingentityorconstituententityempty") => JsSuccess(ReportingEntityOrConstituentEntityEmpty)
+          case Some(otherError) if otherError.startsWith("InvalidXMLError: ") =>
+            JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
         }
       }
   }
   implicit val eShows: Show[BusinessRuleErrors] =  Show.show[BusinessRuleErrors]{
     case m:MessageRefIDError => m.show
-    case TestDataError         => "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD11OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
+    case TestDataError         => "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD10 - OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
     case SendingEntityError    => "The CBCId in the SendingEntityIN field has not been registered"
     case SendingEntityOrganisationMatchError => "The CBCId in the SendingEntityIN does not match that of the Organisation"
     case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
@@ -188,6 +201,9 @@ object BusinessRuleErrors {
     case PrivateBetaCBCIdError => """ The country-by-country ID you entered has changed. You will need to use the new ID which we have emailed to you. If you are operating as an agent, contact your client for the new country-by-country ID."""
     case CorrDocRefIdDuplicate => """Error Code 80011 CorrDocRefId (Duplicate):The same DocRefID cannot be corrected or deleted twice in the same message."""
     case ResentDataIsUnknownError => """OECD0 must be used for resent data, but a previous submission with this DocRefID has not been received"""
+    case MultipleCbcBodies        => """File contains multiple occurrences of CbcBody: Only 1 occurrence of CbcBody is allowed per XML message"""
+    case CorrectedFileToOld    => "Corrections only allowed up to 3 years after the initial submission date for the Reporting Period"
+    case ReportingEntityOrConstituentEntityEmpty => """Organisation Name: The Name of the Reporting Entity or Constituent Entity cannot be an empty string"""
     case i:InvalidXMLError     => i.toString
   }
 }

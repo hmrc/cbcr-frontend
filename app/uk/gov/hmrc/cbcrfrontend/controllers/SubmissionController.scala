@@ -113,10 +113,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
           },
           (data: ReportingEntityData) => reportingEntityDataService.saveReportingEntityData(data)
         )
-
-      // UPDATE| DELETE
-      case OECD0 => reportingEntityDataService.updateReportingEntityAdditionalData(PartialReportingEntityData.extract(xml))
-      case OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
+      case OECD0 | OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
     }
 
   def confirm = Action.async{ implicit request =>
@@ -276,7 +273,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
             cache.save(UltimateParentEntity(kXml.reportingEntity.name))).map(_ => ())
 
         case CBC702 | CBC703 =>
-          cache.save(FilingType(CBC702))
+          cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
       }).semiflatMap(_ => enterSubmitterInfo()).leftMap(errorRedirect).merge
     }

@@ -25,6 +25,8 @@ import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
 import uk.gov.hmrc.http.{HttpException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
+import scala.concurrent.Future
+
 @Singleton
 class TestCBCRController @Inject()(val authConnector:AuthConnector,
                                    val testCBCRConnector: TestCBCRConnector,
@@ -91,6 +93,48 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
   def deleteSingleMessageRefId(messageRefId: String) = Action.async{ implicit request =>
     authorised() {
       testCBCRConnector.deleteSingleMessageRefId(messageRefId).map(_ => Ok("MessageRefId has been deleted"))
+    }
+  }
+
+  def updateReportingEntityCreationDate(docRefId:String, createDate: String) = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.updateReportingEntityCreationDate(docRefId, createDate).map{s =>
+        s.status match {
+          case OK           => Ok("Reporting entity createDate updated")
+          case NOT_MODIFIED => Ok("Reporting entity createDate NOT updated")
+          case _            => Ok("Something went wrong")
+        }
+      }.recover{
+        case _:NotFoundException => Ok("Reporting entity not found")
+      }
+    }
+  }
+
+  def deleteReportingEntityCreationDate(docRefId:String) = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.deleteReportingEntityCreationDate(docRefId).map{s =>
+        s.status match {
+          case OK           => Ok("Reporting entity createDate deleted")
+          case NOT_MODIFIED => Ok("Reporting entity createDate NOT deleted")
+          case _            => Ok("Something went wrong")
+        }
+      }.recover{
+        case _:NotFoundException => Ok("Reporting entity not found")
+      }
+    }
+  }
+
+  def confirmReportingEntityCreationDate(docRefId:String, createDate: String) = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.confirmReportingEntityCreationDate(docRefId, createDate).map{s =>
+        s.status match {
+          case OK           => Ok("Reporting entity createDate correct")
+          case NOT_FOUND    => Ok("Reporting entity createDate NOT correct")
+          case _            => Ok("Something went wrong")
+        }
+      }.recover{
+        case _:NotFoundException => Ok("Reporting entity not found")
+      }
     }
   }
 

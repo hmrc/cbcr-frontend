@@ -86,7 +86,9 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
       ),
       Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),TIN("7000000002","GB"),"name")),
       List(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None))),
-      Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None)))
+      Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None))),
+      Some(LocalDate.now()),
+      List.empty[String]
     )
   }
 
@@ -168,7 +170,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
       status(result) shouldBe Status.SEE_OTHER
       val maybeUri = result.header.headers.getOrElse("location", "")
       Logger.debug(s"location: ${maybeUri}")
-      maybeUri shouldBe "http://localhost:9025/gg/sign-out?continue=http://localhost:9696/country-by-country-reporting-private-beta-1/guidance"
+      maybeUri shouldBe "http://localhost:9025/gg/sign-out?continue=http://localhost:9696/country-by-country-reporting/guidance"
 
     }
   }

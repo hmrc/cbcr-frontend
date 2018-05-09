@@ -34,12 +34,6 @@ import uk.gov.hmrc.http.{ HeaderCarrier, NotFoundException }
 class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {
 
 
-  def updateReportingEntityAdditionalData(data: PartialReportingEntityData)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
-    EitherT(connector.reportingEntityDataAdditionalUpdate(data).map(_ => Right(())).recover{
-      case NonFatal(t) => Left(UnexpectedState(s"Attempt to update reporting entity data failed: ${t.getMessage}"))
-    })
-
-
   def updateReportingEntityData(data:PartialReportingEntityData)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
     EitherT(connector.reportingEntityDataUpdate(data).map(_ => Right(())).recover{
       case NonFatal(t) => Left(UnexpectedState(s"Attempt to update reporting entity data failed: ${t.getMessage}"))

@@ -20,7 +20,7 @@
                 <ns1:ResCountryCode>GB</ns1:ResCountryCode>
                 <ns1:TIN issuedBy="GB">7000000002</ns1:TIN>
                 <ns1:IN INType="2001" issuedBy="GB">TEST</ns1:IN>
-                <ns1:Name>ABCCorp</ns1:Name>
+                <ns1:Name></ns1:Name>
                 <ns1:Address legalAddressType="OECD303">
                     <ns1:CountryCode>US</ns1:CountryCode>
                     <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -57,7 +57,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>name1</ns1:Name>
+                    <ns1:Name/>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -71,7 +71,7 @@
         <ns1:CbcReports>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP</ns2:DocRefId>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP2</ns2:DocRefId>
             </ns1:DocSpec>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>
@@ -93,7 +93,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>name2</ns1:Name>
+                    <ns1:Name/>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -129,7 +129,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>name3</ns1:Name>
+                    <ns1:Name/>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -142,9 +142,8 @@
         </ns1:CbcReports>
         <ns1:CbcReports>
             <ns1:DocSpec>
-                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
+                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP4</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP5</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>
@@ -166,7 +165,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>name4</ns1:Name>
+                    <ns1:Name/>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
