@@ -361,9 +361,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   /** Validate the TIN and TIN.issuedBy against the [[ReportingRole]] */
   private def validateTIN(tin:TIN, rr:ReportingRole) : ValidBusinessResult[TIN] = rr match {
     case CBC701 | CBC703 if !tin.issuedBy.equalsIgnoreCase("gb") =>
-      InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for local or primary filings").invalidNel
+      InvalidXMLError("The TIN.issuedBy attribute must be 'GB' for Primary and Local Filing").invalidNel
     case CBC701 | CBC703 if !Utr(tin.value).isValid              =>
-      InvalidXMLError("ReportingEntity.Entity.TIN must be a valid UTR for filings issued in 'GB'").invalidNel
+      InvalidXMLError("The TIN element must be a valid UK UTR").invalidNel
     case _                                                       =>
       tin.validNel
   }
