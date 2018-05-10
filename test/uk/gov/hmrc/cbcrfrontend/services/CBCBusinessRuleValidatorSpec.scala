@@ -700,7 +700,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
           result.fold(
             errors => errors.toList should contain(
-              InvalidXMLError("ReportingEntity.Entity.TIN must be a valid UTR for filings issued in 'GB'")
+              InvalidXMLError("The TIN element must be a valid UK UTR")
             ),
             _ => fail("No InvalidXMLError generated for CBC701 invalid TIN check")
           )
@@ -711,7 +711,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for local or primary filings")),
+            errors => errors.toList should contain(InvalidXMLError("The TIN.issuedBy attribute must be 'GB' for Primary and Local Filing")),
             _ => fail("No InvalidXMLError generated for CBC701 invalid TIN issuedBy check")
           )
 
@@ -723,7 +723,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN must be a valid UTR for filings issued in 'GB'")),
+            errors => errors.toList should contain(InvalidXMLError("The TIN element must be a valid UK UTR")),
             _ => fail("No InvalidXMLError generated for CBC703 invalid TIN check")
           )
 
@@ -733,7 +733,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(InvalidXMLError("ReportingEntity.Entity.TIN@issuedBy must be 'GB' for local or primary filings")),
+            errors => errors.toList should contain(InvalidXMLError("The TIN.issuedBy attribute must be 'GB' for Primary and Local Filing")),
             _ => fail("No InvalidXMLError generated for CBC703 invalid TIN issuedBy check")
           )
 
