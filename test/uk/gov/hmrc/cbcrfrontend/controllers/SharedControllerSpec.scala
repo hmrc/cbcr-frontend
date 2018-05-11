@@ -163,14 +163,16 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
   "GET /signOut" should {
     "return 303 to Company Auth" in {
+      val guidanceUrl = "http://localhost:9696/"
       when(feConfig.cbcrFrontendHost) thenReturn "http://localhost:9696"
       when(feConfig.governmentGatewaySignOutUrl) thenReturn "http://localhost:9025"
+      when(feConfig.cbcrGuidanceUrl) thenReturn guidanceUrl
       when(authC.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
       val result: Result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
       status(result) shouldBe Status.SEE_OTHER
       val maybeUri = result.header.headers.getOrElse("location", "")
       Logger.debug(s"location: ${maybeUri}")
-      maybeUri shouldBe "http://localhost:9025/gg/sign-out?continue=http://localhost:9696/country-by-country-reporting/guidance"
+      maybeUri shouldBe s"http://localhost:9025/gg/sign-out?continue=$guidanceUrl"
 
     }
   }

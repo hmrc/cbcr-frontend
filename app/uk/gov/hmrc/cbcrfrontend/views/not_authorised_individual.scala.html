@@ -30,7 +30,7 @@
         <div class="column-two-thirds">
             <h1>@Messages("notAuthorised.individual.mainHeading")</h1>
         </div>
-        <p>@messages("notAuthorised.Individual.message.start") <a href="@routes.SharedController.register()">@Messages("notAuthorised.Individual.message.link")</a></p>
+        <p>@messages("notAuthorised.Individual.message.start") <a href="@config.cbcrGuidanceRegisterUrl">@Messages("notAuthorised.Individual.message.link")</a></p>
     </div>
-    <p><a class="button" role="button" href="@routes.SharedController.guidance()">@Messages("notAuthorised.individual.button")</a></p>
+    <p><a class="button" role="button" href="@config.cbcrGuidanceUrl">@Messages("notAuthorised.individual.button")</a></p>
 }
