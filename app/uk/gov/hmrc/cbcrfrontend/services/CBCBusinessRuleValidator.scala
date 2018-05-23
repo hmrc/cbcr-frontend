@@ -405,7 +405,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
         if (enrolment.cbcId.value == in.messageSpec.sendingEntityIn.value) in.validNel
         else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
       case (Some(Organisation), None) => cache.readOption[CBCId].map { (maybeCBCId: Option[CBCId]) =>
-        if (maybeCBCId.toString == in.messageSpec.sendingEntityIn.value) in.validNel
+        if (maybeCBCId == in.messageSpec.sendingEntityIn.value) in.validNel
         else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
       }
       case (Some(Agent), _) => in.validNel
