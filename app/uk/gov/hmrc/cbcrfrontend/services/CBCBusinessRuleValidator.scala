@@ -19,7 +19,6 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.time.{LocalDate, LocalDateTime}
 
 import javax.inject.Inject
-
 import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
@@ -33,6 +32,9 @@ import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
+import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrieval, Retrievals}
 
 import scala.util.Failure
 
@@ -189,14 +191,14 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   // <<<<<<<<<<:::Validation methods:::>>>>>>>>>>>>>
 
   /** Top level validation methods */
-  private def validateXMLInfo(x:XMLInfo, fileName:String)(implicit hc: HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
+  private def validateXMLInfo(x:XMLInfo, fileName:String, enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
     validateMessageRefIdD(x.messageSpec) *>
     validateReportingEntity(x) *>
     validateMessageTypes(x) *>
     validateDocSpecs(x) *>
     validateMessageTypeIndic(x) *>
     validateFileName(x,fileName) *>
-    validateOrganisationCBCId(x) *>
+    validateOrganisationCBCId(x, enrolment, affinityGroup) *>
     validateCreationDate(x)
   }
 
@@ -396,14 +398,20 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     else MessageRefIDCBCIdMismatch.invalidNel
 
   /** If the User is an enrolled Organisation, ensure their CBCId matches the  CBCId in the Sending Entity **/
-  private def validateOrganisationCBCId(in:XMLInfo)(implicit hc: HeaderCarrier) : FutureValidBusinessResult[XMLInfo]  =
-    cache.readOption[CBCId].map { (maybeCBCId: Option[CBCId]) =>
-      maybeCBCId match {
-        case Some(organisationCBCId) => if (organisationCBCId == in.messageSpec.sendingEntityIn) in.validNel
-                                        else SendingEntityOrganisationMatchError.invalidNel
-        case None => in.validNel
+  private def validateOrganisationCBCId(in:XMLInfo, enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier) : FutureValidBusinessResult[XMLInfo]  =
+
+    (affinityGroup, enrolment) match {
+      case (Some(Organisation), Some(enrolment)) =>
+        if (enrolment.cbcId.value == in.messageSpec.sendingEntityIn.value) in.validNel
+        else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
+      case (Some(Organisation), None) => cache.readOption[CBCId].map { (maybeCBCId: Option[CBCId]) =>
+        if (maybeCBCId == in.messageSpec.sendingEntityIn.value) in.validNel
+        else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
       }
+      case (Some(Agent), _) => in.validNel
+      case (None, _) => SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
     }
+
 
   /** Ensure the reportingPeriod in the [[MessageRefID]] matches the reportingPeriod field in the MessageSpec */
   private def validateReportingPeriodMatches(messageRefID: MessageRefID,messageSpec:MessageSpec) : ValidBusinessResult[MessageRefID] =
@@ -456,9 +464,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
   }
 
-  def validateBusinessRules(in: RawXMLInfo, fileName: String)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
+  def validateBusinessRules(in: RawXMLInfo, fileName: String, enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     extractXMLInfo(in).flatMap{
-      case Valid(v)   => validateXMLInfo(v,fileName)
+      case Valid(v)   => validateXMLInfo(v,fileName, enrolment, affinityGroup)
       case Invalid(i) => Future.successful(i.invalid)
     }
 

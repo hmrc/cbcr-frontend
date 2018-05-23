@@ -171,13 +171,13 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
   } yield metadata
 
-  def validateBusinessRules(file_metadata:(File,FileMetadata))(implicit hc:HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors],CompleteXMLInfo]] = {
+  def validateBusinessRules(file_metadata:(File,FileMetadata), enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc:HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors],CompleteXMLInfo]] = {
     val startValidation = LocalDateTime.now()
 
     val rawXmlInfo  = xmlExtractor.extract(file_metadata._1)
 
     val result = for {
-      xmlInfo         <- EitherT(businessRuleValidator.validateBusinessRules(rawXmlInfo, file_metadata._2.name).map(_.toEither))
+      xmlInfo         <- EitherT(businessRuleValidator.validateBusinessRules(rawXmlInfo, file_metadata._2.name, enrolment, affinityGroup).map(_.toEither))
       completeXI      <- EitherT(businessRuleValidator.recoverReportingEntity(xmlInfo).map(_.toEither))
     } yield completeXI
 
@@ -202,7 +202,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
 
   def fileValidate(envelopeId: String, fileId: String) = Action.async { implicit request =>
-    authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { case creds ~ affinity =>
+    authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) { case creds ~ affinity ~ enrolment =>
 
       val result = for {
         file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
@@ -216,7 +216,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
                          else auditFailedSubmission(creds, "schema validation errors").flatMap(_ =>
                            EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize)))
                          )
-        result        <- validateBusinessRules(file_metadata)
+        result        <- validateBusinessRules(file_metadata, enrolment, affinity)
         businessSize   = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
         length         = calculateFileSize(file_metadata._2)
         _             <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, "schema validation errors")
