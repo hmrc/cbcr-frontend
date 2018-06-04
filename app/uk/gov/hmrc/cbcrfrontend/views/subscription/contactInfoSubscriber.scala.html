@@ -32,7 +32,7 @@
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 @main_template(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.mainHeading")}else{Messages("contactInfoSubscriber.mainHeading")}) {
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             @if(form.hasErrors) {
                 @if(numberOfErrors == 1) {
                     <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
