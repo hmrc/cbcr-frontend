@@ -29,7 +29,7 @@
 @error = @{form.error("companyName").isDefined}
 @main_template(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}) {
 <div class="grid-row">
-    <div class="column-two-thirds">
+    <div class="column-full">
         @if(form.hasErrors) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                 <h3 id="error-summary-heading" class="h2-heading">@Messages("enterCompanyName.form.error.header")</h3>
