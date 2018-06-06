@@ -30,7 +30,7 @@ implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 @main_template(if(form.hasErrors){"Error: " + Messages("enterCBCId.mainHeading")}else {Messages("enterCBCId.mainHeading")}) {
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             @if(errors){
                 <div class="flash error-summary error-summary--show"
                 id="error-summary-display"

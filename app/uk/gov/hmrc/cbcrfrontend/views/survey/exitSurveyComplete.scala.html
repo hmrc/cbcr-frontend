@@ -26,10 +26,10 @@
 @main_template(Messages("survey.acknowledge.header")) {
 
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             <h1>@Messages("survey.acknowledge.header")</h1>
         </div>
         <p>@messages("survey.acknowledge.message")</p>
     </div>
-    <p><a class="button" role="button" href="@routes.SharedController.guidance()">@Messages("form.controls.finished")</a></p>
+    <p><a class="button" role="button" href="@config.cbcrGuidanceUrl">@Messages("form.controls.finished")</a></p>
 }

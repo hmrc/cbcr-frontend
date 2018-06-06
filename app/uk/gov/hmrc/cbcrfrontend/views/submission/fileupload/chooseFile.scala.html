@@ -25,9 +25,9 @@
 @main_template(Messages("uploadReport.mainHeading")) {
     <div class="grid-row">
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
-        <div class="column-two-thirds">
+        <div class="column-full">
             <h1>
-            @Messages("uploadReport.mainHeading")
+                @Messages("uploadReport.mainHeading")
             </h1>
 
             <p>@Messages("uploadReport.moreInfo")
@@ -37,19 +37,16 @@
                 <div class="form-field-group">
 
                     <span id="@fileName-error-message" class="error-notification" role="alert" data-input-name="@fileName">
-
                     </span>
-                    <input type="file" id="file-input" class="upload-report-input" name ="@fileName" accept=".xml" required
-                data-msg-required="@Messages("uploadReport.error")">
+                    <input type="file" id="file-input" class="upload-report-input bordered-box column-two-thirds" name ="@fileName" accept=".xml" required
+                        data-msg-required="@Messages("uploadReport.error")">
                 </div>
-                    <div class="form-field form-field--submit">
+                <div class="form-field form-field--submit">
                     @csrf_token()
-                <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
+                    <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
                 </div>
-
             </div>
-
-            </div>
+        </div>
         </form>
     </div>
 

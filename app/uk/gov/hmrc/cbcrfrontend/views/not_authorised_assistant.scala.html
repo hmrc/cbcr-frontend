@@ -26,10 +26,10 @@
 @main_template(Messages("notAuthorised.assistant.mainHeading")) {
 
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             <h1>@Messages("notAuthorised.assistant.mainHeading")</h1>
         </div>
         <p>@Messages("notAuthorised.assistant.message")</p>
     </div>
-    <p><a class="button" role="button" href="@routes.SharedController.guidance()">@Messages("notAuthorised.assistant.button")</a></p>
+    <p><a class="button" role="button" href="@config.cbcrGuidanceUrl">@Messages("notAuthorised.assistant.button")</a></p>
 }
