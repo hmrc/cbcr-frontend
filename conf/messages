@@ -292,3 +292,8 @@ utrCheck.hint=This can be for Corporation Tax, or Self-Assessment for a business
 utrCheck.error=Enter a Unique Taxpayer Reference of at least 10 characters
 utrCheck.error.header=The Unique Taxpayer Reference must contain at least 10 characters
 
+sessionTimeout.title=You'’re about to be signed out
+sessionTimeout.message=For security reasons, you will be signed out of this service in
+sessionTimeout.staySignedIn=Stay signed in
+sessionTimeout.signOut=Sign out
+
