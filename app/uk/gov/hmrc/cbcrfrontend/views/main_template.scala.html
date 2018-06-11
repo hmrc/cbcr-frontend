@@ -20,10 +20,13 @@
   contentHeader: Option[Html] = None,
   bodyClasses: Option[String] = None,
   mainClass: Option[String] = None,
+  sessionTimeout:Boolean = true,
   scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, conf: FrontendAppConfig)
 
 @import uk.gov.hmrc.play.views.html.layouts
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+
 
 @serviceInfoContent = {}
 
@@ -43,3 +46,18 @@
                serviceInfoContent = serviceInfoContent,
                scriptElem = scriptElem
 )
+
+@if( conf.timeOutShowDialog && sessionTimeout) {
+    <script>
+            $.timeoutDialog({
+                title: "@Messages("sessionTimeout.title")",
+                message: "@Messages("sessionTimeout.message")",
+                keep_alive_button_text: "@Messages("sessionTimeout.staySignedIn")",
+                sign_out_button_text: "@Messages("sessionTimeout.signOut")",
+                timeout: @conf.timeOutSeconds,
+                countdown: @conf.timeOutCountdownSeconds,
+                keep_alive_url: "@conf.keepAliveUrl",
+                logout_url: "@conf.signOutUrl"
+            })
+    </script>
+}

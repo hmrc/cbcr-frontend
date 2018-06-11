@@ -27,8 +27,8 @@
 
 @isError= @{form.hasErrors}
 
-@main_template(Messages("survey.mainHeading")) {
-
+@main_template(Messages("survey.mainHeading"),
+               sessionTimeout=false) {
     <h1>@Messages("survey.header")</h1>
     @Messages("survey.intro")
     <br/>

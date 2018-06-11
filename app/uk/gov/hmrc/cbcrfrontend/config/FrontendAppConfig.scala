@@ -75,4 +75,11 @@ class FrontendAppConfig @Inject() (val runModeConfiguration: Configuration,
   val whitelist: Seq[String]         = whitelistConfig("whitelist")
   val whitelistExcluded: Seq[String] = whitelistConfig("whitelist-excluded")
 
+  val timeOutSeconds = loadConfig("sessionTimeout.timeOutSeconds")
+  val timeOutCountdownSeconds = loadConfig("sessionTimeout.timeOutCountdownSeconds")
+  val timeOutShowDialog:Boolean = runModeConfiguration.getBoolean(s"sessionTimeout.timeOutShowDialog").getOrElse(false)
+  val keepAliveUrl = loadConfig("sessionTimeout.keepAliveUrl")
+  val signOutUrl = loadConfig("sessionTimeout.signOutUrl")
+
+
 }
