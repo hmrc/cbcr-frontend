@@ -20,6 +20,8 @@ POST       /known-facts                                   @uk.gov.hmrc.cbcrfront
 GET        /known-facts/match                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.knownFactsMatch
 GET        /known-facts/organisation/verify-form          @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsOrganisation
 GET        /unsupportedAffinityGroup                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.unsupportedAffinityGroup
+GET        /keepSessionAlive                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.keepSessionAlive
+
 
 GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileValidate(envelopeId: String, fileId:String)
 GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadProgress(envelopeId: String, fileId: String)

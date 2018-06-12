@@ -132,6 +132,12 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     }
   }
 
+  val keepSessionAlive = Action.async { implicit request =>
+    authorised() {
+      Future.successful(Ok("OK"))
+    }
+  }
+
 
   def downloadGuide = Action.async{ implicit request =>
     val guideVer: String = config.getString(s"${env.mode}.oecd-guide-version").getOrElse(throw new Exception(s"Missing configuration ${env.mode}.oecd-guide-version"))
