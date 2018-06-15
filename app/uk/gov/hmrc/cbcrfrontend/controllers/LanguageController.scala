@@ -34,7 +34,6 @@ class LanguageController @Inject()(configuration: FrontendAppConfig) extends Fro
   def switchToWelsh: Action[AnyContent] = switchToLang(welsh)
 
   private def switchToLang(lang: Lang) = Action { implicit request =>
-    val temp = CbcrSwitches.enableLanguageSwitching.enabled
     val newLang = if (CbcrSwitches.enableLanguageSwitching.enabled) lang else english
     request.headers.get(REFERER) match {
       case Some(referrer) => Redirect(referrer).withLang(newLang).flashing(Flash(Map("switching-language" -> "true")))
