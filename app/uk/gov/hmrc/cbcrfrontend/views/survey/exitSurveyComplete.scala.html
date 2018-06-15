@@ -20,7 +20,7 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 
 @main_template(Messages("survey.acknowledge.header"),

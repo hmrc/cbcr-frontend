@@ -63,3 +63,6 @@ GET        /enrolments                                    @uk.gov.hmrc.cbcrfront
 
 GET        /assets/*file                                  controllers.Assets.versioned(path="/public", file: Asset)
 
+GET         /switch-to-welsh                              @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToWelsh
+GET         /switch-to-english                            @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToEnglish
+

@@ -24,7 +24,7 @@
 
 
 @(form:Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(
-implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @import tags.formFieldDisplay
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}

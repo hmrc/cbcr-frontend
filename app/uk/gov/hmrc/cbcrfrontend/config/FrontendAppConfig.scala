@@ -81,5 +81,5 @@ class FrontendAppConfig @Inject() (val runModeConfiguration: Configuration,
   val keepAliveUrl = loadConfig("sessionTimeout.keepAliveUrl")
   val signOutUrl = loadConfig("sessionTimeout.signOutUrl")
 
-
+  def fallbackURLForLanguageSwitcher: String = loadConfig("languageSwitcher.fallback.url")
 }
