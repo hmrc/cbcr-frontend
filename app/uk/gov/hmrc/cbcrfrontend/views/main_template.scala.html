@@ -15,13 +15,14 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 @(title: String,
   sidebarLinks: Option[Html] = None,
   contentHeader: Option[Html] = None,
   bodyClasses: Option[String] = None,
   mainClass: Option[String] = None,
   sessionTimeout:Boolean = true,
-  scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, conf: FrontendAppConfig)
+  scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, lang: Lang, conf: FrontendAppConfig)
 
 @import uk.gov.hmrc.play.views.html.layouts
 @import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -40,7 +41,7 @@
 @govuk_wrapper(title = title,
                mainClass = mainClass,
                bodyClasses = bodyClasses,
-               sidebar = sidebar,
+               sidebar = language.language_selection(CbcrSwitches.enableLanguageSwitching.enabled),
                contentHeader = contentHeader,
                mainContent = layouts.article(mainContent),
                serviceInfoContent = serviceInfoContent,

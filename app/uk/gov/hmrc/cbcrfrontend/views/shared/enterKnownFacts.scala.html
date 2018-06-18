@@ -21,7 +21,7 @@
 @import helper._
 @import tags._
 
-@(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false)(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @hasErrors = @{
     knownFactsForm.hasErrors || noMatchingBusiness
