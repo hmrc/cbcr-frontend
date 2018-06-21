@@ -21,6 +21,9 @@ import cats.syntax.show._
 import play.api.Logger
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
+import uk.gov.hmrc.cbcrfrontend.services.LanguageSupport
+import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
+
 
 
 sealed trait CBCErrors extends Product with Serializable
@@ -178,32 +181,32 @@ object BusinessRuleErrors {
   }
   implicit val eShows: Show[BusinessRuleErrors] =  Show.show[BusinessRuleErrors]{
     case m:MessageRefIDError => m.show
-    case TestDataError         => "ErrorCode: 50010 - The referenced file contains one or more records with a DocTypeIndic value in the range OECD10 - OECD13, indicating test data. As a result, the receiving Competent Authority cannot accept this file as a valid CbC file submission."
-    case SendingEntityError    => "The CBCId in the SendingEntityIN field has not been registered"
-    case SendingEntityOrganisationMatchError => "The SendingEntityIN field must be completed with your CBCId"
-    case ReceivingCountryError => """The ReceivingCountry field must equal "GB""""
+    case TestDataError         => "error.TestDataError"
+    case SendingEntityError    => "error.SendingEntityError"
+    case SendingEntityOrganisationMatchError => "error.SendingEntityOrganisationMatchError"
+    case ReceivingCountryError => "error.ReceivingCountryError"
     case FileNameError(f,e)         => s"The filename and messageRefID should match." +"\r\n" + s"You entered this filename: $f" +"\r\n" + s"It should read: $e"
-    case MessageTypeIndicError => "Error DocTypeIndic (Correction): If MessageTypeIndic is provided and completed with \"CBC402\" message can only contain DocTypeIndic \"OECD2\" or \"OECD3\". (With 1 execption ReportingEntity can contain DocTypeIndic \"OECD0\" where ReportingEntity information is unchanged. \"OECD0\" cannot be used in DocSpec\\DocTypeIndic for CbCReports or AdditionalInfo)"
-    case CorrDocRefIdInvalidRecord => "Error Code 80003 CorrDocRefId (record no longer valid): The corrected record is no longer valid (invalidated or outdated by a previous correction message). As a consequence, no further information should have been received on this version of the record."
-    case CorrDocRefIdUnknownRecord => "Error Code 80002 CorrDocRefId (unknown record): The CorrDocRefId refers to an unknown record"
-    case DocRefIdDuplicate         => "Error Code 80001: DocRefId (already used)"
-    case DocRefIdInvalidParentGroupElement => "Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide."
-    case CorrDocRefIdInvalidParentGroupElement => "Error Code 80000 CorrDocRefId (format): The structure of the CorrDocRefId is not in the correct format, as set out in the User Guide."
-    case CorrDocRefIdMissing   => "Error Code 80005 CorrDocRefId (missing): CorrDocRefId must be provided when DocTypeIndic is OECD2 or OECD3"
-    case CorrDocRefIdNotNeeded => "Error Code 80004 CorrDocRefId (Initial record): CorrDocRefId cannot be provided when DocTypeIndic is OECD1"
-    case IncompatibleOECDTypes => "Error DocTypeIndic: Document must not contain a mixture of New (OECD1) and corrected (OECD2 & OECD3) DocTypeIndics"
-    case MessageTypeIndicDocTypeIncompatible => "Error DocTypeIndic (New): If MessageTypeIndic is provided and completed with \"CBC401\" DocTypeIndic must be \"OECD1\""
-    case InvalidDocRefId       => "Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide."
-    case InvalidCorrDocRefId   => "Error Code 8000 CorrDocRefId (format): The structure of the CorrDocRefID is not in the correct format, as set out in the User Guide."
-    case CbcOecdVersionError   => """CBC_OECD version must equal 1.0.1"""
-    case XmlEncodingError      => """XML encoding must equal UTF8"""
-    case OriginalSubmissionNotFound => "Original submission could not be identified"
-    case PrivateBetaCBCIdError => """ The country-by-country ID you entered has changed. You will need to use the new ID which we have emailed to you. If you are operating as an agent, contact your client for the new country-by-country ID."""
-    case CorrDocRefIdDuplicate => """Error Code 80011 CorrDocRefId (Duplicate):The same DocRefID cannot be corrected or deleted twice in the same message."""
-    case ResentDataIsUnknownError => """OECD0 must be used for resent data, but a previous submission with this DocRefID has not been received"""
-    case MultipleCbcBodies        => """File contains multiple occurrences of CbcBody: Only 1 occurrence of CbcBody is allowed per XML message"""
-    case CorrectedFileToOld    => "Corrections only allowed up to 3 years after the initial submission date for the Reporting Period"
-    case ReportingEntityOrConstituentEntityEmpty => """Organisation Name: The Name of the Reporting Entity or Constituent Entity cannot be an empty string"""
+    case MessageTypeIndicError => "error.MessageTypeIndicError"
+    case CorrDocRefIdInvalidRecord => "error.CorrDocRefIdInvalidRecord"
+    case CorrDocRefIdUnknownRecord => "error.CorrDocRefIdUnknownRecord"
+    case DocRefIdDuplicate         => "error.DocRefIdDuplicate"
+    case DocRefIdInvalidParentGroupElement => "error.DocRefIdInvalidParentGroupElement"
+    case CorrDocRefIdInvalidParentGroupElement => "error.CorrDocRefIdInvalidParentGroupElement"
+    case CorrDocRefIdMissing   => "error.CorrDocRefIdMissing"
+    case CorrDocRefIdNotNeeded => "error.CorrDocRefIdNotNeeded"
+    case IncompatibleOECDTypes => "error.IncompatibleOECDTypes"
+    case MessageTypeIndicDocTypeIncompatible => "error.MessageTypeIndicDocTypeIncompatible"
+    case InvalidDocRefId       => "error.InvalidDocRefId"
+    case InvalidCorrDocRefId   => "error.InvalidCorrDocRefId"
+    case CbcOecdVersionError   => "error.CbcOecdVersionError"
+    case XmlEncodingError      => "error.XmlEncodingError"
+    case OriginalSubmissionNotFound => "error.OriginalSubmissionNotFound"
+    case PrivateBetaCBCIdError => "error.PrivateBetaCBCIdError"
+    case CorrDocRefIdDuplicate => "error.CorrDocRefIdDuplicate"
+    case ResentDataIsUnknownError => "error.ResentDataIsUnknownError"
+    case MultipleCbcBodies        => "error.MultipleCbcBodies"
+    case CorrectedFileToOld    => "error.CorrectedFileToOld"
+    case ReportingEntityOrConstituentEntityEmpty => "error.ReportingEntityOrConstituentEntityEmpty"
     case i:InvalidXMLError     => i.toString
   }
 }

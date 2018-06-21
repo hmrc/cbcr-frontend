@@ -24,6 +24,7 @@ import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
 import cats.{Applicative, Functor}
+import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
 import uk.gov.hmrc.cbcrfrontend.functorInstance
@@ -62,7 +63,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                                           reportingEntityDataService: ReportingEntityDataService,
                                           configuration: Configuration,
                                           runMode: RunMode,
-                                          creationDateService: CreationDateService
+                                          creationDateService: CreationDateService,
+                                          messagesApi: MessagesApi
                                          )(implicit ec:ExecutionContext, cache:CBCSessionCache) {
 
   private val testData = "OECD1[0123]"
@@ -123,7 +125,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def extractDocTypeInidc(docType:String) : ValidBusinessResult[DocTypeIndic] =
     DocTypeIndic.fromString(docType).fold[ValidBusinessResult[DocTypeIndic]]{
       if(docType.matches(testData)) TestDataError.invalidNel
-      else InvalidXMLError("Invalid DocTypeIndic").invalidNel}(
+      else InvalidXMLError(messagesApi("xmlError.InvalidDocType")).invalidNel}(
       _.validNel)
 
   private def extractCorrDocRefId(corrDocRefIdString:Option[String], parentGroupElement: ParentGroupElement) : ValidBusinessResult[Option[CorrDocRefId]] = {
@@ -149,7 +151,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def extractTIN(in:RawReportingEntity) : ValidBusinessResult[TIN] = TIN(in.tin,in.tinIssuedBy).validNel
 
   private def extractReportingRole(in:RawReportingEntity): ValidBusinessResult[ReportingRole] =
-    ReportingRole.parseFromString(in.reportingRole).toValidNel(InvalidXMLError("ReportingEntity.ReportingRole not found or invalid"))
+    ReportingRole.parseFromString(in.reportingRole).toValidNel(InvalidXMLError(messagesApi("xmlError.ReportingRole")))
 
   private def extractSendingEntityIn(in:RawMessageSpec): ValidBusinessResult[CBCId] = {
     CBCId(in.sendingEntityIn).fold[ValidBusinessResult[CBCId]](
@@ -167,9 +169,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def extractReceivingCountry(in:RawMessageSpec) : ValidBusinessResult[String] =
     if(in.receivingCountry equalsIgnoreCase "GB") in.receivingCountry.validNel else ReceivingCountryError.invalidNel
 
-  private def extractReportingPeriod(in:RawMessageSpec) : ValidBusinessResult[LocalDate] =
+  private def extractReportingPeriod(in:RawMessageSpec)(implicit lang: Lang) : ValidBusinessResult[LocalDate] =
     Validated.catchNonFatal(LocalDate.parse(in.reportingPeriod))
-      .leftMap(_ => InvalidXMLError("Invalid Date for reporting period")).toValidatedNel
+      .leftMap(_ => InvalidXMLError(messagesApi("xmlError.InvalidDate")(lang))).toValidatedNel
 
   private def extractMessageRefID(in:RawMessageSpec) : ValidBusinessResult[MessageRefID] =
     MessageRefID(in.messageRefID).fold(
@@ -363,9 +365,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   /** Validate the TIN and TIN.issuedBy against the [[ReportingRole]] */
   private def validateTIN(tin:TIN, rr:ReportingRole) : ValidBusinessResult[TIN] = rr match {
     case CBC701 | CBC703 if !tin.issuedBy.equalsIgnoreCase("gb") =>
-      InvalidXMLError("The TIN.issuedBy attribute must be 'GB' for Primary and Local Filing").invalidNel
+      InvalidXMLError(messagesApi("xmlError.TINIssuedBy")).invalidNel
     case CBC701 | CBC703 if !Utr(tin.value).isValid              =>
-      InvalidXMLError("The TIN element must be a valid UK UTR").invalidNel
+      InvalidXMLError(messagesApi("xmlError.InvalidTIN")).invalidNel
     case _                                                       =>
       tin.validNel
   }
