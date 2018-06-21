@@ -1,3 +1,5 @@
+application.title=Anfonwch adroddiad country-by-country
+
 contactDetailsUpdate.mainHeading=The registration contact details have been updated
 contactDetailsUpdate.printThisButton=Print this page
 contactDetailsUpdate.next=What happens next?
@@ -50,12 +52,12 @@ cbc.button.fileupload.report=Upload Report
 cbc.button.continue=Continue
 cbc.entercbcid.label=CBC Id
 
-form.controls.continue=Continue
-form.controls.signOut=Sign out
-form.controls.finished=Finished
-form.controls.returnToStart=Return to start page
-form.controls.confirmAndContinue=Confirm and continue
-form.controls.save=Save
+form.controls.continue=Parhau
+form.controls.signOut=Arwyddwch
+form.controls.finished=Wedi''i gwblhau
+form.controls.returnToStart=Dychwelyd i''r dudalen gychwyn
+form.controls.confirmAndContinue=Cadarnhau a pharhau
+form.controls.save=Arbed
 
 enterCBCId.mainHeading=Enter the country-by-country ID
 enterCBCId.formHint=This must contain the 15-character ID you received when you registered, for example: XACBC0000999999.
