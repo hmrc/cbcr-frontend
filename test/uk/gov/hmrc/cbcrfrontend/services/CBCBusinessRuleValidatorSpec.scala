@@ -49,8 +49,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val configuration = mock[Configuration]
   val runMode = mock[RunMode]
   val creationDateService = mock[CreationDateService]
-  implicit val cache: CBCSessionCache = mock[CBCSessionCache]
-
+  implicit val cache: CBCSessionCache   = mock[CBCSessionCache]
 
   val docRefId1 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
   val docRefId2 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").getOrElse(fail("bad docrefid"))
@@ -64,7 +63,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   val corrDocRefId5 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC2").getOrElse(fail("bad docrefid"))
 
   val schemaVer: String = "1.0"
-
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.pure[Future,CBCErrors,Option[SubscriptionDetails]](Some(submissionData))
   when(runMode.env) thenReturn "Dev"
@@ -718,7 +716,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
           result.fold(
             errors => errors.toList should contain(
-              InvalidXMLError("The TIN element must be a valid UK UTR")
+              InvalidXMLError("xmlValidationError.InvalidTIN")
             ),
             _ => fail("No InvalidXMLError generated for CBC701 invalid TIN check")
           )
@@ -729,7 +727,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(InvalidXMLError("The TIN.issuedBy attribute must be 'GB' for Primary and Local Filing")),
+            errors => errors.toList should contain(InvalidXMLError("xmlValidationError.TINIssuedBy")),
             _ => fail("No InvalidXMLError generated for CBC701 invalid TIN issuedBy check")
           )
 
@@ -741,7 +739,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(InvalidXMLError("The TIN element must be a valid UK UTR")),
+            errors => errors.toList should contain(InvalidXMLError("xmlValidationError.InvalidTIN")),
             _ => fail("No InvalidXMLError generated for CBC703 invalid TIN check")
           )
 
@@ -751,7 +749,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(InvalidXMLError("The TIN.issuedBy attribute must be 'GB' for Primary and Local Filing")),
+            errors => errors.toList should contain(InvalidXMLError("xmlValidationError.TINIssuedBy")),
             _ => fail("No InvalidXMLError generated for CBC703 invalid TIN issuedBy check")
           )
 

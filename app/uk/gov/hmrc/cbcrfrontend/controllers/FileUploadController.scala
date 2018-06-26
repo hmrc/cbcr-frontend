@@ -25,7 +25,7 @@ import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
 import org.joda.time.Period
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, Lang, MessagesApi}
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.Files
 import play.api.libs.json._
@@ -250,10 +250,11 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     Math.incrementExact(kb.toInt)
   }
 
-  private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
+  private def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
     val b = Files.TemporaryFile(name, ".txt")
     val writer = new PrintWriter(b.file)
-    writer.write(e.map(_.show).mkString("\r\n"))
+    val em = e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
+    writer.write(em.map(_.toString).mkString("\r\n"))
     writer.flush()
     writer.close()
     b.file
