@@ -1,3 +1,5 @@
+application.title=Send a country-by-country report
+
 contactDetailsUpdate.mainHeading=The registration contact details have been updated
 contactDetailsUpdate.printThisButton=Print this page
 contactDetailsUpdate.next=What happens next?
@@ -301,7 +303,9 @@ error.TestDataError=ErrorCode: 50010 - The referenced file contains one or more 
 error.SendingEntityError=The CBCId in the SendingEntityIN field has not been registered
 error.SendingEntityOrganisationMatchError=The SendingEntityIN field must be completed with your CBCId
 error.ReceivingCountryError=The ReceivingCountry field must equal "GB"
-error.FileNameError=The filename and messageRefID should match. You entered this filename: It should read:
+error.FileNameError1=The filename and messageRefID should match.
+error.FileNameError2=You entered this filename:
+error.FileNameError3=It should read:
 error.MessageTypeIndicError=Error DocTypeIndic (Correction): If MessageTypeIndic is provided and completed with "CBC402" message can only contain DocTypeIndic "OECD2" or "OECD3". (With 1 execption ReportingEntity can contain DocTypeIndic "OECD0" where ReportingEntity information is unchanged. "OECD0" cannot be used in DocSpec\\DocTypeIndic for CbCReports or AdditionalInfo)
 error.CorrDocRefIdInvalidRecord=Error Code 80003 CorrDocRefId (record no longer valid): The corrected record is no longer valid (invalidated or outdated by a previous correction message). As a consequence, no further information should have been received on this version of the record.
 error.CorrDocRefIdUnknownRecord=Error Code 80002 CorrDocRefId (unknown record): The CorrDocRefId refers to an unknown record
@@ -324,8 +328,17 @@ error.MultipleCbcBodies=File contains multiple occurrences of CbcBody: Only 1 oc
 error.CorrectedFileToOld=Corrections only allowed up to 3 years after the initial submission date for the Reporting Period
 error.ReportingEntityOrConstituentEntityEmpty=Organisation Name: The Name of the Reporting Entity or Constituent Entity cannot be an empty string
 
-xmlError.InvalidDocType=Invalid DocTypeIndic
-xmlError.ReportingRole=ReportingEntity.ReportingRole not found or invalid
-xmlError.InvalidDate=Invalid Date for reporting period
-xmlError.TINIssuedBy=The TIN.issuedBy attribute must be ''GB'' for Primary and Local Filing
-xmlError.InvalidTIN=The TIN element must be a valid UK UTR
+xmlValidationError.InvalidDocType=Invalid DocTypeIndic
+xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid
+xmlValidationError.InvalidDate=Invalid Date for reporting period
+xmlValidationError.TINIssuedBy=The TIN.issuedBy attribute must be ''GB'' for Primary and Local Filing
+xmlValidationError.InvalidTIN=The TIN element must be a valid UK UTR
+
+messageRefIDError.IDMissing=ErrorCode: 70000 - Message Reference must be completed
+messageRefIDError.CBCIdMismatch=The CbC ID within the MessageRefId does not match the CbC ID in the SendingEntityIN field
+messageRefIDError.FormatError=MessageRefID must match defined format
+messageRefIdError.Duplicate=ErrorCode: 50009 - The referenced file has a duplicate MessageRefID value that was received on a previous file
+messageRefIdError.ReportingPeriodMismatch=The ReportingPeriod element of the MessageRefId does not match the Year of the Reporting Period field in the XML
+messageRefIdError.TimestampError=The XML Creation Time stamp element is not a valid UTC date time
+
+xmlError.header=ErrorCode: 50007 - The referenced file failed validation against the CbC XML Schema

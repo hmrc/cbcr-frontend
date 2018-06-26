@@ -25,7 +25,7 @@ import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
 import org.joda.time.Period
-import play.api.i18n.{I18nSupport,MessagesApi,Lang}
+import play.api.i18n.{I18nSupport, Lang, MessagesApi}
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.Files
 import play.api.libs.json._
@@ -52,7 +52,6 @@ import uk.gov.hmrc.play.config.ServicesConfig
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
 import play.api.libs.json.Json
-import play.i18n.Langs
 
 import scala.concurrent.duration.{Duration => SDuration}
 import scala.util.{Failure, Success}
@@ -60,7 +59,6 @@ import scala.util.{Failure, Success}
 
 @Singleton
 class FileUploadController @Inject()(val messagesApi:MessagesApi,
-                                     val langs: Langs,
                                      val authConnector:AuthConnector,
                                      val schemaValidator: CBCRXMLValidator,
                                      val businessRuleValidator: CBCBusinessRuleValidator,
@@ -255,7 +253,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   private def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
     val b = Files.TemporaryFile(name, ".txt")
     val writer = new PrintWriter(b.file)
-    val em = e.map(x => messagesApi(x.show))
+    val em = e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
     writer.write(em.map(_.toString).mkString("\r\n"))
     writer.flush()
     writer.close()

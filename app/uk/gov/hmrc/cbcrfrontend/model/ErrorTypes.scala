@@ -21,8 +21,6 @@ import cats.syntax.show._
 import play.api.Logger
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
-import uk.gov.hmrc.cbcrfrontend.services.LanguageSupport
-import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
 
 
 
@@ -173,7 +171,7 @@ object BusinessRuleErrors {
           case Some(ci"resentdataisunknownerror")   => JsSuccess(ResentDataIsUnknownError)
           case Some(ci"correctedfiletoold")         => JsSuccess(CorrectedFileToOld)
           case Some(ci"reportingentityorconstituententityempty") => JsSuccess(ReportingEntityOrConstituentEntityEmpty)
-          case Some(otherError) if otherError.startsWith("InvalidXMLError: ") =>
+          case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
         }
@@ -185,7 +183,7 @@ object BusinessRuleErrors {
     case SendingEntityError    => "error.SendingEntityError"
     case SendingEntityOrganisationMatchError => "error.SendingEntityOrganisationMatchError"
     case ReceivingCountryError => "error.ReceivingCountryError"
-    case FileNameError(f,e)         => s"The filename and messageRefID should match." +"\r\n" + s"You entered this filename: $f" +"\r\n" + s"It should read: $e"
+    case FileNameError(f,e)         => s"error.FileNameError1" +" \r\n" + s" error.FileNameError2 $f" +" \r\n" + s" error.FileNameError3 $e"
     case MessageTypeIndicError => "error.MessageTypeIndicError"
     case CorrDocRefIdInvalidRecord => "error.CorrDocRefIdInvalidRecord"
     case CorrDocRefIdUnknownRecord => "error.CorrDocRefIdUnknownRecord"
@@ -227,12 +225,12 @@ object MessageRefIDError {
   }
 
   implicit val idMissingShows: Show[MessageRefIDError] = Show.show[MessageRefIDError] {
-    case MessageRefIDMissing                 => "ErrorCode: 70000 - Message Reference must be completed"
-    case MessageRefIDCBCIdMismatch           => "The CbC ID within the MessageRefId does not match the CbC ID in the SendingEntityIN field"
-    case MessageRefIDFormatError             => "MessageRefID must match defined format"
-    case MessageRefIDDuplicate               => "ErrorCode: 50009 - The referenced file has a duplicate MessageRefID value that was received on a previous file"
-    case MessageRefIDReportingPeriodMismatch => "The ReportingPeriod element of the MessageRefId does not match the Year of the Reporting Period field in the XML"
-    case MessageRefIDTimestampError          => "The XML Creation Time stamp element is not a valid UTC date time"
+    case MessageRefIDMissing                 => "messageRefIDError.IDMissing"
+    case MessageRefIDCBCIdMismatch           => "messageRefIDError.CBCIdMismatch"
+    case MessageRefIDFormatError             => "messageRefIDError.FormatError"
+    case MessageRefIDDuplicate               => "messageRefIdError.Duplicate"
+    case MessageRefIDReportingPeriodMismatch => "messageRefIdError.ReportingPeriodMismatch"
+    case MessageRefIDTimestampError          => "messageRefIdError.TimestampError"
   }
 }
 
@@ -240,7 +238,7 @@ object XMLErrors {
   implicit val format = Json.format[XMLErrors]
   def errorHandlerToXmlErrors(x:XmlErrorHandler) : XMLErrors = XMLErrors(x.fatalErrorsCollection ++ x.errorsCollection)
   implicit val xmlShows: Show[XMLErrors] = Show.show[XMLErrors](e =>
-    "ErrorCode: 50007 - The referenced file failed validation against the CbC XML Schema\n\n" + e.errors.mkString("\n")
+    "xmlError.header " + "\n\n " + e.errors.mkString("\n")
   )
 }
 

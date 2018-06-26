@@ -24,7 +24,7 @@ import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
 import cats.{Applicative, Functor}
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.i18n.{Lang, MessagesApi}
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
 import uk.gov.hmrc.cbcrfrontend.functorInstance
@@ -125,7 +125,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def extractDocTypeInidc(docType:String) : ValidBusinessResult[DocTypeIndic] =
     DocTypeIndic.fromString(docType).fold[ValidBusinessResult[DocTypeIndic]]{
       if(docType.matches(testData)) TestDataError.invalidNel
-      else InvalidXMLError(messagesApi("xmlError.InvalidDocType")).invalidNel}(
+      else InvalidXMLError("xmlValidationError.InvalidDocType").invalidNel}(
       _.validNel)
 
   private def extractCorrDocRefId(corrDocRefIdString:Option[String], parentGroupElement: ParentGroupElement) : ValidBusinessResult[Option[CorrDocRefId]] = {
@@ -151,7 +151,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def extractTIN(in:RawReportingEntity) : ValidBusinessResult[TIN] = TIN(in.tin,in.tinIssuedBy).validNel
 
   private def extractReportingRole(in:RawReportingEntity): ValidBusinessResult[ReportingRole] =
-    ReportingRole.parseFromString(in.reportingRole).toValidNel(InvalidXMLError(messagesApi("xmlError.ReportingRole")))
+    ReportingRole.parseFromString(in.reportingRole).toValidNel(InvalidXMLError(messagesApi("xmlValidationError.ReportingRole")))
 
   private def extractSendingEntityIn(in:RawMessageSpec): ValidBusinessResult[CBCId] = {
     CBCId(in.sendingEntityIn).fold[ValidBusinessResult[CBCId]](
@@ -171,7 +171,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
   private def extractReportingPeriod(in:RawMessageSpec)(implicit lang: Lang) : ValidBusinessResult[LocalDate] =
     Validated.catchNonFatal(LocalDate.parse(in.reportingPeriod))
-      .leftMap(_ => InvalidXMLError(messagesApi("xmlError.InvalidDate")(lang))).toValidatedNel
+      .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate")).toValidatedNel
 
   private def extractMessageRefID(in:RawMessageSpec) : ValidBusinessResult[MessageRefID] =
     MessageRefID(in.messageRefID).fold(
@@ -365,9 +365,9 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   /** Validate the TIN and TIN.issuedBy against the [[ReportingRole]] */
   private def validateTIN(tin:TIN, rr:ReportingRole) : ValidBusinessResult[TIN] = rr match {
     case CBC701 | CBC703 if !tin.issuedBy.equalsIgnoreCase("gb") =>
-      InvalidXMLError(messagesApi("xmlError.TINIssuedBy")).invalidNel
+      InvalidXMLError("xmlValidationError.TINIssuedBy").invalidNel
     case CBC701 | CBC703 if !Utr(tin.value).isValid              =>
-      InvalidXMLError(messagesApi("xmlError.InvalidTIN")).invalidNel
+      InvalidXMLError("xmlValidationError.InvalidTIN").invalidNel
     case _                                                       =>
       tin.validNel
   }
