@@ -24,7 +24,6 @@ import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
 import cats.{Applicative, Functor}
-import play.api.i18n.{Lang, MessagesApi}
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
 import uk.gov.hmrc.cbcrfrontend.functorInstance
@@ -63,8 +62,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
                                           reportingEntityDataService: ReportingEntityDataService,
                                           configuration: Configuration,
                                           runMode: RunMode,
-                                          creationDateService: CreationDateService,
-                                          messagesApi: MessagesApi
+                                          creationDateService: CreationDateService
                                          )(implicit ec:ExecutionContext, cache:CBCSessionCache) {
 
   private val testData = "OECD1[0123]"
@@ -151,7 +149,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def extractTIN(in:RawReportingEntity) : ValidBusinessResult[TIN] = TIN(in.tin,in.tinIssuedBy).validNel
 
   private def extractReportingRole(in:RawReportingEntity): ValidBusinessResult[ReportingRole] =
-    ReportingRole.parseFromString(in.reportingRole).toValidNel(InvalidXMLError(messagesApi("xmlValidationError.ReportingRole")))
+    ReportingRole.parseFromString(in.reportingRole).toValidNel(InvalidXMLError("xmlValidationError.ReportingRole"))
 
   private def extractSendingEntityIn(in:RawMessageSpec): ValidBusinessResult[CBCId] = {
     CBCId(in.sendingEntityIn).fold[ValidBusinessResult[CBCId]](
@@ -169,7 +167,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   private def extractReceivingCountry(in:RawMessageSpec) : ValidBusinessResult[String] =
     if(in.receivingCountry equalsIgnoreCase "GB") in.receivingCountry.validNel else ReceivingCountryError.invalidNel
 
-  private def extractReportingPeriod(in:RawMessageSpec)(implicit lang: Lang) : ValidBusinessResult[LocalDate] =
+  private def extractReportingPeriod(in:RawMessageSpec) : ValidBusinessResult[LocalDate] =
     Validated.catchNonFatal(LocalDate.parse(in.reportingPeriod))
       .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate")).toValidatedNel
 

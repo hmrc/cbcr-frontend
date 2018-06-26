@@ -31,17 +31,15 @@ import scala.concurrent.{Await, Future}
 import cats.instances.future._
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import org.mockito.Matchers.{eq => EQ, _}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.emailaddress.EmailAddress
-import play.api.{Configuration, Environment}
-import play.api.i18n.{Langs, MessagesApi}
+import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 import uk.gov.hmrc.http.HeaderCarrier
 
 /**
   * Created by max on 24/05/17.
   */
-class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with GuiceOneAppPerSuite{
+class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
 
   val messageRefIdService = mock[MessageRefIdService]
@@ -52,9 +50,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Guice
   val runMode = mock[RunMode]
   val creationDateService = mock[CreationDateService]
   implicit val cache: CBCSessionCache   = mock[CBCSessionCache]
-  implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
-  implicit val env                      = app.injector.instanceOf[Environment]
-  implicit val langs: Langs             = app.injector.instanceOf[Langs]
 
   val docRefId1 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
   val docRefId2 = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").getOrElse(fail("bad docrefid"))
@@ -123,7 +118,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Guice
     List.empty[String]
   )
 
-  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode,creationDateService, messagesApi)
+  val validator = new CBCBusinessRuleValidator(messageRefIdService,docRefIdService,subscriptionDataService,reportingEntity, configuration,runMode,creationDateService)
 
 
   "The CBCBusinessRuleValidator" should {
