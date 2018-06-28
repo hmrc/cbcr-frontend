@@ -260,9 +260,15 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     b.file
   }
 
+
+  private def fileUploadName(fname: String)(implicit lang: Lang) : String = {
+    messagesApi(fname)
+  }
+
+
   def getBusinessRuleErrors = Action.async{ implicit request =>
     authorised() {
-      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => errorsToFile(x.errors, "BusinessRuleErrors")
+      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors"))
       ).fold(
         NoContent
       )((file: File) =>
@@ -273,7 +279,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
   def getXmlSchemaErrors = Action.async{ implicit request =>
     authorised() {
-      OptionT(cache.readOption[XMLErrors]).map(x => errorsToFile(List(x), "XMLSchemaErrors")
+      OptionT(cache.readOption[XMLErrors]).map(x => errorsToFile(List(x), fileUploadName("fileUpload.XMLSchemaErrors"))
       ).fold(
         NoContent
       )((file: File) =>

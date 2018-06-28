@@ -342,3 +342,6 @@ messageRefIdError.ReportingPeriodMismatch=The ReportingPeriod element of the Mes
 messageRefIdError.TimestampError=The XML Creation Time stamp element is not a valid UTC date time
 
 xmlError.header=ErrorCode: 50007 - The referenced file failed validation against the CbC XML Schema
+
+fileUpload.BusinessRuleErrors=BusinessRuleErrors
+fileUpload.XMLSchemaErrors=XMLSchemaErrors
