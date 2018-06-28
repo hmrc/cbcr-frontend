@@ -24,7 +24,7 @@
 @import uk.gov.hmrc.auth.core.AffinityGroup.Agent
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @main_template(Messages("subscribeMatchFound.mainHeading")) {
     <div class="grid-row">

@@ -14,23 +14,21 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import helper._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@()(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+@(enableLanguageSwitching: Boolean)(implicit lang : Lang, messages: Messages)
 
-@main_template(Messages("notAuthorised.mainHeading"),
-    sessionTimeout=false) {
-
-    <div class="grid-row">
-        <div class="column-full">
-            <h1>@Messages("notAuthorised.mainHeading")</h1>
-            <p>@Messages("notAuthorised.message.start")</p>
+@if(enableLanguageSwitching) {
+    <div class="available-languages">
+    @if(lang==Lang("cy")) {
+        <div class="available-languages" style="float:right">
+            <a id="switch-to-english" href="@routes.LanguageController.switchToEnglish" >English</a> | Cymraeg
         </div>
+    } else {
+        <div class="available-languages" style="float:right">
+            English | <a id="switch-to-welsh" href="@routes.LanguageController.switchToWelsh" >Cymraeg</a>
+        </div>
+    }
     </div>
-    <p><a class="button" role="button" href="@routes.SharedController.signOutSurvey()">@Messages("notAuthorised.individual.button")</a></p>
+
 }
