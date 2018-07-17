@@ -211,6 +211,19 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         makeTheUserAnAgent
       }
 
+      "the Organisation user has a CBCId that does match that in the SendingEntityIn field on straight through journey" in {
+        makeTheUserAnOrganisation("XLCBC0100000056")
+
+        val validFile = new File("test/resources/cbcr-valid.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, None,Some(Organisation)), 5.seconds)
+        result.fold(
+          errors => fail(s"Errors were generated ${errors.toList}"),
+          _ => ()
+        )
+
+        makeTheUserAnAgent
+      }
+
       "the Organisation user has a CBCId that does not match that in the SendingEntityIn field" in {
         val cbcId3 = CBCId("XTCBC0100000001").getOrElse(fail("booo"))
         val enrol2 = CBCEnrolment(cbcId3,Utr("7000000002"))
