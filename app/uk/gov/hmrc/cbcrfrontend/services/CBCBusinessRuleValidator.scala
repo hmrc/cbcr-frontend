@@ -405,8 +405,12 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
         if (enrolment.cbcId.value == in.messageSpec.sendingEntityIn.value) in.validNel
         else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
       case (Some(Organisation), None) => cache.readOption[CBCId].map { (maybeCBCId: Option[CBCId]) =>
-        if (maybeCBCId == in.messageSpec.sendingEntityIn.value) in.validNel
-        else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
+        maybeCBCId match {
+          case Some(maybeCBCId) =>
+            if (maybeCBCId.value == in.messageSpec.sendingEntityIn.value) in.validNel
+            else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
+          case _ => SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
+        }
       }
       case (Some(Agent), _) => in.validNel
       case (None, _) => SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
