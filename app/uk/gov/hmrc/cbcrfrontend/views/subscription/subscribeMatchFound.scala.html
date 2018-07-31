@@ -56,10 +56,10 @@
 
             @userType match {
                 case Organisation => {
-                    <p><a class="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
+                    <p><a class="button" role="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
                 case Agent => {
-                    <p><a class="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
+                    <p><a class="button" role="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
             }
         </div>
