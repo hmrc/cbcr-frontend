@@ -92,17 +92,17 @@ else {
 
                 @if(reportingRole == Some(CBC701)){
                    @if(userType == Some(Organisation)){
-                        <p><a class="button" href="@routes.SubmissionController.submitterInfo" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                        <p><a class="button" role="button" href="@routes.SubmissionController.submitterInfo" id="btn-continue">@Messages("form.controls.continue")</a></p>
                     } else {
-                        <p><a class="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                        <p><a class="button" role="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
                     }
                 } else {
-                    <p><a class="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    <p><a class="button" role="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
                 }
 
             } else {
                 @errorFocus()
-                <a class="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@Messages("form.controls.finished")</a>
+                <a class="button" role="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@Messages("form.controls.finished")</a>
             }
     </div>
 }
