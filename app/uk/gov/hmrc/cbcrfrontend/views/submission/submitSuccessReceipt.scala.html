@@ -44,7 +44,7 @@
             <p>@Messages("submitSuccessReceipt.whatNext.info")</p>
             @if(userType == "Agent" && cacheCleared){<p><a href="@routes.FileUploadController.chooseXMLFile()">@Messages("submitSuccessReceipt.sendAnotherReport.link")</a></p>}
             <p>
-                <a class="button" href="@routes.SharedController.signOutSurvey()" id="btn-close">@Messages("form.controls.finished")</a>
+                <a class="button" role="button" href="@routes.SharedController.signOutSurvey()" id="btn-close">@Messages("form.controls.finished")</a>
             </p>
         </div>
     </div>

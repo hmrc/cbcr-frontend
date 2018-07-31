@@ -90,7 +90,7 @@ String.prototype.format = function () {
                     '<p id="timeout-message">' +
                     settings.message + ' <br /><span class="countdown" id="timeout-countdown" role="text">' + time.m + ' ' + settings.messageMinutes + '</span>' +
                     '</p>' +
-                    '<button id="timeout-keep-signin-btn" class="button">' + settings.keep_alive_button_text.format(settings.timeout / 60) + '</button>' +
+                    '<button id="timeout-keep-signin-btn" class="button" role="button">' + settings.keep_alive_button_text.format(settings.timeout / 60) + '</button>' +
                     '</div>' +
                     '<div id="timeout-overlay" class="timeout-overlay"></div>')
                     .appendTo('body');
