@@ -89,6 +89,8 @@ subscribeMatchFound.businessDetails.name=cy-UK-registered company or partnership
 subscribeMatchFound.businessDetails.postcode=cy-Postcode
 subscribeMatchFound.businessDetails.utr=cy-Unique Taxpayer Reference
 subscribeMatchFound.businessDetails.advice=cy-If these details aren''t correct, go back and enter a different Unique Taxpayer Reference and postcode.
+subscribeMatchFound.tableHeading1=cy-Company Details
+subscribeMatchFound.tableHeading2=cy-Value
 
 subscribeSuccessCbcId.mainHeading=cy-Registration successful
 subscribeSuccessCbcId.subHeading=cy-The country-by-country ID is
@@ -252,6 +254,7 @@ uploadReport.moreInfo=cy-If the report is ready to send, you can choose to send 
 uploadReport.inputField.label=cy-Choose the file you want to check:
 uploadReport.uploadButton=cy-Check report
 uploadReport.error=cy-You must select a file
+uploadReport.label=cy-Upload a file
 
 submitterInfo.mainHeading=cy-Enter your contact details, as the sender of the report
 submitterInfo.error.heading=cy-There is a problem
