@@ -26,6 +26,10 @@
     <div class="grid-row">
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-full">
+            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="0">
+                <h2 id="error-summary-heading" class="h2-heading"></h2>
+                <p id="file-input-error-summary"><strong><a id="file-input-error-link" href="#file-input"></a></strong></p>
+            </div>
             <h1>
                 @Messages("uploadReport.mainHeading")
             </h1>
@@ -50,5 +54,22 @@
         </div>
         </form>
     </div>
+
+    <script>
+        var form = document.getElementsByTagName('form')[0];
+        var error_header = document.getElementById('error-summary-heading');
+        var error_text = document.getElementById('file-input-error-link');
+        var error_summary = document.getElementById('error-summary-display');
+
+        form.addEventListener("submit", function() {
+            error_header.innerText = "@Messages("uploadReport.error.heading")";
+            error_text.innerText = "@Messages("uploadReport.error")";
+            error_summary.className += "flash error-summary error-summary--show";
+            window.setTimeout(function () {
+                error_summary.focus();
+            }, 0);
+        });
+
+    </script>
 
 }

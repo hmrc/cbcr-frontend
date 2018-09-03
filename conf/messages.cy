@@ -253,6 +253,7 @@ uploadReport.mainHeading=cy-Check the report
 uploadReport.moreInfo=cy-If the report is ready to send, you can choose to send it now or later.
 uploadReport.inputField.label=cy-Choose the file you want to check:
 uploadReport.uploadButton=cy-Check report
+uploadReport.error.heading=cy-There is a problem
 uploadReport.error=cy-You must select a file
 uploadReport.label=cy-Upload a file
 
