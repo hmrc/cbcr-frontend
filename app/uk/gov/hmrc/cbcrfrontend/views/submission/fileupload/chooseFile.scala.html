@@ -60,11 +60,13 @@
         var error_header = document.getElementById('error-summary-heading');
         var error_text = document.getElementById('file-input-error-link');
         var error_summary = document.getElementById('error-summary-display');
+        var title = document.title;
 
         form.addEventListener("submit", function() {
             error_header.innerText = "@Messages("uploadReport.error.heading")";
             error_text.innerText = "@Messages("uploadReport.error")";
             error_summary.className += "flash error-summary error-summary--show";
+            document.title = "Error: " + title
             window.setTimeout(function () {
                 error_summary.focus();
             }, 0);

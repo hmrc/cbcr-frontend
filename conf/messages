@@ -255,7 +255,7 @@ uploadReport.inputField.label=Choose the file you want to check:
 uploadReport.uploadButton=Check report
 uploadReport.error.heading=There is a problem
 uploadReport.error=You must select a file
-uploadReport.label=Upload a file
+uploadReport.label=Select a file
 
 submitterInfo.mainHeading=Enter your contact details, as the sender of the report
 submitterInfo.error.heading=There is a problem
