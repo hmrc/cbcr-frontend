@@ -89,6 +89,8 @@ subscribeMatchFound.businessDetails.name=UK-registered company or partnership
 subscribeMatchFound.businessDetails.postcode=Postcode
 subscribeMatchFound.businessDetails.utr=Unique Taxpayer Reference
 subscribeMatchFound.businessDetails.advice=If these details aren''t correct, go back and enter a different Unique Taxpayer Reference and postcode.
+subscribeMatchFound.tableHeading1=Company Details
+subscribeMatchFound.tableHeading2=Value
 
 subscribeSuccessCbcId.mainHeading=Registration successful
 subscribeSuccessCbcId.subHeading=The country-by-country ID is
@@ -207,6 +209,8 @@ fileUploadResult.error.data.message=Ask the person who created the XML file to c
 fileUploadResult.error.xml.link=XML error summary
 fileUploadResult.error.xml.message=Give it to your XML creator to correct the errors
 fileUploadResult.error.guidance=Check formatting guidance
+fileUploadResult.error.oecdUrl=Read the XML user guide
+fileUploadResult.error.oecdInfo=for the rules you must follow.
 
 fileUploadResult.error.FileTooLarge=The report is larger than 50MB. You''ll need to fix this issue before uploading it again.
 fileUploadResult.error.FileContainsVirus=The report has failed our anti-virus checks. You''ll need to fix this issue before uploading it again.
@@ -248,10 +252,14 @@ submitSummary.submit=Confirm and send report
 submitSummary.submitReport=Submit report
 
 uploadReport.mainHeading=Check the report
-uploadReport.moreInfo=If the report is ready to send, you can choose to send it now or later.
+uploadReport.moreInfo=This will check the report against 
+uploadReport.linkInfo=HMRC and OECD guidelines.
+uploadReport.andMoreInfo=Until you send the report, HMRC will not be able to access it.
 uploadReport.inputField.label=Choose the file you want to check:
 uploadReport.uploadButton=Check report
+uploadReport.error.heading=There is a problem
 uploadReport.error=You must select a file
+uploadReport.label=Select a file
 
 submitterInfo.mainHeading=Enter your contact details, as the sender of the report
 submitterInfo.error.heading=There is a problem

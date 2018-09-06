@@ -26,17 +26,19 @@
     <div class="grid-row">
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-full">
+            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="0">
+                <h2 id="error-summary-heading" class="h2-heading"></h2>
+                <p id="file-input-error-summary"><strong><a id="file-input-error-link" href="#file-input"></a></strong></p>
+            </div>
             <h1>
                 @Messages("uploadReport.mainHeading")
             </h1>
 
-            <p>
-                @Messages("uploadReport.moreInfo")
-            </p>
+            <p>@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
             <br/>
             <div class="form-group">
                 <div class="form-field-group">
-
+                    <label class="form-label" for=file-input">@Messages("uploadReport.label")</label>
                     <span id="@fileName-error-message" class="error-notification" role="alert" data-input-name="@fileName">
                     </span>
                     <input type="file" id="file-input" class="upload-report-input bordered-box column-two-thirds" name ="@fileName" accept=".xml" required
@@ -50,5 +52,24 @@
         </div>
         </form>
     </div>
+
+    <script>
+        var form = document.getElementsByTagName('form')[0];
+        var error_header = document.getElementById('error-summary-heading');
+        var error_text = document.getElementById('file-input-error-link');
+        var error_summary = document.getElementById('error-summary-display');
+        var title = document.title;
+
+        form.addEventListener("submit", function() {
+            error_header.innerText = "@Messages("uploadReport.error.heading")";
+            error_text.innerText = "@Messages("uploadReport.error")";
+            error_summary.className += "flash error-summary error-summary--show";
+            document.title = "Error: " + title
+            window.setTimeout(function () {
+                error_summary.focus();
+            }, 0);
+        });
+
+    </script>
 
 }
