@@ -21,6 +21,7 @@ import java.time.{Duration, LocalDateTime}
 import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
+import cats.data.EitherT
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
@@ -31,8 +32,8 @@ import play.api.libs.Files
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
-import uk.gov.hmrc.auth.core.AffinityGroup.{Individual, Organisation}
-import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
+import uk.gov.hmrc.auth.core.retrieve.{Retrievals, _}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
@@ -213,14 +214,14 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
         schemaSize     = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
         _             <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
         _             <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
-                         else auditFailedSubmission(creds, "schema validation errors").flatMap(_ =>
+                         else auditFailedSubmission(creds, affinity, enrolment, "schema validation errors").flatMap(_ =>
                            EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize)))
                          )
         result        <- validateBusinessRules(file_metadata, enrolment, affinity)
         businessSize   = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
         length         = calculateFileSize(file_metadata._2)
-        _             <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, "schema validation errors")
-                         else if (result.isLeft) auditFailedSubmission(creds, "business rules errors")
+        _             <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
+                         else if (result.isLeft) auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
                          else EitherT.pure[Future, CBCErrors, Unit](())
         _              = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
       } yield Ok(submission.fileupload.fileUploadResult(affinity, Some(file_metadata._2.name), Some(length), schemaSize, businessSize,  result.map(_.reportingEntity.reportingRole).toOption))
@@ -250,11 +251,17 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     Math.incrementExact(kb.toInt)
   }
 
+
+  private def errorsToString(e:List[ValidationErrors]) : String = {
+    val em = e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
+    em.map(_.toString).mkString("\r\n")
+  }
+
+
   private def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
     val b = Files.TemporaryFile(name, ".txt")
     val writer = new PrintWriter(b.file)
-    val em = e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
-    writer.write(em.map(_.toString).mkString("\r\n"))
+    writer.write(errorsToString(e))
     writer.flush()
     writer.close()
     b.file
@@ -293,8 +300,8 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   def fileContainsVirus = fileUploadError(FileContainsVirus)
 
   private def fileUploadError(errorType:FileUploadErrorType) = Action.async{ implicit request =>
-    authorised().retrieve(Retrievals.credentials) { creds =>
-      auditFailedSubmission(creds, errorType.toString).map(_ =>
+    authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) { case creds ~ affinity  ~ enrolment =>
+      auditFailedSubmission(creds, affinity, enrolment, errorType.toString).map(_ =>
         Ok(submission.fileupload.fileUploadError(errorType))
       ).leftMap(errorRedirect).merge
     }
@@ -340,16 +347,53 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       acc + (field.getName -> field.get(cc).toString)
     }
 
-  def auditFailedSubmission(creds: Credentials, reason:String)(implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
+
+  private def auditDetailAffinity(affinity: AffinityGroup, cbc: Option[CBCId],utr: Option[Utr]) : JsObject = {
+
+    affinity match {
+      case Organisation => Json.obj(
+        "affinity group" -> Json.toJson(affinity),
+        "utr"   -> JsString(utr.getOrElse("none retrieved").toString),
+        "cbcId" -> JsString(cbc.getOrElse("none retrieved").toString)
+      )
+      case Agent        => Json.obj("affinity group" -> Json.toJson(affinity))
+      case _            => Json.obj("affinity group" -> "none retrieved")
+    }
+  }
+
+
+  private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(implicit hc:HeaderCarrier) : JsObject = {
+    (all_errors._1.map(bre => bre.errors.nonEmpty), all_errors._2.map(xml => xml.errors.nonEmpty)) match {
+      case (Some(true), Some(true)) => Json.obj(
+        "business rule errors" -> JsString(errorsToString(all_errors._1.get.errors)),
+        "xml errors" -> JsString(errorsToString(List(all_errors._2.get)))
+      )
+      case (Some(true), Some(false)) => Json.obj("business rule errors" -> JsString(errorsToString(all_errors._1.get.errors)))
+      case (Some(false), Some(true)) => Json.obj("xml errors" -> JsString(errorsToString(List(all_errors._2.get))))
+      case _                         => Json.obj("none" -> "no business rule or schema errors")
+
+    }
+  }
+
+
+  def auditFailedSubmission(creds: Credentials,
+                            affinity: Option[AffinityGroup],
+                            enrolment: Option[CBCEnrolment],
+                            reason:String)(implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
     for {
-      md     <- right(cache.readOption[FileMetadata])
-      result <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
+      md        <- right(cache.readOption[FileMetadata])
+      all_error <- (right(cache.readOption[AllBusinessRuleErrors]) |@| right(cache.readOption[XMLErrors])).tupled
+      c         <- right(cache.readOption[CBCId])
+      cbcId     =  if(enrolment.isEmpty) c else Option(enrolment.get.cbcId)
+      u         <- right(cache.readOption[Utr])
+      utr       =  if(enrolment.isEmpty) u else Option(enrolment.get.utr)
+      result    <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
         detail = Json.obj(
-          "reason"        -> JsString(reason),
-          "path"          -> JsString(request.uri),
-          "file metadata" -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
-          "creds"         -> Json.toJson(creds)
-        )
+          "reason"       -> JsString(reason),
+          "path"                 -> JsString(request.uri),
+          "file metadata"        -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
+          "creds"                -> Json.toJson(creds)
+        ) ++ auditDetailAffinity(affinity.get, cbcId, utr) ++ auditDetailErrors(all_error)
       )).map {
         case AuditResult.Success => Right(AuditResult.Success)
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
@@ -357,5 +401,4 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       })
     } yield result
   }
-
 }
