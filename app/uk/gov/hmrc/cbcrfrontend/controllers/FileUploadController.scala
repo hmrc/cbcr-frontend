@@ -352,12 +352,12 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
     affinity match {
       case Organisation => Json.obj(
-        "affinity group" -> Json.toJson(affinity),
+        "affinityGroup" -> Json.toJson(affinity),
         "utr"   -> JsString(utr.getOrElse("none retrieved").toString),
         "cbcId" -> JsString(cbc.getOrElse("none retrieved").toString)
       )
-      case Agent        => Json.obj("affinity group" -> Json.toJson(affinity))
-      case _            => Json.obj("affinity group" -> "none retrieved")
+      case Agent        => Json.obj("affinityGroup" -> Json.toJson(affinity))
+      case _            => Json.obj("affinityGroup" -> "none retrieved")
     }
   }
 
@@ -365,11 +365,11 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(implicit hc:HeaderCarrier) : JsObject = {
     (all_errors._1.map(bre => bre.errors.nonEmpty), all_errors._2.map(xml => xml.errors.nonEmpty)) match {
       case (Some(true), Some(true)) => Json.obj(
-        "business rule errors" -> JsString(errorsToString(all_errors._1.get.errors)),
-        "xml errors" -> JsString(errorsToString(List(all_errors._2.get)))
+        "businessruleErrors" -> JsString(errorsToString(all_errors._1.get.errors)),
+        "xmlErrors" -> JsString(errorsToString(List(all_errors._2.get)))
       )
-      case (Some(true), Some(false)) => Json.obj("business rule errors" -> JsString(errorsToString(all_errors._1.get.errors)))
-      case (Some(false), Some(true)) => Json.obj("xml errors" -> JsString(errorsToString(List(all_errors._2.get))))
+      case (Some(true), Some(false)) => Json.obj("businessRuleErrors" -> "ERRORS") //JsString(errorsToString(all_errors._1.get.errors)))
+      case (Some(false), Some(true)) => Json.obj("xmlErrors" -> "ERRORS") //JsString(errorsToString(List(all_errors._2.get))))
       case _                         => Json.obj("none" -> "no business rule or schema errors")
 
     }
@@ -387,13 +387,17 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       cbcId     =  if(enrolment.isEmpty) c else Option(enrolment.get.cbcId)
       u         <- right(cache.readOption[Utr])
       utr       =  if(enrolment.isEmpty) u else Option(enrolment.get.utr)
+      affinityDetail = auditDetailAffinity(affinity.get, cbcId, utr)
+      errorDetail = auditDetailErrors(all_error)
+      auditDetail = Json.obj(
+        "reason"       -> JsString(reason),
+        "path"                 -> JsString(request.uri),
+        "file metadata"        -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
+        "creds"                -> Json.toJson(creds)
+      ) ++ affinityDetail ++ errorDetail
+      _ = Logger.warn(s"audit json = $auditDetail")
       result    <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
-        detail = Json.obj(
-          "reason"       -> JsString(reason),
-          "path"                 -> JsString(request.uri),
-          "file metadata"        -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
-          "creds"                -> Json.toJson(creds)
-        ) ++ auditDetailAffinity(affinity.get, cbcId, utr) ++ auditDetailErrors(all_error)
+        detail = auditDetail
       )).map {
         case AuditResult.Success => Right(AuditResult.Success)
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
