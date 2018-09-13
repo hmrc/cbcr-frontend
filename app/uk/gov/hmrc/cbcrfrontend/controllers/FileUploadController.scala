@@ -252,10 +252,16 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   }
 
 
-  private def errorsToString(e:List[ValidationErrors]) : String = {
-    val em = e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
-    em.map(_.toString).mkString("\r\n")
-  }
+  private def errorsToList(e:List[ValidationErrors]) : List[String] =
+    e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
+
+
+  private def errorsToMap(e:List[ValidationErrors]) : Map[String,String] =
+    (errorsToList(e) map {x => ("error_"+x.indexOf(x).toString, x)}).toMap
+
+
+  private def errorsToString(e:List[ValidationErrors]) : String =
+    errorsToList(e).map(_.toString).mkString("\r\n")
 
 
   private def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
@@ -365,11 +371,11 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(implicit hc:HeaderCarrier) : JsObject = {
     (all_errors._1.map(bre => bre.errors.nonEmpty), all_errors._2.map(xml => xml.errors.nonEmpty)) match {
       case (Some(true), Some(true)) => Json.obj(
-        "businessruleErrors" -> JsString(errorsToString(all_errors._1.get.errors)),
-        "xmlErrors" -> JsString(errorsToString(List(all_errors._2.get)))
+        "businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)),
+        "xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get)))
       )
-      case (Some(true), Some(false)) => Json.obj("businessRuleErrors" -> "ERRORS") //JsString(errorsToString(all_errors._1.get.errors)))
-      case (Some(false), Some(true)) => Json.obj("xmlErrors" -> "ERRORS") //JsString(errorsToString(List(all_errors._2.get))))
+      case (Some(true), Some(false)) => Json.obj("businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)))
+      case (Some(false), Some(true)) => Json.obj("xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get))))
       case _                         => Json.obj("none" -> "no business rule or schema errors")
 
     }
@@ -387,15 +393,15 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       cbcId     =  if(enrolment.isEmpty) c else Option(enrolment.get.cbcId)
       u         <- right(cache.readOption[Utr])
       utr       =  if(enrolment.isEmpty) u else Option(enrolment.get.utr)
-      affinityDetail = auditDetailAffinity(affinity.get, cbcId, utr)
-      errorDetail = auditDetailErrors(all_error)
       auditDetail = Json.obj(
         "reason"       -> JsString(reason),
         "path"                 -> JsString(request.uri),
         "file metadata"        -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
-        "creds"                -> Json.toJson(creds)
-      ) ++ affinityDetail ++ errorDetail
-      _ = Logger.warn(s"audit json = $auditDetail")
+        "creds"                -> Json.toJson(creds),
+        "registration"         -> auditDetailAffinity(affinity.get, cbcId, utr),
+        "errors"               -> auditDetailErrors(all_error),
+        "anOther"              -> "oops"
+      )
       result    <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
         detail = auditDetail
       )).map {
