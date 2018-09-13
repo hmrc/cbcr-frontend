@@ -399,8 +399,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
         "file metadata"        -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
         "creds"                -> Json.toJson(creds),
         "registration"         -> auditDetailAffinity(affinity.get, cbcId, utr),
-        "errors"               -> auditDetailErrors(all_error),
-        "anOther"              -> "oops"
+        "errors"               -> auditDetailErrors(all_error)
       )
       result    <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
         detail = auditDetail
