@@ -55,6 +55,7 @@ import scala.util.control.NonFatal
 import play.api.libs.json.Json
 
 import scala.concurrent.duration.{Duration => SDuration}
+import scala.concurrent.java8.FuturesConvertersImpl.P
 import scala.util.{Failure, Success}
 
 
@@ -257,7 +258,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
 
   private def errorsToMap(e:List[ValidationErrors]) : Map[String,String] =
-    (errorsToList(e) map {x => ("error_"+x.indexOf(x).toString, x)}).toMap
+    errorsToList(e).foldLeft(Map[String, String]()) {(m, t) => m + ("error_" + (m.size + 1).toString -> t)}
 
 
   private def errorsToString(e:List[ValidationErrors]) : String =
@@ -387,22 +388,21 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
                             enrolment: Option[CBCEnrolment],
                             reason:String)(implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
     for {
-      md        <- right(cache.readOption[FileMetadata])
-      all_error <- (right(cache.readOption[AllBusinessRuleErrors]) |@| right(cache.readOption[XMLErrors])).tupled
-      c         <- right(cache.readOption[CBCId])
-      cbcId     =  if(enrolment.isEmpty) c else Option(enrolment.get.cbcId)
-      u         <- right(cache.readOption[Utr])
-      utr       =  if(enrolment.isEmpty) u else Option(enrolment.get.utr)
-      auditDetail = Json.obj(
-        "reason"       -> JsString(reason),
-        "path"                 -> JsString(request.uri),
-        "file metadata"        -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
-        "creds"                -> Json.toJson(creds),
-        "registration"         -> auditDetailAffinity(affinity.get, cbcId, utr),
-        "errors"               -> auditDetailErrors(all_error)
-      )
+      md          <- right(cache.readOption[FileMetadata])
+      all_error   <- (right(cache.readOption[AllBusinessRuleErrors]) |@| right(cache.readOption[XMLErrors])).tupled
+      c           <- right(cache.readOption[CBCId])
+      cbcId       =  if(enrolment.isEmpty) c else Option(enrolment.get.cbcId)
+      u           <- right(cache.readOption[Utr])
+      utr         =  if(enrolment.isEmpty) u else Option(enrolment.get.utr)
       result    <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
-        detail = auditDetail
+        detail = Json.obj(
+          "reason"       -> JsString(reason),
+          "path"                 -> JsString(request.uri),
+          "file metadata"        -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
+          "creds"                -> Json.toJson(creds),
+          "registration"         -> auditDetailAffinity(affinity.get, cbcId, utr),
+          "errors"               -> auditDetailErrors(all_error)
+      )
       )).map {
         case AuditResult.Success => Right(AuditResult.Success)
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
