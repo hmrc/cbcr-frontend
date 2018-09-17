@@ -370,13 +370,13 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
 
   private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(implicit hc:HeaderCarrier) : JsObject = {
-    (all_errors._1.map(bre => bre.errors.nonEmpty), all_errors._2.map(xml => xml.errors.nonEmpty)) match {
-      case (Some(true), Some(true)) => Json.obj(
+    (all_errors._1.map(bre => bre.errors.nonEmpty).nonEmpty, all_errors._2.map(xml => xml.errors.nonEmpty).nonEmpty) match {
+      case (true, true) => Json.obj(
         "businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)),
         "xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get)))
       )
-      case (Some(true), Some(false)) => Json.obj("businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)))
-      case (Some(false), Some(true)) => Json.obj("xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get))))
+      case (true, false) => Json.obj("businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)))
+      case (false, true) => Json.obj("xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get))))
       case _                         => Json.obj("none" -> "no business rule or schema errors")
 
     }
