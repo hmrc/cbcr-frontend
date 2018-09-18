@@ -17,10 +17,11 @@
 @(isError:Boolean, name:String, errorMessage:Option[String], label:String, form:Form[_], formHint:Option[String]=None, inputType:Option[String]=Some("text"))
 
 <div class="form-group form-field @if(isError){form-field--error} else {form-field--tall}">
-        <label class="form-label" for="@name">@label</label>
+        <label class="form-label" for="@name">@label
         @if(formHint.isDefined){
-            <div class="form-hint">@formHint</div>
+            <span class="form-hint">@formHint</span>
         }
+        </label>
     @if(isError && errorMessage.isDefined) {
         @errorMessage.map(error => <span id={s"$name-error-notification"} class="error-notification">{error}</span>)
     }
