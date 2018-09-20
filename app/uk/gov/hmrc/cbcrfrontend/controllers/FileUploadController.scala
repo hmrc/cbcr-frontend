@@ -370,7 +370,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
 
   private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(implicit hc:HeaderCarrier) : JsObject = {
-    (all_errors._1.map(bre => bre.errors.nonEmpty).nonEmpty, all_errors._2.map(xml => xml.errors.nonEmpty).nonEmpty) match {
+    (all_errors._1.exists(bre => if(bre.errors.isEmpty) false else true), all_errors._2.exists(xml => if(xml.errors.isEmpty) false else true)) match {
       case (true, true) => Json.obj(
         "businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)),
         "xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get)))
@@ -394,7 +394,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       cbcId       =  if(enrolment.isEmpty) c else Option(enrolment.get.cbcId)
       u           <- right(cache.readOption[Utr])
       utr         =  if(enrolment.isEmpty) u else Option(enrolment.get.utr)
-      result    <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
+      result      <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
         detail = Json.obj(
           "reason"       -> JsString(reason),
           "path"                 -> JsString(request.uri),
