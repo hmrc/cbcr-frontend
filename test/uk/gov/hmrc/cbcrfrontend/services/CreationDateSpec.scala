@@ -69,6 +69,7 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
     CBCId.create(99).getOrElse(fail("booo")),
     LocalDateTime.now(),
     LocalDate.parse("2017-01-30"),
+    None,
     None
   )
 

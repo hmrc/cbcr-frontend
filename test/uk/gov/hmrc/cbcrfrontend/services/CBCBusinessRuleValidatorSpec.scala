@@ -109,6 +109,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   CBCId.create(99).getOrElse(fail("booo")),
   LocalDateTime.now(),
   LocalDate.parse("2017-01-30"),
+  None,
   None
   ),
   None,
@@ -859,6 +860,17 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
             _ => ()
           )
         }
+      }
+
+      "when the CorrMessageRefID included in MessageSpec" in {
+        val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInMessageSpec.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(CorrMessageRefIdNotAllowedInMessageSpec),
+          _ => fail("No CorrMessageRefIdNotAllowedInMessageSpec generated")
+        )
+
       }
     }
   }

@@ -82,6 +82,7 @@ case object ResentDataIsUnknownError extends BusinessRuleErrors
 case object MultipleCbcBodies extends BusinessRuleErrors
 case object CorrectedFileToOld extends BusinessRuleErrors
 case object ReportingEntityOrConstituentEntityEmpty extends BusinessRuleErrors
+case object CorrMessageRefIdNotAllowedInMessageSpec extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
@@ -135,6 +136,7 @@ object BusinessRuleErrors {
       case MultipleCbcBodies         => JsString(MultipleCbcBodies.toString)
       case CorrectedFileToOld        => JsString(CorrectedFileToOld.toString)
       case ReportingEntityOrConstituentEntityEmpty => JsString(ReportingEntityOrConstituentEntityEmpty.toString)
+      case CorrMessageRefIdNotAllowedInMessageSpec => JsString(CorrMessageRefIdNotAllowedInMessageSpec.toString)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -171,6 +173,7 @@ object BusinessRuleErrors {
           case Some(ci"resentdataisunknownerror")   => JsSuccess(ResentDataIsUnknownError)
           case Some(ci"correctedfiletoold")         => JsSuccess(CorrectedFileToOld)
           case Some(ci"reportingentityorconstituententityempty") => JsSuccess(ReportingEntityOrConstituentEntityEmpty)
+          case Some(ci"corrmessagerefidnotallowedinmessagespec") => JsSuccess(CorrMessageRefIdNotAllowedInMessageSpec)
           case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -206,6 +209,7 @@ object BusinessRuleErrors {
     case CorrectedFileToOld    => "error.CorrectedFileToOld"
     case ReportingEntityOrConstituentEntityEmpty => "error.ReportingEntityOrConstituentEntityEmpty"
     case i:InvalidXMLError     => i.toString
+    case CorrMessageRefIdNotAllowedInMessageSpec => "error.CorrMessageRefIdNotAllowedInMessageSpec"
   }
 }
 

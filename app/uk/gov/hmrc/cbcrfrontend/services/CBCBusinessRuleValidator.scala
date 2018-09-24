@@ -100,7 +100,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
           sendingEntityIn,
           messageRefID.creationTimestamp,
           reportingPeriod,
-          messageTypeInic
+          messageTypeInic,
+          in.corrMessageRefId
         )
     )
 
@@ -193,6 +194,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   /** Top level validation methods */
   private def validateXMLInfo(x:XMLInfo, fileName:String, enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
     validateMessageRefIdD(x.messageSpec) *>
+    validateCorrMessageRefIdD(x.messageSpec) *>
     validateReportingEntity(x) *>
     validateMessageTypes(x) *>
     validateDocSpecs(x) *>
@@ -466,6 +468,15 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       xmlInfo.validNel
     }
 
+  }
+
+  private def validateCorrMessageRefIdD(messageSpec: MessageSpec)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[MessageSpec] = {
+    validateCorrMsgRefIdNotInMessageSpec(messageSpec)
+  }
+
+  private def validateCorrMsgRefIdNotInMessageSpec(messageSpec: MessageSpec)(implicit hc:HeaderCarrier) : ValidBusinessResult[MessageSpec] = {
+    if(messageSpec.corrMessageRefId.isDefined) CorrMessageRefIdNotAllowedInMessageSpec.invalidNel
+    else messageSpec.validNel
   }
 
   def validateBusinessRules(in: RawXMLInfo, fileName: String, enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =

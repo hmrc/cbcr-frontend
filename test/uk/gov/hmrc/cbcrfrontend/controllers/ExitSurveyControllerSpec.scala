@@ -77,6 +77,7 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
         CBCId.create(99).getOrElse(fail("booo")),
         LocalDateTime.now(),
         LocalDate.parse("2017-01-30"),
+        None,
         None
       ),
       Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),TIN("7000000002","GB"),"name")),

@@ -111,7 +111,8 @@ class XmlInfoExtract {
       val timestamp        = (ms \ "Timestamp").text
       val msgType          = (ms \ "MessageTypeIndic").textOption
       val reportingPeriod  = (ms \ "ReportingPeriod").text
-      RawMessageSpec(msgRefId,receivingCountry,sendingEntityIn,timestamp,reportingPeriod,msgType)
+      val corrMsgRefId     = (ms \ "CorrMessageRefId").textOption
+      RawMessageSpec(msgRefId,receivingCountry,sendingEntityIn,timestamp,reportingPeriod,msgType,corrMsgRefId)
     }
 
     case List("CBC_OECD", "CbcBody", "ReportingEntity") => re => {
@@ -150,7 +151,7 @@ class XmlInfoExtract {
 
     val xe = extractEncoding(file)
     val cv = extractCbcVal(file)
-    val ms = collectedData._1.collectFirst{ case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","","",None))
+    val ms = collectedData._1.collectFirst{ case ms:RawMessageSpec => ms}.getOrElse(RawMessageSpec("","","","","",None,None))
     val re = collectedData._1.collectFirst{ case re:RawReportingEntity => re}
     val ai = collectedData._1.collect{ case ai:RawAdditionalInfo => ai}
     val cr = collectedData._1.collect{ case cr:RawCbcReports=> cr }

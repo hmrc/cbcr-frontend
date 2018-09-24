@@ -10,7 +10,6 @@
         <ns1:Contact>Contact ABCCorp</ns1:Contact>
         <ns1:MessageRefId>GB2016RGXLCBC0100000056CBC40120170311T090000X</ns1:MessageRefId>
         <ns1:MessageTypeIndic>CBC401</ns1:MessageTypeIndic>
-        <ns1:CorrMessageRefId>String_CorrectionMessageRefId</ns1:CorrMessageRefId>
         <ns1:ReportingPeriod>2017-03-31</ns1:ReportingPeriod>
         <ns1:Timestamp>2016-11-01T15:00:00</ns1:Timestamp>
     </ns1:MessageSpec>
