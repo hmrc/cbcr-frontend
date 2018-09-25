@@ -336,6 +336,7 @@ error.MultipleCbcBodies=File contains multiple occurrences of CbcBody: Only 1 oc
 error.CorrectedFileToOld=Corrections only allowed up to 3 years after the initial submission date for the Reporting Period
 error.ReportingEntityOrConstituentEntityEmpty=Organisation Name: The Name of the Reporting Entity or Constituent Entity cannot be an empty string
 error.CorrMessageRefIdNotAllowedInMessageSpec=The CorrMessageRefID element must not be provided in the MessageSpec
+error.CorrMessageRefIdNotAllowedInDocSpec=The CorrMessageRefID element must not be provided in the DocSpec
 
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid

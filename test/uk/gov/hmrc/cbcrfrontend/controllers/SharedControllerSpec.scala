@@ -85,9 +85,9 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
         None,
         None
       ),
-      Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None),TIN("7000000002","GB"),"name")),
-      List(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None))),
-      Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None))),
+      Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None,None),TIN("7000000002","GB"),"name")),
+      List(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None,None))),
+      Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None,None))),
       Some(LocalDate.now()),
       List.empty[String]
     )

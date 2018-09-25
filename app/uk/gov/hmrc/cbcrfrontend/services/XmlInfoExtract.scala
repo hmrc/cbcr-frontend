@@ -48,7 +48,8 @@ class XmlInfoExtract {
     val docType = (e \ "DocTypeIndic").text
     val docRefId = (e \ "DocRefId").text
     val corrDocRefId = (e \ "CorrDocRefId").textOption
-    RawDocSpec(docType, docRefId, corrDocRefId)
+    val corrMessageRefId = (e \ "CorrMessageRefId").textOption
+    RawDocSpec(docType, docRefId, corrDocRefId, corrMessageRefId)
   }
 
   // sorry but speed

@@ -76,8 +76,8 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
   val xmlinfo = XMLInfo(
     messageSpec,
     None,
-    List(CbcReports(DocSpec(OECD2,DocRefId(docRefId + "ENT").get,Some(CorrDocRefId(actualDocRefId))))),
-    Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None))),
+    List(CbcReports(DocSpec(OECD2,DocRefId(docRefId + "ENT").get,Some(CorrDocRefId(actualDocRefId)),None))),
+    Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
     Some(LocalDate.now()),
     List.empty[String]
   )

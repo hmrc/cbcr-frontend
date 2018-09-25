@@ -32,7 +32,7 @@ sealed trait RawXmlFields extends Product with Serializable
 case object RawBody extends RawXmlFields
 case class RawAdditionalInfo(docSpec: RawDocSpec) extends RawXmlFields
 case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
-case class RawDocSpec(docType:String, docRefId:String, corrDocRefId:Option[String]) extends RawXmlFields
+case class RawDocSpec(docType:String, docRefId:String, corrDocRefId:Option[String], corrMessageRefId:Option[String]) extends RawXmlFields
 case class RawCbcVal(cbcVer:String) extends RawXmlFields
 case class RawConstEntityName(name:String) extends RawXmlFields
 case class RawXmlEncodingVal(xmlEncodingVal: String) extends RawXmlFields
@@ -111,7 +111,7 @@ object CorrDocRefId {
   }
 }
 
-case class DocSpec(docType:DocTypeIndic, docRefId:DocRefId, corrDocRefId:Option[CorrDocRefId])
+case class DocSpec(docType:DocTypeIndic, docRefId:DocRefId, corrDocRefId:Option[CorrDocRefId], corrMessageRefId:Option[String])
 object DocSpec { implicit val format = Json.format[DocSpec] }
 
 case class AdditionalInfo(docSpec: DocSpec)

@@ -113,8 +113,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   None
   ),
   None,
-  List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
-  Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None))),
+  List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None,None))),
+  Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
     Some(LocalDate.now()),
     List.empty[String]
   )
@@ -862,6 +862,17 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         }
       }
 
+      "when the CorrMessageRefID not in MessageSpec or DocSpec" in {
+        val validFile = new File("test/resources/cbcr-valid.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => fail(s"Error were generated: $errors"),
+          _ => ()
+        )
+
+      }
+
       "when the CorrMessageRefID included in MessageSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInMessageSpec.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
@@ -869,6 +880,62 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         result.fold(
           errors => errors.toList should contain(CorrMessageRefIdNotAllowedInMessageSpec),
           _ => fail("No CorrMessageRefIdNotAllowedInMessageSpec generated")
+        )
+
+      }
+
+      "when the CorrMessageRefID included in ReportingEntity DocSpec" in {
+        val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInReportingEntity.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(CorrMessageRefIdNotAllowedInDocSpec),
+          _ => fail("No CorrMessageRefIdNotAllowedInDocSpec generated")
+        )
+
+      }
+
+      "when the CorrMessageRefID included in CbcReports DocSpec" in {
+        val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInCbcReports.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(CorrMessageRefIdNotAllowedInDocSpec),
+          _ => fail("No CorrMessageRefIdNotAllowedInDocSpec generated")
+        )
+
+      }
+
+      "when the CorrMessageRefID included in AdditionalInfo DocSpec" in {
+        val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInAdditionalInfo.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(CorrMessageRefIdNotAllowedInDocSpec),
+          _ => fail("No CorrMessageRefIdNotAllowedInDocSpec generated")
+        )
+
+      }
+
+      "when the CorrMessageRefID included in AdditionalInfo DocSpec and CbcReports DocSpec and ReportingEntity DocSpec" in {
+        val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInAllDocSpec.xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(CorrMessageRefIdNotAllowedInDocSpec),
+          _ => fail("No CorrMessageRefIdNotAllowedInDocSpec generated")
+        )
+
+      }
+
+      "when the CorrMessageRefID included in both MesageSpec and DocSpec" in {
+        val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInMsgSpecDocSpec" +
+          ".xml")
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain allOf (CorrMessageRefIdNotAllowedInMessageSpec, CorrMessageRefIdNotAllowedInDocSpec),
+          _ => fail("CorrMessageRefIdNotAllowedInMessageSpec and CorrMessageRefIdNotAllowedInDocSpec messages not generated")
         )
 
       }

@@ -134,14 +134,14 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       None,
       None
     ),
-    Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),TIN("7000000002","gb"),"name")),
-    List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
-    Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None))),
+    Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None,None),TIN("7000000002","gb"),"name")),
+    List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None,None))),
+    Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
     Some(LocalDate.now()),
     List.empty[String]
   )
 
-  val completeXmlInfo = CompleteXMLInfo(xmlinfo,ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),TIN("7000000002","gb"),"name"))
+  val completeXmlInfo = CompleteXMLInfo(xmlinfo,ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None,None),TIN("7000000002","gb"),"name"))
 
   def right[A](a:Future[A]) : ServiceResponse[A] = EitherT.right[Future,CBCErrors, A](a)
   def left[A](s:String) : ServiceResponse[A] = EitherT.left[Future,CBCErrors, A](UnexpectedState(s))
