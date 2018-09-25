@@ -82,6 +82,8 @@ case object ResentDataIsUnknownError extends BusinessRuleErrors
 case object MultipleCbcBodies extends BusinessRuleErrors
 case object CorrectedFileToOld extends BusinessRuleErrors
 case object ReportingEntityOrConstituentEntityEmpty extends BusinessRuleErrors
+case object CorrMessageRefIdNotAllowedInMessageSpec extends BusinessRuleErrors
+case object CorrMessageRefIdNotAllowedInDocSpec extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
@@ -107,34 +109,36 @@ object ValidationErrors {
 object BusinessRuleErrors {
   implicit val format = new Format[BusinessRuleErrors] {
     override def writes(o: BusinessRuleErrors): JsValue = o match {
-      case m:MessageRefIDError       => Json.toJson[MessageRefIDError](m)(MessageRefIDError.format)
-      case TestDataError             => JsString(TestDataError.toString)
-      case SendingEntityError        => JsString(SendingEntityError.toString)
-      case SendingEntityOrganisationMatchError        => JsString(SendingEntityOrganisationMatchError.toString)
-      case ReceivingCountryError     => JsString(ReceivingCountryError.toString)
-      case fne:FileNameError         => Json.toJson(fne)
-      case MessageTypeIndicError     => JsString(MessageTypeIndicError.toString)
-      case m:InvalidXMLError         => JsString(m.toString)
-      case InvalidDocRefId           => JsString(InvalidDocRefId.toString)
-      case InvalidCorrDocRefId       => JsString(InvalidCorrDocRefId.toString)
-      case CorrDocRefIdInvalidRecord => JsString(CorrDocRefIdInvalidRecord.toString)
-      case CorrDocRefIdUnknownRecord => JsString(CorrDocRefIdUnknownRecord.toString)
-      case DocRefIdDuplicate         => JsString(DocRefIdDuplicate.toString)
-      case DocRefIdInvalidParentGroupElement => JsString(DocRefIdInvalidParentGroupElement.toString)
-      case CorrDocRefIdInvalidParentGroupElement => JsString(CorrDocRefIdInvalidParentGroupElement.toString)
-      case CorrDocRefIdMissing       => JsString(CorrDocRefIdMissing.toString)
-      case CorrDocRefIdNotNeeded     => JsString(CorrDocRefIdNotNeeded.toString)
-      case CorrDocRefIdDuplicate     => JsString(CorrDocRefIdDuplicate.toString)
-      case IncompatibleOECDTypes     => JsString(IncompatibleOECDTypes.toString)
-      case MessageTypeIndicDocTypeIncompatible => JsString(MessageTypeIndicDocTypeIncompatible.toString)
-      case CbcOecdVersionError       => JsString(CbcOecdVersionError.toString)
-      case XmlEncodingError           => JsString(XmlEncodingError.toString)
-      case OriginalSubmissionNotFound => JsString(OriginalSubmissionNotFound.toString)
-      case PrivateBetaCBCIdError     => JsString(PrivateBetaCBCIdError.toString)
-      case ResentDataIsUnknownError => JsString(ResentDataIsUnknownError.toString)
-      case MultipleCbcBodies         => JsString(MultipleCbcBodies.toString)
-      case CorrectedFileToOld        => JsString(CorrectedFileToOld.toString)
-      case ReportingEntityOrConstituentEntityEmpty => JsString(ReportingEntityOrConstituentEntityEmpty.toString)
+      case m:MessageRefIDError                      => Json.toJson[MessageRefIDError](m)(MessageRefIDError.format)
+      case TestDataError                            => JsString(TestDataError.toString)
+      case SendingEntityError                       => JsString(SendingEntityError.toString)
+      case SendingEntityOrganisationMatchError      => JsString(SendingEntityOrganisationMatchError.toString)
+      case ReceivingCountryError                    => JsString(ReceivingCountryError.toString)
+      case fne:FileNameError                        => Json.toJson(fne)
+      case MessageTypeIndicError                    => JsString(MessageTypeIndicError.toString)
+      case m:InvalidXMLError                        => JsString(m.toString)
+      case InvalidDocRefId                          => JsString(InvalidDocRefId.toString)
+      case InvalidCorrDocRefId                      => JsString(InvalidCorrDocRefId.toString)
+      case CorrDocRefIdInvalidRecord                => JsString(CorrDocRefIdInvalidRecord.toString)
+      case CorrDocRefIdUnknownRecord                => JsString(CorrDocRefIdUnknownRecord.toString)
+      case DocRefIdDuplicate                        => JsString(DocRefIdDuplicate.toString)
+      case DocRefIdInvalidParentGroupElement        => JsString(DocRefIdInvalidParentGroupElement.toString)
+      case CorrDocRefIdInvalidParentGroupElement    => JsString(CorrDocRefIdInvalidParentGroupElement.toString)
+      case CorrDocRefIdMissing                      => JsString(CorrDocRefIdMissing.toString)
+      case CorrDocRefIdNotNeeded                    => JsString(CorrDocRefIdNotNeeded.toString)
+      case CorrDocRefIdDuplicate                    => JsString(CorrDocRefIdDuplicate.toString)
+      case IncompatibleOECDTypes                    => JsString(IncompatibleOECDTypes.toString)
+      case MessageTypeIndicDocTypeIncompatible      => JsString(MessageTypeIndicDocTypeIncompatible.toString)
+      case CbcOecdVersionError                      => JsString(CbcOecdVersionError.toString)
+      case XmlEncodingError                         => JsString(XmlEncodingError.toString)
+      case OriginalSubmissionNotFound               => JsString(OriginalSubmissionNotFound.toString)
+      case PrivateBetaCBCIdError                    => JsString(PrivateBetaCBCIdError.toString)
+      case ResentDataIsUnknownError                 => JsString(ResentDataIsUnknownError.toString)
+      case MultipleCbcBodies                        => JsString(MultipleCbcBodies.toString)
+      case CorrectedFileToOld                       => JsString(CorrectedFileToOld.toString)
+      case ReportingEntityOrConstituentEntityEmpty  => JsString(ReportingEntityOrConstituentEntityEmpty.toString)
+      case CorrMessageRefIdNotAllowedInMessageSpec  => JsString(CorrMessageRefIdNotAllowedInMessageSpec.toString)
+      case CorrMessageRefIdNotAllowedInDocSpec      => JsString(CorrMessageRefIdNotAllowedInDocSpec.toString)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -171,6 +175,8 @@ object BusinessRuleErrors {
           case Some(ci"resentdataisunknownerror")   => JsSuccess(ResentDataIsUnknownError)
           case Some(ci"correctedfiletoold")         => JsSuccess(CorrectedFileToOld)
           case Some(ci"reportingentityorconstituententityempty") => JsSuccess(ReportingEntityOrConstituentEntityEmpty)
+          case Some(ci"corrmessagerefidnotallowedinmessagespec") => JsSuccess(CorrMessageRefIdNotAllowedInMessageSpec)
+          case Some(ci"corrmessagerefidnotallowedindocspec") => JsSuccess(CorrMessageRefIdNotAllowedInDocSpec)
           case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -206,6 +212,9 @@ object BusinessRuleErrors {
     case CorrectedFileToOld    => "error.CorrectedFileToOld"
     case ReportingEntityOrConstituentEntityEmpty => "error.ReportingEntityOrConstituentEntityEmpty"
     case i:InvalidXMLError     => i.toString
+    case CorrMessageRefIdNotAllowedInMessageSpec => "error.CorrMessageRefIdNotAllowedInMessageSpec"
+    case CorrMessageRefIdNotAllowedInDocSpec => "error.CorrMessageRefIdNotAllowedInDocSpec"
+
   }
 }
 
