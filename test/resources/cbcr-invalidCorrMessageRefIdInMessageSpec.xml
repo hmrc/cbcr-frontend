@@ -9,6 +9,7 @@
         <ns1:Warning>String_Warning</ns1:Warning>
         <ns1:Contact>Contact ABCCorp</ns1:Contact>
         <ns1:MessageRefId>GB2016RGXLCBC0100000056CBC40120170311T090000X</ns1:MessageRefId>
+        <ns1:CorrMessageRefId>String_CorrectionMessageRefId</ns1:CorrMessageRefId>
         <ns1:MessageTypeIndic>CBC401</ns1:MessageTypeIndic>
         <ns1:ReportingPeriod>2016-03-31</ns1:ReportingPeriod>
         <ns1:Timestamp>2016-11-01T15:00:00</ns1:Timestamp>
@@ -17,7 +18,7 @@
         <ns1:ReportingEntity>
             <ns1:Entity>
                 <ns1:ResCountryCode>GB</ns1:ResCountryCode>
-                <ns1:TIN issuedBy="HK">7000000002</ns1:TIN>
+                <ns1:TIN issuedBy="GB">7000000002</ns1:TIN>
                 <ns1:IN INType="2001" issuedBy="GB">TEST</ns1:IN>
                 <ns1:Name>ABCCorp</ns1:Name>
                 <ns1:Address legalAddressType="OECD303">
@@ -25,7 +26,7 @@
                     <ns1:AddressFree>Free Text</ns1:AddressFree>
                 </ns1:Address>
             </ns1:Entity>
-            <ns1:ReportingRole>CBC701</ns1:ReportingRole>
+            <ns1:ReportingRole>CBC703</ns1:ReportingRole>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT</ns2:DocRefId>
@@ -56,7 +57,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>asdlfkj</ns1:Name>
+                    <ns1:Name>name</ns1:Name>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -92,7 +93,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>asdf</ns1:Name>
+                    <ns1:Name>I am not empty</ns1:Name>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -128,7 +129,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>asdlfkj</ns1:Name>
+                    <ns1:Name>Name</ns1:Name>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -164,7 +165,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>asdf</ns1:Name>
+                    <ns1:Name>constEntityName</ns1:Name>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
