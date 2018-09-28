@@ -21,18 +21,19 @@ import java.time.{Duration, LocalDateTime}
 import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
+import cats.data.EitherT
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
 import org.joda.time.Period
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, Lang, MessagesApi}
 import play.api.i18n.Messages.Implicits._
 import play.api.libs.Files
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
-import uk.gov.hmrc.auth.core.AffinityGroup.{Individual, Organisation}
-import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
+import uk.gov.hmrc.auth.core.retrieve.{Retrievals, _}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
@@ -54,6 +55,7 @@ import scala.util.control.NonFatal
 import play.api.libs.json.Json
 
 import scala.concurrent.duration.{Duration => SDuration}
+import scala.concurrent.java8.FuturesConvertersImpl.P
 import scala.util.{Failure, Success}
 
 
@@ -171,13 +173,13 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
   } yield metadata
 
-  def validateBusinessRules(file_metadata:(File,FileMetadata))(implicit hc:HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors],CompleteXMLInfo]] = {
+  def validateBusinessRules(file_metadata:(File,FileMetadata), enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc:HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors],CompleteXMLInfo]] = {
     val startValidation = LocalDateTime.now()
 
     val rawXmlInfo  = xmlExtractor.extract(file_metadata._1)
 
     val result = for {
-      xmlInfo         <- EitherT(businessRuleValidator.validateBusinessRules(rawXmlInfo, file_metadata._2.name).map(_.toEither))
+      xmlInfo         <- EitherT(businessRuleValidator.validateBusinessRules(rawXmlInfo, file_metadata._2.name, enrolment, affinityGroup).map(_.toEither))
       completeXI      <- EitherT(businessRuleValidator.recoverReportingEntity(xmlInfo).map(_.toEither))
     } yield completeXI
 
@@ -202,7 +204,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
 
   def fileValidate(envelopeId: String, fileId: String) = Action.async { implicit request =>
-    authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { case creds ~ affinity =>
+    authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) { case creds ~ affinity ~ enrolment =>
 
       val result = for {
         file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
@@ -213,14 +215,14 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
         schemaSize     = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
         _             <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
         _             <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
-                         else auditFailedSubmission(creds, "schema validation errors").flatMap(_ =>
+                         else auditFailedSubmission(creds, affinity, enrolment, "schema validation errors").flatMap(_ =>
                            EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize)))
                          )
-        result        <- validateBusinessRules(file_metadata)
+        result        <- validateBusinessRules(file_metadata, enrolment, affinity)
         businessSize   = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
         length         = calculateFileSize(file_metadata._2)
-        _             <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, "schema validation errors")
-                         else if (result.isLeft) auditFailedSubmission(creds, "business rules errors")
+        _             <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
+                         else if (result.isLeft) auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
                          else EitherT.pure[Future, CBCErrors, Unit](())
         _              = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
       } yield Ok(submission.fileupload.fileUploadResult(affinity, Some(file_metadata._2.name), Some(length), schemaSize, businessSize,  result.map(_.reportingEntity.reportingRole).toOption))
@@ -250,18 +252,37 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     Math.incrementExact(kb.toInt)
   }
 
-  private def errorsToFile(e:List[ValidationErrors], name:String) : File = {
+
+  private def errorsToList(e:List[ValidationErrors]) : List[String] =
+    e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
+
+
+  private def errorsToMap(e:List[ValidationErrors]) : Map[String,String] =
+    errorsToList(e).foldLeft(Map[String, String]()) {(m, t) => m + ("error_" + (m.size + 1).toString -> t)}
+
+
+  private def errorsToString(e:List[ValidationErrors]) : String =
+    errorsToList(e).map(_.toString).mkString("\r\n")
+
+
+  private def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
     val b = Files.TemporaryFile(name, ".txt")
     val writer = new PrintWriter(b.file)
-    writer.write(e.map(_.show).mkString("\r\n"))
+    writer.write(errorsToString(e))
     writer.flush()
     writer.close()
     b.file
   }
 
+
+  private def fileUploadName(fname: String)(implicit lang: Lang) : String = {
+    messagesApi(fname)
+  }
+
+
   def getBusinessRuleErrors = Action.async{ implicit request =>
     authorised() {
-      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => errorsToFile(x.errors, "BusinessRuleErrors")
+      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors"))
       ).fold(
         NoContent
       )((file: File) =>
@@ -272,7 +293,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
   def getXmlSchemaErrors = Action.async{ implicit request =>
     authorised() {
-      OptionT(cache.readOption[XMLErrors]).map(x => errorsToFile(List(x), "XMLSchemaErrors")
+      OptionT(cache.readOption[XMLErrors]).map(x => errorsToFile(List(x), fileUploadName("fileUpload.XMLSchemaErrors"))
       ).fold(
         NoContent
       )((file: File) =>
@@ -286,8 +307,8 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   def fileContainsVirus = fileUploadError(FileContainsVirus)
 
   private def fileUploadError(errorType:FileUploadErrorType) = Action.async{ implicit request =>
-    authorised().retrieve(Retrievals.credentials) { creds =>
-      auditFailedSubmission(creds, errorType.toString).map(_ =>
+    authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) { case creds ~ affinity  ~ enrolment =>
+      auditFailedSubmission(creds, affinity, enrolment, errorType.toString).map(_ =>
         Ok(submission.fileupload.fileUploadError(errorType))
       ).leftMap(errorRedirect).merge
     }
@@ -333,16 +354,55 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       acc + (field.getName -> field.get(cc).toString)
     }
 
-  def auditFailedSubmission(creds: Credentials, reason:String)(implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
+
+  private def auditDetailAffinity(affinity: AffinityGroup, cbc: Option[CBCId],utr: Option[Utr]) : JsObject = {
+
+    affinity match {
+      case Organisation => Json.obj(
+        "affinityGroup" -> Json.toJson(affinity),
+        "utr"   -> JsString(utr.getOrElse("none retrieved").toString),
+        "cbcId" -> JsString(cbc.getOrElse("none retrieved").toString)
+      )
+      case Agent        => Json.obj("affinityGroup" -> Json.toJson(affinity))
+      case _            => Json.obj("affinityGroup" -> "none retrieved")
+    }
+  }
+
+
+  private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(implicit hc:HeaderCarrier) : JsObject = {
+    (all_errors._1.exists(bre => if(bre.errors.isEmpty) false else true), all_errors._2.exists(xml => if(xml.errors.isEmpty) false else true)) match {
+      case (true, true) => Json.obj(
+        "businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)),
+        "xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get)))
+      )
+      case (true, false) => Json.obj("businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)))
+      case (false, true) => Json.obj("xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get))))
+      case _                         => Json.obj("none" -> "no business rule or schema errors")
+
+    }
+  }
+
+
+  def auditFailedSubmission(creds: Credentials,
+                            affinity: Option[AffinityGroup],
+                            enrolment: Option[CBCEnrolment],
+                            reason:String)(implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] = {
     for {
-      md     <- right(cache.readOption[FileMetadata])
-      result <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
+      md          <- right(cache.readOption[FileMetadata])
+      all_error   <- (right(cache.readOption[AllBusinessRuleErrors]) |@| right(cache.readOption[XMLErrors])).tupled
+      c           <- right(cache.readOption[CBCId])
+      cbcId       =  if(enrolment.isEmpty) c else Option(enrolment.get.cbcId)
+      u           <- right(cache.readOption[Utr])
+      utr         =  if(enrolment.isEmpty) u else Option(enrolment.get.utr)
+      result      <- eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingFailed",
         detail = Json.obj(
-          "reason"        -> JsString(reason),
-          "path"          -> JsString(request.uri),
-          "file metadata" -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
-          "creds"         -> Json.toJson(creds)
-        )
+          "reason"               -> JsString(reason),
+          "path"                 -> JsString(request.uri),
+          "file metadata"        -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String,String])),
+          "creds"                -> Json.toJson(creds),
+          "registration"         -> auditDetailAffinity(affinity.get, cbcId, utr),
+          "errorTypes"           -> auditDetailErrors(all_error)
+      )
       )).map {
         case AuditResult.Success => Right(AuditResult.Success)
         case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
@@ -350,5 +410,4 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       })
     } yield result
   }
-
 }

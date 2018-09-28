@@ -24,13 +24,13 @@
 
 
 @(form:Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(
-implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @import tags.formFieldDisplay
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 @main_template(if(form.hasErrors){"Error: " + Messages("enterCBCId.mainHeading")}else {Messages("enterCBCId.mainHeading")}) {
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             @if(errors){
                 <div class="flash error-summary error-summary--show"
                 id="error-summary-display"
@@ -56,7 +56,7 @@ implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
             </fieldset>
             @csrf_token()
 
-                <input class="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">
+                <input class="button" role="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">
             }
         </div>
     </div>

@@ -20,12 +20,12 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@()(implicit request: Request[_], messages: Messages, conf: FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, lang: Lang, conf: FrontendAppConfig)
 
 
 @main_template(Messages("contactDetailsUpdate.mainHeading")) {
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             <section>
                 <div class="transaction-banner--complete">
                     <p><strong>@Messages("contactDetailsUpdate.mainHeading")</strong><br> </p>

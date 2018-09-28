@@ -20,37 +20,56 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(fileUploadUrl: String, fileName: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(fileUploadUrl: String, fileName: String)(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @main_template(Messages("uploadReport.mainHeading")) {
     <div class="grid-row">
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
-        <div class="column-two-thirds">
+        <div class="column-full">
+            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="0">
+                <h2 id="error-summary-heading" class="h2-heading"></h2>
+                <p id="file-input-error-summary"><strong><a id="file-input-error-link" href="#file-input"></a></strong></p>
+            </div>
             <h1>
-            @Messages("uploadReport.mainHeading")
+                @Messages("uploadReport.mainHeading")
             </h1>
 
-            <p>@Messages("uploadReport.moreInfo")
-            </p>
+            <p>@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
             <br/>
             <div class="form-group">
                 <div class="form-field-group">
-
+                    <label class="form-label" for="file-input">@Messages("uploadReport.label")</label>
                     <span id="@fileName-error-message" class="error-notification" role="alert" data-input-name="@fileName">
-
                     </span>
-                    <input type="file" id="file-input" class="upload-report-input" name ="@fileName" accept=".xml" required
-                data-msg-required="@Messages("uploadReport.error")">
+                    <input type="file" id="file-input" class="upload-report-input bordered-box column-two-thirds" name ="@fileName" accept=".xml" required
+                        data-msg-required="@Messages("uploadReport.error")">
                 </div>
-                    <div class="form-field form-field--submit">
+                <div class="form-field form-field--submit">
                     @csrf_token()
-                <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
+                    <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
                 </div>
-
             </div>
-
-            </div>
+        </div>
         </form>
     </div>
+
+    <script>
+        var form = document.getElementsByTagName('form')[0];
+        var error_header = document.getElementById('error-summary-heading');
+        var error_text = document.getElementById('file-input-error-link');
+        var error_summary = document.getElementById('error-summary-display');
+        var title = document.title;
+
+        form.addEventListener("submit", function() {
+            error_header.innerText = "@Messages("uploadReport.error.heading")";
+            error_text.innerText = "@Messages("uploadReport.error")";
+            error_summary.className += "flash error-summary error-summary--show";
+            document.title = "Error: " + title
+            window.setTimeout(function () {
+                error_summary.focus();
+            }, 0);
+        });
+
+    </script>
 
 }

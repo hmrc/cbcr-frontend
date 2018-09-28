@@ -21,12 +21,13 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
-@main_template(Messages("notAuthorised.mainHeading")) {
+@main_template(Messages("notAuthorised.mainHeading"),
+    sessionTimeout=false) {
 
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             <h1>@Messages("notAuthorised.mainHeading")</h1>
             <p>@Messages("notAuthorised.message.start")</p>
         </div>

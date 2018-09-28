@@ -21,7 +21,7 @@
 @import helper._
 @import tags._
 
-@(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false)(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @hasErrors = @{
     knownFactsForm.hasErrors || noMatchingBusiness
@@ -29,7 +29,7 @@
 @main_template(if(hasErrors){"Error: " + Messages("subscribeFirst.mainHeading")} else{ Messages("subscribeFirst.mainHeading")}){
 
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             @if(hasErrors) {
                 <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                     <h2 id="error-summary-heading" class="h2-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>

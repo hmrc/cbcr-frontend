@@ -64,6 +64,9 @@ class FrontendAppConfig @Inject() (val runModeConfiguration: Configuration,
 
   val cbcrFrontendBaseUrl: String         = loadConfig("cbcr-frontend-base-url")
   val betaFeedbackUrlNoAuth: String       = s"$contactHost/contact/beta-feedback-unauthenticated?service=$contactFormServiceIdentifier"
+  val cbcrGuidanceUrl:String              = loadConfig("cbcr-guidance-url")
+  val cbcrGuidanceRegisterUrl:String      = loadConfig("cbcr-guidance-register-url")
+  val cbcrOecdGuideUrl:String             = loadConfig("cbcr-OECD-guide-url")
 
 
   private def whitelistConfig(key: String): Seq[String] = Some(new String(Base64.getDecoder
@@ -73,4 +76,11 @@ class FrontendAppConfig @Inject() (val runModeConfiguration: Configuration,
   val whitelist: Seq[String]         = whitelistConfig("whitelist")
   val whitelistExcluded: Seq[String] = whitelistConfig("whitelist-excluded")
 
+  val timeOutSeconds = loadConfig("sessionTimeout.timeOutSeconds")
+  val timeOutCountdownSeconds = loadConfig("sessionTimeout.timeOutCountdownSeconds")
+  val timeOutShowDialog:Boolean = runModeConfiguration.getBoolean(s"sessionTimeout.timeOutShowDialog").getOrElse(false)
+  val keepAliveUrl = loadConfig("sessionTimeout.keepAliveUrl")
+  val signOutUrl = loadConfig("sessionTimeout.signOutUrl")
+
+  def fallbackURLForLanguageSwitcher: String = loadConfig("languageSwitcher.fallback.url")
 }

@@ -21,7 +21,7 @@
 @import tags._
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_])(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @firstNameErrors = @{form.error("firstName").isDefined}
 @lastNameErrors = @{form.error("lastName").isDefined}
@@ -32,7 +32,7 @@
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 @main_template(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.mainHeading")}else{Messages("contactInfoSubscriber.mainHeading")}) {
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             @if(form.hasErrors) {
                 @if(numberOfErrors == 1) {
                     <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
@@ -58,22 +58,22 @@
                 }
                 @errorFocus()
             }
-            <h1>
+            <h1 tabindex="-1">
                 @Messages("contactInfoSubscriber.mainHeading")
             </h1>
             <p>@Messages("contactInfoSubscriber.additionalInfo")</p>
             <div class="form-group">
-            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.submitSubscriptionData()){
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.submitSubscriptionData(), 'novalidate -> "novalidate"){
                 @formFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)
                 @formFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None)
-                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"),form, Some(Messages("contactInfoSubscriber.phoneNumber.hint")))
-                @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None)
+                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"),form, Some(Messages("contactInfoSubscriber.phoneNumber.hint")),Some("tel"))
+                @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None, Some("email"))
                 @CSRF.formField
                 <div class="form-field">
                     <button role="button" type="submit" id="continue">Continue</button>
                 </div>
                 @if(!form.hasErrors) {
-                    <script>document.getElementById("firstName").focus();</script>
+                    <script>document.getElementsByTagName("h1").firstChild.nodeValue.focus()</script>
                 }
             }
             </div>

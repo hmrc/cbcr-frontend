@@ -20,16 +20,17 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 
-@main_template(Messages("survey.acknowledge.header")) {
+@main_template(Messages("survey.acknowledge.header"),
+               sessionTimeout=false) {
 
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             <h1>@Messages("survey.acknowledge.header")</h1>
         </div>
         <p>@messages("survey.acknowledge.message")</p>
     </div>
-    <p><a class="button" role="button" href="@routes.SharedController.guidance()">@Messages("form.controls.finished")</a></p>
+    <p><a class="button" role="button" href="@config.cbcrGuidanceUrl">@Messages("form.controls.finished")</a></p>
 }

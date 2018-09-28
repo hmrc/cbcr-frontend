@@ -21,7 +21,7 @@
 @import tags._
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_])(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
 @agencyBusinessNameErrors = @{form.error("agencyBusinessName").isDefined}

@@ -20,7 +20,7 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @(envelopeId: String, fileId: String, hostName: String, assetsLocationPrefix: String)(
-implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @main_template(Messages("fileUploadProgress.mainHeading")) {
 <script src='@routes.Assets.versioned("javascripts/jquery-3.1.1.min.js")' ></script>
@@ -28,7 +28,7 @@ implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 
  <div class="grid-row">
-  <div class="column-two-thirds">
+  <div class="column-full">
    <h1>
     @Messages("fileUploadProgress.mainHeading")
    </h1>

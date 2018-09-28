@@ -24,42 +24,39 @@
 @import uk.gov.hmrc.auth.core.AffinityGroup.Agent
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @main_template(Messages("subscribeMatchFound.mainHeading")) {
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             <h1>
             @Messages("subscribeMatchFound.mainHeading")
             </h1>
 
-            <table class="form-group">
-                <thead>
-                    <th>Company Details</th>
-                    <th>Value</th>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th>@Messages("subscribeMatchFound.businessDetails.name")</th>
-                        <td>@name</td>
-                    </tr>
-                    <tr>
-                        <th>@Messages("subscribeMatchFound.businessDetails.utr")</th>
-                        <td>@utr</td>
-                    </tr>
-                    <tr>
-                        <th>@Messages("subscribeMatchFound.businessDetails.postcode")</th>
-                        <td>@postCode</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="tabular-data__entry divider--bottom">
+                <div class="tabular-data__heading tabular-data__heading--label">@Messages("subscribeMatchFound.tableHeading1")</div>
+                <span class="tabular-data__heading tabular-data__heading--label">@Messages("subscribeMatchFound.tableHeading2")</span>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <div class="tabular-data__data-1">@Messages("subscribeMatchFound.businessDetails.name")</div>
+                <span class="tabular-data__data-1">@name</span>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <div class="tabular-data__data-1">@Messages("subscribeMatchFound.businessDetails.utr")</div>
+                <span class="tabular-data__data-1">@utr</span>
+            </div>
+            <div class="tabular-data__entry divider--bottom">
+                <div class="tabular-data__data-1">@Messages("subscribeMatchFound.businessDetails.postcode")</div>
+                <span class="tabular-data__data-1">@postCode</span>
+            </div>
+            <br>
 
             @userType match {
                 case Organisation => {
-                    <p><a class="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
+                    <p><a class="button" role="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
                 case Agent => {
-                    <p><a class="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
+                    <p><a class="button" role="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
             }
         </div>

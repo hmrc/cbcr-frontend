@@ -24,12 +24,12 @@
 
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_])(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @error = @{form.error("companyName").isDefined}
 @main_template(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}) {
 <div class="grid-row">
-    <div class="column-two-thirds">
+    <div class="column-full">
         @if(form.hasErrors) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                 <h3 id="error-summary-heading" class="h2-heading">@Messages("enterCompanyName.form.error.header")</h3>
@@ -44,7 +44,7 @@
         </fieldset>
         @csrf_token()
 
-        <input class="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">
+        <input class="button" role="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">
         }
     </div>
 </div>

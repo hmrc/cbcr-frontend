@@ -22,14 +22,15 @@
 @import tags.formFieldDisplay
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
-@main_template(Messages("sessionExpired.mainHeading")) {
+@()(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+@main_template(Messages("sessionExpired.mainHeading"),
+    sessionTimeout=false) {
 
 <div class="grid-row">
-    <div class="column-two-thirds">
+    <div class="column-full">
         <h1>@Messages("sessionExpired.mainHeading")</h1>
         <p>@Messages("sessionExpired.continue")</p>
-        <p><a href="@routes.SharedController.guidance">@Messages("sessionExpired.link")</a></p>
+        <p><a href="@config.cbcrGuidanceUrl">@Messages("sessionExpired.link")</a></p>
     </div>
 </div>
 

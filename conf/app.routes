@@ -14,17 +14,14 @@ POST       /cbc-id                                        @uk.gov.hmrc.cbcrfront
 GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
 GET        /sign-out                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOut
 GET        /sign-out-survey                               @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOutSurvey
-GET        /guidance                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.guidance
-GET        /guidance/register                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.register
-GET        /guidance/volunteer                            @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.volunteer
-GET        /guidance/report                               @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.report
-GET        /guidance/business-rules                       @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.businessRules
 GET        /guidance/download-cbc-guide                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.downloadGuide
 GET        /known-facts/agent/verify-form                 @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsAgent
 POST       /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.checkKnownFacts
 GET        /known-facts/match                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.knownFactsMatch
 GET        /known-facts/organisation/verify-form          @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsOrganisation
 GET        /unsupportedAffinityGroup                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.unsupportedAffinityGroup
+GET        /keepSessionAlive                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.keepSessionAlive
+
 
 GET        /file-upload-ready/:envelopeId/:fileId         @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileValidate(envelopeId: String, fileId:String)
 GET        /file-upload-progress/:envelopeId/:fileId      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadProgress(envelopeId: String, fileId: String)
@@ -65,4 +62,7 @@ GET        /de-enrol                                      @uk.gov.hmrc.cbcrfront
 GET        /enrolments                                    @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.getEnrolments
 
 GET        /assets/*file                                  controllers.Assets.versioned(path="/public", file: Asset)
+
+GET         /switch-to-welsh                              @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToWelsh
+GET         /switch-to-english                            @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToEnglish
 

@@ -22,12 +22,12 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @main_template(Messages("submitSuccessReceipt.submissionDateLabel")) {
 
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             <section>
                 <div class="transaction-banner--complete">
                     <h1 class="transaction-banner__heading">@Messages("submitSuccessReceipt.submissionDateLabel")</h1><br>
@@ -44,7 +44,7 @@
             <p>@Messages("submitSuccessReceipt.whatNext.info")</p>
             @if(userType == "Agent" && cacheCleared){<p><a href="@routes.FileUploadController.chooseXMLFile()">@Messages("submitSuccessReceipt.sendAnotherReport.link")</a></p>}
             <p>
-                <a class="button" href="@routes.SharedController.signOutSurvey()" id="btn-close">@Messages("form.controls.finished")</a>
+                <a class="button" role="button" href="@routes.SharedController.signOutSurvey()" id="btn-close">@Messages("form.controls.finished")</a>
             </p>
         </div>
     </div>

@@ -131,16 +131,17 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       CBCId.create(99).getOrElse(fail("booo")),
       LocalDateTime.now(),
       LocalDate.parse("2017-01-30"),
+      None,
       None
     ),
-    Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),TIN("7000000002","gb"),"name")),
-    List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None))),
-    Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None))),
+    Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None,None),TIN("7000000002","gb"),"name")),
+    List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None,None))),
+    Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
     Some(LocalDate.now()),
     List.empty[String]
   )
 
-  val completeXmlInfo = CompleteXMLInfo(xmlinfo,ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None),TIN("7000000002","gb"),"name"))
+  val completeXmlInfo = CompleteXMLInfo(xmlinfo,ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None,None),TIN("7000000002","gb"),"name"))
 
   def right[A](a:Future[A]) : ServiceResponse[A] = EitherT.right[Future,CBCErrors, A](a)
   def left[A](s:String) : ServiceResponse[A] = EitherT.left[Future,CBCErrors, A](UnexpectedState(s))
@@ -252,9 +253,11 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
     "direct to technical-difficulties" when {
       "the call to get the file metadata fails" in{
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
+        val enrole:CBCEnrolment = CBCEnrolment(cbcId,Utr("7000000002"))
         when(fuService.getFile(any(),any())(any(),any())) thenReturn right(validFile)
         when(fuService.getFileMetaData(any(),any())(any(),any())) thenReturn right[Option[FileMetadata]](None)
-        when(authConnector.authorise[~[Credentials, Option[AffinityGroup]]](any(),any())(any(), any())) thenReturn Future.successful(new ~ [Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
+        when(authConnector.authorise[~[~[Credentials, Option[AffinityGroup]], Option[CBCEnrolment]]](any(),any())(any(),any())) thenReturn Future.successful(new ~[ ~ [Credentials, Option[AffinityGroup]],Option[CBCEnrolment]](new ~(creds, Some(AffinityGroup.Organisation)),Some(enrole)))
         val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
         result.header.headers("Location") should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
@@ -263,9 +266,11 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       }
       "the call to get the file fails" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
+        val enrole:CBCEnrolment = CBCEnrolment(cbcId,Utr("7000000002"))
         when(fuService.getFile(any(),any())(any(),any())) thenReturn left[File]("oops")
         when(fuService.getFileMetaData(any(),any())(any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
-        when(authConnector.authorise[~[Credentials, Option[AffinityGroup]]](any(),any())(any(), any())) thenReturn Future.successful(new ~ [Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
+        when(authConnector.authorise[~[~[Credentials, Option[AffinityGroup]], Option[CBCEnrolment]]](any(),any())(any(),any())) thenReturn Future.successful(new ~[ ~ [Credentials, Option[AffinityGroup]],Option[CBCEnrolment]](new ~(creds, Some(AffinityGroup.Organisation)),Some(enrole)))
         val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
         result.header.headers("Location") should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
@@ -274,9 +279,11 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       }
       "the call to cache.save fails" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
+        val enrole:CBCEnrolment = CBCEnrolment(cbcId,Utr("7000000002"))
         when(fuService.getFile(any(),any())(any(),any())) thenReturn right(validFile)
         when(fuService.getFileMetaData(any(),any())(any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
-        when(authConnector.authorise[~[Credentials, Option[AffinityGroup]]](any(),any())(any(), any())) thenReturn Future.successful(new ~ [Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
+        when(authConnector.authorise[~[~[Credentials, Option[AffinityGroup]], Option[CBCEnrolment]]](any(),any())(any(),any())) thenReturn Future.successful(new ~[ ~ [Credentials, Option[AffinityGroup]],Option[CBCEnrolment]](new ~(creds, Some(AffinityGroup.Organisation)),Some(enrole)))
         when(cache.save(any())(any(),any(),any())) thenReturn Future.failed(new Exception("bad"))
         val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
         result.header.headers("Location") should endWith("technical-difficulties")
@@ -289,21 +296,23 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
     "return a 200 when the fileValidate call is successful and all dependant calls return successfully" in {
       val evenMoreValidFile = java.nio.file.Files.copy(testFile.toPath,tempFile.toPath,REPLACE_EXISTING).toFile
       val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+      val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
+      val enrole:CBCEnrolment = CBCEnrolment(cbcId,Utr("7000000002"))
       when(fuService.getFile(any(),any())(any(),any())) thenReturn right(evenMoreValidFile)
       when(fuService.getFileMetaData(any(),any())(any(),any())) thenReturn right[Option[FileMetadata]](Some(md))
       when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(new CacheMap("",Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat),any(),any())) thenReturn Future.successful(Option(AffinityGroup.Organisation))
-      when(businessRulesValidator.validateBusinessRules(any(),any())(any())) thenReturn Future.successful(Valid(xmlinfo))
+      when(businessRulesValidator.validateBusinessRules(any(),any(),any(),any())(any())) thenReturn Future.successful(Valid(xmlinfo))
       when(businessRulesValidator.recoverReportingEntity(any())(any())) thenReturn Future.successful(Valid(completeXmlInfo))
-      when(authConnector.authorise[~[Credentials, Option[AffinityGroup]]](any(),any())(any(), any())) thenReturn Future.successful(new ~ [Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
+      when(authConnector.authorise[~[~[Credentials, Option[AffinityGroup]], Option[CBCEnrolment]]](any(),any())(any(),any())) thenReturn Future.successful(new ~[ ~ [Credentials, Option[AffinityGroup]],Option[CBCEnrolment]](new ~(creds, Some(AffinityGroup.Organisation)),Some(enrole)))
       val result = Await.result(controller.fileValidate("test","test")(request), 2.second)
       val returnVal = status(result)
       returnVal shouldBe Status.OK
       verify(fuService).getFile(any(),any())(any(),any())
       verify(fuService).getFileMetaData(any(),any())(any(),any())
       verify(cache,atLeastOnce()).save(any())(any(),any(),any())
-      verify(businessRulesValidator).validateBusinessRules(any(),any())(any())
+      verify(businessRulesValidator).validateBusinessRules(any(),any(),any(),any())(any())
       verify(schemaValidator).validateSchema(any())
 
     }
@@ -311,11 +320,13 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
     "be redirected to an error page" when {
       "the file extension is invalid" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
+        val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
+        val enrole:CBCEnrolment = CBCEnrolment(cbcId,Utr("7000000002"))
         when(fuService.getFile(any(),any())(any(),any())) thenReturn right(validFile)
         when(fuService.getFileMetaData(any(),any())(any(),any())) thenReturn right[Option[FileMetadata]](Some(md.copy(name = "bad.zip")))
         when(cache.read[CBCId](EQ(CBCId.cbcIdFormat),any(),any())) thenReturn rightE(CBCId.create(1).getOrElse(fail("baaa")))
         when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache",Map.empty))
-        when(authConnector.authorise[~[Credentials, Option[AffinityGroup]]](any(),any())(any(), any())) thenReturn Future.successful(new ~ [Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
+        when(authConnector.authorise[~[~[Credentials, Option[AffinityGroup]], Option[CBCEnrolment]]](any(),any())(any(),any())) thenReturn Future.successful(new ~[ ~ [Credentials, Option[AffinityGroup]],Option[CBCEnrolment]](new ~(creds, Some(AffinityGroup.Organisation)),Some(enrole)))
         val result = Await.result(controller.fileValidate("test","test")(request), 5.second)
         result.header.headers("Location") should endWith("invalid-file-type")
         status(result) shouldBe Status.SEE_OTHER

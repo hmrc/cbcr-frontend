@@ -21,12 +21,12 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(cbcId:CBCId)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(cbcId:CBCId)(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 @import tags.formFieldDisplay
 @main_template(Messages("subscribeFirst.mainHeading")) {
 
     <div class="grid-row">
-        <div class="column-two-thirds">
+        <div class="column-full">
             <h1>@Messages("regenerate.mainHeading")</h1>
             <p>
                 @Messages("regenerate.message")
