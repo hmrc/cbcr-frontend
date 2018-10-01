@@ -10,13 +10,14 @@ trait MicroService {
 
   import uk.gov.hmrc._
   import DefaultBuildSettings._
-  import uk.gov.hmrc.{SbtBuildInfo, ShellPrompt, SbtAutoBuildPlugin}
+  import uk.gov.hmrc.{SbtBuildInfo, ShellPrompt, SbtAutoBuildPlugin, SbtArtifactory}
   import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
   import uk.gov.hmrc.versioning.SbtGitVersioning
   import play.sbt.routes.RoutesKeys.routesGenerator
+  import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 
-  import TestPhases._
+  import TestPhases.oneForkedJvmPerTest
 
   val appName: String
 
@@ -26,11 +27,12 @@ trait MicroService {
 
 
   lazy val microservice = Project(appName, file("."))
-    .enablePlugins(Seq(play.sbt.PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin) ++ plugins : _*)
+    .enablePlugins(Seq(play.sbt.PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) ++ plugins : _*)
     .settings(playSettings : _*)
     .settings(scalaSettings: _*)
     .settings(playDefaultPort := 9696)
     .settings(publishingSettings: _*)
+    .settings(majorVersion := 1 )
     .settings(defaultSettings(): _*)
     .settings(
       scalaVersion := "2.11.11",
@@ -43,7 +45,7 @@ trait MicroService {
     .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
     .settings(
       Keys.fork in IntegrationTest := false,
-      unmanagedSourceDirectories in IntegrationTest <<= (baseDirectory in IntegrationTest)(base => Seq(base / "it")),
+      unmanagedSourceDirectories in IntegrationTest := (baseDirectory in IntegrationTest)(base => Seq(base / "it")).value,
       addTestReportOption(IntegrationTest, "int-test-reports"),
       testGrouping in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
       parallelExecution in IntegrationTest := false)
