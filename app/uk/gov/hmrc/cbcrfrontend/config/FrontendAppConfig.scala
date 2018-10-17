@@ -82,5 +82,7 @@ class FrontendAppConfig @Inject() (val runModeConfiguration: Configuration,
   val keepAliveUrl = loadConfig("sessionTimeout.keepAliveUrl")
   val signOutUrl = loadConfig("sessionTimeout.signOutUrl")
 
+  val gtmContainerId = loadConfig("googleTagManager.containerId")
+
   def fallbackURLForLanguageSwitcher: String = loadConfig("languageSwitcher.fallback.url")
 }
