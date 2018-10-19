@@ -68,12 +68,14 @@
 
         <h1 class="heading-medium" for="suggestions">@Messages("survey.question2")
         </h1>
-        <label for="suggestions">@Messages("survey.enterFeedback")
-            <span class="form-hint">@Messages("survey.question2.hint")</span>
-        </label>
-        <textarea class="form-control form-control-3-4" name="suggestions" id="suggestions" rows="5">@form.data.get("suggestions")</textarea>
-
+        <div>
+            <label for="suggestions">@Messages("survey.enterFeedback")
+                <span class="form-hint">@Messages("survey.question2.hint")</span>
+            </label>
+            <textarea class="form-control form-control-3-4" name="suggestions" id="suggestions" rows="5">@form.data.get("suggestions")</textarea>
+        </div>
         <div class="form-field">
+            <p></p>
             <button role="button" type="submit" id="continue">@Messages("survey.send")</button>
         </div>
         @CSRF.formField

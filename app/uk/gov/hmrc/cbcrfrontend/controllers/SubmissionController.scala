@@ -249,23 +249,24 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
   }
 
 
-  def enterSubmitterInfo()(implicit request:Request[AnyContent]): Future[Result] = {
+  def enterSubmitterInfo(fieldName:FieldName)(implicit request:Request[AnyContent]): Future[Result] = {
 
     cache.readOption[SubmitterInfo].map{ osi =>
 
       val form = (osi.map(_.fullName) |@| osi.map(_.contactPhone) |@| osi.map(_.email)).map{(name,phone,email) =>
-        submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
+        submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "contactEmail" -> email.value))
       }.getOrElse(submitterInfoForm)
 
-      Ok(views.html.submission.submitterInfo( form))
+      Ok(views.html.submission.submitterInfo( form, fieldName))
 
     }
   }
 
 
-  val submitterInfo = Action.async{ implicit request =>
+  def submitterInfo(fieldName: String) = Action.async{ implicit request =>
     authorised() {
-
+      Logger.info(s"**************** Field id = $fieldName ******************************")
+      val fn = FieldName.fromString(fieldName)
       cache.read[CompleteXMLInfo].map(kXml => kXml.reportingEntity.reportingRole match {
 
         case CBC701 =>
@@ -275,7 +276,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
         case CBC702 | CBC703 =>
           cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
-      }).semiflatMap(_ => enterSubmitterInfo()).leftMap(errorRedirect).merge
+      }).semiflatMap(_ => enterSubmitterInfo(fn)).leftMap(errorRedirect).merge
     }
 
   }
@@ -285,7 +286,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
     authorised().retrieve(Retrievals.affinityGroup){ userType =>
         submitterInfoForm.bindFromRequest.fold(
           formWithErrors => Future.successful(BadRequest(views.html.submission.submitterInfo(
-             formWithErrors
+             formWithErrors, FieldName.fromString("fullName")
           ))),
           success => {
             val result = for {

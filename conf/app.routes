@@ -36,7 +36,7 @@ GET        /failed-callback                               @uk.gov.hmrc.cbcrfront
 
 GET        /ultimate-parent-entity/entry-form             @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.upe
 POST       /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUltimateParentEntity
-GET        /submitter-info/entry-form                     @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitterInfo
+GET        /submitter-info/entry-form                     @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitterInfo(field: String ?= "fullName")
 POST       /submitter-info                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSubmitterInfo
 POST       /utr                                           @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUtr
 GET        /utr/entry-form                                @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.utr

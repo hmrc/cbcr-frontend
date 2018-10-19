@@ -54,19 +54,21 @@
 
             <div class="tabular-data__entry divider--bottom">
                 <h2 class="tabular-data__heading tabular-data__heading--label">@Messages("submitSummary.contactDetails.heading")</h2>
-                <a class="tabular-data__data-2" id="change-contact-details" href="@routes.SubmissionController.submitterInfo()">@Messages("submitSummary.contactDetails.change")</a>
             </div>
             <div class="tabular-data__entry divider--bottom">
                 <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.name")</span>
                 <div class="tabular-data__data-1">@summaryData.submissionMetaData.submitterInfo.fullName</div>
+                <a class="tabular-data__data-2" id="change-contact-details" href="@routes.SubmissionController.submitterInfo("fullName")">@Messages("submitSummary.contactDetails.change")</a>
             </div>
             <div class="tabular-data__entry divider--bottom">
                 <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.phone")</span>
                 <div class="tabular-data__data-1">@summaryData.submissionMetaData.submitterInfo.contactPhone</div>
+                <a class="tabular-data__data-2" id="change-contact-details" href="@routes.SubmissionController.submitterInfo("contactPhone")">@Messages("submitSummary.contactDetails.change")</a>
             </div>
             <div class="tabular-data__entry divider--bottom">
                 <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.email")</span>
                 <div class="tabular-data__data-1">@summaryData.submissionMetaData.submitterInfo.email.value</div>
+                <a class="tabular-data__data-2" id="change-contact-details" href="@routes.SubmissionController.submitterInfo("contactEmail")">@Messages("submitSummary.contactDetails.change")</a>
             </div>
             <br>
 
