@@ -249,7 +249,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
   }
 
 
-  def enterSubmitterInfo()(implicit request:Request[AnyContent]): Future[Result] = {
+  def enterSubmitterInfo(fn: Option[FieldName])(implicit request:Request[AnyContent]): Future[Result] = {
 
     cache.readOption[SubmitterInfo].map{ osi =>
 
@@ -257,13 +257,13 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
         submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
       }.getOrElse(submitterInfoForm)
 
-      Ok(views.html.submission.submitterInfo( form))
+      Ok(views.html.submission.submitterInfo( form, fn))
 
     }
   }
 
 
-  val submitterInfo = Action.async{ implicit request =>
+  def submitterInfo(field: Option[String] = None) = Action.async{ implicit request =>
     authorised() {
 
       cache.read[CompleteXMLInfo].map(kXml => kXml.reportingEntity.reportingRole match {
@@ -275,7 +275,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
         case CBC702 | CBC703 =>
           cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
-      }).semiflatMap(_ => enterSubmitterInfo()).leftMap(errorRedirect).merge
+      }).semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse("")))).leftMap(errorRedirect).merge
     }
 
   }
@@ -285,7 +285,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
     authorised().retrieve(Retrievals.affinityGroup){ userType =>
         submitterInfoForm.bindFromRequest.fold(
           formWithErrors => Future.successful(BadRequest(views.html.submission.submitterInfo(
-             formWithErrors
+             formWithErrors,None
           ))),
           success => {
             val result = for {

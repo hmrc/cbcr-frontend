@@ -43,68 +43,63 @@ else {
 },
     sidebarLinks = None) {
 
-    <div class="grid-row column-full">
-            @if(!errors) {
-        <h1>@Messages("fileUploadResult.mainHeading.ok")</h1>
+    <div>
+        @if(!errors) {
+            <h1>@Messages("fileUploadResult.mainHeading.ok")</h1>
+        } else {
+            @if(schemaErrors.isDefined && busErrors.isDefined) {
+                <h1>@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
             } else {
-                    @if(schemaErrors.isDefined && busErrors.isDefined) {
-                        <h1>@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
-                    } else {
-                        @if(schemaErrors.isDefined) {
-                            <h1>@messages("fileUploadResult.mainHeading.xmlError")</h1>
-                        } else {
-                            <h1>@messages("fileUploadResult.mainHeading.dataError")</h1>
-                        }
-                    }
-                    <h2>@messages("fileUploadResult.whatToDo")</h2>
-                    <ol style="margin-left: 15px;">
-                        @schemaErrors.map { size =>
-                            <li><p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.data.link")
-                                (Text, @{
-                                size
-                            }KB)</a>.</p></li>
-                            <li><p>@Messages("fileUploadResult.error.data.message")</p></li>
-                        }
-                        @busErrors.map { size =>
-                            <li><p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
-                                (Text, @{
-                                size
-                            }KB)</a>.</p></li>
-                            <li><p>@Messages("fileUploadResult.error.data.message")</p></li>
-                        }
-                        <li><p><a href="@config.cbcrOecdGuideUrl">@Messages("fileUploadResult.error.oecdUrl")</a> @Messages("fileUploadResult.error.oecdInfo")</p></li>
-                    </ol>
-
-            }
-            @if(!errors) {
-                <table class="table--top-border" id="table-successReport">
-                    <tbody>
-                        <tr>
-                            <td>@Messages("fileUploadResult.fileName")</td>
-                            <td>@fileName</td>
-                        </tr>
-                        <tr>
-                            <td>@Messages("fileUploadResult.fileSize")</td>
-                            <td>@fileSize KB</td>
-                        </tr>
-                    </tbody>
-                </table>
-        <p>@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey()">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
-
-
-                @if(reportingRole == Some(CBC701)){
-                   @if(userType == Some(Organisation)){
-                        <p><a class="button" role="button" href="@routes.SubmissionController.submitterInfo" id="btn-continue">@Messages("form.controls.continue")</a></p>
-                    } else {
-                        <p><a class="button" role="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
-                    }
+                @if(schemaErrors.isDefined) {
+                    <h1>@messages("fileUploadResult.mainHeading.xmlError")</h1>
                 } else {
-                    <p><a class="button" role="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    <h1>@messages("fileUploadResult.mainHeading.dataError")</h1>
                 }
-
-            } else {
-                @errorFocus()
-                <a class="button" role="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@Messages("form.controls.finished")</a>
             }
+            <h2>@messages("fileUploadResult.whatToDo")</h2>
+            @schemaErrors.map { size =>
+                <p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.data.link")
+                    (Text, @{
+                    size
+                }KB)</a>.</p>
+                <p>@Messages("fileUploadResult.error.data.message")</p>
+            }
+            @busErrors.map { size =>
+                <p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
+                    (Text, @{
+                    size
+                }KB)</a>.</p>
+                <p>@Messages("fileUploadResult.error.data.message")</p>
+            }
+            <p><a href="@config.cbcrOecdGuideUrl">@Messages("fileUploadResult.error.oecdUrl")</a> @Messages("fileUploadResult.error.oecdInfo")</p>
+        }
+        @if(!errors) {
+            <table class="table--top-border" id="table-successReport">
+                <tbody>
+                    <tr>
+                        <td>@Messages("fileUploadResult.fileName")</td>
+                        <td>@fileName</td>
+                    </tr>
+                    <tr>
+                        <td>@Messages("fileUploadResult.fileSize")</td>
+                        <td>@fileSize KB</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey()">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
+
+            @if(reportingRole == Some(CBC701)){
+                @if(userType == Some(Organisation)){
+                    <p><a class="button" role="button" href="@routes.SubmissionController.submitterInfo()" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                } else {
+                    <p><a class="button" role="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                }
+            } else {
+                <p><a class="button" role="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+            }
+        } else {
+            @errorFocus()
+            <a class="button" role="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@Messages("form.controls.finished")</a>
+        }
     </div>
 }
