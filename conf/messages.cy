@@ -1,4 +1,4 @@
-application.title=Anfonwch adroddiad country-by-country
+application.title=cy-Send a country-by-country report
 
 contactDetailsUpdate.mainHeading=cy-The registration contact details have been updated
 contactDetailsUpdate.printThisButton=cy-Print this page
@@ -209,6 +209,8 @@ fileUploadResult.error.data.message=cy-Ask the person who created the XML file t
 fileUploadResult.error.xml.link=cy-XML error summary
 fileUploadResult.error.xml.message=cy-Give it to your XML creator to correct the errors
 fileUploadResult.error.guidance=cy-Check formatting guidance
+fileUploadResult.error.oecdUrl=cy-Read the XML user guide
+fileUploadResult.error.oecdInfo=cy-for the rules you must follow.
 
 fileUploadResult.error.FileTooLarge=cy-The report is larger than 50MB. You''ll need to fix this issue before uploading it again.
 fileUploadResult.error.FileContainsVirus=cy-The report has failed our anti-virus checks. You''ll need to fix this issue before uploading it again.
@@ -229,7 +231,7 @@ submitSummary.companyDetails.companyName=cy-UK-registered company or partnership
 submitSummary.companyDetails.utr=cy-Unique Taxpayer Reference
 submitSummary.companyDetails.filedBy=cy-Sent by
 submitSummary.contactDetails.heading=cy-Contact details
-submitSummary.contactDetails.change=cy-Change contact details
+submitSummary.contactDetails.change=cy-Change
 submitSummary.contactDetails.name=cy-Your name
 submitSummary.contactDetails.phone=cy-Your phone number
 submitSummary.contactDetails.email=cy-Your email address
@@ -250,12 +252,14 @@ submitSummary.submit=cy-Confirm and send report
 submitSummary.submitReport=cy-Submit report
 
 uploadReport.mainHeading=cy-Check the report
-uploadReport.moreInfo=cy-If the report is ready to send, you can choose to send it now or later.
+uploadReport.moreInfo=cy-This will check the report against 
+uploadReport.linkInfo=cy-HMRC and OECD guidelines.
+uploadReport.andMoreInfo=cy-Until you send the report, HMRC will not be able to access it.
 uploadReport.inputField.label=cy-Choose the file you want to check:
 uploadReport.uploadButton=cy-Check report
 uploadReport.error.heading=cy-There is a problem
 uploadReport.error=cy-You must select a file
-uploadReport.label=cy-Upload a file
+uploadReport.label=cy-Select a file
 
 submitterInfo.mainHeading=cy-Enter your contact details, as the sender of the report
 submitterInfo.error.heading=cy-There is a problem
