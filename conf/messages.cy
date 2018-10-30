@@ -1,4 +1,4 @@
-application.title=cy-Send a country-by-country report
+application.title=Anfonwch adroddiad country-by-country
 
 contactDetailsUpdate.mainHeading=cy-The registration contact details have been updated
 contactDetailsUpdate.printThisButton=cy-Print this page
