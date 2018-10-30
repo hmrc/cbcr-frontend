@@ -33,11 +33,11 @@ object FieldName {
     def ci = ("(?i)" + sc.parts.mkString).r
   }
 
-  def fromString(s:String): FieldName = s match {
-    case ci"fullname"     => FullName
-    case ci"contactphone" => ContactPhone
-    case ci"email" => ContactEmail
-    case _ => FullName
+  def fromString(s:String): Option[FieldName] = s match {
+    case ci"fullname"     => Some(FullName)
+    case ci"contactphone" => Some(ContactPhone)
+    case ci"email"        => Some(ContactEmail)
+    case _                => None
   }
 
 }

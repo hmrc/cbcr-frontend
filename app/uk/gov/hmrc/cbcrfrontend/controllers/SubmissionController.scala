@@ -275,7 +275,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
         case CBC702 | CBC703 =>
           cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
-      }).semiflatMap(_ => enterSubmitterInfo(Some(FieldName.fromString(field.getOrElse(""))))).leftMap(errorRedirect).merge
+      }).semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse("")))).leftMap(errorRedirect).merge
     }
 
   }
