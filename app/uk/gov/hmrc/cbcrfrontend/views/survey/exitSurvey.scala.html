@@ -28,52 +28,54 @@
 @isError= @{form.hasErrors}
 
 @main_template(Messages("survey.mainHeading"),
-               sessionTimeout=false) {
+    sessionTimeout=false) {
     <h1>@Messages("survey.header")</h1>
     @Messages("survey.intro")
     <br/>
-<br/>
+    <br/>
 
     @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.ExitSurveyController.submit()){
 
-         <div class="form-group @if(isError){form-field-group--error}">
-             <fieldset>
-                 <legend>
-                     <span class="form-label-bold">@Messages("survey.question1") </span>
-                 @if(isError){ <span class="error-notification">@Messages("survey.required")</span> }
-                 </legend>
+        <div class="form-group @if(isError){form-field-group--error}">
+            <fieldset>
+                <legend>
+                    <span class="form-label-bold">@Messages("survey.question1") </span>
+                    @if(isError){ <span class="error-notification">@Messages("survey.required")</span> }
+                </legend>
 
-                 <div class="multiple-choice">
-                     <input id="radio-1" type="radio" name="satisfied" value="@Messages("survey.one")">
-                     <label for="radio-1">@Messages("survey.one")</label>
-                 </div>
-                 <div class="multiple-choice">
-                     <input id="radio-2" type="radio" name="satisfied" value="@Messages("survey.two")">
-                     <label for="radio-2">@Messages("survey.two")</label>
-                 </div>
-                 <div class="multiple-choice">
-                     <input id="radio-3" type="radio" name="satisfied" value="@Messages("survey.three")">
-                     <label for="radio-3">@Messages("survey.three")</label>
-                 </div>
-                 <div class="multiple-choice">
-                     <input id="radio-4" type="radio" name="satisfied" value="@Messages("survey.four")">
-                     <label for="radio-4">@Messages("survey.four")</label>
-                 </div>
-                 <div class="multiple-choice">
-                     <input id="radio-5" type="radio" name="satisfied" value="@Messages("survey.five")">
-                     <label for="radio-5">@Messages("survey.five")</label>
-                 </div>
-             </fieldset>
-         </div>
+                <div class="multiple-choice">
+                    <input id="radio-1" type="radio" name="satisfied" value="@Messages("survey.one")">
+                    <label for="radio-1">@Messages("survey.one")</label>
+                </div>
+                <div class="multiple-choice">
+                    <input id="radio-2" type="radio" name="satisfied" value="@Messages("survey.two")">
+                    <label for="radio-2">@Messages("survey.two")</label>
+                </div>
+                <div class="multiple-choice">
+                    <input id="radio-3" type="radio" name="satisfied" value="@Messages("survey.three")">
+                    <label for="radio-3">@Messages("survey.three")</label>
+                </div>
+                <div class="multiple-choice">
+                    <input id="radio-4" type="radio" name="satisfied" value="@Messages("survey.four")">
+                    <label for="radio-4">@Messages("survey.four")</label>
+                </div>
+                <div class="multiple-choice">
+                    <input id="radio-5" type="radio" name="satisfied" value="@Messages("survey.five")">
+                    <label for="radio-5">@Messages("survey.five")</label>
+                </div>
+            </fieldset>
+        </div>
 
         <h1 class="heading-medium" for="suggestions">@Messages("survey.question2")
         </h1>
-        <label for="suggestions">@Messages("survey.enterFeedback")
-            <span class="form-hint">@Messages("survey.question2.hint")</span>
-        </label>
-        <textarea class="form-control form-control-3-4" name="suggestions" id="suggestions" rows="5">@form.data.get("suggestions")</textarea>
-
+        <div>
+            <label for="suggestions">@Messages("survey.enterFeedback")
+                <span class="form-hint">@Messages("survey.question2.hint")</span>
+            </label>
+            <textarea class="form-control form-control-3-4" name="suggestions" id="suggestions" rows="5">@form.data.get("suggestions")</textarea>
+        </div>
         <div class="form-field">
+            <p></p>
             <button role="button" type="submit" id="continue">@Messages("survey.send")</button>
         </div>
         @CSRF.formField

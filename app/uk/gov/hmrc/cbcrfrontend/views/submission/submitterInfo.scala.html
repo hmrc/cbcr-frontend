@@ -21,7 +21,8 @@
 @import tags._
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(form:Form[_])(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+@import uk.gov.hmrc.cbcrfrontend.model.FieldName
+@(form:Form[_],field: Option[FieldName])(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
 @agencyBusinessNameErrors = @{form.error("agencyBusinessName").isDefined}
@@ -82,7 +83,7 @@
         <button role="button" type="submit" id="btn-continue">Continue</button>
     </div>
     @if(!form.hasErrors) {
-        <script>document.getElementById("fullName").focus();</script>
+        <script>document.getElementById("@field.getOrElse("fullName")").focus();</script>
     }
     }
 </div>
