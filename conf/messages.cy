@@ -337,6 +337,7 @@ error.CorrectedFileToOld=cy-Corrections only allowed up to 3 years after the ini
 error.ReportingEntityOrConstituentEntityEmpty=cy-Organisation Name: The Name of the Reporting Entity or Constituent Entity cannot be an empty string
 error.CorrMessageRefIdNotAllowedInMessageSpec=cy-The CorrMessageRefID element must not be provided in the MessageSpec
 error.CorrMessageRefIdNotAllowedInDocSpec=cy-Error Code 80006: The CorrMessageRefID element must not be provided in the DocSpec
+error.ReportingPeriodInvalid=cy-The ReportingPeriod cannot be corrected. If you wish to change the Reporting Period, then void (OECD3) the original submission and submit a new file (CBC 401)
 
 xmlValidationError.InvalidDocType=cy-Invalid DocTypeIndic
 xmlValidationError.ReportingRole=cy-ReportingEntity.ReportingRole not found or invalid

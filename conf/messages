@@ -337,6 +337,7 @@ error.CorrectedFileToOld=Corrections only allowed up to 3 years after the initia
 error.ReportingEntityOrConstituentEntityEmpty=Organisation Name: The Name of the Reporting Entity or Constituent Entity cannot be an empty string
 error.CorrMessageRefIdNotAllowedInMessageSpec=The CorrMessageRefID element must not be provided in the MessageSpec
 error.CorrMessageRefIdNotAllowedInDocSpec=Error Code 80006: The CorrMessageRefID element must not be provided in the DocSpec
+error.ReportingPeriodInvalid=The ReportingPeriod cannot be corrected. If you wish to change the Reporting Period, then void (OECD3) the original submission and submit a new file (CBC 401)
 
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid

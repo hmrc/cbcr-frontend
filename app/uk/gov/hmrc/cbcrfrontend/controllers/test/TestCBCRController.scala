@@ -138,4 +138,18 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
+  def deleteReportingEntityReportingPeriod(docRefId:String) = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.deleteReportingEntityReportingPeriod(docRefId).map{s =>
+        s.status match {
+          case OK           => Ok("Reporting entity reportingPeriod deleted")
+          case NOT_MODIFIED => Ok("Reporting entity reportingPeriod NOT deleted")
+          case _            => Ok("Something went wrong")
+        }
+      }.recover{
+        case _:NotFoundException => Ok("Reporting entity not found")
+      }
+    }
+  }
+
 }
