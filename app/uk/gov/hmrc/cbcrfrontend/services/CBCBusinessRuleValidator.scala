@@ -201,7 +201,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     validateMessageTypeIndic(x) *>
     validateFileName(x,fileName) *>
     validateOrganisationCBCId(x, enrolment, affinityGroup) *>
-    validateCreationDate(x)
+    validateCreationDate(x) *>
+    validateReportingPeriod(x)
   }
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
@@ -468,6 +469,30 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       xmlInfo.validNel
     }
 
+  }
+
+  private def validateReportingPeriod(xmlInfo: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
+    if (xmlInfo.messageSpec.messageType.contains(CBC401)) xmlInfo.validNel
+    else {
+      val crid = xmlInfo.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId)
+          .orElse(xmlInfo.additionalInfo.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
+          .orElse(xmlInfo.reportingEntity.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
+
+      crid.map { drid =>
+        reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap {
+          cbcErrors => {
+            Logger.error(s"Got error back: $cbcErrors")
+            throw new Exception(s"Error communicating with backend: $cbcErrors")
+          }
+        }.subflatMap {
+          case Some(red) if red.reportingPeriod.isDefined => if (red.reportingPeriod.get == xmlInfo.messageSpec.reportingPeriod) Right(xmlInfo) else Left(ReportingPeriodInvalid)
+          case Some(red)                                  => Right(xmlInfo) //reportingPeriod not persisted prior to this rules implementation so can't check
+          case _                                          => Left(ReportingPeriodInvalid)
+        }.toValidatedNel
+      }.getOrElse {
+        Future.successful(ReportingPeriodInvalid.invalidNel)
+      }
+    }
   }
 
   private def validateCorrMessageRefIdD(x: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {

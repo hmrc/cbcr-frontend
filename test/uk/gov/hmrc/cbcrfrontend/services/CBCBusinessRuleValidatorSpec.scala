@@ -100,7 +100,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
 
-  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()))
+  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),None)
+  val redReportPeriod = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),Some(LocalDate.of(2018,1,1)))
 
   val xmlinfo = XMLInfo(
   MessageSpec(
@@ -529,6 +530,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
         when(reportingEntity.queryReportingEntityDataDocRefId(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(red))
+        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(red))
 
 
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
@@ -938,6 +940,49 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           _ => fail("CorrMessageRefIdNotAllowedInMessageSpec and CorrMessageRefIdNotAllowedInDocSpec messages not generated")
         )
 
+      }
+
+      "when the reporting period of a correction does not match the reporting period of original submission" in {
+        val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(redReportPeriod))
+
+
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(ReportingPeriodInvalid),
+          _ => fail("No ReportingPeriodInvalid generated")
+        )
+
+      }
+
+      "when the reporting period of a correction matches the reporting period of original submission" in {
+        val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red.copy(reportingPeriod = Some(LocalDate.of(2016,3,31)))))
+
+
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => fail(s"Error were generated: $errors"),
+          _ => ()
+        )
+      }
+
+      "when the original submission di not persist a reporting period and so reportingEntity returns None" in {
+        val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red))
+
+
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => fail(s"Error were generated: $errors"),
+          _ => ()
+        )
       }
     }
   }
