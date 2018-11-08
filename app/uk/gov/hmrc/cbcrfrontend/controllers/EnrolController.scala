@@ -40,10 +40,11 @@ class EnrolController @Inject()(val config:Configuration,
   val conf = config.underlying.get[Config]("microservice.services.gg-proxy").value
 
   val url: String = (for {
-    host    <- conf.get[String]("host")
-    port    <- conf.get[Int]("port")
-    service <- conf.get[String]("url")
-  } yield s"http://$host:$port/$service").value
+    host     <- conf.get[String]("host")
+    port     <- conf.get[Int]("port")
+    service  <- conf.get[String]("url")
+    protocol <- conf.get[String]("protocol")
+  } yield s"$protocol://$host:$port/$service").value
 
   def deEnrol() = Action.async{ implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)){

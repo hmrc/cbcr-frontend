@@ -36,10 +36,11 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient, config:Configuration)(i
   val conf = config.underlying.get[Config]("microservice.services.tax-enrolments").value
 
   val url: String = (for {
-    host    <- conf.get[String]("host")
-    port    <- conf.get[Int]("port")
-    service <- conf.get[String]("url")
-  } yield s"http://$host:$port/$service").value
+    host     <- conf.get[String]("host")
+    port     <- conf.get[Int]("port")
+    service  <- conf.get[String]("url")
+    protocol <- conf.get[String]("protocol")
+  } yield s"$protocol://$host:$port/$service").value
 
 
   def deEnrol(implicit hc:HeaderCarrier): Future[HttpResponse] =
