@@ -138,13 +138,6 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     }
   }
 
-
-  def downloadGuide = Action.async{ implicit request =>
-    val guideVer: String = config.getString(s"${env.mode}.oecd-guide-version").getOrElse(throw new Exception(s"Missing configuration ${env.mode}.oecd-guide-version"))
-    val file: Path = Paths.get(s"conf/downloads/HMRC_CbC_XML_User_Guide_V$guideVer.pdf")
-    Future.successful(Ok.sendPath(file,inline = false,fileName = _ => s"HMRC_CbC_XML_User_Guide_V$guideVer.pdf"))
-  }
-
   val pred = AffinityGroup.Organisation and (User or Admin)
 
   val verifyKnownFactsOrganisation = Action.async{ implicit request =>
