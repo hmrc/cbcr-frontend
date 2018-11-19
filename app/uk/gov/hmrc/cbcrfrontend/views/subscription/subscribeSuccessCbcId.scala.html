@@ -34,12 +34,11 @@
                 </div>
             </section>
             <p><a href="#" onclick="window.print()" class="print-link">@Messages("subscribeSuccessCbcId.printThisButton")</a></p>
-            <p>@Messages("subscribeSuccessCbcId.printThis1")</p>
+
             <h2>@Messages("subscribeSuccessCbcId.next")</h2>
             <p>@Messages("subscribeSuccessCbcId.email")</p>
-            <p>@Messages("subscribeSuccessCbcId.next2")<a href="@routes.SharedController.signOutSurvey()"> @messages("subscribeSuccessCbcId.nextLink")</a></p>
-            <p>
-                <a class="button" role="button" href="@routes.FileUploadController.chooseXMLFile()">@Messages("cbc.button.continue")</a>
+            <p>@Messages("subscribeSuccessCbcId.next2") <a href="@routes.SharedController.signOutSurvey()">@messages("subscribeSuccessCbcId.nextLink")</a>
+                @Messages("subscribeSuccessCbcId.next3") <a href="@routes.FileUploadController.chooseXMLFile()">@messages("subscribeSuccessCbcId.nextLink2")</a>
             </p>
         </div>
 
