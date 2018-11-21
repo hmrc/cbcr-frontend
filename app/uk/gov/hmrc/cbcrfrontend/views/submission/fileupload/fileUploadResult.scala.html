@@ -61,31 +61,33 @@ else {
                 <p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.data.link")
                     (Text, @{
                     size
-                }KB)</a>.</p>
-                <p>@Messages("fileUploadResult.error.data.message")</p>
+                }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
             }
             @busErrors.map { size =>
                 <p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
                     (Text, @{
                     size
-                }KB)</a>.</p>
-                <p>@Messages("fileUploadResult.error.data.message")</p>
+                }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
             }
             <p><a href="@config.cbcrOecdGuideUrl">@Messages("fileUploadResult.error.oecdUrl")</a> @Messages("fileUploadResult.error.oecdInfo")</p>
         }
         @if(!errors) {
-            <table class="table--top-border" id="table-successReport">
-                <tbody>
-                    <tr>
-                        <td>@Messages("fileUploadResult.fileName")</td>
-                        <td>@fileName</td>
-                    </tr>
-                    <tr>
-                        <td>@Messages("fileUploadResult.fileSize")</td>
-                        <td>@fileSize KB</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div>
+                <br>
+                <table class="table--top-border" id="table-successReport">
+                    <tbody>
+                        <tr>
+                            <td>@Messages("fileUploadResult.fileName")</td>
+                            <td>@fileName</td>
+                        </tr>
+                        <tr>
+                            <td>@Messages("fileUploadResult.fileSize")</td>
+                            <td>@fileSize KB</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p></p>
             <p>@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey()">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
 
             @if(reportingRole == Some(CBC701)){

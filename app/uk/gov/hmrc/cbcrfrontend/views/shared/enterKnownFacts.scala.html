@@ -55,7 +55,7 @@
                             Some(Messages("subscribeFirst.error.message.postcode-empty")),
                             Messages("subscribeFirst.postcode.label"),
                             knownFactsForm,
-                            None)
+                            Some(Messages("subscribeFirst.postcode.hint")))
                     </div>
                 </fieldset>
                 @csrf_token()

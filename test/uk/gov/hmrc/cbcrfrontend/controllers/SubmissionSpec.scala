@@ -717,7 +717,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "contain a valid dateformat" in {
 
-      LocalDateTime.of(2017,12,1,23,59,59).format(controller.dateFormat) shouldEqual "01 December 2017 at 23:59"
+      LocalDateTime.of(2017,12,1,23,59,59).format(controller.dateFormat).replace("AM","am").replace("PM","pm") shouldEqual "01 December 2017 at 11:59pm"
     }
     "display the audit information correctly" in {
       val sd = SummaryData(bpr,submissionData,keyXMLInfo)

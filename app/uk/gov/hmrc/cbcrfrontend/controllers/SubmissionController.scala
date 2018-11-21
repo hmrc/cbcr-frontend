@@ -75,7 +75,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
-  val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' HH:mm")
+  val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' h:mma")
 
   def saveDocRefIds(x:CompleteXMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
     val cbcReportIds      = x.cbcReport.map(reports      => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId)
@@ -360,7 +360,7 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
           data = dataTuple._1
           date = dataTuple._2
           cbcId = dataTuple._3
-          formattedDate <- fromEither((nonFatalCatch opt date.date.format(dateFormat)).toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")))
+          formattedDate <- fromEither((nonFatalCatch opt date.date.format(dateFormat).replace("AM","am").replace("PM","pm")).toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")))
           emailSentAlready <- right(cache.readOption[ConfirmationEmailSent].map(_.isDefined))
           sentEmail <- if (!emailSentAlready) right(emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
           else pure(None)
