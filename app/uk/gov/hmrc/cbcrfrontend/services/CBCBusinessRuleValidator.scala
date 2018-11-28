@@ -250,7 +250,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     (r.messageSpec.messageType, docType401) match {
       case (Some(CBC401), true)   => Some(CBC401)
       case (Some(CBC401), false)  => None
-      case (Some(CBC402), false)  => Some(CBC402)
+      case (Some(CBC402), _)      => Some(CBC402)
       case (None, true)           => Some(CBC401)
       case (None, false)          => Some(CBC402)
       case _                      => None
