@@ -245,15 +245,15 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
     lazy val repDocTypes = r.reportingEntity.map(_.docSpec.docType)
 
-    val DocType401 = !(docTypes.exists(_ != OECD1) || repDocTypes.exists(dt => dt != OECD1 && dt != OECD0))
+    val docType401 = !(docTypes.exists(_ != OECD1) || repDocTypes.exists(dt => dt != OECD1 && dt != OECD0))
 
-    (r.messageSpec.messageType, DocType401) match {
-      case (Some(CBC401), DocType401) => Some(CBC401)
-      case (Some(CBC401), _)          => None
-      case (Some(CBC402), _)          => Some(CBC402)
-      case (None, DocType401)         => Some(CBC401)
-      case (None, _)                  => Some(CBC402)
-      case _                          => None
+    (r.messageSpec.messageType, docType401) match {
+      case (Some(CBC401), true)   => Some(CBC401)
+      case (Some(CBC401), false)  => None
+      case (Some(CBC402), false)  => Some(CBC402)
+      case (None, true)           => Some(CBC401)
+      case (None, false)          => Some(CBC402)
+      case _                      => None
     }
 
   }
