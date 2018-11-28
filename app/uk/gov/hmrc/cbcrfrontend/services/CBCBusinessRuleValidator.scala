@@ -240,19 +240,29 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     }.toValidatedNel
   }
 
-  /** Ensure that if the messageType is [[CBC401]] there are no [[DocTypeIndic]] other than [[OECD1]]*/
-  private def validateMessageTypes(r:XMLInfo):ValidBusinessResult[XMLInfo] = {
+  private def determineMessageTypeIndic(r:XMLInfo):Option[MessageTypeIndic] = {
     lazy val docTypes = List(r.additionalInfo.map(_.docSpec.docType)).flatten ++ r.cbcReport.map(_.docSpec.docType)
 
     lazy val repDocTypes = r.reportingEntity.map(_.docSpec.docType)
 
-    // For CBC401 all other DocTypes must be OECD1 except reportingEntity which can also be OECD0
-    if(r.messageSpec.messageType.contains(CBC401) &&
-      (docTypes.exists(_ != OECD1) || repDocTypes.exists(dt => dt != OECD1 && dt != OECD0))) {
-      MessageTypeIndicDocTypeIncompatible.invalidNel
-    } else {
-      r.validNel
+    val docType401 = !(docTypes.exists(_ != OECD1) || repDocTypes.exists(dt => dt != OECD1 && dt != OECD0))
+
+    (r.messageSpec.messageType, docType401) match {
+      case (Some(CBC401), true)   => Some(CBC401)
+      case (Some(CBC401), false)  => None
+      case (Some(CBC402), _)      => Some(CBC402)
+      case (None, true)           => Some(CBC401)
+      case (None, false)          => Some(CBC402)
+      case _                      => None
     }
+
+  }
+
+  /** Ensure that if the messageType is [[CBC401]] there are no [[DocTypeIndic]] other than [[OECD1]]*/
+  private def validateMessageTypes(r:XMLInfo):ValidBusinessResult[XMLInfo] = {
+
+    if (determineMessageTypeIndic(r).isDefined) r.validNel
+    else MessageTypeIndicDocTypeIncompatible.invalidNel
   }
 
   /** Ensure there is not a mixture of OECD1 and other DocTypes within the document */
@@ -472,8 +482,10 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   }
 
   private def validateReportingPeriod(xmlInfo: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
-    if (xmlInfo.messageSpec.messageType.contains(CBC401)) xmlInfo.validNel
-    else {
+    val messageTypeIndic = determineMessageTypeIndic(xmlInfo)
+
+    if (messageTypeIndic.contains(CBC401)) xmlInfo.validNel
+    else if (messageTypeIndic.contains(CBC402)) {
       val crid = xmlInfo.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId)
           .orElse(xmlInfo.additionalInfo.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
           .orElse(xmlInfo.reportingEntity.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
@@ -493,6 +505,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
         Future.successful(ReportingPeriodInvalid.invalidNel)
       }
     }
+    else Future.successful(ReportingPeriodInvalid.invalidNel)
   }
 
   private def validateCorrMessageRefIdD(x: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
