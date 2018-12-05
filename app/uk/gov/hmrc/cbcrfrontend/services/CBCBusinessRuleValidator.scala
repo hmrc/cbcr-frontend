@@ -482,30 +482,31 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   }
 
   private def validateReportingPeriod(xmlInfo: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
-    val messageTypeIndic = determineMessageTypeIndic(xmlInfo)
 
-    if (messageTypeIndic.contains(CBC401)) xmlInfo.validNel
-    else if (messageTypeIndic.contains(CBC402)) {
-      val crid = xmlInfo.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId)
+    determineMessageTypeIndic(xmlInfo) match {
+      case Some(CBC401) => xmlInfo.validNel
+      case Some(CBC402) => {
+        val crid = xmlInfo.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId)
           .orElse(xmlInfo.additionalInfo.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
           .orElse(xmlInfo.reportingEntity.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
 
-      crid.map { drid =>
-        reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap {
-          cbcErrors => {
-            Logger.error(s"Got error back: $cbcErrors")
-            throw new Exception(s"Error communicating with backend: $cbcErrors")
-          }
-        }.subflatMap {
-          case Some(red) if red.reportingPeriod.isDefined => if (red.reportingPeriod.get == xmlInfo.messageSpec.reportingPeriod) Right(xmlInfo) else Left(ReportingPeriodInvalid)
-          case Some(red)                                  => Right(xmlInfo) //reportingPeriod not persisted prior to this rules implementation so can't check
-          case _                                          => Left(ReportingPeriodInvalid)
-        }.toValidatedNel
-      }.getOrElse {
-        Future.successful(ReportingPeriodInvalid.invalidNel)
+        crid.map { drid =>
+          reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap {
+            cbcErrors => {
+              Logger.error(s"Got error back: $cbcErrors")
+              throw new Exception(s"Error communicating with backend: $cbcErrors")
+            }
+          }.subflatMap {
+            case Some(red) if red.reportingPeriod.isDefined => if (red.reportingPeriod.get == xmlInfo.messageSpec.reportingPeriod) Right(xmlInfo) else Left(ReportingPeriodInvalid)
+            case Some(red) => Right(xmlInfo) //reportingPeriod not persisted prior to this rules implementation so can't check
+            case _ => Left(ReportingPeriodInvalid)
+          }.toValidatedNel
+        }.getOrElse {
+          Future.successful(ReportingPeriodInvalid.invalidNel)
+        }
       }
+      case _ => Future.successful(ReportingPeriodInvalid.invalidNel)
     }
-    else Future.successful(ReportingPeriodInvalid.invalidNel)
   }
 
   private def validateCorrMessageRefIdD(x: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
