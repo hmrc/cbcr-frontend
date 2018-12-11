@@ -445,7 +445,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList shouldNot contain(MessageTypeIndicError),
+          errors => errors.toList should contain(MessageTypeIndicError),
           _ => ()
         )
 
