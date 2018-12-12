@@ -508,6 +508,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
           Future.successful(xmlInfo.validNel)
         }
       }
+      case None if(xmlInfo.messageSpec.messageType.contains(CBC401)) => Future.successful(xmlInfo.validNel)
       case _ => Future.successful(ReportingPeriodInvalid.invalidNel)
     }
   }
