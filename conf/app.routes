@@ -32,6 +32,7 @@ GET        /invalid-file-type                             @uk.gov.hmrc.cbcrfront
 GET        /virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileContainsVirus
 GET        /file-too-large                                @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileTooLarge
 GET        /failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.handleError(errorCode:Int ?= 0, reason:String ?= "Unknown")
+GET        /unregistered-gg-account                       @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.unregisteredGGAccount
 
 GET        /ultimate-parent-entity/entry-form             @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.upe
 POST       /ultimate-parent-entity                        @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUltimateParentEntity
@@ -62,6 +63,6 @@ GET        /enrolments                                    @uk.gov.hmrc.cbcrfront
 
 GET        /assets/*file                                  controllers.Assets.versioned(path="/public", file: Asset)
 
-GET         /switch-to-welsh                              @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToWelsh
-GET         /switch-to-english                            @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToEnglish
+GET        /switch-to-welsh                               @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToWelsh
+GET        /switch-to-english                             @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToEnglish
 

@@ -102,16 +102,27 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
             error => errorRedirect(error),
             details => details.fold[Future[Result]] {
               BadRequest(submission.enterCBCId( cbcIdForm, true))
-            }(subscriptionDetails => cbcEnrolment.toRight(UnexpectedState("Could not find valid enrolment")).ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId)).fold[Future[Result]](
-              {
-                case InvalidSession => BadRequest(submission.enterCBCId( cbcIdForm, false, true))
-                case error => errorRedirect(error)
-              },
-              _ => cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
-                Redirect(routes.SubmissionController.submitSummary())
-              )
+            }(subscriptionDetails =>
+              cbcEnrolment match {
+                case Some(enrolment) => cbcEnrolment.toRight (UnexpectedState ("Could not find valid enrolment") ).ensure (InvalidSession) (e => subscriptionDetails.cbcId.contains (e.cbcId) ).fold[Future[Result]] ( {
+                  case InvalidSession => BadRequest (submission.enterCBCId (cbcIdForm, false, true) )
+                  case error => errorRedirect (error)
+                  },
+                  _ => cacheSubscriptionDetails (subscriptionDetails, id).map (_ =>
+                  Redirect (routes.SubmissionController.submitSummary () )
+                  )
 
-            ))
+                  )
+
+                /**************************************************
+                * user logged in with GG account
+                * not used to register the organisation
+                **************************************************/
+                case None => cacheSubscriptionDetails (subscriptionDetails, id).map (_ =>
+                  Redirect (routes.SubmissionController.submitSummary () )
+                )
+              }
+            )
           ))
         }
       )

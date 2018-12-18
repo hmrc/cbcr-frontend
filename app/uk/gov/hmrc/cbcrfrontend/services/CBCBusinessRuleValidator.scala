@@ -425,7 +425,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
           case Some(maybeCBCId) =>
             if (maybeCBCId.value == in.messageSpec.sendingEntityIn.value) in.validNel
             else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
-          case _ => SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
+          case _ => in.validNel //user has logged in as an org but with an unregistered cbcId
         }
       }
       case (Some(Agent), _) => in.validNel
