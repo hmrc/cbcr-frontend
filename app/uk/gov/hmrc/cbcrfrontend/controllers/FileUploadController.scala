@@ -106,29 +106,28 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     enrolled
   }
 
+  private def fileUploadUrl()(implicit hc: HeaderCarrier) :EitherT[Future,CBCErrors,String] = for {
+    envelopeId <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
+    fileId     <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"): CBCErrors)
+    successRedirect = s"$hostName${routes.FileUploadController.fileUploadProgress(envelopeId.value, fileId.value).url}"
+    fileUploadUrl   = s"$fileUploadHost/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
+      s"redirect-success-url=$successRedirect&" +
+      s"redirect-error-url=$fileUploadErrorRedirectUrl"
+  } yield fileUploadUrl
 
   val chooseXMLFile = Action.async{ implicit request =>
     authorised(AffinityGroup.Organisation or AffinityGroup.Agent).retrieve(Retrievals.affinityGroup and cbcEnrolment){
       case None               ~ _                    => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
       case Some(Organisation) ~ None
         if Await.result(cache.readOption[CBCId].map(_.isEmpty
-        ), SDuration(5, "seconds"))                   => Redirect(routes.SubmissionController.notRegistered())
+        ), SDuration(5, "seconds"))                  => Ok(submission.unregisteredGGAccount())
       case Some(Organisation) ~ Some(enrolment)
         if CBCId.isPrivateBetaCBCId(enrolment.cbcId) =>
         auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).map(
           (id: CBCId) => Ok(shared.regenerate(id))
         ).leftMap(errorRedirect).merge
       case Some(Individual) ~ _                      => Redirect(routes.SubmissionController.noIndividuals())
-      case _ ~ _                                     => (for {
-        envelopeId <- cache.readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption).toRight(UnexpectedState("Unable to get envelopeId"))
-        fileId     <- cache.readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString)))).toRight(UnexpectedState("Unable to get FileId"): CBCErrors)
-        successRedirect = s"$hostName${routes.FileUploadController.fileUploadProgress(envelopeId.value, fileId.value).url}"
-        fileUploadUrl   = s"$fileUploadHost/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
-          s"redirect-success-url=$successRedirect&" +
-          s"redirect-error-url=$fileUploadErrorRedirectUrl"
-        fileName        = s"oecd-${LocalDateTime.now}-cbcr.xml"
-      } yield Ok(submission.fileupload.chooseFile(fileUploadUrl, fileName))).leftMap(errorRedirect).merge
-
+      case _ ~ _                                     => fileUploadUrl().map (fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml"))).leftMap(errorRedirect).merge
     }
   }
 
@@ -409,5 +408,11 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
         case AuditResult.Disabled => Right(AuditResult.Success)
       })
     } yield result
+  }
+
+  val unregisteredGGAccount = Action.async{ implicit request =>
+    authorised(AffinityGroup.Organisation and (User or Admin) ) {
+      fileUploadUrl().map (fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml"))).leftMap(errorRedirect).merge
+    }
   }
 }
