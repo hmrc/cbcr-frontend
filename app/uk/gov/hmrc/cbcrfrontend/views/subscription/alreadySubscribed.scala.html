@@ -30,16 +30,12 @@
     <div class="column-full">
 
         <h1>@Messages("subscribeFirst.alreadyRegistered.heading")</h1>
-            <div class="error-summary error-summary--show"
-             id="error-summary-display"
-             role="alert"
-             aria-labelledby="error-summary-heading"
-             tabindex="-1">
-             <p>@Messages("subscribeFirst.alreadyRegistered")</p>
-             <p><a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.alreadyRegistered2")</a></p>
-            </div>
-
-        <a class="button" role="button" href="@routes.SharedController.signOutSurvey()">@Messages("form.controls.finished")</a>
+        <div>
+            <p>@Messages("subscribeFirst.alreadyRegistered")</p>
+            <p>@Messages("subscribeFirst.alreadyRegistered2") <a href="@routes.FileUploadController.chooseXMLFile()">@Messages("subscribeFirst.alreadyRegistered2.link")</a>.</p>
+            <p>@Messages("subscribeFirst.alreadyRegistered5") <a href="@routes.SharedController.signOutGG()">@Messages("subscribeFirst.alreadyRegistered5.link")</a>.</p>
+            <p>@messages("subscribeFirst.alreadyRegistered3") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.alreadyRegistered4")</a></p>
+        </div>
     </div>
 </div>
 }

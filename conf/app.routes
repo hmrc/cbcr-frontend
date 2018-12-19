@@ -14,6 +14,7 @@ POST       /cbc-id                                        @uk.gov.hmrc.cbcrfront
 GET        /                                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
 GET        /sign-out                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOut
 GET        /sign-out-survey                               @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOutSurvey
+GET        /sign-out-gg                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.signOutGG
 GET        /known-facts/agent/verify-form                 @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.verifyKnownFactsAgent
 POST       /known-facts                                   @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.checkKnownFacts
 GET        /known-facts/match                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.knownFactsMatch
