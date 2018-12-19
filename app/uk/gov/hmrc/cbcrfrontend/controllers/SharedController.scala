@@ -125,6 +125,12 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     }
   }
 
+  val signOutGG = Action.async { implicit request =>
+    {
+      Future.successful(Redirect(s"${feConfig.governmentGatewaySignInUrl}?continue=${feConfig.cbcrFrontendBaseUrl}/country-by-country-reporting/"))
+    }
+  }
+
   val signOutSurvey = Action.async { implicit request =>
     authorised() {
       val continue = s"?continue=${feConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey().url}"
