@@ -365,3 +365,12 @@ xmlError.header=ErrorCode: 50007 - The referenced file failed validation against
 
 fileUpload.BusinessRuleErrors=BusinessRuleErrors
 fileUpload.XMLSchemaErrors=XMLSchemaErrors
+
+unregisteredGG.heading=This Government Gateway account has not been used to register a business
+unregisteredGG.message1=If the business you’re reporting for has a country-by-country ID, you can continue to
+unregisteredGG.checkAndSend=check and send a report
+unregisteredGG.message2=Otherwise, you need to
+unregisteredGG.register=register for country-by-country reporting
+unregisteredGG.message3=before you can check or send a report.
+unregisteredGG.message4=If you need to change the registration details for your business, you need to
+unregisteredGG.signOut=sign in using the Government Gateway account you registered with

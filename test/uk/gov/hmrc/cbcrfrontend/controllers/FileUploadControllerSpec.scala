@@ -174,11 +174,11 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
-    "redirect to not registered page if Organisation user has is not enrolled" in {
+    "displays gateway account not registered page if Organisation user has is not enrolled" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None)))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
-      status(result) shouldBe Status.SEE_OTHER
+      status(result) shouldBe Status.OK
     }
     "allow agent to submit even when no enrolment" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
@@ -213,6 +213,26 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
 
       verify(deEnrolReEnrolService).deEnrolReEnrol(any())(any())
 
+    }
+  }
+
+  "GET /unregistered-gg-account" should {
+    val fakeRequestUnregisteredGGId = addToken((FakeRequest("GET", "/unregistered-gg-account")))
+
+    "return 200 when the envelope is created successfully" in {
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(cache.readOrCreate[EnvelopeId](any())) thenReturn OptionT.some[Future,EnvelopeId](EnvelopeId("12345678"))
+      val result = partiallyMockedController.unregisteredGGAccount(fakeRequestUnregisteredGGId)
+      status(result) shouldBe Status.OK
+    }
+    "return 500 when the is an error creating the envelope\"" in {
+      TestSessionCache.succeed = false
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(fuService.createEnvelope(any(), any())) thenReturn left[EnvelopeId]("server error")
+      val result = partiallyMockedController.unregisteredGGAccount(fakeRequestUnregisteredGGId)
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+
+      TestSessionCache.succeed = true
     }
   }
 
