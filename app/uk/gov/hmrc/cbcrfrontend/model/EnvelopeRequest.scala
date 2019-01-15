@@ -23,7 +23,7 @@ object MetaData {
   implicit val metaDataFormat = Json.format[MetaData]
 }
 
-case class Constraints(maxSize:String = "50MB", maxSizePerItem:String = "50MB")
+case class Constraints(maxSize:String = "50MB", maxSizePerItem:String = "50MB", contentTypes:List[String] = List("application/xml", "text/xml"))
 object Constraints {
   implicit val constraintFormat = Json.format[Constraints]
 }
