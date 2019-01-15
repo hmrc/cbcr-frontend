@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
         ),
         "constraints" -> Json.obj(
           "maxSize" -> "50MB",
-          "maxSizePerItem" -> "50MB"
+          "maxSizePerItem" -> "50MB",
+          "contentTypes" -> List("application/xml","text/xml")
         )
       )
 
@@ -63,7 +64,8 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
         ),
         "constraints" -> Json.obj(
           "maxSize" -> "50MB",
-          "maxSizePerItem" -> "50MB"
+          "maxSizePerItem" -> "50MB",
+          "contentTypes" -> List("application/xml","text/xml")
         )
       )
 

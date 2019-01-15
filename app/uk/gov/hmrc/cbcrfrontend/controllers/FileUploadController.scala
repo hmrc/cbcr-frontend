@@ -168,7 +168,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
   def getMetaData(envelopeId: String, fileId: String)(implicit hc:HeaderCarrier): ServiceResponse[FileMetadata] = for {
     metadata <- fileUploadService.getFileMetaData(envelopeId, fileId).subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
-    _        <- EitherT.cond[Future](metadata.name.endsWith(".xml"), (), InvalidFileType(metadata.name))
+    _        <- EitherT.cond[Future](metadata.name.toLowerCase.endsWith(".xml"), (), InvalidFileType(metadata.name))
     _        <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
   } yield metadata
 
@@ -208,7 +208,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       val result = for {
         file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
         _             <- right(cache.save(file_metadata._2))
-        _             <- EitherT.cond[Future](file_metadata._2.name endsWith ".xml", (), InvalidFileType(file_metadata._2.name))
+        _             <- EitherT.cond[Future](file_metadata._2.name.toLowerCase endsWith ".xml", (), InvalidFileType(file_metadata._2.name))
         schemaErrors   = schemaValidator.validateSchema(file_metadata._1)
         xmlErrors      = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
         schemaSize     = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
