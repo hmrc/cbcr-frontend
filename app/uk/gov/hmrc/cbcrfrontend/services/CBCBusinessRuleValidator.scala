@@ -28,7 +28,7 @@ import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
 import uk.gov.hmrc.cbcrfrontend.functorInstance
 import uk.gov.hmrc.cbcrfrontend.applicativeInstance
-import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, _}
+import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, DocRefIdDuplicate, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -541,8 +541,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
   def recoverReportingEntity(in:XMLInfo)(implicit hc: HeaderCarrier) : FutureValidBusinessResult[CompleteXMLInfo] = in.reportingEntity match {
     case Some(re) => Future.successful(CompleteXMLInfo(in.messageSpec,re,in.cbcReport,in.additionalInfo, in.creationDate, in.constEntityNames).validNel)
     case None     =>
-      val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId))
-      val rr = in.cbcReport.headOption.map(_.docSpec.docType).orElse(in.additionalInfo.map(_.docSpec.docType))
+      val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.headOption.flatMap(_.docSpec.corrDocRefId))
+      val rr = in.cbcReport.headOption.map(_.docSpec.docType).orElse(in.additionalInfo.headOption.map(_.docSpec.docType))
 
       (id |@| rr).map { (drid, dti) =>
         reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap{

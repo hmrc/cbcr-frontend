@@ -136,7 +136,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
     ),
     Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId+"REP").get,None,None),TIN("7000000002","gb"),"name")),
     List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None,None))),
-    Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
+    List(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
     Some(LocalDate.now()),
     List.empty[String]
   )

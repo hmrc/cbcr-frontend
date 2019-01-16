@@ -52,7 +52,7 @@ class CreationDateService @Inject()(connector:CBCRBackendConnector,
   )
 
   def isDateValid(in:XMLInfo)(implicit hc:HeaderCarrier) : Future[Boolean] = {
-    val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.flatMap(_.docSpec.corrDocRefId)).orElse(in.reportingEntity.flatMap(_.docSpec.corrDocRefId))
+    val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.headOption.flatMap(_.docSpec.corrDocRefId)).orElse(in.reportingEntity.flatMap(_.docSpec.corrDocRefId))
     id.map { drid =>
       reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap {
         {
