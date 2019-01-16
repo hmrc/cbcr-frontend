@@ -158,7 +158,7 @@ class XmlInfoExtract {
     val cr = collectedData._1.collect{ case cr:RawCbcReports=> cr }
     val cen = collectedData._1.collect{ case cen:RawConstEntityName => cen.name}
 
-    RawXMLInfo(ms,re,cr,ai.headOption,cv,xe, collectedData._2, cen)
+    RawXMLInfo(ms,re,cr,ai,cv,xe, collectedData._2, cen)
 
   }
 

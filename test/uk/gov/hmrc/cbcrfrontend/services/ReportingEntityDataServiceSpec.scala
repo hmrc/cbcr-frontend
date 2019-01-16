@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class ReportingEntityDataServiceSpec extends UnitSpec with ScalaFutures with Gui
   val docRefId=DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").get
 
 
-  val red = ReportingEntityData(NonEmptyList(docRefId,Nil),Some(docRefId),docRefId,TIN("90000000001",""),UltimateParentEntity("Foo Corp"),CBC701,Some(LocalDate.now()),None)
+  val red = ReportingEntityData(NonEmptyList(docRefId,Nil),List(docRefId),docRefId,TIN("90000000001",""),UltimateParentEntity("Foo Corp"),CBC701,Some(LocalDate.now()),None)
 
   implicit val hc:HeaderCarrier = HeaderCarrier()
 

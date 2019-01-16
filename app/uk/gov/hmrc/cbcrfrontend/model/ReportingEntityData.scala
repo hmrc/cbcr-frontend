@@ -41,7 +41,7 @@ import play.api.libs.json.Json._
   * @param reportingRole The [[ReportingRole]] from the [[ReportingEntity]] section of the XML document
   */
 case class ReportingEntityData(cbcReportsDRI:NonEmptyList[DocRefId],
-                               additionalInfoDRI:Option[DocRefId],
+                               additionalInfoDRI:List[DocRefId],
                                reportingEntityDRI:DocRefId,
                                tin:TIN,
                                ultimateParentEntity: UltimateParentEntity,
@@ -53,7 +53,7 @@ case class DocRefIdPair(docRefId: DocRefId,corrDocRefId: Option[CorrDocRefId])
 object DocRefIdPair{ implicit val format = Json.format[DocRefIdPair] }
 
 case class PartialReportingEntityData(cbcReportsDRI:List[DocRefIdPair],
-                                      additionalInfoDRI:Option[DocRefIdPair],
+                                      additionalInfoDRI:List[DocRefIdPair],
                                       reportingEntityDRI:DocRefIdPair,
                                       tin:TIN,
                                       ultimateParentEntity: UltimateParentEntity,

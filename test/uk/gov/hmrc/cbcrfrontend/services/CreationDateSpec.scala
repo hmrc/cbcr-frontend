@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,11 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
 
   val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
   val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
+  val actualDocRefId2 = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD63").get
 
-  val redNoCreationDate = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,None,None)
-  val redOldCreationDate = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.parse("2010-01-01")),None)
-  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),None)
+  val redNoCreationDate = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,None,None)
+  val redOldCreationDate = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.parse("2010-01-01")),None)
+  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),None)
 
   val messageSpec = MessageSpec(
     MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
@@ -77,7 +78,7 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
     messageSpec,
     None,
     List(CbcReports(DocSpec(OECD2,DocRefId(docRefId + "ENT").get,Some(CorrDocRefId(actualDocRefId)),None))),
-    Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
+    List(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
     Some(LocalDate.now()),
     List.empty[String]
   )

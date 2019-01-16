@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -767,7 +767,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
       ),
       ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None,None),TIN("7000000002", "gb"),"name"),
       List(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None,None))),
-      Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None,None))),
+      List(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None,None))),
       Some(LocalDate.now()),
       List.empty[String]
     )

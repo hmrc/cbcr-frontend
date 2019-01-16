@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,11 +72,17 @@ class XmlInfoExtractSpec extends UnitSpec {
       r4.docSpec.docRefId shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP4"
       r4.docSpec.corrDocRefId shouldBe Some("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP5")
 
-      val a = e.additionalInfo.get
+      val a = e.additionalInfo.head
 
       a.docSpec.docType shouldBe "OECD1"
       a.docSpec.docRefId shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD"
       a.docSpec.corrDocRefId shouldBe None
+
+      val a2 = e.additionalInfo.tail.head
+
+      a2.docSpec.docType shouldBe "OECD1"
+      a2.docSpec.docRefId shouldBe "GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD2"
+      a2.docSpec.corrDocRefId shouldBe None
 
       e.constEntityNames should contain("name1")
       e.constEntityNames should contain("name2")

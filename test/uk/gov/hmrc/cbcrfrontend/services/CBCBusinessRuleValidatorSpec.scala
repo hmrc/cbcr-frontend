@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,8 +100,10 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
 
-  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),None)
-  val redReportPeriod = ReportingEntityData(NonEmptyList.of(actualDocRefId),None,actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),Some(LocalDate.of(2018,1,1)))
+  val actualDocRefId2 = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD63").get
+
+  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),None)
+  val redReportPeriod = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),Some(LocalDate.of(2018,1,1)))
 
   val xmlinfo = XMLInfo(
   MessageSpec(
@@ -115,7 +117,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
   ),
   None,
   List(CbcReports(DocSpec(OECD1,DocRefId(docRefId + "ENT").get,None,None))),
-  Some(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
+  List(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
     Some(LocalDate.now()),
     List.empty[String]
   )
@@ -497,8 +499,20 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
 
       }
-      "when a docRefId is a duplicate within the file" in {
+      "when a CBCReports docRefId is a duplicate within the file" in {
         val validFile = new File("test/resources/cbcr-valid-dup.xml")
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
+
+        val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(DocRefIdDuplicate),
+          _ => fail("No InvalidXMLError generated")
+        )
+      }
+      "when a AdditionalInfo docRefId is a duplicate within the file" in {
+        val validFile = new File("test/resources/cbcr-valid-additional-dup.xml")
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
         when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
 
