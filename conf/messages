@@ -336,7 +336,7 @@ error.MessageTypeIndicDocTypeIncompatible=Error DocTypeIndic (New): If the Submi
 error.InvalidDocRefId=Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide.
 error.InvalidCorrDocRefId=Error Code 8000 CorrDocRefId (format): The structure of the CorrDocRefID is not in the correct format, as set out in the User Guide.
 error.CbcOecdVersionError=CBC_OECD version must equal 1.0.1
-error.XmlEncodingError=XML encoding must equal UTF8
+error.XmlEncodingError=XML encoding must equal UTF-8
 error.OriginalSubmissionNotFound=Original submission could not be identified
 error.PrivateBetaCBCIdError=The country-by-country ID you entered has changed. You will need to use the new ID which we have emailed to you. If you are operating as an agent, contact your client for the new country-by-country ID.
 error.CorrDocRefIdDuplicate=Error Code 80011 CorrDocRefId (Duplicate):The same DocRefID cannot be corrected or deleted twice in the same message.
@@ -356,7 +356,7 @@ xmlValidationError.InvalidTIN=The TIN element must be a valid UK UTR
 
 messageRefIDError.IDMissing=ErrorCode: 70000 - Message Reference must be completed
 messageRefIDError.CBCIdMismatch=The CbC ID within the MessageRefId does not match the CbC ID in the SendingEntityIN field
-messageRefIDError.FormatError=MessageRefID must match defined format
+messageRefIDError.FormatError=MessageRefID must match defined format, only alphanumeric and "_" characters are allowed
 messageRefIdError.Duplicate=ErrorCode: 50009 - The referenced file has a duplicate MessageRefID value that was received on a previous file
 messageRefIdError.ReportingPeriodMismatch=The ReportingPeriod element of the MessageRefId does not match the Year of the Reporting Period field in the XML
 messageRefIdError.TimestampError=The XML Creation Time stamp element is not a valid UTC date time
