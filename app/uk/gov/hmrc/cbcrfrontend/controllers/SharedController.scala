@@ -189,10 +189,7 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     for {
       postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
       utr <- cache.readOption[Utr].map(_.map(_.utr))
-      result <- cbcEnrolment.map(enrolment =>
-          Future.successful(NotAcceptable(subscription.alreadySubscribed()))
-
-      ).fold[Future[Result]](
+      result <- cbcEnrolment.map(_ => Future.successful(NotAcceptable(subscription.alreadySubscribed()))).fold[Future[Result]](
         {
           val form = (utr |@| postCode).map((utr: String, postCode: String) =>
             knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode))
