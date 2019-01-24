@@ -307,17 +307,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         }
       }
 
-      "SendingEntityIn is using a private beta CBCId" in {
-        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
-        val validFile = new File("test/resources/cbcr-privatebeta.xml")
-        val result = Await.result(validator.validateBusinessRules(validFile, filenamePB, Some(enrol), Some(Organisation)), 5.seconds)
-
-        result.fold(
-          errors => errors.head shouldBe PrivateBetaCBCIdError,
-          _ => fail("No TestDataError generated")
-        )
-      }
-
       "SendingEntityIn does not match any CBCId in the database" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
         when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT.pure[Future, CBCErrors, Option[SubscriptionDetails]](None)

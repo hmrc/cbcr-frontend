@@ -85,8 +85,6 @@ object CBCId extends Modulus23Check {
 
   private def isValidCBC(s: String): Boolean = s.matches(cbcRegex)
 
-  def isPrivateBetaCBCId(c:CBCId) : Boolean = c.value.matches("""^X[A-Z]CBC00.*$""")
-
   def create(i: Int): Validated[Throwable, CBCId] = if (i > 999999 || i < 0) {
     Invalid(new IllegalArgumentException("CBCId ranges from 0-999999"))
   } else {

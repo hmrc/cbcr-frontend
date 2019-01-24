@@ -60,7 +60,6 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
   val subService                      = mock[SubscriptionDataService]
   val bprKF                           = mock[BPRKnownFactsService]
   val configuration                   = mock[Configuration]
-  val reDeEnrol:DeEnrolReEnrolService = mock[DeEnrolReEnrolService]
   val auditC: AuditConnector          = mock[AuditConnector]
   val runMode                         = mock[RunMode]
   val env                             = mock[Environment]
@@ -93,11 +92,6 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
     )
   }
 
-  override protected def afterEach(): Unit = {
-    reset(cache,subService,bprKF,reDeEnrol,auditC,runMode,authC)
-    super.afterEach()
-  }
-
   private val affinityGroupOrgansiation = AffinityGroup.Organisation
 
   when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
@@ -106,7 +100,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
   val schemaVer: String = "1.0"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new SharedController(messagesApi, subService,bprKF,reDeEnrol,auditC,env,authC)(cache,config, feConfig)
+  val controller = new SharedController(messagesApi, subService,bprKF,auditC,env,authC)(cache,config, feConfig)
 
   val utr = Utr("7000000001")
   val bpr = BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))
@@ -193,17 +187,6 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
       when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
-    }
-    "call the deEnrolReEnrolService if the user has a publicBetaCBCId" in {
-      when(authC.authorise[Option[CBCEnrolment]](any(),any())(any(),any())) thenReturn Future.successful(Some(CBCEnrolment(CBCId("XGCBC0000000001").getOrElse(fail("bad cbcId")),utr)))
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(Some(bpr))
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(utr))
-      when(reDeEnrol.deEnrolReEnrol(any())(any())) thenReturn right(id2)
-      when(auditC.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
-      status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
-      verify(reDeEnrol).deEnrolReEnrol(any())(any())
-
     }
   }
 

@@ -67,7 +67,6 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
                                      val fileUploadService:FileUploadService,
                                      val xmlExtractor:XmlInfoExtract,
                                      val audit: AuditConnector,
-                                     val rrService: DeEnrolReEnrolService,
                                      val env:Environment)
                                     (implicit ec: ExecutionContext, cache:CBCSessionCache, val config:Configuration, feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport{
 
@@ -121,11 +120,6 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
       case Some(Organisation) ~ None
         if Await.result(cache.readOption[CBCId].map(_.isEmpty
         ), SDuration(5, "seconds"))                  => Ok(submission.unregisteredGGAccount())
-      case Some(Organisation) ~ Some(enrolment)
-        if CBCId.isPrivateBetaCBCId(enrolment.cbcId) =>
-        auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).map(
-          (id: CBCId) => Ok(shared.regenerate(id))
-        ).leftMap(errorRedirect).merge
       case Some(Individual) ~ _                      => Redirect(routes.SubmissionController.noIndividuals())
       case _ ~ _                                     => fileUploadUrl().map (fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml"))).leftMap(errorRedirect).merge
     }

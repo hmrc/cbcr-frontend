@@ -70,7 +70,6 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   val businessRulesValidator: CBCBusinessRuleValidator = mock[CBCBusinessRuleValidator]
   val cache: CBCSessionCache                           = mock[CBCSessionCache]
   val extractor: XmlInfoExtract                        = new XmlInfoExtract()
-  val deEnrolReEnrolService                            = mock[DeEnrolReEnrolService]
   val auditC: AuditConnector                           = mock[AuditConnector]
   var runMode                                          = mock[RunMode]
   val authConnector                                    = mock[AuthConnector]
@@ -155,8 +154,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   val schemaVer: String = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration ${runMode.env}.oecd-schema-version"))
   val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
 
-  val partiallyMockedController = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,deEnrolReEnrolService,env)(ec,TestSessionCache(), configuration, feConfig)
-  val controller = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,deEnrolReEnrolService,env)(ec,cache, configuration, feConfig)
+  val partiallyMockedController = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,env)(ec,TestSessionCache(), configuration, feConfig)
+  val controller = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,env)(ec,cache, configuration, feConfig)
 
   val testFile:File= new File("test/resources/cbcr-valid.xml")
   val tempFile:File=File.createTempFile("test",".xml")
@@ -202,17 +201,6 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       TestSessionCache.succeed = true
-    }
-    "return a 200 and call the DeEnrolReEnrolService if the user has a PrivateBeta cbcId in their bearer token" in {
-      when(auditC.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
-      when(deEnrolReEnrolService.deEnrolReEnrol(any())(any())) thenReturn right(CBCId.create(10).getOrElse(fail("bad cbcid")))
-      when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
-        .thenReturn(Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(CBCEnrolment(CBCId("XGCBC0000000001").getOrElse(fail("bad cbcId")),Utr("9000000001"))))))
-      val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
-      status(result) shouldBe Status.OK
-
-      verify(deEnrolReEnrolService).deEnrolReEnrol(any())(any())
-
     }
   }
 
