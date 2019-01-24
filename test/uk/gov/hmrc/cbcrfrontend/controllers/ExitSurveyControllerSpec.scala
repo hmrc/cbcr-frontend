@@ -57,7 +57,6 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   val subService                      = mock[SubscriptionDataService]
   val bprKF                           = mock[BPRKnownFactsService]
   val configuration                   = mock[Configuration]
-  val reDeEnrol:DeEnrolReEnrolService = mock[DeEnrolReEnrolService]
   val auditC: AuditConnector          = mock[AuditConnector]
   val runMode                         = mock[RunMode]
 
@@ -88,10 +87,6 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
     )
   }
 
-  override protected def afterEach(): Unit = {
-    reset(subService,bprKF,reDeEnrol,auditC,runMode)
-    super.afterEach()
-  }
 
   when(runMode.env) thenReturn "Dev"
 

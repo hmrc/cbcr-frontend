@@ -53,7 +53,6 @@ import scala.concurrent.Future
 class SharedController @Inject()(val messagesApi: MessagesApi,
                                  val subDataService: SubscriptionDataService,
                                  val knownFactsService: BPRKnownFactsService,
-                                 val rrService: DeEnrolReEnrolService,
                                  val audit: AuditConnector,
                                  val env:Environment,
                                  val authConnector:AuthConnector
@@ -165,23 +164,6 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
     authorised(AffinityGroup.Agent)(enterKnownFacts(None))
   }
 
-  def auditDeEnrolReEnrolEvent(enrolment: CBCEnrolment,result:ServiceResponse[CBCId])(implicit request:Request[AnyContent]) : ServiceResponse[CBCId] = {
-    EitherT(result.value.flatMap { e =>
-      audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCR-DeEnrolReEnrol",
-        detail = Json.obj(
-          "path"     -> JsString(request.uri),
-          "newCBCId" -> JsString(e.map(_.value).getOrElse("Failed to get new CBCId")),
-          "oldCBCId" -> JsString(enrolment.cbcId.value),
-          "utr"      -> JsString(enrolment.utr.utr)
-        )
-      )).map {
-        case AuditResult.Success         => e
-        case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
-        case AuditResult.Disabled        => e
-      }
-    })
-  }
-
 
   def auditBPRKnowFactsFailure(cbcIdFromXml: Option[CBCId], bpr: BusinessPartnerRecord, bPRKnownFacts: BPRKnownFacts)(implicit request:Request[AnyContent]): Unit ={
 
@@ -208,14 +190,8 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
       postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
       utr <- cache.readOption[Utr].map(_.map(_.utr))
       result <- cbcEnrolment.map(enrolment =>
-        if (CBCId.isPrivateBetaCBCId(enrolment.cbcId)) {
-          auditDeEnrolReEnrolEvent(enrolment, rrService.deEnrolReEnrol(enrolment)).fold[Result](
-            errors => errorRedirect(errors),
-            (id: CBCId) => Ok(shared.regenerate(id))
-          )
-        } else {
           Future.successful(NotAcceptable(subscription.alreadySubscribed()))
-        }
+
       ).fold[Future[Result]](
         {
           val form = (utr |@| postCode).map((utr: String, postCode: String) =>

@@ -154,15 +154,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
   private def extractSendingEntityIn(in:RawMessageSpec): ValidBusinessResult[CBCId] = {
     CBCId(in.sendingEntityIn).fold[ValidBusinessResult[CBCId]](
-      SendingEntityError.invalidNel[CBCId])(
-      cbcId => {
-        if (CBCId.isPrivateBetaCBCId(cbcId)) {
-          PrivateBetaCBCIdError.invalidNel[CBCId]
-        } else {
-          cbcId.validNel
-        }
-      }
-    )
+      SendingEntityError.invalidNel[CBCId])(cbcId => {cbcId.validNel})
   }
 
   private def extractReceivingCountry(in:RawMessageSpec) : ValidBusinessResult[String] =
@@ -397,16 +389,14 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     * 2) Has already been registered
     */
   private def validateSendingEntity(cbcId:CBCId)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[CBCId] =
-    if (CBCId.isPrivateBetaCBCId(cbcId)) Future.successful(PrivateBetaCBCIdError.invalidNel[CBCId])
-    else {
-      subscriptionDataService.retrieveSubscriptionData(Right(cbcId)).fold[ValidBusinessResult[CBCId]](
-        (_: CBCErrors) => SendingEntityError.invalidNel,
-        (maybeDetails: Option[SubscriptionDetails]) => maybeDetails match {
-          case None    => SendingEntityError.invalidNel
-          case Some(_) => cbcId.validNel
-        }
-      )
-    }
+    subscriptionDataService.retrieveSubscriptionData(Right(cbcId)).fold[ValidBusinessResult[CBCId]](
+      (_: CBCErrors) => SendingEntityError.invalidNel,
+      (maybeDetails: Option[SubscriptionDetails]) => maybeDetails match {
+        case None    => SendingEntityError.invalidNel
+        case Some(_) => cbcId.validNel
+      }
+    )
+
 
   /** Ensure the [[CBCId]] found in the [[MessageRefID]] matches the [[CBCId]] in the SendingEntityIN field */
   private def validateCBCId(messageRefID: MessageRefID, messageSpec: MessageSpec) : ValidBusinessResult[MessageRefID] =
