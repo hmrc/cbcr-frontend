@@ -25,10 +25,44 @@ trait MicroService {
   lazy val plugins : Seq[Plugins] = Seq.empty
   lazy val playSettings : Seq[Setting[_]] = Seq.empty
 
+  lazy val excludedPackages = Seq(
+    "<empty>",
+    "Reverse*",
+    "models/.data/..*",
+    "view.*",
+    ".*standardError*.*",
+    ".*govuk_wrapper*.*",
+    ".*main_template*.*",
+    "uk.gov.hmrc.BuildInfo",
+    "app.*",
+    "prod.*",
+    "config.*",
+    "testOnlyDoNotUseInAppConf.*",
+    "testOnly.*",
+    "uk.gov.hmrc.cbcr.controllers.test",
+    "test",
+    "uk.gov.hmrc.cbcrfrontend.connectors.test",
+    "uk.gov.hmrc.cbcrfrontend.controllers.test",
+    "uk.gov.hmrc.cbcrfrontend.views.*",
+    "uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector.*",
+    "uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector.*",
+    "uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector.*",
+    "uk.gov.hmrc.cbcrfrontend.typesclasses"
+  )
+
+  lazy val scoverageSettings = {
+    import scoverage._
+    Seq(
+      ScoverageKeys.coverageExcludedPackages := excludedPackages.mkString(";"),
+      ScoverageKeys.coverageMinimum := 80,
+      ScoverageKeys.coverageFailOnMinimum := false,
+      ScoverageKeys.coverageHighlighting := true
+    )
+  }
 
   lazy val microservice = Project(appName, file("."))
     .enablePlugins(Seq(play.sbt.PlayScala,SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory) ++ plugins : _*)
-    .settings(playSettings : _*)
+    .settings(playSettings ++ scoverageSettings : _*)
     .settings(scalaSettings: _*)
     .settings(playDefaultPort := 9696)
     .settings(publishingSettings: _*)
