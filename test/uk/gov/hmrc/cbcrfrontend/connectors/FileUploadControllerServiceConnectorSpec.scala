@@ -19,15 +19,18 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import org.scalatest.{EitherValues, FlatSpec, Matchers}
-import play.api.libs.json.Json
+import org.scalatest.{EitherValues, FlatSpec, Matchers, WordSpec}
+import play.api.libs.json.{JsNull, Json}
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
+import org.mockito.Mockito._
+import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, EnvelopeId, FileMetadata, UnexpectedState}
+import play.api.http.HeaderNames.LOCATION
 
-import scala.io.Source
 
-
-class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers with EitherValues {
-
+class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers with EitherValues with MockitoSugar {
 
 
   "A FileUploadControllerServiceConnectorSpec " should {
@@ -72,6 +75,107 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
       val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", None)
 
       actualEnvelopeRequest should be(expectedEnvelopeRequest)
+    }
+
+    "return the envelopeId if call to extractEnvelopId with valid location header" in {
+      val response: HttpResponse = mock[HttpResponse]
+      when(response.header(LOCATION)).thenReturn(Option("localhost:8898/file-upload/envelopes/0f23a63e-d448-41af-a159-6ba23d88943e"))
+
+      val result = new FileUploadServiceConnector().extractEnvelopId(response)
+      result should equal(Right(EnvelopeId("0f23a63e-d448-41af-a159-6ba23d88943e")))
+    }
+
+    "return an error if call to extractEnvelopId with location header but no envelopeId" in {
+      val response: HttpResponse = mock[HttpResponse]
+      when(response.header(LOCATION)).thenReturn(Option("localhost:8898/file-upload/envelopes"))
+
+      val result = new FileUploadServiceConnector().extractEnvelopId(response)
+
+      result.fold(
+        cbcError => cbcError.shouldBe(UnexpectedState(s"EnvelopeId in $LOCATION header: localhost:8898/file-upload/envelopes not found",None)),
+        _ => fail("No error generated")
+      )
+    }
+
+    "return an error if call to extractEnvelopId with no location header" in {
+      val response: HttpResponse = mock[HttpResponse]
+      when(response.header(LOCATION)).thenReturn(None)
+
+      val result = new FileUploadServiceConnector().extractEnvelopId(response)
+
+      result.fold(
+        cbcError => cbcError.shouldBe(UnexpectedState(s"Header $LOCATION not found",None)),
+        _ => fail("No error generated")
+      )
+    }
+
+    "return the response body if call to extractFileUploadMessage with status = 200" in {
+      val response: HttpResponse = mock[HttpResponse]
+      when(response.body).thenReturn("Test Body")
+      when(response.status).thenReturn(200)
+
+      val result = new FileUploadServiceConnector().extractFileUploadMessage(response)
+      result should equal(Right("Test Body"))
+    }
+
+    "return an error if call to extractFileUploadMessage with status not 200" in {
+      val response: HttpResponse = mock[HttpResponse]
+      when(response.body).thenReturn("Test Body")
+      when(response.status).thenReturn(400)
+
+      val result = new FileUploadServiceConnector().extractFileUploadMessage(response)
+
+
+      result.fold(
+        cbcError => cbcError.shouldBe(UnexpectedState("Problems uploading the file",None)),
+        _ => fail("No error generated")
+      )
+    }
+
+    "return the response body if call to extractEnvelopeDeleteMessage with status = 200" in {
+      val response: HttpResponse = mock[HttpResponse]
+      when(response.body).thenReturn("Test Body")
+      when(response.status).thenReturn(200)
+
+      val result = new FileUploadServiceConnector().extractEnvelopeDeleteMessage(response)
+      result should equal(Right("Test Body"))
+    }
+
+    "return an error if call to extractEnvelopeDeleteMessage with status not 200" in {
+      val response: HttpResponse = mock[HttpResponse]
+      when(response.body).thenReturn("Test Body")
+      when(response.status).thenReturn(400)
+
+      val result = new FileUploadServiceConnector().extractEnvelopeDeleteMessage(response)
+
+
+      result.fold(
+        cbcError => cbcError.shouldBe(UnexpectedState("Problems deleting the envelope",None)),
+        _ => fail("No error generated")
+      )
+    }
+
+    "return the file meta data if call to extractFileMetadata with status = 200" in {
+      val response: HttpResponse = mock[HttpResponse]
+      val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
+      when(response.json).thenReturn(Json.toJson(md))
+      when(response.status).thenReturn(200)
+
+      val result = new FileUploadServiceConnector().extractFileMetadata(response)
+      result should equal(Right(Option(md)))
+    }
+
+    "return an error if call to extractFileMetadata with status not 200" in {
+      val response: HttpResponse = mock[HttpResponse]
+      when(response.status).thenReturn(400)
+
+      val result = new FileUploadServiceConnector().extractFileMetadata(response)
+
+
+      result.fold(
+        cbcError => cbcError.shouldBe(UnexpectedState("Problems getting File Metadata",None)),
+        _ => fail("No error generated")
+      )
     }
   }
 }

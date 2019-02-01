@@ -31,10 +31,11 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.Logger
 import play.api.{Configuration, Environment}
 import play.api.http.Status
-import play.api.i18n.MessagesApi
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Result
 import play.api.test.FakeRequest
+import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 //import uk.gov.hmrc.cbcrfrontend.controllers.auth.{TestSecuredActions, TestUsers}
@@ -73,6 +74,8 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
   val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
 
   val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
+
+  def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
   private lazy val keyXMLInfo = {
     XMLInfo(
@@ -189,6 +192,14 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
     }
+    "return 200 if an Agent" in {
+      when(authC.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(Some(bpr))
+      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(utr))
+      when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
+      status(controller.verifyKnownFactsAgent(fakeRequestSubscribe)) shouldBe Status.OK
+    }
   }
 
   "POST /checkKnownFacts" should {
@@ -304,5 +315,85 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
   }
 
+  "Redirect calls to information pages" should {
+    "redirect to error page and return 500" in {
+      val request = addToken(FakeRequest())
+      val result = controller.technicalDifficulties(request)
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+      val webPageAsString = contentAsString(result)
+      webPageAsString should include("Internal Server Error")
+    }
+
+    "redirect to sessionExpired page and return 200" in {
+      val request = addToken(FakeRequest())
+      val result = controller.sessionExpired(request)
+      status(result) shouldBe Status.OK
+      val webPageAsString = contentAsString(result)
+      webPageAsString should include(getMessages(request)("sessionExpired.mainHeading"))
+    }
+
+    "redirect to GG page and return 303" in {
+      val request = addToken(FakeRequest())
+      val result = controller.signOutGG(request)
+      status(result) shouldBe Status.SEE_OTHER
+    }
+
+    "redirect to signOutSurvey page and return 200" in {
+      val request = addToken(FakeRequest())
+      when(authC.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(feConfig.cbcrFrontendHost) thenReturn "http://localhost:9696"
+      when(feConfig.governmentGatewaySignOutUrl) thenReturn "http://localhost:9025"
+      val result = controller.signOutSurvey(request)
+      status(result) shouldBe Status.SEE_OTHER
+    }
+
+    "keepSessionAlive returns 200" in {
+      val request = addToken(FakeRequest())
+      when(authC.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      val result = controller.keepSessionAlive(request)
+      status(result) shouldBe Status.OK
+    }
+  }
+
+  "unsupportedAffinityGroup" should {
+    "return 401 for individuals" in {
+      val request = addToken(FakeRequest())
+      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Individual))
+      val result = controller.unsupportedAffinityGroup(request)
+      status(result) shouldBe Status.UNAUTHORIZED
+    }
+
+    "return 500 when no affinity group found" in {
+      val request = addToken(FakeRequest())
+      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(None)
+      val result = controller.unsupportedAffinityGroup(request)
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+
+    "return 401 when unexpected affinity group found" in {
+      val request = addToken(FakeRequest())
+      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
+      val result = controller.unsupportedAffinityGroup(request)
+      status(result) shouldBe Status.UNAUTHORIZED
+    }
+  }
+
+  "knownFactsMatch" should {
+    "return 500 when no affinity group found" in {
+      val request = addToken(FakeRequest())
+      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(None)
+      val result = controller.knownFactsMatch(request)
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+
+    "return 200 when affinity group found" in {
+      val request = addToken(FakeRequest())
+      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn rightE(bpr)
+      when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn rightE(Utr("700000002"))
+      val result = controller.knownFactsMatch(request)
+      status(result) shouldBe Status.OK
+    }
+  }
 
 }
