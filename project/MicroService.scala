@@ -3,6 +3,8 @@ import sbt.Tests.{Group, SubProcess}
 import sbt._
 import play.routes.compiler.StaticRoutesGenerator
 import play.sbt.PlayImport.PlayKeys.playDefaultPort
+import uk.gov.hmrc.ServiceManagerPlugin.Keys.itDependenciesList
+import uk.gov.hmrc.ServiceManagerPlugin.serviceManagerSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 
 
@@ -47,7 +49,9 @@ trait MicroService {
     "uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector.*",
     "uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector.*",
     "uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector.*",
-    "uk.gov.hmrc.cbcrfrontend.typesclasses"
+    "uk.gov.hmrc.cbcrfrontend.typesclasses",
+    "uk.gov.hmrc.cbcrfrontend.core",
+    "uk.gov.hmrc.cbcrfrontend.model"
   )
 
   lazy val scoverageSettings = {
