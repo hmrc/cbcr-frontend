@@ -38,7 +38,6 @@ import scala.concurrent.Future
 @Singleton
 class StartController @Inject()(val messagesApi: MessagesApi,
                                 val authConnector:AuthConnector)(implicit val cache:CBCSessionCache,
-//                                                                 val auth:AuthConnector,
                                                                  val config: Configuration,
                                                                  feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport {
 
