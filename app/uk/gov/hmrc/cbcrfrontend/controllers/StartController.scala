@@ -38,7 +38,6 @@ import scala.concurrent.Future
 @Singleton
 class StartController @Inject()(val messagesApi: MessagesApi,
                                 val authConnector:AuthConnector)(implicit val cache:CBCSessionCache,
-                                                                 val auth:AuthConnector,
                                                                  val config: Configuration,
                                                                  feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport {
 
@@ -49,10 +48,10 @@ class StartController @Inject()(val messagesApi: MessagesApi,
 
   def start =  Action.async{ implicit request =>
     authorised().retrieve(Retrievals.affinityGroup and cbcEnrolment) {
-        case Some(Agent)   ~ _                    =>  Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
+        case Some(Agent)   ~ _                    => Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
         case Some(Organisation) ~ Some(enrolment) => Ok(views.html.start(startForm))
         case Some(Organisation) ~ None            => Redirect(routes.SharedController.verifyKnownFactsOrganisation())
-        case Some(Individual) ~ _                 =>  Future.successful(errorRedirect(UnexpectedState("Individuals are not permitted to use this service")))
+        case Some(Individual) ~ _                 => errorRedirect(UnexpectedState("Individuals are not permitted to use this service"))
     }
   }
 
