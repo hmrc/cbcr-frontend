@@ -29,7 +29,6 @@ object FrontendBuild extends Build with MicroService {
 
   def test(scope: String = "test") = Seq(
     "uk.gov.hmrc" %% "hmrctest" % "3.4.0-play-25" % scope,
-    "org.scalatest" %% "scalatest" % "3.0.5" % scope,
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
     "org.jsoup" % "jsoup" % "1.8.1" % scope,
     "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
