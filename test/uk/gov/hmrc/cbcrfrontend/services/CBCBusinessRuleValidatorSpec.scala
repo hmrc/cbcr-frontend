@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
 
+import org.mockito.ArgumentMatchers.any
 import cats.data.{EitherT, NonEmptyList}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -30,7 +31,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import cats.instances.future._
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
-import org.mockito.Matchers.{eq => EQ, _}
+import org.mockito.ArgumentMatchers.{eq => EQ, _}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation

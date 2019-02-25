@@ -18,10 +18,11 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.time.LocalDateTime
 
+import org.mockito.ArgumentMatchers.any
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
-import org.mockito.Matchers.{eq => EQ, _}
+import org.mockito.ArgumentMatchers.{eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
