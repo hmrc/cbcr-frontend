@@ -21,7 +21,7 @@ import akka.util.ByteString
 import com.typesafe.config.Config
 import play.api.http.HttpVerbs.{POST => POST_VERB}
 import play.api.mvc.MultipartFormData.FilePart
-import uk.gov.hmrc.gg.config.GenericAppConfig
+import uk.gov.hmrc.cbcrfrontend.config.GenericAppConfig
 import uk.gov.hmrc.play.http.ws.{WSPost, _}
 
 import scala.concurrent.Future
