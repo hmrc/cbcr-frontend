@@ -61,6 +61,21 @@ class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(impl
       }
     )
 
+  def queryReportingEntityDataModel(d:DocRefId)(implicit hc:HeaderCarrier) : ServiceResponse[Option[ReportingEntityDataModel]] =
+    EitherT(
+      connector.reportingEntityDataQuery(d).map { response =>
+        response.json.validate[ReportingEntityDataModel].fold(
+          failed => Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+          data   => Right(Some(data))
+        )
+      }.recover{
+        case _:NotFoundException =>
+          Logger.error("Got a NotFoundException - backend returned 404")
+          Right(None)
+        case NonFatal(e)         => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+      }
+    )
+
   def queryReportingEntityDataByCbcId(cbcId: CBCId, reportingPeriod: LocalDate)(implicit hc:HeaderCarrier) : ServiceResponse[Option[ReportingEntityData]] = {
     EitherT(connector.reportingEntityCBCIdAndReportingPeriod(cbcId, reportingPeriod).map { response =>
       response.json.validate[ReportingEntityData].fold(

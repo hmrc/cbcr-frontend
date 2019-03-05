@@ -104,6 +104,22 @@ object ReportingEntityData{
 
     }
 
+  case class ReportingEntityDataModel(cbcReportsDRI:NonEmptyList[DocRefId],
+                                      additionalInfoDRI:List[DocRefId],
+                                      reportingEntityDRI:DocRefId,
+                                      tin:TIN,
+                                      ultimateParentEntity: UltimateParentEntity,
+                                      reportingRole: ReportingRole,
+                                      creationDate: Option[LocalDate],
+                                      reportingPeriod: Option[LocalDate],
+                                      oldModel: Boolean)
+
+  object ReportingEntityDataModel {
+
+    import PartialReportingEntityData.formatNEL
+
+    implicit val format = Json.format[ReportingEntityDataModel]
+  }
 
 }
 

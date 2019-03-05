@@ -81,6 +81,9 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   def reportingEntityDataQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/${d.show}")
 
+  def reportingEntityDataModelQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+    http.GET(url + s"/reporting-entity/model/${d.show}")
+
   def reportingEntityDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/doc-ref-id/${d.show}")
 
