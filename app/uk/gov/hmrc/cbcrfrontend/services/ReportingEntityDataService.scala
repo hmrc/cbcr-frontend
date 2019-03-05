@@ -18,17 +18,17 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 
 import javax.inject.{Inject, Singleton}
-
 import cats.data.EitherT
 import play.api.Logger
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
+import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityData.ReportingEntityDataModel
 import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, PartialReportingEntityData, ReportingEntityData, UnexpectedState}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.{ HeaderCarrier, NotFoundException }
+import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
 
 @Singleton
 class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {
@@ -49,6 +49,21 @@ class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(impl
     EitherT(
       connector.reportingEntityDataQuery(d).map { response =>
         response.json.validate[ReportingEntityData].fold(
+          failed => Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+          data   => Right(Some(data))
+        )
+      }.recover{
+        case _:NotFoundException =>
+          Logger.error("Got a NotFoundException - backend returned 404")
+          Right(None)
+        case NonFatal(e)         => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+      }
+    )
+
+  def queryReportingEntityDataModel(d:DocRefId)(implicit hc:HeaderCarrier) : ServiceResponse[Option[ReportingEntityDataModel]] =
+    EitherT(
+      connector.reportingEntityDataQuery(d).map { response =>
+        response.json.validate[ReportingEntityDataModel].fold(
           failed => Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
           data   => Right(Some(data))
         )
