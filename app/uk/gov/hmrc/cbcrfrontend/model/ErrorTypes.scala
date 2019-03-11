@@ -85,6 +85,7 @@ case object ReportingEntityOrConstituentEntityEmpty extends BusinessRuleErrors
 case object CorrMessageRefIdNotAllowedInMessageSpec extends BusinessRuleErrors
 case object CorrMessageRefIdNotAllowedInDocSpec extends BusinessRuleErrors
 case object ReportingPeriodInvalid extends BusinessRuleErrors
+case object MultipleFileUploadForSameReportingPeriod extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
@@ -141,6 +142,7 @@ object BusinessRuleErrors {
       case CorrMessageRefIdNotAllowedInMessageSpec  => JsString(CorrMessageRefIdNotAllowedInMessageSpec.toString)
       case CorrMessageRefIdNotAllowedInDocSpec      => JsString(CorrMessageRefIdNotAllowedInDocSpec.toString)
       case ReportingPeriodInvalid                   => JsString(ReportingPeriodInvalid.toString)
+      case MultipleFileUploadForSameReportingPeriod => JsString(MultipleFileUploadForSameReportingPeriod.toString)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -180,6 +182,7 @@ object BusinessRuleErrors {
           case Some(ci"corrmessagerefidnotallowedinmessagespec") => JsSuccess(CorrMessageRefIdNotAllowedInMessageSpec)
           case Some(ci"corrmessagerefidnotallowedindocspec") => JsSuccess(CorrMessageRefIdNotAllowedInDocSpec)
           case Some(ci"reportingperiodinvalid") => JsSuccess(ReportingPeriodInvalid)
+          case Some(ci"multiplefileuploadforsamereportingperiod") => JsSuccess(MultipleFileUploadForSameReportingPeriod)
           case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -218,7 +221,7 @@ object BusinessRuleErrors {
     case CorrMessageRefIdNotAllowedInMessageSpec => "error.CorrMessageRefIdNotAllowedInMessageSpec"
     case CorrMessageRefIdNotAllowedInDocSpec => "error.CorrMessageRefIdNotAllowedInDocSpec"
     case ReportingPeriodInvalid => "error.ReportingPeriodInvalid"
-
+    case MultipleFileUploadForSameReportingPeriod => "error.MultipleFileUploadForSameReportingPeriod"
   }
 }
 

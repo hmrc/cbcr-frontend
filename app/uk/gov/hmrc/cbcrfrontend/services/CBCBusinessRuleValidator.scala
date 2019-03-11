@@ -194,7 +194,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     validateFileName(x,fileName) *>
     validateOrganisationCBCId(x, enrolment, affinityGroup) *>
     validateCreationDate(x) *>
-    validateReportingPeriod(x)
+    validateReportingPeriod(x) *>
+    validateMultipleFileUploadForSameReportingPeriod(x)
   }
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
@@ -500,6 +501,23 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       }
       case None if(xmlInfo.messageSpec.messageType.contains(CBC401)) => Future.successful(xmlInfo.validNel)
       case _ => Future.successful(ReportingPeriodInvalid.invalidNel)
+    }
+  }
+
+  private def validateMultipleFileUploadForSameReportingPeriod(x: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
+
+    x.messageSpec.messageType.getOrElse(determineMessageTypeIndic(x)) match {
+      case CBC401 =>
+        reportingEntityDataService.queryReportingEntityDataByCbcId(x.messageSpec.sendingEntityIn, x.messageSpec.reportingPeriod).leftMap {
+          cbcErrors => {
+            Logger.error(s"Got error back: $cbcErrors")
+            throw new Exception(s"Error communicating with xwbackend: $cbcErrors")
+          }
+        }.subflatMap {
+          case Some(_) => Left(MultipleFileUploadForSameReportingPeriod)
+          case _ => Right(x)
+        }.toValidatedNel
+      case _ => Future.successful(x.validNel)
     }
   }
 

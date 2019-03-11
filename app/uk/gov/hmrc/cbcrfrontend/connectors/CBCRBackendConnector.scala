@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import javax.inject.{Inject, Singleton}
+import java.time.LocalDate
 
+import javax.inject.{Inject, Singleton}
 import cats.syntax.show._
 import com.typesafe.config.Config
 import configs.syntax._
@@ -81,5 +82,9 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
 
   def reportingEntityDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/doc-ref-id/${d.show}")
+
+  def reportingEntityCBCIdAndReportingPeriod(cbcId: CBCId, reportingPeriod: LocalDate)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
+    http.GET(url + s"/reporting-entity/query-cbc-id/${cbcId.toString}/${reportingPeriod.toString}")
+  }
 
 }
