@@ -42,7 +42,7 @@ class ReportingEntityDataServiceSpec extends UnitSpec with ScalaFutures with Gui
   val connector = mock[CBCRBackendConnector]
   val reds = new ReportingEntityDataService(connector)
   val docRefId=DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").get
-
+  val cbcid = CBCId.create(1).toOption
 
   val red = ReportingEntityData(NonEmptyList(docRefId,Nil),List(docRefId),docRefId,TIN("90000000001",""),UltimateParentEntity("Foo Corp"),CBC701,Some(LocalDate.now()),None)
 
@@ -68,6 +68,29 @@ class ReportingEntityDataServiceSpec extends UnitSpec with ScalaFutures with Gui
       "return an error if anything else goes wrong" in {
         when(connector.reportingEntityDataQuery(any())(any())) thenReturn Future.failed(new Exception("The sky is falling"))
         val result = Await.result(reds.queryReportingEntityData(docRefId).value, 2.seconds)
+        result.isLeft shouldBe true
+      }
+    }
+
+    "provide a query service by cbc id and reporting period to prevent multiple file upload for original submission within same reporting period" which {
+      "returns a reportingEntityData object the call to the connector returns one" in{
+        when(connector.reportingEntityCBCIdAndReportingPeriod(any(), any())(any())) thenReturn Future.successful(HttpResponse(Status.OK,Some(Json.toJson(red))))
+        val result = Await.result(reds.queryReportingEntityDataByCbcId(cbcid.get, LocalDate.now()).value, 2.seconds)
+        result shouldBe Right(Some(red))
+      }
+      "return NONE if the connector returns a NotFoundException" in {
+        when(connector.reportingEntityCBCIdAndReportingPeriod(any(), any())(any())) thenReturn Future.failed(new NotFoundException("Not found"))
+        val result = Await.result(reds.queryReportingEntityDataByCbcId(cbcid.get, LocalDate.now()).value, 2.seconds)
+        result shouldBe Right(None)
+      }
+      "return an error if there is a serialisation error" in {
+        when(connector.reportingEntityCBCIdAndReportingPeriod(any(), any())(any())) thenReturn Future.successful(HttpResponse(Status.OK,Some(JsString("Not the correct json"))))
+        val result = Await.result(reds.queryReportingEntityDataByCbcId(cbcid.get, LocalDate.now()).value, 2.seconds)
+        result.isLeft shouldBe true
+      }
+      "return an error if anything else goes wrong" in {
+        when(connector.reportingEntityCBCIdAndReportingPeriod(any(), any())(any())) thenReturn Future.failed(new Exception("The sky is falling"))
+        val result = Await.result(reds.queryReportingEntityDataByCbcId(cbcid.get, LocalDate.now()).value, 2.seconds)
         result.isLeft shouldBe true
       }
     }

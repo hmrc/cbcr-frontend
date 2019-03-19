@@ -19,8 +19,9 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
 
+import cats.data.Validated._
 import org.mockito.ArgumentMatchers.any
-import cats.data.{EitherT, NonEmptyList}
+import cats.data.{EitherT, NonEmptyList, Validated}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -128,10 +129,33 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   "The CBCBusinessRuleValidator" should {
 
+    "when multiple file uploaded for the same reporting period of original submission" in {
+
+      val cbcReportsDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").get
+      val additionalInfoDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD").get
+      val reportingEntityDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").get
+
+      val reportEntityData = ReportingEntityData(NonEmptyList.of(cbcReportsDri),List(additionalInfoDri), reportingEntityDri, TIN("2001", "GB"), UltimateParentEntity("someone"), CBC703, Some(LocalDate.now()), Some(LocalDate.of(2019, 3, 31)))
+
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+      when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(reportEntityData))
+
+      val multipleSubmissionForSameReportingPeriod = new File("test/resources/cbcr-valid-multipleupload" +
+        ".xml")
+
+      val result = Await.result(validator.validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+      result.fold(
+        errors => errors.toList should contain (MultipleFileUploadForSameReportingPeriod),
+        _ => fail("MultipleFileUploadForSameReportingPeriod")
+      )
+    }
 
     "return the correct error" when {
 
       "the reportingEntity name is an empty string" in {
+        when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
         val multipleCbcBodies = new File("test/resources/cbcr-valid-reporting-entity-name.xml")
         val result = Await.result(validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol),Some(Organisation)), 5.seconds)
@@ -217,6 +241,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
 
       "the Organisation user has a CBCId that does match that in the SendingEntityIn field on straight through journey" in {
+        when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
         makeTheUserAnOrganisation("XLCBC0100000056")
 
         val validFile = new File("test/resources/cbcr-valid.xml")
@@ -245,6 +271,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
 
       "the Organisation user has a CBCId matches that in the SendingEntityIn field" in {
+        when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
         makeTheUserAnOrganisation("XLCBC0100000056")
 
         val validFile = new File("test/resources/cbcr-valid.xml")
@@ -582,6 +610,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
       }
       "when the messageTypeIndic is CBC401 but ADD or ENT doctypeIndic is not OECD1" in {
+        when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
         val validFile = new File("test/resources/cbcr-OECD2-Incompatible-messageTypes.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -765,6 +795,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
         }
         "the @issuedBy attribute of the TIN is not 'GB' " in {
+          when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
           val validFile = new File("test/resources/cbcr-CBC703-badTINAttribute.xml")
           val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -789,6 +821,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
         }
         "the @issuedBy attribute of the TIN is unrestricted" in {
+          when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
           val validFile = new File("test/resources/cbcr-CBC702-badTINAttribute.xml")
           val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -801,6 +835,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
 
       "return the KeyXmlInfo when everything is fine and were using a NON GB TIN for a 702 submission" in {
+        when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
         val validFile = new File("test/resources/cbcr-valid-nonGBTINInDocRefId.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -812,6 +848,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
 
       "return the KeyXmlInfo when everything is fine" in {
+        when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
         val validFile = new File("test/resources/cbcr-valid.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -847,6 +885,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
         }
         "the original submission was < 3 years ago" in {
+          when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
           when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
           when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
           when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
