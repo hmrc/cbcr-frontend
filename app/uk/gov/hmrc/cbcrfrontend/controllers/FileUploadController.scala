@@ -241,6 +241,12 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     errorsToList(e).map(_.toString).mkString("\r\n")
 
 
+  def retrieveBusinessRuleValidationErrors: String = Action.async{ implicit request =>
+    authorised() {
+      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => errorsToString(x.errors)).map(errors=>errors)
+    }
+  }
+
   private def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
     val b = Files.TemporaryFile(name, ".txt")
     val writer = new PrintWriter(b.file)
