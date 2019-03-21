@@ -18,12 +18,15 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import java.time.{LocalDate, LocalDateTime}
 
+import akka.actor.Status.Success
 import javax.inject.Inject
 import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
 import cats.{Applicative, Functor}
+import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.mvc.Result
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult, applicativeInstance, functorInstance}
 import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, DocRefIdDuplicate, _}
@@ -33,8 +36,11 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrieval, Retrievals}
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
+import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityData.ReportingEntityDataModel
+import play.api.i18n.{I18nSupport, Lang, MessagesApi}
 
-import scala.util.Failure
+import scala.util.{Failure, Try}
 
 /**
   * This class exposes two methods:
@@ -269,17 +275,18 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
 
   private def validateDocSpecs(in:XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
     val addDocSpec     = in.additionalInfo.map(_.docSpec)
-    val addEntDocSpecs = in.cbcReport.map(_.docSpec)  ++ addDocSpec
+    val entDocSpecs    = in.cbcReport.map(_.docSpec)
     val repDocSpec     = in.reportingEntity.map(_.docSpec)
-    val allDocSpecs    = addEntDocSpecs ++ repDocSpec
-    val crid           = extractCorrDRI(in)
+    val entRepDocSpecs = entDocSpecs ++ repDocSpec
+    val allDocSpecs    = entDocSpecs ++ repDocSpec ++ addDocSpec
+    val addCorrCheck   = addDocSpec.flatMap(_.corrDocRefId).map(c => (c,extractCorrDRI(in).get))
 
     functorInstance.map(
       allDocSpecs.map(validateDocSpec).sequence[FutureValidBusinessResult, DocSpec] *>
-      validateDocTypes(addEntDocSpecs, repDocSpec) *>
+      validateDocTypes(entDocSpecs, repDocSpec) *>
       validateDistinctDocRefIds(allDocSpecs.map(_.docRefId)) *>
       validateDistinctCorrDocRefIds(allDocSpecs.map(_.corrDocRefId).flatten) *>
-        validateAdditionalInfoDRIs(crid,addDocSpec.flatMap(_.corrDocRefId))
+      addCorrCheck.map(validateAddInfoCorrDRI).sequence[FutureValidBusinessResult, CorrDocRefId]
 
     )(_ => in)
 
@@ -309,21 +316,19 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       case (doc,corrDoc) => (doc |@| corrDoc |@| validateCorrDocRefIdRequired(d)).map((_,_,_) => d)
     }
 
-  private def validateAdditionalInfoDRIs(c:Option[CorrDocRefId],dl:List[CorrDocRefId])(implicit hc:HeaderCarrier) : FutureValidBusinessResult[Unit] = {
-    c.map { d =>
-      reportingEntityDataService.queryReportingEntityDataModel(d.cid).leftMap {
-        cbcErrors => {
-          Logger.error(s"Got error back: $cbcErrors")
-          throw new Exception(s"Error communicating with backend: $cbcErrors")
-        }
-      }.subflatMap {
-        case Some(red) => if(red.oldModel && dl.map(corDRIAdditionalInfoCheck).contains(Future.successful(true))) Left(AdditionalInfoDRINotFound) else Right(CorrDocRefId)
-        case _         => Right(CorrDocRefId)
-      }.toValidatedNel
-    }.getOrElse {
-      Future.successful(c.validNel)
-    }
-  }
+  /** Check if only 1st AddInfoCorrDocRefId was saved (before issue corrected) and if so And AddInfo coorDocRefId not found then show appropriate error */
+  private def validateAddInfoCorrDRI(aiCid: (CorrDocRefId,CorrDocRefId))(implicit hc:HeaderCarrier) : FutureValidBusinessResult[CorrDocRefId] =
+    reportingEntityDataService.queryReportingEntityDataModel(aiCid._2.cid).fold(
+      (errors: CBCErrors)                             => throw new Exception(s"Error communicating with backend: $errors"),
+      (maybeModel: Option[ReportingEntityDataModel])  => maybeModel.toValidNel[BusinessRuleErrors](AdditionalInfoDRINotFound("error.AdditionalInfoDRINotFound5", aiCid._1.cid.show))
+    ).flatMap(_.fold(
+      (value: NonEmptyList[BusinessRuleErrors]) => Future.successful(value.invalid),
+      (red: ReportingEntityDataModel)           => docRefIdService.queryDocRefId(aiCid._1.cid).map {
+        case DocRefIdResponses.Valid        => aiCid._1.validNel
+        case DocRefIdResponses.Invalid      => CorrDocRefIdInvalidRecord.invalidNel
+        case DocRefIdResponses.DoesNotExist => if (red.oldModel) AdditionalInfoDRINotFound(red.additionalInfoDRI.head.show, aiCid._1.cid.show).invalidNel else CorrDocRefIdUnknownRecord.invalidNel
+      }
+    ))
 
   /** Do further validation on the provided [[CorrDocRefId]] */
   private def validateCorrDocRefId(corrDocRefId: CorrDocRefId)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[CorrDocRefId] = {
@@ -336,14 +341,6 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       case DocRefIdResponses.Valid        => corrDocRefId.validNel
       case DocRefIdResponses.Invalid      => CorrDocRefIdInvalidRecord.invalidNel
       case DocRefIdResponses.DoesNotExist => CorrDocRefIdUnknownRecord.invalidNel
-    }
-  }
-
-  private def corDRIAdditionalInfoCheck(corrDocRefId: CorrDocRefId)(implicit hc:HeaderCarrier) : Future[Boolean] = {
-    docRefIdService.queryDocRefId(corrDocRefId.cid).map {
-      case DocRefIdResponses.Valid        => false
-      case DocRefIdResponses.Invalid      => false
-      case DocRefIdResponses.DoesNotExist => true
     }
   }
 
@@ -523,7 +520,7 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
           Future.successful(xmlInfo.validNel)
         }
       }
-      case None if(xmlInfo.messageSpec.messageType.contains(CBC401)) => Future.successful(xmlInfo.validNel)
+      case None if xmlInfo.messageSpec.messageType.contains(CBC401) => Future.successful(xmlInfo.validNel)
       case _ => Future.successful(ReportingPeriodInvalid.invalidNel)
     }
   }

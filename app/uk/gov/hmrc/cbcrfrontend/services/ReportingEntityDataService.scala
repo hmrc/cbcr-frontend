@@ -63,7 +63,7 @@ class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(impl
 
   def queryReportingEntityDataModel(d:DocRefId)(implicit hc:HeaderCarrier) : ServiceResponse[Option[ReportingEntityDataModel]] =
     EitherT(
-      connector.reportingEntityDataQuery(d).map { response =>
+      connector.reportingEntityDataModelQuery(d).map { response =>
         response.json.validate[ReportingEntityDataModel].fold(
           failed => Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
           data   => Right(Some(data))

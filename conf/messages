@@ -349,6 +349,12 @@ error.CorrMessageRefIdNotAllowedInDocSpec=Error Code 80006: The CorrMessageRefID
 error.ReportingPeriodInvalid=The ReportingPeriod cannot be corrected. If you wish to change the Reporting Period, then void (OECD3) the original submission and submit a new file (CBC 401)
 error.MultipleFileUploadForSameReportingPeriod=The report has not been uploaded. A report has already been submitted for this tax year. You need to send a corrected version of the original report.
 error.AdditionalInfoDRINotFound=The AdditionalInfo CorrDocRefId was not found, this might be due to historical data issues. Please contact HMRC help desk on 01234567 or hmrc.email@hmrc.com
+error.AdditionalInfoDRINotFound1=The AdditionalInfo CorrDocRefId
+error.AdditionalInfoDRINotFound2=was not found.
+error.AdditionalInfoDRINotFound3=Please move the information into the AdditionalInfo section with CorrDocRefId
+error.AdditionalInfoDRINotFound4=and resubmit. You can also also contact ‘digitalservice.cbc@hmrc.gsi.gov.uk’ to discuss this issue if preferred.
+error.AdditionalInfoDRINotFound5=from the first AdditionalInfo section of the initial submission
+
 
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid
