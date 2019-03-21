@@ -241,9 +241,13 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     errorsToList(e).map(_.toString).mkString("\r\n")
 
 
-  def retrieveBusinessRuleValidationErrors: String = Action.async{ implicit request =>
+  def retrieveBusinessRuleValidationErrors = Action.async{ implicit request =>
     authorised() {
-      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => errorsToString(x.errors)).map(errors=>errors)
+      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => errorsToString(x.errors)).fold (
+        NoContent
+      ) { errors: String =>
+        Ok(errors)
+      }
     }
   }
 
