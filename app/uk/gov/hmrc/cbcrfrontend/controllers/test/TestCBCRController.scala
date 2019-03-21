@@ -152,4 +152,19 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
+  def updateReportingEntityAdditionalInfoDRI(docRefId:String) = Action.async{implicit request =>
+    authorised() {
+      Logger.error(s"================================ $docRefId =====================================================")
+      testCBCRConnector.updateReportingEntityAdditionalInfoDRI(docRefId).map{s =>
+        s.status match {
+          case OK           => Ok("Reporting entity additionalInfoDRI updated")
+          case NOT_MODIFIED => Ok("Reporting entity additionalInfoDRI NOT updated")
+          case _            => Ok("Something went wrong")
+        }
+      }.recover{
+        case _:NotFoundException => Ok("Reporting entity not found")
+      }
+    }
+  }
+
 }

@@ -229,15 +229,15 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   }
 
 
-  private def errorsToList(e:List[ValidationErrors]) : List[String] =
+  private def errorsToList(e:List[ValidationErrors])(implicit lang: Lang) : List[String] =
     e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
 
 
-  private def errorsToMap(e:List[ValidationErrors]) : Map[String,String] =
+  private def errorsToMap(e:List[ValidationErrors])(implicit lang: Lang) : Map[String,String] =
     errorsToList(e).foldLeft(Map[String, String]()) {(m, t) => m + ("error_" + (m.size + 1).toString -> t)}
 
 
-  private def errorsToString(e:List[ValidationErrors]) : String =
+  private def errorsToString(e:List[ValidationErrors])(implicit lang: Lang) : String =
     errorsToList(e).map(_.toString).mkString("\r\n")
 
 

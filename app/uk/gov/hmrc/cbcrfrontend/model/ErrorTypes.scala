@@ -58,6 +58,11 @@ object FileNameError {
   implicit val format = Json.format[FileNameError]
 }
 
+case class AdditionalInfoDRINotFound(firstCdri:String, missingCdri:String) extends BusinessRuleErrors
+object AdditionalInfoDRINotFound {
+  implicit val format = Json.format[AdditionalInfoDRINotFound]
+}
+
 case object TestDataError extends BusinessRuleErrors
 case object SendingEntityError extends BusinessRuleErrors
 case object SendingEntityOrganisationMatchError extends BusinessRuleErrors
@@ -85,7 +90,7 @@ case object ReportingEntityOrConstituentEntityEmpty extends BusinessRuleErrors
 case object CorrMessageRefIdNotAllowedInMessageSpec extends BusinessRuleErrors
 case object CorrMessageRefIdNotAllowedInDocSpec extends BusinessRuleErrors
 case object ReportingPeriodInvalid extends BusinessRuleErrors
-case object AdditionalInfoDRINotFound extends BusinessRuleErrors
+//case object AdditionalInfoDRINotFound extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
@@ -142,7 +147,7 @@ object BusinessRuleErrors {
       case CorrMessageRefIdNotAllowedInMessageSpec  => JsString(CorrMessageRefIdNotAllowedInMessageSpec.toString)
       case CorrMessageRefIdNotAllowedInDocSpec      => JsString(CorrMessageRefIdNotAllowedInDocSpec.toString)
       case ReportingPeriodInvalid                   => JsString(ReportingPeriodInvalid.toString)
-      case AdditionalInfoDRINotFound                => JsString(AdditionalInfoDRINotFound.toString)
+      case aidnf:AdditionalInfoDRINotFound          => Json.toJson(aidnf)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -152,6 +157,7 @@ object BusinessRuleErrors {
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
       Json.fromJson[MessageRefIDError](json)
         .orElse[BusinessRuleErrors](Json.fromJson(json)(FileNameError.format))
+      .orElse[BusinessRuleErrors](Json.fromJson(json)(AdditionalInfoDRINotFound.format))
         .orElse[BusinessRuleErrors]{
         json.asOpt[String] match {
           case Some(ci"multiplecbcbodies")     => JsSuccess(MultipleCbcBodies)
@@ -182,7 +188,6 @@ object BusinessRuleErrors {
           case Some(ci"corrmessagerefidnotallowedinmessagespec") => JsSuccess(CorrMessageRefIdNotAllowedInMessageSpec)
           case Some(ci"corrmessagerefidnotallowedindocspec") => JsSuccess(CorrMessageRefIdNotAllowedInDocSpec)
           case Some(ci"reportingperiodinvalid") => JsSuccess(ReportingPeriodInvalid)
-          case Some(ci"additionalinfodrinotfound") => JsSuccess(AdditionalInfoDRINotFound)
           case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
             JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
           case other                         => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -221,7 +226,7 @@ object BusinessRuleErrors {
     case CorrMessageRefIdNotAllowedInMessageSpec => "error.CorrMessageRefIdNotAllowedInMessageSpec"
     case CorrMessageRefIdNotAllowedInDocSpec => "error.CorrMessageRefIdNotAllowedInDocSpec"
     case ReportingPeriodInvalid => "error.ReportingPeriodInvalid"
-    case AdditionalInfoDRINotFound => "error.AdditionalInfoDRINotFound"
+    case AdditionalInfoDRINotFound(f,m) => s"error.AdditionalInfoDRINotFound1 $m error.AdditionalInfoDRINotFound2" + " \r\n" + s" error.AdditionalInfoDRINotFound3 $f error.AdditionalInfoDRINotFound4"
 
   }
 }
