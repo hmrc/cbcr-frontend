@@ -18,17 +18,16 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import java.time.{LocalDate, LocalDateTime}
 
-import akka.actor.Status.Success
 import javax.inject.Inject
 import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
 import cats.{Applicative, Functor}
-import play.api.i18n.{Lang, Messages, MessagesApi}
-import play.api.mvc.Result
 import play.api.{Configuration, Logger}
-import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult, applicativeInstance, functorInstance}
+import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult}
+import uk.gov.hmrc.cbcrfrontend.functorInstance
+import uk.gov.hmrc.cbcrfrontend.applicativeInstance
 import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, DocRefIdDuplicate, _}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,7 +39,7 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityData.ReportingEntityDataModel
 import play.api.i18n.{I18nSupport, Lang, MessagesApi}
 
-import scala.util.{Failure, Try}
+import scala.util.Failure
 
 /**
   * This class exposes two methods:
@@ -198,7 +197,8 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     validateFileName(x,fileName) *>
     validateOrganisationCBCId(x, enrolment, affinityGroup) *>
     validateCreationDate(x) *>
-    validateReportingPeriod(x)
+    validateReportingPeriod(x) *>
+    validateMultipleFileUploadForSameReportingPeriod(x)
   }
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
@@ -521,6 +521,23 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
       }
       case None if xmlInfo.messageSpec.messageType.contains(CBC401) => Future.successful(xmlInfo.validNel)
       case _ => Future.successful(ReportingPeriodInvalid.invalidNel)
+    }
+  }
+
+  private def validateMultipleFileUploadForSameReportingPeriod(x: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
+
+    x.messageSpec.messageType.getOrElse(determineMessageTypeIndic(x)) match {
+      case CBC401 =>
+        reportingEntityDataService.queryReportingEntityDataByCbcId(x.messageSpec.sendingEntityIn, x.messageSpec.reportingPeriod).leftMap {
+          cbcErrors => {
+            Logger.error(s"Got error back: $cbcErrors")
+            throw new Exception(s"Error communicating with xwbackend: $cbcErrors")
+          }
+        }.subflatMap {
+          case Some(_) => Left(MultipleFileUploadForSameReportingPeriod)
+          case _ => Right(x)
+        }.toValidatedNel
+      case _ => Future.successful(x.validNel)
     }
   }
 

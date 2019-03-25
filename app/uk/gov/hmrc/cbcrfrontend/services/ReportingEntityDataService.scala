@@ -17,6 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 
+import java.time.LocalDate
+
 import javax.inject.{Inject, Singleton}
 import cats.data.EitherT
 import play.api.Logger
@@ -24,7 +26,7 @@ import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityData.ReportingEntityDataModel
-import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, PartialReportingEntityData, ReportingEntityData, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.model._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -75,6 +77,17 @@ class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(impl
       }
     )
 
+  def queryReportingEntityDataByCbcId(cbcId: CBCId, reportingPeriod: LocalDate)(implicit hc:HeaderCarrier) : ServiceResponse[Option[ReportingEntityData]] = {
+    EitherT(connector.reportingEntityCBCIdAndReportingPeriod(cbcId, reportingPeriod).map { response =>
+      response.json.validate[ReportingEntityData].fold(
+        failed => Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+        data => Right(Some(data))
+      )
+    }.recover {
+      case _: NotFoundException => Right(None)
+      case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+    })
+  }
 
   def queryReportingEntityDataDocRefId(d:DocRefId)(implicit hc:HeaderCarrier) : ServiceResponse[Option[ReportingEntityData]] =
     EitherT(connector.reportingEntityDocRefId(d).map(response =>

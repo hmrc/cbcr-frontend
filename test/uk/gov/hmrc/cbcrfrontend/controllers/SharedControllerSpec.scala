@@ -157,7 +157,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
     }
   }
 
-  val fakeRequestSignOut = addToken(FakeRequest("GET", "/signOut"))
+  val fakeRequ    estSignOut = addToken(FakeRequest("GET", "/signOut"))
 
   "GET /signOut" should {
     "return 303 to Company Auth" in {

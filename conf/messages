@@ -347,6 +347,7 @@ error.ReportingEntityOrConstituentEntityEmpty=Organisation Name: The Name of the
 error.CorrMessageRefIdNotAllowedInMessageSpec=The CorrMessageRefID element must not be provided in the MessageSpec
 error.CorrMessageRefIdNotAllowedInDocSpec=Error Code 80006: The CorrMessageRefID element must not be provided in the DocSpec
 error.ReportingPeriodInvalid=The ReportingPeriod cannot be corrected. If you wish to change the Reporting Period, then void (OECD3) the original submission and submit a new file (CBC 401)
+error.MultipleFileUploadForSameReportingPeriod=You cannot submit multiple INITIALs for the same period if this is a change to a previous file please submit either a Correction or VOID/Delete your previous message and submit another INITIAL
 error.AdditionalInfoDRINotFound1=The AdditionalInfo CorrDocRefId
 error.AdditionalInfoDRINotFound2=was not found.
 error.AdditionalInfoDRINotFound3=Please move the information into the AdditionalInfo section with CorrDocRefId
