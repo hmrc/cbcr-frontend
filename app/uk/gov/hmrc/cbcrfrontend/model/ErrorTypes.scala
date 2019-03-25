@@ -149,6 +149,7 @@ object BusinessRuleErrors {
       case ReportingPeriodInvalid                   => JsString(ReportingPeriodInvalid.toString)
       case MultipleFileUploadForSameReportingPeriod => JsString(MultipleFileUploadForSameReportingPeriod.toString)
       case aidnf:AdditionalInfoDRINotFound          => Json.toJson(aidnf)
+
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {

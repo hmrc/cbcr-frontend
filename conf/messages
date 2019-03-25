@@ -354,7 +354,6 @@ error.AdditionalInfoDRINotFound3=Please move the information into the Additional
 error.AdditionalInfoDRINotFound4=and resubmit. You can also also contact ‘digitalservice.cbc@hmrc.gsi.gov.uk’ to discuss this issue if preferred.
 error.AdditionalInfoDRINotFound5=from the first AdditionalInfo section of the initial submission
 
-
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid
 xmlValidationError.InvalidDate=Invalid Date for reporting period
