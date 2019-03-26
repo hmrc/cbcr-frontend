@@ -90,6 +90,14 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
+  def dropReportingEntityDataCollection() = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.dropReportingEntityDataCollection.map(_ => Ok("Reporting entity data collection dropped")).recover{
+        case _:NotFoundException => Ok("Reporting entity data collection dropped")
+      }
+    }
+  }
+
   def deleteSingleMessageRefId(messageRefId: String) = Action.async{ implicit request =>
     authorised() {
       testCBCRConnector.deleteSingleMessageRefId(messageRefId).map(_ => Ok("MessageRefId has been deleted"))
