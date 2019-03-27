@@ -11,4 +11,4 @@
 
 # Add all the application routes to the prod.routes file
 ->         /                                                          prod.Routes
-->         /country-by-country-reporting/test-only      test.Routes
+->         /country-by-country-reporting/test-only                    test.Routes
