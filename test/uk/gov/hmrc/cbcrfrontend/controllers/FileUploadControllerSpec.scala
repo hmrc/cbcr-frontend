@@ -20,9 +20,10 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption._
 import java.time.{LocalDate, LocalDateTime}
+
 import org.mockito.ArgumentMatchers.any
 import akka.actor.ActorSystem
-import cats.data.Validated.{Valid,Invalid}
+import cats.data.Validated.{Invalid, Valid}
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.future._
 import com.ctc.wstx.exc.WstxException
@@ -411,6 +412,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("1234567890")))
       when(authConnector.authorise[~[~[Credentials, Option[AffinityGroup]], Option[CBCEnrolment]]](any(),any())(any(),any())) thenReturn Future.successful(new ~[ ~ [Credentials, Option[AffinityGroup]],Option[CBCEnrolment]](new ~(creds, Some(AffinityGroup.Organisation)),Some(enrole)))
       when(auditC.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(fuService.errorsToMap(any())(any())) thenReturn Map("error" -> "error message")
       val result = controller.fileInvalid(request)
       status(result) shouldBe Status.OK
     }
@@ -427,6 +429,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("1234567890")))
       when(authConnector.authorise[~[~[Credentials, Option[AffinityGroup]], Option[CBCEnrolment]]](any(),any())(any(),any())) thenReturn Future.successful(new ~[ ~ [Credentials, Option[AffinityGroup]],Option[CBCEnrolment]](new ~(creds, Some(AffinityGroup.Organisation)),Some(enrole)))
       when(auditC.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(failure)
+      when(fuService.errorsToMap(any())(any())) thenReturn Map("error" -> "error message")
       val result = controller.fileInvalid(request)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
@@ -444,6 +447,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("1234567890")))
       when(authConnector.authorise[~[~[Credentials, Option[AffinityGroup]], Option[CBCEnrolment]]](any(),any())(any(),any())) thenReturn Future.successful(new ~[ ~ [Credentials, Option[AffinityGroup]],Option[CBCEnrolment]](new ~(creds, Some(AffinityGroup.Organisation)),Some(enrole)))
       when(auditC.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(fuService.errorsToMap(any())(any())) thenReturn Map("error" -> "error message")
       val result = controller.fileTooLarge(request)
       status(result) shouldBe Status.OK
     }
@@ -461,6 +465,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(Utr("1234567890")))
       when(authConnector.authorise[~[~[Credentials, Option[AffinityGroup]], Option[CBCEnrolment]]](any(),any())(any(),any())) thenReturn Future.successful(new ~[ ~ [Credentials, Option[AffinityGroup]],Option[CBCEnrolment]](new ~(creds, Some(AffinityGroup.Organisation)),Some(enrole)))
       when(auditC.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(fuService.errorsToMap(any())(any())) thenReturn Map("error" -> "error message")
       val result = controller.fileContainsVirus(request)
       status(result) shouldBe Status.OK
     }
@@ -489,6 +494,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
       when(cache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format),any(),any())) thenReturn Future.successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       when(file.delete) thenReturn Future.successful(true)
+      when(fuService.errorsToFile(any(),any())(any())) thenReturn validFile
       val result = controller.getBusinessRuleErrors(request)
       status(result) shouldBe Status.OK
     }
@@ -509,6 +515,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
       when(cache.readOption[XMLErrors](EQ(XMLErrors.format),any(),any())) thenReturn Future.successful(Some(XMLErrors(List("Big xml error"))))
       when(file.delete) thenReturn Future.successful(true)
+      when(fuService.errorsToFile(any(),any())(any())) thenReturn validFile
       val result = controller.getXmlSchemaErrors(request)
       status(result) shouldBe Status.OK
     }
