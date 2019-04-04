@@ -24,7 +24,9 @@ object FrontendBuild extends Build with MicroService {
     "msv"                      % "msv"                  %           "20050913",
     "com.sun.xml"              % "relaxngDatatype"      %           "1.0",
     "com.sun.msv.datatype.xsd" % "xsdlib"               %           "2013.2",
-    "commons-io"               % "commons-io"           %           "2.5"
+    "commons-io"               % "commons-io"           %           "2.5",
+    "org.mindrot"              % "jbcrypt"                          % "0.4"
+
   )
 
   def test(scope: String = "test") = Seq(

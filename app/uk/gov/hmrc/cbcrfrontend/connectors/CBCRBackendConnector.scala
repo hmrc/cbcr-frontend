@@ -24,6 +24,7 @@ import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
 import play.api.libs.json.JsNull
+import uk.gov.hmrc.cbcrfrontend.controllers.{DocRefIdRecord, ListDocRefIdRecord}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.Email
 
@@ -86,5 +87,11 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   def reportingEntityCBCIdAndReportingPeriod(cbcId: CBCId, reportingPeriod: LocalDate)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
     http.GET(url + s"/reporting-entity/query-cbc-id/${cbcId.toString}/${reportingPeriod.toString}")
   }
+
+  def getDocRefIdOver200(implicit hc: HeaderCarrier) = {
+
+    http.GET[ListDocRefIdRecord](url + s"/getDocsRefId")
+  }
+
 
 }

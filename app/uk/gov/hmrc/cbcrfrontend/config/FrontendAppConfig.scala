@@ -85,4 +85,7 @@ class FrontendAppConfig @Inject() (val runModeConfiguration: Configuration,
   val gtmContainerId = loadConfig("googleTagManager.containerId")
 
   def fallbackURLForLanguageSwitcher: String = loadConfig("languageSwitcher.fallback.url")
+
+  lazy val username = getString("credentials.username")
+  lazy val password = getString("credentials.password")
 }
