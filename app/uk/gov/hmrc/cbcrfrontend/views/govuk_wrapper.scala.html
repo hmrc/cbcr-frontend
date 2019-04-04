@@ -97,9 +97,13 @@
       serviceInfoContent = Some(serviceInfoContent))
 }
 
+@betaBanner = {
+        @uiLayouts.betaBanner(false,config.betaFeedbackUrlNoAuth,config.betaFeedbackUrlNoAuth, true, true)
+}
+
 
 @serviceInfoContent = {
-    @uiLayouts.serviceInfo(HtmlFormat.empty, false, Option.empty, false)
+    @uiLayouts.serviceInfo(betaBanner, false, Option.empty, false)
 }
 
 @mainContentHeader = {
