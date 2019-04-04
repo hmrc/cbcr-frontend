@@ -347,7 +347,7 @@ error.ReportingEntityOrConstituentEntityEmpty=Organisation Name: The Name of the
 error.CorrMessageRefIdNotAllowedInMessageSpec=The CorrMessageRefID element must not be provided in the MessageSpec
 error.CorrMessageRefIdNotAllowedInDocSpec=Error Code 80006: The CorrMessageRefID element must not be provided in the DocSpec
 error.ReportingPeriodInvalid=The ReportingPeriod cannot be corrected. If you wish to change the Reporting Period, then void (OECD3) the original submission and submit a new file (CBC 401)
-error.MultipleFileUploadForSameReportingPeriod=You cannot submit multiple INITIALs for the same period if this is a change to a previous file please submit either a Correction or VOID/Delete your previous message and submit another INITIAL
+error.MultipleFileUploadForSameReportingPeriod=The report has not been uploaded. A report has already been submitted for this tax year. You need to send a corrected version of the original report.
 
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid

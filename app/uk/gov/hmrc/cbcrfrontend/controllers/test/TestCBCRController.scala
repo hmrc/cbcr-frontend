@@ -16,22 +16,32 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers.test
 
+import cats.data.OptionT
 import javax.inject.{Inject, Singleton}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.Action
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.http.{HttpException, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import cats.instances.all._
+import play.api.libs.json.Json
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+
 
 @Singleton
 class TestCBCRController @Inject()(val authConnector:AuthConnector,
                                    val testCBCRConnector: TestCBCRConnector,
-                                   val config:Configuration,
-                                   val env:Environment) extends FrontendController with AuthorisedFunctions{
+                                   val env:Environment,
+                                   val fileUploadService:FileUploadService,
+                                   val messagesApi:MessagesApi)
+                                  (implicit ec: ExecutionContext, cache:CBCSessionCache, feConfig:FrontendAppConfig, val config:Configuration)extends FrontendController with AuthorisedFunctions with I18nSupport{
 
   def insertSubscriptionData(cbcId: String, utr: String) = Action.async{ implicit request =>
     authorised() {
@@ -86,6 +96,14 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     authorised() {
       testCBCRConnector.deleteReportingEntityData(docRefId).map(_ => Ok("Reporting entity data deleted")).recover{
         case _:NotFoundException => Ok("Reporting entity data deleted")
+      }
+    }
+  }
+
+  def dropReportingEntityDataCollection() = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.dropReportingEntityDataCollection.map(_ => Ok("Reporting entity data collection dropped")).recover{
+        case _:NotFoundException => Ok("Reporting entity data collection dropped")
       }
     }
   }
@@ -148,6 +166,16 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
         }
       }.recover{
         case _:NotFoundException => Ok("Reporting entity not found")
+      }
+    }
+  }
+
+  def retrieveBusinessRuleValidationErrors() = Action.async{ implicit request =>
+    authorised() {
+      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => fileUploadService.errorsToString(x.errors)).fold (
+        NoContent
+      ) { errors: String =>
+        Ok(errors)
       }
     }
   }

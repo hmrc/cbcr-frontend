@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{File, FileInputStream}
+import java.io.{File, FileInputStream, PrintWriter}
 import java.time.LocalDateTime
 import java.util.UUID
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
@@ -31,6 +31,8 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.Mode.Mode
 import play.api.http.Status
+import play.api.i18n.{I18nSupport, Lang, MessagesApi}
+import play.api.libs.Files
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Environment, Logger}
@@ -46,7 +48,11 @@ import uk.gov.hmrc.play.config.ServicesConfig
 
 
 @Singleton
-class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,ws:WSClient, configuration: Configuration)(implicit http:HttpClient, ac:ActorSystem, environment:Environment) extends ServicesConfig {
+class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,
+                                  ws:WSClient,
+                                  configuration: Configuration,
+                                  val messagesApi:MessagesApi)
+                                 (implicit http:HttpClient, ac:ActorSystem, environment:Environment) extends ServicesConfig with I18nSupport{
 
   implicit val materializer = ActorMaterializer()
 
@@ -151,5 +157,26 @@ class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,ws:WS
   override protected def mode: Mode = environment.mode
 
   override protected def runModeConfiguration: Configuration = configuration
+
+  def errorsToList(e:List[ValidationErrors])(implicit lang: Lang) : List[String] =
+    e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
+
+
+  def errorsToMap(e:List[ValidationErrors])(implicit lang: Lang) : Map[String,String] =
+    errorsToList(e).foldLeft(Map[String, String]()) {(m, t) => m + ("error_" + (m.size + 1).toString -> t)}
+
+
+  def errorsToString(e:List[ValidationErrors])(implicit lang: Lang) : String =
+    errorsToList(e).map(_.toString).mkString("\r\n")
+
+  def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
+    val b = Files.TemporaryFile(name, ".txt")
+    val writer = new PrintWriter(b.file)
+    writer.write(errorsToString(e))
+    writer.flush()
+    writer.close()
+    b.file
+  }
+
 
 }

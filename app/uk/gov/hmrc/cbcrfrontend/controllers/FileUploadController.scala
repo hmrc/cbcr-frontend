@@ -222,43 +222,19 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   }
 
   private def getErrorFileSize(e:List[ValidationErrors]) : Int = {
-    val f = errorsToFile(e,"")
+    val f = fileUploadService.errorsToFile(e,"")
     val kb = f.length() * 0.001
     f.delete()
     Math.incrementExact(kb.toInt)
   }
 
-
-  private def errorsToList(e:List[ValidationErrors]) : List[String] =
-    e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
-
-
-  private def errorsToMap(e:List[ValidationErrors]) : Map[String,String] =
-    errorsToList(e).foldLeft(Map[String, String]()) {(m, t) => m + ("error_" + (m.size + 1).toString -> t)}
-
-
-  private def errorsToString(e:List[ValidationErrors]) : String =
-    errorsToList(e).map(_.toString).mkString("\r\n")
-
-
-  private def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
-    val b = Files.TemporaryFile(name, ".txt")
-    val writer = new PrintWriter(b.file)
-    writer.write(errorsToString(e))
-    writer.flush()
-    writer.close()
-    b.file
-  }
-
-
   private def fileUploadName(fname: String)(implicit lang: Lang) : String = {
     messagesApi(fname)
   }
 
-
   def getBusinessRuleErrors = Action.async{ implicit request =>
     authorised() {
-      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors"))
+      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => fileUploadService.errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors"))
       ).fold(
         NoContent
       )((file: File) =>
@@ -269,7 +245,7 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
 
   def getXmlSchemaErrors = Action.async{ implicit request =>
     authorised() {
-      OptionT(cache.readOption[XMLErrors]).map(x => errorsToFile(List(x), fileUploadName("fileUpload.XMLSchemaErrors"))
+      OptionT(cache.readOption[XMLErrors]).map(x => fileUploadService.errorsToFile(List(x), fileUploadName("fileUpload.XMLSchemaErrors"))
       ).fold(
         NoContent
       )((file: File) =>
@@ -348,11 +324,11 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
   private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(implicit hc:HeaderCarrier) : JsObject = {
     (all_errors._1.exists(bre => if(bre.errors.isEmpty) false else true), all_errors._2.exists(xml => if(xml.errors.isEmpty) false else true)) match {
       case (true, true) => Json.obj(
-        "businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)),
-        "xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get)))
+        "businessRuleErrors" -> Json.toJson(fileUploadService.errorsToMap(all_errors._1.get.errors)),
+        "xmlErrors" -> Json.toJson(fileUploadService.errorsToMap(List(all_errors._2.get)))
       )
-      case (true, false) => Json.obj("businessRuleErrors" -> Json.toJson(errorsToMap(all_errors._1.get.errors)))
-      case (false, true) => Json.obj("xmlErrors" -> Json.toJson(errorsToMap(List(all_errors._2.get))))
+      case (true, false) => Json.obj("businessRuleErrors" -> Json.toJson(fileUploadService.errorsToMap(all_errors._1.get.errors)))
+      case (false, true) => Json.obj("xmlErrors" -> Json.toJson(fileUploadService.errorsToMap(List(all_errors._2.get))))
       case _                         => Json.obj("none" -> "no business rule or schema errors")
 
     }
