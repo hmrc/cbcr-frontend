@@ -17,31 +17,31 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
 @(title: String,
-  mainClass: Option[String] = None,
-  mainDataAttributes: Option[Html] = None,
-  bodyClasses: Option[String] = None,
-  sidebar: Html = HtmlFormat.empty,
-  contentHeader: Option[Html] = None,
-  mainContent: Html = HtmlFormat.empty,
-  serviceInfoContent: Html = HtmlFormat.empty,
-  scriptElem: Option[Html] = None
+        mainClass: Option[String] = None,
+        mainDataAttributes: Option[Html] = None,
+        bodyClasses: Option[String] = None,
+        sidebar: Html = HtmlFormat.empty,
+        contentHeader: Option[Html] = None,
+        mainContent: Html = HtmlFormat.empty,
+        serviceInfoContent: Html = HtmlFormat.empty,
+        scriptElem: Option[Html] = None
 )(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
 @googleHeadScript = {
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer', '@config.gtmContainerId');</script>
-     <!-- End Google Tag Manager -->
-}
+        <!-- End Google Tag Manager -->
+    }
 
 @googleBodyScript = {
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=@config.gtmContainerId"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
+        <!-- End Google Tag Manager (noscript) -->
 }
 
 @import layouts.{govuk_template => hmrcGovUkTemplate}
@@ -50,23 +50,23 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @head = {
-    @uiLayouts.head(
-      linkElem = None,
-      headScripts = Some(googleHeadScript))
+@uiLayouts.head(
+    linkElem = None,
+    headScripts = Some(googleHeadScript))
     <meta name="format-detection" content="telephone=no" />
 }
 
 @headerNavLinks = {
-  <li><a id="homeNavHref" href="@routes.SharedController.signOutSurvey()"
-         data-journey-click="primary-navigation:Click:Home">@Messages("form.controls.signOut")</a></li>
+    <li><a id="homeNavHref" href="@routes.SharedController.signOutSurvey()"
+    data-journey-click="primary-navigation:Click:Home">@Messages("form.controls.signOut")</a></li>
 }
 
 @insideHeader = {
-    @uiLayouts.header_nav(
-      navTitle = Some(messages("application.title")),
-      navTitleLink = None,
-      showBetaLink = false,
-      navLinks = Some(headerNavLinks))
+@uiLayouts.header_nav(
+    navTitle = Some(messages("application.title")),
+    navTitleLink = None,
+    showBetaLink = false,
+    navLinks = Some(headerNavLinks))
 }
 
 @afterHeader = {@googleBodyScript}
@@ -78,52 +78,48 @@
 
 
 @bodyEnd = {
-    @uiLayouts.footer(
-      analyticsToken = Some(config.analyticsToken),
-      analyticsHost = config.analyticsHost,
-      ssoUrl = None,
-      scriptElem = None,
-      gaCalls = Option((a,b) => analyticsCode("", config.analyticsToken))
-    )
+@uiLayouts.footer(
+    analyticsToken = Some(config.analyticsToken),
+    analyticsHost = config.analyticsHost,
+    ssoUrl = None,
+    scriptElem = None,
+    gaCalls = Option((a,b) => analyticsCode("", config.analyticsToken))
+)
 }
 
 @footerTop = {}
 @footerLinks = {}
 
 @serviceInfo = {
-    @uiLayouts.serviceInfo(
-      betaBanner = HtmlFormat.empty,
-      includeGridWrapper = false,
-      serviceInfoContent = Some(serviceInfoContent))
-}
-
-@betaBanner = {
-        @uiLayouts.betaBanner(false,config.betaFeedbackUrlNoAuth,config.betaFeedbackUrlNoAuth, true, true)
+@uiLayouts.serviceInfo(
+    betaBanner = HtmlFormat.empty,
+    includeGridWrapper = false,
+    serviceInfoContent = Some(serviceInfoContent))
 }
 
 
 @serviceInfoContent = {
-    @uiLayouts.serviceInfo(betaBanner, false, Option.empty, false)
+@uiLayouts.serviceInfo(HtmlFormat.empty, false, Option.empty, false)
 }
 
 @mainContentHeader = {
-    @if(contentHeader.isDefined) {
-        googleTagScript
-        @uiLayouts.main_content_header(contentHeader = contentHeader.get)
-    }
+@if(contentHeader.isDefined) {
+    googleTagScript
+    @uiLayouts.main_content_header(contentHeader = contentHeader.get)
+}
 }
 
 @getHelpForm = @{uiHelpers.reportAProblemLink(config.reportAProblemPartialUrl, config.reportAProblemNonJSUrl)}
 
 @content = {
-    @uiLayouts.main_content(
-      article = mainContent,
-      mainClass = mainClass,
-      mainDataAttributes = mainDataAttributes,
-      mainContentHeader = mainContentHeader,
-      serviceInfo = serviceInfoContent,
-      getHelpForm = getHelpForm,
-      sidebar = sidebar)
+@uiLayouts.main_content(
+    article = mainContent,
+    mainClass = mainClass,
+    mainDataAttributes = mainDataAttributes,
+    mainContentHeader = mainContentHeader,
+    serviceInfo = serviceInfoContent,
+    getHelpForm = getHelpForm,
+    sidebar = sidebar)
 }
 
 @hmrcGovUkTemplate(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(uiLayouts.footer_links()), true)(content)
