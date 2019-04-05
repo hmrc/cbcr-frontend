@@ -67,3 +67,6 @@ GET        /assets/*file                                  controllers.Assets.ver
 GET        /switch-to-welsh                               @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToWelsh
 GET        /switch-to-english                             @uk.gov.hmrc.cbcrfrontend.controllers.LanguageController.switchToEnglish
 
+GET        /admin                                         @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.showAdminPage
+GET        /admin/get-docs                                @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.showAllDocRefIdOver200
+
