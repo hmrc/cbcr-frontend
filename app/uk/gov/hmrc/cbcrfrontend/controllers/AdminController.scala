@@ -60,25 +60,25 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
 }
 
 
-case class DocRefId(id:String)
-object DocRefId {
-  implicit val format = new Format[DocRefId] {
-    override def writes(o: DocRefId): JsValue = JsString(o.id)
+case class AdminDocRefId(id:String)
+object AdminDocRefId {
+  implicit val format = new Format[AdminDocRefId] {
+    override def writes(o: AdminDocRefId): JsValue = JsString(o.id)
 
-    override def reads(json: JsValue): JsResult[DocRefId] = json.asOpt[JsString].map(v => DocRefId(v.value)).fold[JsResult[DocRefId]](
+    override def reads(json: JsValue): JsResult[AdminDocRefId] = json.asOpt[JsString].map(v => AdminDocRefId(v.value)).fold[JsResult[AdminDocRefId]](
       JsError(s"Unable to deserialise $json as a DocRefId"))(
-      (id: DocRefId) => JsSuccess(id)
+      (id: AdminDocRefId) => JsSuccess(id)
     )
   }
 }
 
-case class DocRefIdRecord(id:DocRefId,valid:Boolean)
-object DocRefIdRecord {
+case class AdminDocRefIdRecord(id:AdminDocRefId,valid:Boolean)
+object AdminDocRefIdRecord {
 
-implicit val format:Format[DocRefIdRecord] = Json.format[DocRefIdRecord]
+implicit val format:Format[AdminDocRefIdRecord] = Json.format[AdminDocRefIdRecord]
 }
 
-case class ListDocRefIdRecord(docs: List[DocRefIdRecord])
+case class ListDocRefIdRecord(docs: List[AdminDocRefIdRecord])
 object ListDocRefIdRecord {
   implicit val format:Format[ListDocRefIdRecord] = Json.format[ListDocRefIdRecord]
 }
