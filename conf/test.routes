@@ -10,3 +10,4 @@ GET     /confirmReportingEntityCreationDate/:docRefId/:createDate @uk.gov.hmrc.c
 GET     /deleteReportingEntityReportingPeriod/:docRefId           @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteReportingEntityReportingPeriod(docRefId: String)
 GET     /retrieveBusinessRuleValidationErrors                     @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.retrieveBusinessRuleValidationErrors()
 GET     /retrieveSchemaValidationErrors                           @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.retrieveSchemaValidationErrors()
+GET     /validateNumberOfCbcIdForUtr/:utr                         @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.validateNumberOfCbcIdForUtr(utr: String)
