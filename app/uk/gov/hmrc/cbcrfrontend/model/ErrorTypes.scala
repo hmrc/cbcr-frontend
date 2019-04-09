@@ -58,6 +58,11 @@ object FileNameError {
   implicit val format = Json.format[FileNameError]
 }
 
+case class AdditionalInfoDRINotFound(firstCdri:String, missingCdri:String) extends BusinessRuleErrors
+object AdditionalInfoDRINotFound {
+  implicit val format = Json.format[AdditionalInfoDRINotFound]
+}
+
 case object TestDataError extends BusinessRuleErrors
 case object SendingEntityError extends BusinessRuleErrors
 case object SendingEntityOrganisationMatchError extends BusinessRuleErrors
@@ -143,6 +148,7 @@ object BusinessRuleErrors {
       case CorrMessageRefIdNotAllowedInDocSpec      => JsString(CorrMessageRefIdNotAllowedInDocSpec.toString)
       case ReportingPeriodInvalid                   => JsString(ReportingPeriodInvalid.toString)
       case MultipleFileUploadForSameReportingPeriod => JsString(MultipleFileUploadForSameReportingPeriod.toString)
+      case aidnf:AdditionalInfoDRINotFound          => Json.toJson(aidnf)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -152,6 +158,7 @@ object BusinessRuleErrors {
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
       Json.fromJson[MessageRefIDError](json)
         .orElse[BusinessRuleErrors](Json.fromJson(json)(FileNameError.format))
+      .orElse[BusinessRuleErrors](Json.fromJson(json)(AdditionalInfoDRINotFound.format))
         .orElse[BusinessRuleErrors]{
         json.asOpt[String] match {
           case Some(ci"multiplecbcbodies")     => JsSuccess(MultipleCbcBodies)
@@ -222,6 +229,8 @@ object BusinessRuleErrors {
     case CorrMessageRefIdNotAllowedInDocSpec => "error.CorrMessageRefIdNotAllowedInDocSpec"
     case ReportingPeriodInvalid => "error.ReportingPeriodInvalid"
     case MultipleFileUploadForSameReportingPeriod => "error.MultipleFileUploadForSameReportingPeriod"
+    case AdditionalInfoDRINotFound(f,m) => s"error.AdditionalInfoDRINotFound1 $m error.AdditionalInfoDRINotFound2" + " \r\n" + s" error.AdditionalInfoDRINotFound3 $f error.AdditionalInfoDRINotFound4"
+
   }
 }
 

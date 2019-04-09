@@ -36,7 +36,9 @@ import org.mockito.ArgumentMatchers.{eq => EQ, _}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityDataModel
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.cbcrfrontend.model.MessageRefID
 
 /**
   * Created by max on 24/05/17.
@@ -106,6 +108,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),None)
   val redReportPeriod = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),Some(LocalDate.of(2018,1,1)))
+  val redmTrue = ReportingEntityDataModel(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),None,true)
+  val redmFalse = ReportingEntityDataModel(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),None,false)
 
   val xmlinfo = XMLInfo(
   MessageSpec(
@@ -423,6 +427,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       "MessageTypeIndic is CBC402 and the DocTypeIndic's are invalid" when {
         "CBCReports.docTypeIndic isn't OECD2 or OECD3" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndic.xml")
+          when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
           val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
@@ -432,6 +437,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         }
         "CBCReports[*].docTypeIndic isn't OECD2 or OECD3" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndicM.xml")
+          when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
           val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
@@ -462,6 +468,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       "MessageTypeIndic is not provided" in {
         val validFile = new File("test/resources/cbcr-noMessageTypeIndic.xml")
+        when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
@@ -494,6 +501,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId4))(any())) thenReturn Future.successful(DoesNotExist)
 
+        when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
+
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
@@ -508,6 +517,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId4))(any())) thenReturn Future.successful(Valid)
+
+        when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
 
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -563,6 +574,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
         when(reportingEntity.queryReportingEntityDataDocRefId(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(red))
         when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(red))
+        when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
 
 
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
@@ -576,6 +588,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+        when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
 
 
         val validFile1 = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds1.xml")
@@ -652,6 +665,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       "when the messageTypeIndic is CBC401 and REP doctypeIndic OECD0 but is not a known docrefid" in {
         val validFile = new File("test/resources/cbcr-OECD0[1]-valid.xml")
         when(reportingEntity.queryReportingEntityDataDocRefId(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityData]](Future.successful(None))
+        when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
@@ -750,6 +764,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId4))(any())) thenReturn Future.successful(DoesNotExist)
+
+        when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
 
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -872,9 +888,11 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           )
         }
       }
-      "when the submission contains a correction" when {
+      "the submission contains a correction" when {
         "the original submission was created > 3 years ago" in {
           when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(false)
+          when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
+          when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(Valid)
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
           val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -897,6 +915,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
           when(docRefIdService.queryDocRefId(EQ(corrDocRefId5))(any())) thenReturn Future.successful(Valid)
 
+          when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
+
           when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(true)
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
           val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
@@ -908,8 +928,14 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         }
       }
 
-      "when the CorrMessageRefID not in MessageSpec or DocSpec" in {
+      "the CorrMessageRefID not in MessageSpec or DocSpec" in {
         val validFile = new File("test/resources/cbcr-valid.xml")
+        when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
+
+        when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
+
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
@@ -919,7 +945,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
-      "when the CorrMessageRefID included in MessageSpec" in {
+      "the CorrMessageRefID included in MessageSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInMessageSpec.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -930,7 +956,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
-      "when the CorrMessageRefID included in ReportingEntity DocSpec" in {
+      "the CorrMessageRefID included in ReportingEntity DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInReportingEntity.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -941,7 +967,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
-      "when the CorrMessageRefID included in CbcReports DocSpec" in {
+      "the CorrMessageRefID included in CbcReports DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInCbcReports.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -952,7 +978,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
-      "when the CorrMessageRefID included in AdditionalInfo DocSpec" in {
+      "the CorrMessageRefID included in AdditionalInfo DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInAdditionalInfo.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -963,7 +989,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
-      "when the CorrMessageRefID included in AdditionalInfo DocSpec and CbcReports DocSpec and ReportingEntity DocSpec" in {
+      "the CorrMessageRefID included in AdditionalInfo DocSpec and CbcReports DocSpec and ReportingEntity DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInAllDocSpec.xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
@@ -974,7 +1000,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
-      "when the CorrMessageRefID included in both MesageSpec and DocSpec" in {
+      "the CorrMessageRefID included in both MesageSpec and DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInMsgSpecDocSpec" +
           ".xml")
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
@@ -986,7 +1012,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
-      "when the reporting period of a correction does not match the reporting period of original submission" in {
+      "the reporting period of a correction does not match the reporting period of original submission" in {
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
         when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(redReportPeriod))
@@ -1001,9 +1027,12 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
       }
 
-      "when the reporting period of a correction matches the reporting period of original submission" in {
+      "the reporting period of a correction matches the reporting period of original submission" in {
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(EQ(corrDocRefId5))(any())) thenReturn Future.successful(Valid)
         when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red.copy(reportingPeriod = Some(LocalDate.of(2016,3,31)))))
 
 
@@ -1015,7 +1044,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
         )
       }
 
-      "when the original submission di not persist a reporting period and so reportingEntity returns None" in {
+      "the original submission di not persist a reporting period and so reportingEntity returns None" in {
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
         when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red))
@@ -1027,6 +1056,88 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           errors => fail(s"Error were generated: $errors"),
           _ => ()
         )
+      }
+
+      "the submission corrects AdditionalIno" when {
+        "the original submission only persisted the 1st AdditionalInfo DRI but the submission corrects a subsequant AdditionalInfo section" in {
+          when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(true)
+          when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+          when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmTrue)))
+          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+          when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red))
+          val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(AdditionalInfoDRINotFound(actualDocRefId2.toString,corrDocRefId3.toString)),
+            _ => fail("No AdditionalInfoDRINotFound generated out of date correction")
+          )
+        }
+
+        "the original submission only persisted the 1st AdditionalInfo DRI and the submission corrects that AdditionalInfo section" in {
+          when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(true)
+          when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+          when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmTrue)))
+          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+          when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red))
+          val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+          result.fold(
+            errors => fail(s"Error were generated: $errors"),
+            _ => ()
+          )
+        }
+
+        "the original submission persisted ALL AdditionalInfo DRI and the submission correctly corrects one AdditionalInfo section" in {
+          when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(true)
+          when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+          when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
+          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
+          when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red))
+          val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+          result.fold(
+            errors => fail(s"Error were generated: $errors"),
+            _ => ()
+          )
+        }
+
+        "the original submission persisted ALL AdditionalInfo DRI but the submission attempts to corrects a none-existent AdditionalInfo section" in {
+          when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(true)
+          when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+          when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
+          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+          when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red))
+          val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(CorrDocRefIdUnknownRecord),
+            _ => fail("No CorrDocRefIdUnknownRecord generated out of date correction")
+          )
+        }
+
+        "the original submission persisted ALL AdditionalInfo DRI but the submission attempts to corrects a previously corrected AdditionalInfo section" in {
+          when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(true)
+          when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+          when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
+          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Invalid)
+          when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red))
+          val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId.xml")
+          val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(CorrDocRefIdInvalidRecord),
+            _ => fail("No CorrDocRefIdInvalidRecord generated out of date correction")
+          )
+        }
       }
     }
   }

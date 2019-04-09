@@ -69,6 +69,8 @@ class DocRefId private[model](val msgRefID:MessageRefID,
     case _          => false
   }
 
+  override def toString: String = this.show
+
   override def hashCode(): Int = this.show.hashCode()
 
 }

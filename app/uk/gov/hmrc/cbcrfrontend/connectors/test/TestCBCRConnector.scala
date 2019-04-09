@@ -76,6 +76,10 @@ class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(impli
   def deleteReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
     http.DELETE(s"$url/test-only/deleteReportingEntityReportingPeriod/$docRefId")
 
+  def updateReportingEntityAdditionalInfoDRI(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
+    http.PUT(s"$url/test-only/updateReportingEntityAdditionalInfoDRI/$docRefId", JsNull)
+
   def checkNumberOfCbcIdForUtr(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET[HttpResponse](s"$url/test-only/validateNumberOfCbcIdForUtr/$utr")
+
 }

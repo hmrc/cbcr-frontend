@@ -347,6 +347,11 @@ error.ReportingEntityOrConstituentEntityEmpty=cy-Organisation Name: The Name of 
 error.CorrMessageRefIdNotAllowedInMessageSpec=cy-The CorrMessageRefID element must not be provided in the MessageSpec
 error.CorrMessageRefIdNotAllowedInDocSpec=cy-Error Code 80006: The CorrMessageRefID element must not be provided in the DocSpec
 error.ReportingPeriodInvalid=cy-The ReportingPeriod cannot be corrected. If you wish to change the Reporting Period, then void (OECD3) the original submission and submit a new file (CBC 401)
+error.AdditionalInfoDRINotFound1=cy-The AdditionalInfo CorrDocRefId
+error.AdditionalInfoDRINotFound2=cy-was not found.
+error.AdditionalInfoDRINotFound3=cy-Please move the information into the AdditionalInfo section with CorrDocRefId
+error.AdditionalInfoDRINotFound4=cy-and resubmit. You can also also contact ‘digitalservice.cbc@hmrc.gsi.gov.uk’ to discuss this issue if preferred.
+error.AdditionalInfoDRINotFound5=cy-from the first AdditionalInfo section of the initial submission
 
 xmlValidationError.InvalidDocType=cy-Invalid DocTypeIndic
 xmlValidationError.ReportingRole=cy-ReportingEntity.ReportingRole not found or invalid

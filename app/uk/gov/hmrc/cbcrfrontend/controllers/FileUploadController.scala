@@ -228,6 +228,29 @@ class FileUploadController @Inject()(val messagesApi:MessagesApi,
     Math.incrementExact(kb.toInt)
   }
 
+
+  private def errorsToList(e:List[ValidationErrors])(implicit lang: Lang) : List[String] =
+    e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
+
+
+  private def errorsToMap(e:List[ValidationErrors])(implicit lang: Lang) : Map[String,String] =
+    errorsToList(e).foldLeft(Map[String, String]()) {(m, t) => m + ("error_" + (m.size + 1).toString -> t)}
+
+
+  private def errorsToString(e:List[ValidationErrors])(implicit lang: Lang) : String =
+    errorsToList(e).map(_.toString).mkString("\r\n")
+
+
+  private def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
+    val b = Files.TemporaryFile(name, ".txt")
+    val writer = new PrintWriter(b.file)
+    writer.write(errorsToString(e))
+    writer.flush()
+    writer.close()
+    b.file
+  }
+
+
   private def fileUploadName(fname: String)(implicit lang: Lang) : String = {
     messagesApi(fname)
   }
