@@ -180,4 +180,18 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
+  def validateNumberOfCbcIdForUtr(utr: String) = Action.async{implicit request =>
+    authorised() {
+      testCBCRConnector.checkNumberOfCbcIdForUtr(utr).map{s =>
+        s.status match {
+          case OK           => Ok(s"The total number of cbc id for given utr is: ${s.json}")
+          case NOT_FOUND    => Ok("Subscription data not found for the given utr")
+          case _            => Ok("Something went wrong")
+        }
+      }.recover{
+        case _:NotFoundException => Ok("Subscription data not found")
+      }
+    }
+  }
+
 }
