@@ -180,6 +180,16 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
+  def retrieveSchemaValidationErrors() = Action.async{ implicit request =>
+    authorised() {
+      OptionT(cache.readOption[XMLErrors]).map(x => x.errors.mkString ).fold (
+        NoContent
+      ) { errors: String =>
+        Ok(errors)
+      }
+    }
+  }
+
   def validateNumberOfCbcIdForUtr(utr: String) = Action.async{implicit request =>
     authorised() {
       testCBCRConnector.checkNumberOfCbcIdForUtr(utr).map{s =>
