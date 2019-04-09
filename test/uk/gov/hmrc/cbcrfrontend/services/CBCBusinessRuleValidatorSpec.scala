@@ -36,7 +36,7 @@ import org.mockito.ArgumentMatchers.{eq => EQ, _}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
-import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityData.ReportingEntityDataModel
+import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityDataModel
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.cbcrfrontend.model.MessageRefID
 

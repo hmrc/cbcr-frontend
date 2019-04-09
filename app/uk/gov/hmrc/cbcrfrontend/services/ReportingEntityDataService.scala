@@ -25,7 +25,8 @@ import play.api.Logger
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, DocRefId, PartialReportingEntityData, ReportingEntityData, ReportingEntityDataModel, UnexpectedState}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
