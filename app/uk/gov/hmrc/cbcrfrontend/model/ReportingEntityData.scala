@@ -123,4 +123,3 @@ object ReportingEntityDataModel {
   implicit val format = Json.format[ReportingEntityDataModel]
 }
 
-

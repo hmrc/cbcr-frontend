@@ -1139,7 +1139,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
           )
         }
       }
-
     }
   }
 }
