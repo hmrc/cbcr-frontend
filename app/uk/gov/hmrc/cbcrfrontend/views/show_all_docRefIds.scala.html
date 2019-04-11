@@ -32,6 +32,7 @@
 <table >
   <tr>
     <th>isValid</th>
+      <th>DocRefId</th>
     <th>Length</th>
   </tr>
 
@@ -41,6 +42,9 @@
                 <td>@{
                     elem.valid
                 }</td>
+                    <td>@{
+                        elem.id.id
+                    }</td>
                 <td>@{
                     elem.id.id.length
                 }</td>
