@@ -133,27 +133,27 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   "The CBCBusinessRuleValidator" should {
 
-    "when multiple file uploaded for the same reporting period of original submission" in {
-
-      val cbcReportsDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").get
-      val additionalInfoDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD").get
-      val reportingEntityDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").get
-
-      val reportEntityData = ReportingEntityData(NonEmptyList.of(cbcReportsDri),List(additionalInfoDri), reportingEntityDri, TIN("2001", "GB"), UltimateParentEntity("someone"), CBC703, Some(LocalDate.now()), Some(LocalDate.of(2019, 3, 31)))
-
-      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
-      when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(reportEntityData))
-
-      val multipleSubmissionForSameReportingPeriod = new File("test/resources/cbcr-valid-multipleupload" +
-        ".xml")
-
-      val result = Await.result(validator.validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)), 5.seconds)
-
-      result.fold(
-        errors => errors.toList should contain (MultipleFileUploadForSameReportingPeriod),
-        _ => fail("MultipleFileUploadForSameReportingPeriod")
-      )
-    }
+//    "when multiple file uploaded for the same reporting period of original submission" in {
+//
+//      val cbcReportsDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").get
+//      val additionalInfoDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD").get
+//      val reportingEntityDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").get
+//
+//      val reportEntityData = ReportingEntityData(NonEmptyList.of(cbcReportsDri),List(additionalInfoDri), reportingEntityDri, TIN("2001", "GB"), UltimateParentEntity("someone"), CBC703, Some(LocalDate.now()), Some(LocalDate.of(2019, 3, 31)))
+//
+//      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+//      when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(reportEntityData))
+//
+//      val multipleSubmissionForSameReportingPeriod = new File("test/resources/cbcr-valid-multipleupload" +
+//        ".xml")
+//
+//      val result = Await.result(validator.validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)), 5.seconds)
+//
+//      result.fold(
+//        errors => errors.toList should contain (MultipleFileUploadForSameReportingPeriod),
+//        _ => fail("MultipleFileUploadForSameReportingPeriod")
+//      )
+//    }
 
     "return the correct error" when {
 
