@@ -197,8 +197,10 @@ class CBCBusinessRuleValidator @Inject() (messageRefService:MessageRefIdService,
     validateFileName(x,fileName) *>
     validateOrganisationCBCId(x, enrolment, affinityGroup) *>
     validateCreationDate(x) *>
-    validateReportingPeriod(x) *>
-    validateMultipleFileUploadForSameReportingPeriod(x)
+    validateReportingPeriod(x)
+
+    /*The code stated below will be putted back in after the proper solution has been implemented*/
+//    validateMultipleFileUploadForSameReportingPeriod(x)
   }
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
