@@ -75,7 +75,7 @@ class DocRefId private[model](val msgRefID:MessageRefID,
 
 }
 object DocRefId {
-  val docRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.*?)(OECD[0123])(ENT|REP|ADD)(.{0,41})""".r
+  val docRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,41})""".r
   def apply(s:String) : Option[DocRefId] = s match {
     case docRefIdRegex(msgRef,_,_,_,_,_,_,tin,docType,pGroup,uniq) => for {
       m <- MessageRefID(msgRef).toOption
