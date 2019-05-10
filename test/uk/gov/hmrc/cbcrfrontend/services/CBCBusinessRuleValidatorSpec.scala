@@ -246,6 +246,9 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
 
       "the Organisation user has a CBCId that does match that in the SendingEntityIn field on straight through journey" in {
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        when(reportingEntity.queryReportingEntityDataTin(any())(any())).thenReturn(EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None))
+        
         when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
 
         makeTheUserAnOrganisation("XLCBC0100000056")
@@ -276,6 +279,9 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
 
       "the Organisation user has a CBCId matches that in the SendingEntityIn field" in {
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        when(reportingEntity.queryReportingEntityDataTin(any())(any())).thenReturn(EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None))
+
         when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
 
         makeTheUserAnOrganisation("XLCBC0100000056")
