@@ -75,9 +75,21 @@ class DocRefId private[model](val msgRefID:MessageRefID,
 
 }
 object DocRefId {
+
+
   val docRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,41})""".r
   def apply(s:String) : Option[DocRefId] = s match {
     case docRefIdRegex(msgRef,_,_,_,_,_,_,tin,docType,pGroup,uniq) => for {
+      m <- MessageRefID(msgRef).toOption
+      o <- DocTypeIndic.fromString(docType)
+      p <- ParentGroupElement.fromString(pGroup)
+    } yield new DocRefId(m,tin,o,p,uniq)
+    case _                                             => None
+  }
+
+  val newDocRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,25})""".r
+  def applyNewDocRefIdRegex(s:String) : Option[DocRefId] = s match {
+    case newDocRefIdRegex(msgRef,_,_,_,_,_,_,tin,docType,pGroup,uniq) => for {
       m <- MessageRefID(msgRef).toOption
       o <- DocTypeIndic.fromString(docType)
       p <- ParentGroupElement.fromString(pGroup)

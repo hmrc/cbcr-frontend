@@ -140,8 +140,8 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
       })).getOrElse(None.validNel)
   }
 
-  private def extractDocRefId(docRefIdString: String, parentGroupElement: ParentGroupElement): ValidBusinessResult[DocRefId] =
-    DocRefId(docRefIdString).fold[ValidBusinessResult[DocRefId]](
+  private def extractDocRefId(docRefIdString:String, parentGroupElement: ParentGroupElement) : ValidBusinessResult[DocRefId] =
+    DocRefId.applyNewDocRefIdRegex(docRefIdString).fold[ValidBusinessResult[DocRefId]](
       InvalidDocRefId.invalidNel)(
       d => {
         if (d.parentGroupElement != parentGroupElement) DocRefIdInvalidParentGroupElement.invalidNel
