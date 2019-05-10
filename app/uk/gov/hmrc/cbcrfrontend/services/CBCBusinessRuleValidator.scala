@@ -201,7 +201,8 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
       validateOrganisationCBCId(x, enrolment, affinityGroup) *>
       validateCreationDate(x) *>
       validateReportingPeriod(x) *>
-      validateMultipleFileUploadForSameReportingPeriod(x)
+      validateMultipleFileUploadForSameReportingPeriod(x) *>
+      validateMessageRefIds(x)
   }
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
@@ -569,6 +570,42 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
         }.toValidatedNel
       case _ => Future.successful(x.validNel)
     }
+  }
+
+  private def validateMessageRefIds(in: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
+
+    val messageSpecMessageRefId = in.messageSpec.messageRefID.show
+    val cbcrReportsDocRefIds = in.cbcReport.map(_.docSpec.docRefId.show)
+    val addInfoDocRefIds = in.additionalInfo.map(_.docSpec.docRefId.show)
+    val reportingEntityDocRefIds = in.reportingEntity.map(_.docSpec.docRefId.show)
+
+    val docRefIds = reportingEntityDocRefIds match {
+      case Some(s) =>  s :: cbcrReportsDocRefIds ++ addInfoDocRefIds
+      case _ => cbcrReportsDocRefIds ++ addInfoDocRefIds
+    }
+
+
+    val docRefIdsValidator = docRefIds.foldLeft(List[Boolean]()) {(resultingValue, currentValue) =>
+
+      val docRefMessageRefId = currentValue match {
+        case data => data.slice(0, data.indexOf("_"))
+      }
+
+      val results = if(docRefMessageRefId == messageSpecMessageRefId) true else false
+
+      resultingValue :+ results
+
+    }
+
+    if (docRefIdsValidator.contains(false)){
+
+      Future.successful(MessageRefIdDontMatchWithDocRefId.invalidNel)
+
+    }else{
+
+      Future.successful(in.validNel)
+    }
+
   }
 
   private def extractCorrDRI(xmlInfo: XMLInfo) = {

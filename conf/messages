@@ -353,7 +353,7 @@ error.AdditionalInfoDRINotFound2=was not found.
 error.AdditionalInfoDRINotFound3=Please move the information into the AdditionalInfo section with CorrDocRefId
 error.AdditionalInfoDRINotFound4=and resubmit. You can also also contact ‘digitalservice.cbc@hmrc.gsi.gov.uk’ to discuss this issue if preferred.
 error.AdditionalInfoDRINotFound5=from the first AdditionalInfo section of the initial submission
-
+error.MessageRefIdDontMatchWithDocRefId=The report has not been uploaded. The DocRefID must begin with the MessageRefID contained within the message specification.
 
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid
