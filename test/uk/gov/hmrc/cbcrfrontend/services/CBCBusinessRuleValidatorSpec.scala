@@ -156,6 +156,21 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
     }
 
+    "when message-ref-id within doc-ref-id doesn't match with the message-ref-id of message spec" in {
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+      when(reportingEntity.queryReportingEntityDataTin(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
+
+      val messageRefIdValidation = new File("test/resources/cbcr-messageRefId-dontMatchAgainst-messageRefId-inDocRefId" + ".xml")
+
+      val result = Await.result(validator.validateBusinessRules(messageRefIdValidation, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+      result.fold(
+        errors => errors.toList should contain (MessageRefIdDontMatchWithDocRefId),
+        _ => fail("MessageRefIdDontMatchWithDocRefId")
+      )
+
+    }
+
     "return the correct error" when {
 
       "the reportingEntity name is an empty string" in {
