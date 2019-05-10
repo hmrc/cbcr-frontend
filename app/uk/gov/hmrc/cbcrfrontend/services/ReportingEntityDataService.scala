@@ -100,4 +100,18 @@ class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(impl
       case NonFatal(e)         => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
     })
 
+
+  def queryReportingEntityDataTin(tin: String)(implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityData]]  =
+    EitherT(connector.reportingEntityDataQueryTin(tin).map(response =>
+      response.json.validate[ReportingEntityData].fold(
+        failed => Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+        data   => Right(Some(data))
+      )
+    ).recover{
+      case _:NotFoundException => Right(None)
+      case NonFatal(e)         => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+    })
+
+
+
 }
