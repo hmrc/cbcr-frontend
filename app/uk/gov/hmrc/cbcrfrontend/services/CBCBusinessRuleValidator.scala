@@ -244,20 +244,20 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     }.toValidatedNel
   }
 
-  private def determineMessageTypeIndic(r:XMLInfo):Option[MessageTypeIndic] = {
-    lazy val docTypes = List(r.additionalInfo.map(_.docSpec.docType)).flatten ++ r.cbcReport.map(_.docSpec.docType) ++ r.reportingEntity.map(_.docSpec.docType)
+  private def determineMessageTypeIndic(r: XMLInfo): Option[MessageTypeIndic] = {
+    lazy val docTypes = List(r.additionalInfo.map(_.docSpec.docType)).flatten ++ r.cbcReport.map(_.docSpec.docType)
 
-    lazy val distinctTypes = docTypes.distinct
+    lazy val repDocTypes = r.reportingEntity.map(_.docSpec.docType)
 
-    lazy val docType401 = distinctTypes.contains(OECD1) && distinctTypes.size == 1
+    val docType401 = !(docTypes.exists(_ != OECD1) || repDocTypes.exists(dt => dt != OECD1 && dt != OECD0))
 
     (r.messageSpec.messageType, docType401) match {
-      case (Some(CBC401), true)   => Some(CBC401)
-      case (Some(CBC401), false)  => None
-      case (Some(CBC402), _)      => Some(CBC402)
-      case (None, true)           => Some(CBC401)
-      case (None, false)          => Some(CBC402)
-      case _                      => None
+      case (Some(CBC401), true) => Some(CBC401)
+      case (Some(CBC401), false) => None
+      case (Some(CBC402), _) => Some(CBC402)
+      case (None, true) => Some(CBC401)
+      case (None, false) => Some(CBC402)
+      case _ => None
     }
 
   }
