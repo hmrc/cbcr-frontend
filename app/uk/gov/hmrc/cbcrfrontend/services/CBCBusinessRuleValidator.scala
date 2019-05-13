@@ -575,24 +575,20 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
   private def validateMessageRefIds(in: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
 
     val messageSpecMessageRefId = in.messageSpec.messageRefID.show
-    val cbcrReportsDocRefIds = in.cbcReport.map(_.docSpec.docRefId.show)
-    val addInfoDocRefIds = in.additionalInfo.map(_.docSpec.docRefId.show)
-    val reportingEntityDocRefIds = in.reportingEntity.map(_.docSpec.docRefId.show)
+    val cbcrReportsRefIds = in.cbcReport.map(_.docSpec.docRefId.msgRefID.show)
+    val addInfoRefIds = in.additionalInfo.map(_.docSpec.docRefId.msgRefID.show)
+    val reportingEntityRefIds = in.reportingEntity.map(_.docSpec.docRefId.msgRefID.show)
 
-    val docRefIds = reportingEntityDocRefIds match {
-      case Some(s) =>  s :: cbcrReportsDocRefIds ++ addInfoDocRefIds
-      case _ => cbcrReportsDocRefIds ++ addInfoDocRefIds
+    val docRefIds = reportingEntityRefIds match {
+      case Some(s) =>  s :: cbcrReportsRefIds ++ addInfoRefIds
+      case _ => cbcrReportsRefIds ++ addInfoRefIds
     }
 
 
     val docRefIdsValidator = docRefIds.foldLeft(List[Boolean]()) {(resultingValue, currentValue) =>
 
-      val docRefMessageRefId = currentValue match {
-        case data => data.slice(0, data.indexOf("_"))
-      }
-
-      val results = if(docRefMessageRefId == messageSpecMessageRefId) true else false
-
+      //This needs to be improved as the regex is a bit unstable due to multiple underscores that might appear in the messageRefId
+      val results = if(currentValue == messageSpecMessageRefId) true else false
       resultingValue :+ results
 
     }
