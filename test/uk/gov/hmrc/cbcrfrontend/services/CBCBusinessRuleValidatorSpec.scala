@@ -133,21 +133,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   "The CBCBusinessRuleValidator" should {
 
-    "when reporting entity doc type indicator is OECD0 we skip message ref id validation" in {
-      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
-      when(reportingEntity.queryReportingEntityDataTin(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
-
-      val messageRefIdValidation = new File("test/resources/cbcr-messageRefId-dontMatchAgainst-messageRefId-inDocRefId" + ".xml")
-
-      val result = Await.result(validator.validateBusinessRules(messageRefIdValidation, filename, Some(enrol), Some(Organisation)), 5.seconds)
-
-      result.fold(
-        errors => errors.toList should contain (MessageRefIdDontMatchWithDocRefId),
-        _ => fail("MessageRefIdDontMatchWithDocRefId")
-      )
-
-    }
-
     "when multiple file uploaded for the same reporting period of original submission when the previous submission exists" in {
 
       val firstOriginalReportingEntityDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").get
