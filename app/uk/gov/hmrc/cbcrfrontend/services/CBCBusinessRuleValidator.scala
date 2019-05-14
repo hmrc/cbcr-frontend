@@ -578,9 +578,13 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     val cbcrReportsRefIds = in.cbcReport.map(_.docSpec.docRefId.msgRefID.show)
     val addInfoRefIds = in.additionalInfo.map(_.docSpec.docRefId.msgRefID.show)
     val reportingEntityRefIds = in.reportingEntity.map(_.docSpec.docRefId.msgRefID.show)
+    val reportingEntityDocTypeIndicator = in.reportingEntity.map(_.docSpec.docType)
 
     val docRefIds = reportingEntityRefIds match {
-      case Some(s) =>  s :: cbcrReportsRefIds ++ addInfoRefIds
+      case Some(s) =>  reportingEntityDocTypeIndicator match {
+        case Some(indicator) if indicator == OECD0 => cbcrReportsRefIds ++ addInfoRefIds
+        case _ => s :: cbcrReportsRefIds ++ addInfoRefIds
+      }
       case _ => cbcrReportsRefIds ++ addInfoRefIds
     }
 
