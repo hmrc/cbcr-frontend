@@ -26,7 +26,6 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.cbcrfrontend.services.{CBCRXMLValidator, RunMode}
 
 class CBCXMLValidatorSpec extends WordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
 

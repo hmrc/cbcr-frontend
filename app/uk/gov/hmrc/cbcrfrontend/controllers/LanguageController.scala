@@ -24,7 +24,6 @@ import play.api.i18n.Lang
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import play.api.i18n.Messages.Implicits._
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
-//import play.api.Play.current
 
 import scala.concurrent.ExecutionContext
 

@@ -44,8 +44,8 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.test.UnitSpec
-
 import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -103,7 +103,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
   val schemaVer: String = "1.0"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new SharedController(messagesApi, subService,bprKF,auditC,env,authC)(cache,config, feConfig)
+  val controller = new SharedController(messagesApi, subService,bprKF,auditC,env,authC)(cache,config, feConfig, ec)
 
   val utr = Utr("7000000001")
   val bpr = BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))
@@ -192,7 +192,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
     }
     "return 200 if an Agent" in {
-      when(authC.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+      when(authC.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
       when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(Some(bpr))
       when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(utr))
       when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
@@ -339,7 +339,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
     "redirect to signOutSurvey page and return 200" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authC.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       when(feConfig.cbcrFrontendHost) thenReturn "http://localhost:9696"
       when(feConfig.governmentGatewaySignOutUrl) thenReturn "http://localhost:9025"
       val result = controller.signOutSurvey(request)
@@ -348,7 +348,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
     "keepSessionAlive returns 200" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authC.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       val result = controller.keepSessionAlive(request)
       status(result) shouldBe Status.OK
     }
