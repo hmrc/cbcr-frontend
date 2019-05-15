@@ -685,7 +685,9 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       }
 
       "when the messageTypeIndic is CBC401 and REP doctypeIndic OECD0 but is not a known docrefid" in {
-        val validFile = new File("test/resources/cbcr-OECD0[1]-valid.xml")
+        val validFile = new File("test/resources/cbcr-OECD0[1]-invalid1.xml")
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        when(reportingEntity.queryReportingEntityDataTin(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](None)
         when(reportingEntity.queryReportingEntityDataDocRefId(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityData]](Future.successful(None))
         when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT.right[Future,CBCErrors,Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
         val result = Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
