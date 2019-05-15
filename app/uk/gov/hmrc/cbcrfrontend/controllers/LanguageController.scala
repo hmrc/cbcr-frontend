@@ -18,15 +18,17 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.Inject
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import play.api.Logger
+import play.api.{Application, Logger}
 import play.api.mvc.{Action, AnyContent, Flash, LegacyI18nSupport}
 import play.api.i18n.Lang
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import play.api.i18n.Messages.Implicits._
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
-import play.api.Play.current
+//import play.api.Play.current
 
-class LanguageController @Inject()(configuration: FrontendAppConfig) extends FrontendController with LegacyI18nSupport{
+import scala.concurrent.ExecutionContext
+
+class LanguageController @Inject()(configuration: FrontendAppConfig)(implicit val ec: ExecutionContext, application: Application) extends FrontendController with LegacyI18nSupport{
   val english = Lang("en")
   val welsh = Lang("cy")
 

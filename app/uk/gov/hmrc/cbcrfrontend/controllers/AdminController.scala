@@ -20,6 +20,7 @@ import javax.inject.Inject
 import play.api.Configuration
 import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
 import play.api.libs.json._
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.http.HeaderCarrier
@@ -27,34 +28,31 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import uk.gov.hmrc.cbcrfrontend.views.html.{show_all_docRefIds, tepm_admin_page}
 
+import scala.concurrent.ExecutionContext
+
 class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
                                 val config:Configuration,
                                 val audit:AuditConnector,
                                 cbcrBackendConnector: CBCRBackendConnector)
                                (implicit conf:FrontendAppConfig,
-                                val messagesApi:MessagesApi) extends FrontendController with I18nSupport {
+                                val messagesApi:MessagesApi,
+                                val ec: ExecutionContext) extends FrontendController with I18nSupport {
 
-  implicit val hc = HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   lazy val credentials = Creds(frontendAppConfig.username, frontendAppConfig.password)
 
 
-  def showAdminPage = AuthenticationController(credentials) {
+  def showAdminPage: Action[AnyContent] = AuthenticationController(credentials) {
     implicit request =>
       Ok(tepm_admin_page())
   }
 
-  def showAllDocRefIdOver200 = AuthenticationController(credentials).async {
+  def showAllDocRefIdOver200: Action[AnyContent] = AuthenticationController(credentials).async {
     implicit request =>
-
-    cbcrBackendConnector.getDocRefIdOver200.map {
-      case documents => {
-
-        Ok(show_all_docRefIds(documents.docs))
-      }
-      /*case documents => Ok(show_all_docRefIds(documents))*/
-      case _ => Unauthorized("")
-    }
+      cbcrBackendConnector.getDocRefIdOver200.map(
+        documents => Ok(show_all_docRefIds(documents.docs))
+      )
   }
 
 }
@@ -62,7 +60,7 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
 
 case class AdminDocRefId(id:String)
 object AdminDocRefId {
-  implicit val format = new Format[AdminDocRefId] {
+  implicit val format: Format[AdminDocRefId] = new Format[AdminDocRefId] {
     override def writes(o: AdminDocRefId): JsValue = JsString(o.id)
 
     override def reads(json: JsValue): JsResult[AdminDocRefId] = json.asOpt[JsString].map(v => AdminDocRefId(v.value)).fold[JsResult[AdminDocRefId]](

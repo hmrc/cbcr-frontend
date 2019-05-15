@@ -46,7 +46,7 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import uk.gov.hmrc.cbcrfrontend.views.html.subscription.notAuthorised
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
@@ -58,7 +58,8 @@ class SharedController @Inject()(val messagesApi: MessagesApi,
                                  val authConnector:AuthConnector
                                 )(implicit val cache:CBCSessionCache,
                                   val config: Configuration,
-                                  feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport {
+                                  feConfig:FrontendAppConfig,
+                                  val ec: ExecutionContext) extends FrontendController with AuthorisedFunctions with I18nSupport {
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid
