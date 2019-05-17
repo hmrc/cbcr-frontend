@@ -454,7 +454,7 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
         }
       }
       case (Some(Agent), _) => in.validNel
-      case (None, _) => SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
+      case _ => SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
     }
 
 
@@ -545,9 +545,7 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     x.messageSpec.messageType.getOrElse(determineMessageTypeIndic(x)) match {
       case CBC401 =>
 
-        val tin = x.reportingEntity match {
-          case Some(r) => r.tin.value
-        }
+        val tin = x.reportingEntity.fold("")(_.tin.value)
 
         reportingEntityDataService.queryReportingEntityDataTin(tin).leftMap {
           cbcErrors => {

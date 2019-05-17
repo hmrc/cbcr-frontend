@@ -215,14 +215,14 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
     val fakeRequestUnregisteredGGId = addToken((FakeRequest("GET", "/unregistered-gg-account")))
 
     "return 200 when the envelope is created successfully" in {
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.readOrCreate[EnvelopeId](any())) thenReturn OptionT.some[Future,EnvelopeId](EnvelopeId("12345678"))
       val result = partiallyMockedController.unregisteredGGAccount(fakeRequestUnregisteredGGId)
       status(result) shouldBe Status.OK
     }
     "return 500 when the is an error creating the envelope\"" in {
       TestSessionCache.succeed = false
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       when(fuService.createEnvelope(any(), any())) thenReturn left[EnvelopeId]("server error")
       val result = partiallyMockedController.unregisteredGGAccount(fakeRequestUnregisteredGGId)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -234,33 +234,33 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   "GET /fileUploadResponse/envelopeId/fileId" should {
     val fakeRequestGetFileUploadResponse  = addToken(FakeRequest("GET", "/fileUploadResponse/envelopeId/fileId"))
     "return 202 when the file is available" in {
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       when(fuService.getFileUploadResponse(any())(any(), any())) thenReturn right(Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE", None)):Option[FileUploadCallbackResponse])
       val result = partiallyMockedController.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse)
       status(result) shouldBe Status.ACCEPTED
     }
     "return 204" when {
       "the FUS hasn't updated the backend yet" in {
-        when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+        when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
         when(fuService.getFileUploadResponse(any())(any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](None)
         val result = partiallyMockedController.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse).futureValue
         status(result) shouldBe Status.NO_CONTENT
       }
       "file is not yet available" in {
-        when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+        when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
         when(fuService.getFileUploadResponse(any())(any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED",None)): Option[FileUploadCallbackResponse])
         val result = partiallyMockedController.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse).futureValue
         status(result) shouldBe Status.NO_CONTENT
       }
     }
     "return a 200" in {
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       val request = addToken(FakeRequest("GET", "fileUploadProgress/envelopeId/fileId"))
       val result = partiallyMockedController.fileUploadProgress("test","test")(request)
       status(result) shouldBe Status.OK
     }
     "return a 500 if the envelopeId doesn't match with the cache" in {
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       val request = addToken(FakeRequest("GET", "fileUploadProgress/envelopeId/fileId"))
       val result = partiallyMockedController.fileUploadProgress("test2","test")(request)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -474,14 +474,14 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   "The file-upload error call back" should {
     "cause a redirect to file-too-large if the response has status-code 413" in {
       val request = addToken(FakeRequest())
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       val result = Await.result(partiallyMockedController.handleError(413, "no reason")(request), 5.second)
       result.header.headers("Location") should endWith("file-too-large")
       status(result) shouldBe Status.SEE_OTHER
     }
     "cause a redirect to invalid-file-type if the response has status-code 415" in {
       val request = addToken(FakeRequest())
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       val result = Await.result(partiallyMockedController.handleError(415, "no reason")(request), 5.second)
       result.header.headers("Location") should endWith("invalid-file-type")
       status(result) shouldBe Status.SEE_OTHER
@@ -491,7 +491,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   "getBusinessRuleErrors" should {
     "return 200 if error details found in cache" in {
       val request = addToken(FakeRequest())
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format),any(),any())) thenReturn Future.successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       when(file.delete) thenReturn Future.successful(true)
       when(fuService.errorsToFile(any(),any())(any())) thenReturn validFile
@@ -501,7 +501,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
 
     "return 203 if no error content found in cache" in {
       val request = addToken(FakeRequest())
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format),any(),any())) thenReturn Future.successful(None)
       when(file.delete) thenReturn Future.successful(true)
       val result = controller.getBusinessRuleErrors(request)
@@ -512,7 +512,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   "getXmlSchemaErrors" should {
     "return 200 if error details found in cache" in {
       val request = addToken(FakeRequest())
-      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.readOption[XMLErrors](EQ(XMLErrors.format),any(),any())) thenReturn Future.successful(Some(XMLErrors(List("Big xml error"))))
       when(file.delete) thenReturn Future.successful(true)
       when(fuService.errorsToFile(any(),any())(any())) thenReturn validFile
@@ -522,7 +522,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
 
     "return 203 if no error content found in cache" in {
       val request = addToken(FakeRequest())
-      when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful()
+      when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(None)
       when(file.delete) thenReturn Future.successful(true)
       val result = controller.getXmlSchemaErrors(request)

@@ -30,6 +30,7 @@ import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import play.api.http.HeaderNames._
 import uk.gov.hmrc.cbcrfrontend.util
+import scala.concurrent.ExecutionContext.Implicits.global
 import uk.gov.hmrc.cbcrfrontend.util.{CbcrSwitches, FeatureSwitch}
 
 

@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
-
 import cats.instances.future._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
@@ -33,13 +32,14 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ExitSurveyController @Inject()(val config:Configuration,
                                      val audit:AuditConnector)
                                     (implicit conf:FrontendAppConfig,
-                                     val messagesApi:MessagesApi) extends FrontendController with I18nSupport{
+                                     val messagesApi:MessagesApi,
+                                     val ec: ExecutionContext) extends FrontendController with I18nSupport{
 
   val doSurvey = Action{ implicit request =>
     Ok(survey.exitSurvey( SurveyForm.surveyForm))

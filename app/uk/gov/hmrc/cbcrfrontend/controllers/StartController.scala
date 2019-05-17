@@ -33,13 +33,14 @@ import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StartController @Inject()(val messagesApi: MessagesApi,
                                 val authConnector:AuthConnector)(implicit val cache:CBCSessionCache,
                                                                  val config: Configuration,
-                                                                 feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport {
+                                                                 feConfig:FrontendAppConfig,
+                                                                 val ec: ExecutionContext) extends FrontendController with AuthorisedFunctions with I18nSupport {
 
 
   val startForm: Form[String] = Form(

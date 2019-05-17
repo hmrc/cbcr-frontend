@@ -41,6 +41,7 @@ import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.test.UnitSpec
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.Ok
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._

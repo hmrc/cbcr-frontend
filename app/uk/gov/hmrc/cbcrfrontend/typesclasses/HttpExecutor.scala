@@ -23,7 +23,6 @@ import play.api.libs.json.{JsObject, Json, Writes}
 import play.api.mvc.MultipartFormData.FilePart
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.net.URLEncoder._
@@ -75,7 +74,8 @@ trait HttpExecutor[U, P, I] {
     getBody: GetBody[P, I],
     http:HttpPost,
 //              TO DO - is http2 required
-    http2:HttpPut
+    http2:HttpPut,
+    ec: ExecutionContext
   ): Future[HttpResponse]
 }
 
@@ -92,7 +92,8 @@ object HttpExecutor {
       getBody: GetBody[CreateEnvelope, JsObject],
       http: HttpPost,
       //              TO DO - is http2 required
-      http2: HttpPut
+      http2: HttpPut,
+      ec: ExecutionContext
     ): Future[HttpResponse] = {
       http.POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", getBody(obj))
     }
@@ -110,11 +111,12 @@ object HttpExecutor {
       getBody: GetBody[UploadFile, Array[Byte]],
       http: HttpPost,
       //              TO DO - is http2 required
-      http2: HttpPut
+      http2: HttpPut,
+      ec: ExecutionContext
     ): Future[HttpResponse] = {
       import obj._
       val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
-      FileUploadFrontEndWS.doFormPartPost(url, fileName, contentType, ByteString.fromArray(getBody(obj)), Seq("CSRF-token" -> "nocheck"))
+       FileUploadFrontEndWS.doFormPartPost(url, fileName, contentType, ByteString.fromArray(getBody(obj)), Seq("CSRF-token" -> "nocheck"))
 
     }
   }
@@ -132,7 +134,8 @@ object HttpExecutor {
                   getBody: GetBody[FUCallbackResponse, JsObject],
                   http: HttpPost,
                   //              TO DO - is http2 required
-                  http2: HttpPut
+                  http2: HttpPut,
+                  ec: ExecutionContext
                 ): Future[HttpResponse] = {
       http.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", getBody(obj))
     }
@@ -152,7 +155,8 @@ object HttpExecutor {
                   getBody: GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest],
                   http: HttpPost,
                   //              TO DO - is http2 required
-                  http2: HttpPut
+                  http2: HttpPut,
+                  ec: ExecutionContext
                 ): Future[HttpResponse] = {
       http.POST[RouteEnvelopeRequest, HttpResponse](s"${fusUrl.url}/file-routing/requests", getBody(obj))
     }

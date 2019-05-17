@@ -778,7 +778,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     "return 200" when {
       "calling notRegistered" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
         val result = controller.notRegistered(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -787,7 +787,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
 
       "calling noIndividuals" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
         val result = controller.noIndividuals(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -796,7 +796,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
 
       "calling noAssistants" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
         val result = controller.noAssistants(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -805,7 +805,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
 
       "calling upe" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
         val result = controller.upe(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -814,7 +814,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
 
       "calling utr" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
         val result = controller.utr(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -823,7 +823,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
 
       "calling enterCompanyName" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+        when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
         val result = controller.enterCompanyName(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -835,7 +835,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     "return 303 if valid company details passed in request" in {
       val data = Json.obj("companyName" -> "Any Old Co")
       val request = addToken(FakeRequest()).withJsonBody(data)
-      when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+      when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("",Map.empty[String,JsValue]))
       val result = controller.saveCompanyName(request)
       status(result) shouldBe Status.SEE_OTHER
@@ -844,7 +844,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     "return 400 if company details in request are invalid" in {
       val data = Json.obj("sas" -> "Any Old Iron")
       val request = addToken(FakeRequest()).withJsonBody(data)
-      when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful()
+      when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
       when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("",Map.empty[String,JsValue]))
       val result = controller.saveCompanyName(request)
       status(result) shouldBe Status.BAD_REQUEST
