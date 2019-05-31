@@ -546,18 +546,22 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
       case CBC401 =>
 
         val tin = x.reportingEntity.fold("")(_.tin.value)
+        val curentReportingPeriod = x.messageSpec.reportingPeriod
+
 
         reportingEntityDataService.queryReportingEntityDataTin(tin).leftMap {
           cbcErrors => {
             Logger.error(s"Got error back: $cbcErrors")
-            throw new Exception(s"Error communicating with xwbackend: $cbcErrors")
+            throw new Exception(s"Error communicating with backend: $cbcErrors")
           }
         }.subflatMap {
           case Some(reportEntityData) => {
+            //check for previous reporting period and default to really old date if is not present in Mongo
+            val previousReportingPeriod = reportEntityData.reportingPeriod.getOrElse(LocalDate.of(2000,1,1))
 
             val reportEntityDocRefId = reportEntityData.reportingEntityDRI.show
 
-            if (reportEntityDocRefId.contains("OECD3")) {
+            if (reportEntityDocRefId.contains("OECD3") || previousReportingPeriod != curentReportingPeriod) {
               Right(x)
             } else {
               Left(MultipleFileUploadForSameReportingPeriod)

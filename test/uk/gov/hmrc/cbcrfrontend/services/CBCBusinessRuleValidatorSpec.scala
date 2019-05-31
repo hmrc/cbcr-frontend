@@ -133,13 +133,13 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
 
   "The CBCBusinessRuleValidator" should {
 
-    "when multiple file uploaded for the same reporting period of original submission when the previous submission exists" in {
+    "throw an error when multiple file uploaded for the same reporting period of original submission when the previous submission exists" in {
 
       val firstOriginalReportingEntityDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").get
       val firstOriginalCbcReportsDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").get
       val firstOriginalAdditionalInfoDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD").get
 
-      val reportEntityData = ReportingEntityData(NonEmptyList.of(firstOriginalCbcReportsDri),List(firstOriginalAdditionalInfoDri), firstOriginalReportingEntityDri, TIN("7000000002", "GB"), UltimateParentEntity("someone"), CBC703, Some(LocalDate.now()), Some(LocalDate.of(2019, 3, 31)))
+      val reportEntityData = ReportingEntityData(NonEmptyList.of(firstOriginalCbcReportsDri),List(firstOriginalAdditionalInfoDri), firstOriginalReportingEntityDri, TIN("7000000002", "GB"), UltimateParentEntity("someone"), CBC703, Some(LocalDate.now()), Some(LocalDate.of(2016, 3, 31)))
 
       when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
 
@@ -152,6 +152,29 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar{
       result.fold(
         errors => errors.toList should contain (MultipleFileUploadForSameReportingPeriod),
         _ => fail("MultipleFileUploadForSameReportingPeriod")
+      )
+
+    }
+
+    "let the file go through when multiple file uploaded for different years" in {
+
+      val firstOriginalReportingEntityDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").get
+      val firstOriginalCbcReportsDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").get
+      val firstOriginalAdditionalInfoDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD").get
+
+      val reportEntityData = ReportingEntityData(NonEmptyList.of(firstOriginalCbcReportsDri),List(firstOriginalAdditionalInfoDri), firstOriginalReportingEntityDri, TIN("7000000002", "GB"), UltimateParentEntity("someone"), CBC703, Some(LocalDate.now()), Some(LocalDate.of(2017, 3, 31)))
+
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+
+      when(reportingEntity.queryReportingEntityDataTin(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(reportEntityData))
+
+      val multipleSubmissionForSameReportingPeriod = new File("test/resources/cbcr-multiplefileupload-original" + ".xml")
+
+      val result = Await.result(validator.validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+      result.fold(
+        errors => fail(s"Errors were generated ${errors.toList}"),
+        _ => ()
       )
 
     }
