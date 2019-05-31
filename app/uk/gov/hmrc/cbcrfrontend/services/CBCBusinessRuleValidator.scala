@@ -549,7 +549,7 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
         val curentReportingPeriod = x.messageSpec.reportingPeriod
 
 
-        reportingEntityDataService.queryReportingEntityDataTin(tin).leftMap {
+        reportingEntityDataService.queryReportingEntityDataTin(tin, curentReportingPeriod.toString).leftMap {
           cbcErrors => {
             Logger.error(s"Got error back: $cbcErrors")
             throw new Exception(s"Error communicating with backend: $cbcErrors")
@@ -561,7 +561,7 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
 
             val reportEntityDocRefId = reportEntityData.reportingEntityDRI.show
 
-            if (reportEntityDocRefId.contains("OECD3") || previousReportingPeriod != curentReportingPeriod) {
+            if (reportEntityDocRefId.contains("OECD3")) {
               Right(x)
             } else {
               Left(MultipleFileUploadForSameReportingPeriod)

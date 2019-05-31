@@ -101,8 +101,8 @@ class ReportingEntityDataService @Inject() (connector:CBCRBackendConnector)(impl
     })
 
 
-  def queryReportingEntityDataTin(tin: String)(implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityData]]  =
-    EitherT(connector.reportingEntityDataQueryTin(tin).map(response =>
+  def queryReportingEntityDataTin(tin: String, reportingPeriod: String)(implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityData]]  =
+    EitherT(connector.reportingEntityDataQueryTin(tin, reportingPeriod).map(response =>
       response.json.validate[ReportingEntityData].fold(
         failed => Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
         data   => Right(Some(data))
