@@ -91,34 +91,34 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
       Future.successful(Ok(addReportingEntityPage()))
   }
 
-  def queryReportingEntityByDocRefId = AuthenticationController(credentials).async(parse.json) {
+  def queryReportingEntityByDocRefId = AuthenticationController(credentials).async {
     implicit request =>
       adminQueryDocRefIdForm.bindFromRequest().fold(
         errors => Future.successful(BadRequest("Error")),
         docRefId =>
           cbcrBackendConnector.adminReportingEntityDataQuery(docRefId.id).map(doc =>
-            Ok(showReportingEntity(doc.json.as[ReportingEntityData])))
+            Ok(showReportingEntity(doc.body.asInstanceOf[ReportingEntityData])))
       )
   }
 
 
-  def queryReportingEntityByCbcIdAndDate = AuthenticationController(credentials).async(parse.json) {
+  def queryReportingEntityByCbcIdAndDate = AuthenticationController(credentials).async {
     implicit request =>
       adminQueryWithCbcIdAndDate.bindFromRequest().fold(
         errors => Future.successful(BadRequest("Error")),
         query =>
           cbcrBackendConnector.adminReportingEntityCBCIdAndReportingPeriod(query.cbcId, query.date).map(doc =>
-            Ok(showReportingEntity(doc.json.as[ReportingEntityData])))
+            Ok(showReportingEntity(doc.body.asInstanceOf[ReportingEntityData])))
       )
   }
 
-  def queryReportingEntityByTinAndDate = AuthenticationController(credentials).async(parse.json) {
+  def queryReportingEntityByTinAndDate = AuthenticationController(credentials).async {
     implicit request =>
       adminQueryWithCbcIdAndDate.bindFromRequest().fold(
         errors => Future.successful(BadRequest("Error")),
         query =>
           cbcrBackendConnector.adminReportingEntityDataQueryTin(query.cbcId, query.date.toString).map(doc =>
-            Ok(showReportingEntity(doc.json.as[ReportingEntityData])))
+            Ok(showReportingEntity(doc.body.asInstanceOf[ReportingEntityData])))
       )
   }
 
