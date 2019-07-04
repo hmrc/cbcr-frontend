@@ -69,4 +69,9 @@ GET        /switch-to-english                             @uk.gov.hmrc.cbcrfront
 
 GET        /admin                                         @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.showAdminPage
 GET        /admin/get-docs                                @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.showAllDocRefIdOver200
+GET        /admin/add-reporting-entity                    @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.showAddReportingEntityPage
+
+POST       /admin/get-reporting-entity-by-doc-ref-id     @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.queryReportingEntityByDocRefId
+POST       /admin/get-reporting-entity-by-date-and-cbc-id     @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.queryReportingEntityByCbcIdAndDate
+POST       /admin/get-reporting-entity-by-tin-and-date     @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.queryReportingEntityByTinAndDate
 
