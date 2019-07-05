@@ -70,7 +70,7 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
     mapping(
       "tin" -> nonEmptyText,
       "date" -> localDate
-    )(AdminCbcIdAndDate.apply)(AdminCbcIdAndDate.unapply)
+    )(AdminTinAndDate.apply)(AdminTinAndDate.unapply)
   )
 
 
@@ -97,7 +97,7 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
         errors => Future.successful(BadRequest("Error")),
         docRefId =>
           cbcrBackendConnector.adminReportingEntityDataQuery(docRefId.id).map(doc =>
-            Ok(showReportingEntity(doc.body.asInstanceOf[ReportingEntityData])))
+            Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
       )
   }
 
@@ -108,17 +108,17 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
         errors => Future.successful(BadRequest("Error")),
         query =>
           cbcrBackendConnector.adminReportingEntityCBCIdAndReportingPeriod(query.cbcId, query.date).map(doc =>
-            Ok(showReportingEntity(doc.body.asInstanceOf[ReportingEntityData])))
+            Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
       )
   }
 
   def queryReportingEntityByTinAndDate = AuthenticationController(credentials).async {
     implicit request =>
-      adminQueryWithCbcIdAndDate.bindFromRequest().fold(
+      adminQueryWithTinAndDate.bindFromRequest().fold(
         errors => Future.successful(BadRequest("Error")),
         query =>
-          cbcrBackendConnector.adminReportingEntityDataQueryTin(query.cbcId, query.date.toString).map(doc =>
-            Ok(showReportingEntity(doc.body.asInstanceOf[ReportingEntityData])))
+          cbcrBackendConnector.adminReportingEntityDataQueryTin(query.tin, query.date.toString).map(doc =>
+            Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
       )
   }
 

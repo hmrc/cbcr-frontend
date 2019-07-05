@@ -100,13 +100,13 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   }
 
   def adminReportingEntityDataQuery(d:String)(implicit hc:HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/reporting-entity/$d")
+    http.GET(url + s"/admin/reporting-entity/doc-ref-id/$d")
 
   def adminReportingEntityCBCIdAndReportingPeriod(cbcId: String, reportingPeriod: LocalDate)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.GET(url + s"/reporting-entity/query-cbc-id/${cbcId}/${reportingPeriod.toString}")
+    http.GET(url + s"/admin/reporting-entity/query-cbc-id/${cbcId}/${reportingPeriod.toString}")
   }
 
   def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/reporting-entity/query-tin/$tin/$reportingPeriod")
+    http.GET(url + s"/admin/reporting-entity/query-tin/$tin/$reportingPeriod")
 
 }
