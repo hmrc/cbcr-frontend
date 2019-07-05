@@ -35,22 +35,34 @@
         <table >
             <tr>
                 <th>cbcReportsDRI</th>
-                <th>additionalInfoDRI</th>
-                <th>reportingEntityDRI</th>
-                <th>tin</th>
-                <th>ultimateParentEntity</th>
-                <th>reportingRole</th>
-                <th>creationDate</th>
-                <th>reportingPeriod</th>
+                <th>@{reportingEntity.cbcReportsDRI}</th>
             </tr>
             <tr>
-                <th>@{reportingEntity.cbcReportsDRI}</th>
+                <th>additionalInfoDRI</th>
                 <th>@{reportingEntity.additionalInfoDRI}</th>
+            </tr>
+            <tr>
+                <th>reportingEntityDRI</th>
                 <th>@{reportingEntity.reportingEntityDRI}</th>
+            </tr>
+            <tr>
+                <th>tin</th>
                 <th>@{reportingEntity.tin}</th>
+            </tr>
+            <tr>
+                <th>ultimateParentEntity</th>
                 <th>@{reportingEntity.ultimateParentEntity}</th>
+            </tr>
+            <tr>
+                <th>reportingRole</th>
                 <th>@{reportingEntity.reportingRole}</th>
+            </tr>
+            <tr>
+                <th>creationDate</th>
                 <th>@{reportingEntity.creationDate}</th>
+            </tr>
+            <tr>
+                <th>reportingPeriod</th>
                 <th>@{reportingEntity.reportingPeriod}</th>
             </tr>
         </table>
