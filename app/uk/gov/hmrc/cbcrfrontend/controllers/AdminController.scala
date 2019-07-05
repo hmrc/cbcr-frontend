@@ -70,7 +70,7 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
     mapping(
       "tin" -> nonEmptyText,
       "date" -> localDate
-    )(AdminCbcIdAndDate.apply)(AdminCbcIdAndDate.unapply)
+    )(AdminTinAndDate.apply)(AdminTinAndDate.unapply)
   )
 
 
@@ -91,34 +91,34 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
       Future.successful(Ok(addReportingEntityPage()))
   }
 
-  def queryReportingEntityByDocRefId = AuthenticationController(credentials).async(parse.json) {
+  def queryReportingEntityByDocRefId = AuthenticationController(credentials).async {
     implicit request =>
       adminQueryDocRefIdForm.bindFromRequest().fold(
         errors => Future.successful(BadRequest("Error")),
         docRefId =>
           cbcrBackendConnector.adminReportingEntityDataQuery(docRefId.id).map(doc =>
-            Ok(showReportingEntity(doc.json.as[ReportingEntityData])))
+            Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
       )
   }
 
 
-  def queryReportingEntityByCbcIdAndDate = AuthenticationController(credentials).async(parse.json) {
+  def queryReportingEntityByCbcIdAndDate = AuthenticationController(credentials).async {
     implicit request =>
       adminQueryWithCbcIdAndDate.bindFromRequest().fold(
         errors => Future.successful(BadRequest("Error")),
         query =>
           cbcrBackendConnector.adminReportingEntityCBCIdAndReportingPeriod(query.cbcId, query.date).map(doc =>
-            Ok(showReportingEntity(doc.json.as[ReportingEntityData])))
+            Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
       )
   }
 
-  def queryReportingEntityByTinAndDate = AuthenticationController(credentials).async(parse.json) {
+  def queryReportingEntityByTinAndDate = AuthenticationController(credentials).async {
     implicit request =>
-      adminQueryWithCbcIdAndDate.bindFromRequest().fold(
+      adminQueryWithTinAndDate.bindFromRequest().fold(
         errors => Future.successful(BadRequest("Error")),
         query =>
-          cbcrBackendConnector.adminReportingEntityDataQueryTin(query.cbcId, query.date.toString).map(doc =>
-            Ok(showReportingEntity(doc.json.as[ReportingEntityData])))
+          cbcrBackendConnector.adminReportingEntityDataQueryTin(query.tin, query.date.toString).map(doc =>
+            Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
       )
   }
 

@@ -25,34 +25,47 @@
 @import tags._
 
 
-@()(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, lang: Lang, config: FrontendAppConfig)
 
 @main_template(title = Messages("")) {
 
 
-   <div class="doc-ref-id">
+    <div class="doc-ref-id">
+        <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.queryReportingEntityByDocRefId()" method="post">
 
-        <input type="text" name="doc-ref-id"><br>
-        <a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.queryReportingEntityByDocRefId()">submit</a>
-
+            <input type="text" name="id" label="id"><br>
+            @CSRF.formField
+            <div class="form-field">
+            <button role="button" type="submit" id="continue">Submit DocRefId</button>
+        </div>
+        </form>
     </div>
 
     <div class="cbcId">
 
-        <input type="text" name="cbcId"><br>
-        <input type="text" name="LocalDate"><br>
-        <a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.queryReportingEntityByCbcIdAndDate()">submit</a>
+        <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.queryReportingEntityByCbcIdAndDate()" method="post">
 
+            <input type="text" name="cbcId" label="cbcId"><br>
+            <input type="text" name="date" label="date"><br>
+            @CSRF.formField
+            <div class="form-field">
+            <button role="button" type="submit" id="continue">Submit CbcId</button>
+        </div>
+        </form>
     </div>
 
     <div class="tin">
 
-        <input type="text" name="tin"><br>
-        <input type="text" name="LocalDate"><br>
-        <a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.queryReportingEntityByTinAndDate()">submit</a>
+        <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.queryReportingEntityByTinAndDate()" method="post">
 
+            <input type="text" name="tin" label="tin"><br>
+            <input type="text" name="date" label="date"><br>
+            @CSRF.formField
+            <div class="form-field">
+            <button role="button" type="submit" id="continue">Submit Tin</button>
+        </div>
+        </form>
     </div>
 
 
-
-    }
+}
