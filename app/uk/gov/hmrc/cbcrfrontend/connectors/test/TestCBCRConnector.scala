@@ -34,20 +34,20 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec:ExecutionContext){
 
 
-  val conf = config.underlying.get[Config]("microservice.services.cbcr").value
+  val conf = config.underlying.get[Config]("microservice.services.cbcr-stubs").value
 
   val url: String = (for {
     proto <- conf.get[String]("protocol")
     host <- conf.get[String]("host")
     port <- conf.get[Int]("port")
-  } yield s"$proto://$host:$port/cbcr").value
+  } yield s"$proto://$host:$port/country-by-country").value
 
   def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.POST[JsValue, HttpResponse](s"$url/test-only/insertSubscriptionData", jsonData)
+    http.POST[JsValue, HttpResponse](s"$url/insertSubscriptionData", jsonData)
   }
 
   def deleteSubscription(utr: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.DELETE[HttpResponse](s"$url/test-only/deleteSubscription/$utr")
+    http.DELETE[HttpResponse](s"$url/deleteSubscription/$utr")
   }
 
   def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
