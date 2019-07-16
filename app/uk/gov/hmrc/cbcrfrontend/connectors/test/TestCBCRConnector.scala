@@ -58,6 +58,10 @@ class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(impli
     http.DELETE[HttpResponse](s"$url/deleteSubscription/$utr")
   }
 
+  def deleteSubscriptionFromBackend(utr: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
+    http.DELETE[HttpResponse](s"$cbcrUrl/test-only/deleteSubscription/$utr")
+  }
+
   def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
     http.DELETE[HttpResponse](s"$cbcrUrl/test-only/deleteDocRefId/$docRefId")
   }
