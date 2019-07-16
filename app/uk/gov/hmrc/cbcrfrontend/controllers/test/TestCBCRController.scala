@@ -88,7 +88,7 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
 
   def deleteSubscriptionFromBackend(utr: String) = Action.async{ implicit request =>
     authorised() {
-      testCBCRConnector.deleteSubscription(utr).map(_ => Ok("Record with the specific UTR deleted"))
+      testCBCRConnector.deleteSubscriptionFromBackend(utr).map(_ => Ok("Record with the specific UTR deleted"))
     }
   }
 
