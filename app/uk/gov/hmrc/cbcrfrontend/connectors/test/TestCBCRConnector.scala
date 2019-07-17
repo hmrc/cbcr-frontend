@@ -34,64 +34,52 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec:ExecutionContext){
 
 
-  val conf = config.underlying.get[Config]("microservice.services.cbcr-stubs").value
-
-  val confBackend = config.underlying.get[Config]("microservice.services.cbcr").value
+  val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
   val url: String = (for {
     proto <- conf.get[String]("protocol")
     host <- conf.get[String]("host")
     port <- conf.get[Int]("port")
-  } yield s"$proto://$host:$port/country-by-country").value
-
-  val cbcrUrl: String = (for {
-    proto <- confBackend.get[String]("protocol")
-    host <- confBackend.get[String]("host")
-    port <- confBackend.get[Int]("port")
   } yield s"$proto://$host:$port/cbcr").value
 
   def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.POST[JsValue, HttpResponse](s"$url/insertSubscriptionData", jsonData)
+    http.POST[JsValue, HttpResponse](s"$url/test-only/insertSubscriptionData", jsonData)
   }
 
   def deleteSubscription(utr: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.DELETE[HttpResponse](s"$url/deleteSubscription/$utr")
-  }
-
-  def deleteSubscriptionFromBackend(utr: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.DELETE[HttpResponse](s"$cbcrUrl/test-only/deleteSubscription/$utr")
+    http.DELETE[HttpResponse](s"$url/test-only/deleteSubscription/$utr")
   }
 
   def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.DELETE[HttpResponse](s"$cbcrUrl/test-only/deleteDocRefId/$docRefId")
+    http.DELETE[HttpResponse](s"$url/test-only/deleteDocRefId/$docRefId")
   }
 
   def deleteReportingEntityData(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
-    http.DELETE(s"$cbcrUrl/test-only/reportingEntityData/$docRefId")
+    http.DELETE(s"$url/test-only/reportingEntityData/$docRefId")
 
   def deleteSingleMessageRefId(messageRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.DELETE[HttpResponse](s"$cbcrUrl/test-only/deleteMessageRefId/$messageRefId")
+    http.DELETE[HttpResponse](s"$url/test-only/deleteMessageRefId/$messageRefId")
   }
 
   def dropReportingEntityDataCollection()(implicit hc: HeaderCarrier) : Future[HttpResponse] =
-    http.DELETE(s"$cbcrUrl/test-only/reportingEntityData")
+    http.DELETE(s"$url/test-only/reportingEntityData")
 
   def updateReportingEntityCreationDate(docRefId: String, createDate: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(s"$cbcrUrl/test-only/updateReportingEntityCreationDate/$docRefId/$createDate", JsNull)
+    http.PUT(s"$url/test-only/updateReportingEntityCreationDate/$docRefId/$createDate", JsNull)
 
   def deleteReportingEntityCreationDate(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
-    http.DELETE(s"$cbcrUrl/test-only/deleteReportingEntityCreationDate/$docRefId")
+    http.DELETE(s"$url/test-only/deleteReportingEntityCreationDate/$docRefId")
 
   def confirmReportingEntityCreationDate(docRefId: String, createDate: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(s"$cbcrUrl/test-only/confirmReportingEntityCreationDate/$docRefId/$createDate", JsNull)
+    http.PUT(s"$url/test-only/confirmReportingEntityCreationDate/$docRefId/$createDate", JsNull)
 
   def deleteReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
-    http.DELETE(s"$cbcrUrl/test-only/deleteReportingEntityReportingPeriod/$docRefId")
+    http.DELETE(s"$url/test-only/deleteReportingEntityReportingPeriod/$docRefId")
 
   def updateReportingEntityAdditionalInfoDRI(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(s"$cbcrUrl/test-only/updateReportingEntityAdditionalInfoDRI/$docRefId", JsNull)
+    http.PUT(s"$url/test-only/updateReportingEntityAdditionalInfoDRI/$docRefId", JsNull)
 
   def checkNumberOfCbcIdForUtr(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](s"$cbcrUrl/test-only/validateNumberOfCbcIdForUtr/$utr")
+    http.GET[HttpResponse](s"$url/test-only/validateNumberOfCbcIdForUtr/$utr")
 
 }
