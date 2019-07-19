@@ -218,4 +218,11 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
+  def dropSubscription() = Action.async {
+    implicit request =>  authorised() {
+      testCBCRConnector.dropSubscriptionData.map(_ => Ok("Subscription data collection dropped")).recover{
+        case _:NotFoundException => Ok("Subscription data collection dropped")
+      }
+    }
+  }
 }
