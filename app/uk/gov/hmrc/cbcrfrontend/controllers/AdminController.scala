@@ -29,7 +29,7 @@ import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, ReportingEntity, ReportingEntit
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend.views.html.{addReportingEntityPage, showReportingEntity, show_all_docRefIds, tepm_admin_page}
+import uk.gov.hmrc.cbcrfrontend.views.html._
 import play.api.data.Form
 import play.api.data.Forms.{localDate, mapping, nonEmptyText}
 import uk.gov.hmrc.cbcrfrontend.services.ReportingEntityDataService
@@ -83,7 +83,13 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
     implicit request =>
       cbcrBackendConnector.getDocRefIdOver200.map(
         documents => Ok(show_all_docRefIds(documents.docs))
-      )
+  )
+}
+
+  def showAmendDocRefIdPage = AuthenticationController(credentials) {
+    implicit request =>
+      Ok(admin_docRefId_Editor())
+
   }
 
   def showAddReportingEntityPage = AuthenticationController(credentials).async {
@@ -119,6 +125,16 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
         query =>
           cbcrBackendConnector.adminReportingEntityDataQueryTin(query.tin, query.date.toString).map(doc =>
             Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
+      )
+  }
+
+  def editDIR() = AuthenticationController(credentials).async {
+    implicit result =>
+      adminQueryDocRefIdForm.bindFromRequest().fold(
+        errors => Future.successful(BadRequest("Error")),
+        docRefId =>
+          cbcrBackendConnector.adminEditDocRefId(docRefId.id).map(_ =>
+            Ok("Doc Ref Id has been Validated"))
       )
   }
 
