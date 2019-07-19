@@ -19,15 +19,28 @@
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import helper._
+@import uk.gov.hmrc.cbcrfrontend.controllers.AdminDocRefIdRecord
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+
 @import tags._
 
-    @()(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+
+@()(implicit request: Request[_], messages: Messages, lang: Lang, config: FrontendAppConfig)
 
 @main_template(title = Messages("")) {
-        <h1>@Messages("")</h1>
 
-        <a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAllDocRefIdOver200()">Get docRef</a>
-        <a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAddReportingEntityPage()">Add Reporting Entity</a>
-        <a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAmendDocRefIdPage()">Amend DocRefId</a>
-    }
+    <div class="tin">
+
+        <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.editDIR()" method="post">
+
+            <input type="text" name="id" label="id"><br>
+            @CSRF.formField
+            <div class="form-field">
+                <button role="button" type="submit" id="continue">Re-Validate DIR</button>
+            </div>
+        </form>
+    </div>
+
+
+
+}

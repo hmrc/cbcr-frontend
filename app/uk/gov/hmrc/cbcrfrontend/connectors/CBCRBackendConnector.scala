@@ -109,4 +109,6 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/admin/reporting-entity/query-tin/$tin/$reportingPeriod")
 
+  def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier):Future[HttpResponse] = http.PUT(url + s"/admin/updateDocRefId/$docRefId", JsNull)
+
 }
