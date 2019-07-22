@@ -67,14 +67,14 @@ class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(impli
   def dropSubscriptionData()(implicit hc:HeaderCarrier): Future[HttpResponse] =
     http.DELETE(s"$url/test-only/deleteSubscription")
 
-  def updateReportingEntityCreationDate(docRefId: String, createDate: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(s"$url/test-only/updateReportingEntityCreationDate/$docRefId/$createDate", JsNull)
+  def updateReportingEntityCreationDate(createDate: String, docRefId:String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
+    http.PUT(s"$url/test-only/updateReportingEntityCreationDate/$createDate/$docRefId", JsNull)
 
   def deleteReportingEntityCreationDate(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
     http.DELETE(s"$url/test-only/deleteReportingEntityCreationDate/$docRefId")
 
-  def confirmReportingEntityCreationDate(docRefId: String, createDate: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(s"$url/test-only/confirmReportingEntityCreationDate/$docRefId/$createDate", JsNull)
+  def confirmReportingEntityCreationDate(createDate: String, docRefId:String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
+    http.PUT(s"$url/test-only/confirmReportingEntityCreationDate/$createDate/$docRefId", JsNull)
 
   def deleteReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier) : Future[HttpResponse] =
     http.DELETE(s"$url/test-only/deleteReportingEntityReportingPeriod/$docRefId")

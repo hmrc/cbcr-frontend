@@ -114,7 +114,7 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
-  def updateReportingEntityCreationDate(docRefId:String, createDate: String) = Action.async{implicit request =>
+  def updateReportingEntityCreationDate(createDate: String, docRefId:String) = Action.async{implicit request =>
     authorised() {
       testCBCRConnector.updateReportingEntityCreationDate(docRefId, createDate).map{s =>
         s.status match {
@@ -142,7 +142,7 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
     }
   }
 
-  def confirmReportingEntityCreationDate(docRefId:String, createDate: String) = Action.async{implicit request =>
+  def confirmReportingEntityCreationDate(createDate: String, docRefId:String) = Action.async{implicit request =>
     authorised() {
       testCBCRConnector.confirmReportingEntityCreationDate(docRefId, createDate).map{s =>
         s.status match {

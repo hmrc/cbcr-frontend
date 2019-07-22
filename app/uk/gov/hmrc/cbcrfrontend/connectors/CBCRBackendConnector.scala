@@ -23,7 +23,7 @@ import cats.syntax.show._
 import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
-import play.api.libs.json.JsNull
+import play.api.libs.json.{JsNull, JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.controllers.{AdminDocRefIdRecord, ListDocRefIdRecord}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.Email
@@ -69,8 +69,11 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   def docRefIdSave(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT(url + s"/doc-ref-id/${d.show}", JsNull)
 
-  def corrDocRefIdSave(c: CorrDocRefId, d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT(url + s"/corr-doc-ref-id/${c.cid.show}/${d.show}", JsNull)
+  def corrDocRefIdSave(c: CorrDocRefId, d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    val jsonObj = JsString(d.show)
+
+  http.PUT(url + s"/corr-doc-ref-id/${c.cid.show}", jsonObj)
+}
 
   def reportingEntityDataSave(r:ReportingEntityData)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
     http.POST(url+ "/reporting-entity",r)
@@ -79,7 +82,7 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.PUT[PartialReportingEntityData,HttpResponse](url+ "/reporting-entity",r)
 
   def reportingEntityDataQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.GET(url + s"/reporting-entity/${d.show}")
+    http.GET(url + s"/reporting-entity/query/${d.show}")
 
   def reportingEntityDataModelQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/model/${d.show}")
