@@ -116,7 +116,7 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
 
   def updateReportingEntityCreationDate(createDate: String, docRefId:String) = Action.async{implicit request =>
     authorised() {
-      testCBCRConnector.updateReportingEntityCreationDate(docRefId, createDate).map{s =>
+      testCBCRConnector.updateReportingEntityCreationDate(createDate, docRefId).map{s =>
         s.status match {
           case OK           => Ok("Reporting entity createDate updated")
           case NOT_MODIFIED => Ok("Reporting entity createDate NOT updated")
@@ -144,7 +144,7 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
 
   def confirmReportingEntityCreationDate(createDate: String, docRefId:String) = Action.async{implicit request =>
     authorised() {
-      testCBCRConnector.confirmReportingEntityCreationDate(docRefId, createDate).map{s =>
+      testCBCRConnector.confirmReportingEntityCreationDate(createDate, docRefId).map{s =>
         s.status match {
           case OK           => Ok("Reporting entity createDate correct")
           case NOT_FOUND    => Ok("Reporting entity createDate NOT correct")
