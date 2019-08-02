@@ -17,14 +17,13 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 
-import javax.inject.{Inject, Singleton}
-
 import cats.data.EitherT
 import cats.instances.all._
 import cats.syntax.all._
+import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrievals}
@@ -39,15 +38,13 @@ import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SubscriptionController @Inject()(val messagesApi:MessagesApi,
+class SubscriptionController @Inject()(override val messagesApi: MessagesApi,
                                        val subscriptionDataService: SubscriptionDataService,
                                        val connector: BPRKnownFactsConnector,
                                        val cbcIdService: CBCIdService,
@@ -56,12 +53,12 @@ class SubscriptionController @Inject()(val messagesApi:MessagesApi,
                                        val knownFactsService: BPRKnownFactsService,
                                        val env:Environment,
                                        val audit:AuditConnector,
-                                       val authConnector:AuthConnector)
+                                       val authConnector:AuthConnector,
+                                       messagesControllerComponents: MessagesControllerComponents)
                                       (implicit ec: ExecutionContext,
                                        val cache: CBCSessionCache,
                                        val config:Configuration,
-                                       feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport{
-
+                                       feConfig:FrontendAppConfig) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
 
   val alreadySubscribed = Action.async{ implicit request =>

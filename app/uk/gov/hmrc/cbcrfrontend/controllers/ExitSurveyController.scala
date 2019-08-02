@@ -20,7 +20,7 @@ import javax.inject.{Inject, Singleton}
 import cats.instances.future._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, Request}
+import play.api.mvc.{Action, MessagesControllerComponents, Request}
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -38,8 +38,9 @@ import scala.concurrent.{ExecutionContext, Future}
 class ExitSurveyController @Inject()(val config:Configuration,
                                      val audit:AuditConnector)
                                     (implicit conf:FrontendAppConfig,
-                                     val messagesApi:MessagesApi,
-                                     val ec: ExecutionContext) extends FrontendController with I18nSupport{
+                                     override val messagesApi:MessagesApi,
+                                     val ec: ExecutionContext,
+                                     messagesControllerComponents: MessagesControllerComponents) extends CBCRFrontendController(messagesControllerComponents) with I18nSupport{
 
   val doSurvey = Action{ implicit request =>
     Ok(survey.exitSurvey( SurveyForm.surveyForm))

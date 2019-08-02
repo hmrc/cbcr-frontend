@@ -19,9 +19,10 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.util.Base64
 
 import org.mindrot.jbcrypt.BCrypt
-import play.api.mvc.{RequestHeader, Result, Results}
 import play.api.mvc.Security.AuthenticatedBuilder
+import play.api.mvc.{AnyContent, BodyParser, RequestHeader, Result, Results}
 
+import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 case class Creds(username: String, password:String) {
@@ -31,7 +32,7 @@ case class Creds(username: String, password:String) {
   }
 }
 
-case class AuthenticationController(credentials: Creds) extends AuthenticatedBuilder[String](AuthenticationController.extractCredentials(credentials), AuthenticationController.onUnauthorised)
+case class AuthenticationController(credentials: Creds)(implicit executionContext: ExecutionContext, defaultParser: BodyParser[AnyContent]) extends AuthenticatedBuilder[String](AuthenticationController.extractCredentials(credentials), defaultParser, AuthenticationController.onUnauthorised)
 
 object AuthenticationController {
   def extractCredentials(storedCredentials: Creds): RequestHeader => Option[String] = { header =>

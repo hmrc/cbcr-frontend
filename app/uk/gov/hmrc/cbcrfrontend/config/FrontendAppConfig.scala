@@ -33,14 +33,14 @@ package uk.gov.hmrc.cbcrfrontend.config
  */
 
 import java.util.Base64
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
 class FrontendAppConfig @Inject() (val runModeConfiguration: Configuration,
-                        val environment:Environment) extends ServicesConfig {
+                        val environment:Environment, servicesConfig: ServicesConfig) {
 
 
   val mode = environment.mode
@@ -86,6 +86,6 @@ class FrontendAppConfig @Inject() (val runModeConfiguration: Configuration,
 
   def fallbackURLForLanguageSwitcher: String = loadConfig("languageSwitcher.fallback.url")
 
-  lazy val username = getString("credentials.username")
-  lazy val password = getString("credentials.password")
+  lazy val username = servicesConfig.getString("credentials.username")
+  lazy val password = servicesConfig.getString("credentials.password")
 }

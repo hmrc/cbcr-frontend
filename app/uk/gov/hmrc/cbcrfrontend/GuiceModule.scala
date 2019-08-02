@@ -23,16 +23,14 @@ import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFa
 import play.api.Mode.Mode
 import play.api.i18n.{DefaultMessagesApi, MessagesApi}
 import play.api.{Configuration, Environment, Logger}
-import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.cbcrfrontend.services.RunMode
-import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.hooks.HttpHook
-import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.ws._
 
 class GuiceModule(environment: Environment,
-                  configuration: Configuration) extends AbstractModule with ServicesConfig {
+                  configuration: Configuration) extends AbstractModule {
 
+  //TODO: See if should be injecting ServicesConfig instead
+  val mode: Mode = environment.mode
+  val runModeConfiguration: Configuration = configuration
 
   override def configure(): Unit = {
 
@@ -51,11 +49,5 @@ class GuiceModule(environment: Environment,
       val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
-
   }
-
-  override protected def mode: Mode = environment.mode
-
-  override protected def runModeConfiguration: Configuration = configuration
-
 }

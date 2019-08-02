@@ -20,6 +20,7 @@ import java.io.{File, FileInputStream}
 
 import _root_.play.api.Logger
 import _root_.play.api.i18n.Messages
+import _root_.play.api.i18n.Lang
 import _root_.play.api.libs.json.Reads
 import _root_.play.api.mvc.Results._
 import _root_.play.api.mvc._
@@ -63,10 +64,9 @@ package object cbcrfrontend {
   implicit def functorInstance(implicit ec:ExecutionContext):Functor[FutureValidBusinessResult] = Functor[Future] compose Functor[ValidBusinessResult]
 
   implicit def toTheFuture[A](a:ValidBusinessResult[A]):FutureValidBusinessResult[A] = Future.successful(a)
-
   implicit def resultFuture(r:Result):Future[Result] = Future.successful(r)
 
-  def errorRedirect(error:CBCErrors)(implicit request:Request[_],  msgs:Messages, feConfig:FrontendAppConfig): Result = {
+  def errorRedirect(error:CBCErrors)(implicit request:Request[_], msgs:Messages, feConfig:FrontendAppConfig, lang: Lang): Result = {
     Logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())

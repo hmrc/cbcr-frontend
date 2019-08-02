@@ -17,22 +17,22 @@
 package uk.gov.hmrc.cbcrfrontend.controllers.test
 
 import cats.data.OptionT
+import cats.instances.all._
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json._
-import play.api.mvc.Action
-import play.api.{Configuration, Environment, Logger}
+import play.api.libs.json.{Json, _}
+import play.api.mvc.MessagesControllerComponents
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
+import uk.gov.hmrc.cbcrfrontend.controllers.CBCRFrontendController
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
-import uk.gov.hmrc.http.{HttpException, NotFoundException}
+import uk.gov.hmrc.http.NotFoundException
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import cats.instances.all._
-import play.api.libs.json.Json
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 
 @Singleton
@@ -40,8 +40,12 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
                                    val testCBCRConnector: TestCBCRConnector,
                                    val env:Environment,
                                    val fileUploadService:FileUploadService,
-                                   val messagesApi:MessagesApi)
-                                  (implicit ec: ExecutionContext, cache:CBCSessionCache, feConfig:FrontendAppConfig, val config:Configuration)extends FrontendController with AuthorisedFunctions with I18nSupport{
+                                   override val messagesApi:MessagesApi,
+                                   messagesControllerComponents: MessagesControllerComponents)
+                                  (implicit ec: ExecutionContext,
+                                   cache:CBCSessionCache,
+                                   feConfig:FrontendAppConfig,
+                                   val config:Configuration) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
 
   def insertSubscriptionData(cbcId: String, utr: String) = Action.async{ implicit request =>
     authorised() {

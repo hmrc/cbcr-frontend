@@ -28,7 +28,7 @@ import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc.Results.Unauthorized
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request, Result}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual}
 import uk.gov.hmrc.auth.core._
@@ -50,16 +50,17 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
-class SharedController @Inject()(val messagesApi: MessagesApi,
+class SharedController @Inject()(override val messagesApi: MessagesApi,
                                  val subDataService: SubscriptionDataService,
                                  val knownFactsService: BPRKnownFactsService,
                                  val audit: AuditConnector,
-                                 val env:Environment,
-                                 val authConnector:AuthConnector
+                                 val env: Environment,
+                                 val authConnector: AuthConnector,
+                                 messagesControllerComponents: MessagesControllerComponents
                                 )(implicit val cache:CBCSessionCache,
                                   val config: Configuration,
                                   feConfig:FrontendAppConfig,
-                                  val ec: ExecutionContext) extends FrontendController with AuthorisedFunctions with I18nSupport {
+                                  val ec: ExecutionContext) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid

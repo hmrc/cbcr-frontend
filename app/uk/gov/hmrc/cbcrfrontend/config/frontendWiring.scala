@@ -20,6 +20,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.typesafe.config.Config
 import play.api.http.HttpVerbs.{POST => POST_VERB}
+import play.api.libs.ws.WSClient
 import play.api.mvc.MultipartFormData.FilePart
 import uk.gov.hmrc.cbcrfrontend.config.GenericAppConfig
 import uk.gov.hmrc.play.http.ws.{WSPost, _}
@@ -28,7 +29,7 @@ import scala.concurrent.Future
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.hooks.HttpHook
 
-object FileUploadFrontEndWS extends HttpPost with WSPost with GenericAppConfig {
+class FileUploadFrontEndWS(override val wsClient: WSClient, appConfig: GenericAppConfig) extends HttpPost with WSPost {
 
   def doFormPartPost(
                       url: String,
@@ -51,6 +52,6 @@ object FileUploadFrontEndWS extends HttpPost with WSPost with GenericAppConfig {
 
 
   override val hooks: Seq[HttpHook] = Seq.empty[HttpHook]
-
-  override protected def configuration: Option[Config] = Some(runModeConfiguration.underlying)
+  override val actorSystem = appConfig.actorSystem
+  override protected def configuration: Option[Config] = Some(appConfig.runModeConfiguration.underlying)
 }

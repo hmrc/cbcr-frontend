@@ -28,7 +28,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.{JsString, Json}
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request, Result}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrievals}
@@ -45,7 +45,6 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 
@@ -57,7 +56,7 @@ import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
-class SubmissionController @Inject()(val messagesApi: MessagesApi,
+class SubmissionController @Inject()(override val messagesApi: MessagesApi,
                                      val fus:FileUploadService,
                                      val docRefIdService: DocRefIdService,
                                      val reportingEntityDataService: ReportingEntityDataService,
@@ -66,11 +65,12 @@ class SubmissionController @Inject()(val messagesApi: MessagesApi,
                                      val audit: AuditConnector,
                                      val env:Environment,
                                      val authConnector:AuthConnector,
-                                     val emailService:EmailService)
+                                     val emailService:EmailService,
+                                     messagesControllerComponents: MessagesControllerComponents)
                                     (implicit ec: ExecutionContext,
                                      cache:CBCSessionCache,
                                      val config: Configuration,
-                                     feConfig:FrontendAppConfig) extends FrontendController with AuthorisedFunctions with I18nSupport{
+                                     feConfig:FrontendAppConfig) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
 
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat

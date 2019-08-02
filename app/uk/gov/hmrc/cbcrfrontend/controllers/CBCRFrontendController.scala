@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.config
+package uk.gov.hmrc.cbcrfrontend.controllers
 
-import akka.actor.ActorSystem
-import play.api.Mode.Mode
-import play.api.{Configuration, Play}
-import uk.gov.hmrc.play.bootstrap.config.RunMode
+import play.api.i18n.Lang
+import play.api.mvc.MessagesControllerComponents
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-class GenericAppConfig(configuration: Configuration, mode: Mode) extends RunMode(configuration, mode) {
-
-  def mode: Mode = Play.current.mode
-
-  def runModeConfiguration: Configuration = Play.current.configuration
-
-  def appNameConfiguration: Configuration = runModeConfiguration
-
-  def actorSystem: ActorSystem = Play.current.actorSystem
-
+class CBCRFrontendController(messagesControllerComponents: MessagesControllerComponents) extends FrontendController(messagesControllerComponents) {
+  implicit val lang = Lang.defaultLang
+  implicit val defaultBodyParser = messagesControllerComponents.parsers.defaultBodyParser
 }
