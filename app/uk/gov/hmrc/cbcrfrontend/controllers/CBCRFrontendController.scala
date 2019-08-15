@@ -21,6 +21,6 @@ import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 class CBCRFrontendController(messagesControllerComponents: MessagesControllerComponents) extends FrontendController(messagesControllerComponents) {
-  implicit val lang = Lang.defaultLang
-  implicit val defaultBodyParser = messagesControllerComponents.parsers.defaultBodyParser
+  implicit lazy val lang = Lang.defaultLang
+  implicit lazy val defaultBodyParser = messagesControllerComponents.parsers.defaultBodyParser
 }

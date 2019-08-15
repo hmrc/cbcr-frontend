@@ -16,34 +16,30 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.play.test.UnitSpec
-import org.mockito.Mockito._
-import play.api.mvc.Result
-import play.api.test.FakeRequest
-
-import scala.concurrent.duration.{Duration, _}
-import scala.concurrent.{Await, ExecutionContext, Future}
 import play.api.http.HeaderNames._
-import uk.gov.hmrc.cbcrfrontend.util
+import play.api.mvc.{MessagesControllerComponents, Result}
+import play.api.test.FakeRequest
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
+import uk.gov.hmrc.play.test.UnitSpec
+
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import uk.gov.hmrc.cbcrfrontend.util.{CbcrSwitches, FeatureSwitch}
+import scala.concurrent.duration._
 
-
-
-
-class LanguageControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach{
+class LanguageControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
 
   implicit val conf  = mock[FrontendAppConfig]
-
+  val mcc = app.injector.instanceOf[MessagesControllerComponents]
 
   when(conf.fallbackURLForLanguageSwitcher) thenReturn "#"
 
-  val controller = new LanguageController(conf)
+  val controller = new LanguageController(conf, mcc)
   val requestWithReferer = addToken(FakeRequest("GET","/report/upload-form").withHeaders(REFERER -> "/somewhere"))
   val requestNoReferer = addToken(FakeRequest("GET","/report/upload-form"))
 
@@ -53,8 +49,13 @@ class LanguageControllerSpec extends UnitSpec with ScalaFutures with GuiceOneApp
         val result: Result = Await.result(controller.switchToWelsh()(requestWithReferer), 5.second)
         status(result) shouldBe 303
         val headers = result.header.headers.getOrElse("Set-Cookie", "")
-        headers should include("PLAY_FLASH=switching-language=true")
-        headers should include("PLAY_LANG=en")
+
+        val switchingFlashValue = result.newFlash.head.data("switching-language")
+        val cookieName = result.newCookies.head.name
+        val cookieValue = result.newCookies.head.value
+        switchingFlashValue shouldBe "true"
+        cookieName shouldBe "PLAY_LANG"
+        cookieValue shouldBe "en"
       }
     }
     "return 303 and set lang=cy " when {
@@ -62,9 +63,13 @@ class LanguageControllerSpec extends UnitSpec with ScalaFutures with GuiceOneApp
         FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", true))
         val result: Result = Await.result(controller.switchToWelsh()(requestWithReferer), 5.second)
         status(result) shouldBe 303
-        val headers = result.header.headers.getOrElse("Set-Cookie", "").toString
-        headers should include("PLAY_FLASH=switching-language=true")
-        headers should include("PLAY_LANG=cy")
+
+        val switchingFlashValue = result.newFlash.head.data("switching-language")
+        val cookieName = result.newCookies.head.name
+        val cookieValue = result.newCookies.head.value
+        switchingFlashValue shouldBe "true"
+        cookieName shouldBe "PLAY_LANG"
+        cookieValue shouldBe "cy"
       }
     }
     "return 303 and set lang=en" when {
@@ -72,9 +77,13 @@ class LanguageControllerSpec extends UnitSpec with ScalaFutures with GuiceOneApp
         FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching",true))
         val result: Result = Await.result(controller.switchToEnglish()(requestWithReferer), 5.second)
         status(result) shouldBe 303
-        val headers = result.header.headers.getOrElse("Set-Cookie", "")
-        headers should include("PLAY_FLASH=switching-language=true")
-        headers should include("PLAY_LANG=en")
+
+        val switchingFlashValue = result.newFlash.head.data("switching-language")
+        val cookieName = result.newCookies.head.name
+        val cookieValue = result.newCookies.head.value
+        switchingFlashValue shouldBe "true"
+        cookieName shouldBe "PLAY_LANG"
+        cookieValue shouldBe "en"
       }
     }
     "redirect to the fallbackURLForLanguageSwitcher" in {

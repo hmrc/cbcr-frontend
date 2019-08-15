@@ -36,11 +36,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ExitSurveyController @Inject()(val config:Configuration,
-                                     val audit:AuditConnector)
+                                     val audit:AuditConnector,
+                                     messagesControllerComponents: MessagesControllerComponents)
                                     (implicit conf:FrontendAppConfig,
                                      override val messagesApi:MessagesApi,
-                                     val ec: ExecutionContext,
-                                     messagesControllerComponents: MessagesControllerComponents) extends CBCRFrontendController(messagesControllerComponents) with I18nSupport{
+                                     val ec: ExecutionContext) extends CBCRFrontendController(messagesControllerComponents) with I18nSupport{
 
   val doSurvey = Action{ implicit request =>
     Ok(survey.exitSurvey( SurveyForm.surveyForm))

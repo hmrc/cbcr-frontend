@@ -33,7 +33,7 @@ import play.api.{Configuration, Environment}
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.Result
+import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
@@ -44,8 +44,8 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.test.UnitSpec
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -65,6 +65,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
   val runMode                         = mock[RunMode]
   val env                             = mock[Environment]
   val authC                           = mock[AuthConnector]
+  val mcc                             = app.injector.instanceOf[MessagesControllerComponents]
 
   when(feConfig.analyticsHost) thenReturn "host"
   when(feConfig.analyticsToken) thenReturn "token"
@@ -103,7 +104,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
   val schemaVer: String = "1.0"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new SharedController(messagesApi, subService,bprKF,auditC,env,authC)(cache,config, feConfig, ec)
+  val controller = new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc)(cache,config, feConfig, ec)
 
   val utr = Utr("7000000001")
   val bpr = BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))

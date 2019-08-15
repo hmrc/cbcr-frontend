@@ -17,8 +17,9 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.time.{LocalDate, LocalDateTime}
-import org.mockito.ArgumentMatchers.any
+
 import akka.util.Timeout
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
@@ -27,10 +28,10 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
 import play.api.http.Status
 import play.api.i18n.MessagesApi
-import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.Result
+import play.api.libs.json.Json
+import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
@@ -55,6 +56,7 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   val bprKF                           = mock[BPRKnownFactsService]
   val configuration                   = mock[Configuration]
   val auditC: AuditConnector          = mock[AuditConnector]
+  val mcc                             = app.injector.instanceOf[MessagesControllerComponents]
   val runMode                         = mock[RunMode]
 
   when(conf.analyticsHost) thenReturn "host"
@@ -90,7 +92,7 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   val schemaVer: String = "1.0"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new ExitSurveyController(configuration, auditC)
+  val controller = new ExitSurveyController(configuration, auditC, mcc)
 
   val utr = Utr("7000000001")
   val bpr = BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))
@@ -115,7 +117,7 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
 
   "GET /exit-survey" should {
     "return 200" in {
-      val result: Result = Await.result(controller.doSurvey(fakeRequest), 5.second)
+      val result: Result = Await.result(controller.doSurvey().apply(fakeRequest), 5.second)
       status(result) shouldBe Status.OK
     }
   }

@@ -43,6 +43,7 @@ import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.libs.Files
 import play.api.libs.json.{Format, JsNull, Reads}
+import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.authorise.Predicate
@@ -80,6 +81,7 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   var runMode                                          = mock[RunMode]
   val authConnector                                    = mock[AuthConnector]
   val file                                             = mock[File]
+  val mcc                                              = app.injector.instanceOf[MessagesControllerComponents]
 
   implicit val configuration = new Configuration(ConfigFactory.load("application.conf"))
   implicit val feConfig = mock[FrontendAppConfig]
@@ -161,8 +163,8 @@ class FileUploadControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   val schemaVer: String = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(throw new Exception(s"Missing configuration ${runMode.env}.oecd-schema-version"))
   val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
 
-  val partiallyMockedController = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,env)(ec,TestSessionCache(), configuration, feConfig)
-  val controller = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor,auditC,env)(ec,cache, configuration, feConfig)
+  val partiallyMockedController = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor, auditC, env, mcc)(ec,TestSessionCache(), configuration, feConfig)
+  val controller = new FileUploadController(messagesApi,authConnector,schemaValidator, businessRulesValidator, fuService, extractor, auditC, env, mcc)(ec,cache, configuration, feConfig)
 
   val testFile:File= new File("test/resources/cbcr-valid.xml")
   val tempFile:File=File.createTempFile("test",".xml")

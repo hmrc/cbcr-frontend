@@ -20,9 +20,7 @@ import java.io.File
 
 import com.google.inject.AbstractModule
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
-import play.api.Mode.Mode
-import play.api.i18n.{DefaultMessagesApi, MessagesApi}
-import play.api.{Configuration, Environment, Logger}
+import play.api.{Configuration, Environment, Logger, Mode}
 import uk.gov.hmrc.cbcrfrontend.services.RunMode
 
 class GuiceModule(environment: Environment,
@@ -33,9 +31,6 @@ class GuiceModule(environment: Environment,
   val runModeConfiguration: Configuration = configuration
 
   override def configure(): Unit = {
-
-    bind(classOf[MessagesApi]).to(classOf[DefaultMessagesApi])
-
     bind(classOf[XMLValidationSchema]).toInstance{
       val runMode: RunMode = new RunMode(configuration)
       val env = runMode.env
