@@ -66,7 +66,7 @@ package object cbcrfrontend {
   implicit def toTheFuture[A](a:ValidBusinessResult[A]):FutureValidBusinessResult[A] = Future.successful(a)
   implicit def resultFuture(r:Result):Future[Result] = Future.successful(r)
 
-  def errorRedirect(error:CBCErrors)(implicit request:Request[_], msgs:Messages, feConfig:FrontendAppConfig, lang: Lang): Result = {
+  def errorRedirect(error:CBCErrors)(implicit request:Request[_], msgs:Messages, feConfig:FrontendAppConfig): Result = {
     Logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())

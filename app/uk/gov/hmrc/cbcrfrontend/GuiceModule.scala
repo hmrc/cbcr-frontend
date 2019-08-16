@@ -26,10 +26,8 @@ import uk.gov.hmrc.cbcrfrontend.services.RunMode
 class GuiceModule(environment: Environment,
                   configuration: Configuration) extends AbstractModule {
 
-  //TODO: See if should be injecting ServicesConfig instead
   val mode: Mode = environment.mode
   val runModeConfiguration: Configuration = configuration
-
   override def configure(): Unit = {
     bind(classOf[XMLValidationSchema]).toInstance{
       val runMode: RunMode = new RunMode(configuration)

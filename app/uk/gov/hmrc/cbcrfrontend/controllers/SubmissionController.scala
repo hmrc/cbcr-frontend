@@ -70,7 +70,7 @@ class SubmissionController @Inject()(override val messagesApi: MessagesApi,
                                     (implicit ec: ExecutionContext,
                                      cache:CBCSessionCache,
                                      val config: Configuration,
-                                     feConfig:FrontendAppConfig) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
+                                     feConfig:FrontendAppConfig) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
 
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat

@@ -22,12 +22,13 @@ import play.api.mvc.{Action, AnyContent, Flash, MessagesControllerComponents}
 import play.api.{Application, Logger}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
 
 class LanguageController @Inject()(configuration: FrontendAppConfig, messagesControllerComponents: MessagesControllerComponents)(
   implicit val ec: ExecutionContext,
-  application: Application) extends CBCRFrontendController(messagesControllerComponents) with I18nSupport {
+  application: Application) extends FrontendController(messagesControllerComponents) with I18nSupport {
   val english = Lang("en")
   val welsh = Lang("cy")
 

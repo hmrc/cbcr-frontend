@@ -16,21 +16,18 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.nio.file.{Path, Paths}
-
-import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
+import javax.inject.{Inject, Singleton}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
-import play.api.mvc.Results.Unauthorized
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request, Result}
+import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
-import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual}
+import uk.gov.hmrc.auth.core.AffinityGroup.Individual
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
@@ -40,11 +37,9 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend.views.html.subscription.notAuthorised
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -60,7 +55,7 @@ class SharedController @Inject()(override val messagesApi: MessagesApi,
                                 )(implicit val cache:CBCSessionCache,
                                   val config: Configuration,
                                   feConfig:FrontendAppConfig,
-                                  val ec: ExecutionContext) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
+                                  val ec: ExecutionContext) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck"){
     case utr if Utr(utr).isValid => Valid

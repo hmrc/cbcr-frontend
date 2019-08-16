@@ -40,6 +40,7 @@ import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -58,7 +59,7 @@ class SubscriptionController @Inject()(override val messagesApi: MessagesApi,
                                       (implicit ec: ExecutionContext,
                                        val cache: CBCSessionCache,
                                        val config:Configuration,
-                                       feConfig:FrontendAppConfig) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
+                                       feConfig:FrontendAppConfig) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
 
   val alreadySubscribed = Action.async{ implicit request =>

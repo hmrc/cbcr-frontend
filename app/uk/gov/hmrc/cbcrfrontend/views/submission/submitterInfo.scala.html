@@ -22,7 +22,7 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.FieldName
-@(form:Form[_],field: Option[FieldName])(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+@(form:Form[_],field: Option[FieldName])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
 @agencyBusinessNameErrors = @{form.error("agencyBusinessName").isDefined}

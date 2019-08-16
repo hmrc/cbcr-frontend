@@ -29,6 +29,7 @@ import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,7 +39,7 @@ class StartController @Inject()(override val messagesApi: MessagesApi,
                                 messagesControllerComponents: MessagesControllerComponents)(implicit val cache:CBCSessionCache,
                                                                                             val config: Configuration,
                                                                                             feConfig:FrontendAppConfig,
-                                                                                            val ec: ExecutionContext) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
+                                                                                            val ec: ExecutionContext) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
 
   val startForm: Form[String] = Form(

@@ -20,7 +20,7 @@ import java.util.Base64
 
 import org.mindrot.jbcrypt.BCrypt
 import play.api.mvc.Security.AuthenticatedBuilder
-import play.api.mvc.{AnyContent, BodyParser, RequestHeader, Result, Results}
+import play.api.mvc._
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try

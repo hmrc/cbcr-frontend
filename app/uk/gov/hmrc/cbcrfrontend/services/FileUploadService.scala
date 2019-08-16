@@ -30,7 +30,7 @@ import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.http.Status
-import play.api.i18n.{I18nSupport, Lang, MessagesApi}
+import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
@@ -154,18 +154,18 @@ class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,
     } yield resourceUrl.body
   }
 
-  def errorsToList(e:List[ValidationErrors])(implicit lang: Lang) : List[String] =
-    e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
+  def errorsToList(e:List[ValidationErrors])(implicit messages: Messages) : List[String] =
+    e.map(x => x.show.split(" ").map(x => messages(x)).map(_.toString).mkString(" "))
 
 
-  def errorsToMap(e:List[ValidationErrors])(implicit lang: Lang) : Map[String,String] =
+  def errorsToMap(e:List[ValidationErrors])(implicit messages: Messages) : Map[String,String] =
     errorsToList(e).foldLeft(Map[String, String]()) {(m, t) => m + ("error_" + (m.size + 1).toString -> t)}
 
 
-  def errorsToString(e:List[ValidationErrors])(implicit lang: Lang) : String =
+  def errorsToString(e:List[ValidationErrors])(implicit messages: Messages) : String =
     errorsToList(e).map(_.toString).mkString("\r\n")
 
-  def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
+  def errorsToFile(e:List[ValidationErrors], name:String)(implicit messages: Messages) : File = {
     val b = SingletonTemporaryFileCreator.create(name, ".txt")
     val writer = new PrintWriter(b.file)
     writer.write(errorsToString(e))

@@ -14,7 +14,7 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
+@import uk.gov.hmrc.play.views.html._
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
@@ -23,18 +23,19 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@()(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
 
-@main_template(Messages("subscribeFirst.alreadyRegistered.heading")) {
+@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@main_template(messages("subscribeFirst.alreadyRegistered.heading")) {
 <div class="grid-row">
     <div class="column-full">
 
-        <h1>@Messages("subscribeFirst.alreadyRegistered.heading")</h1>
+        <h1>@messages("subscribeFirst.alreadyRegistered.heading")</h1>
         <div>
-            <p>@Messages("subscribeFirst.alreadyRegistered")</p>
-            <p>@Messages("subscribeFirst.alreadyRegistered2") <a href="@routes.FileUploadController.chooseXMLFile()">@Messages("subscribeFirst.alreadyRegistered2.link")</a>.</p>
-            <p>@Messages("subscribeFirst.alreadyRegistered5") <a href="@routes.SharedController.signOutGG()">@Messages("subscribeFirst.alreadyRegistered5.link")</a>.</p>
-            <p>@messages("subscribeFirst.alreadyRegistered3") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@Messages("subscribeFirst.alreadyRegistered4")</a></p>
+            <p>@messages("subscribeFirst.alreadyRegistered")</p>
+            <p>@messages("subscribeFirst.alreadyRegistered2") <a href="@routes.FileUploadController.chooseXMLFile()">@messages("subscribeFirst.alreadyRegistered2.link")</a>.</p>
+            <p>@messages("subscribeFirst.alreadyRegistered5") <a href="@routes.SharedController.signOutGG()">@messages("subscribeFirst.alreadyRegistered5.link")</a>.</p>
+            <p>@messages("subscribeFirst.alreadyRegistered3") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@messages("subscribeFirst.alreadyRegistered4")</a></p>
         </div>
     </div>
 </div>

@@ -30,5 +30,4 @@ class GenericAppConfig @Inject()(configuration: Configuration, mode: Mode) exten
   def appNameConfiguration: Configuration = runModeConfiguration
 
   def actorSystem: ActorSystem = Play.current.actorSystem
-
 }

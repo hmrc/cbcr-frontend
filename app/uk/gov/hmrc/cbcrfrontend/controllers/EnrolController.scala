@@ -25,6 +25,7 @@ import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,7 +34,7 @@ class EnrolController @Inject()(val config:Configuration,
                                 val enrolConnector: TaxEnrolmentsConnector,
                                 val authConnector: AuthConnector,
                                 val env:Environment,
-                                messagesControllerComponents: MessagesControllerComponents)(implicit ec:ExecutionContext) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions{
+                                messagesControllerComponents: MessagesControllerComponents)(implicit ec:ExecutionContext) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions{
 
   implicit val format = uk.gov.hmrc.cbcrfrontend.controllers.enrolmentsFormat
   val conf = config.underlying.get[Config]("microservice.services.gg-proxy").value

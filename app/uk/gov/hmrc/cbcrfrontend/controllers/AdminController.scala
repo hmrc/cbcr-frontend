@@ -32,6 +32,7 @@ import uk.gov.hmrc.cbcrfrontend.services.ReportingEntityDataService
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,9 +44,10 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
                                (implicit conf:FrontendAppConfig,
                                 override val messagesApi:MessagesApi,
                                 val ec: ExecutionContext,
-                                messagesControllerComponents: MessagesControllerComponents) extends CBCRFrontendController(messagesControllerComponents) with I18nSupport {
+                                messagesControllerComponents: MessagesControllerComponents) extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val defaultParser = messagesControllerComponents.parsers.defaultBodyParser
 
   lazy val credentials = Creds(frontendAppConfig.username, frontendAppConfig.password)
 

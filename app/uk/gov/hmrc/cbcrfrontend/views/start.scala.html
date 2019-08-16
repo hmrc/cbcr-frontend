@@ -22,7 +22,7 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import tags._
 
-@(form:Form[_])(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @isError= @{form.hasErrors}
 

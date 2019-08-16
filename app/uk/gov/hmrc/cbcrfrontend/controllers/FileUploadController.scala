@@ -24,7 +24,7 @@ import cats.data.{EitherT, _}
 import cats.instances.all._
 import cats.syntax.all._
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.{I18nSupport, Lang, MessagesApi}
+import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.{Json, _}
 import play.api.mvc._
@@ -42,6 +42,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.duration.{Duration => SDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -59,7 +60,7 @@ class FileUploadController @Inject()(override val messagesApi: MessagesApi,
                                      val audit: AuditConnector,
                                      val env:Environment,
                                      messagesControllerComponents: MessagesControllerComponents)
-                                    (implicit ec: ExecutionContext, cache:CBCSessionCache, val config:Configuration, feConfig:FrontendAppConfig) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
+                                    (implicit ec: ExecutionContext, cache:CBCSessionCache, val config:Configuration, feConfig:FrontendAppConfig) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
@@ -212,7 +213,7 @@ class FileUploadController @Inject()(override val messagesApi: MessagesApi,
     }
   }
 
-  private def getErrorFileSize(e:List[ValidationErrors]) : Int = {
+  private def getErrorFileSize(e:List[ValidationErrors])(implicit messages: Messages) : Int = {
     val f = fileUploadService.errorsToFile(e,"")
     val kb = f.length() * 0.001
     f.delete()
@@ -220,19 +221,19 @@ class FileUploadController @Inject()(override val messagesApi: MessagesApi,
   }
 
 
-  private def errorsToList(e:List[ValidationErrors])(implicit lang: Lang) : List[String] =
-    e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
+  private def errorsToList(e:List[ValidationErrors])(implicit messages: Messages) : List[String] =
+    e.map(x => x.show.split(" ").map(x => messages(x)).map(_.toString).mkString(" "))
 
 
-  private def errorsToMap(e:List[ValidationErrors])(implicit lang: Lang) : Map[String,String] =
+  private def errorsToMap(e:List[ValidationErrors])(implicit messages: Messages) : Map[String,String] =
     errorsToList(e).foldLeft(Map[String, String]()) {(m, t) => m + ("error_" + (m.size + 1).toString -> t)}
 
 
-  private def errorsToString(e:List[ValidationErrors])(implicit lang: Lang) : String =
+  private def errorsToString(e:List[ValidationErrors])(implicit messages: Messages) : String =
     errorsToList(e).map(_.toString).mkString("\r\n")
 
 
-  private def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
+  private def errorsToFile(e:List[ValidationErrors], name:String)(implicit messages: Messages) : File = {
     val b = SingletonTemporaryFileCreator.create(name, ".txt")
     val writer = new PrintWriter(b.file)
     writer.write(errorsToString(e))
@@ -242,8 +243,8 @@ class FileUploadController @Inject()(override val messagesApi: MessagesApi,
   }
 
 
-  private def fileUploadName(fname: String)(implicit lang: Lang) : String = {
-    messagesApi(fname)
+  private def fileUploadName(fname: String)(implicit messages: Messages) : String = {
+    messages(fname)
   }
 
   def getBusinessRuleErrors = Action.async{ implicit request =>
@@ -335,7 +336,7 @@ class FileUploadController @Inject()(override val messagesApi: MessagesApi,
   }
 
 
-  private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(implicit hc:HeaderCarrier) : JsObject = {
+  private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(implicit hc:HeaderCarrier, messages: Messages) : JsObject = {
     (all_errors._1.exists(bre => if(bre.errors.isEmpty) false else true), all_errors._2.exists(xml => if(xml.errors.isEmpty) false else true)) match {
       case (true, true) => Json.obj(
         "businessRuleErrors" -> Json.toJson(fileUploadService.errorsToMap(all_errors._1.get.errors)),

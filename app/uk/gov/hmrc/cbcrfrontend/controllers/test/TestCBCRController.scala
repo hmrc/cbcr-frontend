@@ -26,7 +26,6 @@ import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
-import uk.gov.hmrc.cbcrfrontend.controllers.CBCRFrontendController
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.http.NotFoundException
@@ -45,7 +44,7 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
                                   (implicit ec: ExecutionContext,
                                    cache:CBCSessionCache,
                                    feConfig:FrontendAppConfig,
-                                   val config:Configuration) extends CBCRFrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
+                                   val config:Configuration) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
 
   def insertSubscriptionData(cbcId: String, utr: String) = Action.async{ implicit request =>
     authorised() {
