@@ -30,7 +30,7 @@ object FrontendBuild extends Build with MicroService {
   )
 
   def test(scope: String = "test") = Seq(
-    "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-25" % scope,
+    "uk.gov.hmrc" %% "hmrctest" % "3.9.0-play-26" % scope,
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
     "org.jsoup" % "jsoup" % "1.12.1" % scope,
     "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,

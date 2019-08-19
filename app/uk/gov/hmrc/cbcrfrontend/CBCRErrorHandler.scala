@@ -33,9 +33,7 @@ class CBCRErrorHandler @Inject()(override val messagesApi: MessagesApi,
                                  val env:Environment,
                                  val config:Configuration,
                                  val authConnector:AuthConnector)(implicit val feConfig:FrontendAppConfig)
-  extends FrontendErrorHandler with Results with AuthorisedFunctions with I18nSupport with AuthRedirects {
-
-  implicit val lang = Lang.defaultLang
+  extends FrontendErrorHandler with Results with AuthRedirects {
 
   override def resolveError(rh: RequestHeader, ex: Throwable) = ex match {
     case _:NoActiveSession            =>
