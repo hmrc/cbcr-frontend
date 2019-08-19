@@ -16,27 +16,24 @@
 
 package uk.gov.hmrc.cbcrfrontend
 
+import javax.inject.Inject
+import play.api.i18n.{I18nSupport, Lang, MessagesApi}
+import play.api.mvc._
+import play.api.{Configuration, Environment, Logger}
+import uk.gov.hmrc.auth.core.{NoActiveSession, UnsupportedAffinityGroup, UnsupportedCredentialRole, _}
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.routes
-import uk.gov.hmrc.auth.core.{NoActiveSession, UnsupportedAffinityGroup, UnsupportedCredentialRole}
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
 import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
-import play.api.{Configuration, Environment, Logger}
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import javax.inject.{Inject, Singleton}
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.mvc._
-import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual}
-import uk.gov.hmrc.auth.core.retrieve.Retrievals
-import uk.gov.hmrc.cbcrfrontend.model.UnexpectedState
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
 
 
-class CBCRErrorHandler @Inject()(val messagesApi: MessagesApi, val env:Environment, val config:Configuration,
+class CBCRErrorHandler @Inject()(override val messagesApi: MessagesApi,
+                                 val env:Environment,
+                                 val config:Configuration,
                                  val authConnector:AuthConnector)(implicit val feConfig:FrontendAppConfig)
-  extends FrontendErrorHandler with AuthorisedFunctions with I18nSupport with AuthRedirects with FrontendController{
+  extends FrontendErrorHandler with Results with AuthRedirects {
 
   override def resolveError(rh: RequestHeader, ex: Throwable) = ex match {
     case _:NoActiveSession            =>
@@ -55,6 +52,4 @@ class CBCRErrorHandler @Inject()(val messagesApi: MessagesApi, val env:Environme
 
   override def standardErrorTemplate (pageTitle: String, heading: String, message: String) (implicit request: Request[_] ) =
   uk.gov.hmrc.cbcrfrontend.views.html.error_template (pageTitle, heading, message)
-
-
 }

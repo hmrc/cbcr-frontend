@@ -16,18 +16,17 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import javax.inject.{Inject, Singleton}
 import cats.instances.future._
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import javax.inject.{Inject, Singleton}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Json
-import play.api.mvc.{Action, Request}
+import play.api.mvc.{MessagesControllerComponents, Request}
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SurveyForm
 import uk.gov.hmrc.cbcrfrontend.model.{SurveyAnswers, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.views.html._
-import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
@@ -36,10 +35,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ExitSurveyController @Inject()(val config:Configuration,
-                                     val audit:AuditConnector)
+                                     val audit:AuditConnector,
+                                     messagesControllerComponents: MessagesControllerComponents)
                                     (implicit conf:FrontendAppConfig,
-                                     val messagesApi:MessagesApi,
-                                     val ec: ExecutionContext) extends FrontendController with I18nSupport{
+                                     override val messagesApi:MessagesApi,
+                                     val ec: ExecutionContext) extends FrontendController(messagesControllerComponents) with I18nSupport{
 
   val doSurvey = Action{ implicit request =>
     Ok(survey.exitSurvey( SurveyForm.surveyForm))

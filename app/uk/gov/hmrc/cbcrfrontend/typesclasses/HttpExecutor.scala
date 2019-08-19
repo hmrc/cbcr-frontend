@@ -16,18 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.typesclasses
 
-import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import play.Logger
 import play.api.libs.json.{JsObject, Json, Writes}
-import play.api.mvc.MultipartFormData.FilePart
+import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
 import uk.gov.hmrc.http._
 
 import scala.concurrent.{ExecutionContext, Future}
-import java.net.URLEncoder._
-
-import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 
 trait GetBody[O, T] {
   def apply(obj: O): T
@@ -72,9 +67,9 @@ trait HttpExecutor[U, P, I] {
     wts: Writes[I],
     rds: HttpReads[HttpResponse],
     getBody: GetBody[P, I],
-    http:HttpPost,
 //              TO DO - is http2 required
     http2:HttpPut,
+    fileUploadFrontEndWS: FileUploadFrontEndWS,
     ec: ExecutionContext
   ): Future[HttpResponse]
 }
@@ -90,12 +85,12 @@ object HttpExecutor {
       wts: Writes[JsObject],
       rds: HttpReads[HttpResponse],
       getBody: GetBody[CreateEnvelope, JsObject],
-      http: HttpPost,
       //              TO DO - is http2 required
       http2: HttpPut,
+      fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] = {
-      http.POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", getBody(obj))
+      fileUploadFrontEndWS.POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", getBody(obj))
     }
   }
 
@@ -109,15 +104,14 @@ object HttpExecutor {
       wts: Writes[Array[Byte]],
       rds: HttpReads[HttpResponse],
       getBody: GetBody[UploadFile, Array[Byte]],
-      http: HttpPost,
       //              TO DO - is http2 required
       http2: HttpPut,
+      fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] = {
       import obj._
       val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
-       FileUploadFrontEndWS.doFormPartPost(url, fileName, contentType, ByteString.fromArray(getBody(obj)), Seq("CSRF-token" -> "nocheck"))
-
+      fileUploadFrontEndWS.doFormPartPost(url, fileName, contentType, ByteString.fromArray(getBody(obj)), Seq("CSRF-token" -> "nocheck"))
     }
   }
 
@@ -132,12 +126,12 @@ object HttpExecutor {
                   wts: Writes[JsObject],
                   rds: HttpReads[HttpResponse],
                   getBody: GetBody[FUCallbackResponse, JsObject],
-                  http: HttpPost,
                   //              TO DO - is http2 required
                   http2: HttpPut,
+                  fileUploadFrontEndWS: FileUploadFrontEndWS,
                   ec: ExecutionContext
                 ): Future[HttpResponse] = {
-      http.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", getBody(obj))
+      fileUploadFrontEndWS.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", getBody(obj))
     }
 
   }
@@ -153,12 +147,12 @@ object HttpExecutor {
                   wts: Writes[RouteEnvelopeRequest],
                   rds: HttpReads[HttpResponse],
                   getBody: GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest],
-                  http: HttpPost,
                   //              TO DO - is http2 required
                   http2: HttpPut,
+                  fileUploadFrontEndWS: FileUploadFrontEndWS,
                   ec: ExecutionContext
                 ): Future[HttpResponse] = {
-      http.POST[RouteEnvelopeRequest, HttpResponse](s"${fusUrl.url}/file-routing/requests", getBody(obj))
+      fileUploadFrontEndWS.POST[RouteEnvelopeRequest, HttpResponse](s"${fusUrl.url}/file-routing/requests", getBody(obj))
     }
   }
 
@@ -172,9 +166,9 @@ object HttpExecutor {
     httpExecutor: HttpExecutor[U, P, I],
     wts: Writes[I],
     getBody: GetBody[P, I],
-    http:HttpPost,
     //              TO DO - is http2 required
-    http2: HttpPut
+    http2: HttpPut,
+    fileUploadFrontEndWS: FileUploadFrontEndWS
   ): Future[HttpResponse] = {
     httpExecutor.makeCall(url, obj)
   }

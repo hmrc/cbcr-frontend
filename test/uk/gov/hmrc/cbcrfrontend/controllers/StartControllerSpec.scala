@@ -31,7 +31,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.{Configuration, Environment}
 import play.api.http.HeaderNames.LOCATION
 import play.api.i18n.{Lang, Messages, MessagesApi}
-import play.api.mvc.Result
+import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
@@ -41,8 +41,8 @@ import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.play.test.UnitSpec
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.Ok
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import play.api.libs.json.{JsValue, Json}
@@ -59,7 +59,8 @@ class StartControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPer
   implicit val timeout                  = Timeout(5 seconds)
 
   val authConnector                     = mock[AuthConnector]
-  val controller                        = new StartController(messagesApi,authConnector)
+  val mcc                               = app.injector.instanceOf[MessagesControllerComponents]
+  val controller                        = new StartController(messagesApi, authConnector, mcc)
   val newCBCEnrolment                   = CBCEnrolment(CBCId.create(99).getOrElse(fail("booo")), Utr("1234567890"))
   val langSwitch                        = mock[FeatureSwitch]
 

@@ -20,24 +20,15 @@ import java.io.File
 
 import com.google.inject.AbstractModule
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
-import play.api.Mode.Mode
-import play.api.i18n.{DefaultMessagesApi, MessagesApi}
-import play.api.{Configuration, Environment, Logger}
-import uk.gov.hmrc.auth.core.AuthConnector
+import play.api.{Configuration, Environment, Logger, Mode}
 import uk.gov.hmrc.cbcrfrontend.services.RunMode
-import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.hooks.HttpHook
-import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.http.ws._
 
 class GuiceModule(environment: Environment,
-                  configuration: Configuration) extends AbstractModule with ServicesConfig {
+                  configuration: Configuration) extends AbstractModule {
 
-
+  val mode: Mode = environment.mode
+  val runModeConfiguration: Configuration = configuration
   override def configure(): Unit = {
-
-    bind(classOf[MessagesApi]).to(classOf[DefaultMessagesApi])
-
     bind(classOf[XMLValidationSchema]).toInstance{
       val runMode: RunMode = new RunMode(configuration)
       val env = runMode.env
@@ -51,11 +42,5 @@ class GuiceModule(environment: Environment,
       val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
-
   }
-
-  override protected def mode: Mode = environment.mode
-
-  override protected def runModeConfiguration: Configuration = configuration
-
 }

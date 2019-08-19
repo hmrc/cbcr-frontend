@@ -22,7 +22,7 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @main_template(Messages("submitSuccessReceipt.submissionDateLabel")) {
 

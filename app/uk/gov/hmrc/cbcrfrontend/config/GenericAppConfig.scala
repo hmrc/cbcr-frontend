@@ -17,11 +17,11 @@
 package uk.gov.hmrc.cbcrfrontend.config
 
 import akka.actor.ActorSystem
-import play.api.Mode.Mode
-import play.api.{Configuration, Play}
-import uk.gov.hmrc.play.config.RunMode
+import javax.inject.Inject
+import play.api.{Configuration, Mode, Play}
+import uk.gov.hmrc.play.bootstrap.config.RunMode
 
-trait GenericAppConfig extends RunMode {
+class GenericAppConfig @Inject()(configuration: Configuration, mode: Mode) extends RunMode(configuration, mode) {
 
   def mode: Mode = Play.current.mode
 
@@ -30,5 +30,4 @@ trait GenericAppConfig extends RunMode {
   def appNameConfiguration: Configuration = runModeConfiguration
 
   def actorSystem: ActorSystem = Play.current.actorSystem
-
 }

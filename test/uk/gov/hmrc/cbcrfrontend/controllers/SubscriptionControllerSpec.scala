@@ -32,7 +32,7 @@ import play.api.{Configuration, Environment}
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.Result
+import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.auth.core.retrieve.Credentials
@@ -70,7 +70,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
   val emailMock = mock[EmailService]
   implicit val cache = mock[CBCSessionCache]
   val auth = mock[AuthConnector]
-
+  val mcc = app.injector.instanceOf[MessagesControllerComponents]
 
   val id = CBCId.create(5678).getOrElse(fail("bad cbcid"))
   val utr = Utr("9000000001")
@@ -82,7 +82,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
 
   when(cache.read[AffinityGroup](EQ(AffinityGroup.jsonFormat),any(),any())).thenReturn(rightE[AffinityGroup](AffinityGroup.Organisation))
 
-  val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+  val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
 
   implicit val hc = HeaderCarrier()
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr"}
@@ -108,7 +108,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 200" in {
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/contactInfoSubscriber"))
       status(controller.contactInfoSubscriber(fakeRequestSubscribe)) shouldBe Status.OK
     }
@@ -118,14 +118,14 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 400 when the there is no data" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData"))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when either first or last name or both are missing" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "email" -> "blagh@blagh.com"
@@ -152,7 +152,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 400 when the email is missing" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "firstName" -> "Dave",
@@ -164,7 +164,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 400 when the email is invalid" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "firstName" -> "Dave",
@@ -177,7 +177,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 400 when the phone number is missing" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "firstName" -> "Dave",
         "lastName" -> "Jones",
@@ -190,7 +190,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 400 when the phone number is invalid" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "I'm not a phone number",
         "firstName" -> "Dave",
@@ -203,7 +203,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return a custom error message when the phone number is invalid" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "I'm not a phone number",
         "firstName" -> "Dave",
@@ -224,7 +224,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return a custom error message when the phone number is empty" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "",
         "firstName" -> "Dave",
@@ -245,7 +245,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return a custom error message when the email  is invalid" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "07706641666",
         "firstName" -> "Dave",
@@ -266,7 +266,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return a custom error message when the frist name is empty" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "07706641666",
         "firstName" -> "",
@@ -285,7 +285,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return a custom error message when the last name is empty" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "07706641666",
         "firstName" -> "Dave",
@@ -304,7 +304,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return a custom error message when the email is empty" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val data = Json.obj(
         "phoneNumber" -> "07706641666",
         "firstName" -> "Dave",
@@ -324,7 +324,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 500 when the SubscriptionDataService errors" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val sData = SubscriberContact("Dave","Smith", "0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT[Future,CBCId](Future.successful(cbcid))
@@ -342,7 +342,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 500 when the getCbcId call errors out" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat),any(),any())) thenReturn rightE(subscriptionDetails)
@@ -356,7 +356,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 500 when the addKnownFactsToGG call errors" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.left[Future,CBCErrors, String](Future.successful(UnexpectedState("oops")))
@@ -375,7 +375,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 303 (see_other) when all params are present and valid and the SubscriptionDataService returns Ok and send an email " in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(),anyObject())) thenReturn EitherT.pure[Future,CBCErrors, String]("done")
@@ -398,7 +398,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "not send an email if one has already been send " in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cache.readOption[GGId](EQ(GGId.format),any(),any())) thenReturn Future.successful(Some(GGId("ggid","type")))
@@ -421,7 +421,7 @@ class SubscriptionControllerSpec  extends UnitSpec with ScalaFutures with GuiceO
     "return 500 when trying to resubmit subscription details" in {
       when(auth.authorise[Credentials](any(),any())(any(),any())) thenReturn Future.successful(Credentials("asdf","gateway"))
       val subService = mock[SubscriptionDataService]
-      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth)
+      val controller = new SubscriptionController(messagesApi,subService,dc,cbcId,emailMock,cbcKF,bprKF,env,auditMock,auth,mcc)
       val sData = SubscriberContact("Dave","Smith","0207456789",EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cache.readOption[Subscribed.type] (EQ(Implicits.format),any(),any())) thenReturn Future.successful(Some(Subscribed))

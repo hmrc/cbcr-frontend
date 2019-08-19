@@ -24,7 +24,7 @@
 
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@(form:Form[_])(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @error = @{form.error("companyName").isDefined}
 @main_template(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}) {

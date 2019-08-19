@@ -17,29 +17,29 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.EitherT
+import cats.instances.future._
+import javax.inject.{Inject, Singleton}
 import play.api.http.Status
+import play.api.{Configuration, Environment, Logger}
+import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import javax.inject.{Inject, Singleton}
-
-import play.api.{Configuration, Environment, Logger}
-import uk.gov.hmrc.play.config.ServicesConfig
-import cats.instances.future._
-import uk.gov.hmrc.cbcrfrontend.controllers._
-import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 @Singleton
 class SubscriptionDataService @Inject()(environment:Environment,
                                         val runModeConfiguration:Configuration,
-                                        http:HttpClient) extends ServicesConfig{
+                                        http: HttpClient,
+                                        servicesConfig: ServicesConfig) {
 
   val mode = environment.mode
 
-  implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr")}
+  implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr")}
 
   def alreadySubscribed(utr:Utr)(implicit hc: HeaderCarrier, ec: ExecutionContext):ServiceResponse[Boolean] =
     retrieveSubscriptionData(Left(utr)).map(_.isDefined)

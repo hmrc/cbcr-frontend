@@ -15,6 +15,7 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import play.twirl.api.HtmlFormat
 
 @(title: String,
         mainClass: Option[String] = None,
@@ -25,7 +26,7 @@
         mainContent: Html = HtmlFormat.empty,
         serviceInfoContent: Html = HtmlFormat.empty,
         scriptElem: Option[Html] = None
-)(implicit request: Request[_], messages: Messages, lang: Lang, config:FrontendAppConfig)
+)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @googleHeadScript = {
     <!-- Google Tag Manager -->

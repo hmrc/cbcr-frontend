@@ -20,46 +20,46 @@ import java.io.{File, FileInputStream, PrintWriter}
 import java.time.LocalDateTime
 import java.util.UUID
 
-import javax.inject.{Inject, Singleton}
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
+import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import play.api.Mode.Mode
 import play.api.http.Status
-import play.api.i18n.{I18nSupport, Lang, MessagesApi}
-import play.api.libs.Files
+import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
+import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Environment, Logger}
+import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.typesclasses.{HttpExecutor, _}
+import uk.gov.hmrc.cbcrfrontend.typesclasses._
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.play.config.ServicesConfig
-
 
 @Singleton
 class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,
                                   ws:WSClient,
                                   configuration: Configuration,
-                                  val messagesApi:MessagesApi)
-                                 (implicit http:HttpClient, ac:ActorSystem, environment:Environment) extends ServicesConfig with I18nSupport{
+                                  val messagesApi:MessagesApi,
+                                  servicesConfig: ServicesConfig)
+                                 (implicit http:HttpClient, ac:ActorSystem, environment:Environment, fileUploadFrontEndWS: FileUploadFrontEndWS) extends I18nSupport{
 
   implicit val materializer = ActorMaterializer()
 
 
-  implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = baseUrl("file-upload") }
-  implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = baseUrl("file-upload-frontend") }
-  implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = baseUrl("cbcr") }
+  implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = servicesConfig.baseUrl("file-upload") }
+  implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = servicesConfig.baseUrl("file-upload-frontend") }
+  implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[EnvelopeId] = {
 
@@ -109,15 +109,15 @@ class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,
   def getFile(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier,
                                                   ec: ExecutionContext): ServiceResponse[File] =
     EitherT(
-      ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").withMethod("GET") .stream().flatMap{
-        res => res.headers.status match {
+      ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content").withMethod("GET").stream().flatMap{
+        res => res.status match {
           case Status.OK =>
             val file = java.nio.file.Files.createTempFile(envelopeId,"xml")
             val outputStream = java.nio.file.Files.newOutputStream(file)
 
             val sink = Sink.foreach[ByteString] { bytes => outputStream.write(bytes.toArray) }
 
-            res.body.runWith(sink).andThen {
+            res.bodyAsSource.runWith(sink).andThen {
               case result =>
                 outputStream.close()
                 result.get
@@ -154,23 +154,19 @@ class FileUploadService @Inject()(fusConnector: FileUploadServiceConnector,
     } yield resourceUrl.body
   }
 
-  override protected def mode: Mode = environment.mode
-
-  override protected def runModeConfiguration: Configuration = configuration
-
-  def errorsToList(e:List[ValidationErrors])(implicit lang: Lang) : List[String] =
-    e.map(x => x.show.split(" ").map(x => messagesApi(x)).map(_.toString).mkString(" "))
+  def errorsToList(e:List[ValidationErrors])(implicit messages: Messages) : List[String] =
+    e.map(x => x.show.split(" ").map(x => messages(x)).map(_.toString).mkString(" "))
 
 
-  def errorsToMap(e:List[ValidationErrors])(implicit lang: Lang) : Map[String,String] =
+  def errorsToMap(e:List[ValidationErrors])(implicit messages: Messages) : Map[String,String] =
     errorsToList(e).foldLeft(Map[String, String]()) {(m, t) => m + ("error_" + (m.size + 1).toString -> t)}
 
 
-  def errorsToString(e:List[ValidationErrors])(implicit lang: Lang) : String =
+  def errorsToString(e:List[ValidationErrors])(implicit messages: Messages) : String =
     errorsToList(e).map(_.toString).mkString("\r\n")
 
-  def errorsToFile(e:List[ValidationErrors], name:String)(implicit lang: Lang) : File = {
-    val b = Files.TemporaryFile(name, ".txt")
+  def errorsToFile(e:List[ValidationErrors], name:String)(implicit messages: Messages) : File = {
+    val b = SingletonTemporaryFileCreator.create(name, ".txt")
     val writer = new PrintWriter(b.file)
     writer.write(errorsToString(e))
     writer.flush()

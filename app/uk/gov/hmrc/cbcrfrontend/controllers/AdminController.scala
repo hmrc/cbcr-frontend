@@ -20,19 +20,19 @@ import java.time.LocalDate
 
 import javax.inject.Inject
 import play.api.Configuration
-import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
+import play.api.data.Form
+import play.api.data.Forms.{localDate, mapping, nonEmptyText}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
-import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, ReportingEntity, ReportingEntityData, SubscriberContact}
+import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityData
+import uk.gov.hmrc.cbcrfrontend.services.ReportingEntityDataService
+import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend.views.html._
-import play.api.data.Form
-import play.api.data.Forms.{localDate, mapping, nonEmptyText}
-import uk.gov.hmrc.cbcrfrontend.services.ReportingEntityDataService
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,10 +42,12 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
                                 cbcrBackendConnector: CBCRBackendConnector,
                                 reportingEntityDataService: ReportingEntityDataService)
                                (implicit conf:FrontendAppConfig,
-                                val messagesApi:MessagesApi,
-                                val ec: ExecutionContext) extends FrontendController with I18nSupport {
+                                override val messagesApi:MessagesApi,
+                                val ec: ExecutionContext,
+                                messagesControllerComponents: MessagesControllerComponents) extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val defaultParser = messagesControllerComponents.parsers.defaultBodyParser
 
   lazy val credentials = Creds(frontendAppConfig.username, frontendAppConfig.password)
 
@@ -74,7 +76,7 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
   )
 
 
-  def showAdminPage: Action[AnyContent] = AuthenticationController(credentials) {
+  def showAdminPage: Action[AnyContent] = AuthenticationController(credentials).apply {
     implicit request =>
       Ok(tepm_admin_page())
   }
@@ -86,10 +88,9 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
   )
 }
 
-  def showAmendDocRefIdPage = AuthenticationController(credentials) {
+  def showAmendDocRefIdPage = AuthenticationController(credentials).apply {
     implicit request =>
       Ok(admin_docRefId_Editor())
-
   }
 
   def showAddReportingEntityPage = AuthenticationController(credentials).async {

@@ -22,7 +22,7 @@
   bodyClasses: Option[String] = None,
   mainClass: Option[String] = None,
   sessionTimeout:Boolean = true,
-  scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, lang: Lang, conf: FrontendAppConfig)
+  scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, conf: FrontendAppConfig)
 
 @import uk.gov.hmrc.play.views.html.layouts
 @import uk.gov.hmrc.cbcrfrontend.views.html._

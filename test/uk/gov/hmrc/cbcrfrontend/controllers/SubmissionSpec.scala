@@ -31,7 +31,7 @@ import play.api.{Configuration, Environment}
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsNull, JsValue, Json}
-import play.api.mvc.Result
+import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval, ~}
@@ -81,6 +81,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
   val mockCBCIdService        = mock[CBCIdService]
   val mockEmailService        = mock[EmailService]
   val reportingEntity         = mock[ReportingEntityDataService]
+  val mcc                     = app.injector.instanceOf[MessagesControllerComponents]
 
   implicit lazy val fusUrl    = new ServiceUrl[FusUrl] { val url = "file-upload"}
   implicit lazy val fusFeUrl  = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend"}
@@ -92,7 +93,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
 
 
   implicit val hc = HeaderCarrier()
-  val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+  val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService,mcc)(ec,cache,config,feConfig)
 
   override protected def afterEach(): Unit = {
     reset(cache,fus,docRefService,reportingEntity,mockEmailService, auth, messageRefIdService)
@@ -152,7 +153,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "use the UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService,mcc)(ec,cache,config,feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
@@ -165,7 +166,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService,mcc)(ec,cache,config,feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)
@@ -176,7 +177,7 @@ class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wi
     }
     "use the Filing type form the xml when the ReportingRole is CBC703" in {
       val cache = mock[CBCSessionCache]
-      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService)(ec,cache,config,feConfig)
+      val controller = new SubmissionController(messagesApi,fus, docRefService,reportingEntity,messageRefIdService,mockCBCIdService,auditMock,env,auth,mockEmailService,mcc)(ec,cache,config,feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format),any(),any())) thenReturn Future.successful(None)

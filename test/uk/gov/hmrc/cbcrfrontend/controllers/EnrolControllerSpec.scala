@@ -24,23 +24,18 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.{Configuration, Environment}
 import play.api.http.Status
-import play.api.i18n.{Messages, MessagesApi}
-import play.api.libs.json.Json
-import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
+import play.api.mvc.{DefaultMessagesControllerComponents, MessagesControllerComponents}
+import play.api.test.{FakeRequest, Helpers}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
-import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, Utr}
-import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
+import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 
 class EnrolControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach{
@@ -55,7 +50,8 @@ class EnrolControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPer
   val authConnector     = mock[AuthConnector]
   val enrolConnector    = mock[TaxEnrolmentsConnector]
   val env               = mock[Environment]
-  val controller        = new EnrolController(config,enrolConnector,authConnector,env)
+  val mcc               = app.injector.instanceOf[MessagesControllerComponents]
+  val controller        = new EnrolController(config,enrolConnector,authConnector,env, mcc)
 
   val id = CBCId.create(5678).getOrElse(fail("bad cbcid"))
   val utr = Utr("9000000001")

@@ -17,30 +17,29 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import javax.inject.{Inject, Singleton}
+import play.api.Configuration
 import play.api.data.Forms._
 import play.api.data._
-import play.api.Configuration
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
-import uk.gov.hmrc.auth.core.retrieve.Retrievals
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import uk.gov.hmrc.auth.core.retrieve.{Retrievals, _}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class StartController @Inject()(val messagesApi: MessagesApi,
-                                val authConnector:AuthConnector)(implicit val cache:CBCSessionCache,
-                                                                 val config: Configuration,
-                                                                 feConfig:FrontendAppConfig,
-                                                                 val ec: ExecutionContext) extends FrontendController with AuthorisedFunctions with I18nSupport {
+class StartController @Inject()(override val messagesApi: MessagesApi,
+                                val authConnector:AuthConnector,
+                                messagesControllerComponents: MessagesControllerComponents)(implicit val cache:CBCSessionCache,
+                                                                                            val config: Configuration,
+                                                                                            feConfig:FrontendAppConfig,
+                                                                                            val ec: ExecutionContext) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
 
   val startForm: Form[String] = Form(
