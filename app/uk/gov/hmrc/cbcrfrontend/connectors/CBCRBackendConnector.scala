@@ -24,7 +24,7 @@ import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
 import play.api.libs.json.{JsNull, JsString, Json}
-import uk.gov.hmrc.cbcrfrontend.controllers.{AdminDocRefIdRecord, ListDocRefIdRecord}
+import uk.gov.hmrc.cbcrfrontend.controllers.{AdminDocRefId, AdminDocRefIdRecord, AdminReportingEntityData, ListDocRefIdRecord}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.Email
 
@@ -112,6 +112,8 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/admin/reporting-entity/query-tin/$tin/$reportingPeriod")
 
-  def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier):Future[HttpResponse] = http.PUT(url + s"/admin/updateDocRefId/$docRefId", JsNull)
+  def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier):Future[HttpResponse] = http.PUT(url + s"/admin/updateDocRefId/${docRefId}", JsNull)
+
+  def editAdminReportingEntity(selector: AdminDocRefId, adminReportingEntityData: AdminReportingEntityData)(implicit hc: HeaderCarrier) = http.POST(url + s"/admin/updateReportingEntityDRI/${selector.id}", Json.toJson(adminReportingEntityData))
 
 }
