@@ -35,7 +35,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-
 import scala.concurrent.{ExecutionContext, Future}
 
 /*This case class is used to show all the DocRefIds stored in our mongo DB. The one we had in models had too many parameters and we only retrieve id and valid fields from DB which isnt enough to make the original

@@ -24,7 +24,6 @@ import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
 import play.api.libs.json.{JsNull, JsString, Json}
-import play.api.mvc.Result
 import uk.gov.hmrc.cbcrfrontend.controllers.{AdminDocRefId, AdminDocRefIdRecord, AdminReportingEntityData, ListDocRefIdRecord}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.Email
