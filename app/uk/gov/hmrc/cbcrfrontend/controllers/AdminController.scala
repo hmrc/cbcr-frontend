@@ -35,7 +35,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
-
 import scala.concurrent.{ExecutionContext, Future}
 
 /*This case class is used to show all the DocRefIds stored in our mongo DB. The one we had in models had too many parameters and we only retrieve id and valid fields from DB which isnt enough to make the original
@@ -87,7 +86,7 @@ case class AdminReportingEntityDataRequestForm(selector: AdminDocRefId, cbcRepor
 
 object AdminReportingEntityDataRequestForm {
   implicit val format = Json.format[AdminReportingEntityDataRequestForm]
-  }
+}
 
 case class AdminReportingEntityData(cbcReportsDRI: List[AdminDocRefId], additionalInfoDRI: Option[List[AdminDocRefId]], reportingEntityDRI: AdminDocRefId)
 
@@ -224,8 +223,17 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
         }
 
       )
+  }
 
-
+  def adminAddDocRefId = AuthenticationController(credentials).async {
+    implicit request =>
+      adminQueryDocRefIdForm.bindFromRequest().fold(
+        errors => Future.successful(BadRequest("Error binding doc ref id from text box")),
+        docRefId =>
+          cbcrBackendConnector.adminSaveDocRefId(docRefId).map { res =>
+            Ok(s"${docRefId.id} was added to Database")
+          }
+      )
   }
 
 }

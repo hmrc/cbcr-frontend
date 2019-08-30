@@ -116,4 +116,6 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
 
   def editAdminReportingEntity(selector: AdminDocRefId, adminReportingEntityData: AdminReportingEntityData)(implicit hc: HeaderCarrier) = http.POST(url + s"/admin/updateReportingEntityDRI/${selector.id}", Json.toJson(adminReportingEntityData))
 
+  def adminSaveDocRefId(id: AdminDocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] = http.POST(url + s"/admin/saveDocRefId/${id.id}", JsNull)
+
 }
