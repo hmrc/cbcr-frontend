@@ -41,6 +41,18 @@
         </form>
     </div>
 
+    <div class="tin">
+
+        <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.adminAddDocRefId()" method="post">
+
+            <input type="text" name="id" label="id"><br>
+            @CSRF.formField
+            <div class="form-field">
+                <button role="button" type="submit" id="continue">Add Doc Ref ID</button>
+            </div>
+        </form>
+    </div>
+
 
 
 }

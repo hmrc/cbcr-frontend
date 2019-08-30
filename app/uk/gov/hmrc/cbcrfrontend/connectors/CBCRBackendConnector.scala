@@ -24,6 +24,7 @@ import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
 import play.api.libs.json.{JsNull, JsString, Json}
+import play.api.mvc.Result
 import uk.gov.hmrc.cbcrfrontend.controllers.{AdminDocRefId, AdminDocRefIdRecord, AdminReportingEntityData, ListDocRefIdRecord}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.Email
@@ -115,5 +116,7 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier):Future[HttpResponse] = http.PUT(url + s"/admin/updateDocRefId/${docRefId}", JsNull)
 
   def editAdminReportingEntity(selector: AdminDocRefId, adminReportingEntityData: AdminReportingEntityData)(implicit hc: HeaderCarrier) = http.POST(url + s"/admin/updateReportingEntityDRI/${selector.id}", Json.toJson(adminReportingEntityData))
+
+  def adminSaveDocRefId(id: AdminDocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] = http.POST(url + s"/admin/saveDocRefId/${id.id}", JsNull)
 
 }

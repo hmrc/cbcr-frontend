@@ -21,6 +21,7 @@
 @import helper._
 @import uk.gov.hmrc.cbcrfrontend.controllers.AdminDocRefIdRecord
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import cats.data.NonEmptyList
 
 @import tags._
 
@@ -35,11 +36,15 @@
         <table >
             <tr>
                 <th>cbcReportsDRI</th>
-                <th>@{reportingEntity.cbcReportsDRI}</th>
+                <th>@for(cbcReports <- reportingEntity.cbcReportsDRI.toList) {
+                    @{cbcReports}
+                }</th>
             </tr>
             <tr>
                 <th>additionalInfoDRI</th>
-                <th>@{reportingEntity.additionalInfoDRI}</th>
+                <th>@for(addintonalInfo <- reportingEntity.additionalInfoDRI) {
+                    @{addintonalInfo}
+                }</th>
             </tr>
             <tr>
                 <th>reportingEntityDRI</th>

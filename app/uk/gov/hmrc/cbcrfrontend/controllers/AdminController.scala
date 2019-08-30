@@ -87,7 +87,7 @@ case class AdminReportingEntityDataRequestForm(selector: AdminDocRefId, cbcRepor
 
 object AdminReportingEntityDataRequestForm {
   implicit val format = Json.format[AdminReportingEntityDataRequestForm]
-  }
+}
 
 case class AdminReportingEntityData(cbcReportsDRI: List[AdminDocRefId], additionalInfoDRI: Option[List[AdminDocRefId]], reportingEntityDRI: AdminDocRefId)
 
@@ -224,8 +224,17 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
         }
 
       )
+  }
 
-
+  def adminAddDocRefId = AuthenticationController(credentials).async {
+    implicit request =>
+      adminQueryDocRefIdForm.bindFromRequest().fold(
+        errors => Future.successful(BadRequest("Error binding doc ref id from text box")),
+        docRefId =>
+          cbcrBackendConnector.adminSaveDocRefId(docRefId).map { res =>
+            Ok(s"${docRefId.id} was added to Database")
+          }
+      )
   }
 
 }
