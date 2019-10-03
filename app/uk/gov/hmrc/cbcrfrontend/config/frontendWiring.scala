@@ -29,6 +29,7 @@ import uk.gov.hmrc.play.http.ws.{WSPost, _}
 import scala.concurrent.Future
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.hooks.HttpHook
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class FileUploadFrontEndWS @Inject()(override val wsClient: WSClient, appConfig: GenericAppConfig) extends HttpPost with WSPost {
