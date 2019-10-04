@@ -31,7 +31,7 @@ import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, NotFoundException}
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

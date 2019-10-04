@@ -38,7 +38,7 @@ import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, UnexpectedState, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.Ok
 

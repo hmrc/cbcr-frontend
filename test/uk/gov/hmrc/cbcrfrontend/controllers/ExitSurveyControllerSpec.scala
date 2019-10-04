@@ -38,7 +38,7 @@ import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}

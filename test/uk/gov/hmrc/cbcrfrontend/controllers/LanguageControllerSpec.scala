@@ -26,7 +26,7 @@ import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global

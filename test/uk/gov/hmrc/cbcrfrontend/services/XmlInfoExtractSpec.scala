@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.{File, FileInputStream}
 
 import uk.gov.hmrc.cbcrfrontend.model.RawCbcReports
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 class XmlInfoExtractSpec extends UnitSpec {
 
