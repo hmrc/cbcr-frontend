@@ -32,7 +32,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}

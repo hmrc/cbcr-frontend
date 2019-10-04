@@ -19,42 +19,40 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
 
-import org.mockito.ArgumentMatchers.any
 import akka.actor.ActorSystem
+import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
-import org.mockito.ArgumentMatchers.{eq => EQ, _}
+import org.mockito.ArgumentMatchers.{any, eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
-import play.api.{Configuration, Environment}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsNull, JsValue, Json}
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, EmptyRetrieval, Retrieval, ~}
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model.{CompleteXMLInfo, FileId, _}
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService, _}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import akka.util.Timeout
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 
-class SubmissionSpec  extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
+class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
 
 
   implicit val ec             = app.injector.instanceOf[ExecutionContext]
