@@ -168,7 +168,7 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
         errors => Future.successful(BadRequest("Error")),
         docRefId =>
           cbcrBackendConnector.adminReportingEntityDataQuery(docRefId.id).map(doc =>
-            Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
+            Ok(doc.json))
       )
   }
 
@@ -179,7 +179,7 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
         errors => Future.successful(BadRequest("Error")),
         query =>
           cbcrBackendConnector.adminReportingEntityCBCIdAndReportingPeriod(query.cbcId, query.date).map(doc =>
-            Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
+            Ok(doc.json))
       )
   }
 
