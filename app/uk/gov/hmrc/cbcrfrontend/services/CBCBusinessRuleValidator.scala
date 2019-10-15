@@ -542,6 +542,7 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
 
   private def validateMultipleFileUploadForSameReportingPeriod(x: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
 
+    /** checking for Reporting type because this rule only applies to CBC401*/
     x.messageSpec.messageType.getOrElse(determineMessageTypeIndic(x)) match {
       case CBC401 =>
 
