@@ -37,8 +37,8 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/*This case class is used to show all the DocRefIds stored in our mongo DB. The one we had in models had too many parameters and we only retrieve id and valid fields from DB which isnt enough to make the original
-* case class.
+/** This case class is used to show all the DocRefIds stored in our mongo DB. The one we had in models had too many parameters and we only retrieve id and valid fields from DB which isn't enough to make the original
+*   case class.
 * */
 case class AdminDocRefId(id: String)
 
@@ -61,11 +61,10 @@ object AdminDocRefId {
   }
 }
 
-/*This case class is used to re validate Doc Ref Ids that has been invalidated by users.*/
+/** This case class is used to re validate Doc Ref Ids that has been invalidated by users.*/
 case class AdminDocRefIdRecord(id: AdminDocRefId, valid: Boolean)
 
 object AdminDocRefIdRecord {
-
   implicit val format: Format[AdminDocRefIdRecord] = Json.format[AdminDocRefIdRecord]
 }
 
@@ -75,13 +74,13 @@ object ListDocRefIdRecord {
   implicit val format: Format[ListDocRefIdRecord] = Json.format[ListDocRefIdRecord]
 }
 
-/*This case class is used when searching for reporting entity data using cbc Id date */
+/** This case class is used when searching for reporting entity data using cbc Id date */
 case class AdminCbcIdAndDate(cbcId: String, date: LocalDate)
 
-/*This case class is used when searching for reporting entity data tin cbc Id date */
+/** This case class is used when searching for reporting entity data tin cbc Id date */
 case class AdminTinAndDate(tin: String, date: LocalDate)
 
-/*This case class is used when we manually need to the customers reporting entity and docref if and addtional info.*/
+/** This case class is used when we manually need to the customers reporting entity and docref if and addtional info.*/
 case class AdminReportingEntityDataRequestForm(selector: AdminDocRefId, cbcReportsDRI: List[AdminDocRefId], additionalInfoDRI: Option[List[AdminDocRefId]], reportingEntityDRI: AdminDocRefId)
 
 object AdminReportingEntityDataRequestForm {
@@ -108,13 +107,19 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val defaultParser = messagesControllerComponents.parsers.defaultBodyParser
 
+
   lazy val credentials = Creds(frontendAppConfig.username, frontendAppConfig.password)
+
+
+  def removeControllerCharacters(string: String) = {
+    string.filter(_ >= ' ')
+  }
 
   val adminReportingEntityDataRequestForm = Form(
     mapping(
       "selector" -> of[AdminDocRefId],
-      "cbcReportsDRI" -> nonEmptyText.transform[List[AdminDocRefId]](_.split(",").toList.map(elem => AdminDocRefId(elem)), l => l.map(_.id).mkString),
-      "additionalInfoDRI" -> optional(nonEmptyText).transform[Option[List[AdminDocRefId]]](str => str.map(in => in.split(",").toList.map(AdminDocRefId(_))), list => list.map(l => l.map(_.id).mkString)),
+      "cbcReportsDRI" -> nonEmptyText.transform[List[AdminDocRefId]](removeControllerCharacters(_).split(",").toList.map(elem => AdminDocRefId(elem)), l => l.map(_.id).mkString),
+      "additionalInfoDRI" -> optional(nonEmptyText).transform[Option[List[AdminDocRefId]]](str => str.map(input => removeControllerCharacters(input).split(",").toList.map(AdminDocRefId(_))), list => list.map(l => l.map(_.id).mkString)),
       "reportingEntityDRI" -> of[AdminDocRefId]
     )(AdminReportingEntityDataRequestForm.apply)(AdminReportingEntityDataRequestForm.unapply)
   )

@@ -33,17 +33,17 @@
 
         <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.editReportingEntity()" method="post">
 
-            <p>Selector Id</p>
-            <textarea type="text" name="selector" label="selector"></textarea><br>
-            <p>cbcReportsDRI</p>
-            <textarea type="text" name="cbcReportsDRI" label="cbcReportsDRI" contenteditable="true"></textarea>
-            <p>additionalInfoDRI</p>
-            <textarea type="text" name="additionalInfoDRI" label="additionalInfoDRI"></textarea>
-            <p>reportingEntityDRI</p>
-            <textarea type="text" name="reportingEntityDRI" label="reportingEntityDRI"></textarea>
+            <p><b>Selector Id</b></p>
+            <textarea type="text" name="selector" label="selector" placeholder="DRI"></textarea><br>
+            <p><b>cbcReportsDRI</b></p>
+            <textarea type="text" name="cbcReportsDRI" label="cbcReportsDRI" placeholder="cbcReportsDRI(comma separated)"></textarea><br>
+            <p><b>additionalInfoDRI</b></p>
+            <textarea type="text" name="additionalInfoDRI" label="additionalInfoDRI" placeholder="additionalInfoDRI(comma separated)"></textarea><br>
+            <p><b>reportingEntityDRI</b></p>
+            <textarea type="text" name="reportingEntityDRI" label="reportingEntityDRI" placeholder="reportingEntityDRI"></textarea><br>
             @CSRF.formField
             <div class="form-field">
-                <button role="button" type="submit" id="continue">Submit CbcId</button>
+                <button role="button" type="submit" id="continue">Submit</button>
             </div>
         </form>
     </div>
