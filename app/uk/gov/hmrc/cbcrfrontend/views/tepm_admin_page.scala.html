@@ -27,7 +27,11 @@
 @main_template(title = Messages("")) {
         <h1>@Messages("")</h1>
 
-        <a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAllDocRefIdOver200()">Get docRef</a>
-        <a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAddReportingEntityPage()">Add Reporting Entity</a>
-        <a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAmendDocRefIdPage()">Amend DocRefId</a>
+        <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAllDocRefIdOver200()">Get All DRI</a></p>
+
+        <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAddReportingEntityPage()">Get Reporting Entity Data</a></p>
+
+        <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAmendDocRefIdPage()">Add/Revalidate DRI</a></p>
+
+        <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.editReportingEntity()">Update Reporting Entity Data</a></p>
     }

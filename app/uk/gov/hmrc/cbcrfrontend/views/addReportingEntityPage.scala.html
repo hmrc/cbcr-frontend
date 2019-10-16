@@ -33,7 +33,8 @@
     <div class="doc-ref-id">
         <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.queryReportingEntityByDocRefId()" method="post">
 
-            <input type="text" name="id" label="id"><br>
+            <h3>Search by DRI</h3>
+            <input type="text" name="id" label="id" placeholder="DRI"><br>
             @CSRF.formField
             <div class="form-field">
             <button role="button" type="submit" id="continue">Submit DocRefId</button>
@@ -44,9 +45,9 @@
     <div class="cbcId">
 
         <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.queryReportingEntityByCbcIdAndDate()" method="post">
-
-            <input type="text" name="cbcId" label="cbcId"><br>
-            <input type="text" name="date" label="date"><br>
+            <h3>Search by CBC ID and Date</h3>
+            <input type="text" name="cbcId" label="cbcId" placeholder="CBC ID"><br>
+            <input type="text" name="date" label="date" placeholder="YYYY-MM-DD"><br>
             @CSRF.formField
             <div class="form-field">
             <button role="button" type="submit" id="continue">Submit CbcId</button>
@@ -58,8 +59,9 @@
 
         <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.queryReportingEntityByTinAndDate()" method="post">
 
-            <input type="text" name="tin" label="tin"><br>
-            <input type="text" name="date" label="date"><br>
+            <h3>Search by TIN/UTR and Date</h3>
+            <input type="text" name="tin" label="tin" placeholder="TIN/UTR"><br>
+            <input type="text" name="date" label="date" placeholder="YYYY-MM-DD"><br>
             @CSRF.formField
             <div class="form-field">
             <button role="button" type="submit" id="continue">Submit Tin</button>

@@ -25,35 +25,35 @@
 @import tags._
 
 
-@(submissionList: List[AdminDocRefIdRecord])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(submissionList: List[AdminDocRefIdRecord])(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 
 @main_template(title = Messages("")) {
 
-<table >
-  <tr>
-    <th>isValid</th>
-      <th>DocRefId</th>
-    <th>Length</th>
-  </tr>
+    <table >
+        <tr>
+            <th>isValid</th>
+            <th>DocRefId</th>
+            <th>Length</th>
+        </tr>
 
-    @for(elem <- submissionList) {
+        @for(elem <- submissionList) {
 
-                <tr>
+            <tr>
                 <td>@{
                     elem.valid
                 }</td>
-                    <td>@{
-                        elem.id.id
-                    }</td>
+                <td>@{
+                    elem.id.id
+                }</td>
                 <td>@{
                     elem.id.id.length
                 }</td>
-                </tr>
+            </tr>
 
 
-    }
+        }
 
-</table>
+    </table>
 
-<p>Total records with DocrefId length above 200 is: @submissionList.length</p>
+    <p>Total records of DRI: @submissionList.length</p>
 }
