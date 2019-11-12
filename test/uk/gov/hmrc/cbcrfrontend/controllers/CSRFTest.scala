@@ -23,5 +23,6 @@ import play.api.test.FakeRequest
 import scala.language.postfixOps
 
 trait CSRFTest {
-  def addToken[T](fakeRequest: FakeRequest[T])(implicit app: Application): FakeRequest[T] = new FakeRequest(addCSRFToken(fakeRequest))
+  def addToken[T](fakeRequest: FakeRequest[T])(implicit app: Application): FakeRequest[T] =
+    new FakeRequest(addCSRFToken(fakeRequest))
 }

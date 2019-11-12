@@ -19,10 +19,10 @@ package uk.gov.hmrc.cbcrfrontend.model
 import play.api.libs.json._
 import cats.syntax.show._
 
-case class FilingType(value:ReportingRole)
-object FilingType{
+case class FilingType(value: ReportingRole)
+object FilingType {
   implicit val format = new Format[FilingType] {
-    override def writes(o: FilingType): JsValue = Json.obj("filingType"-> o.value.show)
+    override def writes(o: FilingType): JsValue = Json.obj("filingType" -> o.value.show)
 
     override def reads(json: JsValue): JsResult[FilingType] = {
       val value = for {

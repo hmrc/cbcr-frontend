@@ -18,16 +18,15 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.{JsValue, Json}
 
-
 case class FileMetadata(
-                         id: String,
-                         status: String,
-                         name: String,
-                         contentType: String,
-                         length: BigDecimal,
-                         created: String,
-                         metadata: JsValue,
-                         href: String)
+  id: String,
+  status: String,
+  name: String,
+  contentType: String,
+  length: BigDecimal,
+  created: String,
+  metadata: JsValue,
+  href: String)
 
 object FileMetadata {
   implicit val fileMetadataFormat = Json.format[FileMetadata]

@@ -37,32 +37,56 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
+class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
 
-class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with BeforeAndAfterEach{
-
-  val connector        = mock[CBCRBackendConnector]
-  val reportingEntity  = mock[ReportingEntityDataService]
-  val configuration    = mock[Configuration]
-  val runMode:RunMode  = mock[RunMode]
+  val connector = mock[CBCRBackendConnector]
+  val reportingEntity = mock[ReportingEntityDataService]
+  val configuration = mock[Configuration]
+  val runMode: RunMode = mock[RunMode]
 
   when(runMode.env) thenReturn "Dev"
   when(configuration.getInt(s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(Some(23))
   when(configuration.getInt(s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(Some(12))
   when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(Some(2017))
 
+  implicit val ec: ExecutionContext = mock[ExecutionContext]
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  implicit val ec:ExecutionContext = mock[ExecutionContext]
-  implicit val hc:HeaderCarrier = HeaderCarrier()
+  val cds = new CreationDateService(connector, configuration, runMode, reportingEntity)
 
-  val cds = new CreationDateService(connector,configuration,runMode,reportingEntity)
-
-  val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
+  val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
   val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
   val actualDocRefId2 = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD63").get
 
-  val redNoCreationDate = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,None,None)
-  val redOldCreationDate = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.parse("2010-01-01")),None)
-  val red = ReportingEntityData(NonEmptyList.of(actualDocRefId),List(actualDocRefId2),actualDocRefId,TIN("asdf","lkajsdf"),UltimateParentEntity("someone"),CBC701,Some(LocalDate.now()),None)
+  val redNoCreationDate = ReportingEntityData(
+    NonEmptyList.of(actualDocRefId),
+    List(actualDocRefId2),
+    actualDocRefId,
+    TIN("asdf", "lkajsdf"),
+    UltimateParentEntity("someone"),
+    CBC701,
+    None,
+    None)
+  val redOldCreationDate = ReportingEntityData(
+    NonEmptyList.of(actualDocRefId),
+    List(actualDocRefId2),
+    actualDocRefId,
+    TIN("asdf", "lkajsdf"),
+    UltimateParentEntity("someone"),
+    CBC701,
+    Some(LocalDate.parse("2010-01-01")),
+    None
+  )
+  val red = ReportingEntityData(
+    NonEmptyList.of(actualDocRefId),
+    List(actualDocRefId2),
+    actualDocRefId,
+    TIN("asdf", "lkajsdf"),
+    UltimateParentEntity("someone"),
+    CBC701,
+    Some(LocalDate.now()),
+    None
+  )
 
   val messageSpec = MessageSpec(
     MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
@@ -77,8 +101,8 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
   val xmlinfo = XMLInfo(
     messageSpec,
     None,
-    List(CbcReports(DocSpec(OECD2,DocRefId(docRefId + "ENT").get,Some(CorrDocRefId(actualDocRefId)),None))),
-    List(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId + "ADD").get,None,None))),
+    List(CbcReports(DocSpec(OECD2, DocRefId(docRefId + "ENT").get, Some(CorrDocRefId(actualDocRefId)), None))),
+    List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None))),
     Some(LocalDate.now()),
     List.empty[String]
   )
@@ -88,32 +112,37 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
     super.afterEach()
   }
 
-
   "The CreationDateService" should {
     "return true" when {
       "repotingEntity creationDate is Null and default date of 2017/12/23 is less than 3 years ago" in {
-        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(redNoCreationDate))
-       val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
+        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
+          .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(redNoCreationDate))
+        val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
         result shouldBe true
       }
       "repotingEntity creationDate is less than 3 years ago" in {
-        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(red))
+        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
+          .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red))
         val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
         result shouldBe true
       }
     }
     "return false" when {
       "reportingEntity creationDate is older than 3 years ago" in {
-        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT.pure[Future,CBCErrors,Option[ReportingEntityData]](Some(redOldCreationDate))
+        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
+          .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(redOldCreationDate))
         val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
         result shouldBe false
       }
-      "repotingEntity creationDate is Null and default date is more than 3 years ago" in {when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(Some(2017))
+      "repotingEntity creationDate is Null and default date is more than 3 years ago" in {
+        when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
+          Some(2017))
         when(runMode.env) thenReturn "Dev"
-        when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(Some(2010))
+        when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
+          Some(2010))
         when(configuration.getInt(s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(Some(23))
         when(configuration.getInt(s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(Some(12))
-        val cds2 = new CreationDateService(connector,configuration,runMode,reportingEntity)
+        val cds2 = new CreationDateService(connector, configuration, runMode, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlinfo), 5.seconds)
         result shouldBe false
       }

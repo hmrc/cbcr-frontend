@@ -30,13 +30,11 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-
 class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
-
 
   val mockConnector = mock[BPRKnownFactsConnector]
   val mockAudit = mock[AuditConnector]
-  val bprKnownFactsService = new BPRKnownFactsService(mockConnector,mockAudit)
+  val bprKnownFactsService = new BPRKnownFactsService(mockConnector, mockAudit)
   implicit val hc = HeaderCarrier()
 
   val bodyKnownFact1: String =
@@ -53,17 +51,16 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPe
       |      "countryCode": "GB"
       |    }}""".stripMargin
 
-  val businessPartnerRecord1: BusinessPartnerRecord = Json.parse(bodyKnownFact1).validate[BusinessPartnerRecord].asOpt.get
+  val businessPartnerRecord1: BusinessPartnerRecord =
+    Json.parse(bodyKnownFact1).validate[BusinessPartnerRecord].asOpt.get
   val kf1 = BPRKnownFacts(Utr("7000000002"), "BN5 4ZZ")
-
-
 
   "The BPRKnowFactsService" should {
     "return a match for a check with an exact matching post code " in {
 
       val result: HttpResponse = mock[HttpResponse]
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
-      when(mockAudit.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(mockAudit.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(kf1).value, 2.second)
@@ -76,10 +73,11 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPe
 
       val result: HttpResponse = mock[HttpResponse]
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
-      when(mockAudit.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(mockAudit.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       when(result.body).thenReturn(bodyKnownFact1)
 
-      val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN3 5XB")).value, 2.second)
+      val maybeKnownFact = Await
+        .result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN3 5XB")).value, 2.second)
 
       maybeKnownFact.isDefined shouldBe false
 
@@ -89,10 +87,11 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPe
 
       val result: HttpResponse = mock[HttpResponse]
       when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
-      when(mockAudit.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(mockAudit.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       when(result.body).thenReturn(bodyKnownFact1)
 
-      val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value, 2.second)
+      val maybeKnownFact = Await
+        .result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value, 2.second)
 
       maybeKnownFact.isDefined shouldBe true
 

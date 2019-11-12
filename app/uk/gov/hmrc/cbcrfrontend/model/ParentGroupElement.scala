@@ -24,12 +24,14 @@ case object ENT extends ParentGroupElement
 case object REP extends ParentGroupElement
 case object ADD extends ParentGroupElement
 
-
 object ParentGroupElement {
-  def fromString(s:String):Option[ParentGroupElement] = format.reads(JsString(s)).fold(
-    _ => None,
-    p => Some(p)
-  )
+  def fromString(s: String): Option[ParentGroupElement] =
+    format
+      .reads(JsString(s))
+      .fold(
+        _ => None,
+        p => Some(p)
+      )
 
   implicit val format = new Format[ParentGroupElement] {
     override def reads(json: JsValue): JsResult[ParentGroupElement] = json match {

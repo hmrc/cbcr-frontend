@@ -18,7 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.Json
 
-case class AgencyBusinessName(name:String)
-object AgencyBusinessName{
+case class AgencyBusinessName(name: String)
+object AgencyBusinessName {
   implicit val format = Json.format[AgencyBusinessName]
 }

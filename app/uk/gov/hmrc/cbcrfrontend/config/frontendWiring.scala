@@ -32,19 +32,20 @@ import uk.gov.hmrc.http.hooks.HttpHook
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
-class FileUploadFrontEndWS @Inject()(override val wsClient: WSClient, appConfig: GenericAppConfig) extends HttpPost with WSPost {
+class FileUploadFrontEndWS @Inject()(override val wsClient: WSClient, appConfig: GenericAppConfig)
+    extends HttpPost with WSPost {
 
   def doFormPartPost(
-                      url: String,
-                      fileName: String,
-                      contentType: String,
-                      body: ByteString,
-                      headers: Seq[(String, String)]
-                    )(
-                      implicit
-                      hc: HeaderCarrier,
-                      rds: HttpReads[HttpResponse]
-                    ): Future[HttpResponse] = {
+    url: String,
+    fileName: String,
+    contentType: String,
+    body: ByteString,
+    headers: Seq[(String, String)]
+  )(
+    implicit
+    hc: HeaderCarrier,
+    rds: HttpReads[HttpResponse]
+  ): Future[HttpResponse] = {
     val source = Source(FilePart(fileName, fileName, Some(contentType), Source.single(body)) :: Nil)
 
     withTracing(POST_VERB, url) {

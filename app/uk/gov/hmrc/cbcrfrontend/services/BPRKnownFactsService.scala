@@ -38,44 +38,49 @@ import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
   * the same postcode as the provided [[BPRKnownFacts]]
   */
 @Singleton
-class BPRKnownFactsService @Inject() (dc:BPRKnownFactsConnector, audit:AuditConnector) {
+class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditConnector) {
 
   private val AUDIT_TAG = "CBCRBPRKnowFacts"
 
-  private def sanitisePostCode(s:String) : String = s.toLowerCase.replaceAll("\\s", "")
+  private def sanitisePostCode(s: String): String = s.toLowerCase.replaceAll("\\s", "")
 
-  def checkBPRKnownFacts(kf:BPRKnownFacts)(implicit hc:HeaderCarrier) : OptionT[Future,BusinessPartnerRecord] = {
-    val response = OptionT(dc.lookup(kf.utr.value).map { response =>
-      val bpr: Option[BusinessPartnerRecord] = Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
-      auditBpr(bpr, kf)
-      bpr
-    }.recover{
-      case _:NotFoundException=> None
-    })
-    response.subflatMap{ r =>
+  def checkBPRKnownFacts(kf: BPRKnownFacts)(implicit hc: HeaderCarrier): OptionT[Future, BusinessPartnerRecord] = {
+    val response = OptionT(
+      dc.lookup(kf.utr.value)
+        .map { response =>
+          val bpr: Option[BusinessPartnerRecord] = Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
+          auditBpr(bpr, kf)
+          bpr
+        }
+        .recover {
+          case _: NotFoundException => None
+        })
+    response.subflatMap { r =>
       val bprPostCode = r.address.postalCode.getOrElse("")
       val postCodeMatches = sanitisePostCode(bprPostCode) == sanitisePostCode(kf.postCode)
-      if(postCodeMatches) Some(r)
+      if (postCodeMatches) Some(r)
       else None
     }
   }
 
-  private def auditBpr(bpr: Option[BusinessPartnerRecord], kf:BPRKnownFacts)
-              (implicit hc: HeaderCarrier): Future[Unit] = {
-
-    bpr.fold(Future.successful(Logger.error("Des Connector did not return anything from lookup")))(bpr =>
-      audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", AUDIT_TAG,
-        detail = Json.obj(
-          "utr"      -> JsString(kf.utr.utr),
-          "postcode" -> JsString(kf.postCode),
-          "bpr"      -> Json.toJson(bpr)
-        )
-      )).map {
-        case AuditResult.Disabled => Logger.info("Audit disabled for BPRKnownFactsService")
-        case AuditResult.Success => Logger.info("Successful Audit for BPRKnownFactsService")
-        case AuditResult.Failure(msg, _) => Logger.error(s"Unable to audit a BPRKnowFacts lookup: $msg")
-      }
-    )
-  }
+  private def auditBpr(bpr: Option[BusinessPartnerRecord], kf: BPRKnownFacts)(
+    implicit hc: HeaderCarrier): Future[Unit] =
+    bpr.fold(Future.successful(Logger.error("Des Connector did not return anything from lookup")))(
+      bpr =>
+        audit
+          .sendExtendedEvent(
+            ExtendedDataEvent(
+              "Country-By-Country-Frontend",
+              AUDIT_TAG,
+              detail = Json.obj(
+                "utr"      -> JsString(kf.utr.utr),
+                "postcode" -> JsString(kf.postCode),
+                "bpr"      -> Json.toJson(bpr)
+              )))
+          .map {
+            case AuditResult.Disabled        => Logger.info("Audit disabled for BPRKnownFactsService")
+            case AuditResult.Success         => Logger.info("Successful Audit for BPRKnownFactsService")
+            case AuditResult.Failure(msg, _) => Logger.error(s"Unable to audit a BPRKnowFacts lookup: $msg")
+        })
 
 }

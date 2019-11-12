@@ -25,7 +25,6 @@ import cats.instances.all._
 import play.api.libs.json._
 import play.api.libs.json.Json._
 
-
 /**
   * This Data is stored in our mongo store on initial submission of an XML
   * On subsequent update/delete submissions, if the [[ReportingEntity]] section is missing, we can use the [[DocRefId]]
@@ -40,43 +39,50 @@ import play.api.libs.json.Json._
   * @param ultimateParentEntity The [[UltimateParentEntity]] from the [[ReportingEntity]] section of the XML document
   * @param reportingRole The [[ReportingRole]] from the [[ReportingEntity]] section of the XML document
   */
-case class ReportingEntityData(cbcReportsDRI:NonEmptyList[DocRefId],
-                               additionalInfoDRI:List[DocRefId],
-                               reportingEntityDRI:DocRefId,
-                               tin:TIN,
-                               ultimateParentEntity: UltimateParentEntity,
-                               reportingRole: ReportingRole,
-                               creationDate: Option[LocalDate],
-                               reportingPeriod: Option[LocalDate])
+case class ReportingEntityData(
+  cbcReportsDRI: NonEmptyList[DocRefId],
+  additionalInfoDRI: List[DocRefId],
+  reportingEntityDRI: DocRefId,
+  tin: TIN,
+  ultimateParentEntity: UltimateParentEntity,
+  reportingRole: ReportingRole,
+  creationDate: Option[LocalDate],
+  reportingPeriod: Option[LocalDate])
 
-case class DocRefIdPair(docRefId: DocRefId,corrDocRefId: Option[CorrDocRefId])
-object DocRefIdPair{ implicit val format = Json.format[DocRefIdPair] }
+case class DocRefIdPair(docRefId: DocRefId, corrDocRefId: Option[CorrDocRefId])
+object DocRefIdPair { implicit val format = Json.format[DocRefIdPair] }
 
-case class PartialReportingEntityData(cbcReportsDRI:List[DocRefIdPair],
-                                      additionalInfoDRI:List[DocRefIdPair],
-                                      reportingEntityDRI:DocRefIdPair,
-                                      tin:TIN,
-                                      ultimateParentEntity: UltimateParentEntity,
-                                      reportingRole: ReportingRole,
-                                      creationDate: Option[LocalDate],
-                                      reportingPeriod: Option[LocalDate])
+case class PartialReportingEntityData(
+  cbcReportsDRI: List[DocRefIdPair],
+  additionalInfoDRI: List[DocRefIdPair],
+  reportingEntityDRI: DocRefIdPair,
+  tin: TIN,
+  ultimateParentEntity: UltimateParentEntity,
+  reportingRole: ReportingRole,
+  creationDate: Option[LocalDate],
+  reportingPeriod: Option[LocalDate])
 
 object PartialReportingEntityData {
-  implicit def formatNEL[A:Format] = new Format[NonEmptyList[A]] {
+  implicit def formatNEL[A: Format] = new Format[NonEmptyList[A]] {
     override def writes(o: NonEmptyList[A]) = JsArray(o.map(Json.toJson(_)).toList)
 
-    override def reads(json: JsValue) = json.validate[List[A]].flatMap(l => NonEmptyList.fromList(l) match {
-      case None    => JsError(s"Unable to serialise $json as NonEmptyList")
-      case Some(a) => JsSuccess(a)
-    }).orElse{ json.validate[A].map(a => NonEmptyList(a,Nil)) }
+    override def reads(json: JsValue) =
+      json
+        .validate[List[A]]
+        .flatMap(l =>
+          NonEmptyList.fromList(l) match {
+            case None    => JsError(s"Unable to serialise $json as NonEmptyList")
+            case Some(a) => JsSuccess(a)
+        })
+        .orElse { json.validate[A].map(a => NonEmptyList(a, Nil)) }
   }
 
   implicit val format = Json.format[PartialReportingEntityData]
-  def extract(x:CompleteXMLInfo):PartialReportingEntityData =
+  def extract(x: CompleteXMLInfo): PartialReportingEntityData =
     PartialReportingEntityData(
-      x.cbcReport.map(cr => DocRefIdPair(cr.docSpec.docRefId,cr.docSpec.corrDocRefId)),
+      x.cbcReport.map(cr => DocRefIdPair(cr.docSpec.docRefId, cr.docSpec.corrDocRefId)),
       x.additionalInfo.map(ai => DocRefIdPair(ai.docSpec.docRefId, ai.docSpec.corrDocRefId)),
-      DocRefIdPair(x.reportingEntity.docSpec.docRefId,x.reportingEntity.docSpec.corrDocRefId),
+      DocRefIdPair(x.reportingEntity.docSpec.docRefId, x.reportingEntity.docSpec.corrDocRefId),
       x.reportingEntity.tin,
       UltimateParentEntity(x.reportingEntity.name),
       x.reportingEntity.reportingRole,
@@ -85,15 +91,16 @@ object PartialReportingEntityData {
     )
 }
 
-object ReportingEntityData{
+object ReportingEntityData {
 
   import PartialReportingEntityData.formatNEL
   implicit val format = Json.format[ReportingEntityData]
 
-  def extract(x:CompleteXMLInfo):ValidatedNel[CBCErrors,ReportingEntityData]=
-    x.cbcReport.toNel.toValidNel(UnexpectedState("CBCReport DocRefId not found")).map{c =>
+  def extract(x: CompleteXMLInfo): ValidatedNel[CBCErrors, ReportingEntityData] =
+    x.cbcReport.toNel.toValidNel(UnexpectedState("CBCReport DocRefId not found")).map { c =>
       ReportingEntityData(
-        c.map(_.docSpec.docRefId),x.additionalInfo.map(_.docSpec.docRefId),
+        c.map(_.docSpec.docRefId),
+        x.additionalInfo.map(_.docSpec.docRefId),
         x.reportingEntity.docSpec.docRefId,
         x.reportingEntity.tin,
         UltimateParentEntity(x.reportingEntity.name),
@@ -106,15 +113,16 @@ object ReportingEntityData{
 
 }
 
-case class ReportingEntityDataModel(cbcReportsDRI:NonEmptyList[DocRefId],
-                                    additionalInfoDRI:List[DocRefId],
-                                    reportingEntityDRI:DocRefId,
-                                    tin:TIN,
-                                    ultimateParentEntity: UltimateParentEntity,
-                                    reportingRole: ReportingRole,
-                                    creationDate: Option[LocalDate],
-                                    reportingPeriod: Option[LocalDate],
-                                    oldModel: Boolean)
+case class ReportingEntityDataModel(
+  cbcReportsDRI: NonEmptyList[DocRefId],
+  additionalInfoDRI: List[DocRefId],
+  reportingEntityDRI: DocRefId,
+  tin: TIN,
+  ultimateParentEntity: UltimateParentEntity,
+  reportingRole: ReportingRole,
+  creationDate: Option[LocalDate],
+  reportingPeriod: Option[LocalDate],
+  oldModel: Boolean)
 
 object ReportingEntityDataModel {
 
@@ -122,4 +130,3 @@ object ReportingEntityDataModel {
 
   implicit val format = Json.format[ReportingEntityDataModel]
 }
-

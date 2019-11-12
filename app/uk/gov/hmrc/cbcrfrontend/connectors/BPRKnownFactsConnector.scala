@@ -27,14 +27,15 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class BPRKnownFactsConnector @Inject()(http:HttpClient)(implicit ec:ExecutionContext,
-                                                        val runModeConfiguration:Configuration,
-                                                        val environment:Environment,
-                                                        servicesConfig: ServicesConfig){
+class BPRKnownFactsConnector @Inject()(http: HttpClient)(
+  implicit ec: ExecutionContext,
+  val runModeConfiguration: Configuration,
+  val environment: Environment,
+  servicesConfig: ServicesConfig) {
 
   implicit lazy val url = servicesConfig.baseUrl("cbcr")
 
-  def lookup(utr:String)(implicit hc:HeaderCarrier) : Future[HttpResponse] = http.GET(generateUrl(url,utr).toString)
+  def lookup(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = http.GET(generateUrl(url, utr).toString)
 
-  private def generateUrl(baseUrl:String,utr:String) : URL = new URL(s"$baseUrl/cbcr/business-partner-record/$utr")
+  private def generateUrl(baseUrl: String, utr: String): URL = new URL(s"$baseUrl/cbcr/business-partner-record/$utr")
 }

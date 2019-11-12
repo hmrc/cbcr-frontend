@@ -25,7 +25,7 @@ object FileId {
   implicit val fileIdFormat = new Format[FileId] {
     override def reads(json: JsValue): JsResult[FileId] = json.asOpt[String] match {
       case Some(s) => JsSuccess(FileId(s))
-      case None => JsError(s"Could not parse fileId: $json")
+      case None    => JsError(s"Could not parse fileId: $json")
     }
 
     override def writes(o: FileId): JsValue = JsString(o.value)

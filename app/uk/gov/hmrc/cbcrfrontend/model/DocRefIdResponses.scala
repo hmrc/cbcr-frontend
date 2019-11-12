@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-object DocRefIdResponses{
+object DocRefIdResponses {
 
   sealed trait DocRefIdResponses extends Product with Serializable
 

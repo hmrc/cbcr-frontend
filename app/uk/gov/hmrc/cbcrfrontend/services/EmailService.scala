@@ -29,17 +29,20 @@ import scala.util.control.NonFatal
 import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
-class EmailService  @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {
+class EmailService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
-  def sendEmail(email:Email)(implicit hc:HeaderCarrier) : OptionT[Future,Boolean] = {
-    OptionT(connector.sendEmail(email).map { response =>
-      response.status match {
-        case Status.ACCEPTED => Some(true)
-      }
-    }.recover{
-      case NonFatal(e) =>
-        Logger.error("The email has failed to send :( " + email + " exception " + e)
-        Some(false)
-    })
-  }
+  def sendEmail(email: Email)(implicit hc: HeaderCarrier): OptionT[Future, Boolean] =
+    OptionT(
+      connector
+        .sendEmail(email)
+        .map { response =>
+          response.status match {
+            case Status.ACCEPTED => Some(true)
+          }
+        }
+        .recover {
+          case NonFatal(e) =>
+            Logger.error("The email has failed to send :( " + email + " exception " + e)
+            Some(false)
+        })
 }

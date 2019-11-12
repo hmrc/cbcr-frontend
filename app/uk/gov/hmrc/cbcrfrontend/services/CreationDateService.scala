@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-
-
 import javax.inject.{Inject, Singleton}
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -30,51 +28,66 @@ import cats.instances.all._
 import play.api.Configuration
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
-
-
 @Singleton
-class CreationDateService @Inject()(connector:CBCRBackendConnector,
-                                    configuration: Configuration,
-                                    runMode: RunMode,
-                                    reportingEntityDataService: ReportingEntityDataService)(implicit ec:ExecutionContext) {
+class CreationDateService @Inject()(
+  connector: CBCRBackendConnector,
+  configuration: Configuration,
+  runMode: RunMode,
+  reportingEntityDataService: ReportingEntityDataService)(implicit ec: ExecutionContext) {
 
   val env: String = runMode.env
 
-  private val creationDay = configuration.getInt(s"$env.default-creation-date.day").getOrElse(
-    throw new Exception(s"Missing configuration key: $env.default-creation-date.day")
-  )
-  private val creationMonth = configuration.getInt(s"$env.default-creation-date.month").getOrElse(
-    throw new Exception(s"Missing configuration key: $env.default-creation-date.month")
-  )
-  private val creationYear = configuration.getInt(s"$env.default-creation-date.year").getOrElse(
-    throw new Exception(s"Missing configuration key: $env.default-creation-date.year")
-  )
+  private val creationDay = configuration
+    .getInt(s"$env.default-creation-date.day")
+    .getOrElse(
+      throw new Exception(s"Missing configuration key: $env.default-creation-date.day")
+    )
+  private val creationMonth = configuration
+    .getInt(s"$env.default-creation-date.month")
+    .getOrElse(
+      throw new Exception(s"Missing configuration key: $env.default-creation-date.month")
+    )
+  private val creationYear = configuration
+    .getInt(s"$env.default-creation-date.year")
+    .getOrElse(
+      throw new Exception(s"Missing configuration key: $env.default-creation-date.year")
+    )
 
-  def isDateValid(in:XMLInfo)(implicit hc:HeaderCarrier) : Future[Boolean] = {
-    val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.headOption.flatMap(_.docSpec.corrDocRefId)).orElse(in.reportingEntity.flatMap(_.docSpec.corrDocRefId))
+  def isDateValid(in: XMLInfo)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    val id = in.cbcReport
+      .find(_.docSpec.corrDocRefId.isDefined)
+      .flatMap(_.docSpec.corrDocRefId)
+      .orElse(in.additionalInfo.headOption.flatMap(_.docSpec.corrDocRefId))
+      .orElse(in.reportingEntity.flatMap(_.docSpec.corrDocRefId))
     id.map { drid =>
-      reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap {
-        {
-            cbcErrors => UnexpectedState(s"Error communicating with backend: $cbcErrors")
-            false
-        }
-      }.subflatMap{
-          case Some(red) => {
-            val cd: LocalDate = red.creationDate.getOrElse(LocalDate.of(creationYear, creationMonth, creationDay))
-            val lcd: LocalDate = in.creationDate.getOrElse(LocalDate.now())
-            val result:Boolean = Period.between(cd, lcd).getYears < 3
-            Right(result)
+        reportingEntityDataService
+          .queryReportingEntityData(drid.cid)
+          .leftMap {
+            { cbcErrors =>
+              UnexpectedState(s"Error communicating with backend: $cbcErrors")
+              false
+            }
           }
-          case None      => Left(false)
-        }.merge
-    }.getOrElse{
-      /************************************************
-      *                                               *
-      *    If we reach this then the submitted file   *
-      *    is an addition and NOT a correction        *
-      *                                               *
+          .subflatMap {
+            case Some(red) => {
+              val cd: LocalDate = red.creationDate.getOrElse(LocalDate.of(creationYear, creationMonth, creationDay))
+              val lcd: LocalDate = in.creationDate.getOrElse(LocalDate.now())
+              val result: Boolean = Period.between(cd, lcd).getYears < 3
+              Right(result)
+            }
+            case None => Left(false)
+          }
+          .merge
+      }
+      .getOrElse {
+
+        /************************************************
+          *                                               *
+          *    If we reach this then the submitted file   *
+          *    is an addition and NOT a correction        *
+          *                                               *
       ************************************************/
-      Future.successful(true)}
+        Future.successful(true)
+      }
   }
 }

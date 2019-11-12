@@ -27,27 +27,27 @@ import uk.gov.hmrc.play.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpException, NotFoundException, Upstream4xxResponse }
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, NotFoundException, Upstream4xxResponse}
 
 @Singleton
-class DocRefIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext) {
+class DocRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
-  def saveDocRefId(d:DocRefId)(implicit hc:HeaderCarrier): OptionT[Future,UnexpectedState] =
-    OptionT(connector.docRefIdSave(d).map(_ => None).recover{
-      case e:HttpException => Some(UnexpectedState(s"Response Code: ${e.responseCode}\n\n" + e.message))
-      case NonFatal(e)     => Some(UnexpectedState(e.getMessage))
+  def saveDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): OptionT[Future, UnexpectedState] =
+    OptionT(connector.docRefIdSave(d).map(_ => None).recover {
+      case e: HttpException => Some(UnexpectedState(s"Response Code: ${e.responseCode}\n\n" + e.message))
+      case NonFatal(e)      => Some(UnexpectedState(e.getMessage))
     })
 
-  def saveCorrDocRefID(c:CorrDocRefId,d:DocRefId)(implicit hc:HeaderCarrier) : OptionT[Future,UnexpectedState] =
-    OptionT(connector.corrDocRefIdSave(c,d).map(_ => None).recover{
-      case e:HttpException => Some(UnexpectedState(s"Response Code: ${e.responseCode}\n\n" + e.message))
-      case NonFatal(e)     => Some(UnexpectedState(e.getMessage))
+  def saveCorrDocRefID(c: CorrDocRefId, d: DocRefId)(implicit hc: HeaderCarrier): OptionT[Future, UnexpectedState] =
+    OptionT(connector.corrDocRefIdSave(c, d).map(_ => None).recover {
+      case e: HttpException => Some(UnexpectedState(s"Response Code: ${e.responseCode}\n\n" + e.message))
+      case NonFatal(e)      => Some(UnexpectedState(e.getMessage))
     })
 
-  def queryDocRefId(d:DocRefId)(implicit hc:HeaderCarrier) : Future[DocRefIdQueryResponse] =
-    connector.docRefIdQuery(d).map(_ => Valid).recover{
-      case _:NotFoundException   => DoesNotExist
-      case e:Upstream4xxResponse if e.upstreamResponseCode == Status.CONFLICT => Invalid
+  def queryDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): Future[DocRefIdQueryResponse] =
+    connector.docRefIdQuery(d).map(_ => Valid).recover {
+      case _: NotFoundException                                                => DoesNotExist
+      case e: Upstream4xxResponse if e.upstreamResponseCode == Status.CONFLICT => Invalid
     }
 
 }

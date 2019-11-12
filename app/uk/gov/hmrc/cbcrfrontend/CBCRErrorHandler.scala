@@ -28,28 +28,29 @@ import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
 
 import scala.concurrent.Future
 
-
-class CBCRErrorHandler @Inject()(override val messagesApi: MessagesApi,
-                                 val env:Environment,
-                                 val config:Configuration,
-                                 val authConnector:AuthConnector)(implicit val feConfig:FrontendAppConfig)
-  extends FrontendErrorHandler with Results with AuthRedirects {
+class CBCRErrorHandler @Inject()(
+  override val messagesApi: MessagesApi,
+  val env: Environment,
+  val config: Configuration,
+  val authConnector: AuthConnector)(implicit val feConfig: FrontendAppConfig)
+    extends FrontendErrorHandler with Results with AuthRedirects {
 
   override def resolveError(rh: RequestHeader, ex: Throwable) = ex match {
-    case _:NoActiveSession            =>
+    case _: NoActiveSession =>
       toGGLogin(rh.uri)
-    case _:UnsupportedCredentialRole  =>
+    case _: UnsupportedCredentialRole =>
       Redirect(routes.SubmissionController.noAssistants())
-    case _:UnsupportedAffinityGroup   =>
+    case _: UnsupportedAffinityGroup =>
       Redirect(routes.SharedController.unsupportedAffinityGroup())
-    case _                            =>
+    case _ =>
       Logger.error(s"Unresolved error: ${ex.getMessage}", ex)
-      super.resolveError(rh,ex)
+      super.resolveError(rh, ex)
   }
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
-    resolveError(request,exception)
+    resolveError(request, exception)
 
-  override def standardErrorTemplate (pageTitle: String, heading: String, message: String) (implicit request: Request[_] ) =
-  uk.gov.hmrc.cbcrfrontend.views.html.error_template (pageTitle, heading, message)
+  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(
+    implicit request: Request[_]) =
+    uk.gov.hmrc.cbcrfrontend.views.html.error_template(pageTitle, heading, message)
 }

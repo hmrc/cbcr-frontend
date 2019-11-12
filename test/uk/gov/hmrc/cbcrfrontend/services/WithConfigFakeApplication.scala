@@ -23,35 +23,33 @@ import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
 import play.api.test.Helpers._
 
 trait WithConfigFakeApplication extends BeforeAndAfterAll {
-    this: Suite =>
+  this: Suite =>
 
-    def configFile: String
+  def configFile: String
 
-    lazy val Application = new GuiceApplicationBuilder()
-      .loadConfig(new Configuration(ConfigFactory.load(configFile)))
-      .bindings(bindModules:_*).build()
+  lazy val Application = new GuiceApplicationBuilder()
+    .loadConfig(new Configuration(ConfigFactory.load(configFile)))
+    .bindings(bindModules: _*)
+    .build()
 
-    def bindModules: Seq[GuiceableModule] = Seq()
+  def bindModules: Seq[GuiceableModule] = Seq()
 
-    override def beforeAll() {
-      super.beforeAll()
-      Play.start(Application)
+  override def beforeAll() {
+    super.beforeAll()
+    Play.start(Application)
+  }
+
+  override def afterAll() {
+    super.afterAll()
+    Play.stop(Application)
+  }
+
+  def getString(tag: String): String =
+    Application.configuration.getString(tag).getOrElse(tag + " does not exist")
+
+  def evaluateUsingPlay[T](block: => T): T =
+    running(Application) {
+      block
     }
-
-    override def afterAll() {
-      super.afterAll()
-      Play.stop(Application)
-    }
-
-    def getString(tag: String): String = {
-      Application.configuration.getString(tag).getOrElse(tag+" does not exist")
-    }
-
-    def evaluateUsingPlay[T](block: => T): T = {
-      running(Application) {
-        block
-      }
-    }
-
 
 }

@@ -28,10 +28,13 @@ case object OECD3 extends DocTypeIndic
 
 object DocTypeIndic {
 
-  def fromString(s:String): Option[DocTypeIndic] = format.reads(JsString(s)).fold(
-    _ => None,
-    d => Some(d)
-  )
+  def fromString(s: String): Option[DocTypeIndic] =
+    format
+      .reads(JsString(s))
+      .fold(
+        _ => None,
+        d => Some(d)
+      )
 
   implicit val format = new Format[DocTypeIndic] {
     override def writes(o: DocTypeIndic): JsValue = JsString(o.toString)

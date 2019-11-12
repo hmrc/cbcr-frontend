@@ -56,80 +56,94 @@ import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
-class SubmissionController @Inject()(override val messagesApi: MessagesApi,
-                                     val fus:FileUploadService,
-                                     val docRefIdService: DocRefIdService,
-                                     val reportingEntityDataService: ReportingEntityDataService,
-                                     val messageRefIdService: MessageRefIdService,
-                                     val cbidService: CBCIdService,
-                                     val audit: AuditConnector,
-                                     val env:Environment,
-                                     val authConnector:AuthConnector,
-                                     val emailService:EmailService,
-                                     messagesControllerComponents: MessagesControllerComponents)
-                                    (implicit ec: ExecutionContext,
-                                     cache:CBCSessionCache,
-                                     val config: Configuration,
-                                     feConfig:FrontendAppConfig) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
-
+class SubmissionController @Inject()(
+  override val messagesApi: MessagesApi,
+  val fus: FileUploadService,
+  val docRefIdService: DocRefIdService,
+  val reportingEntityDataService: ReportingEntityDataService,
+  val messageRefIdService: MessageRefIdService,
+  val cbidService: CBCIdService,
+  val audit: AuditConnector,
+  val env: Environment,
+  val authConnector: AuthConnector,
+  val emailService: EmailService,
+  messagesControllerComponents: MessagesControllerComponents)(
+  implicit ec: ExecutionContext,
+  cache: CBCSessionCache,
+  val config: Configuration,
+  feConfig: FrontendAppConfig)
+    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
   val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' h:mma")
 
-  def saveDocRefIds(x:CompleteXMLInfo)(implicit hc:HeaderCarrier): EitherT[Future,NonEmptyList[UnexpectedState],Unit] = {
-    val cbcReportIds      = x.cbcReport.map(reports      => reports.docSpec.docRefId -> reports.docSpec.corrDocRefId)
+  def saveDocRefIds(x: CompleteXMLInfo)(
+    implicit hc: HeaderCarrier): EitherT[Future, NonEmptyList[UnexpectedState], Unit] = {
+    val cbcReportIds = x.cbcReport.map(reports => reports.docSpec.docRefId           -> reports.docSpec.corrDocRefId)
     val additionalInfoIds = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
 
-    val allIds            = cbcReportIds ++ List(additionalInfoIds).flatten
+    val allIds = cbcReportIds ++ List(additionalInfoIds).flatten
 
     // The result of saving these DocRefIds/CorrDocRefIds from the cbcReports
-    val result = NonEmptyList.fromList(allIds).map(_.map{
-      case (doc, corr) => corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
-    }.sequence[({type λ[α] = OptionT[Future,α]})#λ,UnexpectedState]).getOrElse(OptionT.none[Future,NonEmptyList[UnexpectedState]])
+    val result = NonEmptyList
+      .fromList(allIds)
+      .map(_.map {
+        case (doc, corr) =>
+          corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
+      }.sequence[({ type λ[α] = OptionT[Future, α] })#λ, UnexpectedState])
+      .getOrElse(OptionT.none[Future, NonEmptyList[UnexpectedState]])
 
     x.reportingEntity.docSpec.docType match {
-      case OECD0                 => result.toLeft(())
+      case OECD0 => result.toLeft(())
 
       case OECD1 | OECD2 | OECD3 =>
         val reDocRef = x.reportingEntity.docSpec.docRefId
-        val reCorr   = x.reportingEntity.docSpec.corrDocRefId
+        val reCorr = x.reportingEntity.docSpec.corrDocRefId
 
-        val reResult = reCorr.map(c => docRefIdService.saveCorrDocRefID(c, reDocRef)).getOrElse(docRefIdService.saveDocRefId(reDocRef))
+        val reResult = reCorr
+          .map(c => docRefIdService.saveCorrDocRefID(c, reDocRef))
+          .getOrElse(docRefIdService.saveDocRefId(reDocRef))
 
-        EitherT((result.toLeft(()).toValidated |@| reResult.toLeft(()).toValidatedNel).map((a,b) => (a |@| b).map((_,_) => ()).toEither))
+        EitherT((result.toLeft(()).toValidated |@| reResult.toLeft(()).toValidatedNel).map((a, b) =>
+          (a |@| b).map((_, _) => ()).toEither))
     }
   }
 
-  def storeOrUpdateReportingEntityData(xml:CompleteXMLInfo)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] =
+  def storeOrUpdateReportingEntityData(xml: CompleteXMLInfo)(implicit hc: HeaderCarrier): ServiceResponse[Unit] =
     xml.reportingEntity.docSpec.docType match {
       // RESENT| NEW
       case OECD1 =>
-        ReportingEntityData.extract(xml).fold[ServiceResponse[Unit]](
-          errors => {
-            EitherT.left(Future.successful(
-              UnexpectedState(s"Unable to submit partially completed data when docType is ${xml.reportingEntity.docSpec.docType}\n${errors.toList.mkString("\n")}")
-            ))
-          },
-          (data: ReportingEntityData) => reportingEntityDataService.saveReportingEntityData(data)
-        )
-      case OECD0 | OECD2 | OECD3 => reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
+        ReportingEntityData
+          .extract(xml)
+          .fold[ServiceResponse[Unit]](
+            errors => {
+              EitherT.left(Future.successful(
+                UnexpectedState(
+                  s"Unable to submit partially completed data when docType is ${xml.reportingEntity.docSpec.docType}\n${errors.toList
+                    .mkString("\n")}")
+              ))
+            },
+            (data: ReportingEntityData) => reportingEntityDataService.saveReportingEntityData(data)
+          )
+      case OECD0 | OECD2 | OECD3 =>
+        reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
     }
 
-  def confirm = Action.async{ implicit request =>
+  def confirm = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrieval =>
       (for {
         summaryData <- cache.read[SummaryData]
-        xml <- cache.read[CompleteXMLInfo]
-        _ <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+        xml         <- cache.read[CompleteXMLInfo]
+        _           <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
         _ <- saveDocRefIds(xml).leftMap[CBCErrors] { es =>
-          Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
-          UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
-        }
+              Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
+              UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
+            }
         _ <- messageRefIdService.saveMessageRefId(xml.messageSpec.messageRefID).toLeft {
-          Logger.error(s"Errors saving MessageRefId")
-          UnexpectedState("Errors in saving MessageRefId aborting submission")
-        }
+              Logger.error(s"Errors saving MessageRefId")
+              UnexpectedState("Errors in saving MessageRefId aborting submission")
+            }
         _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
         _ <- storeOrUpdateReportingEntityData(xml)
         _ <- createSuccessfulSubmissionAuditEvent(retrieval.a, summaryData)
@@ -141,88 +155,97 @@ class SubmissionController @Inject()(override val messagesApi: MessagesApi,
     }
   }
 
-  def notRegistered =  Action.async { implicit request =>
+  def notRegistered = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
       Ok(views.html.submission.notRegistered())
     }
   }
 
-  def noIndividuals =  Action.async { implicit request =>
+  def noIndividuals = Action.async { implicit request =>
     authorised(AffinityGroup.Individual) {
       Ok(views.html.not_authorised_individual())
     }
   }
-  def noAssistants =  Action.async { implicit request =>
+  def noAssistants = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (Assistant)) {
       Ok(views.html.not_authorised_assistant())
     }
   }
 
-  def createSuccessfulSubmissionAuditEvent(creds:Credentials,summaryData:SummaryData)
-                                          (implicit hc:HeaderCarrier, request:Request[_]): ServiceResponse[AuditResult.Success.type] =
+  def createSuccessfulSubmissionAuditEvent(creds: Credentials, summaryData: SummaryData)(
+    implicit hc: HeaderCarrier,
+    request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
-      result <- eitherT[AuditResult.Success.type ](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRFilingSuccessful",
-        detail = Json.obj(
-          "path"        -> JsString(request.uri),
-          "summaryData" -> Json.toJson(summaryData),
-          "creds"       -> Json.toJson(creds)
-        )
-      )).map{
-        case AuditResult.Success         => Right(AuditResult.Success)
-        case AuditResult.Failure(msg,_)  => Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
-        case AuditResult.Disabled        => Right(AuditResult.Success)
-      })
+      result <- eitherT[AuditResult.Success.type](
+                 audit
+                   .sendExtendedEvent(ExtendedDataEvent(
+                     "Country-By-Country-Frontend",
+                     "CBCRFilingSuccessful",
+                     detail = Json.obj(
+                       "path"        -> JsString(request.uri),
+                       "summaryData" -> Json.toJson(summaryData),
+                       "creds"       -> Json.toJson(creds)
+                     )
+                   ))
+                   .map {
+                     case AuditResult.Success => Right(AuditResult.Success)
+                     case AuditResult.Failure(msg, _) =>
+                       Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
+                     case AuditResult.Disabled => Right(AuditResult.Success)
+                   })
     } yield result
 
-  val utrForm:Form[Utr] = Form(
+  val utrForm: Form[Utr] = Form(
     mapping(
       "utr" -> nonEmptyText.verifying(s => Utr(s).isValid)
     )(Utr.apply)(Utr.unapply)
   )
 
   val ultimateParentEntityForm: Form[UltimateParentEntity] = Form(
-    mapping("ultimateParentEntity" -> nonEmptyText
-    )(UltimateParentEntity.apply)(UltimateParentEntity.unapply)
+    mapping("ultimateParentEntity" -> nonEmptyText)(UltimateParentEntity.apply)(UltimateParentEntity.unapply)
   )
 
-
-
-  val reconfirmEmailForm : Form[EmailAddress] = Form(
+  val reconfirmEmailForm: Form[EmailAddress] = Form(
     mapping(
       "reconfirmEmail" -> email.verifying(EmailAddress.isValid(_))
     )(EmailAddress.apply)(EmailAddress.unapply)
   )
 
-
-  val enterCompanyNameForm : Form[AgencyBusinessName] = Form(
+  val enterCompanyNameForm: Form[AgencyBusinessName] = Form(
     single(
       "companyName" -> nonEmptyText
-    ).transform[AgencyBusinessName](AgencyBusinessName(_),_.name)
+    ).transform[AgencyBusinessName](AgencyBusinessName(_), _.name)
   )
 
-  val upe = Action.async{ implicit request =>
+  val upe = Action.async { implicit request =>
     authorised() {
-      Ok(views.html.submission.submitInfoUltimateParentEntity(
-         ultimateParentEntityForm
-      ))
+      Ok(
+        views.html.submission.submitInfoUltimateParentEntity(
+          ultimateParentEntityForm
+        ))
     }
   }
 
-  val submitUltimateParentEntity = Action.async{ implicit request =>
+  val submitUltimateParentEntity = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       (for {
         reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
-        redirect      <- right(ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
-          formWithErrors => BadRequest(views.html.submission.submitInfoUltimateParentEntity( formWithErrors)),
-          success        => cache.save(success).map { _ =>
-            (userType, reportingRole) match {
-              case (_,                  CBC702) => Redirect(routes.SubmissionController.utr())
-              case (Some(Agent),        CBC703) => Redirect(routes.SubmissionController.enterCompanyName())
-              case (Some(Organisation), CBC703) => Redirect(routes.SubmissionController.submitterInfo())
-              case _                            => errorRedirect(UnexpectedState(s"Unexpected userType/ReportingRole combination: $userType $reportingRole"))
-            }
-          }
-        ))
+        redirect <- right(
+                     ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
+                       formWithErrors =>
+                         BadRequest(views.html.submission.submitInfoUltimateParentEntity(formWithErrors)),
+                       success =>
+                         cache.save(success).map { _ =>
+                           (userType, reportingRole) match {
+                             case (_, CBC702)                  => Redirect(routes.SubmissionController.utr())
+                             case (Some(Agent), CBC703)        => Redirect(routes.SubmissionController.enterCompanyName())
+                             case (Some(Organisation), CBC703) => Redirect(routes.SubmissionController.submitterInfo())
+                             case _ =>
+                               errorRedirect(UnexpectedState(
+                                 s"Unexpected userType/ReportingRole combination: $userType $reportingRole"))
+                           }
+                       }
+                     ))
       } yield redirect).leftMap(errorRedirect).merge
     }
   }
@@ -237,82 +260,91 @@ class SubmissionController @Inject()(override val messagesApi: MessagesApi,
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       utrForm.bindFromRequest.fold[Future[Result]](
         errors => BadRequest(views.html.submission.utrCheck(errors)),
-        utr    => cache.save(TIN(utr.utr, "")).map { _ =>
-          userType match {
-            case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo())
-            case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName())
-            case _                  => errorRedirect(UnexpectedState(s"Bad affinityGroup: $userType"))
-          }
+        utr =>
+          cache.save(TIN(utr.utr, "")).map { _ =>
+            userType match {
+              case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo())
+              case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName())
+              case _                  => errorRedirect(UnexpectedState(s"Bad affinityGroup: $userType"))
+            }
         }
       )
     }
   }
 
+  def enterSubmitterInfo(fn: Option[FieldName])(implicit request: Request[AnyContent]): Future[Result] =
+    cache.readOption[SubmitterInfo].map { osi =>
+      val form = (osi.map(_.fullName) |@| osi.map(_.contactPhone) |@| osi.map(_.email))
+        .map { (name, phone, email) =>
+          submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
+        }
+        .getOrElse(submitterInfoForm)
 
-  def enterSubmitterInfo(fn: Option[FieldName])(implicit request:Request[AnyContent]): Future[Result] = {
-
-    cache.readOption[SubmitterInfo].map{ osi =>
-
-      val form = (osi.map(_.fullName) |@| osi.map(_.contactPhone) |@| osi.map(_.email)).map{(name,phone,email) =>
-        submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
-      }.getOrElse(submitterInfoForm)
-
-      Ok(views.html.submission.submitterInfo( form, fn))
+      Ok(views.html.submission.submitterInfo(form, fn))
 
     }
-  }
 
-
-  def submitterInfo(field: Option[String] = None) = Action.async{ implicit request =>
+  def submitterInfo(field: Option[String] = None) = Action.async { implicit request =>
     authorised() {
 
-      cache.read[CompleteXMLInfo].map(kXml => kXml.reportingEntity.reportingRole match {
+      cache
+        .read[CompleteXMLInfo]
+        .map(kXml =>
+          kXml.reportingEntity.reportingRole match {
 
-        case CBC701 =>
-          (cache.save(FilingType(CBC701)) *>
-            cache.save(UltimateParentEntity(kXml.reportingEntity.name))).map(_ => ())
+            case CBC701 =>
+              (cache.save(FilingType(CBC701)) *>
+                cache.save(UltimateParentEntity(kXml.reportingEntity.name))).map(_ => ())
 
-        case CBC702 | CBC703 =>
-          cache.save(FilingType(kXml.reportingEntity.reportingRole))
+            case CBC702 | CBC703 =>
+              cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
-      }).semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse("")))).leftMap(errorRedirect).merge
+        })
+        .semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse(""))))
+        .leftMap(errorRedirect)
+        .merge
     }
 
   }
 
+  val submitSubmitterInfo = Action.async { implicit request =>
+    authorised().retrieve(Retrievals.affinityGroup) { userType =>
+      submitterInfoForm.bindFromRequest.fold(
+        formWithErrors =>
+          Future.successful(
+            BadRequest(
+              views.html.submission.submitterInfo(
+                formWithErrors,
+                None
+              ))),
+        success => {
+          val result = for {
+            straightThrough <- right[Boolean](cache.readOption[CBCId].map(_.isDefined))
+            xml             <- cache.read[CompleteXMLInfo]
+            name <- right(
+                     OptionT(cache.readOption[AgencyBusinessName])
+                       .getOrElse(AgencyBusinessName(xml.reportingEntity.name)))
+            _ <- right[CacheMap](cache.save(success.copy(affinityGroup = userType, agencyBusinessName = Some(name))))
+            result <- userType match {
+                       case Some(Organisation) if straightThrough =>
+                         pure(Redirect(routes.SubmissionController.submitSummary()))
+                       case Some(Organisation) => pure(Redirect(routes.SharedController.enterCBCId()))
+                       case Some(Agent) =>
+                         right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ =>
+                           Redirect(routes.SharedController.verifyKnownFactsAgent()))
+                       case _ => left[Result](UnexpectedState(s"Invalid affinityGroup: $userType"))
+                     }
+          } yield result
 
-  val submitSubmitterInfo = Action.async{ implicit request =>
-    authorised().retrieve(Retrievals.affinityGroup){ userType =>
-        submitterInfoForm.bindFromRequest.fold(
-          formWithErrors => Future.successful(BadRequest(views.html.submission.submitterInfo(
-             formWithErrors,None
-          ))),
-          success => {
-            val result = for {
-              straightThrough <- right[Boolean](cache.readOption[CBCId].map(_.isDefined))
-              xml             <- cache.read[CompleteXMLInfo]
-              name            <- right(OptionT(cache.readOption[AgencyBusinessName]).getOrElse(AgencyBusinessName(xml.reportingEntity.name)))
-              _               <- right[CacheMap](cache.save(success.copy( affinityGroup = userType, agencyBusinessName = Some(name))))
-              result          <- userType match {
-                case Some(Organisation) if straightThrough => pure(Redirect(routes.SubmissionController.submitSummary()))
-                case Some(Organisation)                    => pure(Redirect(routes.SharedController.enterCBCId()))
-                case Some(Agent)                           => right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ => Redirect(routes.SharedController.verifyKnownFactsAgent()))
-                case _                                     => left[Result](UnexpectedState(s"Invalid affinityGroup: $userType"))
-              }
-            } yield result
+          result.leftMap(errorRedirect).merge
 
-            result.leftMap(errorRedirect).merge
-
-          }
-        )
-      }
+        }
+      )
+    }
   }
-
-
 
   val submitSummary = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials) { credentials =>
-
       val result = for {
         smd <- EitherT(generateMetadataFile(cache, credentials).map(_.toEither)).leftMap(_.head)
         sd  <- createSummaryData(smd)
@@ -327,27 +359,29 @@ class SubmissionController @Inject()(override val messagesApi: MessagesApi,
 
   }
 
-  def createSummaryData(submissionMetaData: SubmissionMetaData)(implicit hc:HeaderCarrier) : ServiceResponse[SummaryData] = {
+  def createSummaryData(submissionMetaData: SubmissionMetaData)(
+    implicit hc: HeaderCarrier): ServiceResponse[SummaryData] =
     for {
       keyXMLFileInfo <- cache.read[CompleteXMLInfo]
       bpr            <- cache.read[BusinessPartnerRecord]
-      summaryData    = SummaryData(bpr, submissionMetaData, keyXMLFileInfo)
-      _              <- right(cache.save[SummaryData](summaryData))
+      summaryData = SummaryData(bpr, submissionMetaData, keyXMLFileInfo)
+      _ <- right(cache.save[SummaryData](summaryData))
     } yield summaryData
-  }
 
-  def enterCompanyName = Action.async{ implicit request =>
+  def enterCompanyName = Action.async { implicit request =>
     authorised() {
-      Ok(views.html.submission.enterCompanyName( enterCompanyNameForm))
+      Ok(views.html.submission.enterCompanyName(enterCompanyNameForm))
     }
   }
 
   def saveCompanyName = Action.async { implicit request =>
     authorised() {
-      enterCompanyNameForm.bindFromRequest().fold(
-        errors => BadRequest(views.html.submission.enterCompanyName( errors)),
-        name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
-      )
+      enterCompanyNameForm
+        .bindFromRequest()
+        .fold(
+          errors => BadRequest(views.html.submission.enterCompanyName(errors)),
+          name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
+        )
     }
   }
 
@@ -360,16 +394,18 @@ class SubmissionController @Inject()(override val messagesApi: MessagesApi,
           data = dataTuple._1
           date = dataTuple._2
           cbcId = dataTuple._3
-          formattedDate <- fromEither((nonFatalCatch opt date.date.format(dateFormat).replace("AM","am").replace("PM","pm")).toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")))
+          formattedDate <- fromEither(
+                            (nonFatalCatch opt date.date.format(dateFormat).replace("AM", "am").replace("PM", "pm"))
+                              .toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")))
           emailSentAlready <- right(cache.readOption[ConfirmationEmailSent].map(_.isDefined))
-          sentEmail <- if (!emailSentAlready) right(emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
-          else pure(None)
+          sentEmail <- if (!emailSentAlready)
+                        right(emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
+                      else pure(None)
           _ <- if (sentEmail.getOrElse(false)) right(cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
-          else pure(())
+              else pure(())
           hash = data.submissionMetaData.submissionInfo.hash
           cacheCleared <- right(cache.clear)
         } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)
-
 
       data.fold[Result](
         (error: CBCErrors) => errorRedirect(error),
@@ -380,17 +416,18 @@ class SubmissionController @Inject()(override val messagesApi: MessagesApi,
     }
   }
 
-  private def makeSubmissionSuccessEmail(data:SummaryData,formattedDate:String,cbcId: CBCId):Email ={
+  private def makeSubmissionSuccessEmail(data: SummaryData, formattedDate: String, cbcId: CBCId): Email = {
     val submittedInfo = data.submissionMetaData.submitterInfo
-    Email(List(submittedInfo.email.toString()),
+    Email(
+      List(submittedInfo.email.toString()),
       "cbcr_report_confirmation",
       Map(
         "name" → submittedInfo.fullName,
         "received_at" → formattedDate,
-        "hash"   → data.submissionMetaData.submissionInfo.hash.value,
+        "hash" → data.submissionMetaData.submissionInfo.hash.value,
         "cbcrId" -> cbcId.value
-      ))
+      )
+    )
   }
-
 
 }

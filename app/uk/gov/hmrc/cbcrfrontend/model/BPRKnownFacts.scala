@@ -18,12 +18,12 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.Json
 
-case class BPRKnownFacts(utr:Utr, postCode:String)
+case class BPRKnownFacts(utr: Utr, postCode: String)
 object BPRKnownFacts {
   implicit val kfFormat = Json.format[BPRKnownFacts]
 }
 
-case class CBCKnownFacts(utr:Utr,cBCId: CBCId)
+case class CBCKnownFacts(utr: Utr, cBCId: CBCId)
 object CBCKnownFacts {
   implicit val cbcKfFormat = Json.format[CBCKnownFacts]
 }

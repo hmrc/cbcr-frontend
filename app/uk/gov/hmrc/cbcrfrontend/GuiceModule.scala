@@ -23,13 +23,12 @@ import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFa
 import play.api.{Configuration, Environment, Logger, Mode}
 import uk.gov.hmrc.cbcrfrontend.services.RunMode
 
-class GuiceModule(environment: Environment,
-                  configuration: Configuration) extends AbstractModule {
+class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule {
 
   val mode: Mode = environment.mode
   val runModeConfiguration: Configuration = configuration
-  override def configure(): Unit = {
-    bind(classOf[XMLValidationSchema]).toInstance{
+  override def configure(): Unit =
+    bind(classOf[XMLValidationSchema]).toInstance {
       val runMode: RunMode = new RunMode(configuration)
       val env = runMode.env
       val path = s"$env.oecd-schema-version"
@@ -42,5 +41,4 @@ class GuiceModule(environment: Environment,
       val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
-  }
 }

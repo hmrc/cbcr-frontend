@@ -31,7 +31,7 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
   * Created by max on 23/05/17.
   */
 @Singleton
-class TaxEnrolmentsConnector @Inject()(http: HttpClient, config:Configuration)(implicit ec:ExecutionContext) {
+class TaxEnrolmentsConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
 
   val conf = config.underlying.get[Config]("microservice.services.tax-enrolments").value
 
@@ -42,21 +42,20 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient, config:Configuration)(i
     protocol <- conf.get[String]("protocol")
   } yield s"$protocol://$host:$port/$service").value
 
+  def deEnrol(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.POST(url + "/de-enrol/HMRC-CBC-ORG", Json.obj("keepAgentAllocations" -> false))
 
-  def deEnrol(implicit hc:HeaderCarrier): Future[HttpResponse] =
-    http.POST(url + "/de-enrol/HMRC-CBC-ORG",Json.obj("keepAgentAllocations" -> false))
-
-  def enrol(cBCId: CBCId,utr:Utr)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT(url + "/service/HMRC-CBC-ORG/enrolment",Json.obj(
-      "identifiers" -> JsArray(List(
-        Json.obj(
-          "key" -> "cbcId",
-          "value" -> cBCId.value),
-        Json.obj(
-          "key" -> "UTR",
-          "value" -> utr.value)
-      )),
-      "verifiers" -> JsArray()
-    ))
+  def enrol(cBCId: CBCId, utr: Utr)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.PUT(
+      url + "/service/HMRC-CBC-ORG/enrolment",
+      Json.obj(
+        "identifiers" -> JsArray(
+          List(
+            Json.obj("key" -> "cbcId", "value" -> cBCId.value),
+            Json.obj("key" -> "UTR", "value"   -> utr.value)
+          )),
+        "verifiers" -> JsArray()
+      )
+    )
 
 }

@@ -21,7 +21,6 @@ import play.api.data.Forms.{mapping, text}
 import uk.gov.hmrc.cbcrfrontend.model.SubscriberContact
 import uk.gov.hmrc.emailaddress.EmailAddress
 
-
 object SubscriptionDataForm {
 
   def condTrue(condition: Boolean, statement: Boolean) = if (condition) statement else true
@@ -29,11 +28,17 @@ object SubscriptionDataForm {
   val subscriptionDataForm: Form[SubscriberContact] = Form(
     mapping(
       "firstName" -> text.verifying("contactInfoSubscriber.firstName.error", _.trim != ""),
-      "lastName" -> text.verifying("contactInfoSubscriber.lastName.error", _.trim != ""),
-      "phoneNumber" -> text.verifying("contactInfoSubscriber.phoneNumber.error.empty", _.trim != "")
-        .verifying("contactInfoSubscriber.phoneNumber.error.invalid", x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))),
-      "email" -> text.verifying("contactInfoSubscriber.emailAddress.error.empty", _.trim != "")
-        .verifying("contactInfoSubscriber.emailAddress.error.invalid", x => condTrue(x.trim != "", EmailAddress.isValid(x)))
+      "lastName"  -> text.verifying("contactInfoSubscriber.lastName.error", _.trim != ""),
+      "phoneNumber" -> text
+        .verifying("contactInfoSubscriber.phoneNumber.error.empty", _.trim != "")
+        .verifying(
+          "contactInfoSubscriber.phoneNumber.error.invalid",
+          x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))),
+      "email" -> text
+        .verifying("contactInfoSubscriber.emailAddress.error.empty", _.trim != "")
+        .verifying(
+          "contactInfoSubscriber.emailAddress.error.invalid",
+          x => condTrue(x.trim != "", EmailAddress.isValid(x)))
         .transform[EmailAddress](EmailAddress(_), _.value)
     )(SubscriberContact.apply)(SubscriberContact.unapply)
   )

@@ -30,11 +30,13 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EnrolController @Inject()(val config:Configuration,
-                                val enrolConnector: TaxEnrolmentsConnector,
-                                val authConnector: AuthConnector,
-                                val env:Environment,
-                                messagesControllerComponents: MessagesControllerComponents)(implicit ec:ExecutionContext) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions{
+class EnrolController @Inject()(
+  val config: Configuration,
+  val enrolConnector: TaxEnrolmentsConnector,
+  val authConnector: AuthConnector,
+  val env: Environment,
+  messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext)
+    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions {
 
   implicit val format = uk.gov.hmrc.cbcrfrontend.controllers.enrolmentsFormat
   val conf = config.underlying.get[Config]("microservice.services.gg-proxy").value
@@ -46,13 +48,13 @@ class EnrolController @Inject()(val config:Configuration,
     protocol <- conf.get[String]("protocol")
   } yield s"$protocol://$host:$port/$service").value
 
-  def deEnrol() = Action.async{ implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)){
+  def deEnrol() = Action.async { implicit request =>
+    authorised(AffinityGroup.Organisation and (User or Admin)) {
       enrolConnector.deEnrol.map(r => Ok(r.body))
     }
   }
 
-  def getEnrolments = Action.async{ implicit request =>
+  def getEnrolments = Action.async { implicit request =>
     authorised().retrieve(Retrievals.allEnrolments) { e =>
       Future.successful(Ok(Json.toJson(e)))
     }

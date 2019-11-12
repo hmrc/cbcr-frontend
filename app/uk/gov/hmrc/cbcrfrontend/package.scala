@@ -40,53 +40,68 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
-
 package object cbcrfrontend {
 
-  val cbcEnrolment: Retrieval[Option[CBCEnrolment]] = SimpleRetrieval("allEnrolments", Reads.set[Enrolment].map{ e =>
-    for {
-      value      <- e.find(_.key == "HMRC-CBC-ORG")
-      id         <- value.identifiers.find(_.key == "cbcId")
-      utr        <- value.identifiers.find(_.key == "UTR")
-      cbcId      <- CBCId(id.value)
-    } yield CBCEnrolment(cbcId,Utr(utr.value))
-  })
+  val cbcEnrolment: Retrieval[Option[CBCEnrolment]] = SimpleRetrieval(
+    "allEnrolments",
+    Reads.set[Enrolment].map { e =>
+      for {
+        value <- e.find(_.key == "HMRC-CBC-ORG")
+        id    <- value.identifiers.find(_.key == "cbcId")
+        utr   <- value.identifiers.find(_.key == "UTR")
+        cbcId <- CBCId(id.value)
+      } yield CBCEnrolment(cbcId, Utr(utr.value))
+    }
+  )
 
-  type ValidResult[A]               = ValidatedNel[CBCErrors, A]
-  type CacheResult[A]               = ValidatedNel[ExpiredSession, A]
-  type FutureValidResult[A]         = Future[ValidResult[A]]
-  type FutureCacheResult[A]         = Future[CacheResult[A]]
-  type ValidBusinessResult[A]       = ValidatedNel[BusinessRuleErrors, A]
+  type ValidResult[A] = ValidatedNel[CBCErrors, A]
+  type CacheResult[A] = ValidatedNel[ExpiredSession, A]
+  type FutureValidResult[A] = Future[ValidResult[A]]
+  type FutureCacheResult[A] = Future[CacheResult[A]]
+  type ValidBusinessResult[A] = ValidatedNel[BusinessRuleErrors, A]
   type FutureValidBusinessResult[A] = Future[ValidBusinessResult[A]]
 
-  implicit def applicativeInstance(implicit ec:ExecutionContext):Applicative[FutureValidBusinessResult] = Applicative[Future] compose Applicative[ValidBusinessResult]
-  implicit def applicativeInstance2(implicit ec:ExecutionContext):Applicative[FutureCacheResult] = Applicative[Future] compose Applicative[CacheResult]
-  implicit def functorInstance(implicit ec:ExecutionContext):Functor[FutureValidBusinessResult] = Functor[Future] compose Functor[ValidBusinessResult]
+  implicit def applicativeInstance(implicit ec: ExecutionContext): Applicative[FutureValidBusinessResult] =
+    Applicative[Future] compose Applicative[ValidBusinessResult]
+  implicit def applicativeInstance2(implicit ec: ExecutionContext): Applicative[FutureCacheResult] =
+    Applicative[Future] compose Applicative[CacheResult]
+  implicit def functorInstance(implicit ec: ExecutionContext): Functor[FutureValidBusinessResult] =
+    Functor[Future] compose Functor[ValidBusinessResult]
 
-  implicit def toTheFuture[A](a:ValidBusinessResult[A]):FutureValidBusinessResult[A] = Future.successful(a)
-  implicit def resultFuture(r:Result):Future[Result] = Future.successful(r)
+  implicit def toTheFuture[A](a: ValidBusinessResult[A]): FutureValidBusinessResult[A] = Future.successful(a)
+  implicit def resultFuture(r: Result): Future[Result] = Future.successful(r)
 
-  def errorRedirect(error:CBCErrors)(implicit request:Request[_], msgs:Messages, feConfig:FrontendAppConfig): Result = {
+  def errorRedirect(
+    error: CBCErrors)(implicit request: Request[_], msgs: Messages, feConfig: FrontendAppConfig): Result = {
     Logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())
-      case _                 => InternalServerError(
-        views.html.error_template ("Internal Server Error", "Internal Server Error", "Something went wrong")
-      )
+      case _ =>
+        InternalServerError(
+          views.html.error_template("Internal Server Error", "Internal Server Error", "Something went wrong")
+        )
     }
   }
 
-  implicit def utrToLeft(u:Utr): Either[Utr, CBCId] = Left[Utr,CBCId](u)
-  implicit def cbcToRight(c:CBCId): Either[Utr, CBCId] = Right[Utr,CBCId](c)
+  implicit def utrToLeft(u: Utr): Either[Utr, CBCId] = Left[Utr, CBCId](u)
+  implicit def cbcToRight(c: CBCId): Either[Utr, CBCId] = Right[Utr, CBCId](c)
 
   def sha256Hash(file: File): String =
-    String.format("%064x", new java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(
-      org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
-    )))
+    String.format(
+      "%064x",
+      new java.math.BigInteger(
+        1,
+        java.security.MessageDigest
+          .getInstance("SHA-256")
+          .digest(
+            org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
+          ))
+    )
 
-  def generateMetadataFile(cache: CBCSessionCache, creds: Credentials)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[ValidatedNel[ExpiredSession,SubmissionMetaData]] = {
-
-    ((cache.read[BusinessPartnerRecord].toValidatedNel:FutureCacheResult[BusinessPartnerRecord]) |@|
+  def generateMetadataFile(cache: CBCSessionCache, creds: Credentials)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): Future[ValidatedNel[ExpiredSession, SubmissionMetaData]] =
+    ((cache.read[BusinessPartnerRecord].toValidatedNel: FutureCacheResult[BusinessPartnerRecord]) |@|
       cache.read[TIN].toValidatedNel |@|
       cache.read[Hash].toValidatedNel |@|
       cache.read[CBCId].toValidatedNel |@|
@@ -97,7 +112,6 @@ package object cbcrfrontend {
       cache.read[UltimateParentEntity].toValidatedNel |@|
       cache.read[FileMetadata].toValidatedNel)
       .map { (record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
-
         SubmissionMetaData(
           SubmissionInfo(
             gwCredId = creds.toString,
@@ -110,9 +124,15 @@ package object cbcrfrontend {
             ultimateParentEntity = upe
           ),
           info,
-          FileInfo(fileId, envelopeId, metadata.status, metadata.name, metadata.contentType, metadata.length, metadata.created)
+          FileInfo(
+            fileId,
+            envelopeId,
+            metadata.status,
+            metadata.name,
+            metadata.contentType,
+            metadata.length,
+            metadata.created)
         )
       }
-  }
 
 }

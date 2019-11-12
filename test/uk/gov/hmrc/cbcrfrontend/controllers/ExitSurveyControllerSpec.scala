@@ -43,21 +43,22 @@ import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach{
+class ExitSurveyControllerSpec
+    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
+    with BeforeAndAfterEach {
 
+  implicit val ec = app.injector.instanceOf[ExecutionContext]
+  implicit val messagesApi = app.injector.instanceOf[MessagesApi]
+  implicit val authCon = mock[AuthConnector]
+  implicit val conf = mock[FrontendAppConfig]
 
-  implicit val ec                     = app.injector.instanceOf[ExecutionContext]
-  implicit val messagesApi            = app.injector.instanceOf[MessagesApi]
-  implicit val authCon                = mock[AuthConnector]
-  implicit val conf                   = mock[FrontendAppConfig]
-
-  implicit val cache                  = app.injector.instanceOf[CBCSessionCache]
-  val subService                      = mock[SubscriptionDataService]
-  val bprKF                           = mock[BPRKnownFactsService]
-  val configuration                   = mock[Configuration]
-  val auditC: AuditConnector          = mock[AuditConnector]
-  val mcc                             = app.injector.instanceOf[MessagesControllerComponents]
-  val runMode                         = mock[RunMode]
+  implicit val cache = app.injector.instanceOf[CBCSessionCache]
+  val subService = mock[SubscriptionDataService]
+  val bprKF = mock[BPRKnownFactsService]
+  val configuration = mock[Configuration]
+  val auditC: AuditConnector = mock[AuditConnector]
+  val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  val runMode = mock[RunMode]
 
   when(conf.analyticsHost) thenReturn "host"
   when(conf.analyticsToken) thenReturn "token"
@@ -65,7 +66,7 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   val id: CBCId = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
   val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
 
-  val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
+  val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
 
   private lazy val keyXMLInfo = {
     XMLInfo(
@@ -78,14 +79,14 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
         None,
         None
       ),
-      Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None,None),TIN("7000000002","GB"),"name")),
-      List(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None,None))),
-      List(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None,None))),
+      Some(
+        ReportingEntity(CBC701, DocSpec(OECD1, DocRefId(docRefId).get, None, None), TIN("7000000002", "GB"), "name")),
+      List(CbcReports(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
+      List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
       Some(LocalDate.now()),
       List.empty[String]
     )
   }
-
 
   when(runMode.env) thenReturn "Dev"
 
@@ -95,10 +96,10 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
   val controller = new ExitSurveyController(configuration, auditC, mcc)
 
   val utr = Utr("7000000001")
-  val bpr = BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))
+  val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))
   val subDetails = SubscriptionDetails(
     bpr,
-    SubscriberContact("firstName","lastName", "lkasjdf",EmailAddress("max@max.com")),
+    SubscriberContact("firstName", "lastName", "lkasjdf", EmailAddress("max@max.com")),
     Some(id),
     utr
   )
@@ -107,13 +108,13 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
 
   implicit val timeout: Timeout = Duration.apply(20, "s")
 
-  val sa = SurveyAnswers("","")
+  val sa = SurveyAnswers("", "")
 
   val fakeSubmit = addToken(FakeRequest("POST", "/exit-survey/submit"))
 
-  val fakeRequest  = addToken(FakeRequest("GET", "/exit-survey"))
+  val fakeRequest = addToken(FakeRequest("GET", "/exit-survey"))
 
-  val fakeAcknowledge  = addToken(FakeRequest("GET", "/exit-survey/acknowledge"))
+  val fakeAcknowledge = addToken(FakeRequest("GET", "/exit-survey/acknowledge"))
 
   "GET /exit-survey" should {
     "return 200" in {
@@ -129,18 +130,18 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
         5.seconds
       )
       status(result) shouldBe 400
-      verify(auditC, times(0)).sendEvent(any())(any(),any())
+      verify(auditC, times(0)).sendEvent(any())(any(), any())
     }
     "return a 303 to the guidance page if satisfied selection is provided and should audit" in {
-      when(auditC.sendExtendedEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       val result = Await.result(
-        controller.submit(fakeSubmit.withJsonBody(Json.toJson(SurveyAnswers("splendid","")))),
+        controller.submit(fakeSubmit.withJsonBody(Json.toJson(SurveyAnswers("splendid", "")))),
         5.seconds
       )
       status(result) shouldBe 303
       val redirect = result.header.headers.getOrElse("location", "")
       redirect should endWith("acknowledge")
-      verify(auditC, times(1)).sendExtendedEvent(any())(any(),any())
+      verify(auditC, times(1)).sendExtendedEvent(any())(any(), any())
     }
   }
 
@@ -150,6 +151,5 @@ class ExitSurveyControllerSpec extends UnitSpec with ScalaFutures with GuiceOneA
       status(result) shouldBe Status.OK
     }
   }
-
 
 }
