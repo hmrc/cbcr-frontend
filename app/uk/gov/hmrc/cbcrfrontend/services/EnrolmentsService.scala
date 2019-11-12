@@ -29,12 +29,11 @@ import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
-class EnrolmentsService @Inject()(tec:TaxEnrolmentsConnector)(implicit ec:ExecutionContext){
+class EnrolmentsService @Inject()(tec: TaxEnrolmentsConnector)(implicit ec: ExecutionContext) {
 
-  def enrol(cbcKnownFacts:CBCKnownFacts)(implicit hc:HeaderCarrier) : ServiceResponse[Unit] = {
-    eitherT[Unit](tec.enrol(cbcKnownFacts.cBCId,cbcKnownFacts.utr).map(_ => Right(())).recover{
+  def enrol(cbcKnownFacts: CBCKnownFacts)(implicit hc: HeaderCarrier): ServiceResponse[Unit] =
+    eitherT[Unit](tec.enrol(cbcKnownFacts.cBCId, cbcKnownFacts.utr).map(_ => Right(())).recover {
       case NonFatal(t) => Left(UnexpectedState(s"Failed to call enrol: ${t.getMessage}"))
     })
-  }
 
 }

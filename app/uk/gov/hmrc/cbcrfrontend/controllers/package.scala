@@ -45,11 +45,12 @@ package object controllers {
   val enrolmentsFormat = Json.format[Enrolments]
   val credentialsFormat = Json.format[Credentials]
 
-  def pure[A](a:A)(implicit ec:ExecutionContext) = EitherT.pure[Future,CBCErrors,A](a)
-  def right[A](a:Future[A])(implicit ec:ExecutionContext) = EitherT.right[Future,CBCErrors,A](a)
-  def rightE[A](a:Future[A])(implicit ec:ExecutionContext) = EitherT.right[Future,ExpiredSession,A](a)
-  def left[A](e:CBCErrors)(implicit ec:ExecutionContext) = EitherT.left[Future,CBCErrors,A](Future.successful(e))
-  def leftE[A](e:ExpiredSession)(implicit ec:ExecutionContext) = EitherT.left[Future,ExpiredSession,A](Future.successful(e))
-  def fromEither[A,B](e:Either[A,B])(implicit ec:ExecutionContext)  = EitherT.fromEither[Future](e)
-  def eitherT[A](a:Future[Either[CBCErrors,A]]) = EitherT[Future,CBCErrors,A](a)
+  def pure[A](a: A)(implicit ec: ExecutionContext) = EitherT.pure[Future, CBCErrors, A](a)
+  def right[A](a: Future[A])(implicit ec: ExecutionContext) = EitherT.right[Future, CBCErrors, A](a)
+  def rightE[A](a: Future[A])(implicit ec: ExecutionContext) = EitherT.right[Future, ExpiredSession, A](a)
+  def left[A](e: CBCErrors)(implicit ec: ExecutionContext) = EitherT.left[Future, CBCErrors, A](Future.successful(e))
+  def leftE[A](e: ExpiredSession)(implicit ec: ExecutionContext) =
+    EitherT.left[Future, ExpiredSession, A](Future.successful(e))
+  def fromEither[A, B](e: Either[A, B])(implicit ec: ExecutionContext) = EitherT.fromEither[Future](e)
+  def eitherT[A](a: Future[Either[CBCErrors, A]]) = EitherT[Future, CBCErrors, A](a)
 }

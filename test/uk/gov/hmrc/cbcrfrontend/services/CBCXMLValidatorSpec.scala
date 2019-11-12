@@ -31,25 +31,26 @@ class CBCXMLValidatorSpec extends WordSpec with Matchers with GuiceOneAppPerSuit
 
   private def loadFile(filename: String) = new File(s"test/resources/$filename")
 
-  val validXmlFile            = loadFile("cbcr-valid.xml")
-  val invalidXmlFile          = loadFile("cbcr-invalid.xml")
-  val invalidMultipleXmlFile  = loadFile("cbcr-invalid-multiple-errors.xml")
+  val validXmlFile = loadFile("cbcr-valid.xml")
+  val invalidXmlFile = loadFile("cbcr-invalid.xml")
+  val invalidMultipleXmlFile = loadFile("cbcr-invalid-multiple-errors.xml")
   val invalidMultipleXmlFile2 = loadFile("cbcr-invalid-multiple-errors2.xml")
-  val fatal                   = loadFile("fatal.xml")
-  val configuration           = new Configuration(ConfigFactory.load("application.conf"))
-  val runMode:RunMode         = mock[RunMode]
+  val fatal = loadFile("fatal.xml")
+  val configuration = new Configuration(ConfigFactory.load("application.conf"))
+  val runMode: RunMode = mock[RunMode]
 
   implicit val env = app.injector.instanceOf[Environment]
 
   implicit val as = app.injector.instanceOf[ActorSystem]
 
   when(runMode.env) thenReturn "Dev"
-  val schemaVer: String = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(s"${runMode.env}.oecd-schema-version deos not exist")
+  val schemaVer: String = configuration
+    .getString(s"${runMode.env}.oecd-schema-version")
+    .getOrElse(s"${runMode.env}.oecd-schema-version deos not exist")
   val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-  val schemaFile: File = new File(s"conf/schema/${schemaVer}/CbcXML_v${schemaVer}.xsd")
+  val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
   val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
-
 
   "An Xml Validator" should {
     "not return any error for a valid file" in {

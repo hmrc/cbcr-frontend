@@ -50,22 +50,23 @@ import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
 
-class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach{
+class SharedControllerSpec
+    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
+    with BeforeAndAfterEach {
 
-
-  implicit val ec                     = app.injector.instanceOf[ExecutionContext]
-  implicit val messagesApi            = app.injector.instanceOf[MessagesApi]
-  implicit val cache                  = mock[CBCSessionCache]
-  implicit val config                 = app.injector.instanceOf[Configuration]
-  implicit val feConfig               = mock[FrontendAppConfig]
-  val subService                      = mock[SubscriptionDataService]
-  val bprKF                           = mock[BPRKnownFactsService]
-  val configuration                   = mock[Configuration]
-  val auditC: AuditConnector          = mock[AuditConnector]
-  val runMode                         = mock[RunMode]
-  val env                             = mock[Environment]
-  val authC                           = mock[AuthConnector]
-  val mcc                             = app.injector.instanceOf[MessagesControllerComponents]
+  implicit val ec = app.injector.instanceOf[ExecutionContext]
+  implicit val messagesApi = app.injector.instanceOf[MessagesApi]
+  implicit val cache = mock[CBCSessionCache]
+  implicit val config = app.injector.instanceOf[Configuration]
+  implicit val feConfig = mock[FrontendAppConfig]
+  val subService = mock[SubscriptionDataService]
+  val bprKF = mock[BPRKnownFactsService]
+  val configuration = mock[Configuration]
+  val auditC: AuditConnector = mock[AuditConnector]
+  val runMode = mock[RunMode]
+  val env = mock[Environment]
+  val authC = mock[AuthConnector]
+  val mcc = app.injector.instanceOf[MessagesControllerComponents]
 
   when(feConfig.analyticsHost) thenReturn "host"
   when(feConfig.analyticsToken) thenReturn "token"
@@ -73,7 +74,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
   val id: CBCId = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
   val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
 
-  val docRefId="GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
+  val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
 
   def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
@@ -88,9 +89,10 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
         None,
         None
       ),
-      Some(ReportingEntity(CBC701,DocSpec(OECD1,DocRefId(docRefId).get,None,None),TIN("7000000002","GB"),"name")),
-      List(CbcReports(DocSpec(OECD1,DocRefId(docRefId).get,None,None))),
-      List(AdditionalInfo(DocSpec(OECD1,DocRefId(docRefId).get,None,None))),
+      Some(
+        ReportingEntity(CBC701, DocSpec(OECD1, DocRefId(docRefId).get, None, None), TIN("7000000002", "GB"), "name")),
+      List(CbcReports(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
+      List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
       Some(LocalDate.now()),
       List.empty[String]
     )
@@ -98,19 +100,21 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
   private val affinityGroupOrgansiation = AffinityGroup.Organisation
 
-  when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("id",Map.empty[String,JsValue]))
+  when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
+    CacheMap("id", Map.empty[String, JsValue]))
   when(runMode.env) thenReturn "Dev"
 
   val schemaVer: String = "1.0"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc)(cache,config, feConfig, ec)
+  val controller =
+    new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc)(cache, config, feConfig, ec)
 
   val utr = Utr("7000000001")
-  val bpr = BusinessPartnerRecord("safeid",None,EtmpAddress("Line1",None,None,None,None,"GB"))
+  val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))
   val subDetails = SubscriptionDetails(
     bpr,
-    SubscriberContact("firstName","lastName", "lkasjdf",EmailAddress("max@max.com")),
+    SubscriberContact("firstName", "lastName", "lkasjdf", EmailAddress("max@max.com")),
     Some(id),
     utr
   )
@@ -123,7 +127,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
   "GET /enter-CBCId" should {
     "return 200" in {
-      when(authC.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
+      when(authC.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       val result = Await.result(controller.enterCBCId(fakeRequestEnterCBCId), 5.second)
       status(result) shouldBe Status.OK
     }
@@ -133,26 +137,34 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
   "GET /submitCBCId" should {
     "return 400 if it was not a valid CBCId" in {
-      when(authC.authorise[Option[CBCEnrolment]](any(),any())(any(),any())) thenReturn Future.successful(Some(CBCEnrolment(id,utr)))
+      when(authC.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(CBCEnrolment(id, utr)))
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> "NOTAVALIDID")))
       status(result) shouldBe Status.BAD_REQUEST
     }
     "return 400 if the CBCId has not been registered" in {
-      when(authC.authorise[Option[CBCEnrolment]](any(),any())(any(),any())) thenReturn Future.successful(Some(CBCEnrolment(id,utr)))
-      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](None)
+      when(authC.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(CBCEnrolment(id, utr)))
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[SubscriptionDetails]](None)
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.BAD_REQUEST
     }
     "return 400 if the CBCId has been registered but doesnt match the CBCId in the bearer token" in {
-      when(authC.authorise[Option[CBCEnrolment]](any(),any())(any(),any())) thenReturn Future.successful(Some(CBCEnrolment(CBCId.create(99).getOrElse(fail("bad cbcid")),utr)))
-      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
+      when(authC.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(CBCEnrolment(CBCId.create(99).getOrElse(fail("bad cbcid")), utr)))
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.BAD_REQUEST
     }
     "return a redirect if successful" in {
-      when(authC.authorise[Option[CBCEnrolment]](any(),any())(any(),any())) thenReturn Future.successful(Some(CBCEnrolment(id,utr)))
-      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
-      when(cache.save(any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(authC.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(CBCEnrolment(id, utr)))
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
+      when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.SEE_OTHER
     }
@@ -166,37 +178,41 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
       when(feConfig.cbcrFrontendHost) thenReturn "http://localhost:9696"
       when(feConfig.governmentGatewaySignOutUrl) thenReturn "http://localhost:9025"
       when(feConfig.cbcrGuidanceUrl) thenReturn guidanceUrl
-      when(authC.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful(())
+      when(authC.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       val result: Result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
       status(result) shouldBe Status.SEE_OTHER
       val maybeUri = result.header.headers.getOrElse("location", "")
-      Logger.debug(s"location: ${maybeUri}")
+      Logger.debug(s"location: $maybeUri")
       maybeUri shouldBe s"http://localhost:9025/gg/sign-out?continue=$guidanceUrl"
 
     }
   }
   "GET /known-facts-check" should {
     "return 406 if we have already subscribed" in {
-      when(authC.authorise[Option[CBCEnrolment]](any(),any())(any(),any())) thenReturn Future.successful(Some(CBCEnrolment(id,utr)))
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(Some(bpr))
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(utr))
+      when(authC.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(CBCEnrolment(id, utr)))
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(Some(bpr))
+      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(Some(utr))
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
 
     }
     "return 200 if we haven't already subscribed" in {
-      when(authC.authorise[Option[CBCEnrolment]](any(),any())(any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(Some(bpr))
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(utr))
-      when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(authC.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(None)
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(Some(bpr))
+      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(Some(utr))
+      when(auditC.sendEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
     }
     "return 200 if an Agent" in {
-      when(authC.authorise[Any](any(),any())(any(),any())) thenReturn Future.successful((): Unit)
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(Some(bpr))
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(Some(utr))
-      when(auditC.sendEvent(any())(any(),any())) thenReturn Future.successful(AuditResult.Success)
+      when(authC.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(Some(bpr))
+      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(Some(utr))
+      when(auditC.sendEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsAgent(fakeRequestSubscribe)) shouldBe Status.OK
     }
@@ -204,111 +220,165 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
   "POST /checkKnownFacts" should {
     "return 400 when KnownFacts are missing" in {
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(None)
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(None)
+      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(None)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts"))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the postcode is invalid" in {
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(None)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(BPRKnownFacts(Utr("1234567890"), "NOTAPOSTCODE"))))
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(None)
+      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(None)
+      val fakeRequestSubscribe = addToken(
+        FakeRequest("POST", "/checkKnownFacts").withJsonBody(
+          Json.toJson(BPRKnownFacts(Utr("1234567890"), "NOTAPOSTCODE"))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the utr is invalid" in {
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(None)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(BPRKnownFacts(Utr("IAMNOTAUTR"), "SW4 6NR"))))
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(None)
+      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(None)
+      val fakeRequestSubscribe = addToken(
+        FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(BPRKnownFacts(Utr("IAMNOTAUTR"), "SW4 6NR"))))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 404 when the utr and postcode are valid but the postcode doesn't match" in {
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(None)
-      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.none[Future,BusinessPartnerRecord]
-      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](None)
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(None)
+      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(None)
+      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.none[Future, BusinessPartnerRecord]
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[SubscriptionDetails]](None)
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
-    "return 303 when we have already used that utr and we are an Organisation"  in {
+    "return 303 when we have already used that utr and we are an Organisation" in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn Future.successful(None)
-      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("line1", None, None, None, Some("SW46NR"), "GB"))
-      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
-      when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(None)
+      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(None)
+      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn Future.successful(
+        None)
+      val response = BusinessPartnerRecord(
+        "safeid",
+        Some(OrganisationResponse("My Corp")),
+        EtmpAddress("line1", None, None, None, Some("SW46NR"), "GB"))
+      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future, BusinessPartnerRecord](response)
+      when(cache.save[BusinessPartnerRecord](any())(any(), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       result.header.headers("Location") should endWith("/already-subscribed")
 
     }
-    "return 303 when that utr has not been registered and we are an Agent"  in {
+    "return 303 when that utr has not been registered and we are an Agent" in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
-      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
+      val response = BusinessPartnerRecord(
+        "safeid",
+        Some(OrganisationResponse("My Corp")),
+        EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Agent))
-      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
-      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
-      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
-      when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Agent))
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
+      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future, BusinessPartnerRecord](response)
+      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn Future.successful(
+        None)
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(None)
+      when(cache.save[BusinessPartnerRecord](any())(any(), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.NOT_FOUND
     }
 
     "return 303 when the utr and postcode are valid" in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
-      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
+      val response = BusinessPartnerRecord(
+        "safeid",
+        Some(OrganisationResponse("My Corp")),
+        EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](None)
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future, BusinessPartnerRecord](response)
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(None)
+      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn Future.successful(
+        None)
+      when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[SubscriptionDetails]](None)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       result.header.headers("Location") should endWith("/known-facts/match")
     }
-
 
     "return 303 when the utr and postcode are valid and the postcode is blank" in {
       val kf = BPRKnownFacts(Utr("7000000002"), "")
-      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("I live far away")), EtmpAddress("Line1", None, None, None, None, "NL"))
+      val response = BusinessPartnerRecord(
+        "safeid",
+        Some(OrganisationResponse("I live far away")),
+        EtmpAddress("Line1", None, None, None, None, "NL"))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checknownFacts").withJsonBody(Json.toJson(kf)))
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](None)
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future, BusinessPartnerRecord](response)
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(None)
+      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn Future.successful(
+        None)
+      when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[SubscriptionDetails]](None)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       result.header.headers("Location") should endWith("/known-facts/match")
     }
 
-    "return 404 when CBCId in KF does not match CBCId in submitted XML"  in {
+    "return 404 when CBCId in KF does not match CBCId in submitted XML" in {
       val kf = BPRKnownFacts(Utr("7000000002"), "SW46NR")
-      val response = BusinessPartnerRecord("safeid", Some(OrganisationResponse("My Corp")), EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
+      val response = BusinessPartnerRecord(
+        "safeid",
+        Some(OrganisationResponse("My Corp")),
+        EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Agent))
-      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future,BusinessPartnerRecord](response)
-      when(subService.retrieveSubscriptionData(any())(any(),any())) thenReturn EitherT.right[Future,CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
-      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[Utr](EQ(Utr.utrRead),any(),any())) thenReturn Future.successful(None)
-      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format),any(),any())) thenReturn Future.successful(None)
-      when(cache.save[BusinessPartnerRecord](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
-      when(cache.save[Utr](any())(any(),any(),any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String,JsValue]))
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Agent))
+      when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future, BusinessPartnerRecord](response)
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
+      when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
+        .successful(None)
+      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(None)
+      when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn Future.successful(
+        None)
+      when(cache.save[BusinessPartnerRecord](any())(any(), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.NOT_FOUND
     }
@@ -340,7 +410,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
     "redirect to signOutSurvey page and return 200" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
+      when(authC.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       when(feConfig.cbcrFrontendHost) thenReturn "http://localhost:9696"
       when(feConfig.governmentGatewaySignOutUrl) thenReturn "http://localhost:9025"
       val result = controller.signOutSurvey(request)
@@ -349,7 +419,7 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
 
     "keepSessionAlive returns 200" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Any](any(),any())(any(), any())) thenReturn Future.successful((): Unit)
+      when(authC.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       val result = controller.keepSessionAlive(request)
       status(result) shouldBe Status.OK
     }
@@ -358,21 +428,23 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
   "unsupportedAffinityGroup" should {
     "return 401 for individuals" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Individual))
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Individual))
       val result = controller.unsupportedAffinityGroup(request)
       status(result) shouldBe Status.UNAUTHORIZED
     }
 
     "return 500 when no affinity group found" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(None)
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(None)
       val result = controller.unsupportedAffinityGroup(request)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
     "return 401 when unexpected affinity group found" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
       val result = controller.unsupportedAffinityGroup(request)
       status(result) shouldBe Status.UNAUTHORIZED
     }
@@ -381,16 +453,17 @@ class SharedControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPe
   "knownFactsMatch" should {
     "return 500 when no affinity group found" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(None)
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(None)
       val result = controller.knownFactsMatch(request)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
     "return 200 when affinity group found" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any(),any())(any(),any())) thenReturn Future.successful(Some(AffinityGroup.Organisation))
-      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format),any(),any())) thenReturn rightE(bpr)
-      when(cache.read[Utr](EQ(Utr.utrRead),any(),any())) thenReturn rightE(Utr("700000002"))
+      when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn rightE(bpr)
+      when(cache.read[Utr](EQ(Utr.utrRead), any(), any())) thenReturn rightE(Utr("700000002"))
       val result = controller.knownFactsMatch(request)
       status(result) shouldBe Status.OK
     }

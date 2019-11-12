@@ -31,33 +31,34 @@ import scala.util.control.NonFatal
 import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
-class CBCIdService @Inject()(connector:CBCRBackendConnector)(implicit ec:ExecutionContext){
+class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
-  def subscribe(s:SubscriptionDetails)(implicit hc:HeaderCarrier) : OptionT[Future,CBCId] =
-    OptionT(connector.subscribe(s).map { response =>
-      response.status match {
-        case Status.OK => CBCId((response.json \ "cbc-id").as[String])
-        case _         => None
-      }
-      }.recover {
-        case NonFatal(t) => {
-          Logger.error("Failed to call subscribe", t)
-          None
+  def subscribe(s: SubscriptionDetails)(implicit hc: HeaderCarrier): OptionT[Future, CBCId] =
+    OptionT(
+      connector
+        .subscribe(s)
+        .map { response =>
+          response.status match {
+            case Status.OK => CBCId((response.json \ "cbc-id").as[String])
+            case _         => None
+          }
         }
-      }
-      )
+        .recover {
+          case NonFatal(t) => {
+            Logger.error("Failed to call subscribe", t)
+            None
+          }
+        })
 
-  def getETMPSubscriptionData(safeId:String)(implicit hc:HeaderCarrier) : OptionT[Future,ETMPSubscription] =
-    OptionT(connector.getETMPSubscriptionData(safeId).map{ response =>
+  def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): OptionT[Future, ETMPSubscription] =
+    OptionT(connector.getETMPSubscriptionData(safeId).map { response =>
       Option(response.json).flatMap(_.validate[ETMPSubscription].asOpt)
     })
 
-
-  def updateETMPSubscriptionData(safeId:String,correspondenceDetails: CorrespondenceDetails)(implicit hc:HeaderCarrier) : ServiceResponse[UpdateResponse] = {
-    OptionT(connector.updateETMPSubscriptionData(safeId,correspondenceDetails).map{ response =>
+  def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(
+    implicit hc: HeaderCarrier): ServiceResponse[UpdateResponse] =
+    OptionT(connector.updateETMPSubscriptionData(safeId, correspondenceDetails).map { response =>
       Option(response.json).flatMap(_.validate[UpdateResponse].asOpt)
-    }).toRight(UnexpectedState("Failed to update ETMP subscription data"):CBCErrors)
-  }
-
+    }).toRight(UnexpectedState("Failed to update ETMP subscription data"): CBCErrors)
 
 }

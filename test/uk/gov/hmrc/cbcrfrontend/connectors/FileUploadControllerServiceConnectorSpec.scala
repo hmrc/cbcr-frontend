@@ -29,9 +29,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, EnvelopeId, FileMetadata, UnexpectedState}
 import play.api.http.HeaderNames.LOCATION
 
-
 class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers with EitherValues with MockitoSugar {
-
 
   "A FileUploadControllerServiceConnectorSpec " should {
     "create the expected Json Object when the expiry Date is specified" in {
@@ -40,18 +38,19 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
 
       val expectedEnvelopeRequest = Json.obj(
         "callbackUrl" -> "http://localhost:9797/cbcr/file-upload-response",
-        "expiryDate" -> s"$envelopeExpiryDate",
+        "expiryDate"  -> s"$envelopeExpiryDate",
         "metadata" -> Json.obj(
           "application" -> "Country By Country Reporting Service"
         ),
         "constraints" -> Json.obj(
-          "maxSize" -> "50MB",
+          "maxSize"        -> "50MB",
           "maxSizePerItem" -> "50MB",
-          "contentTypes" -> List("application/xml","text/xml")
+          "contentTypes"   -> List("application/xml", "text/xml")
         )
       )
 
-      val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", Some(envelopeExpiryDate))
+      val actualEnvelopeRequest =
+        new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", Some(envelopeExpiryDate))
 
       actualEnvelopeRequest should be(expectedEnvelopeRequest)
     }
@@ -66,9 +65,9 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
           "application" -> "Country By Country Reporting Service"
         ),
         "constraints" -> Json.obj(
-          "maxSize" -> "50MB",
+          "maxSize"        -> "50MB",
           "maxSizePerItem" -> "50MB",
-          "contentTypes" -> List("application/xml","text/xml")
+          "contentTypes"   -> List("application/xml", "text/xml")
         )
       )
 
@@ -79,7 +78,8 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
 
     "return the envelopeId if call to extractEnvelopId with valid location header" in {
       val response: HttpResponse = mock[HttpResponse]
-      when(response.header(LOCATION)).thenReturn(Option("localhost:8898/file-upload/envelopes/0f23a63e-d448-41af-a159-6ba23d88943e"))
+      when(response.header(LOCATION))
+        .thenReturn(Option("localhost:8898/file-upload/envelopes/0f23a63e-d448-41af-a159-6ba23d88943e"))
 
       val result = new FileUploadServiceConnector().extractEnvelopId(response)
       result should equal(Right(EnvelopeId("0f23a63e-d448-41af-a159-6ba23d88943e")))
@@ -92,7 +92,9 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
       val result = new FileUploadServiceConnector().extractEnvelopId(response)
 
       result.fold(
-        cbcError => cbcError.shouldBe(UnexpectedState(s"EnvelopeId in $LOCATION header: localhost:8898/file-upload/envelopes not found",None)),
+        cbcError =>
+          cbcError.shouldBe(
+            UnexpectedState(s"EnvelopeId in $LOCATION header: localhost:8898/file-upload/envelopes not found", None)),
         _ => fail("No error generated")
       )
     }
@@ -104,7 +106,7 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
       val result = new FileUploadServiceConnector().extractEnvelopId(response)
 
       result.fold(
-        cbcError => cbcError.shouldBe(UnexpectedState(s"Header $LOCATION not found",None)),
+        cbcError => cbcError.shouldBe(UnexpectedState(s"Header $LOCATION not found", None)),
         _ => fail("No error generated")
       )
     }
@@ -125,9 +127,8 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
 
       val result = new FileUploadServiceConnector().extractFileUploadMessage(response)
 
-
       result.fold(
-        cbcError => cbcError.shouldBe(UnexpectedState("Problems uploading the file",None)),
+        cbcError => cbcError.shouldBe(UnexpectedState("Problems uploading the file", None)),
         _ => fail("No error generated")
       )
     }
@@ -148,16 +149,15 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
 
       val result = new FileUploadServiceConnector().extractEnvelopeDeleteMessage(response)
 
-
       result.fold(
-        cbcError => cbcError.shouldBe(UnexpectedState("Problems deleting the envelope",None)),
+        cbcError => cbcError.shouldBe(UnexpectedState("Problems deleting the envelope", None)),
         _ => fail("No error generated")
       )
     }
 
     "return the file meta data if call to extractFileMetadata with status = 200" in {
       val response: HttpResponse = mock[HttpResponse]
-      val md = FileMetadata("","","something.xml","",1.0,"",JsNull,"")
+      val md = FileMetadata("", "", "something.xml", "", 1.0, "", JsNull, "")
       when(response.json).thenReturn(Json.toJson(md))
       when(response.status).thenReturn(200)
 
@@ -171,9 +171,8 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
 
       val result = new FileUploadServiceConnector().extractFileMetadata(response)
 
-
       result.fold(
-        cbcError => cbcError.shouldBe(UnexpectedState("Problems getting File Metadata",None)),
+        cbcError => cbcError.shouldBe(UnexpectedState("Problems getting File Metadata", None)),
         _ => fail("No error generated")
       )
     }

@@ -16,5 +16,4 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-case class CBCEnrolment(cbcId:CBCId, utr:Utr)
-
+case class CBCEnrolment(cbcId: CBCId, utr: Utr)

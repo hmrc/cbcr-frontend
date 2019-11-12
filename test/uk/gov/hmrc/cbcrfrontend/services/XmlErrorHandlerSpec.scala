@@ -24,19 +24,18 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.xml.SAXParseException
 
+class XmlErrorHandlerSpec extends FlatSpec with Matchers {
 
-class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
+  def addException(errorMessage: String, line: Int, column: Int, severity: Int) =
+    new XMLValidationProblem(new ImmutableLocation(0, column, line, "", ""), errorMessage, severity)
 
-  def addException(errorMessage: String, line: Int, column: Int, severity:Int) =
-    new XMLValidationProblem(new ImmutableLocation(0,column,line,"",""),errorMessage,severity)
-
-  val warnings: List[XMLValidationProblem] = List(addException("WarningOne", 5, 2,1), addException("WarningTwo", 13, 14,1))
-  val errors: List[XMLValidationProblem] = List(addException("ErrorOne", 5, 2,2), addException("ErrorTwo", 13, 14, 2))
-  val fatalErrors: List[XMLValidationProblem] = List(addException("FatalErrorOne", 5, 2,3))
-
+  val warnings: List[XMLValidationProblem] =
+    List(addException("WarningOne", 5, 2, 1), addException("WarningTwo", 13, 14, 1))
+  val errors: List[XMLValidationProblem] = List(addException("ErrorOne", 5, 2, 2), addException("ErrorTwo", 13, 14, 2))
+  val fatalErrors: List[XMLValidationProblem] = List(addException("FatalErrorOne", 5, 2, 3))
 
   "An XmlErrorHandler" should "report multiple errors and multiple warnings" in {
-    val xmlErorHandler =  new XmlErrorHandler
+    val xmlErorHandler = new XmlErrorHandler
 
     warnings.foreach(spe => xmlErorHandler.reportProblem(spe))
     errors.foreach(spe => xmlErorHandler.reportProblem(spe))
@@ -45,7 +44,7 @@ class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
     xmlErorHandler.hasErrors shouldBe true
     xmlErorHandler.errorsCollection.size shouldBe errors.size
 
-    for(i <- errors.indices) {
+    for (i <- errors.indices) {
       val message = s"${errors(i).getMessage} on line ${errors(i).getLocation.getLineNumber}"
       assert(message == xmlErorHandler.errorsCollection(i))
     }
@@ -53,7 +52,7 @@ class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
     xmlErorHandler.hasWarnings shouldBe true
     xmlErorHandler.warningsCollection.size shouldBe warnings.size
 
-    for(i <- warnings.indices) {
+    for (i <- warnings.indices) {
       val message = s"${warnings(i).getMessage} on line ${warnings(i).getLocation.getLineNumber}"
       assert(message == xmlErorHandler.warningsCollection(i))
     }
@@ -61,7 +60,7 @@ class XmlErrorHandlerSpec  extends FlatSpec with Matchers {
     xmlErorHandler.hasFatalErrors shouldBe true
     xmlErorHandler.fatalErrorsCollection.size shouldBe fatalErrors.size
 
-    for(i <- fatalErrors.indices) {
+    for (i <- fatalErrors.indices) {
       val message = s"${fatalErrors(i).getMessage} on line ${fatalErrors(i).getLocation.getLineNumber}"
       assert(message == xmlErorHandler.fatalErrorsCollection(i))
     }

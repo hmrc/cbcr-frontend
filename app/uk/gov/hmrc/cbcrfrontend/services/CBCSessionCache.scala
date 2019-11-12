@@ -35,46 +35,58 @@ import play.api.http.Status
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 @Singleton
-class CBCSessionCache @Inject()(val config:Configuration, val http:HttpClient)(implicit ec: ExecutionContext) extends SessionCache {
+class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)
+    extends SessionCache {
 
   val conf: Config = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
 
   override def defaultSource: String = "cbcr-frontend"
 
-  override def baseUri: String = (for{
-    protocol <- conf.get[String]("protocol")
-    host     <- conf.get[String]("host")
-    port     <- conf.get[Int]("port")
-  } yield s"$protocol://$host:$port").value
+  override def baseUri: String =
+    (for {
+      protocol <- conf.get[String]("protocol")
+      host     <- conf.get[String]("host")
+      port     <- conf.get[Int]("port")
+    } yield s"$protocol://$host:$port").value
 
   override def domain: String = conf.get[String]("domain").value
 
-  def save[T:Writes:TypeTag](body:T)(implicit hc:HeaderCarrier): Future[CacheMap] =
-    cache(stripPackage(typeOf[T].toString),body)
+  def save[T: Writes: TypeTag](body: T)(implicit hc: HeaderCarrier): Future[CacheMap] =
+    cache(stripPackage(typeOf[T].toString), body)
 
-  def read[T:Reads:TypeTag](implicit hc:HeaderCarrier): EitherT[Future,ExpiredSession,T] = EitherT[Future,ExpiredSession,T](
-    fetchAndGetEntry(stripPackage(typeOf[T].toString)).map(_.toRight(ExpiredSession(s"Unable to read ${typeOf[T]} from cache")))
-  )
+  def read[T: Reads: TypeTag](implicit hc: HeaderCarrier): EitherT[Future, ExpiredSession, T] =
+    EitherT[Future, ExpiredSession, T](
+      fetchAndGetEntry(stripPackage(typeOf[T].toString))
+        .map(_.toRight(ExpiredSession(s"Unable to read ${typeOf[T]} from cache")))
+    )
 
-  def readOption[T:Reads:TypeTag](implicit hc:HeaderCarrier): Future[Option[T]] =
+  def readOption[T: Reads: TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] =
     fetchAndGetEntry(stripPackage(typeOf[T].toString))
 
-  def readOrCreate[T:Format:TypeTag](f: => OptionT[Future,T])(implicit hc:HeaderCarrier) : OptionT[Future, T] =
-    OptionT(readOption[T].flatMap(_.fold(
-      f.semiflatMap{t => save(t).map(_ => t)}.value
-    )(t => Future.successful(Some(t)))))
+  def readOrCreate[T: Format: TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] =
+    OptionT(
+      readOption[T].flatMap(
+        _.fold(
+          f.semiflatMap { t =>
+            save(t).map(_ => t)
+          }.value
+        )(t => Future.successful(Some(t)))))
 
-  def stripPackage(s:String) : String = s.split('.').last
+  def stripPackage(s: String): String = s.split('.').last
 
   def clear(implicit hc: HeaderCarrier): Future[Boolean] =
-    super.remove().map {response =>
-      response.status match {
-        case Status.OK          => true
-        case Status.NO_CONTENT  => true
-        case _                  => false
+    super
+      .remove()
+      .map { response =>
+        response.status match {
+          case Status.OK         => true
+          case Status.NO_CONTENT => true
+          case _                 => false
+        }
       }
-    }.recover{case NonFatal(t) =>
-      Logger.info(s"CBCSessionCache Failed - error message: ${t.getMessage}")
-      false
-    }
+      .recover {
+        case NonFatal(t) =>
+          Logger.info(s"CBCSessionCache Failed - error message: ${t.getMessage}")
+          false
+      }
 }

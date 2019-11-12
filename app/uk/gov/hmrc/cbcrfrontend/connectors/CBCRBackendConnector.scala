@@ -33,14 +33,14 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 @Singleton
-class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec:ExecutionContext) {
+class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
 
   val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
   val url: String = (for {
     proto <- conf.get[String]("protocol")
-    host <- conf.get[String]("host")
-    port <- conf.get[Int]("port")
+    host  <- conf.get[String]("host")
+    port  <- conf.get[Int]("port")
   } yield s"$proto://$host:$port/cbcr").value
 
   def subscribe(s: SubscriptionDetails)(implicit hc: HeaderCarrier): Future[HttpResponse] =
@@ -52,7 +52,8 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/subscription/$safeId")
 
-  def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(
+    implicit hc: HeaderCarrier): Future[HttpResponse] = {
     implicit val emailFormat = ContactDetails.emailFormat
     http.PUT(url + s"/subscription/$safeId", correspondenceDetails)
   }
@@ -72,50 +73,54 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   def corrDocRefIdSave(c: CorrDocRefId, d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val jsonObj = JsString(d.show)
 
-  http.PUT(url + s"/corr-doc-ref-id/${c.cid.show}", jsonObj)
-}
+    http.PUT(url + s"/corr-doc-ref-id/${c.cid.show}", jsonObj)
+  }
 
-  def reportingEntityDataSave(r:ReportingEntityData)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.POST(url+ "/reporting-entity",r)
+  def reportingEntityDataSave(r: ReportingEntityData)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.POST(url + "/reporting-entity", r)
 
-  def reportingEntityDataUpdate(r:PartialReportingEntityData)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
-    http.PUT[PartialReportingEntityData,HttpResponse](url+ "/reporting-entity",r)
+  def reportingEntityDataUpdate(r: PartialReportingEntityData)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.PUT[PartialReportingEntityData, HttpResponse](url + "/reporting-entity", r)
 
-  def reportingEntityDataQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+  def reportingEntityDataQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/query/${d.show}")
 
-  def reportingEntityDataModelQuery(d:DocRefId)(implicit hc:HeaderCarrier) : Future[HttpResponse] =
+  def reportingEntityDataModelQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/model/${d.show}")
 
   def reportingEntityDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/doc-ref-id/${d.show}")
 
-  def reportingEntityCBCIdAndReportingPeriod(cbcId: CBCId, reportingPeriod: LocalDate)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
+  def reportingEntityCBCIdAndReportingPeriod(cbcId: CBCId, reportingPeriod: LocalDate)(
+    implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/query-cbc-id/${cbcId.toString}/${reportingPeriod.toString}")
-  }
 
-  def reportingEntityDataQueryTin(tin: String, reportingPeriod: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+  def reportingEntityDataQueryTin(tin: String, reportingPeriod: String)(
+    implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/query-tin/$tin/$reportingPeriod")
 
-  def getDocRefIdOver200(implicit hc: HeaderCarrier) = {
-
+  def getDocRefIdOver200(implicit hc: HeaderCarrier) =
     http.GET[ListDocRefIdRecord](url + s"/getDocsRefId")
-  }
 
-  def adminReportingEntityDataQuery(d:String)(implicit hc:HeaderCarrier): Future[HttpResponse] =
+  def adminReportingEntityDataQuery(d: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/admin/reporting-entity/doc-ref-id/$d")
 
-  def adminReportingEntityCBCIdAndReportingPeriod(cbcId: String, reportingPeriod: LocalDate)(implicit hc: HeaderCarrier) : Future[HttpResponse] = {
-    http.GET(url + s"/admin/reporting-entity/query-cbc-id/${cbcId}/${reportingPeriod.toString}")
-  }
+  def adminReportingEntityCBCIdAndReportingPeriod(cbcId: String, reportingPeriod: LocalDate)(
+    implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.GET(url + s"/admin/reporting-entity/query-cbc-id/$cbcId/${reportingPeriod.toString}")
 
-  def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+  def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(
+    implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/admin/reporting-entity/query-tin/$tin/$reportingPeriod")
 
-  def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier):Future[HttpResponse] = http.PUT(url + s"/admin/updateDocRefId/${docRefId}", JsNull)
+  def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.PUT(url + s"/admin/updateDocRefId/$docRefId", JsNull)
 
-  def editAdminReportingEntity(selector: AdminDocRefId, adminReportingEntityData: AdminReportingEntityData)(implicit hc: HeaderCarrier) = http.POST(url + s"/admin/updateReportingEntityDRI/${selector.id}", Json.toJson(adminReportingEntityData))
+  def editAdminReportingEntity(selector: AdminDocRefId, adminReportingEntityData: AdminReportingEntityData)(
+    implicit hc: HeaderCarrier) =
+    http.POST(url + s"/admin/updateReportingEntityDRI/${selector.id}", Json.toJson(adminReportingEntityData))
 
-  def adminSaveDocRefId(id: AdminDocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] = http.POST(url + s"/admin/saveDocRefId/${id.id}", JsNull)
+  def adminSaveDocRefId(id: AdminDocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.POST(url + s"/admin/saveDocRefId/${id.id}", JsNull)
 
 }

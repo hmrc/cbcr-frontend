@@ -23,7 +23,7 @@ import play.api.libs.json.Json
 /**
   * Created by max on 18/07/17.
   */
-case class SubmissionDate(date:LocalDateTime)
-object SubmissionDate{
+case class SubmissionDate(date: LocalDateTime)
+object SubmissionDate {
   implicit val format = Json.format[SubmissionDate]
 }

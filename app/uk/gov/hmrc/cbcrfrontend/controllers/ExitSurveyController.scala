@@ -34,44 +34,49 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ExitSurveyController @Inject()(val config:Configuration,
-                                     val audit:AuditConnector,
-                                     messagesControllerComponents: MessagesControllerComponents)
-                                    (implicit conf:FrontendAppConfig,
-                                     override val messagesApi:MessagesApi,
-                                     val ec: ExecutionContext) extends FrontendController(messagesControllerComponents) with I18nSupport{
+class ExitSurveyController @Inject()(
+  val config: Configuration,
+  val audit: AuditConnector,
+  messagesControllerComponents: MessagesControllerComponents)(
+  implicit conf: FrontendAppConfig,
+  override val messagesApi: MessagesApi,
+  val ec: ExecutionContext)
+    extends FrontendController(messagesControllerComponents) with I18nSupport {
 
-  val doSurvey = Action{ implicit request =>
-    Ok(survey.exitSurvey( SurveyForm.surveyForm))
+  val doSurvey = Action { implicit request =>
+    Ok(survey.exitSurvey(SurveyForm.surveyForm))
   }
 
-  val surveyAcknowledge =  Action { implicit request =>
+  val surveyAcknowledge = Action { implicit request =>
     Ok(survey.exitSurveyComplete())
   }
 
-
-  val submit = Action.async{ implicit request =>
-    SurveyForm.surveyForm.bindFromRequest().fold(
-      errors  => Future.successful(BadRequest(survey.exitSurvey( errors))),
-      answers => auditSurveyAnswers(answers).fold(
-        errors => {
-          Logger.error(errors.toString)//          Redirect(routes.SharedController.guidance())
-          Redirect(routes.ExitSurveyController.surveyAcknowledge())
-        },
-        _      => Redirect(routes.ExitSurveyController.surveyAcknowledge())
+  val submit = Action.async { implicit request =>
+    SurveyForm.surveyForm
+      .bindFromRequest()
+      .fold(
+        errors => Future.successful(BadRequest(survey.exitSurvey(errors))),
+        answers =>
+          auditSurveyAnswers(answers).fold(
+            errors => {
+              Logger.error(errors.toString) //          Redirect(routes.SharedController.guidance())
+              Redirect(routes.ExitSurveyController.surveyAcknowledge())
+            },
+            _ => Redirect(routes.ExitSurveyController.surveyAcknowledge())
+        )
       )
-    )
   }
 
-  def auditSurveyAnswers(answers: SurveyAnswers)(implicit request:Request[_]) : ServiceResponse[AuditResult.Success.type ] = {
-    eitherT[AuditResult.Success.type](audit.sendExtendedEvent(ExtendedDataEvent("Country-By-Country-Frontend", "CBCRExitSurvey",
-      detail = Json.toJson(answers)
-    )).map {
-      case AuditResult.Disabled        => Right(AuditResult.Success)
-      case AuditResult.Success         => Right(AuditResult.Success)
-      case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit an exit survey: $msg"))
-    })
-
-  }
+  def auditSurveyAnswers(answers: SurveyAnswers)(
+    implicit request: Request[_]): ServiceResponse[AuditResult.Success.type] =
+    eitherT[AuditResult.Success.type](
+      audit
+        .sendExtendedEvent(
+          ExtendedDataEvent("Country-By-Country-Frontend", "CBCRExitSurvey", detail = Json.toJson(answers)))
+        .map {
+          case AuditResult.Disabled        => Right(AuditResult.Success)
+          case AuditResult.Success         => Right(AuditResult.Success)
+          case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit an exit survey: $msg"))
+        })
 
 }

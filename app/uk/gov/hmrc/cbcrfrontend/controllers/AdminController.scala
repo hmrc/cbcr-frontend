@@ -38,8 +38,8 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import scala.concurrent.{ExecutionContext, Future}
 
 /** This case class is used to show all the DocRefIds stored in our mongo DB. The one we had in models had too many parameters and we only retrieve id and valid fields from DB which isn't enough to make the original
-*   case class.
-* */
+  *   case class.
+  * */
 case class AdminDocRefId(id: String)
 
 object AdminDocRefId {
@@ -47,10 +47,13 @@ object AdminDocRefId {
   implicit val format: Format[AdminDocRefId] = new Format[AdminDocRefId] {
     override def writes(o: AdminDocRefId): JsValue = JsString(o.id)
 
-    override def reads(json: JsValue): JsResult[AdminDocRefId] = json.asOpt[JsString].map(v => AdminDocRefId(v.value)).fold[JsResult[AdminDocRefId]](
-      JsError(s"Unable to deserialise $json as a DocRefId"))(
-      (id: AdminDocRefId) => JsSuccess(id)
-    )
+    override def reads(json: JsValue): JsResult[AdminDocRefId] =
+      json
+        .asOpt[JsString]
+        .map(v => AdminDocRefId(v.value))
+        .fold[JsResult[AdminDocRefId]](JsError(s"Unable to deserialise $json as a DocRefId"))(
+          (id: AdminDocRefId) => JsSuccess(id)
+        )
   }
 
   implicit val adminDocRefIdFormatter = new Formatter[AdminDocRefId] {
@@ -81,45 +84,54 @@ case class AdminCbcIdAndDate(cbcId: String, date: LocalDate)
 case class AdminTinAndDate(tin: String, date: LocalDate)
 
 /** This case class is used when we manually need to the customers reporting entity and docref if and addtional info.*/
-case class AdminReportingEntityDataRequestForm(selector: AdminDocRefId, cbcReportsDRI: List[AdminDocRefId], additionalInfoDRI: Option[List[AdminDocRefId]], reportingEntityDRI: AdminDocRefId)
+case class AdminReportingEntityDataRequestForm(
+  selector: AdminDocRefId,
+  cbcReportsDRI: List[AdminDocRefId],
+  additionalInfoDRI: Option[List[AdminDocRefId]],
+  reportingEntityDRI: AdminDocRefId)
 
 object AdminReportingEntityDataRequestForm {
   implicit val format = Json.format[AdminReportingEntityDataRequestForm]
 }
 
-case class AdminReportingEntityData(cbcReportsDRI: List[AdminDocRefId], additionalInfoDRI: Option[List[AdminDocRefId]], reportingEntityDRI: AdminDocRefId)
+case class AdminReportingEntityData(
+  cbcReportsDRI: List[AdminDocRefId],
+  additionalInfoDRI: Option[List[AdminDocRefId]],
+  reportingEntityDRI: AdminDocRefId)
 
 object AdminReportingEntityData {
   implicit val format = Json.format[AdminReportingEntityData]
 }
 
-
-class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
-                                val config: Configuration,
-                                val audit: AuditConnector,
-                                cbcrBackendConnector: CBCRBackendConnector,
-                                reportingEntityDataService: ReportingEntityDataService)
-                               (implicit conf: FrontendAppConfig,
-                                override val messagesApi: MessagesApi,
-                                val ec: ExecutionContext,
-                                messagesControllerComponents: MessagesControllerComponents) extends FrontendController(messagesControllerComponents) with I18nSupport {
+class AdminController @Inject()(
+  frontendAppConfig: FrontendAppConfig,
+  val config: Configuration,
+  val audit: AuditConnector,
+  cbcrBackendConnector: CBCRBackendConnector,
+  reportingEntityDataService: ReportingEntityDataService)(
+  implicit conf: FrontendAppConfig,
+  override val messagesApi: MessagesApi,
+  val ec: ExecutionContext,
+  messagesControllerComponents: MessagesControllerComponents)
+    extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val defaultParser = messagesControllerComponents.parsers.defaultBodyParser
 
-
   lazy val credentials = Creds(frontendAppConfig.username, frontendAppConfig.password)
 
-
-  def removeControllerCharacters(string: String) = {
+  def removeControllerCharacters(string: String) =
     string.filter(_ >= ' ')
-  }
 
   val adminReportingEntityDataRequestForm = Form(
     mapping(
       "selector" -> of[AdminDocRefId],
-      "cbcReportsDRI" -> nonEmptyText.transform[List[AdminDocRefId]](removeControllerCharacters(_).split(",").toList.map(elem => AdminDocRefId(elem)), l => l.map(_.id).mkString),
-      "additionalInfoDRI" -> optional(nonEmptyText).transform[Option[List[AdminDocRefId]]](str => str.map(input => removeControllerCharacters(input).split(",").toList.map(AdminDocRefId(_))), list => list.map(l => l.map(_.id).mkString)),
+      "cbcReportsDRI" -> nonEmptyText.transform[List[AdminDocRefId]](
+        removeControllerCharacters(_).split(",").toList.map(elem => AdminDocRefId(elem)),
+        l => l.map(_.id).mkString),
+      "additionalInfoDRI" -> optional(nonEmptyText).transform[Option[List[AdminDocRefId]]](
+        str => str.map(input => removeControllerCharacters(input).split(",").toList.map(AdminDocRefId(_))),
+        list => list.map(l => l.map(_.id).mkString)),
       "reportingEntityDRI" -> of[AdminDocRefId]
     )(AdminReportingEntityDataRequestForm.apply)(AdminReportingEntityDataRequestForm.unapply)
   )
@@ -133,113 +145,109 @@ class AdminController @Inject()(frontendAppConfig: FrontendAppConfig,
   val adminQueryWithCbcIdAndDate = Form(
     mapping(
       "cbcId" -> nonEmptyText,
-      "date" -> localDate
+      "date"  -> localDate
     )(AdminCbcIdAndDate.apply)(AdminCbcIdAndDate.unapply)
   )
 
   val adminQueryWithTinAndDate = Form(
     mapping(
-      "tin" -> nonEmptyText,
+      "tin"  -> nonEmptyText,
       "date" -> localDate
     )(AdminTinAndDate.apply)(AdminTinAndDate.unapply)
   )
 
-
-  def showAdminPage: Action[AnyContent] = AuthenticationController(credentials).apply {
-    implicit request =>
-      Ok(tepm_admin_page())
+  def showAdminPage: Action[AnyContent] = AuthenticationController(credentials).apply { implicit request =>
+    Ok(tepm_admin_page())
   }
 
-  def showAllDocRefIdOver200: Action[AnyContent] = AuthenticationController(credentials).async {
-    implicit request =>
-      cbcrBackendConnector.getDocRefIdOver200.map(
-        documents => Ok(show_all_docRefIds(documents.docs))
-      )
+  def showAllDocRefIdOver200: Action[AnyContent] = AuthenticationController(credentials).async { implicit request =>
+    cbcrBackendConnector.getDocRefIdOver200.map(
+      documents => Ok(show_all_docRefIds(documents.docs))
+    )
   }
 
-  def showAmendDocRefIdPage = AuthenticationController(credentials).apply {
-    implicit request =>
-      Ok(admin_docRefId_Editor())
+  def showAmendDocRefIdPage = AuthenticationController(credentials).apply { implicit request =>
+    Ok(admin_docRefId_Editor())
   }
 
-  def showAddReportingEntityPage = AuthenticationController(credentials).async {
-    implicit request =>
-      Future.successful(Ok(addReportingEntityPage()))
+  def showAddReportingEntityPage = AuthenticationController(credentials).async { implicit request =>
+    Future.successful(Ok(addReportingEntityPage()))
   }
 
-  def queryReportingEntityByDocRefId = AuthenticationController(credentials).async {
-    implicit request =>
-      adminQueryDocRefIdForm.bindFromRequest().fold(
+  def queryReportingEntityByDocRefId = AuthenticationController(credentials).async { implicit request =>
+    adminQueryDocRefIdForm
+      .bindFromRequest()
+      .fold(
         errors => Future.successful(BadRequest("Error")),
-        docRefId =>
-          cbcrBackendConnector.adminReportingEntityDataQuery(docRefId.id).map(doc =>
-            Ok(doc.json))
+        docRefId => cbcrBackendConnector.adminReportingEntityDataQuery(docRefId.id).map(doc => Ok(doc.json))
       )
   }
 
-
-  def queryReportingEntityByCbcIdAndDate = AuthenticationController(credentials).async {
-    implicit request =>
-      adminQueryWithCbcIdAndDate.bindFromRequest().fold(
+  def queryReportingEntityByCbcIdAndDate = AuthenticationController(credentials).async { implicit request =>
+    adminQueryWithCbcIdAndDate
+      .bindFromRequest()
+      .fold(
         errors => Future.successful(BadRequest("Error")),
         query =>
-          cbcrBackendConnector.adminReportingEntityCBCIdAndReportingPeriod(query.cbcId, query.date).map(doc =>
-            Ok(doc.json))
+          cbcrBackendConnector
+            .adminReportingEntityCBCIdAndReportingPeriod(query.cbcId, query.date)
+            .map(doc => Ok(doc.json))
       )
   }
 
-  def queryReportingEntityByTinAndDate = AuthenticationController(credentials).async {
-    implicit request =>
-      adminQueryWithTinAndDate.bindFromRequest().fold(
+  def queryReportingEntityByTinAndDate = AuthenticationController(credentials).async { implicit request =>
+    adminQueryWithTinAndDate
+      .bindFromRequest()
+      .fold(
         errors => Future.successful(BadRequest("Error")),
         query =>
-          cbcrBackendConnector.adminReportingEntityDataQueryTin(query.tin, query.date.toString).map(doc =>
-            Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
+          cbcrBackendConnector
+            .adminReportingEntityDataQueryTin(query.tin, query.date.toString)
+            .map(doc => Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
       )
   }
 
-  def editDIR() = AuthenticationController(credentials).async {
-    implicit result =>
-      adminQueryDocRefIdForm.bindFromRequest().fold(
+  def editDIR() = AuthenticationController(credentials).async { implicit result =>
+    adminQueryDocRefIdForm
+      .bindFromRequest()
+      .fold(
         errors => Future.successful(BadRequest("Error")),
-        docRefId =>
-          cbcrBackendConnector.adminEditDocRefId(docRefId.id).map(_ =>
-            Ok("Doc Ref Id has been Validated"))
+        docRefId => cbcrBackendConnector.adminEditDocRefId(docRefId.id).map(_ => Ok("Doc Ref Id has been Validated"))
       )
   }
 
-
-  def showEditReportingEntityPage = AuthenticationController(credentials).async {
-    implicit request =>
-      Future.successful(Ok(adminEditReportingEntityData(adminReportingEntityDataRequestForm)))
+  def showEditReportingEntityPage = AuthenticationController(credentials).async { implicit request =>
+    Future.successful(Ok(adminEditReportingEntityData(adminReportingEntityDataRequestForm)))
   }
 
-
-  def editReportingEntity = AuthenticationController(credentials).async {
-    implicit request =>
-      adminReportingEntityDataRequestForm.bindFromRequest().fold(
+  def editReportingEntity = AuthenticationController(credentials).async { implicit request =>
+    adminReportingEntityDataRequestForm
+      .bindFromRequest()
+      .fold(
         errors => Future.successful(BadRequest("Error")),
         editForm => {
-          val adminReportingEntityData = AdminReportingEntityData(editForm.cbcReportsDRI, editForm.additionalInfoDRI, editForm.reportingEntityDRI)
-          cbcrBackendConnector.editAdminReportingEntity(editForm.selector, adminReportingEntityData).map(
-            _ => Ok(s"Replaced document with ${editForm.selector} field with ${Json.toJson(adminReportingEntityData)}")
-
-          )
+          val adminReportingEntityData =
+            AdminReportingEntityData(editForm.cbcReportsDRI, editForm.additionalInfoDRI, editForm.reportingEntityDRI)
+          cbcrBackendConnector
+            .editAdminReportingEntity(editForm.selector, adminReportingEntityData)
+            .map(
+              _ =>
+                Ok(s"Replaced document with ${editForm.selector} field with ${Json.toJson(adminReportingEntityData)}")
+            )
         }
-
       )
   }
 
-  def adminAddDocRefId = AuthenticationController(credentials).async {
-    implicit request =>
-      adminQueryDocRefIdForm.bindFromRequest().fold(
+  def adminAddDocRefId = AuthenticationController(credentials).async { implicit request =>
+    adminQueryDocRefIdForm
+      .bindFromRequest()
+      .fold(
         errors => Future.successful(BadRequest("Error binding doc ref id from text box")),
         docRefId =>
           cbcrBackendConnector.adminSaveDocRefId(docRefId).map { res =>
             Ok(s"${docRefId.id} was added to Database")
-          }
+        }
       )
   }
 
 }
-

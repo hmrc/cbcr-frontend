@@ -23,10 +23,10 @@ import play.api.data.Forms.{mapping, text}
 object SurveyForm {
 
   val surveyForm: Form[SurveyAnswers] = Form(
-      mapping(
-        "satisfied" -> text,
-        "suggestions" -> text
-      )(SurveyAnswers.apply)(SurveyAnswers.unapply)
+    mapping(
+      "satisfied"   -> text,
+      "suggestions" -> text
+    )(SurveyAnswers.apply)(SurveyAnswers.unapply)
   )
 
 }

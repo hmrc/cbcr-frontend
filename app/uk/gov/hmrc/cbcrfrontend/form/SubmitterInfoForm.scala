@@ -22,18 +22,20 @@ import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm.condTrue
 import uk.gov.hmrc.cbcrfrontend.model.SubmitterInfo
 import uk.gov.hmrc.emailaddress.EmailAddress
 
-
 object SubmitterInfoForm {
   val submitterInfoForm: Form[SubmitterInfo] = Form(
     mapping(
       "fullName" -> text.verifying("submitterInfo.fullName.error", _.trim != ""),
-      "contactPhone" -> text.verifying("submitterInfo.phoneNumber.error.empty", _.trim != "")
-        .verifying("submitterInfo.phoneNumber.error.invalid", x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))),
-      "email" -> text.verifying("submitterInfo.emailAddress.error.empty", _.trim != "")
+      "contactPhone" -> text
+        .verifying("submitterInfo.phoneNumber.error.empty", _.trim != "")
+        .verifying(
+          "submitterInfo.phoneNumber.error.invalid",
+          x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))),
+      "email" -> text
+        .verifying("submitterInfo.emailAddress.error.empty", _.trim != "")
         .verifying("submitterInfo.emailAddress.error.invalid", x => condTrue(x.trim != "", EmailAddress.isValid(x)))
     )((fullName: String, contactPhone: String, email: String) => {
       SubmitterInfo(fullName, None, contactPhone, EmailAddress(email), None)
-    }
-    )(si => Some((si.fullName, si.contactPhone, si.email.value)))
+    })(si => Some((si.fullName, si.contactPhone, si.email.value)))
   )
 }

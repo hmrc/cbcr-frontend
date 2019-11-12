@@ -20,27 +20,28 @@ import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._ // Combinator syntax
 
-case class EtmpAddress(addressLine1: String,
-                       addressLine2: Option[String],
-                       addressLine3: Option[String],
-                       addressLine4: Option[String],
-                       postalCode: Option[String],
-                       countryCode: String)
+case class EtmpAddress(
+  addressLine1: String,
+  addressLine2: Option[String],
+  addressLine3: Option[String],
+  addressLine4: Option[String],
+  postalCode: Option[String],
+  countryCode: String)
 
 object EtmpAddress {
   implicit val bprFormat = Json.format[EtmpAddress]
 
   val subscriptionFormat = new Format[EtmpAddress] {
     override def writes(o: EtmpAddress) = Json.obj(
-      "line1" -> o.addressLine1,
-      "line2" -> o.addressLine1,
-      "line3" -> o.addressLine1,
-      "line4" -> o.addressLine1,
-      "postalCode" -> o.postalCode,
+      "line1"       -> o.addressLine1,
+      "line2"       -> o.addressLine1,
+      "line3"       -> o.addressLine1,
+      "line4"       -> o.addressLine1,
+      "postalCode"  -> o.postalCode,
       "countryCode" -> o.countryCode
     )
 
-    implicit val etmpAddressReads : Reads[EtmpAddress] =
+    implicit val etmpAddressReads: Reads[EtmpAddress] =
       ((JsPath \ "line1").read[String] and
         (JsPath \ "line2").readNullable[String] and
         (JsPath \ "line3").readNullable[String] and
@@ -59,11 +60,8 @@ object OrganisationResponse {
   implicit val formats = Json.format[OrganisationResponse]
 }
 
-case class BusinessPartnerRecord(safeId: String,
-                                 organisation: Option[OrganisationResponse],
-                                 address: EtmpAddress)
+case class BusinessPartnerRecord(safeId: String, organisation: Option[OrganisationResponse], address: EtmpAddress)
 
 object BusinessPartnerRecord {
   implicit val format = Json.format[BusinessPartnerRecord]
 }
-

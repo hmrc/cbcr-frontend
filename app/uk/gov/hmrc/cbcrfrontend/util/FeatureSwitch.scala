@@ -22,7 +22,6 @@ import play.api.libs.json.{Json, _}
 
 import scala.util.Try
 
-
 sealed trait FeatureSwitch {
   def name: String
 
@@ -52,29 +51,24 @@ object FeatureSwitch {
   def systemPropertyName(name: String) = name
 
   implicit val featureSwitchWrites = new Writes[FeatureSwitch] {
-    def writes(fs: FeatureSwitch): JsValue = {
-      Json.obj("name" -> fs.name,
-        "enabled" -> fs.enabled)
-    }
+    def writes(fs: FeatureSwitch): JsValue =
+      Json.obj("name" -> fs.name, "enabled" -> fs.enabled)
   }
 
   implicit val featureSwitchReads: Reads[FeatureSwitch] = (
     (JsPath \ "name").read[String] and
       (JsPath \ "enabled").read[Boolean]
-    ) (FeatureSwitch.apply _)
+  )(FeatureSwitch.apply _)
 }
 
 object CbcrSwitches {
   private val WHITELIST_DISABLED = "whiteListDisabled"
   private val CLEAR_SUBSCRIPTION_DATA_ROUTE = "clearSubscriptionData"
   private val LANGUAGE_TOGGLE_SWITCH = "enableLanguageSwitching"
-  def whitelistDisabled = {
+  def whitelistDisabled =
     FeatureSwitch.forName(WHITELIST_DISABLED)
-  }
-  def clearSubscriptionDataRoute = {
+  def clearSubscriptionDataRoute =
     FeatureSwitch.forName(CLEAR_SUBSCRIPTION_DATA_ROUTE)
-  }
-  def enableLanguageSwitching = {
+  def enableLanguageSwitching =
     FeatureSwitch.forName(LANGUAGE_TOGGLE_SWITCH)
-  }
 }

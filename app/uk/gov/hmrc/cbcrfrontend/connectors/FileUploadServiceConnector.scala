@@ -29,49 +29,44 @@ class FileUploadServiceConnector() {
 
   val EnvelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
 
-
   def envelopeRequest(cbcrsUrl: String, expiryDate: Option[String]): JsObject = {
 
     //@todo refactor the hardcode of the /cbcr/file-upload-response
-    val jsObject = Json.toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints())).as[JsObject]
+    val jsObject = Json
+      .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
+      .as[JsObject]
     Logger.info(s"Envelope Request built as $jsObject")
     jsObject
   }
 
-  def extractEnvelopId(resp: HttpResponse): CBCErrorOr[EnvelopeId] = {
+  def extractEnvelopId(resp: HttpResponse): CBCErrorOr[EnvelopeId] =
     resp.header(LOCATION) match {
-      case Some(location) => location match {
-        case EnvelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
-        case _                               => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
-      }
+      case Some(location) =>
+        location match {
+          case EnvelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
+          case _                               => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
+        }
       case None => Left(UnexpectedState(s"Header $LOCATION not found"))
     }
-  }
 
-  def extractFileUploadMessage(resp: HttpResponse): CBCErrorOr[String] = {
-      resp.status match {
-        case 200 => Right(resp.body)
-        case   _ => Left(UnexpectedState("Problems uploading the file"))
-      }
-  }
-
-  def extractEnvelopeDeleteMessage(resp: HttpResponse): CBCErrorOr[String] = {
+  def extractFileUploadMessage(resp: HttpResponse): CBCErrorOr[String] =
     resp.status match {
       case 200 => Right(resp.body)
-      case _ => Left(UnexpectedState("Problems deleting the envelope"))
+      case _   => Left(UnexpectedState("Problems uploading the file"))
     }
-  }
 
-  def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] = {
+  def extractEnvelopeDeleteMessage(resp: HttpResponse): CBCErrorOr[String] =
+    resp.status match {
+      case 200 => Right(resp.body)
+      case _   => Left(UnexpectedState("Problems deleting the envelope"))
+    }
+
+  def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
     resp.status match {
       case 200 => {
-        Logger.debug("FileMetaData: "+resp.json)
+        Logger.debug("FileMetaData: " + resp.json)
         Right(resp.json.asOpt[FileMetadata])
       }
       case _ => Left(UnexpectedState("Problems getting File Metadata"))
     }
-  }
 }
-
-
-

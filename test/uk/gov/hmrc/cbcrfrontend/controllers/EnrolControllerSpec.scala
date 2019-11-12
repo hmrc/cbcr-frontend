@@ -37,21 +37,20 @@ import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
+class EnrolControllerSpec
+    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
+    with BeforeAndAfterEach {
 
-class EnrolControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach{
+  implicit val ec = app.injector.instanceOf[ExecutionContext]
+  implicit val timeout = Timeout(5 seconds)
 
+  val config = new Configuration(ConfigFactory.load("application.conf"))
 
-
-  implicit val ec       = app.injector.instanceOf[ExecutionContext]
-  implicit val timeout  = Timeout(5 seconds)
-
-  val config            = new Configuration(ConfigFactory.load("application.conf"))
-
-  val authConnector     = mock[AuthConnector]
-  val enrolConnector    = mock[TaxEnrolmentsConnector]
-  val env               = mock[Environment]
-  val mcc               = app.injector.instanceOf[MessagesControllerComponents]
-  val controller        = new EnrolController(config,enrolConnector,authConnector,env, mcc)
+  val authConnector = mock[AuthConnector]
+  val enrolConnector = mock[TaxEnrolmentsConnector]
+  val env = mock[Environment]
+  val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  val controller = new EnrolController(config, enrolConnector, authConnector, env, mcc)
 
   val id = CBCId.create(5678).getOrElse(fail("bad cbcid"))
   val utr = Utr("9000000001")
@@ -63,13 +62,13 @@ class EnrolControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPer
       val response: HttpResponse = mock[HttpResponse]
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       when(enrolConnector.deEnrol(any())) thenReturn Future.successful(response)
-      when(response.body) thenReturn("deEnrol")
+      when(response.body) thenReturn ("deEnrol")
       status(controller.deEnrol()(fakeRequest)) shouldBe Status.OK
     }
 
     "return 200 when calling getEnrolments if authorised" in {
       val fakeRequest = addToken(FakeRequest("GET", "/enrolments"))
-      val enrolments = Enrolments(Set(Enrolment("CBC",Seq(EnrolmentIdentifier("cbcId",id.toString)),"something")))
+      val enrolments = Enrolments(Set(Enrolment("CBC", Seq(EnrolmentIdentifier("cbcId", id.toString)), "something")))
       when(authConnector.authorise[Enrolments](any(), any())(any(), any())) thenReturn Future.successful(enrolments)
       status(controller.getEnrolments(fakeRequest)) shouldBe Status.OK
     }

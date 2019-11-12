@@ -42,19 +42,17 @@ package object core {
   type ServiceResponse[A] = EitherT[Future, CBCErrors, A]
   type CBCErrorOr[A] = Either[CBCErrors, A]
 
-  def fromFutureOptA[A](fa: Future[CBCErrorOr[A]]): ServiceResponse[A] = {
+  def fromFutureOptA[A](fa: Future[CBCErrorOr[A]]): ServiceResponse[A] =
     EitherT[Future, CBCErrors, A](fa)
-  }
 
-  def fromFutureA[A](fa: Future[A])(implicit ec: ExecutionContext): ServiceResponse[A] = {
+  def fromFutureA[A](fa: Future[A])(implicit ec: ExecutionContext): ServiceResponse[A] =
     EitherT[Future, CBCErrors, A](fa.map(Right(_)))
-  }
 
-  def fromOptA[A](oa: CBCErrorOr[A])(implicit ec: ExecutionContext): ServiceResponse[A] = {
+  def fromOptA[A](oa: CBCErrorOr[A])(implicit ec: ExecutionContext): ServiceResponse[A] =
     EitherT[Future, CBCErrors, A](Future.successful(oa))
-  }
 
-  def fromFutureOptionA[A](fo: Future[Option[A]])(invalid: => UnexpectedState)(implicit ec: ExecutionContext): ServiceResponse[A] = {
+  def fromFutureOptionA[A](fo: Future[Option[A]])(invalid: => UnexpectedState)(
+    implicit ec: ExecutionContext): ServiceResponse[A] = {
     val futureA = fo.map {
       case Some(a) => Right(a)
       case None    => Left(invalid)

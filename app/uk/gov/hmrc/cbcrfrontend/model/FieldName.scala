@@ -18,13 +18,13 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 sealed trait FieldName
 
-case object FullName      extends FieldName{
+case object FullName extends FieldName {
   override def toString: String = "fullName"
 }
-case object ContactPhone  extends FieldName {
+case object ContactPhone extends FieldName {
   override def toString: String = "contactPhone"
 }
-case object ContactEmail  extends FieldName {
+case object ContactEmail extends FieldName {
   override def toString: String = "email"
 }
 
@@ -33,7 +33,7 @@ object FieldName {
     def ci = ("(?i)" + sc.parts.mkString).r
   }
 
-  def fromString(s:String): Option[FieldName] = s match {
+  def fromString(s: String): Option[FieldName] = s match {
     case ci"fullname"     => Some(FullName)
     case ci"contactphone" => Some(ContactPhone)
     case ci"email"        => Some(ContactEmail)

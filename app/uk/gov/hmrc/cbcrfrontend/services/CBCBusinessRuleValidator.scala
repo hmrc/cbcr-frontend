@@ -59,20 +59,22 @@ import scala.util.{Failure, Try}
   * The methods reflect the structure of the XML document i.e. [[validateDocSpec]] makes further calls to [[validateDocRefId()]]
   *
   */
-class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
-                                         docRefIdService: DocRefIdService,
-                                         subscriptionDataService: SubscriptionDataService,
-                                         reportingEntityDataService: ReportingEntityDataService,
-                                         configuration: Configuration,
-                                         runMode: RunMode,
-                                         creationDateService: CreationDateService
-                                        )(implicit ec: ExecutionContext, cache: CBCSessionCache) {
+class CBCBusinessRuleValidator @Inject()(
+  messageRefService: MessageRefIdService,
+  docRefIdService: DocRefIdService,
+  subscriptionDataService: SubscriptionDataService,
+  reportingEntityDataService: ReportingEntityDataService,
+  configuration: Configuration,
+  runMode: RunMode,
+  creationDateService: CreationDateService)(implicit ec: ExecutionContext, cache: CBCSessionCache) {
 
   private val testData = "OECD1[0123]"
 
-  private val cbcVersion = configuration.getString(s"${runMode.env}.oecd-schema-version").getOrElse(
-    throw new Exception(s"Missing configuration key: ${runMode.env}.oecd-schema-version")
-  )
+  private val cbcVersion = configuration
+    .getString(s"${runMode.env}.oecd-schema-version")
+    .getOrElse(
+      throw new Exception(s"Missing configuration key: ${runMode.env}.oecd-schema-version")
+    )
 
   // <<<<<<<<<<<<:::Extraction Methods:::>>>>>>>>>>>>
 
@@ -85,7 +87,8 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
         extractMessageSpec(in.messageSpec) |@|
         in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult, ReportingEntity] |@|
         in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult, CbcReports] |@|
-        in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult, AdditionalInfo]).map(XMLInfo(_, _, _, _, Some(LocalDate.now()), in.constEntityNames))
+        in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult, AdditionalInfo])
+        .map(XMLInfo(_, _, _, _, Some(LocalDate.now()), in.constEntityNames))
     }
 
   private def extractMessageSpec(in: RawMessageSpec): ValidBusinessResult[MessageSpec] =
@@ -95,7 +98,7 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
         extractSendingEntityIn(in) |@|
         extractReportingPeriod(in) |@|
         extractMessageTypeIndic(in)
-      ).map(
+    ).map(
       (messageRefID, receivingCountry, sendingEntityIn, reportingPeriod, messageTypeInic) =>
         MessageSpec(
           messageRefID,
@@ -105,7 +108,7 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
           reportingPeriod,
           messageTypeInic,
           in.corrMessageRefId
-        )
+      )
     )
 
   private def extractReportingEntity(in: RawReportingEntity): ValidBusinessResult[ReportingEntity] =
@@ -125,25 +128,29 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
       extractCorrDocRefId(d.corrDocRefId, parentGroupElement)).map(DocSpec(_, _, _, d.corrMessageRefId))
 
   private def extractDocTypeInidc(docType: String): ValidBusinessResult[DocTypeIndic] =
-    DocTypeIndic.fromString(docType).fold[ValidBusinessResult[DocTypeIndic]] {
-      if (docType.matches(testData)) TestDataError.invalidNel
-      else InvalidXMLError("xmlValidationError.InvalidDocType").invalidNel
-    }(
-      _.validNel)
+    DocTypeIndic
+      .fromString(docType)
+      .fold[ValidBusinessResult[DocTypeIndic]] {
+        if (docType.matches(testData)) TestDataError.invalidNel
+        else InvalidXMLError("xmlValidationError.InvalidDocType").invalidNel
+      }(_.validNel)
 
-  private def extractCorrDocRefId(corrDocRefIdString: Option[String], parentGroupElement: ParentGroupElement): ValidBusinessResult[Option[CorrDocRefId]] = {
-    corrDocRefIdString.map(DocRefId(_).fold[ValidBusinessResult[Option[CorrDocRefId]]](
-      InvalidCorrDocRefId.invalidNel)(
-      d => {
+  private def extractCorrDocRefId(
+    corrDocRefIdString: Option[String],
+    parentGroupElement: ParentGroupElement): ValidBusinessResult[Option[CorrDocRefId]] =
+    corrDocRefIdString
+      .map(DocRefId(_).fold[ValidBusinessResult[Option[CorrDocRefId]]](InvalidCorrDocRefId.invalidNel)(d => {
         if (d.parentGroupElement != parentGroupElement) CorrDocRefIdInvalidParentGroupElement.invalidNel
         else Some(CorrDocRefId(d)).validNel
-      })).getOrElse(None.validNel)
-  }
+      }))
+      .getOrElse(None.validNel)
 
-  private def extractDocRefId(docRefIdString:String, parentGroupElement: ParentGroupElement) : ValidBusinessResult[DocRefId] =
-    DocRefId.applyNewDocRefIdRegex(docRefIdString).fold[ValidBusinessResult[DocRefId]](
-      InvalidDocRefId.invalidNel)(
-      d => {
+  private def extractDocRefId(
+    docRefIdString: String,
+    parentGroupElement: ParentGroupElement): ValidBusinessResult[DocRefId] =
+    DocRefId
+      .applyNewDocRefIdRegex(docRefIdString)
+      .fold[ValidBusinessResult[DocRefId]](InvalidDocRefId.invalidNel)(d => {
         if (d.parentGroupElement != parentGroupElement) DocRefIdInvalidParentGroupElement.invalidNel
         else d.validNel
       })
@@ -156,19 +163,19 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
   private def extractReportingRole(in: RawReportingEntity): ValidBusinessResult[ReportingRole] =
     ReportingRole.parseFromString(in.reportingRole).toValidNel(InvalidXMLError("xmlValidationError.ReportingRole"))
 
-  private def extractSendingEntityIn(in: RawMessageSpec): ValidBusinessResult[CBCId] = {
-    CBCId(in.sendingEntityIn).fold[ValidBusinessResult[CBCId]](
-      SendingEntityError.invalidNel[CBCId])(cbcId => {
+  private def extractSendingEntityIn(in: RawMessageSpec): ValidBusinessResult[CBCId] =
+    CBCId(in.sendingEntityIn).fold[ValidBusinessResult[CBCId]](SendingEntityError.invalidNel[CBCId])(cbcId => {
       cbcId.validNel
     })
-  }
 
   private def extractReceivingCountry(in: RawMessageSpec): ValidBusinessResult[String] =
     if (in.receivingCountry equalsIgnoreCase "GB") in.receivingCountry.validNel else ReceivingCountryError.invalidNel
 
   private def extractReportingPeriod(in: RawMessageSpec): ValidBusinessResult[LocalDate] =
-    Validated.catchNonFatal(LocalDate.parse(in.reportingPeriod))
-      .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate")).toValidatedNel
+    Validated
+      .catchNonFatal(LocalDate.parse(in.reportingPeriod))
+      .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate"))
+      .toValidatedNel
 
   private def extractMessageRefID(in: RawMessageSpec): ValidBusinessResult[MessageRefID] =
     MessageRefID(in.messageRefID).fold(
@@ -186,11 +193,14 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     if (cv.cbcVer != cbcVersion) CbcOecdVersionError.invalidNel
     else ().validNel
 
-
   // <<<<<<<<<<:::Validation methods:::>>>>>>>>>>>>>
 
   /** Top level validation methods */
-  private def validateXMLInfo(x: XMLInfo, fileName: String, enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
+  private def validateXMLInfo(
+    x: XMLInfo,
+    fileName: String,
+    enrolment: Option[CBCEnrolment],
+    affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     validateMessageRefIdD(x.messageSpec) *>
       validateCorrMessageRefIdD(x) *>
       validateReportingEntity(x) *>
@@ -203,74 +213,73 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
       validateReportingPeriod(x) *>
       validateMultipleFileUploadForSameReportingPeriod(x) *>
       validateMessageRefIds(x)
-  }
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
-    in.reportingEntity.map { re =>
-      val docRefId = if (re.docSpec.docType == OECD0) {
-        ensureDocRefIdExists(re.docSpec.docRefId)
+    in.reportingEntity
+      .map { re =>
+        val docRefId = if (re.docSpec.docType == OECD0) {
+          ensureDocRefIdExists(re.docSpec.docRefId)
+        } else {
+          Future.successful(re.docSpec.docRefId.validNel)
+        }
+
+        (validateDocSpec(re.docSpec) *>
+          docRefId *>
+          validateTIN(re.tin, re.reportingRole) *>
+          validateReportingEntityName(re) *>
+          validateConstEntities(in.constEntityNames)).map(_.andThen(_ => in.validNel))
+
       }
-      else {
-        Future.successful(re.docSpec.docRefId.validNel)
-      }
+      .getOrElse(Future.successful(in.validNel))
 
-      (validateDocSpec(re.docSpec) *>
-        docRefId *>
-        validateTIN(re.tin, re.reportingRole) *>
-        validateReportingEntityName(re) *>
-        validateConstEntities(in.constEntityNames)
-        ).map(_.andThen(_ => in.validNel))
-
-    }.getOrElse(Future.successful(in.validNel))
-
-  private def validateReportingEntityName(entity: ReportingEntity): ValidBusinessResult[ReportingEntity] = {
+  private def validateReportingEntityName(entity: ReportingEntity): ValidBusinessResult[ReportingEntity] =
     if (entity.name.trim.nonEmpty) entity.validNel
     else ReportingEntityOrConstituentEntityEmpty.invalidNel
-  }
 
-  private def validateConstEntities(reports: List[String]): ValidBusinessResult[List[String]] = {
+  private def validateConstEntities(reports: List[String]): ValidBusinessResult[List[String]] =
     if (reports.forall(_.trim.nonEmpty)) reports.validNel
     else ReportingEntityOrConstituentEntityEmpty.invalidNel
-  }
 
-  private def ensureDocRefIdExists(docRefId: DocRefId)(implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] = {
-    reportingEntityDataService.queryReportingEntityDataDocRefId(docRefId).leftMap(
-      cbcErrors => {
+  private def ensureDocRefIdExists(docRefId: DocRefId)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] =
+    reportingEntityDataService
+      .queryReportingEntityDataDocRefId(docRefId)
+      .leftMap(cbcErrors => {
         Logger.error(s"Got error back: $cbcErrors")
         throw new Exception(s"Error communicating with backend: $cbcErrors")
-      }).subflatMap {
-      case Some(_) => Right(docRefId)
-      case None => Left(ResentDataIsUnknownError)
-    }.toValidatedNel
-  }
+      })
+      .subflatMap {
+        case Some(_) => Right(docRefId)
+        case None    => Left(ResentDataIsUnknownError)
+      }
+      .toValidatedNel
 
-  private def determineMessageTypeIndic(r:XMLInfo):Option[MessageTypeIndic] = {
-    lazy val docTypes = List(r.additionalInfo.map(_.docSpec.docType)).flatten ++ r.cbcReport.map(_.docSpec.docType) ++ r.reportingEntity.map(_.docSpec.docType)
+  private def determineMessageTypeIndic(r: XMLInfo): Option[MessageTypeIndic] = {
+    lazy val docTypes = List(r.additionalInfo.map(_.docSpec.docType)).flatten ++ r.cbcReport.map(_.docSpec.docType) ++ r.reportingEntity
+      .map(_.docSpec.docType)
 
     lazy val distinctTypes = docTypes.distinct
 
     lazy val docType401 = distinctTypes.contains(OECD1) && distinctTypes.size == 1
 
     (r.messageSpec.messageType, docType401) match {
-      case (Some(CBC401), true)   => Some(CBC401)
-      case (Some(CBC401), false)  => None
-      case (Some(CBC402), _)      => Some(CBC402)
-      case (None, true)           => Some(CBC401)
-      case (None, false)          => Some(CBC402)
-      case _                      => None
+      case (Some(CBC401), true)  => Some(CBC401)
+      case (Some(CBC401), false) => None
+      case (Some(CBC402), _)     => Some(CBC402)
+      case (None, true)          => Some(CBC401)
+      case (None, false)         => Some(CBC402)
+      case _                     => None
     }
 
   }
 
   /** Ensure that if the messageType is [[CBC401]] there are no [[DocTypeIndic]] other than [[OECD1]] */
-  private def validateMessageTypes(r: XMLInfo): ValidBusinessResult[XMLInfo] = {
-
+  private def validateMessageTypes(r: XMLInfo): ValidBusinessResult[XMLInfo] =
     r.messageSpec.messageType.contains(CBC401) match {
       case true if (determineMessageTypeIndic(r) == Some(CBC401)) => r.validNel
-      case true => MessageTypeIndicDocTypeIncompatible.invalidNel
-      case false => r.validNel
+      case true                                                   => MessageTypeIndicDocTypeIncompatible.invalidNel
+      case false                                                  => r.validNel
     }
-  }
 
   /** Ensure there is not a mixture of OECD1 and other DocTypes within the document */
   private def validateDocTypes(in: List[DocSpec], repIn: Option[DocSpec]): ValidBusinessResult[List[DocSpec]] = {
@@ -294,7 +303,6 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
         validateDistinctDocRefIds(allDocSpecs.map(_.docRefId)) *>
         validateDistinctCorrDocRefIds(allDocSpecs.map(_.corrDocRefId).flatten) *>
         addCorrCheck.map(validateAddInfoCorrDRI).sequence[FutureValidBusinessResult, CorrDocRefId]
-
     )(_ => in)
 
   }
@@ -305,8 +313,8 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     */
   private def validateCorrDocRefIdRequired(d: DocSpec): ValidBusinessResult[DocSpec] = d.docType match {
     case OECD2 | OECD3 if d.corrDocRefId.isEmpty => CorrDocRefIdMissing.invalidNel
-    case OECD1 if d.corrDocRefId.isDefined => CorrDocRefIdNotNeeded.invalidNel
-    case _ => d.validNel
+    case OECD1 if d.corrDocRefId.isDefined       => CorrDocRefIdNotNeeded.invalidNel
+    case _                                       => d.validNel
   }
 
   /** Ensure that the list of CorrDocRefIds are unique */
@@ -319,37 +327,47 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
 
   /** Do further validation on the DocSpec **/
   private def validateDocSpec(d: DocSpec)(implicit hc: HeaderCarrier): FutureValidBusinessResult[DocSpec] =
-    (validateDocRefId(d) zip d.corrDocRefId.map(validateCorrDocRefId).sequence[FutureValidBusinessResult, CorrDocRefId]).map {
-      case (doc, corrDoc) => (doc |@| corrDoc |@| validateCorrDocRefIdRequired(d)).map((_, _, _) => d)
-    }
+    (validateDocRefId(d) zip d.corrDocRefId.map(validateCorrDocRefId).sequence[FutureValidBusinessResult, CorrDocRefId])
+      .map {
+        case (doc, corrDoc) => (doc |@| corrDoc |@| validateCorrDocRefIdRequired(d)).map((_, _, _) => d)
+      }
 
   /** Check if only 1st AddInfoCorrDocRefId was saved (before issue corrected) and if so And AddInfo coorDocRefId not found then show appropriate error */
-  private def validateAddInfoCorrDRI(aiCid: (CorrDocRefId, CorrDocRefId))(implicit hc: HeaderCarrier): FutureValidBusinessResult[CorrDocRefId] =
-    reportingEntityDataService.queryReportingEntityDataModel(aiCid._2.cid).fold(
-      (errors: CBCErrors) => throw new Exception(s"Error communicating with backend: $errors"),
-      (maybeModel: Option[ReportingEntityDataModel]) => maybeModel.toValidNel[BusinessRuleErrors](AdditionalInfoDRINotFound("error.AdditionalInfoDRINotFound5", aiCid._1.cid.show))
-    ).flatMap(_.fold(
-      (value: NonEmptyList[BusinessRuleErrors]) => Future.successful(value.invalid),
-      (red: ReportingEntityDataModel) => docRefIdService.queryDocRefId(aiCid._1.cid).map {
-        case DocRefIdResponses.Valid => aiCid._1.validNel
-        case DocRefIdResponses.Invalid => CorrDocRefIdInvalidRecord.invalidNel
-        case DocRefIdResponses.DoesNotExist => if (red.oldModel) AdditionalInfoDRINotFound(red.additionalInfoDRI.head.show, aiCid._1.cid.show).invalidNel else CorrDocRefIdUnknownRecord.invalidNel
-      }
-    ))
+  private def validateAddInfoCorrDRI(aiCid: (CorrDocRefId, CorrDocRefId))(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[CorrDocRefId] =
+    reportingEntityDataService
+      .queryReportingEntityDataModel(aiCid._2.cid)
+      .fold(
+        (errors: CBCErrors) => throw new Exception(s"Error communicating with backend: $errors"),
+        (maybeModel: Option[ReportingEntityDataModel]) =>
+          maybeModel.toValidNel[BusinessRuleErrors](
+            AdditionalInfoDRINotFound("error.AdditionalInfoDRINotFound5", aiCid._1.cid.show))
+      )
+      .flatMap(_.fold(
+        (value: NonEmptyList[BusinessRuleErrors]) => Future.successful(value.invalid),
+        (red: ReportingEntityDataModel) =>
+          docRefIdService.queryDocRefId(aiCid._1.cid).map {
+            case DocRefIdResponses.Valid   => aiCid._1.validNel
+            case DocRefIdResponses.Invalid => CorrDocRefIdInvalidRecord.invalidNel
+            case DocRefIdResponses.DoesNotExist =>
+              if (red.oldModel) AdditionalInfoDRINotFound(red.additionalInfoDRI.head.show, aiCid._1.cid.show).invalidNel
+              else CorrDocRefIdUnknownRecord.invalidNel
+        }
+      ))
 
   /** Do further validation on the provided [[CorrDocRefId]] */
-  private def validateCorrDocRefId(corrDocRefId: CorrDocRefId)(implicit hc: HeaderCarrier): FutureValidBusinessResult[CorrDocRefId] = {
+  private def validateCorrDocRefId(corrDocRefId: CorrDocRefId)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[CorrDocRefId] =
     corrDocRefIdDuplicateCheck(corrDocRefId)
-  }
 
   /** Query the [[DocRefIdService]] to find out if this [[CorrDocRefId]] is a duplicate */
-  private def corrDocRefIdDuplicateCheck(corrDocRefId: CorrDocRefId)(implicit hc: HeaderCarrier): FutureValidBusinessResult[CorrDocRefId] = {
+  private def corrDocRefIdDuplicateCheck(corrDocRefId: CorrDocRefId)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[CorrDocRefId] =
     docRefIdService.queryDocRefId(corrDocRefId.cid).map {
-      case DocRefIdResponses.Valid => corrDocRefId.validNel
-      case DocRefIdResponses.Invalid => CorrDocRefIdInvalidRecord.invalidNel
+      case DocRefIdResponses.Valid        => corrDocRefId.validNel
+      case DocRefIdResponses.Invalid      => CorrDocRefIdInvalidRecord.invalidNel
       case DocRefIdResponses.DoesNotExist => CorrDocRefIdUnknownRecord.invalidNel
     }
-  }
 
   /** Do further validation on the provided [[DocRefId]] */
   private def validateDocRefId(docSpec: DocSpec)(implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] =
@@ -359,13 +377,14 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     * Query the [[DocRefIdService]] to find out if this docRefId is a duplicate
     * If the doc type is OECD0, when don't check for duplicates
     */
-  private def docRefIdDuplicateCheck(docSpec: DocSpec)(implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] = {
+  private def docRefIdDuplicateCheck(docSpec: DocSpec)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] =
     if (docSpec.docType == OECD0) docSpec.docRefId.validNel
-    else docRefIdService.queryDocRefId(docSpec.docRefId).map {
-      case DocRefIdResponses.DoesNotExist => docSpec.docRefId.validNel
-      case _ => DocRefIdDuplicate.invalidNel
-    }
-  }
+    else
+      docRefIdService.queryDocRefId(docSpec.docRefId).map {
+        case DocRefIdResponses.DoesNotExist => docSpec.docRefId.validNel
+        case _                              => DocRefIdDuplicate.invalidNel
+      }
 
   /** Ensure the messageTypes and docTypes are valid and not in conflict */
   private def validateMessageTypeIndic(xmlInfo: XMLInfo): ValidBusinessResult[XMLInfo] = {
@@ -373,28 +392,30 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     lazy val CBCReportsAreNeverResent: Boolean = xmlInfo.cbcReport.forall(r => r.docSpec.docType != OECD0)
     lazy val AdditionalInfoIsNeverResent: Boolean = xmlInfo.additionalInfo.forall(r => r.docSpec.docType != OECD0)
 
-    lazy val CBCReportsAreNotAllCorrectionsOrDeletions: Boolean = !xmlInfo.cbcReport.forall(r =>
-      r.docSpec.docType == OECD2 ||
-        r.docSpec.docType == OECD3
-    )
+    lazy val CBCReportsAreNotAllCorrectionsOrDeletions: Boolean = !xmlInfo.cbcReport.forall(
+      r =>
+        r.docSpec.docType == OECD2 ||
+          r.docSpec.docType == OECD3)
 
-    lazy val AdditionalInfoIsNotCorrectionsOrDeletions: Boolean = !xmlInfo.additionalInfo.forall(r =>
-      r.docSpec.docType == OECD2 ||
-        r.docSpec.docType == OECD3
-    )
+    lazy val AdditionalInfoIsNotCorrectionsOrDeletions: Boolean = !xmlInfo.additionalInfo.forall(
+      r =>
+        r.docSpec.docType == OECD2 ||
+          r.docSpec.docType == OECD3)
 
-    lazy val ReportingEntityIsNotCorrectionsOrDeletionsOrResent: Boolean = !xmlInfo.reportingEntity.forall(r =>
-      r.docSpec.docType == OECD2 ||
-        r.docSpec.docType == OECD3 ||
-        r.docSpec.docType == OECD0
-    )
+    lazy val ReportingEntityIsNotCorrectionsOrDeletionsOrResent: Boolean = !xmlInfo.reportingEntity.forall(
+      r =>
+        r.docSpec.docType == OECD2 ||
+          r.docSpec.docType == OECD3 ||
+          r.docSpec.docType == OECD0)
 
     determineMessageTypeIndic(xmlInfo) match {
-      case Some(CBC402) if CBCReportsAreNotAllCorrectionsOrDeletions
-        || AdditionalInfoIsNotCorrectionsOrDeletions
-        || ReportingEntityIsNotCorrectionsOrDeletionsOrResent => MessageTypeIndicError.invalidNel
+      case Some(CBC402)
+          if CBCReportsAreNotAllCorrectionsOrDeletions
+            || AdditionalInfoIsNotCorrectionsOrDeletions
+            || ReportingEntityIsNotCorrectionsOrDeletionsOrResent =>
+        MessageTypeIndicError.invalidNel
       case _ if CBCReportsAreNeverResent && AdditionalInfoIsNeverResent => xmlInfo.validNel
-      case _ => MessageTypeIndicError.invalidNel
+      case _                                                            => MessageTypeIndicError.invalidNel
     }
 
   }
@@ -422,56 +443,61 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     * 2) Has already been registered
     */
   private def validateSendingEntity(cbcId: CBCId)(implicit hc: HeaderCarrier): FutureValidBusinessResult[CBCId] =
-    subscriptionDataService.retrieveSubscriptionData(Right(cbcId)).fold[ValidBusinessResult[CBCId]](
-      (_: CBCErrors) => SendingEntityError.invalidNel,
-      (maybeDetails: Option[SubscriptionDetails]) => maybeDetails match {
-        case None => SendingEntityError.invalidNel
-        case Some(_) => cbcId.validNel
-      }
-    )
-
+    subscriptionDataService
+      .retrieveSubscriptionData(Right(cbcId))
+      .fold[ValidBusinessResult[CBCId]](
+        (_: CBCErrors) => SendingEntityError.invalidNel,
+        (maybeDetails: Option[SubscriptionDetails]) =>
+          maybeDetails match {
+            case None    => SendingEntityError.invalidNel
+            case Some(_) => cbcId.validNel
+        }
+      )
 
   /** Ensure the [[CBCId]] found in the [[MessageRefID]] matches the [[CBCId]] in the SendingEntityIN field */
   private def validateCBCId(messageRefID: MessageRefID, messageSpec: MessageSpec): ValidBusinessResult[MessageRefID] =
     if (messageRefID.cBCId == messageSpec.sendingEntityIn) {
       messageRefID.validNel
-    }
-    else MessageRefIDCBCIdMismatch.invalidNel
+    } else MessageRefIDCBCIdMismatch.invalidNel
 
   /** If the User is an enrolled Organisation, ensure their CBCId matches the  CBCId in the Sending Entity **/
-  private def validateOrganisationCBCId(in: XMLInfo, enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
-
+  private def validateOrganisationCBCId(
+    in: XMLInfo,
+    enrolment: Option[CBCEnrolment],
+    affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     (affinityGroup, enrolment) match {
       case (Some(Organisation), Some(enrolment)) =>
         if (enrolment.cbcId.value == in.messageSpec.sendingEntityIn.value) in.validNel
         else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
-      case (Some(Organisation), None) => cache.readOption[CBCId].map { (maybeCBCId: Option[CBCId]) =>
-        maybeCBCId match {
-          case Some(maybeCBCId) =>
-            if (maybeCBCId.value == in.messageSpec.sendingEntityIn.value) in.validNel
-            else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
-          case _ => in.validNel //user has logged in as an org but with an unregistered cbcId
+      case (Some(Organisation), None) =>
+        cache.readOption[CBCId].map { (maybeCBCId: Option[CBCId]) =>
+          maybeCBCId match {
+            case Some(maybeCBCId) =>
+              if (maybeCBCId.value == in.messageSpec.sendingEntityIn.value) in.validNel
+              else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
+            case _ => in.validNel //user has logged in as an org but with an unregistered cbcId
+          }
         }
-      }
       case (Some(Agent), _) => in.validNel
-      case _ => SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
+      case _                => SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
     }
-
 
   /** Ensure the reportingPeriod in the [[MessageRefID]] matches the reportingPeriod field in the MessageSpec */
-  private def validateReportingPeriodMatches(messageRefID: MessageRefID, messageSpec: MessageSpec): ValidBusinessResult[MessageRefID] =
+  private def validateReportingPeriodMatches(
+    messageRefID: MessageRefID,
+    messageSpec: MessageSpec): ValidBusinessResult[MessageRefID] =
     if (messageRefID.reportingPeriod.getValue == messageSpec.reportingPeriod.getYear) {
       messageRefID.validNel
-    }
-    else {
+    } else {
       MessageRefIDReportingPeriodMismatch.invalidNel
     }
 
   /** Calls the [[MessageRefIdService]] to see if this provided [[MessageRefID]] already exists */
-  private def isADuplicate(msgRefId: MessageRefID)(implicit hc: HeaderCarrier): FutureValidBusinessResult[MessageRefID] =
-    messageRefService.messageRefIdExists(msgRefId).map(result =>
-      if (result) MessageRefIDDuplicate.invalidNel else msgRefId.validNel
-    )
+  private def isADuplicate(msgRefId: MessageRefID)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[MessageRefID] =
+    messageRefService
+      .messageRefIdExists(msgRefId)
+      .map(result => if (result) MessageRefIDDuplicate.invalidNel else msgRefId.validNel)
 
   /**
     * Validates the messageRefID by performing 3 checks:
@@ -479,101 +505,110 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     * 2) Checks that the SendingEntityIn in the messageSpec matches the CBCId in the messageRefId
     * 3) Checks the reportingPeriod in the messageRefID matches the reportingPeriod in the messageSpec
     */
-  private def validateMessageRefIdD(messageSpec: MessageSpec)(implicit hc: HeaderCarrier): FutureValidBusinessResult[MessageRefID] = {
+  private def validateMessageRefIdD(messageSpec: MessageSpec)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[MessageRefID] =
     validateSendingEntity(messageSpec.sendingEntityIn) *>
       isADuplicate(messageSpec.messageRefID) *>
       validateCBCId(messageSpec.messageRefID, messageSpec) *>
       validateReportingPeriodMatches(messageSpec.messageRefID, messageSpec)
-  }
 
   private def validateCreationDate(xmlInfo: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
-    lazy val CBCReportsContainCorrectionsOrDeletions: Boolean = xmlInfo.cbcReport.exists(r =>
-      r.docSpec.docType == OECD2 ||
-        r.docSpec.docType == OECD3
-    )
+    lazy val CBCReportsContainCorrectionsOrDeletions: Boolean = xmlInfo.cbcReport.exists(
+      r =>
+        r.docSpec.docType == OECD2 ||
+          r.docSpec.docType == OECD3)
 
-    lazy val AdditionalInfoContainsCorrectionsOrDeletions: Boolean = xmlInfo.additionalInfo.exists(r =>
-      r.docSpec.docType == OECD2 ||
-        r.docSpec.docType == OECD3
-    )
+    lazy val AdditionalInfoContainsCorrectionsOrDeletions: Boolean = xmlInfo.additionalInfo.exists(
+      r =>
+        r.docSpec.docType == OECD2 ||
+          r.docSpec.docType == OECD3)
 
-    lazy val ReportingEntityContainsCorrectionsOrDeletionsOrResent: Boolean = xmlInfo.reportingEntity.exists(r =>
-      r.docSpec.docType == OECD2 ||
-        r.docSpec.docType == OECD3 ||
-        r.docSpec.docType == OECD0
-    )
+    lazy val ReportingEntityContainsCorrectionsOrDeletionsOrResent: Boolean = xmlInfo.reportingEntity.exists(
+      r =>
+        r.docSpec.docType == OECD2 ||
+          r.docSpec.docType == OECD3 ||
+          r.docSpec.docType == OECD0)
 
     if (CBCReportsContainCorrectionsOrDeletions || AdditionalInfoContainsCorrectionsOrDeletions || ReportingEntityContainsCorrectionsOrDeletionsOrResent) {
-      creationDateService.isDateValid(xmlInfo).map(result =>
-        if (result) xmlInfo.validNel else CorrectedFileToOld.invalidNel
-      )
+      creationDateService
+        .isDateValid(xmlInfo)
+        .map(result => if (result) xmlInfo.validNel else CorrectedFileToOld.invalidNel)
     } else {
       xmlInfo.validNel
     }
 
   }
 
-  private def validateReportingPeriod(xmlInfo: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
-
+  private def validateReportingPeriod(xmlInfo: XMLInfo)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     determineMessageTypeIndic(xmlInfo) match {
       case Some(CBC401) => xmlInfo.validNel
       case Some(CBC402) => {
         val crid = extractCorrDRI(xmlInfo)
 
-        crid.map { drid =>
-          reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap {
-            cbcErrors => {
-              Logger.error(s"Got error back: $cbcErrors")
-              throw new Exception(s"Error communicating with backend: $cbcErrors")
-            }
-          }.subflatMap {
-            case Some(red) if red.reportingPeriod.isDefined => if (red.reportingPeriod.get == xmlInfo.messageSpec.reportingPeriod) Right(xmlInfo) else Left(ReportingPeriodInvalid)
-            case Some(red) => Right(xmlInfo) //reportingPeriod not persisted prior to this rules implementation so can't check
-            case _ => Left(ReportingPeriodInvalid)
-          }.toValidatedNel
-        }.getOrElse {
-          Future.successful(xmlInfo.validNel)
-        }
+        crid
+          .map { drid =>
+            reportingEntityDataService
+              .queryReportingEntityData(drid.cid)
+              .leftMap { cbcErrors =>
+                {
+                  Logger.error(s"Got error back: $cbcErrors")
+                  throw new Exception(s"Error communicating with backend: $cbcErrors")
+                }
+              }
+              .subflatMap {
+                case Some(red) if red.reportingPeriod.isDefined =>
+                  if (red.reportingPeriod.get == xmlInfo.messageSpec.reportingPeriod) Right(xmlInfo)
+                  else Left(ReportingPeriodInvalid)
+                case Some(red) =>
+                  Right(xmlInfo) //reportingPeriod not persisted prior to this rules implementation so can't check
+                case _ => Left(ReportingPeriodInvalid)
+              }
+              .toValidatedNel
+          }
+          .getOrElse {
+            Future.successful(xmlInfo.validNel)
+          }
       }
       case None if xmlInfo.messageSpec.messageType.contains(CBC401) => Future.successful(xmlInfo.validNel)
-      case _ => Future.successful(ReportingPeriodInvalid.invalidNel)
+      case _                                                        => Future.successful(ReportingPeriodInvalid.invalidNel)
     }
-  }
 
-  private def validateMultipleFileUploadForSameReportingPeriod(x: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
-
+  private def validateMultipleFileUploadForSameReportingPeriod(x: XMLInfo)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     /** checking for Reporting type because this rule only applies to CBC401*/
     x.messageSpec.messageType.getOrElse(determineMessageTypeIndic(x)) match {
       case CBC401 =>
-
         val tin = x.reportingEntity.fold("")(_.tin.value)
         val currentReportingPeriod = x.messageSpec.reportingPeriod
 
-
-        reportingEntityDataService.queryReportingEntityDataTin(tin, currentReportingPeriod.toString).leftMap {
-          cbcErrors => {
-            Logger.error(s"Got error back: $cbcErrors")
-            throw new Exception(s"Error communicating with backend: $cbcErrors")
-          }
-        }.subflatMap {
-          case Some(reportEntityData) => {
-
-            val reportEntityDocRefId = reportEntityData.reportingEntityDRI.show
-
-            if (reportEntityDocRefId.contains("OECD3")) {
-              Right(x)
-            } else {
-              Left(MultipleFileUploadForSameReportingPeriod)
+        reportingEntityDataService
+          .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
+          .leftMap { cbcErrors =>
+            {
+              Logger.error(s"Got error back: $cbcErrors")
+              throw new Exception(s"Error communicating with backend: $cbcErrors")
             }
-
           }
-          case _ => Right(x)
-        }.toValidatedNel
+          .subflatMap {
+            case Some(reportEntityData) => {
+
+              val reportEntityDocRefId = reportEntityData.reportingEntityDRI.show
+
+              if (reportEntityDocRefId.contains("OECD3")) {
+                Right(x)
+              } else {
+                Left(MultipleFileUploadForSameReportingPeriod)
+              }
+
+            }
+            case _ => Right(x)
+          }
+          .toValidatedNel
       case _ => Future.successful(x.validNel)
     }
-  }
 
-  private def validateMessageRefIds(in: XMLInfo)(implicit hc:HeaderCarrier) : FutureValidBusinessResult[XMLInfo] = {
+  private def validateMessageRefIds(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
 
     val messageSpecMessageRefId = in.messageSpec.messageRefID.show
     val cbcrReportsRefIds = in.cbcReport.map(_.docSpec.docRefId.msgRefID.show)
@@ -582,51 +617,52 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     val reportingEntityDocTypeIndicator = in.reportingEntity.map(_.docSpec.docType)
 
     val docRefIds = reportingEntityRefIds match {
-      case Some(s) =>  reportingEntityDocTypeIndicator match {
-        case Some(indicator) if indicator == OECD0 => cbcrReportsRefIds ++ addInfoRefIds
-        case _ => s :: cbcrReportsRefIds ++ addInfoRefIds
-      }
+      case Some(s) =>
+        reportingEntityDocTypeIndicator match {
+          case Some(indicator) if indicator == OECD0 => cbcrReportsRefIds ++ addInfoRefIds
+          case _                                     => s :: cbcrReportsRefIds ++ addInfoRefIds
+        }
       case _ => cbcrReportsRefIds ++ addInfoRefIds
     }
 
-
-    val docRefIdsValidator = docRefIds.foldLeft(List[Boolean]()) {(resultingValue, currentValue) =>
-
+    val docRefIdsValidator = docRefIds.foldLeft(List[Boolean]()) { (resultingValue, currentValue) =>
       //This needs to be improved as the regex is a bit unstable due to multiple underscores that might appear in the messageRefId
-      val results = if(currentValue == messageSpecMessageRefId) true else false
+      val results = if (currentValue == messageSpecMessageRefId) true else false
       resultingValue :+ results
 
     }
 
-    if (docRefIdsValidator.contains(false)){
+    if (docRefIdsValidator.contains(false)) {
 
       Future.successful(MessageRefIdDontMatchWithDocRefId.invalidNel)
 
-    }else{
+    } else {
 
       Future.successful(in.validNel)
     }
 
   }
 
-  private def extractCorrDRI(xmlInfo: XMLInfo) = {
-    xmlInfo.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId)
+  private def extractCorrDRI(xmlInfo: XMLInfo) =
+    xmlInfo.cbcReport
+      .find(_.docSpec.corrDocRefId.isDefined)
+      .flatMap(_.docSpec.corrDocRefId)
       .orElse(xmlInfo.additionalInfo.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
       .orElse(xmlInfo.reportingEntity.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
-  }
 
-  private def validateCorrMessageRefIdD(x: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
+  private def validateCorrMessageRefIdD(x: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     validateCorrMsgRefIdNotInMessageSpec(x) *>
       validateCorrMsgRefIdNotInDocSpec(x)
-  }
 
-  private def validateCorrMsgRefIdNotInMessageSpec(x: XMLInfo)(implicit hc: HeaderCarrier): ValidBusinessResult[XMLInfo] = {
+  private def validateCorrMsgRefIdNotInMessageSpec(x: XMLInfo)(
+    implicit hc: HeaderCarrier): ValidBusinessResult[XMLInfo] =
     if (x.messageSpec.corrMessageRefId.isDefined) CorrMessageRefIdNotAllowedInMessageSpec.invalidNel
     else x.validNel
-  }
 
   private def validateCorrMsgRefIdNotInDocSpec(x: XMLInfo)(implicit hc: HeaderCarrier): ValidBusinessResult[XMLInfo] = {
-    val corrMessageRefIdisPresent = x.cbcReport.find(_.docSpec.corrMessageRefId.isDefined).flatMap(_.docSpec.corrMessageRefId)
+    val corrMessageRefIdisPresent = x.cbcReport
+      .find(_.docSpec.corrMessageRefId.isDefined)
+      .flatMap(_.docSpec.corrMessageRefId)
       .orElse(x.additionalInfo.find(_.docSpec.corrMessageRefId.isDefined).flatMap(_.docSpec.corrMessageRefId))
       .orElse(x.reportingEntity.find(_.docSpec.corrMessageRefId.isDefined).flatMap(_.docSpec.corrMessageRefId))
 
@@ -634,35 +670,60 @@ class CBCBusinessRuleValidator @Inject()(messageRefService: MessageRefIdService,
     else x.validNel
   }
 
-  def validateBusinessRules(in: RawXMLInfo, fileName: String, enrolment: Option[CBCEnrolment], affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
+  def validateBusinessRules(
+    in: RawXMLInfo,
+    fileName: String,
+    enrolment: Option[CBCEnrolment],
+    affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     extractXMLInfo(in).flatMap {
-      case Valid(v) => validateXMLInfo(v, fileName, enrolment, affinityGroup)
+      case Valid(v)   => validateXMLInfo(v, fileName, enrolment, affinityGroup)
       case Invalid(i) => Future.successful(i.invalid)
     }
 
-  def recoverReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[CompleteXMLInfo] = in.reportingEntity match {
-    case Some(re) => Future.successful(CompleteXMLInfo(in.messageSpec, re, in.cbcReport, in.additionalInfo, in.creationDate, in.constEntityNames).validNel)
-    case None =>
-      val id = in.cbcReport.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId).orElse(in.additionalInfo.headOption.flatMap(_.docSpec.corrDocRefId))
-      val rr = in.cbcReport.headOption.map(_.docSpec.docType).orElse(in.additionalInfo.headOption.map(_.docSpec.docType))
+  def recoverReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[CompleteXMLInfo] =
+    in.reportingEntity match {
+      case Some(re) =>
+        Future.successful(CompleteXMLInfo(
+          in.messageSpec,
+          re,
+          in.cbcReport,
+          in.additionalInfo,
+          in.creationDate,
+          in.constEntityNames).validNel)
+      case None =>
+        val id = in.cbcReport
+          .find(_.docSpec.corrDocRefId.isDefined)
+          .flatMap(_.docSpec.corrDocRefId)
+          .orElse(in.additionalInfo.headOption.flatMap(_.docSpec.corrDocRefId))
+        val rr =
+          in.cbcReport.headOption.map(_.docSpec.docType).orElse(in.additionalInfo.headOption.map(_.docSpec.docType))
 
-      (id |@| rr).map { (drid, dti) =>
-        reportingEntityDataService.queryReportingEntityData(drid.cid).leftMap {
-          cbcErrors => {
-            Logger.error(s"Got error back: $cbcErrors")
-            throw new Exception(s"Error communicating with backend: $cbcErrors")
+        (id |@| rr)
+          .map { (drid, dti) =>
+            reportingEntityDataService
+              .queryReportingEntityData(drid.cid)
+              .leftMap { cbcErrors =>
+                {
+                  Logger.error(s"Got error back: $cbcErrors")
+                  throw new Exception(s"Error communicating with backend: $cbcErrors")
+                }
+              }
+              .subflatMap {
+                case Some(red) => {
+                  val re = ReportingEntity(
+                    red.reportingRole,
+                    DocSpec(OECD0, red.reportingEntityDRI, None, None),
+                    TIN(red.tin.value, "gb"),
+                    red.ultimateParentEntity.ultimateParentEntity)
+                  Right(CompleteXMLInfo(in, re))
+                }
+                case None => Left(OriginalSubmissionNotFound)
+              }
+              .toValidatedNel
           }
-        }.subflatMap {
-          case Some(red) => {
-            val re = ReportingEntity(red.reportingRole, DocSpec(OECD0, red.reportingEntityDRI, None, None), TIN(red.tin.value, "gb"), red.ultimateParentEntity.ultimateParentEntity)
-            Right(CompleteXMLInfo(in, re))
+          .getOrElse {
+            Future.successful(OriginalSubmissionNotFound.invalidNel)
           }
-          case None => Left(OriginalSubmissionNotFound)
-        }.toValidatedNel
-      }.getOrElse {
-        Future.successful(OriginalSubmissionNotFound.invalidNel)
-      }
-  }
-
+    }
 
 }

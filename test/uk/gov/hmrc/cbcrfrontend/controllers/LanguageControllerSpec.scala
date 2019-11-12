@@ -32,16 +32,18 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class LanguageControllerSpec extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
+class LanguageControllerSpec
+    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
+    with BeforeAndAfterEach {
 
-  implicit val conf  = mock[FrontendAppConfig]
+  implicit val conf = mock[FrontendAppConfig]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
 
   when(conf.fallbackURLForLanguageSwitcher) thenReturn "#"
 
   val controller = new LanguageController(conf, mcc)
-  val requestWithReferer = addToken(FakeRequest("GET","/report/upload-form").withHeaders(REFERER -> "/somewhere"))
-  val requestNoReferer = addToken(FakeRequest("GET","/report/upload-form"))
+  val requestWithReferer = addToken(FakeRequest("GET", "/report/upload-form").withHeaders(REFERER -> "/somewhere"))
+  val requestNoReferer = addToken(FakeRequest("GET", "/report/upload-form"))
 
   "Switching Language" should {
     "return 303 and set lang=en " when {
@@ -74,7 +76,7 @@ class LanguageControllerSpec extends UnitSpec with ScalaFutures with GuiceOneApp
     }
     "return 303 and set lang=en" when {
       "switching to english enableLanguageSwitching = true and referer set in request header" in {
-        FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching",true))
+        FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", true))
         val result: Result = Await.result(controller.switchToEnglish()(requestWithReferer), 5.second)
         status(result) shouldBe 303
 
@@ -90,7 +92,7 @@ class LanguageControllerSpec extends UnitSpec with ScalaFutures with GuiceOneApp
       val result: Result = Await.result(controller.switchToWelsh()(requestNoReferer), 5.second)
       status(result) shouldBe 303
       val headers = result.header.headers.getOrElse("location", "")
-      headers should equal ("#")
+      headers should equal("#")
     }
   }
 

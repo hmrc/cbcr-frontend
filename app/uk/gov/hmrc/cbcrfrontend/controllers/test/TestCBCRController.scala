@@ -32,21 +32,21 @@ import uk.gov.hmrc.http.NotFoundException
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
-
-
 @Singleton
-class TestCBCRController @Inject()(val authConnector:AuthConnector,
-                                   val testCBCRConnector: TestCBCRConnector,
-                                   val env:Environment,
-                                   val fileUploadService:FileUploadService,
-                                   override val messagesApi:MessagesApi,
-                                   messagesControllerComponents: MessagesControllerComponents)
-                                  (implicit ec: ExecutionContext,
-                                   cache:CBCSessionCache,
-                                   feConfig:FrontendAppConfig,
-                                   val config:Configuration) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport{
+class TestCBCRController @Inject()(
+  val authConnector: AuthConnector,
+  val testCBCRConnector: TestCBCRConnector,
+  val env: Environment,
+  val fileUploadService: FileUploadService,
+  override val messagesApi: MessagesApi,
+  messagesControllerComponents: MessagesControllerComponents)(
+  implicit ec: ExecutionContext,
+  cache: CBCSessionCache,
+  feConfig: FrontendAppConfig,
+  val config: Configuration)
+    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
-  def insertSubscriptionData(cbcId: String, utr: String) = Action.async{ implicit request =>
+  def insertSubscriptionData(cbcId: String, utr: String) = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.insertSubscriptionData(defaultSubscriptionData(cbcId, utr)).map(_ => Ok("Data inserted"))
     }
@@ -54,7 +54,6 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
 
   def defaultSubscriptionData(cbcId: String, utr: String): JsValue =
     Json.parse(
-
       s"""
          |{
          |   "businessPartnerRecord":{
@@ -83,148 +82,172 @@ class TestCBCRController @Inject()(val authConnector:AuthConnector,
        """.stripMargin
     )
 
-  def deleteSubscription(utr: String) = Action.async{ implicit request =>
+  def deleteSubscription(utr: String) = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.deleteSubscription(utr).map(_ => Ok("Record with the specific UTR deleted"))
     }
   }
 
-  def deleteSingleDocRefId(docRefId: String) = Action.async{ implicit request =>
+  def deleteSingleDocRefId(docRefId: String) = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.deleteSingleDocRefId(docRefId).map(_ => Ok("DocRefId has been deleted"))
     }
   }
 
-  def deleteReportingEntityData(docRefId:String) = Action.async{implicit request =>
+  def deleteReportingEntityData(docRefId: String) = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.deleteReportingEntityData(docRefId).map(_ => Ok("Reporting entity data deleted")).recover{
-        case _:NotFoundException => Ok("Reporting entity data deleted")
+      testCBCRConnector.deleteReportingEntityData(docRefId).map(_ => Ok("Reporting entity data deleted")).recover {
+        case _: NotFoundException => Ok("Reporting entity data deleted")
       }
     }
   }
 
-  def dropReportingEntityDataCollection() = Action.async{implicit request =>
+  def dropReportingEntityDataCollection() = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.dropReportingEntityDataCollection.map(_ => Ok("Reporting entity data collection dropped")).recover{
-        case _:NotFoundException => Ok("Reporting entity data collection dropped")
-      }
+      testCBCRConnector.dropReportingEntityDataCollection
+        .map(_ => Ok("Reporting entity data collection dropped"))
+        .recover {
+          case _: NotFoundException => Ok("Reporting entity data collection dropped")
+        }
     }
   }
 
-  def deleteSingleMessageRefId(messageRefId: String) = Action.async{ implicit request =>
+  def deleteSingleMessageRefId(messageRefId: String) = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.deleteSingleMessageRefId(messageRefId).map(_ => Ok("MessageRefId has been deleted"))
     }
   }
 
-  def updateReportingEntityCreationDate(createDate: String, docRefId:String) = Action.async{implicit request =>
+  def updateReportingEntityCreationDate(createDate: String, docRefId: String) = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.updateReportingEntityCreationDate(createDate, docRefId).map{s =>
-        s.status match {
-          case OK           => Ok("Reporting entity createDate updated")
-          case NOT_MODIFIED => Ok("Reporting entity createDate NOT updated")
-          case _            => Ok("Something went wrong")
+      testCBCRConnector
+        .updateReportingEntityCreationDate(createDate, docRefId)
+        .map { s =>
+          s.status match {
+            case OK           => Ok("Reporting entity createDate updated")
+            case NOT_MODIFIED => Ok("Reporting entity createDate NOT updated")
+            case _            => Ok("Something went wrong")
+          }
         }
-      }.recover{
-        case _:NotFoundException => Ok("Reporting entity not found")
-      }
+        .recover {
+          case _: NotFoundException => Ok("Reporting entity not found")
+        }
     }
   }
 
-  def deleteReportingEntityCreationDate(docRefId:String) = Action.async{implicit request =>
+  def deleteReportingEntityCreationDate(docRefId: String) = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.deleteReportingEntityCreationDate(docRefId).map{s =>
-        s.status match {
-          case OK           => Ok("Reporting entity createDate deleted")
-          case NOT_MODIFIED => Ok("Reporting entity createDate NOT deleted")
-          case _            => Ok("Something went wrong")
+      testCBCRConnector
+        .deleteReportingEntityCreationDate(docRefId)
+        .map { s =>
+          s.status match {
+            case OK           => Ok("Reporting entity createDate deleted")
+            case NOT_MODIFIED => Ok("Reporting entity createDate NOT deleted")
+            case _            => Ok("Something went wrong")
+          }
         }
-      }.recover{
-        case _:NotFoundException => Ok("Reporting entity not found")
-      }
+        .recover {
+          case _: NotFoundException => Ok("Reporting entity not found")
+        }
     }
   }
 
-  def confirmReportingEntityCreationDate(createDate: String, docRefId:String) = Action.async{implicit request =>
+  def confirmReportingEntityCreationDate(createDate: String, docRefId: String) = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.confirmReportingEntityCreationDate(createDate, docRefId).map{s =>
-        s.status match {
-          case OK           => Ok("Reporting entity createDate correct")
-          case NOT_FOUND    => Ok("Reporting entity createDate NOT correct")
-          case _            => Ok("Something went wrong")
+      testCBCRConnector
+        .confirmReportingEntityCreationDate(createDate, docRefId)
+        .map { s =>
+          s.status match {
+            case OK        => Ok("Reporting entity createDate correct")
+            case NOT_FOUND => Ok("Reporting entity createDate NOT correct")
+            case _         => Ok("Something went wrong")
+          }
         }
-      }.recover{
-        case _:NotFoundException => Ok("Reporting entity not found")
-      }
+        .recover {
+          case _: NotFoundException => Ok("Reporting entity not found")
+        }
     }
   }
 
-  def deleteReportingEntityReportingPeriod(docRefId:String) = Action.async{implicit request =>
+  def deleteReportingEntityReportingPeriod(docRefId: String) = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.deleteReportingEntityReportingPeriod(docRefId).map{s =>
-        s.status match {
-          case OK           => Ok("Reporting entity reportingPeriod deleted")
-          case NOT_MODIFIED => Ok("Reporting entity reportingPeriod NOT deleted")
-          case _            => Ok("Something went wrong")
+      testCBCRConnector
+        .deleteReportingEntityReportingPeriod(docRefId)
+        .map { s =>
+          s.status match {
+            case OK           => Ok("Reporting entity reportingPeriod deleted")
+            case NOT_MODIFIED => Ok("Reporting entity reportingPeriod NOT deleted")
+            case _            => Ok("Something went wrong")
+          }
         }
-      }.recover{
-        case _:NotFoundException => Ok("Reporting entity not found")
-      }
+        .recover {
+          case _: NotFoundException => Ok("Reporting entity not found")
+        }
     }
   }
 
-  def retrieveBusinessRuleValidationErrors() = Action.async{ implicit request =>
+  def retrieveBusinessRuleValidationErrors() = Action.async { implicit request =>
     authorised() {
-      OptionT(cache.readOption[AllBusinessRuleErrors]).map(x => fileUploadService.errorsToString(x.errors)).fold (
-        NoContent
-      ) { errors: String =>
-        Ok(errors)
-      }
+      OptionT(cache.readOption[AllBusinessRuleErrors])
+        .map(x => fileUploadService.errorsToString(x.errors))
+        .fold(
+          NoContent
+        ) { errors: String =>
+          Ok(errors)
+        }
     }
   }
 
-  def updateReportingEntityAdditionalInfoDRI(docRefId:String) = Action.async { implicit request =>
+  def updateReportingEntityAdditionalInfoDRI(docRefId: String) = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.updateReportingEntityAdditionalInfoDRI(docRefId).map { s =>
-        s.status match {
-          case OK => Ok("Reporting entity additionalInfoDRI updated")
-          case NOT_MODIFIED => Ok("Reporting entity additionalInfoDRI NOT updated")
-          case _ => Ok("Something went wrong")
+      testCBCRConnector
+        .updateReportingEntityAdditionalInfoDRI(docRefId)
+        .map { s =>
+          s.status match {
+            case OK           => Ok("Reporting entity additionalInfoDRI updated")
+            case NOT_MODIFIED => Ok("Reporting entity additionalInfoDRI NOT updated")
+            case _            => Ok("Something went wrong")
+          }
         }
-      }.recover {
-        case _: NotFoundException => Ok("Reporting entity not found")
-      }
+        .recover {
+          case _: NotFoundException => Ok("Reporting entity not found")
+        }
     }
   }
 
   def retrieveSchemaValidationErrors() = Action.async { implicit request =>
     authorised() {
-      OptionT(cache.readOption[XMLErrors]).map(x => fileUploadService.errorsToString(List(x))).fold (
-        NoContent
-      ) { errors: String =>
-        Ok(errors)
-      }
-    }
-  }
-
-  def validateNumberOfCbcIdForUtr(utr: String) = Action.async{implicit request =>
-    authorised() {
-      testCBCRConnector.checkNumberOfCbcIdForUtr(utr).map{s =>
-        s.status match {
-          case OK           => Ok(s"The total number of cbc id for given utr is: ${s.json}")
-          case NOT_FOUND    => Ok("Subscription data not found for the given utr")
-          case _            => Ok("Something went wrong")
+      OptionT(cache.readOption[XMLErrors])
+        .map(x => fileUploadService.errorsToString(List(x)))
+        .fold(
+          NoContent
+        ) { errors: String =>
+          Ok(errors)
         }
-      }.recover{
-        case _:NotFoundException => Ok("Subscription data not found")
-      }
     }
   }
 
-  def dropSubscription() = Action.async {
-    implicit request =>  authorised() {
-      testCBCRConnector.dropSubscriptionData.map(_ => Ok("Subscription data collection dropped")).recover{
-        case _:NotFoundException => Ok("Subscription data collection dropped")
+  def validateNumberOfCbcIdForUtr(utr: String) = Action.async { implicit request =>
+    authorised() {
+      testCBCRConnector
+        .checkNumberOfCbcIdForUtr(utr)
+        .map { s =>
+          s.status match {
+            case OK        => Ok(s"The total number of cbc id for given utr is: ${s.json}")
+            case NOT_FOUND => Ok("Subscription data not found for the given utr")
+            case _         => Ok("Something went wrong")
+          }
+        }
+        .recover {
+          case _: NotFoundException => Ok("Subscription data not found")
+        }
+    }
+  }
+
+  def dropSubscription() = Action.async { implicit request =>
+    authorised() {
+      testCBCRConnector.dropSubscriptionData.map(_ => Ok("Subscription data collection dropped")).recover {
+        case _: NotFoundException => Ok("Subscription data collection dropped")
       }
     }
   }

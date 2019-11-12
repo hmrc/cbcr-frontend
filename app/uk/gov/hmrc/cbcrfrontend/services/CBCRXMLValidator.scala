@@ -29,9 +29,8 @@ import play.api.{Environment, Logger}
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Exception.nonFatalCatch
 
-
-class CBCRXMLValidator @Inject()(env:Environment, xmlValidationSchema: XMLValidationSchema)(implicit system:ActorSystem) {
-
+class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValidationSchema)(
+  implicit system: ActorSystem) {
 
   val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
   xmlInputFactory2.setProperty(XMLInputFactory.SUPPORT_DTD, false)
@@ -41,13 +40,14 @@ class CBCRXMLValidator @Inject()(env:Environment, xmlValidationSchema: XMLValida
     val xmlErrorHandler = new XmlErrorHandler()
 
     try {
-      val xmlStreamReader: XMLStreamReader2  = xmlInputFactory2.createXMLStreamReader(input)
+      val xmlStreamReader: XMLStreamReader2 = xmlInputFactory2.createXMLStreamReader(input)
       xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
       xmlStreamReader.validateAgainst(xmlValidationSchema)
-      while ( xmlStreamReader.hasNext ) { xmlStreamReader.next }
+      while (xmlStreamReader.hasNext) { xmlStreamReader.next }
     } catch {
-      case e:WstxException =>
-        xmlErrorHandler.reportProblem(new XMLValidationProblem(e.getLocation,e.getMessage,XMLValidationProblem.SEVERITY_FATAL))
+      case e: WstxException =>
+        xmlErrorHandler.reportProblem(
+          new XMLValidationProblem(e.getLocation, e.getMessage, XMLValidationProblem.SEVERITY_FATAL))
       case ErrorLimitExceededException =>
         Logger.warn(s"Errors exceeding the ${xmlErrorHandler.errorMessageLimit} encountered, validation aborting.")
     }
@@ -57,26 +57,26 @@ class CBCRXMLValidator @Inject()(env:Environment, xmlValidationSchema: XMLValida
   }
 }
 
-class XmlErrorHandler() extends ValidationProblemHandler{
+class XmlErrorHandler() extends ValidationProblemHandler {
 
   // How many errors should be handle before giving up?
   val errorMessageLimit = 100
 
   override def reportProblem(problem: XMLValidationProblem): Unit = captureError(problem)
 
-  private val errorsListBuffer:      ListBuffer[String] = new ListBuffer[String]()
-  private val warningsListBuffer:    ListBuffer[String] = new ListBuffer[String]()
+  private val errorsListBuffer: ListBuffer[String] = new ListBuffer[String]()
+  private val warningsListBuffer: ListBuffer[String] = new ListBuffer[String]()
   private val fatalErrorsListBuffer: ListBuffer[String] = new ListBuffer[String]()
 
-  def hasErrors:      Boolean = errorsCollection.nonEmpty
+  def hasErrors: Boolean = errorsCollection.nonEmpty
   def hasFatalErrors: Boolean = fatalErrorsCollection.nonEmpty
-  def hasWarnings:    Boolean = warningsCollection.nonEmpty
+  def hasWarnings: Boolean = warningsCollection.nonEmpty
 
-  def errorsCollection:      List[String] = errorsListBuffer.toList
-  def warningsCollection:    List[String] = warningsListBuffer.toList
+  def errorsCollection: List[String] = errorsListBuffer.toList
+  def warningsCollection: List[String] = warningsListBuffer.toList
   def fatalErrorsCollection: List[String] = fatalErrorsListBuffer.toList
 
-  private def captureError(problem:XMLValidationProblem) = {
+  private def captureError(problem: XMLValidationProblem) = {
 
     var listBuffer: ListBuffer[String] = problem.getSeverity match {
       case XMLValidationProblem.SEVERITY_WARNING => warningsListBuffer
@@ -84,7 +84,7 @@ class XmlErrorHandler() extends ValidationProblemHandler{
       case XMLValidationProblem.SEVERITY_FATAL   => fatalErrorsListBuffer
     }
 
-    if(listBuffer.size < errorMessageLimit) {
+    if (listBuffer.size < errorMessageLimit) {
       val lineNumber = nonFatalCatch opt problem.getLocation.getLineNumber
       listBuffer += lineNumber.fold(s"${problem.getMessage}")(line => s"${problem.getMessage} on line $line")
     } else {
@@ -96,6 +96,4 @@ class XmlErrorHandler() extends ValidationProblemHandler{
 
 }
 
-
 case object ErrorLimitExceededException extends Throwable
-
