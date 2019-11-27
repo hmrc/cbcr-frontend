@@ -211,6 +211,7 @@ fileUploadResult.mainHeading.xmlDataError=cy-The report does not meet the HMRC a
 fileUploadResult.whatToDo=cy-The report has not been uploaded
 fileUploadResult.fileName=cy-Filename
 fileUploadResult.fileSize=cy-Size
+fileUploadResult.caption=Report filename and file size
 
 fileUploadResult.error=cy-The report does not meet the HMRC and OECD guidelines
 fileUploadResult.error.report=cy-Download the
