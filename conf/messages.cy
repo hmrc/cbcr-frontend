@@ -96,6 +96,7 @@ subscribeMatchFound.businessDetails.utr=cy-Unique Taxpayer Reference
 subscribeMatchFound.businessDetails.advice=cy-If these details aren''t correct, go back and enter a different Unique Taxpayer Reference and postcode.
 subscribeMatchFound.tableHeading1=cy-Company Details
 subscribeMatchFound.tableHeading2=cy-Value
+subscribeMatchFound.tableCaption=Company or partnership details
 
 subscribeSuccessCbcId.mainHeading=cy-Registration successful
 subscribeSuccessCbcId.subHeading=cy-The country-by-country ID is

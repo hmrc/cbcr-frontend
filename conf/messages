@@ -96,6 +96,7 @@ subscribeMatchFound.businessDetails.utr=Unique Taxpayer Reference
 subscribeMatchFound.businessDetails.advice=If these details aren''t correct, go back and enter a different Unique Taxpayer Reference and postcode.
 subscribeMatchFound.tableHeading1=Company Details
 subscribeMatchFound.tableHeading2=Value
+subscribeMatchFound.tableCaption=Company or partnership details
 
 subscribeSuccessCbcId.mainHeading=Registration successful
 subscribeSuccessCbcId.subHeading=The country-by-country ID is
@@ -210,6 +211,7 @@ fileUploadResult.mainHeading.xmlDataError=The report does not meet the HMRC and 
 fileUploadResult.whatToDo=The report has not been uploaded
 fileUploadResult.fileName=Filename
 fileUploadResult.fileSize=Size
+fileUploadResult.caption=Report filename and file size
 
 fileUploadResult.error=The report does not meet the HMRC and OECD guidelines
 fileUploadResult.error.report=Download the
