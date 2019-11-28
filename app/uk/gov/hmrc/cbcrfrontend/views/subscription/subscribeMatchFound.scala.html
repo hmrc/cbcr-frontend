@@ -27,30 +27,35 @@
 @(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @main_template(Messages("subscribeMatchFound.mainHeading")) {
-    <div class="grid-row">
-        <div class="column-full">
-            <h1>
-            @Messages("subscribeMatchFound.mainHeading")
-            </h1>
+         <div >
+            <table >
+                <caption><h1>
+                @Messages("subscribeMatchFound.mainHeading")
+                </h1></caption>
+                <thead>
+                    <tr>
+                        <th>@Messages("subscribeMatchFound.tableHeading1")</th>
+                        <th>@Messages("subscribeMatchFound.tableHeading2")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@Messages("subscribeMatchFound.businessDetails.name")</td>
+                        <td>@name</td>
+                    </tr>
+                    <tr>
+                        <td>@Messages("subscribeMatchFound.businessDetails.utr")</td>
+                        <td>@utr</td>
+                    </tr>
+                    <tr>
+                        <td>@Messages("subscribeMatchFound.businessDetails.postcode")</td>
+                        <td>@postCode</td>
+                    </tr>
+                </tbody>
+            </table>
+         </div>
 
-            <div class="tabular-data__entry divider--bottom">
-                <div class="tabular-data__heading tabular-data__heading--label">@Messages("subscribeMatchFound.tableHeading1")</div>
-                <span class="tabular-data__heading tabular-data__heading--label">@Messages("subscribeMatchFound.tableHeading2")</span>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <div class="tabular-data__data-1">@Messages("subscribeMatchFound.businessDetails.name")</div>
-                <span class="tabular-data__data-1">@name</span>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <div class="tabular-data__data-1">@Messages("subscribeMatchFound.businessDetails.utr")</div>
-                <span class="tabular-data__data-1">@utr</span>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <div class="tabular-data__data-1">@Messages("subscribeMatchFound.businessDetails.postcode")</div>
-                <span class="tabular-data__data-1">@postCode</span>
-            </div>
             <br>
-
             @userType match {
                 case Organisation => {
                     <p><a class="button" role="button" href="@routes.SubscriptionController.contactInfoSubscriber" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
@@ -59,6 +64,6 @@
                     <p><a class="button" role="button" href="@routes.SubmissionController.submitSummary" role="button">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
             }
-        </div>
-    </div>
+
+
 }
