@@ -17,7 +17,6 @@ object FrontendBuild extends Build with MicroService {
     "uk.gov.hmrc"              %% "domain"              %           "5.6.0-play-26",
     "uk.gov.hmrc"              %% "http-caching-client" %           "9.0.0-play-26",
     "org.typelevel"            %% "cats"                %           "0.9.0",
-    "org.typelevel"            %% "cats-core"           %           "0.9.0",
     "com.github.kxbmap"        %% "configs"             %           "0.4.4",
     "com.scalawilliam"         %% "xs4s"                %           "0.5",
     "org.codehaus.woodstox"    % "woodstox-core-asl"    %           "4.4.1",
@@ -31,8 +30,6 @@ object FrontendBuild extends Build with MicroService {
 
   def test(scope: String = "test") = Seq(
     "org.pegdown" % "pegdown" % "1.6.0" % scope,
-    "org.jsoup" % "jsoup" % "1.12.1" % scope,
-    "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
     "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % scope,
     "org.mockito" % "mockito-core" % "2.28.2" % scope
   )
