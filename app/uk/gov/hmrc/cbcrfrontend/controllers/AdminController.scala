@@ -181,6 +181,9 @@ class AdminController @Inject()(
         errors => Future.successful(BadRequest("Error")),
         docRefId => cbcrBackendConnector.adminReportingEntityDataQuery(docRefId.id).map(doc => Ok(doc.json))
       )
+      .recover {
+        case _: Exception => Ok(s"couldnt find Reporting Entity")
+      }
   }
 
   def queryReportingEntityByCbcIdAndDate = AuthenticationController(credentials).async { implicit request =>
@@ -193,6 +196,9 @@ class AdminController @Inject()(
             .adminReportingEntityCBCIdAndReportingPeriod(query.cbcId, query.date)
             .map(doc => Ok(doc.json))
       )
+      .recover {
+        case _: Exception => Ok(s"couldnt find Reporting Entity")
+      }
   }
 
   def queryReportingEntityByTinAndDate = AuthenticationController(credentials).async { implicit request =>
@@ -205,6 +211,9 @@ class AdminController @Inject()(
             .adminReportingEntityDataQueryTin(query.tin, query.date.toString)
             .map(doc => Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
       )
+      .recover {
+        case _: Exception => Ok(s"couldnt find Reporting Entity")
+      }
   }
 
   def editDIR() = AuthenticationController(credentials).async { implicit result =>
@@ -236,6 +245,9 @@ class AdminController @Inject()(
             )
         }
       )
+      .recover {
+        case _: Exception => Ok(s"Couldn't edit $adminEditReportingEntityData")
+      }
   }
 
   def adminAddDocRefId = AuthenticationController(credentials).async { implicit request =>
