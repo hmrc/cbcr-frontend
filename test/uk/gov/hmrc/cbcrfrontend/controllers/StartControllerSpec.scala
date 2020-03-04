@@ -89,11 +89,11 @@ class StartControllerSpec
       status(controller.start(fakeRequest)) shouldBe Status.SEE_OTHER
     }
 
-    "return 501 if authorised Individual" in {
+    "return 403 if authorised Individual" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(
           Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None)))
-      status(controller.start(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
+      status(controller.start(fakeRequest)) shouldBe Status.FORBIDDEN
     }
 
     "return 303 if submit returns upload" in {
@@ -116,7 +116,5 @@ class StartControllerSpec
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       status(controller.submit(fakeRequest)) shouldBe Status.BAD_REQUEST
     }
-
   }
-
 }
