@@ -76,6 +76,10 @@ package object cbcrfrontend {
     Logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())
+      case UnexpectedState(error, _) if error.equals("Individuals are not permitted to use this service") =>
+        Forbidden(
+          views.html.not_authorised_individual()
+        )
       case _ =>
         InternalServerError(
           views.html.error_template("Internal Server Error", "Internal Server Error", "Something went wrong")
