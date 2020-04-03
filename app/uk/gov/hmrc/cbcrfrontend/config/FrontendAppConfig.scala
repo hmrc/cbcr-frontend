@@ -43,6 +43,8 @@ class FrontendAppConfig @Inject()(
   val environment: Environment,
   servicesConfig: ServicesConfig) {
 
+  val fileUploadProtocol: String = servicesConfig.getConfString("file-upload-frontend.protocol", "https")
+
   val mode = environment.mode
   private def loadConfig(key: String) =
     runModeConfiguration.getString(key).getOrElse(throw new Exception(s"Missing configuration key: $key"))

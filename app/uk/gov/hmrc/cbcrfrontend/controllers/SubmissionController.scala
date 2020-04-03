@@ -135,7 +135,7 @@ class SubmissionController @Inject()(
       (for {
         summaryData <- cache.read[SummaryData]
         xml         <- cache.read[CompleteXMLInfo]
-        _           <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+        _ <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
         _ <- saveDocRefIds(xml).leftMap[CBCErrors] { es =>
               Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
