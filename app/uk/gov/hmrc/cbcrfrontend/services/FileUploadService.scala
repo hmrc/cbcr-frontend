@@ -66,9 +66,13 @@ class FileUploadService @Inject()(
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = servicesConfig.baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = servicesConfig.baseUrl("file-upload-frontend") }
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
-  implicit lazy val cbcrsStubUrl = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr-stub") }
+  implicit lazy val cbcrsStubUrl = new ServiceUrl[FusUrl] { val url = servicesConfig.baseUrl("cbcr-stub") }
 
-  lazy val fileUploadUrl = if (feConfig.fileUploadProtocol == "http") cbcrsStubUrl.url else fusUrl.url
+  lazy val fileUploadUrl = if (feConfig.fileUploadProtocol == "http") cbcrsStubUrl else fusUrl
+
+  lazy val stubbedFusFeUrl = new ServiceUrl[FusFeUrl] {
+    val url = s"${servicesConfig.baseUrl("file-upload-frontend")}/stub"
+  }
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[EnvelopeId] = {
 
@@ -133,7 +137,7 @@ class FileUploadService @Inject()(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): ServiceResponse[File] =
     EitherT(
-      ws.url(s"$fileUploadUrl/file-upload/envelopes/$envelopeId/files/$fileId/content")
+      ws.url(s"${fileUploadUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content")
         .withMethod("GET")
         .stream()
         .flatMap { res =>
@@ -175,7 +179,7 @@ class FileUploadService @Inject()(
     ec: ExecutionContext): ServiceResponse[Option[FileMetadata]] =
     fromFutureOptA(
       http
-        .GET[HttpResponse](s"$fileUploadUrl/file-upload/envelopes/$envelopeId/files/$fileId/metadata")
+        .GET[HttpResponse](s"${fileUploadUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata")
         .map(fusConnector.extractFileMetadata))
 
   def uploadMetadataAndRoute(
@@ -183,12 +187,11 @@ class FileUploadService @Inject()(
 
     val metadataFileId = UUID.randomUUID.toString
     val envelopeId = metaData.fileInfo.envelopeId
-
-
+    val fileUploadFrontendUrl = if (feConfig.fileUploadProtocol == "http") stubbedFusFeUrl else fusFeUrl
     for {
       _ <- EitherT.right(
             HttpExecutor(
-              fusFeUrl,
+              fileUploadFrontendUrl,
               UploadFile(
                 envelopeId,
                 FileId(s"json-$metadataFileId"),
@@ -196,7 +199,7 @@ class FileUploadService @Inject()(
                 " application/json; charset=UTF-8",
                 Json.toJson(metaData).toString().getBytes)
             ))
-      resourceUrl <- EitherT.right(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")))
+      resourceUrl <- EitherT.right(HttpExecutor(fileUploadUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")))
     } yield resourceUrl.body
   }
 
