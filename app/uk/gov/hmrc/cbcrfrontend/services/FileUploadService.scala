@@ -68,7 +68,7 @@ class FileUploadService @Inject()(
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
   implicit lazy val cbcrsStubUrl = new ServiceUrl[FusUrl] { val url = servicesConfig.baseUrl("cbcr-stub") }
 
-  lazy val fileUploadUrl = if (feConfig.fileUploadProtocol == "http") cbcrsStubUrl else fusUrl
+  lazy val fileUploadUrl = if (feConfig.isLocalEnvironment) cbcrsStubUrl else fusUrl
 
   lazy val stubbedFusFeUrl = new ServiceUrl[FusFeUrl] {
     val url = s"${servicesConfig.baseUrl("file-upload-frontend")}/stub"
@@ -187,7 +187,7 @@ class FileUploadService @Inject()(
 
     val metadataFileId = UUID.randomUUID.toString
     val envelopeId = metaData.fileInfo.envelopeId
-    val fileUploadFrontendUrl = if (feConfig.fileUploadProtocol == "http") stubbedFusFeUrl else fusFeUrl
+    val fileUploadFrontendUrl = if (feConfig.isLocalEnvironment) stubbedFusFeUrl else fusFeUrl
     for {
       _ <- EitherT.right(
             HttpExecutor(

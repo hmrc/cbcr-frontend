@@ -43,13 +43,11 @@ class FrontendAppConfig @Inject()(
   val environment: Environment,
   servicesConfig: ServicesConfig) {
 
-  val fileUploadProtocol: String = servicesConfig.getConfString("file-upload-frontend.protocol", "https")
-
   val mode = environment.mode
   private def loadConfig(key: String) =
-    runModeConfiguration.getString(key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
+    runModeConfiguration.getOptional[String](key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
 
-  val contactHost = runModeConfiguration.getString(s"contact-frontend.host").getOrElse("")
+  val contactHost = runModeConfiguration.getOptional[String](s"contact-frontend.host").getOrElse("")
   val contactFormServiceIdentifier = "CountryByCountryReporting"
 
   val analyticsToken: String = loadConfig(s"google-analytics.token")
@@ -77,7 +75,7 @@ class FrontendAppConfig @Inject()(
     Some(
       new String(
         Base64.getDecoder
-          .decode(runModeConfiguration.getString(key).getOrElse("")),
+          .decode(runModeConfiguration.getOptional[String](key).getOrElse("")),
         "UTF-8"))
       .map(_.split(","))
       .getOrElse(Array.empty)
@@ -88,7 +86,8 @@ class FrontendAppConfig @Inject()(
 
   val timeOutSeconds = loadConfig("sessionTimeout.timeOutSeconds")
   val timeOutCountdownSeconds = loadConfig("sessionTimeout.timeOutCountdownSeconds")
-  val timeOutShowDialog: Boolean = runModeConfiguration.getBoolean(s"sessionTimeout.timeOutShowDialog").getOrElse(false)
+  val timeOutShowDialog: Boolean =
+    runModeConfiguration.getOptional[Boolean](s"sessionTimeout.timeOutShowDialog").getOrElse(false)
   val keepAliveUrl = loadConfig("sessionTimeout.keepAliveUrl")
   val signOutUrl = loadConfig("sessionTimeout.signOutUrl")
 
@@ -98,4 +97,6 @@ class FrontendAppConfig @Inject()(
 
   lazy val username = servicesConfig.getString("credentials.username")
   lazy val password = servicesConfig.getString("credentials.password")
+
+  val isLocalEnvironment = servicesConfig.getBoolean("localEnvironment")
 }
