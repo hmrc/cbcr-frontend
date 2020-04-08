@@ -36,7 +36,6 @@ import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -57,8 +56,7 @@ class FileUploadService @Inject()(
   implicit http: HttpClient,
   ac: ActorSystem,
   environment: Environment,
-  fileUploadFrontEndWS: FileUploadFrontEndWS,
-  feConfig: FrontendAppConfig)
+  fileUploadFrontEndWS: FileUploadFrontEndWS)
     extends I18nSupport {
 
   implicit val materializer = ActorMaterializer()
@@ -66,13 +64,6 @@ class FileUploadService @Inject()(
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = servicesConfig.baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = servicesConfig.baseUrl("file-upload-frontend") }
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
-  implicit lazy val cbcrsStubUrl = new ServiceUrl[FusUrl] { val url = servicesConfig.baseUrl("cbcr-stub") }
-
-  lazy val fileUploadUrl = if (feConfig.isLocalEnvironment) cbcrsStubUrl else fusUrl
-
-//  lazy val stubbedFusFeUrl = new ServiceUrl[FusFeUrl] {
-//    val url = s"${servicesConfig.baseUrl("file-upload-frontend")}/stub"
-//  }
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[EnvelopeId] = {
 
@@ -137,7 +128,7 @@ class FileUploadService @Inject()(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): ServiceResponse[File] =
     EitherT(
-      ws.url(s"${fileUploadUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content")
+      ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content")
         .withMethod("GET")
         .stream()
         .flatMap { res =>
@@ -179,7 +170,7 @@ class FileUploadService @Inject()(
     ec: ExecutionContext): ServiceResponse[Option[FileMetadata]] =
     fromFutureOptA(
       http
-        .GET[HttpResponse](s"${fileUploadUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata")
+        .GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata")
         .map(fusConnector.extractFileMetadata))
 
   def uploadMetadataAndRoute(
