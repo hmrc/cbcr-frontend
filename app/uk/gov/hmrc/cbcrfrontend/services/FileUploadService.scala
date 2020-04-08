@@ -70,9 +70,9 @@ class FileUploadService @Inject()(
 
   lazy val fileUploadUrl = if (feConfig.isLocalEnvironment) cbcrsStubUrl else fusUrl
 
-  lazy val stubbedFusFeUrl = new ServiceUrl[FusFeUrl] {
-    val url = s"${servicesConfig.baseUrl("file-upload-frontend")}/stub"
-  }
+//  lazy val stubbedFusFeUrl = new ServiceUrl[FusFeUrl] {
+//    val url = s"${servicesConfig.baseUrl("file-upload-frontend")}/stub"
+//  }
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[EnvelopeId] = {
 
@@ -187,11 +187,11 @@ class FileUploadService @Inject()(
 
     val metadataFileId = UUID.randomUUID.toString
     val envelopeId = metaData.fileInfo.envelopeId
-    val fileUploadFrontendUrl = if (feConfig.isLocalEnvironment) stubbedFusFeUrl else fusFeUrl
+
     for {
       _ <- EitherT.right(
             HttpExecutor(
-              fileUploadFrontendUrl,
+              fusFeUrl,
               UploadFile(
                 envelopeId,
                 FileId(s"json-$metadataFileId"),
@@ -199,7 +199,7 @@ class FileUploadService @Inject()(
                 " application/json; charset=UTF-8",
                 Json.toJson(metaData).toString().getBytes)
             ))
-      resourceUrl <- EitherT.right(HttpExecutor(fileUploadUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")))
+      resourceUrl <- EitherT.right(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")))
     } yield resourceUrl.body
   }
 
