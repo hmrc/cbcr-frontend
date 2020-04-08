@@ -45,20 +45,12 @@ class FileUploadServiceConnector() {
     resp.header(LOCATION) match {
       case Some(location) =>
         location match {
-          case EnvelopeIdExtractor(envelopeId) => {
-            println("got here")
-            Right(EnvelopeId(envelopeId))
-          }
-          case _ => {
-            println("got here3")
+          case EnvelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
 
-            Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
-          }
+          case _ => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
         }
-      case None => {
-        println("got here2")
-        Left(UnexpectedState(s"Header $LOCATION not found"))
-      }
+      case None => Left(UnexpectedState(s"Header $LOCATION not found"))
+
     }
   }
 
