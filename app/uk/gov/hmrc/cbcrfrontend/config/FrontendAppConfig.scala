@@ -97,6 +97,4 @@ class FrontendAppConfig @Inject()(
 
   lazy val username = servicesConfig.getString("credentials.username")
   lazy val password = servicesConfig.getString("credentials.password")
-
-  val isLocalEnvironment = servicesConfig.getBoolean("localEnvironment")
 }
