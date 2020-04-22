@@ -27,8 +27,8 @@
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-full">
             <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="0">
-                <h2 id="error-summary-heading" class="h2-heading"></h2>
-                <p id="file-input-error-summary"><strong><a id="file-input-error-link" href="#file-input"></a></strong></p>
+                <h2 id="error-summary-heading" class="js-hidden">@Messages("uploadReport.error.heading")</h2>
+                <p id="file-input-error-summary"><strong><a id="file-input-error-link" href="#file-input" class="js-hidden">@Messages("uploadReport.error")</a></strong></p>
             </div>
             <h1>
                 @Messages("uploadReport.mainHeading")
@@ -61,9 +61,10 @@
         var title = document.title;
 
         form.addEventListener("submit", function() {
-            error_header.innerText = "@Messages("uploadReport.error.heading")";
-            error_text.innerText = "@Messages("uploadReport.error")";
             error_summary.className += "flash error-summary error-summary--show";
+            error_header.classList.remove("js-hidden");
+            error_text.classList.remove("js-hidden");
+
             document.title = "Error: " + title
             window.setTimeout(function () {
                 error_summary.focus();
