@@ -26,9 +26,9 @@
     <div class="grid-row">
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-full">
-            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="0">
-                <h2 id="error-summary-heading" class="js-hidden">@Messages("uploadReport.error.heading")</h2>
-                <p id="file-input-error-summary"><strong><a id="file-input-error-link" href="#file-input" class="js-hidden">@Messages("uploadReport.error")</a></strong></p>
+            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="0" class="js-hidden">
+                <h2 id="error-summary-heading">@Messages("uploadReport.error.heading")</h2>
+                <p id="file-input-error-summary"><strong><a id="file-input-error-link" href="#file-input">@Messages("uploadReport.error")</a></strong></p>
             </div>
             <h1>
                 @Messages("uploadReport.mainHeading")
@@ -55,15 +55,11 @@
 
     <script>
         var form = document.getElementsByTagName('form')[0];
-        var error_header = document.getElementById('error-summary-heading');
-        var error_text = document.getElementById('file-input-error-link');
         var error_summary = document.getElementById('error-summary-display');
         var title = document.title;
 
         form.addEventListener("submit", function() {
-            error_summary.className += "flash error-summary error-summary--show";
-            error_header.classList.remove("js-hidden");
-            error_text.classList.remove("js-hidden");
+            error_summary.className = "flash error-summary error-summary--show";
 
             document.title = "Error: " + title
             window.setTimeout(function () {
