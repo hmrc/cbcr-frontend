@@ -70,7 +70,7 @@
                 @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None, Some("email"))
                 @CSRF.formField
                 <div class="form-field">
-                    <button role="button" type="submit" id="continue">Continue</button>
+                    <button role="button" class="button" type="submit" id="continue">Continue</button>
                 </div>
                 @if(!form.hasErrors) {
                     <script>document.getElementsByTagName("h1").firstChild.nodeValue.focus()</script>

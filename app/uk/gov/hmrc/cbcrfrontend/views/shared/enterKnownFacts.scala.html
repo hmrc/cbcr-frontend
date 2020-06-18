@@ -60,7 +60,7 @@
                 </fieldset>
                 @csrf_token()
                 <p>
-                    <button type="submit" role="button">@Messages("form.controls.continue")</button>
+                    <button type="submit" class="button" role="button">@Messages("form.controls.continue")</button>
                 </p>
                 @if(!hasErrors) {
                     <script>document.getElementById("utr").focus();</script>
