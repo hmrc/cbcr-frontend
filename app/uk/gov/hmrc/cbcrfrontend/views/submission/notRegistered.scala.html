@@ -18,7 +18,11 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html.main_template
 
-@(mainTemplate: main_template)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@this(
+        mainTemplate: main_template
+)
+
+@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @mainTemplate(Messages("notRegistered.heading"),
     sessionTimeout=false) {

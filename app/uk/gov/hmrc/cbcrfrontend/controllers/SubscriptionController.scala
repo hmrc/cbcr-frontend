@@ -35,6 +35,7 @@ import uk.gov.hmrc.cbcrfrontend.model.Implicits.format
 import uk.gov.hmrc.cbcrfrontend.model.{SubscriptionEmailSent, _}
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
@@ -59,7 +60,8 @@ class SubscriptionController @Inject()(
   implicit ec: ExecutionContext,
   val cache: CBCSessionCache,
   val config: Configuration,
-  feConfig: FrontendAppConfig)
+  feConfig: FrontendAppConfig,
+  views: Views)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   val alreadySubscribed = Action.async { implicit request =>
@@ -108,8 +110,12 @@ class SubscriptionController @Inject()(
                       Logger.error(error.show)
                       (createFailedSubscriptionAuditEvent(creds, id, bpr, utr) *>
                         subscriptionDataService.clearSubscriptionData(id)).fold(
-                        errorRedirect,
-                        _ => errorRedirect(UnexpectedState("Something went wrong so cleared SubscriptionData"))
+                        (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
+                        _ =>
+                          errorRedirect(
+                            UnexpectedState("Something went wrong so cleared SubscriptionData"),
+                            views.notAuthorisedIndividual,
+                            views.errorTemplate)
                       )
                     },
                     _ => Redirect(routes.SubscriptionController.subscribeSuccessCbcId(id.value))
@@ -117,7 +123,7 @@ class SubscriptionController @Inject()(
                   .flatten
 
             }
-            .leftMap(errorRedirect)
+            .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
             .merge
         }
       )
@@ -176,9 +182,12 @@ class SubscriptionController @Inject()(
 
       subscriptionDataForm.bindFromRequest.fold(
         errors => {
-          ci.fold((error: CBCErrors) => errorRedirect(error), cbcId => {
-            BadRequest(update.updateContactInfoSubscriber(errors, cbcId))
-          })
+          ci.fold(
+            (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
+            cbcId => {
+              BadRequest(update.updateContactInfoSubscriber(errors, cbcId))
+            }
+          )
         },
         data => {
           (for {
@@ -193,7 +202,7 @@ class SubscriptionController @Inject()(
                   cbcId,
                   SubscriberContact(data.firstName, data.lastName, data.phoneNumber, data.email))
           } yield Redirect(routes.SubscriptionController.savedUpdatedInfoSubscriber())).fold(
-            errors => errorRedirect(errors),
+            errors => errorRedirect(errors, views.notAuthorisedIndividual, views.errorTemplate),
             result => result
           )
         }
@@ -203,14 +212,14 @@ class SubscriptionController @Inject()(
 
   val savedUpdatedInfoSubscriber = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
-      Ok(views.html.update.contactDetailsUpdated())
+      Ok(views.contactDetailsUpdated)
     }
   }
 
   def subscribeSuccessCbcId(id: String) = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
       CBCId(id).fold[Future[Result]](
-        errorRedirect(UnexpectedState(s"CBCId: $id is not valid"))
+        errorRedirect(UnexpectedState(s"CBCId: $id is not valid"), views.notAuthorisedIndividual, views.errorTemplate)
       )((cbcId: CBCId) => Ok(subscription.subscribeSuccessCbcId(cbcId, request.session.get("companyName"))))
     }
   }
@@ -221,7 +230,7 @@ class SubscriptionController @Inject()(
         subscriptionDataService
           .clearSubscriptionData(u)
           .fold(
-            error => errorRedirect(error), {
+            error => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate), {
               case Some(_) => Ok
               case None    => NoContent
             }

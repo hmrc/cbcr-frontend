@@ -103,7 +103,7 @@ class SharedController @Inject()(
               .retrieveSubscriptionData(id)
               .value
               .flatMap(_.fold(
-                error => errorRedirect(error),
+                error => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
                 details =>
                   details.fold[Future[Result]] {
                     BadRequest(submission.enterCBCId(cbcIdForm, true))
@@ -116,7 +116,7 @@ class SharedController @Inject()(
                           .fold[Future[Result]](
                             {
                               case InvalidSession => BadRequest(submission.enterCBCId(cbcIdForm, false, true))
-                              case error          => errorRedirect(error)
+                              case error          => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
                             },
                             _ =>
                               cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
@@ -221,7 +221,11 @@ class SharedController @Inject()(
 
   val checkKnownFacts: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) {
-      case None => errorRedirect(UnexpectedState("Could not retrieve affinityGroup"))
+      case None =>
+        errorRedirect(
+          UnexpectedState("Could not retrieve affinityGroup"),
+          views.notAuthorisedIndividual,
+          views.errorTemplate)
       case Some(userType) => {
 
         knownFactsForm.bindFromRequest.fold[EitherT[Future, Result, Result]](
@@ -234,7 +238,10 @@ class SharedController @Inject()(
                     }
               cbcIdFromXml <- EitherT.right[Future, Result, Option[CBCId]](
                                OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
-              subscriptionDetails <- subDataService.retrieveSubscriptionData(knownFacts.utr).leftMap(errorRedirect)
+              subscriptionDetails <- subDataService
+                                      .retrieveSubscriptionData(knownFacts.utr)
+                                      .leftMap((error: CBCErrors) =>
+                                        errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
               _ <- EitherT.fromEither[Future](userType match {
                     case AffinityGroup.Agent if subscriptionDetails.isEmpty =>
                       Logger.error(
@@ -269,7 +276,11 @@ class SharedController @Inject()(
 
   def knownFactsMatch = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) {
-      case None => errorRedirect(UnexpectedState("Unable to get AffinityGroup"))
+      case None =>
+        errorRedirect(
+          UnexpectedState("Unable to get AffinityGroup"),
+          views.notAuthorisedIndividual,
+          views.errorTemplate)
       case Some(userType) =>
         val result: ServiceResponse[Result] = for {
           bpr <- cache.read[BusinessPartnerRecord]
@@ -282,16 +293,22 @@ class SharedController @Inject()(
               utr.value,
               userType))
 
-        result.leftMap(errorRedirect).merge
+        result
+          .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
+          .merge
     }
   }
 
   def unsupportedAffinityGroup = Action.async { implicit request =>
     {
       authorised().retrieve(Retrievals.affinityGroup) {
-        case None             => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
-        case Some(Individual) => Unauthorized(views.notAuthorisedIndividual)
-        case _                => Unauthorized(views.notAuthorised)
+        case None =>
+          errorRedirect(
+            UnexpectedState("Unable to query AffinityGroup"),
+            views.notAuthorisedIndividual,
+            views.errorTemplate)
+        case Some(Individual) => Unauthorized(views.notAuthorisedIndividual())
+        case _                => Unauthorized(views.notAuthorised())
       }
     }
   }

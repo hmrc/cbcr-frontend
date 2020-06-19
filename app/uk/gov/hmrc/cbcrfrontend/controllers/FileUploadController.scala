@@ -101,14 +101,14 @@ class FileUploadController @Inject()(
 
   val chooseXMLFile = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation or AffinityGroup.Agent).retrieve(Retrievals.affinityGroup and cbcEnrolment) {
-      case None ~ _ => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
+      case None ~ _ => errorRedirect(UnexpectedState("Unable to query AffinityGroup"), , )
       case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
         Ok(submission.unregisteredGGAccount())
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals())
       case _ ~ _ =>
         fileUploadUrl()
           .map(fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
-          .leftMap(errorRedirect)
+          .leftMap((error: CBCErrors) => errorRedirect(error,,))
           .merge
     }
   }
@@ -135,7 +135,7 @@ class FileUploadController @Inject()(
             Right(Ok(submission.fileupload.fileUploadProgress(envelopeId, fileId, hostName, assetsLocation)))
           }
         }
-        .leftMap(errorRedirect)
+        .leftMap((error: CBCErrors) => errorRedirect(error,,))
         .merge
     }
   }
@@ -318,7 +318,7 @@ class FileUploadController @Inject()(
       case creds ~ affinity ~ enrolment =>
         auditFailedSubmission(creds, affinity, enrolment, errorType.toString)
           .map(_ => Ok(submission.fileupload.fileUploadError(errorType)))
-          .leftMap(errorRedirect)
+          .leftMap((error: CBCErrors) => errorRedirect(error,,))
           .merge
     }
   }
@@ -433,7 +433,7 @@ class FileUploadController @Inject()(
     authorised(AffinityGroup.Organisation and (User or Admin)) {
       fileUploadUrl()
         .map(fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
-        .leftMap(errorRedirect)
+        .leftMap((error: CBCErrors) => errorRedirect(error,,))
         .merge
     }
   }

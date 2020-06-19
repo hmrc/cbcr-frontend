@@ -53,7 +53,7 @@ class StartController @Inject()(
       case Some(Agent) ~ _                      => Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
       case Some(Organisation) ~ Some(enrolment) => Ok(views.html.start(startForm))
       case Some(Organisation) ~ None            => Redirect(routes.SharedController.verifyKnownFactsOrganisation())
-      case Some(Individual) ~ _                 => errorRedirect(UnexpectedState("Individuals are not permitted to use this service"))
+      case Some(Individual) ~ _                 => errorRedirect(UnexpectedState("Individuals are not permitted to use this service"), , )
     }
   }
 

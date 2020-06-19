@@ -14,16 +14,17 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.model.CBCId
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+
+@this(
+        mainTemplate: main_template
+)
 
 @()(implicit request: Request[_], messages: Messages, conf: FrontendAppConfig)
 
-
-@main_template(Messages("contactDetailsUpdate.mainHeading")) {
+@mainTemplate(Messages("contactDetailsUpdate.mainHeading")) {
     <div class="grid-row">
         <div class="column-full">
             <section>

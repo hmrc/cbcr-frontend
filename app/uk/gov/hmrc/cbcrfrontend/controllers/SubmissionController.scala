@@ -147,7 +147,7 @@ class SubmissionController @Inject()(
           case Some(Agent) => "Agent"
           case _           => "Other"
         }
-      } yield Redirect(routes.SubmissionController.submitSuccessReceipt(userType))).leftMap(errorRedirect).merge
+      } yield Redirect(routes.SubmissionController.submitSuccessReceipt(userType))).leftMap((error: CBCErrors) => errorRedirect(error,,)).merge
     }
   }
 
@@ -237,11 +237,11 @@ class SubmissionController @Inject()(
                              case (Some(Organisation), CBC703) => Redirect(routes.SubmissionController.submitterInfo())
                              case _ =>
                                errorRedirect(UnexpectedState(
-                                 s"Unexpected userType/ReportingRole combination: $userType $reportingRole"))
+                                 s"Unexpected userType/ReportingRole combination: $userType $reportingRole"), , )
                            }
                        }
                      ))
-      } yield redirect).leftMap(errorRedirect).merge
+      } yield redirect).leftMap((error: CBCErrors) => errorRedirect(error,,)).merge
     }
   }
 
@@ -260,7 +260,7 @@ class SubmissionController @Inject()(
             userType match {
               case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo())
               case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName())
-              case _                  => errorRedirect(UnexpectedState(s"Bad affinityGroup: $userType"))
+              case _                  => errorRedirect(UnexpectedState(s"Bad affinityGroup: $userType"), , )
             }
         }
       )
@@ -296,7 +296,7 @@ class SubmissionController @Inject()(
 
         })
         .semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse(""))))
-        .leftMap(errorRedirect)
+        .leftMap((error: CBCErrors) => errorRedirect(error,,))
         .merge
     }
 
@@ -331,7 +331,7 @@ class SubmissionController @Inject()(
                      }
           } yield result
 
-          result.leftMap(errorRedirect).merge
+          result.leftMap((error: CBCErrors) => errorRedirect(error,,)).merge
 
         }
       )
@@ -345,10 +345,10 @@ class SubmissionController @Inject()(
         sd  <- createSummaryData(smd)
       } yield Ok(views.submitSummary(sd))
 
-      result.leftMap(errors => errorRedirect(errors)).merge.recover {
+      result.leftMap(errors => errorRedirect(errors, , )).merge.recover {
         case NonFatal(e) =>
           Logger.error(e.getMessage, e)
-          errorRedirect(UnexpectedState(e.getMessage))
+          errorRedirect(UnexpectedState(e.getMessage), , )
       }
     }
 
@@ -403,7 +403,7 @@ class SubmissionController @Inject()(
         } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)
 
       data.fold[Result](
-        (error: CBCErrors) => errorRedirect(error),
+        (error: CBCErrors) => errorRedirect(error, , ),
         tuple5 => {
           Ok(views.submitSuccessReceipt(tuple5._2, tuple5._1.value, tuple5._3, tuple5._4, tuple5._5))
         }
