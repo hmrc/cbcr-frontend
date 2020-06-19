@@ -31,5 +31,6 @@ class Views @Inject()(
   val submitSummary: submission.submitSummary,
   val enterCompanyName: submission.enterCompanyName,
   val submitSuccessReceipt: submission.submitSuccessReceipt,
-  val contactDetailsUpdated: update.contactDetailsUpdated
+  val contactDetailsUpdated: update.contactDetailsUpdated,
+  val start: start
 )

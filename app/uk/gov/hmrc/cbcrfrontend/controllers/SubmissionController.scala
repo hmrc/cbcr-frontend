@@ -147,7 +147,9 @@ class SubmissionController @Inject()(
           case Some(Agent) => "Agent"
           case _           => "Other"
         }
-      } yield Redirect(routes.SubmissionController.submitSuccessReceipt(userType))).leftMap((error: CBCErrors) => errorRedirect(error,,)).merge
+      } yield Redirect(routes.SubmissionController.submitSuccessReceipt(userType)))
+        .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
+        .merge
     }
   }
 
@@ -236,12 +238,17 @@ class SubmissionController @Inject()(
                              case (Some(Agent), CBC703)        => Redirect(routes.SubmissionController.enterCompanyName())
                              case (Some(Organisation), CBC703) => Redirect(routes.SubmissionController.submitterInfo())
                              case _ =>
-                               errorRedirect(UnexpectedState(
-                                 s"Unexpected userType/ReportingRole combination: $userType $reportingRole"), , )
+                               errorRedirect(
+                                 UnexpectedState(
+                                   s"Unexpected userType/ReportingRole combination: $userType $reportingRole"),
+                                 views.notAuthorisedIndividual,
+                                 views.errorTemplate)
                            }
                        }
                      ))
-      } yield redirect).leftMap((error: CBCErrors) => errorRedirect(error,,)).merge
+      } yield redirect)
+        .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
+        .merge
     }
   }
 
@@ -260,7 +267,11 @@ class SubmissionController @Inject()(
             userType match {
               case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo())
               case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName())
-              case _                  => errorRedirect(UnexpectedState(s"Bad affinityGroup: $userType"), , )
+              case _ =>
+                errorRedirect(
+                  UnexpectedState(s"Bad affinityGroup: $userType"),
+                  views.notAuthorisedIndividual,
+                  views.errorTemplate)
             }
         }
       )
@@ -296,7 +307,7 @@ class SubmissionController @Inject()(
 
         })
         .semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse(""))))
-        .leftMap((error: CBCErrors) => errorRedirect(error,,))
+        .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
 
@@ -331,7 +342,9 @@ class SubmissionController @Inject()(
                      }
           } yield result
 
-          result.leftMap((error: CBCErrors) => errorRedirect(error,,)).merge
+          result
+            .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
+            .merge
 
         }
       )
@@ -345,11 +358,14 @@ class SubmissionController @Inject()(
         sd  <- createSummaryData(smd)
       } yield Ok(views.submitSummary(sd))
 
-      result.leftMap(errors => errorRedirect(errors, , )).merge.recover {
-        case NonFatal(e) =>
-          Logger.error(e.getMessage, e)
-          errorRedirect(UnexpectedState(e.getMessage), , )
-      }
+      result
+        .leftMap(errors => errorRedirect(errors, views.notAuthorisedIndividual, views.errorTemplate))
+        .merge
+        .recover {
+          case NonFatal(e) =>
+            Logger.error(e.getMessage, e)
+            errorRedirect(UnexpectedState(e.getMessage), views.notAuthorisedIndividual, views.errorTemplate)
+        }
     }
 
   }
@@ -403,7 +419,7 @@ class SubmissionController @Inject()(
         } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)
 
       data.fold[Result](
-        (error: CBCErrors) => errorRedirect(error, , ),
+        (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
         tuple5 => {
           Ok(views.submitSuccessReceipt(tuple5._2, tuple5._1.value, tuple5._3, tuple5._4, tuple5._5))
         }
