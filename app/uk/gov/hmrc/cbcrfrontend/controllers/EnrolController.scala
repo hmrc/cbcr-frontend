@@ -23,7 +23,7 @@ import play.api.libs.json.Json
 import play.api.mvc.MessagesControllerComponents
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 

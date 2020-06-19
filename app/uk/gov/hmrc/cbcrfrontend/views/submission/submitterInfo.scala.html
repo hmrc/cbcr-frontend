@@ -14,14 +14,16 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
 @import tags._
-
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.FieldName
+
+@this(
+    mainTemplate: main_template
+)
+
 @(form:Form[_],field: Option[FieldName])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
@@ -35,7 +37,7 @@
 @contactPhoneErrors = @{form.error("contactPhone").isDefined}
 @emailErrors = @{form.error("email").isDefined}
 
-@main_template(if(form.hasErrors){"Error: " + Messages("submitterInfo.mainHeading")}else{Messages("submitterInfo.mainHeading")}) {
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("submitterInfo.mainHeading")}else{Messages("submitterInfo.mainHeading")}) {
     @if(form.hasErrors) {
         @if(numberOfErrors == 1) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">

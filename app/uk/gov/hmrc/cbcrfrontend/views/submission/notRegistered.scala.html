@@ -14,19 +14,13 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-
-@import play.api.i18n.Messages.Implicits._
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import helper._
-@import tags._
-@import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
-
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
 
-@main_template(Messages("notRegistered.heading"),
+@(mainTemplate: main_template)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@mainTemplate(Messages("notRegistered.heading"),
     sessionTimeout=false) {
 <div class="grid-row">
     <div class="column-full">

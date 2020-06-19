@@ -14,18 +14,18 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.model._
 @import helper._
+@import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
-
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+
+@this(
+    mainTemplate: main_template
+)
 @(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @error = @{form.error("utr").isDefined}
-@main_template(Messages("utrCheck.mainHeading")) {
+@mainTemplate(Messages("utrCheck.mainHeading")) {
 
 <div class="grid-row">
     <div class="column-full">

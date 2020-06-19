@@ -23,5 +23,12 @@ class Views @Inject()(
   val errorTemplate: error_template,
   val notAuthorisedIndividual: not_authorised_individual,
   val notAuthorised: subscription.notAuthorised,
-
+  val notAuthorisedAssistant: not_authorised_assistant,
+  val notRegistered: submission.notRegistered,
+  val submitInfoUltimateParentEntity: submission.submitInfoUltimateParentEntity,
+  val utrCheck: submission.utrCheck,
+  val submitterInfo: submission.submitterInfo,
+  val submitSummary: submission.submitSummary,
+  val enterCompanyName: submission.enterCompanyName,
+  val submitSuccessReceipt: submission.submitSuccessReceipt
 )

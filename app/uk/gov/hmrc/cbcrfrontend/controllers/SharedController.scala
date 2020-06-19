@@ -290,8 +290,8 @@ class SharedController @Inject()(
     {
       authorised().retrieve(Retrievals.affinityGroup) {
         case None             => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
-        case Some(Individual) => Unauthorized(views.notAuthorisedIndividual))
-        case _                => Unauthorized(views.html.subscription.notAuthorised())
+        case Some(Individual) => Unauthorized(views.notAuthorisedIndividual)
+        case _                => Unauthorized(views.notAuthorised)
       }
     }
   }

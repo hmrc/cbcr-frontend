@@ -19,41 +19,36 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.{Configuration, Environment, Logger}
+import javax.inject.{Inject, Singleton}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
-import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request, Result}
+import play.api.mvc.{AnyContent, MessagesControllerComponents, Request, Result}
+import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrievals}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrievals}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService}
+import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 import uk.gov.hmrc.cbcrfrontend.model.{ConfirmationEmailSent, SummaryData, _}
-import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
-import uk.gov.hmrc.cbcrfrontend.views.html.includes
+import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService, _}
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
-import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
-import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.HeaderCarrier
-import play.api.http.Status._
-import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
 class SubmissionController @Inject()(
@@ -71,7 +66,8 @@ class SubmissionController @Inject()(
   implicit ec: ExecutionContext,
   cache: CBCSessionCache,
   val config: Configuration,
-  feConfig: FrontendAppConfig)
+  feConfig: FrontendAppConfig,
+  views: Views)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
@@ -157,18 +153,18 @@ class SubmissionController @Inject()(
 
   def notRegistered = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
-      Ok(views.html.submission.notRegistered())
+      Ok(views.notRegistered())
     }
   }
 
   def noIndividuals = Action.async { implicit request =>
     authorised(AffinityGroup.Individual) {
-      Ok(views.html.not_authorised_individual())
+      Ok(views.notAuthorisedIndividual())
     }
   }
   def noAssistants = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (Assistant)) {
-      Ok(views.html.not_authorised_assistant())
+    authorised(AffinityGroup.Organisation and Assistant) {
+      Ok(views.notAuthorisedAssistant())
     }
   }
 
@@ -220,7 +216,7 @@ class SubmissionController @Inject()(
   val upe = Action.async { implicit request =>
     authorised() {
       Ok(
-        views.html.submission.submitInfoUltimateParentEntity(
+        views.submitInfoUltimateParentEntity(
           ultimateParentEntityForm
         ))
     }
@@ -232,8 +228,7 @@ class SubmissionController @Inject()(
         reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
         redirect <- right(
                      ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
-                       formWithErrors =>
-                         BadRequest(views.html.submission.submitInfoUltimateParentEntity(formWithErrors)),
+                       formWithErrors => BadRequest(views.submitInfoUltimateParentEntity(formWithErrors)),
                        success =>
                          cache.save(success).map { _ =>
                            (userType, reportingRole) match {
@@ -252,14 +247,14 @@ class SubmissionController @Inject()(
 
   val utr = Action.async { implicit request =>
     authorised() {
-      Ok(views.html.submission.utrCheck(utrForm))
+      Ok(views.utrCheck(utrForm))
     }
   }
 
   val submitUtr = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       utrForm.bindFromRequest.fold[Future[Result]](
-        errors => BadRequest(views.html.submission.utrCheck(errors)),
+        errors => BadRequest(views.utrCheck(errors)),
         utr =>
           cache.save(TIN(utr.utr, "")).map { _ =>
             userType match {
@@ -280,7 +275,7 @@ class SubmissionController @Inject()(
         }
         .getOrElse(submitterInfoForm)
 
-      Ok(views.html.submission.submitterInfo(form, fn))
+      Ok(views.submitterInfo(form, fn))
 
     }
 
@@ -313,7 +308,7 @@ class SubmissionController @Inject()(
         formWithErrors =>
           Future.successful(
             BadRequest(
-              views.html.submission.submitterInfo(
+              views.submitterInfo(
                 formWithErrors,
                 None
               ))),
@@ -348,7 +343,7 @@ class SubmissionController @Inject()(
       val result = for {
         smd <- EitherT(generateMetadataFile(cache, credentials).map(_.toEither)).leftMap(_.head)
         sd  <- createSummaryData(smd)
-      } yield Ok(views.html.submission.submitSummary(sd))
+      } yield Ok(views.submitSummary(sd))
 
       result.leftMap(errors => errorRedirect(errors)).merge.recover {
         case NonFatal(e) =>
@@ -370,7 +365,7 @@ class SubmissionController @Inject()(
 
   def enterCompanyName = Action.async { implicit request =>
     authorised() {
-      Ok(views.html.submission.enterCompanyName(enterCompanyNameForm))
+      Ok(views.enterCompanyName(enterCompanyNameForm))
     }
   }
 
@@ -379,7 +374,7 @@ class SubmissionController @Inject()(
       enterCompanyNameForm
         .bindFromRequest()
         .fold(
-          errors => BadRequest(views.html.submission.enterCompanyName(errors)),
+          errors => BadRequest(views.enterCompanyName(errors)),
           name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
         )
     }
@@ -410,7 +405,7 @@ class SubmissionController @Inject()(
       data.fold[Result](
         (error: CBCErrors) => errorRedirect(error),
         tuple5 => {
-          Ok(views.html.submission.submitSuccessReceipt(tuple5._2, tuple5._1.value, tuple5._3, tuple5._4, tuple5._5))
+          Ok(views.submitSuccessReceipt(tuple5._2, tuple5._1.value, tuple5._3, tuple5._4, tuple5._5))
         }
       )
     }
