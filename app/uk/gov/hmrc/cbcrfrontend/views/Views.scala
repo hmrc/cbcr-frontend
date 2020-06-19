@@ -17,5 +17,11 @@
 package uk.gov.hmrc.cbcrfrontend.views
 
 import javax.inject.Inject
-import uk.gov.hmrc.cbcrfrontend.views.html
-class Views @Inject()(val languageSelection: uk.gov.hmrc.cbcrfrontend.views.html.language.language_selection.type)
+import uk.gov.hmrc.cbcrfrontend.views.html._
+
+class Views @Inject()(
+  val errorTemplate: error_template,
+  val notAuthorisedIndividual: not_authorised_individual,
+  val notAuthorised: subscription.notAuthorised,
+
+)

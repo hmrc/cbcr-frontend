@@ -29,12 +29,13 @@ import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.Individual
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
@@ -50,7 +51,8 @@ class SharedController @Inject()(
   val audit: AuditConnector,
   val env: Environment,
   val authConnector: AuthConnector,
-  messagesControllerComponents: MessagesControllerComponents)(
+  messagesControllerComponents: MessagesControllerComponents,
+  views: Views)(
   implicit val cache: CBCSessionCache,
   val config: Configuration,
   feConfig: FrontendAppConfig,
@@ -74,9 +76,7 @@ class SharedController @Inject()(
   )
 
   val technicalDifficulties = Action { implicit request =>
-    InternalServerError(
-      uk.gov.hmrc.cbcrfrontend.views.html
-        .error_template("Internal Server Error", "Internal Server Error", "Something went wrong"))
+    InternalServerError(views.errorTemplate("Internal Server Error", "Internal Server Error", "Something went wrong"))
   }
 
   val sessionExpired = Action { implicit request =>
@@ -290,7 +290,7 @@ class SharedController @Inject()(
     {
       authorised().retrieve(Retrievals.affinityGroup) {
         case None             => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
-        case Some(Individual) => Unauthorized(views.html.not_authorised_individual())
+        case Some(Individual) => Unauthorized(views.notAuthorisedIndividual))
         case _                => Unauthorized(views.html.subscription.notAuthorised())
       }
     }

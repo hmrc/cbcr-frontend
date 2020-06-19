@@ -15,16 +15,19 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+
+@this(mainTemplate: main_template)
+
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 
-@main_template(Messages("notAuthorised.individual.mainHeading"),
+@mainTemplate(Messages("notAuthorised.individual.mainHeading"),
     sessionTimeout=false) {
 
     <div class="grid-row" style="margin-left: 0.5%">
-            <h1>@Messages("notAuthorised.individual.mainHeading")</h1>
+        <h1>@Messages("notAuthorised.individual.mainHeading")</h1>
         <p>@messages("notAuthorised.Individual.message.start") <a href="@config.cbcrGuidanceRegisterUrl">@Messages("notAuthorised.Individual.message.link")</a></p>
         <a class="button" role="button" href="@config.cbcrGuidanceUrl">@Messages("notAuthorised.individual.button")</a>
     </div>
-}
+        }
