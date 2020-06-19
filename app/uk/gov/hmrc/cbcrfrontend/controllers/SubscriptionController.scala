@@ -56,12 +56,12 @@ class SubscriptionController @Inject()(
   val env: Environment,
   val audit: AuditConnector,
   val authConnector: AuthConnector,
-  messagesControllerComponents: MessagesControllerComponents)(
+  messagesControllerComponents: MessagesControllerComponents,
+  views: Views)(
   implicit ec: ExecutionContext,
   val cache: CBCSessionCache,
   val config: Configuration,
-  feConfig: FrontendAppConfig,
-  views: Views)
+  feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   val alreadySubscribed = Action.async { implicit request =>
