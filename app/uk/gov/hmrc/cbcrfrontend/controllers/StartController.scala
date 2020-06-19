@@ -55,7 +55,11 @@ class StartController @Inject()(
       case Some(Agent) ~ _                      => Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
       case Some(Organisation) ~ Some(enrolment) => Ok(views.start(startForm))
       case Some(Organisation) ~ None            => Redirect(routes.SharedController.verifyKnownFactsOrganisation())
-      case Some(Individual) ~ _                 => errorRedirect(UnexpectedState("Individuals are not permitted to use this service"), views.notAuthorisedIndividual, views.errorTemplate)
+      case Some(Individual) ~ _ =>
+        errorRedirect(
+          UnexpectedState("Individuals are not permitted to use this service"),
+          views.notAuthorisedIndividual,
+          views.errorTemplate)
     }
   }
 
@@ -64,12 +68,10 @@ class StartController @Inject()(
       startForm
         .bindFromRequest()
         .fold(
-          errors => BadRequest(views.start(errors)),
-          (str: String) =>
-            str match {
-              case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile())
-              case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber())
-              case _                    => BadRequest(views.start(startForm))
+          errors => BadRequest(views.start(errors)), {
+            case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile())
+            case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber())
+            case _                    => BadRequest(views.start(startForm))
           }
         )
     }

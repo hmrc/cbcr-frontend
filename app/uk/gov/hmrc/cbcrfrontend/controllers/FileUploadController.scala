@@ -24,7 +24,7 @@ import cats.data.{EitherT, _}
 import cats.instances.all._
 import cats.syntax.all._
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.{Json, _}
 import play.api.mvc._
@@ -37,6 +37,7 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
@@ -62,7 +63,8 @@ class FileUploadController @Inject()(
   implicit ec: ExecutionContext,
   cache: CBCSessionCache,
   val config: Configuration,
-  feConfig: FrontendAppConfig)
+  feConfig: FrontendAppConfig,
+  views: Views)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
@@ -101,14 +103,14 @@ class FileUploadController @Inject()(
 
   val chooseXMLFile = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation or AffinityGroup.Agent).retrieve(Retrievals.affinityGroup and cbcEnrolment) {
-      case None ~ _ => errorRedirect(UnexpectedState("Unable to query AffinityGroup"), , )
+      case None ~ _ => errorRedirect(UnexpectedState("Unable to query AffinityGroup"), views.notAuthorisedIndividual, views.errorTemplate)
       case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
         Ok(submission.unregisteredGGAccount())
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals())
       case _ ~ _ =>
         fileUploadUrl()
           .map(fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
-          .leftMap((error: CBCErrors) => errorRedirect(error,,))
+          .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
           .merge
     }
   }
@@ -135,7 +137,7 @@ class FileUploadController @Inject()(
             Right(Ok(submission.fileupload.fileUploadProgress(envelopeId, fileId, hostName, assetsLocation)))
           }
         }
-        .leftMap((error: CBCErrors) => errorRedirect(error,,))
+        .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
   }
@@ -318,7 +320,7 @@ class FileUploadController @Inject()(
       case creds ~ affinity ~ enrolment =>
         auditFailedSubmission(creds, affinity, enrolment, errorType.toString)
           .map(_ => Ok(submission.fileupload.fileUploadError(errorType)))
-          .leftMap((error: CBCErrors) => errorRedirect(error,,))
+          .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
           .merge
     }
   }
@@ -433,7 +435,7 @@ class FileUploadController @Inject()(
     authorised(AffinityGroup.Organisation and (User or Admin)) {
       fileUploadUrl()
         .map(fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
-        .leftMap((error: CBCErrors) => errorRedirect(error,,))
+        .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
   }

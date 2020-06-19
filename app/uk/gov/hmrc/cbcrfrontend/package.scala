@@ -85,7 +85,7 @@ package object cbcrfrontend {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())
       case UnexpectedState(error, _) if error.equals("Individuals are not permitted to use this service") =>
         Forbidden(
-          notAuthorisedIndividual
+          notAuthorisedIndividual()
         )
       case _ =>
         InternalServerError(
