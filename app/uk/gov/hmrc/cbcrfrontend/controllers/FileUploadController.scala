@@ -38,7 +38,6 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
@@ -60,12 +59,12 @@ class FileUploadController @Inject()(
   val xmlExtractor: XmlInfoExtract,
   val audit: AuditConnector,
   val env: Environment,
-  messagesControllerComponents: MessagesControllerComponents)(
+  messagesControllerComponents: MessagesControllerComponents,
+  views: Views)(
   implicit ec: ExecutionContext,
   cache: CBCSessionCache,
   val config: Configuration,
-  feConfig: FrontendAppConfig,
-  views: Views)
+  feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat

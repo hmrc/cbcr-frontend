@@ -62,12 +62,12 @@ class SubmissionController @Inject()(
   val env: Environment,
   val authConnector: AuthConnector,
   val emailService: EmailService,
-  messagesControllerComponents: MessagesControllerComponents)(
+  messagesControllerComponents: MessagesControllerComponents,
+  views: Views)(
   implicit ec: ExecutionContext,
   cache: CBCSessionCache,
   val config: Configuration,
-  feConfig: FrontendAppConfig,
-  views: Views)
+  feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat

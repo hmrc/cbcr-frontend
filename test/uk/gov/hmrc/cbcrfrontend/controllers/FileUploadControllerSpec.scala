@@ -59,6 +59,7 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -83,6 +84,7 @@ class FileUploadControllerSpec
   val authConnector = mock[AuthConnector]
   val file = mock[File]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  val views: Views = app.injector.instanceOf[Views]
 
   implicit val configuration = new Configuration(ConfigFactory.load("application.conf"))
   implicit val feConfig = mock[FrontendAppConfig]
@@ -192,7 +194,8 @@ class FileUploadControllerSpec
     extractor,
     auditC,
     env,
-    mcc)(ec, TestSessionCache(), configuration, feConfig)
+    mcc,
+    views)(ec, TestSessionCache(), configuration, feConfig)
   val controller = new FileUploadController(
     messagesApi,
     authConnector,
@@ -202,7 +205,8 @@ class FileUploadControllerSpec
     extractor,
     auditC,
     env,
-    mcc)(ec, cache, configuration, feConfig)
+    mcc,
+    views)(ec, cache, configuration, feConfig)
 
   val testFile: File = new File("test/resources/cbcr-valid.xml")
   val tempFile: File = File.createTempFile("test", ".xml")

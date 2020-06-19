@@ -43,6 +43,7 @@ import uk.gov.hmrc.cbcrfrontend.model.{CompleteXMLInfo, FileId, _}
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService, _}
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
@@ -77,6 +78,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
   val mockEmailService = mock[EmailService]
   val reportingEntity = mock[ReportingEntityDataService]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  val views: Views = app.injector.instanceOf[Views]
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload" }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend" }
@@ -98,7 +100,8 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
     env,
     auth,
     mockEmailService,
-    mcc)(ec, cache, config, feConfig)
+    mcc,
+    views)(ec, cache, config, feConfig)
 
   override protected def afterEach(): Unit = {
     reset(cache, fus, docRefService, reportingEntity, mockEmailService, auth, messageRefIdService)
@@ -187,7 +190,8 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         env,
         auth,
         mockEmailService,
-        mcc)(ec, cache, config, feConfig)
+        mcc,
+        views)(ec, cache, config, feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
@@ -213,7 +217,8 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         env,
         auth,
         mockEmailService,
-        mcc)(ec, cache, config, feConfig)
+        mcc,
+        views)(ec, cache, config, feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
@@ -237,7 +242,8 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         env,
         auth,
         mockEmailService,
-        mcc)(ec, cache, config, feConfig)
+        mcc,
+        views)(ec, cache, config, feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
