@@ -212,7 +212,7 @@ class SubscriptionController @Inject()(
 
   val savedUpdatedInfoSubscriber = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
-      Ok(views.contactDetailsUpdated)
+      Ok(views.contactDetailsUpdated())
     }
   }
 

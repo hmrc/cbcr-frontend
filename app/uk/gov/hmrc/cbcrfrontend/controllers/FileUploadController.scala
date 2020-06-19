@@ -439,7 +439,7 @@ class FileUploadController @Inject()(
   val unregisteredGGAccount = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
       fileUploadUrl()
-        .map(fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
+        .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }

@@ -80,7 +80,7 @@ class SharedController @Inject()(
   }
 
   val sessionExpired = Action { implicit request =>
-    Ok(views.sessionExpired)
+    Ok(views.sessionExpired())
   }
 
   val enterCBCId = Action.async { implicit request =>
