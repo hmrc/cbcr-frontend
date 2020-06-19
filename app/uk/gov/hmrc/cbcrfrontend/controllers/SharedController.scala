@@ -80,12 +80,12 @@ class SharedController @Inject()(
   }
 
   val sessionExpired = Action { implicit request =>
-    Ok(shared.sessionExpired())
+    Ok(views.sessionExpired)
   }
 
   val enterCBCId = Action.async { implicit request =>
     authorised() {
-      Ok(submission.enterCBCId(cbcIdForm))
+      Ok(views.enterCBCId(cbcIdForm))
     }
   }
 
@@ -97,7 +97,7 @@ class SharedController @Inject()(
       cbcIdForm
         .bindFromRequest()
         .fold[Future[Result]](
-          errors => BadRequest(submission.enterCBCId(errors)),
+          errors => BadRequest(views.enterCBCId(errors)),
           id => {
             subDataService
               .retrieveSubscriptionData(id)
@@ -106,7 +106,7 @@ class SharedController @Inject()(
                 error => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
                 details =>
                   details.fold[Future[Result]] {
-                    BadRequest(submission.enterCBCId(cbcIdForm, true))
+                    BadRequest(views.enterCBCId(cbcIdForm, true))
                   }(subscriptionDetails =>
                     cbcEnrolment match {
                       case Some(enrolment) =>
@@ -115,7 +115,7 @@ class SharedController @Inject()(
                           .ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId))
                           .fold[Future[Result]](
                             {
-                              case InvalidSession => BadRequest(submission.enterCBCId(cbcIdForm, false, true))
+                              case InvalidSession => BadRequest(views.enterCBCId(cbcIdForm, false, true))
                               case error          => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
                             },
                             _ =>
@@ -206,18 +206,18 @@ class SharedController @Inject()(
       postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
       utr      <- cache.readOption[Utr].map(_.map(_.utr))
       result <- cbcEnrolment
-                 .map(_ => Future.successful(NotAcceptable(subscription.alreadySubscribed())))
+                 .map(_ => Future.successful(NotAcceptable(views.alreadySubscribed())))
                  .fold[Future[Result]]({
                    val form = (utr |@| postCode)
                      .map((utr: String, postCode: String) =>
                        knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode)))
                      .getOrElse(knownFactsForm)
-                   Ok(shared.enterKnownFacts(form, false))
+                   Ok(views.enterKnownFacts(form, false))
                  })((result: Future[Result]) => result)
     } yield result
 
   def NotFoundView(knownFacts: BPRKnownFacts)(implicit request: Request[_]): Result =
-    NotFound(shared.enterKnownFacts(knownFactsForm.fill(knownFacts), noMatchingBusiness = true))
+    NotFound(views.enterKnownFacts(knownFactsForm.fill(knownFacts), noMatchingBusiness = true))
 
   val checkKnownFacts: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) {
@@ -229,7 +229,7 @@ class SharedController @Inject()(
       case Some(userType) => {
 
         knownFactsForm.bindFromRequest.fold[EitherT[Future, Result, Result]](
-          formWithErrors => EitherT.left(BadRequest(shared.enterKnownFacts(formWithErrors, false))),
+          formWithErrors => EitherT.left(BadRequest(views.enterKnownFacts(formWithErrors, false))),
           knownFacts =>
             for {
               bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight {
@@ -287,7 +287,7 @@ class SharedController @Inject()(
           utr <- cache.read[Utr].leftMap(s => s: CBCErrors)
         } yield
           Ok(
-            subscription.subscribeMatchFound(
+            views.subscribeMatchFound(
               bpr.organisation.map(_.organisationName).getOrElse(""),
               bpr.address.postalCode.orEmpty,
               utr.value,

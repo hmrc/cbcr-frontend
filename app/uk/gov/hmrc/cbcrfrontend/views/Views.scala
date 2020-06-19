@@ -20,10 +20,10 @@ import javax.inject.Inject
 import uk.gov.hmrc.cbcrfrontend.views.html._
 
 class Views @Inject()(
+  val start: start,
   val errorTemplate: error_template,
   val notAuthorisedIndividual: not_authorised_individual,
   val notAuthorisedAssistant: not_authorised_assistant,
-  val notAuthorised: subscription.notAuthorised,
   val notRegistered: submission.notRegistered,
   val submitInfoUltimateParentEntity: submission.submitInfoUltimateParentEntity,
   val utrCheck: submission.utrCheck,
@@ -31,7 +31,14 @@ class Views @Inject()(
   val submitSummary: submission.submitSummary,
   val enterCompanyName: submission.enterCompanyName,
   val submitSuccessReceipt: submission.submitSuccessReceipt,
+  val enterCBCId: submission.enterCBCId,
+  val subscribeSuccessCbcId: subscription.subscribeSuccessCbcId,
+  val contactInfoSubscriber: subscription.contactInfoSubscriber,
+  val notAuthorised: subscription.notAuthorised,
+  val alreadySubscribed: subscription.alreadySubscribed,
+  val subscribeMatchFound: subscription.subscribeMatchFound,
   val contactDetailsUpdated: update.contactDetailsUpdated,
-
-  val start: start
+  val updateContactInfoSubscriber: update.updateContactInfoSubscriber,
+  val sessionExpired: shared.sessionExpired,
+  val enterKnownFacts: shared.enterKnownFacts
 )

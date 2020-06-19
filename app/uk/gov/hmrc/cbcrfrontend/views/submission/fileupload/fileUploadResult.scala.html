@@ -14,20 +14,15 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.model.ReportingRole
-@import uk.gov.hmrc.cbcrfrontend.model.CBC701
-@import uk.gov.hmrc.cbcrfrontend.model.CBC702
-@import uk.gov.hmrc.cbcrfrontend.model.CBC703
 @import uk.gov.hmrc.auth.core.AffinityGroup
-@import uk.gov.hmrc.auth.core.AffinityGroup.{Organisation,Agent}
+@import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+@import uk.gov.hmrc.cbcrfrontend.model.{CBC701, ReportingRole}
+@import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
-
-@import java.nio.file._
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+
+@this(mainTemplate: main_template)
 
 @(userType: Option[AffinityGroup], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], reportingRole: Option[ReportingRole])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -35,7 +30,7 @@
     schemaErrors.isDefined || busErrors.isDefined
 }
 
-@main_template(if(!errors) {
+@mainTemplate(if(!errors) {
     Messages("fileUploadResult.mainHeading.ok")
 }
 else {

@@ -66,7 +66,7 @@ class SubscriptionController @Inject()(
 
   val alreadySubscribed = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
-      Future.successful(Ok(subscription.alreadySubscribed()))
+      Future.successful(Ok(views.alreadySubscribed()))
     }
   }
 
@@ -74,7 +74,7 @@ class SubscriptionController @Inject()(
     authorised(AffinityGroup.Organisation and (User or Admin)).retrieve(Retrievals.credentials) { creds =>
       Logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm.bindFromRequest.fold(
-        errors => BadRequest(subscription.contactInfoSubscriber(errors)),
+        errors => BadRequest(views.contactInfoSubscriber(errors)),
         data => {
           val id_bpr_utr: ServiceResponse[(CBCId, BusinessPartnerRecord, Utr)] = for {
             subscribed <- right[Boolean](cache.readOption[Subscribed.type].map(_.isDefined))
@@ -139,7 +139,7 @@ class SubscriptionController @Inject()(
 
   val contactInfoSubscriber = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
-      Ok(subscription.contactInfoSubscriber(subscriptionDataForm))
+      Ok(views.contactInfoSubscriber(subscriptionDataForm))
     }
   }
 
@@ -168,7 +168,7 @@ class SubscriptionController @Inject()(
               "email"       -> subData.contact.email.value,
               "phoneNumber" -> subData.contact.phoneNumber
             ))
-          Ok(update.updateContactInfoSubscriber(prepopulatedForm, cbcId))
+          Ok(views.updateContactInfoSubscriber(prepopulatedForm, cbcId))
         }
       )
     }
@@ -185,7 +185,7 @@ class SubscriptionController @Inject()(
           ci.fold(
             (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
             cbcId => {
-              BadRequest(update.updateContactInfoSubscriber(errors, cbcId))
+              BadRequest(views.updateContactInfoSubscriber(errors, cbcId))
             }
           )
         },
@@ -220,7 +220,7 @@ class SubscriptionController @Inject()(
     authorised(AffinityGroup.Organisation and (User or Admin)) {
       CBCId(id).fold[Future[Result]](
         errorRedirect(UnexpectedState(s"CBCId: $id is not valid"), views.notAuthorisedIndividual, views.errorTemplate)
-      )((cbcId: CBCId) => Ok(subscription.subscribeSuccessCbcId(cbcId, request.session.get("companyName"))))
+      )((cbcId: CBCId) => Ok(views.subscribeSuccessCbcId(cbcId, request.session.get("companyName"))))
     }
   }
 

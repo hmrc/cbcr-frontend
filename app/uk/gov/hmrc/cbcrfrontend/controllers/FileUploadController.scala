@@ -103,7 +103,11 @@ class FileUploadController @Inject()(
 
   val chooseXMLFile = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation or AffinityGroup.Agent).retrieve(Retrievals.affinityGroup and cbcEnrolment) {
-      case None ~ _ => errorRedirect(UnexpectedState("Unable to query AffinityGroup"), views.notAuthorisedIndividual, views.errorTemplate)
+      case None ~ _ =>
+        errorRedirect(
+          UnexpectedState("Unable to query AffinityGroup"),
+          views.notAuthorisedIndividual,
+          views.errorTemplate)
       case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
         Ok(submission.unregisteredGGAccount())
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals())
