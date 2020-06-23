@@ -14,14 +14,13 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-
-@import uk.gov.hmrc.cbcrfrontend.views.html._
 @import helper._
+@import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
 
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@this(mainTemplate: main_template)
 
 @(form:Form[_], cBCId:CBCId)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -33,7 +32,7 @@
 @maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 
-@main_template(Messages("contactInfoSubscriber.updateHeading")) {
+@mainTemplate(Messages("contactInfoSubscriber.updateHeading")) {
     <div class="grid-row">
         <div class="column-full">
             @if(form.hasErrors) {

@@ -15,6 +15,12 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html.govuk_wrapper
+
+@this(
+govUkWrapper: govuk_wrapper
+)
+
 @(pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @contentHeader = {
@@ -25,4 +31,4 @@
   <p>@message</p>
 }
 
-@govuk_wrapper(title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent)
+@govUkWrapper(title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent)

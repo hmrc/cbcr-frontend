@@ -16,17 +16,18 @@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.auth.core.AffinityGroup
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import helper._
 @import tags._
+
+@this(mainTemplate: main_template)
 
 @(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @hasErrors = @{
     knownFactsForm.hasErrors || noMatchingBusiness
 }
-@main_template(if(hasErrors){"Error: " + Messages("subscribeFirst.mainHeading")} else{ Messages("subscribeFirst.mainHeading")}){
+@mainTemplate(if(hasErrors){"Error: " + Messages("subscribeFirst.mainHeading")} else{ Messages("subscribeFirst.mainHeading")}){
 
     <div class="grid-row">
         <div class="column-full">

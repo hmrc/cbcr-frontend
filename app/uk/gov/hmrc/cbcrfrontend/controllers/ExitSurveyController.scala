@@ -26,6 +26,7 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SurveyForm
 import uk.gov.hmrc.cbcrfrontend.model.{SurveyAnswers, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
@@ -37,25 +38,23 @@ import scala.concurrent.{ExecutionContext, Future}
 class ExitSurveyController @Inject()(
   val config: Configuration,
   val audit: AuditConnector,
-  messagesControllerComponents: MessagesControllerComponents)(
-  implicit conf: FrontendAppConfig,
-  override val messagesApi: MessagesApi,
-  val ec: ExecutionContext)
+  messagesControllerComponents: MessagesControllerComponents,
+  views: Views)(implicit conf: FrontendAppConfig, override val messagesApi: MessagesApi, val ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   val doSurvey = Action { implicit request =>
-    Ok(survey.exitSurvey(SurveyForm.surveyForm))
+    Ok(views.exitSurvey(SurveyForm.surveyForm))
   }
 
   val surveyAcknowledge = Action { implicit request =>
-    Ok(survey.exitSurveyComplete())
+    Ok(views.exitSurveyComplete())
   }
 
   val submit = Action.async { implicit request =>
     SurveyForm.surveyForm
       .bindFromRequest()
       .fold(
-        errors => Future.successful(BadRequest(survey.exitSurvey(errors))),
+        errors => Future.successful(BadRequest(views.exitSurvey(errors))),
         answers =>
           auditSurveyAnswers(answers).fold(
             errors => {

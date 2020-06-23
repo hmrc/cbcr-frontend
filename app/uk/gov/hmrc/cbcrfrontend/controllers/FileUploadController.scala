@@ -24,7 +24,7 @@ import cats.data.{EitherT, _}
 import cats.instances.all._
 import cats.syntax.all._
 import javax.inject.{Inject, Singleton}
-import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.{Json, _}
 import play.api.mvc._
@@ -37,7 +37,7 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.views.html._
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
@@ -48,6 +48,7 @@ import scala.concurrent.duration.{Duration => SDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
+
 @Singleton
 class FileUploadController @Inject()(
   override val messagesApi: MessagesApi,
@@ -58,7 +59,8 @@ class FileUploadController @Inject()(
   val xmlExtractor: XmlInfoExtract,
   val audit: AuditConnector,
   val env: Environment,
-  messagesControllerComponents: MessagesControllerComponents)(
+  messagesControllerComponents: MessagesControllerComponents,
+  views: Views)(
   implicit ec: ExecutionContext,
   cache: CBCSessionCache,
   val config: Configuration,
@@ -101,14 +103,18 @@ class FileUploadController @Inject()(
 
   val chooseXMLFile = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation or AffinityGroup.Agent).retrieve(Retrievals.affinityGroup and cbcEnrolment) {
-      case None ~ _ => errorRedirect(UnexpectedState("Unable to query AffinityGroup"))
+      case None ~ _ =>
+        errorRedirect(
+          UnexpectedState("Unable to query AffinityGroup"),
+          views.notAuthorisedIndividual,
+          views.errorTemplate)
       case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
-        Ok(submission.unregisteredGGAccount())
+        Ok(views.unregisteredGGAccount())
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals())
       case _ ~ _ =>
         fileUploadUrl()
-          .map(fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
-          .leftMap(errorRedirect)
+          .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
+          .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
           .merge
     }
   }
@@ -132,10 +138,10 @@ class FileUploadController @Inject()(
             Left(UnexpectedState(
               s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
           } else {
-            Right(Ok(submission.fileupload.fileUploadProgress(envelopeId, fileId, hostName, assetsLocation)))
+            Right(Ok(views.fileUploadProgress(envelopeId, fileId, hostName, assetsLocation)))
           }
         }
-        .leftMap(errorRedirect)
+        .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
   }
@@ -231,7 +237,7 @@ class FileUploadController @Inject()(
           _ = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
         } yield
           Ok(
-            submission.fileupload.fileUploadResult(
+            views.fileUploadResult(
               affinity,
               Some(file_metadata._2.name),
               Some(length),
@@ -242,7 +248,7 @@ class FileUploadController @Inject()(
         result
           .leftMap {
             case FatalSchemaErrors(size) =>
-              Ok(submission.fileupload.fileUploadResult(None, None, None, size, None, None))
+              Ok(views.fileUploadResult(None, None, None, size, None, None))
             case InvalidFileType(_) =>
               Redirect(routes.FileUploadController.fileInvalid())
             case e: CBCErrors =>
@@ -317,8 +323,8 @@ class FileUploadController @Inject()(
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
       case creds ~ affinity ~ enrolment =>
         auditFailedSubmission(creds, affinity, enrolment, errorType.toString)
-          .map(_ => Ok(submission.fileupload.fileUploadError(errorType)))
-          .leftMap(errorRedirect)
+          .map(_ => Ok(views.fileUploadError(errorType)))
+          .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
           .merge
     }
   }
@@ -432,8 +438,8 @@ class FileUploadController @Inject()(
   val unregisteredGGAccount = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
       fileUploadUrl()
-        .map(fuu => Ok(submission.fileupload.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
-        .leftMap(errorRedirect)
+        .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
+        .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
   }

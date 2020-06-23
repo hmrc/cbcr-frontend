@@ -16,6 +16,12 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import play.twirl.api.HtmlFormat
+@import uk.gov.hmrc.cbcrfrontend.views.ViewHelpers
+
+@this(
+        govUkTemplate: views.html.layouts.GovUkTemplate,
+        viewsHelpers: ViewHelpers
+)
 
 @(title: String,
         mainClass: Option[String] = None,
@@ -45,13 +51,10 @@
         <!-- End Google Tag Manager (noscript) -->
 }
 
-@import layouts.{govuk_template => hmrcGovUkTemplate}
-@import uk.gov.hmrc.play.views.html.{layouts => uiLayouts}
-@import uk.gov.hmrc.play.views.html.{helpers => uiHelpers}
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @head = {
-@uiLayouts.head(
+@viewsHelpers.head(
     linkElem = None,
     headScripts = Some(googleHeadScript))
     <meta name="format-detection" content="telephone=no" />
@@ -63,7 +66,7 @@
 }
 
 @insideHeader = {
-@uiLayouts.header_nav(
+@viewsHelpers.headerNav(
     navTitle = Some(messages("application.title")),
     navTitleLink = None,
     showBetaLink = false,
@@ -79,7 +82,7 @@
 
 
 @bodyEnd = {
-@uiLayouts.footer(
+@viewsHelpers.footer(
     analyticsToken = Some(config.analyticsToken),
     analyticsHost = config.analyticsHost,
     ssoUrl = None,
@@ -92,7 +95,7 @@
 @footerLinks = {}
 
 @serviceInfo = {
-@uiLayouts.serviceInfo(
+@viewsHelpers.serviceInfo(
     betaBanner = HtmlFormat.empty,
     includeGridWrapper = false,
     serviceInfoContent = Some(serviceInfoContent))
@@ -100,19 +103,19 @@
 
 
 @serviceInfoContent = {
-@uiLayouts.serviceInfo(HtmlFormat.empty, false, Option.empty, false)
+@viewsHelpers.serviceInfo(HtmlFormat.empty, includeGridWrapper = false, Option.empty, includeHMRCBranding = false)
 }
 
 @mainContentHeader = {
 @if(contentHeader.isDefined) {
-    @uiLayouts.main_content_header(contentHeader = contentHeader.get)
+    @viewsHelpers.mainContentHeader(contentHeader = contentHeader.get)
 }
 }
 
-@getHelpForm = @{uiHelpers.reportAProblemLink(config.reportAProblemPartialUrl, config.reportAProblemNonJSUrl)}
+@getHelpForm = @{viewsHelpers.reportAProblemLink(config.reportAProblemPartialUrl, config.reportAProblemNonJSUrl)}
 
 @content = {
-@uiLayouts.main_content(
+@viewsHelpers.mainContent(
     article = mainContent,
     mainClass = mainClass,
     mainDataAttributes = mainDataAttributes,
@@ -122,4 +125,4 @@
     sidebar = sidebar)
 }
 
-@hmrcGovUkTemplate(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(uiLayouts.footer_links()), true)(content)
+@govUkTemplate(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(viewsHelpers.footerLinks()), nav = true)(content)

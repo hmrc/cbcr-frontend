@@ -35,6 +35,7 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
+import uk.gov.hmrc.cbcrfrontend.views.html.{error_template, not_authorised_individual}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,6 +43,7 @@ import scala.language.implicitConversions
 
 package object cbcrfrontend {
 
+//  class ErrorRedirect @Ine
   val cbcEnrolment: Retrieval[Option[CBCEnrolment]] = SimpleRetrieval(
     "allEnrolments",
     Reads.set[Enrolment].map { e =>
@@ -72,17 +74,22 @@ package object cbcrfrontend {
   implicit def resultFuture(r: Result): Future[Result] = Future.successful(r)
 
   def errorRedirect(
-    error: CBCErrors)(implicit request: Request[_], msgs: Messages, feConfig: FrontendAppConfig): Result = {
+    error: CBCErrors,
+    notAuthorisedIndividual: not_authorised_individual,
+    errorTemplate: error_template)(
+    implicit request: Request[_],
+    msgs: Messages,
+    feConfig: FrontendAppConfig): Result = {
     Logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())
       case UnexpectedState(error, _) if error.equals("Individuals are not permitted to use this service") =>
         Forbidden(
-          views.html.not_authorised_individual()
+          notAuthorisedIndividual()
         )
       case _ =>
         InternalServerError(
-          views.html.error_template("Internal Server Error", "Internal Server Error", "Something went wrong")
+          errorTemplate("Internal Server Error", "Internal Server Error", "Something went wrong")
         )
     }
   }

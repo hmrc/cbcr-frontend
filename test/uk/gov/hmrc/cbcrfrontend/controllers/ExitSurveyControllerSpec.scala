@@ -39,6 +39,7 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -59,6 +60,7 @@ class ExitSurveyControllerSpec
   val auditC: AuditConnector = mock[AuditConnector]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
   val runMode = mock[RunMode]
+  val views: Views = app.injector.instanceOf[Views]
 
   when(conf.analyticsHost) thenReturn "host"
   when(conf.analyticsToken) thenReturn "token"
@@ -93,7 +95,7 @@ class ExitSurveyControllerSpec
   val schemaVer: String = "1.0"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
-  val controller = new ExitSurveyController(configuration, auditC, mcc)
+  val controller = new ExitSurveyController(configuration, auditC, mcc, views)
 
   val utr = Utr("7000000001")
   val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))

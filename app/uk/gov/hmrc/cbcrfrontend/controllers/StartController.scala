@@ -29,6 +29,7 @@ import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,7 +38,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class StartController @Inject()(
   override val messagesApi: MessagesApi,
   val authConnector: AuthConnector,
-  messagesControllerComponents: MessagesControllerComponents)(
+  messagesControllerComponents: MessagesControllerComponents,
+  views: Views)(
   implicit val cache: CBCSessionCache,
   val config: Configuration,
   feConfig: FrontendAppConfig,
@@ -51,9 +53,13 @@ class StartController @Inject()(
   def start = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup and cbcEnrolment) {
       case Some(Agent) ~ _                      => Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
-      case Some(Organisation) ~ Some(enrolment) => Ok(views.html.start(startForm))
+      case Some(Organisation) ~ Some(enrolment) => Ok(views.start(startForm))
       case Some(Organisation) ~ None            => Redirect(routes.SharedController.verifyKnownFactsOrganisation())
-      case Some(Individual) ~ _                 => errorRedirect(UnexpectedState("Individuals are not permitted to use this service"))
+      case Some(Individual) ~ _ =>
+        errorRedirect(
+          UnexpectedState("Individuals are not permitted to use this service"),
+          views.notAuthorisedIndividual,
+          views.errorTemplate)
     }
   }
 
@@ -62,12 +68,10 @@ class StartController @Inject()(
       startForm
         .bindFromRequest()
         .fold(
-          errors => BadRequest(views.html.start(errors)),
-          (str: String) =>
-            str match {
-              case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile())
-              case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber())
-              case _                    => BadRequest(views.html.start(startForm))
+          errors => BadRequest(views.start(errors)), {
+            case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile())
+            case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber())
+            case _                    => BadRequest(views.start(startForm))
           }
         )
     }

@@ -17,12 +17,13 @@
 package uk.gov.hmrc.cbcrfrontend
 
 import javax.inject.Inject
-import play.api.i18n.{I18nSupport, Lang, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.{NoActiveSession, UnsupportedAffinityGroup, UnsupportedCredentialRole, _}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.routes
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
 import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
 
@@ -32,7 +33,8 @@ class CBCRErrorHandler @Inject()(
   override val messagesApi: MessagesApi,
   val env: Environment,
   val config: Configuration,
-  val authConnector: AuthConnector)(implicit val feConfig: FrontendAppConfig)
+  val authConnector: AuthConnector,
+  views: Views)(implicit val feConfig: FrontendAppConfig)
     extends FrontendErrorHandler with Results with AuthRedirects {
 
   override def resolveError(rh: RequestHeader, ex: Throwable) = ex match {
@@ -52,5 +54,5 @@ class CBCRErrorHandler @Inject()(
 
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(
     implicit request: Request[_]) =
-    uk.gov.hmrc.cbcrfrontend.views.html.error_template(pageTitle, heading, message)
+    views.errorTemplate(pageTitle, heading, message)
 }

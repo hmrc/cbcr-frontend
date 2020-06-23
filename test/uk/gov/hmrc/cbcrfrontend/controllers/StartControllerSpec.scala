@@ -44,6 +44,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
+import uk.gov.hmrc.cbcrfrontend.views.Views
 
 class StartControllerSpec
     extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
@@ -57,7 +58,8 @@ class StartControllerSpec
 
   val authConnector = mock[AuthConnector]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  val controller = new StartController(messagesApi, authConnector, mcc)
+  val views: Views = app.injector.instanceOf[Views]
+  val controller = new StartController(messagesApi, authConnector, mcc, views)
   val newCBCEnrolment = CBCEnrolment(CBCId.create(99).getOrElse(fail("booo")), Utr("1234567890"))
   val langSwitch = mock[FeatureSwitch]
 

@@ -16,6 +16,15 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
+@import uk.gov.hmrc.cbcrfrontend.views.html.govuk_wrapper
+@import uk.gov.hmrc.cbcrfrontend.views.ViewHelpers
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+
+@this(
+        govUkWrapper: govuk_wrapper,
+        viewsHelper: ViewHelpers
+)
+
 @(title: String,
   sidebarLinks: Option[Html] = None,
   contentHeader: Option[Html] = None,
@@ -24,26 +33,23 @@
   sessionTimeout:Boolean = true,
   scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, conf: FrontendAppConfig)
 
-@import uk.gov.hmrc.play.views.html.layouts
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
 
 @serviceInfoContent = {}
 
 @sidebar = {
     @if(sidebarLinks.isDefined) {
-        @layouts.sidebar(sidebarLinks.get, Some("sidebar"))
+        @viewsHelper.sidebar(sidebarLinks.get, Some("sidebar"))
     }
 }
 
 
-@govuk_wrapper(title = title,
+@govUkWrapper(title = title,
                mainClass = mainClass,
                bodyClasses = bodyClasses,
                sidebar = language.language_selection(CbcrSwitches.enableLanguageSwitching.enabled),
                contentHeader = contentHeader,
-               mainContent = layouts.article(mainContent),
+               mainContent = viewsHelper.article(mainContent),
                serviceInfoContent = serviceInfoContent,
                scriptElem = scriptElem
 )

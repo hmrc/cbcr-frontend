@@ -44,6 +44,7 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
@@ -67,6 +68,7 @@ class SharedControllerSpec
   val env = mock[Environment]
   val authC = mock[AuthConnector]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  val views: Views = app.injector.instanceOf[Views]
 
   when(feConfig.analyticsHost) thenReturn "host"
   when(feConfig.analyticsToken) thenReturn "token"
@@ -108,7 +110,7 @@ class SharedControllerSpec
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
   val controller =
-    new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc)(cache, config, feConfig, ec)
+    new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc, views)(cache, config, feConfig, ec)
 
   val utr = Utr("7000000001")
   val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))

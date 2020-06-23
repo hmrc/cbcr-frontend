@@ -14,20 +14,19 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-
-@import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import helper._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.model._
-
-
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+
+@this(
+    mainTemplate: main_template
+)
+
 @(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @error = @{form.error("companyName").isDefined}
-@main_template(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}) {
+
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}) {
 <div class="grid-row">
     <div class="column-full">
         @if(form.hasErrors) {

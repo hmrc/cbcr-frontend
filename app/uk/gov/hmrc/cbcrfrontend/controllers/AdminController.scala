@@ -30,6 +30,7 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, ReportingEntityData}
 import uk.gov.hmrc.cbcrfrontend.services.ReportingEntityDataService
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -108,7 +109,7 @@ class AdminController @Inject()(
   val config: Configuration,
   val audit: AuditConnector,
   cbcrBackendConnector: CBCRBackendConnector,
-  reportingEntityDataService: ReportingEntityDataService)(
+  views: Views)(
   implicit conf: FrontendAppConfig,
   override val messagesApi: MessagesApi,
   val ec: ExecutionContext,
@@ -157,21 +158,21 @@ class AdminController @Inject()(
   )
 
   def showAdminPage: Action[AnyContent] = AuthenticationController(credentials).apply { implicit request =>
-    Ok(tepm_admin_page())
+    Ok(views.tepmAdminPage())
   }
 
   def showAllDocRefIdOver200: Action[AnyContent] = AuthenticationController(credentials).async { implicit request =>
     cbcrBackendConnector.getDocRefIdOver200.map(
-      documents => Ok(show_all_docRefIds(documents.docs))
+      documents => Ok(views.showAllDocRefIds(documents.docs))
     )
   }
 
   def showAmendDocRefIdPage = AuthenticationController(credentials).apply { implicit request =>
-    Ok(admin_docRefId_Editor())
+    Ok(views.adminDocRefIdEditor())
   }
 
   def showAddReportingEntityPage = AuthenticationController(credentials).async { implicit request =>
-    Future.successful(Ok(addReportingEntityPage()))
+    Future.successful(Ok(views.addReportingEntityPage()))
   }
 
   def queryReportingEntityByDocRefId = AuthenticationController(credentials).async { implicit request =>
@@ -209,7 +210,7 @@ class AdminController @Inject()(
         query =>
           cbcrBackendConnector
             .adminReportingEntityDataQueryTin(query.tin, query.date.toString)
-            .map(doc => Ok(showReportingEntity(doc.json.validate[ReportingEntityData].get)))
+            .map(doc => Ok(views.showReportingEntity(doc.json.validate[ReportingEntityData].get)))
       )
       .recover {
         case _: Exception => Ok(s"couldnt find Reporting Entity")
@@ -226,7 +227,7 @@ class AdminController @Inject()(
   }
 
   def showEditReportingEntityPage = AuthenticationController(credentials).async { implicit request =>
-    Future.successful(Ok(adminEditReportingEntityData(adminReportingEntityDataRequestForm)))
+    Future.successful(Ok(views.adminEditReportingEntityData(adminReportingEntityDataRequestForm)))
   }
 
   def editReportingEntity = AuthenticationController(credentials).async { implicit request =>
@@ -246,7 +247,7 @@ class AdminController @Inject()(
         }
       )
       .recover {
-        case _: Exception => Ok(s"Couldn't edit $adminEditReportingEntityData")
+        case _: Exception => Ok(s"Couldn't edit ${views.adminEditReportingEntityData}")
       }
   }
 

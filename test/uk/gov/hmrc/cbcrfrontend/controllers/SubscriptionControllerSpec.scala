@@ -47,6 +47,7 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -73,6 +74,7 @@ class SubscriptionControllerSpec
   implicit val cache = mock[CBCSessionCache]
   val auth = mock[AuthConnector]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  val views = app.injector.instanceOf[Views]
 
   val id = CBCId.create(5678).getOrElse(fail("bad cbcid"))
   val utr = Utr("9000000001")
@@ -86,7 +88,19 @@ class SubscriptionControllerSpec
     .thenReturn(rightE[AffinityGroup](AffinityGroup.Organisation))
 
   val controller =
-    new SubscriptionController(messagesApi, subService, dc, cbcId, emailMock, cbcKF, bprKF, env, auditMock, auth, mcc)
+    new SubscriptionController(
+      messagesApi,
+      subService,
+      dc,
+      cbcId,
+      emailMock,
+      cbcKF,
+      bprKF,
+      env,
+      auditMock,
+      auth,
+      mcc,
+      views)
 
   implicit val hc = HeaderCarrier()
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr" }
@@ -128,7 +142,9 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views
+      )
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/contactInfoSubscriber"))
       status(controller.contactInfoSubscriber(fakeRequestSubscribe)) shouldBe Status.OK
     }
@@ -150,7 +166,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData"))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
@@ -169,7 +186,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "email"       -> "blagh@blagh.com"
@@ -208,7 +226,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "firstName"   -> "Dave",
@@ -232,7 +251,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "12345678",
         "firstName"   -> "Dave",
@@ -257,7 +277,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "firstName" -> "Dave",
         "lastName"  -> "Jones",
@@ -282,7 +303,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "I'm not a phone number",
         "firstName"   -> "Dave",
@@ -307,7 +329,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "I'm not a phone number",
         "firstName"   -> "Dave",
@@ -340,7 +363,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "",
         "firstName"   -> "Dave",
@@ -373,7 +397,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "07706641666",
         "firstName"   -> "Dave",
@@ -406,7 +431,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "07706641666",
         "firstName"   -> "",
@@ -437,7 +463,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "07706641666",
         "firstName"   -> "Dave",
@@ -468,7 +495,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val data = Json.obj(
         "phoneNumber" -> "07706641666",
         "firstName"   -> "Dave",
@@ -500,7 +528,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT[Future, CBCId](Future.successful(cbcid))
@@ -535,7 +564,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat), any(), any())) thenReturn rightE(
@@ -563,7 +593,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(), anyObject())) thenReturn EitherT
@@ -599,7 +630,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(anyObject(), anyObject())) thenReturn EitherT
@@ -640,7 +672,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -681,7 +714,8 @@ class SubscriptionControllerSpec
         env,
         auditMock,
         auth,
-        mcc)
+        mcc,
+        views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cache.readOption[Subscribed.type](EQ(Implicits.format), any(), any())) thenReturn Future.successful(

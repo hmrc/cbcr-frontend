@@ -14,20 +14,16 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.model.CBCId
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import helper._
-@import uk.gov.hmrc.cbcrfrontend.controllers.AdminDocRefIdRecord
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@import tags._
+@this(mainTemplate: main_template)
 
 
 @()(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 
-@main_template(title = Messages("")) {
+@mainTemplate(title = Messages("")) {
 
     <div class="tin">
 

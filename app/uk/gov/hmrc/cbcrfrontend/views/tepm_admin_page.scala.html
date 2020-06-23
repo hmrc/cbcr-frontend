@@ -14,17 +14,14 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.model.CBCId
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import helper._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import tags._
+@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
 
-    @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@this(mainTemplate: main_template)
 
-@main_template(title = Messages("")) {
+@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@mainTemplate(title = Messages("")) {
         <h1>@Messages("")</h1>
 
         <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAllDocRefIdOver200()">Get All DRI</a></p>

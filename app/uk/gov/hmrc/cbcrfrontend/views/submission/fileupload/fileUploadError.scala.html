@@ -14,16 +14,16 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
-
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.cbcrfrontend.model._
+@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+
+@this(mainTemplate: main_template)
+
 @(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@main_template(Messages("fileUploadResult.error")) {
+@mainTemplate(Messages("fileUploadResult.error")) {
 <div class="grid-row">
     <div class="column-full">
         <h1>@Messages("fileUploadResult.error")</h1>

@@ -14,19 +14,17 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.play.views.html.helpers._
-
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.auth.core.AffinityGroup
-@import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
-@import uk.gov.hmrc.auth.core.AffinityGroup.Agent
-
+@import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+
+@this(mainTemplate: main_template)
+
 @(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@main_template(Messages("subscribeMatchFound.mainHeading")) {
+@mainTemplate(Messages("subscribeMatchFound.mainHeading")) {
          <div >
             <table >
                 <caption><h1>
