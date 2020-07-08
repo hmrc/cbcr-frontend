@@ -53,9 +53,15 @@
 
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
+@linksElement = {
+    <link rel="stylesheet" href='@controllers.routes.Assets.versioned("stylesheets/palette.css")'/>
+    <link rel="stylesheet" href='@controllers.routes.Assets.versioned("stylesheets/focus.css")'/>
+
+}
+
 @head = {
 @viewsHelpers.head(
-    linkElem = None,
+    linkElem = Some(linksElement),
     headScripts = Some(googleHeadScript))
     <meta name="format-detection" content="telephone=no" />
 }
