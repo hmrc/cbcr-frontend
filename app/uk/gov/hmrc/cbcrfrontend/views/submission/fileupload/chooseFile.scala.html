@@ -40,10 +40,9 @@
                     <label class="form-label" for="file-input">@Messages("uploadReport.label")</label>
                     <span id="@fileName-error-message" class="error-notification" role="alert" data-input-name="@fileName">
                     </span>
-                    <input type="file" id="file-input" class="upload-report-input bordered-box column-two-thirds" name ="@fileName" accept=".xml, .XML" required
-                        data-msg-required="@Messages("uploadReport.error")">
+                    <input type="file" id="file-input" class="govuk-file-upload" name="@fileName" accept=".xml, .XML" required data-msg-required="@Messages("uploadReport.error")">
                 </div>
-                <div class="form-field form-field--submit">
+                <div class="form-field-group form-field--submit">
                     @csrf_token()
                     <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
                 </div>
