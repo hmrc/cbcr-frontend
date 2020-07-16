@@ -25,29 +25,29 @@
 @(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @mainTemplate(Messages("subscribeMatchFound.mainHeading")) {
-         <div >
-            <table >
-                <caption><h1>
+         <div>
+            <table>
+                <caption tabindex="0"><h1>
                 @Messages("subscribeMatchFound.mainHeading")
                 </h1></caption>
                 <thead>
                     <tr>
-                        <th>@Messages("subscribeMatchFound.tableHeading1")</th>
-                        <th>@Messages("subscribeMatchFound.tableHeading2")</th>
+                        <th tabindex="0">@Messages("subscribeMatchFound.tableHeading1")</th>
+                        <th tabindex="0">@Messages("subscribeMatchFound.tableHeading2")</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>@Messages("subscribeMatchFound.businessDetails.name")</td>
-                        <td>@name</td>
+                        <td tabindex="0">@Messages("subscribeMatchFound.businessDetails.name")</td>
+                        <td tabindex="0">@name</td>
                     </tr>
                     <tr>
-                        <td>@Messages("subscribeMatchFound.businessDetails.utr")</td>
-                        <td>@utr</td>
+                        <td tabindex="0">@Messages("subscribeMatchFound.businessDetails.utr")</td>
+                        <td tabindex="0">@utr</td>
                     </tr>
                     <tr>
-                        <td>@Messages("subscribeMatchFound.businessDetails.postcode")</td>
-                        <td>@postCode</td>
+                        <td tabindex="0">@Messages("subscribeMatchFound.businessDetails.postcode")</td>
+                        <td tabindex="0">@postCode</td>
                     </tr>
                 </tbody>
             </table>
