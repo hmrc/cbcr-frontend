@@ -21,12 +21,15 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(mainTemplate: main_template)
 
 @(summaryData: SummaryData)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @mainTemplate(Messages("submitSummary.mainHeading")) {
+  @back_link(routes.SharedController.enterCBCId().url)
     <div class="grid-row">
         <div class="column-full">
             <h1>

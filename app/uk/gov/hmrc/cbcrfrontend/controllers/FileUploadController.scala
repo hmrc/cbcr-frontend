@@ -216,6 +216,7 @@ class FileUploadController @Inject()(
         val result = for {
           file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
           _             <- right(cache.save(file_metadata._2))
+          _             <- right(cache.save(FileDetails(envelopeId, fileId)))
           _ <- EitherT.cond[Future](
                 file_metadata._2.name.toLowerCase endsWith ".xml",
                 (),

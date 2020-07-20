@@ -17,17 +17,20 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(
     mainTemplate: main_template
 )
 
-@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_], envelopeId: String, fileId: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @error = @{form.error("companyName").isDefined}
 
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}) {
-<div class="grid-row">
+@back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
+    <div class="grid-row">
     <div class="column-full">
         @if(form.hasErrors) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
