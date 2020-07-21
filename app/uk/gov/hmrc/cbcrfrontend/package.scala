@@ -141,11 +141,8 @@ package object cbcrfrontend {
             metadata.status,
             metadata.name,
             metadata.contentType,
-            calculateFileSize(metadata),
+            metadata.length,
             metadata.created)
         )
       }
-  def calculateFileSize(md: FileMetadata): BigDecimal =
-    (md.length / 1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-
 }
