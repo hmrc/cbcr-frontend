@@ -317,7 +317,7 @@ class SubmissionController @Inject()(
 
   }
 
-  def submitSubmitterInfo() = Action.async { implicit request =>
+  val submitSubmitterInfo = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       submitterInfoForm.bindFromRequest.fold(
         formWithErrors => {
