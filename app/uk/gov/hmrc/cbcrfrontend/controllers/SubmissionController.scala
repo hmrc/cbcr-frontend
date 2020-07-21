@@ -279,7 +279,8 @@ class SubmissionController @Inject()(
     }
   }
 
-  def enterSubmitterInfo(fn: Option[FieldName])(implicit request: Request[AnyContent]): Future[Result] =
+  def enterSubmitterInfo(fn: Option[FieldName], userType: Option[AffinityGroup])(
+    implicit request: Request[AnyContent]): Future[Result] =
     for {
       form <- cache.readOption[SubmitterInfo].map { osi =>
                (osi.map(_.fullName) |@| osi.map(_.contactPhone) |@| osi.map(_.email))
@@ -291,12 +292,11 @@ class SubmissionController @Inject()(
       fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
 
     } yield {
-      Ok(views.submitterInfo(form, fn, fileDetails.envelopeId, fileDetails.fileId))
+      Ok(views.submitterInfo(form, fn, fileDetails.envelopeId, fileDetails.fileId, userType))
     }
 
   def submitterInfo(field: Option[String] = None) = Action.async { implicit request =>
-    authorised() {
-
+    authorised().retrieve(Retrievals.affinityGroup) { userType =>
       cache
         .read[CompleteXMLInfo]
         .map(kXml =>
@@ -310,7 +310,7 @@ class SubmissionController @Inject()(
               cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
         })
-        .semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse(""))))
+        .semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse("")), userType))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
@@ -329,7 +329,8 @@ class SubmissionController @Inject()(
                   formWithErrors,
                   None,
                   fd.envelopeId,
-                  fd.fileId
+                  fd.fileId,
+                  userType
                 ))
             }
             .getOrElse(throw new RuntimeException("Missing file upload details"))
@@ -363,11 +364,11 @@ class SubmissionController @Inject()(
   }
 
   val submitSummary = Action.async { implicit request =>
-    authorised().retrieve(Retrievals.credentials) { credentials =>
+    authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrievedInformation =>
       val result = for {
-        smd <- EitherT(generateMetadataFile(cache, credentials).map(_.toEither)).leftMap(_.head)
+        smd <- EitherT(generateMetadataFile(cache, retrievedInformation.a).map(_.toEither)).leftMap(_.head)
         sd  <- createSummaryData(smd)
-      } yield Ok(views.submitSummary(sd))
+      } yield Ok(views.submitSummary(sd, retrievedInformation.b))
 
       result
         .leftMap(errors => errorRedirect(errors, views.notAuthorisedIndividual, views.errorTemplate))

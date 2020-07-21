@@ -111,9 +111,9 @@ class FileUploadController @Inject()(
       case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
         Ok(views.unregisteredGGAccount())
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals())
-      case _ ~ _ =>
+      case affinityGroup ~ _ =>
         fileUploadUrl()
-          .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
+          .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml", affinityGroup)))
           .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
           .merge
     }
@@ -439,7 +439,7 @@ class FileUploadController @Inject()(
   val unregisteredGGAccount = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
       fileUploadUrl()
-        .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml")))
+        .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation))))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
