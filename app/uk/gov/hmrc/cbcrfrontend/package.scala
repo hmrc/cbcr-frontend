@@ -145,5 +145,4 @@ package object cbcrfrontend {
             metadata.created)
         )
       }
-
 }
