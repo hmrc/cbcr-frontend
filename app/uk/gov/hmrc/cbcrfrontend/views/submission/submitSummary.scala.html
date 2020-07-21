@@ -25,6 +25,8 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.auth.core.AffinityGroup
 @import uk.gov.hmrc.auth.core.AffinityGroup._
+@import uk.gov.hmrc.cbcrfrontend.util.ModifySize
+
 @this(mainTemplate: main_template)
 
 
@@ -60,7 +62,6 @@
                 <div class="tabular-data__data-1">@summaryData.submissionMetaData.submissionInfo.tin.value</div>
             </div>
             <br>
-
             <div class="tabular-data__entry divider--bottom">
                 <h2 class="tabular-data__heading tabular-data__heading--label">@Messages("submitSummary.contactDetails.heading")</h2>
             </div>
@@ -91,7 +92,7 @@
             </div>
             <div class="tabular-data__entry divider--bottom">
                 <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.fileSize")</span>
-                <div class="tabular-data__data-1">@summaryData.submissionMetaData.fileInfo.length KB</div>
+                <div class="tabular-data__data-1">@ModifySize.calculateFileSize(summaryData.submissionMetaData.fileInfo.length) KB</div>
             </div>
             <div class="tabular-data__entry divider--bottom">
                 <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.period")</span>
@@ -117,4 +118,4 @@
 
         </div>
     </div>
-}@import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+}
