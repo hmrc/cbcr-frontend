@@ -27,9 +27,14 @@
 
 @mainTemplate(Messages("uploadReport.mainHeading")) {
 
-    @{userType match {
-        case Some(Organisation) => back_link(routes.StartController.start().url)
-        case _ =>
+    @{
+        if(request.uri.contains("/unregistered-gg-account")) {
+          back_link(routes.FileUploadController.chooseXMLFile().url)
+        } else {
+            userType match {
+                case Some(Organisation) => back_link(routes.StartController.start().url)
+                case _ =>
+            }
     }}
 
 
