@@ -27,7 +27,7 @@
 @mainTemplate(Messages("unregisteredGG.heading")) {
   @{ request.headers.get("Referer") match {
       case Some(referrer)
-      if(referrer.contains("already-subscribed") || referrer.contains("/unregistered-gg-account")) => back_link(routes.SubscriptionController.alreadySubscribed().url)
+      if(referrer.contains("already-subscribed")) => back_link(routes.SubscriptionController.alreadySubscribed().url)
       case _ => {}
   }}
 
