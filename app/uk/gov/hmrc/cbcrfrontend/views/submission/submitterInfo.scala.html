@@ -19,12 +19,16 @@
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.FieldName
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.auth.core.AffinityGroup._
+@import uk.gov.hmrc.auth.core.AffinityGroup
 
 @this(
     mainTemplate: main_template
 )
 
-@(form:Form[_],field: Option[FieldName])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
 @agencyBusinessNameErrors = @{form.error("agencyBusinessName").isDefined}
@@ -38,6 +42,12 @@
 @emailErrors = @{form.error("email").isDefined}
 
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("submitterInfo.mainHeading")}else{Messages("submitterInfo.mainHeading")}) {
+
+  @{userType match {
+      case Some(Organisation) => back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
+      case _ => back_link(routes.SubmissionController.enterCompanyName().url)
+  }}
+
     @if(form.hasErrors) {
         @if(numberOfErrors == 1) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">

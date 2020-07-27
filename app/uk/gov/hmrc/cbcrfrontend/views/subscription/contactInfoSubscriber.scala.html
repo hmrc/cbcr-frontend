@@ -16,11 +16,12 @@
 
 @import helper._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes._
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(mainTemplate: main_template)
-
 @(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @firstNameErrors = @{form.error("firstName").isDefined}
@@ -31,6 +32,9 @@
 @maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.mainHeading")}else{Messages("contactInfoSubscriber.mainHeading")}) {
+
+    @back_link(routes.SharedController.knownFactsMatch().url)
+
     <div class="grid-row">
         <div class="column-full">
             @if(form.hasErrors) {

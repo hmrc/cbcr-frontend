@@ -168,12 +168,12 @@ class SharedController @Inject()(
 
   val verifyKnownFactsOrganisation = Action.async { implicit request =>
     authorised(pred).retrieve(cbcEnrolment) { enrolment =>
-      enterKnownFacts(enrolment)
+      enterKnownFacts(enrolment, AffinityGroup.Organisation)
     }
   }
 
   val verifyKnownFactsAgent = Action.async { implicit request =>
-    authorised(AffinityGroup.Agent)(enterKnownFacts(None))
+    authorised(AffinityGroup.Agent)(enterKnownFacts(None, AffinityGroup.Agent))
   }
 
   def auditBPRKnowFactsFailure(cbcIdFromXml: Option[CBCId], bpr: BusinessPartnerRecord, bPRKnownFacts: BPRKnownFacts)(
@@ -201,7 +201,8 @@ class SharedController @Inject()(
       }
   }
 
-  def enterKnownFacts(cbcEnrolment: Option[CBCEnrolment])(implicit request: Request[AnyContent]): Future[Result] =
+  def enterKnownFacts(cbcEnrolment: Option[CBCEnrolment], userType: AffinityGroup)(
+    implicit request: Request[AnyContent]): Future[Result] =
     for {
       postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
       utr      <- cache.readOption[Utr].map(_.map(_.utr))
@@ -212,12 +213,12 @@ class SharedController @Inject()(
                      .map((utr: String, postCode: String) =>
                        knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode)))
                      .getOrElse(knownFactsForm)
-                   Ok(views.enterKnownFacts(form, false))
+                   Ok(views.enterKnownFacts(form, false, userType))
                  })((result: Future[Result]) => result)
     } yield result
 
-  def NotFoundView(knownFacts: BPRKnownFacts)(implicit request: Request[_]): Result =
-    NotFound(views.enterKnownFacts(knownFactsForm.fill(knownFacts), noMatchingBusiness = true))
+  def NotFoundView(knownFacts: BPRKnownFacts, userType: AffinityGroup)(implicit request: Request[_]): Result =
+    NotFound(views.enterKnownFacts(knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType))
 
   val checkKnownFacts: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) {
@@ -229,12 +230,12 @@ class SharedController @Inject()(
       case Some(userType) => {
 
         knownFactsForm.bindFromRequest.fold[EitherT[Future, Result, Result]](
-          formWithErrors => EitherT.left(BadRequest(views.enterKnownFacts(formWithErrors, false))),
+          formWithErrors => EitherT.left(BadRequest(views.enterKnownFacts(formWithErrors, false, userType))),
           knownFacts =>
             for {
               bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight {
                       Logger.warn("The BPR was not found when looking it up with the knownFactsService")
-                      NotFoundView(knownFacts)
+                      NotFoundView(knownFacts, userType)
                     }
               cbcIdFromXml <- EitherT.right[Future, Result, Option[CBCId]](
                                OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
@@ -246,18 +247,18 @@ class SharedController @Inject()(
                     case AffinityGroup.Agent if subscriptionDetails.isEmpty =>
                       Logger.error(
                         s"Agent supplying known facts for a UTR that is not registered. Check for an internal error!")
-                      Left(NotFoundView(knownFacts))
+                      Left(NotFoundView(knownFacts, AffinityGroup.Agent))
                     case AffinityGroup.Agent
                         if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined => {
                       Logger.warn(
                         s"Agent submitting Xml where the CBCId associated with the UTR does not match that in the Xml File. Request the original Xml File and Known Facts from the Agent")
                       auditBPRKnowFactsFailure(cbcIdFromXml, bpr, knownFacts)
-                      Left(NotFoundView(knownFacts))
+                      Left(NotFoundView(knownFacts, AffinityGroup.Agent))
                     }
                     case AffinityGroup.Agent if cbcIdFromXml.isEmpty => {
                       Logger.error(
                         s"Agent submitting Xml where the CBCId is not in the Xml. Check for an internal error!")
-                      Left(NotFoundView(knownFacts))
+                      Left(NotFoundView(knownFacts, AffinityGroup.Agent))
                     }
                     case AffinityGroup.Organisation if subscriptionDetails.isDefined =>
                       Left(Redirect(routes.SubscriptionController.alreadySubscribed()))

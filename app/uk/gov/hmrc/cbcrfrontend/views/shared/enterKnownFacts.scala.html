@@ -19,16 +19,25 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import helper._
 @import tags._
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.auth.core.AffinityGroup
+@import uk.gov.hmrc.auth.core.AffinityGroup._
 
 @this(mainTemplate: main_template)
 
-@(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @hasErrors = @{
     knownFactsForm.hasErrors || noMatchingBusiness
 }
 @mainTemplate(if(hasErrors){"Error: " + Messages("subscribeFirst.mainHeading")} else{ Messages("subscribeFirst.mainHeading")}){
-
+    @{
+        if(userType == Agent) {
+            back_link(routes.SubmissionController.submitterInfo().url)
+        } else {}
+    }
     <div class="grid-row">
         <div class="column-full">
             @if(hasErrors) {

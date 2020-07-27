@@ -19,6 +19,8 @@
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(mainTemplate: main_template)
 
@@ -33,6 +35,8 @@
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 
 @mainTemplate(Messages("contactInfoSubscriber.updateHeading")) {
+  @back_link(routes.StartController.start().url)
+
     <div class="grid-row">
         <div class="column-full">
             @if(form.hasErrors) {
