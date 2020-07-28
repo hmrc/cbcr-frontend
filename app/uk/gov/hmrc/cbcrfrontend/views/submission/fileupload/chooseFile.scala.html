@@ -16,12 +16,28 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.auth.core.AffinityGroup._
+@import uk.gov.hmrc.auth.core.AffinityGroup
 
 @this(mainTemplate: main_template)
 
-@(fileUploadUrl: String, fileName: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(fileUploadUrl: String, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @mainTemplate(Messages("uploadReport.mainHeading")) {
+
+    @{
+        if(request.uri.contains("/unregistered-gg-account")) {
+          back_link(routes.FileUploadController.chooseXMLFile().url)
+        } else {
+            userType match {
+                case Some(Organisation) => back_link(routes.StartController.start().url)
+                case _ =>
+            }
+    }}
+
+
     <div class="grid-row">
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-full">

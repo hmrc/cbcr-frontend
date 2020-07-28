@@ -21,13 +21,23 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.auth.core.AffinityGroup
+@import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.cbcrfrontend.util.ModifySize
 
 @this(mainTemplate: main_template)
 
-@(summaryData: SummaryData)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@(summaryData: SummaryData, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @mainTemplate(Messages("submitSummary.mainHeading")) {
+    @{userType match {
+        case Some(Organisation) => back_link(routes.SharedController.enterCBCId().url)
+        case _ => back_link(routes.SharedController.knownFactsMatch().url)
+    }}
+
     <div class="grid-row">
         <div class="column-full">
             <h1>

@@ -17,12 +17,20 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(mainTemplate: main_template)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @mainTemplate(Messages("unregisteredGG.heading")) {
+  @{ request.headers.get("Referer") match {
+      case Some(referrer)
+      if(referrer.contains("already-subscribed")) => back_link(routes.SubscriptionController.alreadySubscribed().url)
+      case _ => {}
+  }}
+
 <div class="grid-row">
     <div class="column-full">
 

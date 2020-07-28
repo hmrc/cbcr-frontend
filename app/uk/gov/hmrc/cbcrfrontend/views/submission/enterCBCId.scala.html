@@ -18,6 +18,8 @@
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import tags.formFieldDisplay
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(mainTemplate: main_template)
 
@@ -26,6 +28,7 @@
 
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCBCId.mainHeading")}else {Messages("enterCBCId.mainHeading")}) {
+    @back_link(routes.SubmissionController.submitterInfo().url)
     <div class="grid-row">
         <div class="column-full">
             @if(errors){

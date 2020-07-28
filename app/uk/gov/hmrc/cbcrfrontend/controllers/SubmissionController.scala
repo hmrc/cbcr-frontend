@@ -234,9 +234,10 @@ class SubmissionController @Inject()(
                        success =>
                          cache.save(success).map { _ =>
                            (userType, reportingRole) match {
-                             case (_, CBC702)                  => Redirect(routes.SubmissionController.utr())
-                             case (Some(Agent), CBC703)        => Redirect(routes.SubmissionController.enterCompanyName())
-                             case (Some(Organisation), CBC703) => Redirect(routes.SubmissionController.submitterInfo())
+                             case (_, CBC702)           => Redirect(routes.SubmissionController.utr())
+                             case (Some(Agent), CBC703) => Redirect(routes.SubmissionController.enterCompanyName())
+                             case (Some(Organisation), CBC703) =>
+                               Redirect(routes.SubmissionController.submitterInfo())
                              case _ =>
                                errorRedirect(
                                  UnexpectedState(
@@ -278,21 +279,24 @@ class SubmissionController @Inject()(
     }
   }
 
-  def enterSubmitterInfo(fn: Option[FieldName])(implicit request: Request[AnyContent]): Future[Result] =
-    cache.readOption[SubmitterInfo].map { osi =>
-      val form = (osi.map(_.fullName) |@| osi.map(_.contactPhone) |@| osi.map(_.email))
-        .map { (name, phone, email) =>
-          submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
-        }
-        .getOrElse(submitterInfoForm)
+  def enterSubmitterInfo(fn: Option[FieldName], userType: Option[AffinityGroup])(
+    implicit request: Request[AnyContent]): Future[Result] =
+    for {
+      form <- cache.readOption[SubmitterInfo].map { osi =>
+               (osi.map(_.fullName) |@| osi.map(_.contactPhone) |@| osi.map(_.email))
+                 .map { (name, phone, email) =>
+                   submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
+                 }
+                 .getOrElse(submitterInfoForm)
+             }
+      fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
 
-      Ok(views.submitterInfo(form, fn))
-
+    } yield {
+      Ok(views.submitterInfo(form, fn, fileDetails.envelopeId, fileDetails.fileId, userType))
     }
 
   def submitterInfo(field: Option[String] = None) = Action.async { implicit request =>
-    authorised() {
-
+    authorised().retrieve(Retrievals.affinityGroup) { userType =>
       cache
         .read[CompleteXMLInfo]
         .map(kXml =>
@@ -306,7 +310,7 @@ class SubmissionController @Inject()(
               cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
         })
-        .semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse(""))))
+        .semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse("")), userType))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
@@ -316,13 +320,21 @@ class SubmissionController @Inject()(
   val submitSubmitterInfo = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       submitterInfoForm.bindFromRequest.fold(
-        formWithErrors =>
-          Future.successful(
-            BadRequest(
-              views.submitterInfo(
-                formWithErrors,
-                None
-              ))),
+        formWithErrors => {
+          cache
+            .read[FileDetails]
+            .map { fd =>
+              BadRequest(
+                views.submitterInfo(
+                  formWithErrors,
+                  None,
+                  fd.envelopeId,
+                  fd.fileId,
+                  userType
+                ))
+            }
+            .getOrElse(throw new RuntimeException("Missing file upload details"))
+        },
         success => {
           val result = for {
             straightThrough <- right[Boolean](cache.readOption[CBCId].map(_.isDefined))
@@ -352,11 +364,11 @@ class SubmissionController @Inject()(
   }
 
   val submitSummary = Action.async { implicit request =>
-    authorised().retrieve(Retrievals.credentials) { credentials =>
+    authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrievedInformation =>
       val result = for {
-        smd <- EitherT(generateMetadataFile(cache, credentials).map(_.toEither)).leftMap(_.head)
+        smd <- EitherT(generateMetadataFile(cache, retrievedInformation.a).map(_.toEither)).leftMap(_.head)
         sd  <- createSummaryData(smd)
-      } yield Ok(views.submitSummary(sd))
+      } yield Ok(views.submitSummary(sd, retrievedInformation.b))
 
       result
         .leftMap(errors => errorRedirect(errors, views.notAuthorisedIndividual, views.errorTemplate))
@@ -381,7 +393,11 @@ class SubmissionController @Inject()(
 
   def enterCompanyName = Action.async { implicit request =>
     authorised() {
-      Ok(views.enterCompanyName(enterCompanyNameForm))
+      for {
+        fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
+      } yield {
+        Ok(views.enterCompanyName(enterCompanyNameForm, fileDetails.envelopeId, fileDetails.fileId))
+      }
     }
   }
 
@@ -390,7 +406,13 @@ class SubmissionController @Inject()(
       enterCompanyNameForm
         .bindFromRequest()
         .fold(
-          errors => BadRequest(views.enterCompanyName(errors)),
+          errors =>
+            cache
+              .read[FileDetails]
+              .map { fd =>
+                BadRequest(views.enterCompanyName(errors, fd.envelopeId, fd.fileId))
+              }
+              .getOrElse(throw new RuntimeException("Missing file upload details")),
           name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
         )
     }

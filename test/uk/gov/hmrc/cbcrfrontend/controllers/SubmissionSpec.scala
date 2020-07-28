@@ -48,9 +48,11 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.retrieve.Retrieval
+import play.api.libs.functional.syntax._
 
 class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
 
@@ -79,6 +81,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
   val reportingEntity = mock[ReportingEntityDataService]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
   val views: Views = app.injector.instanceOf[Views]
+  val fileDetails = FileDetails("env1", "file1")
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload" }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend" }
@@ -164,6 +167,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         CacheMap("cache", Map.empty[String, JsValue]))
       when(cache.save[TIN](any())(EQ(TIN.format), any(), any())) thenReturn Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       status(controller.submitterInfo(None)(fakeRequestSubmit)) shouldBe Status.OK
     }
     "return a 200 when SubmitterInfo is NOT in cache" in {
@@ -175,6 +181,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         CacheMap("cache", Map.empty[String, JsValue]))
       when(cache.save[TIN](any())(EQ(TIN.format), any(), any())) thenReturn Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
     }
     "use the UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
@@ -200,6 +209,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         .successful(CacheMap("cache", Map.empty[String, JsValue]))
       when(cache.save[FilingType](any())(EQ(FilingType.format), any(), any())) thenReturn Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
       verify(cache).save(any())(EQ(FilingType.format), any(), any())
       verify(cache).save(any())(EQ(UltimateParentEntity.format), any(), any())
@@ -226,6 +238,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702)))
       when(cache.save[FilingType](any())(EQ(FilingType.format), any(), any())) thenReturn Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
       verify(cache).save(any())(EQ(FilingType.format), any(), any())
     }
@@ -251,6 +266,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703)))
       when(cache.save[FilingType](any())(EQ(FilingType.format), any(), any())) thenReturn Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
       verify(cache).save(any())(EQ(FilingType.format), any(), any())
     }
@@ -262,7 +280,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
-
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       val returnVal = status(controller.submitSubmitterInfo(fakeRequestSubmit))
       returnVal shouldBe Status.BAD_REQUEST
     }
@@ -273,6 +291,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       val returnVal = status(controller.submitSubmitterInfo(fakeRequestSubmit))
       returnVal shouldBe Status.BAD_REQUEST
     }
@@ -283,6 +302,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       val fakeRequestSubmit =
         addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the all data exists but Email Address" in {
@@ -297,6 +317,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the all data exists but Email Address is in Invalid format" in {
@@ -311,6 +332,11 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the empty fields of data exists" in {
@@ -324,6 +350,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
     }
     "return 303 when all of the data exists & valid" in {
@@ -492,7 +521,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
     "provide a 'submitSummary' Action that" should {
       val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSummary"))
       "return 303 if generating the metadata fails redirecting to session expired page" in {
-        when(auth.authorise[Credentials](any(), any())(any(), any())) thenReturn Future.successful(creds)
+        when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
+          .thenReturn(
+            Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
           Some(GGId("ggid", "type")))
         when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn rightE(keyXMLInfo)
@@ -512,6 +543,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           FileMetadata("asdf", "lkjasdf", "lkj", "lkj", 10, "lkjasdf", JsNull, ""))
         when(cache.save[SummaryData](any())(any(), any(), any())) thenReturn Future.successful(
           CacheMap("cache", Map.empty[String, JsValue]))
+        when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
         val result = controller.submitSummary(fakeRequestSubmitSummary)
         status(result) shouldBe Status.SEE_OTHER
         result.header.headers("Location") should endWith("/session-expired")
@@ -522,7 +554,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
 
         val file = File.createTempFile("test", "test")
 
-        when(auth.authorise[Credentials](any(), any())(any(), any())) thenReturn Future.successful(creds)
+        when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
+          .thenReturn(
+            Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
           Some(GGId("ggid", "type")))
         when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn rightE(keyXMLInfo)
@@ -544,7 +578,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           Future.successful(Right(file)))
         when(cache.save[SummaryData](any())(any(), any(), any())) thenReturn Future.successful(
           CacheMap("cache", Map.empty[String, JsValue]))
-
+        when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
         status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.OK
 
         file.deleteOnExit()
@@ -1063,6 +1097,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       "calling enterCompanyName" in {
         val request = addToken(FakeRequest())
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
+        when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
         val result = controller.enterCompanyName(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -1087,6 +1122,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(
         CacheMap("", Map.empty[String, JsValue]))
+      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
       val result = controller.saveCompanyName(request)
       status(result) shouldBe Status.BAD_REQUEST
     }
