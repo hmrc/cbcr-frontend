@@ -27,9 +27,8 @@
 @mainTemplate(Messages("survey.mainHeading"),
     sessionTimeout=false) {
     <h1>@Messages("survey.header")</h1>
-    @Messages("survey.intro")
-    <br/>
-    <br/>
+    <p class="font-small-size19">@Messages("survey.intro")</p>
+    <br aria-hidden="true"/>
 
     @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.ExitSurveyController.submit()){
 

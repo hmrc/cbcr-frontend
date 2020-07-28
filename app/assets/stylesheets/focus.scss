@@ -76,6 +76,12 @@ select:focus,
   background-color: #fd0;
 }
 @media (min-width: 641px){
+  .tabular-data__entry .tabular-data__heading,
+  .tabular-data__entry .tabular-data__data-0,
+  .tabular-data__entry .tabular-data__data-1,
+  .tabular-data__entry .tabular-data__data-2{
+    font-size: 19px;
+  }
   #footer .footer-meta .copyright a {
     background-position: 50% 0;
     float: right;
@@ -143,8 +149,8 @@ textarea:focus {
   font-family: "GDS Transport", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 16px;
-  font-size: 1.6rem;
+  font-size: 19px;
+  font-size: 1.9rem;
   text-decoration: underline;
   line-height: 1.14286;
   display: block;
@@ -264,4 +270,7 @@ textarea:focus {
   right:0;
   bottom:-14px;
   left:0
+}
+.font-small-size19{
+  font-size: 19px;
 }
