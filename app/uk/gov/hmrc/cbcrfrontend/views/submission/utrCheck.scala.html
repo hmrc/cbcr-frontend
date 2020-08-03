@@ -25,7 +25,7 @@
 @(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @error = @{form.error("utr").isDefined}
-@mainTemplate(Messages("utrCheck.mainHeading")) {
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("utrCheck.title")}else{Messages("utrCheck.title")}) {
 
 <div class="grid-row">
     <div class="column-full">

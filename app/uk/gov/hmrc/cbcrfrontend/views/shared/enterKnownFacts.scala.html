@@ -32,7 +32,7 @@
 @hasErrors = @{
     knownFactsForm.hasErrors || noMatchingBusiness
 }
-@mainTemplate(if(hasErrors){"Error: " + Messages("subscribeFirst.mainHeading")} else{ Messages("subscribeFirst.mainHeading")}){
+@mainTemplate(if(hasErrors){"Error: " + Messages("subscribeFirst.title")} else{ Messages("subscribeFirst.title")}){
     @{
         if(userType == Agent) {
             back_link(routes.SubmissionController.submitterInfo().url)

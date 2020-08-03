@@ -23,7 +23,7 @@
 @this(mainTemplate: main_template)
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(messages("subscribeFirst.alreadyRegistered.heading")) {
+@mainTemplate(messages("subscribeFirst.alreadyRegistered.title")) {
     @back_link(routes.SharedController.verifyKnownFactsOrganisation().url)
 <div class="grid-row">
     <div class="column-full">
