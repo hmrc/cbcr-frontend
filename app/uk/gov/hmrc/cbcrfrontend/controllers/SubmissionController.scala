@@ -395,8 +395,12 @@ class SubmissionController @Inject()(
     authorised() {
       for {
         fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
+        form <- cache
+                 .read[AgencyBusinessName]
+                 .map(abn => enterCompanyNameForm.bind(Map("companyName" -> abn.name)))
+                 .getOrElse(enterCompanyNameForm)
       } yield {
-        Ok(views.enterCompanyName(enterCompanyNameForm, fileDetails.envelopeId, fileDetails.fileId))
+        Ok(views.enterCompanyName(form, fileDetails.envelopeId, fileDetails.fileId))
       }
     }
   }
