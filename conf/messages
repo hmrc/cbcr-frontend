@@ -292,7 +292,7 @@ uploadReport.error.heading=There is a problem
 uploadReport.error=You must select a file
 uploadReport.label=Select a file
 
-submitterInfo.title=Enter your contact details as the sender of the report - Send a country-by-country report - GOV.UK
+submitterInfo.title=Enter your contact details, as the sender of the report - Send a country-by-country report - GOV.UK
 submitterInfo.mainHeading=Enter your contact details, as the sender of the report
 submitterInfo.error.heading=There is a problem
 submitterInfo.fullName=Your name
