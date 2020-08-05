@@ -130,6 +130,7 @@ class SharedControllerSpec
   "GET /enter-CBCId" should {
     "return 200" in {
       when(authC.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
+      when(cache.read(EQ(CBCId.cbcIdFormat), any(), any())) thenReturn rightE(id)
       val result = Await.result(controller.enterCBCId(fakeRequestEnterCBCId), 5.second)
       status(result) shouldBe Status.OK
     }
