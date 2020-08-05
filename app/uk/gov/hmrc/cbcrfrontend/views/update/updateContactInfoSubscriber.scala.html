@@ -34,7 +34,7 @@
 @maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 
-@mainTemplate(Messages("contactInfoSubscriber.updateHeading")) {
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.update.title")} else {Messages("contactInfoSubscriber.update.title")}) {
   @back_link(routes.StartController.start().url)
 
     <div class="grid-row">

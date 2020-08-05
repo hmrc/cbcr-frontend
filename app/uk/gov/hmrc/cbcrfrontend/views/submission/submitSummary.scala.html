@@ -32,7 +32,7 @@
 
 @(summaryData: SummaryData, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("submitSummary.mainHeading")) {
+@mainTemplate(Messages("submitSummary.title")) {
     @{userType match {
         case Some(Organisation) => back_link(routes.SharedController.enterCBCId().url)
         case _ => back_link(routes.SharedController.knownFactsMatch().url)

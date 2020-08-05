@@ -28,7 +28,7 @@
 
 @error = @{form.error("companyName").isDefined}
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCompanyName.mainHeading")}else{Messages("enterCompanyName.mainHeading")}) {
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCompanyName.title")}else{Messages("enterCompanyName.title")}) {
 @back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
     <div class="grid-row">
     <div class="column-full">
