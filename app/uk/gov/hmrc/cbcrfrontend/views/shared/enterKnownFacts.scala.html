@@ -32,40 +32,42 @@
 @hasErrors = @{
     knownFactsForm.hasErrors || noMatchingBusiness
 }
+
 @mainTemplate(if(hasErrors){"Error: " + Messages("subscribeFirst.mainHeading")} else{ Messages("subscribeFirst.mainHeading")}){
     @{
         if(userType == Agent) {
             back_link(routes.SubmissionController.submitterInfo().url)
         } else {}
     }
-    <div class="grid-row">
+     <div class="grid-row">
         <div class="column-full">
             @if(hasErrors) {
+
                 <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                     <h2 id="error-summary-heading" class="h2-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>
-                    <p id="utr-error-summary"><strong><a href="#utr">@Messages("subscribeFirst.error.message.utr-empty")</a></strong></p>
-                    <p id="postCode-error-summary"><strong><a href="#postCode">@Messages("subscribeFirst.error.message.postcode-empty")</a></strong></p>
+                    <p id="utr-error-summary"><strong><a href="#utr">@if(knownFactsForm.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.utr-empty")} else {@Messages("subscribeFirst.error.message.utr-nonEmpty")} </a></strong></p>
+                    <p id="postCode-error-summary"><strong><a href="#postCode">@if(knownFactsForm.data.get("postCode").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.postcode-empty")} else {@Messages("subscribeFirst.error.message.postcode-nonEmpty")} </a></strong></p>
                 </div>
-            @errorFocus()
+                @errorFocus()
             }
             <h1>@Messages("subscribeFirst.mainHeading")</h1>
 
             @form(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts()) {
                 <fieldset>
                     <div class="form-field form-field--tall ">
-                        @formFieldDisplay(hasErrors, "utr",
-                            Some(Messages("subscribeFirst.error.message.utr-empty")),
-                            Messages("subscribeFirst.utr.label"),
-                            knownFactsForm,
-                            Some(Messages("subscribeFirst.utr.hint")))
+                    @formFieldDisplay(hasErrors, "utr",
+                        Some(Messages("subscribeFirst.error.message.utr-empty")),
+                        Messages("subscribeFirst.utr.label"),
+                        knownFactsForm,
+                        Some(Messages("subscribeFirst.utr.hint")))
                     </div>
 
                     <div class="form-field form-field--tall ">
-                        @formFieldDisplay(hasErrors, "postCode",
-                            Some(Messages("subscribeFirst.error.message.postcode-empty")),
-                            Messages("subscribeFirst.postcode.label"),
-                            knownFactsForm,
-                            Some(Messages("subscribeFirst.postcode.hint")))
+                    @formFieldDisplay(hasErrors, "postCode",
+                        Some(Messages("subscribeFirst.error.message.postcode-empty")),
+                        Messages("subscribeFirst.postcode.label"),
+                        knownFactsForm,
+                        Some(Messages("subscribeFirst.postcode.hint")))
                     </div>
                 </fieldset>
                 @csrf_token()

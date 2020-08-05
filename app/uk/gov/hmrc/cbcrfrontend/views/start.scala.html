@@ -26,6 +26,13 @@
 
 @mainTemplate(Messages("start.mainHeading")) {
 
+    @if(form.hasErrors) {
+        <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+            <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
+            <p id="radio-error-summary"><strong><a href="#radio-1">@Messages("start.required")</a></strong></p>
+        </div>
+    }
+
 <h1>@Messages("start.mainHeading")</h1>
 @Messages("start.intro")
 <br/>
@@ -33,8 +40,10 @@
 
 @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.StartController.submit()){
 
+
+
 <div class="form-group @if(isError){form-field-group--error}">
-    @if(isError){ <span class="error-notification">@Messages("start.required")</span> }
+    @if(isError){ <span class="error-notification"><strong>@Messages("start.required")</strong></span> }
     <fieldset>
         <div class="multiple-choice">
             <input id="radio-1" type="radio" name="choice" value="upload">

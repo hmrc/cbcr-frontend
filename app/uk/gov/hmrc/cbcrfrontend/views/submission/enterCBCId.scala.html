@@ -29,6 +29,7 @@
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCBCId.mainHeading")}else {Messages("enterCBCId.mainHeading")}) {
     @back_link(routes.SubmissionController.submitterInfo().url)
+
     <div class="grid-row">
         <div class="column-full">
             @if(errors){
@@ -38,8 +39,7 @@
                 aria-labelledby="error-summary-display"
                 tabindex="-1">
                     <h2 id="error-summary-heading" class="h2-heading">@Messages("enterCBCId.error.header")</h2>
-                    <p>@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk">@Messages("enterCBCId.error.message.link")</a></p>
-                    <p id="cbcId-error-summary"><strong><a href="#cbcId">@Messages("enterCBCId.error.message.invalid.id")</a></strong></p>
+                    <p id="cbcId-error-summary"><strong><a href="#cbcId"> @if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){@Messages("enterCBCId.error.message.empty.id")} else {@Messages("enterCBCId.error.message.invalid.id")}</a></strong></p>
                 </div>
                 @errorFocus()
             }
@@ -52,6 +52,10 @@
                         Messages("enterCBCId.formHintWhereYouGotIt"),
                         form,
                         Some(Messages("enterCBCId.formHint")))
+
+                @if(errors){
+                <p>@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" class="">@Messages("enterCBCId.error.message.link")</a></p>
+                }
                 </div>
             </fieldset>
             @csrf_token()
