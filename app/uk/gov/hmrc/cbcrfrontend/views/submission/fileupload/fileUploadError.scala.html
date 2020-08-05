@@ -25,7 +25,7 @@
 
 @(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("fileUploadResult.error")) {
+@mainTemplate(Messages("fileUploadResult.error.title")) {
 
   @back_link(routes.FileUploadController.chooseXMLFile().url)
 

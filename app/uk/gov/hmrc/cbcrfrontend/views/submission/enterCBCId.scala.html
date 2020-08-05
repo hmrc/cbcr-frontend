@@ -27,7 +27,7 @@
     implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCBCId.mainHeading")}else {Messages("enterCBCId.mainHeading")}) {
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCBCId.title")}else {Messages("enterCBCId.title")}) {
     @back_link(routes.SubmissionController.submitterInfo().url)
 
     <div class="grid-row">

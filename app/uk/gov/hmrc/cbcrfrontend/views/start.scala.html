@@ -24,7 +24,7 @@
 
 @isError= @{form.hasErrors}
 
-@mainTemplate(Messages("start.mainHeading")) {
+@mainTemplate(if(isError){"Error: " + Messages("start.title")} else {Messages("start.title")}) {
 
     @if(form.hasErrors) {
         <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">

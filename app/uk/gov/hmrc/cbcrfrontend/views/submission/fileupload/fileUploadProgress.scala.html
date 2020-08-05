@@ -22,7 +22,7 @@
 @(envelopeId: String, fileId: String, hostName: String, assetsLocationPrefix: String)(
 implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("fileUploadProgress.mainHeading")) {
+@mainTemplate(Messages("fileUploadProgress.title")) {
 <script src='@routes.Assets.versioned("javascripts/jquery-3.1.1.min.js")' ></script>
 <script src='@routes.Assets.versioned("javascripts/poller.js")' type="text/javascript"></script>
 

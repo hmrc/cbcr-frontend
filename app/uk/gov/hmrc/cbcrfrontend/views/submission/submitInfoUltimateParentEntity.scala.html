@@ -25,7 +25,7 @@
 
 @ultimateParentEntityErrors = @{form.error("ultimateParentEntity").isDefined}
 
-@mainTemplate(Messages("submitInfoUltimateParentEntity.mainHeading")) {
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("submitInfoUltimateParentEntity.title")}else{Messages("submitInfoUltimateParentEntity.title")}) {
 
     <div class="grid-row">
         <div class="column-full">

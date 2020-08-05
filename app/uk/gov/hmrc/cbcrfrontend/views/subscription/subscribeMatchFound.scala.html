@@ -26,7 +26,7 @@
 
 @(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("subscribeMatchFound.mainHeading")) {
+@mainTemplate(Messages("subscribeMatchFound.title")) {
 
   @{if(userType == AffinityGroup.Organisation)
       back_link(routes.SharedController.verifyKnownFactsOrganisation().url)

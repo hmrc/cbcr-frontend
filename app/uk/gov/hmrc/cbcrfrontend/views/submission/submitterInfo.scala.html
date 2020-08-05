@@ -41,7 +41,7 @@
 @contactPhoneErrors = @{form.error("contactPhone").isDefined}
 @emailErrors = @{form.error("email").isDefined}
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("submitterInfo.mainHeading")}else{Messages("submitterInfo.mainHeading")}) {
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("submitterInfo.title")}else{Messages("submitterInfo.title")}) {
 
   @{userType match {
       case Some(Organisation) => back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)

@@ -21,7 +21,7 @@
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("sessionExpired.mainHeading"),
+@mainTemplate(Messages("sessionExpired.title"),
     sessionTimeout=false) {
 
 <div class="grid-row">
