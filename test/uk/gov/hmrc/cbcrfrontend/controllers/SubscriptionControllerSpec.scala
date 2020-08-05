@@ -378,7 +378,7 @@ class SubscriptionControllerSpec
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty"))
-      webPageAsString should include("entered your phone number")
+      webPageAsString should include("Enter the phone number")
       webPageAsString should not include ("found some errors")
       webPageAsString should not include (getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
     }
