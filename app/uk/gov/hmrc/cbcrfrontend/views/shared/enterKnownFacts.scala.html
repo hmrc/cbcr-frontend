@@ -43,10 +43,10 @@
         <div class="column-full">
             @if(hasErrors) {
 
-                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                    <h2 id="error-summary-heading" class="h2-heading">@Messages("subscribeFirst.noMatchingBusiness.heading")</h2>
-                    <p id="utr-error-summary"><strong><a href="#utr">@if(knownFactsForm.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.utr-empty")} else {@Messages("subscribeFirst.error.message.utr-nonEmpty")} </a></strong></p>
-                    <p id="postCode-error-summary"><strong><a href="#postCode">@if(knownFactsForm.data.get("postCode").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.postcode-empty")} else {@Messages("subscribeFirst.error.message.postcode-nonEmpty")} </a></strong></p>
+                <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display">
+                    <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
+                    <p id="utr-error-summary" ><a href="#utr">@if(knownFactsForm.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.utr-empty")} else {@Messages("subscribeFirst.error.message.utr-nonEmpty")} </a></p>
+                    <p id="postCode-error-summary"><a href="#postCode">@if(knownFactsForm.data.get("postCode").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.postcode-empty")} else {@Messages("subscribeFirst.error.message.postcode-nonEmpty")} </a></p>
                 </div>
                 @errorFocus()
             }

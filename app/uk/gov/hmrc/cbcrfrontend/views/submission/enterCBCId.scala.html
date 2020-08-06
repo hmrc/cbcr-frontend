@@ -38,8 +38,8 @@
                 role="alert"
                 aria-labelledby="error-summary-display"
                 tabindex="-1">
-                    <h2 id="error-summary-heading" class="h2-heading">@Messages("enterCBCId.error.header")</h2>
-                    <p id="cbcId-error-summary"><strong><a href="#cbcId"> @if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){@Messages("enterCBCId.error.message.empty.id")} else {@Messages("enterCBCId.error.message.invalid.id")}</a></strong></p>
+                    <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
+                    <p id="cbcId-error-summary"><a href="#cbcId"> @if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){@Messages("enterCBCId.error.message.empty.id")} else {@Messages("enterCBCId.error.message.invalid.id")}</a></p>
                 </div>
                 @errorFocus()
             }

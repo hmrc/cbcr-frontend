@@ -12,6 +12,8 @@ start.choice.one=cy-Check and send a country-by-country report
 start.choice.two=cy-Change registration contact details
 start.button=cy-Start
 start.required=cy-Select an option
+start.error.heading=cy-There is a problem
+
 
 sessionExpired.mainHeading=cy-Your session has ended
 sessionExpired.continue=cy-As you''ve been inactive for 20 minutes, you''ll need to start again.
@@ -71,7 +73,6 @@ enterCBCId.error.message.link=cy-digitalservice.cbc@hmrc.gsi.gov.uk
 enterCBCId.error.message.invalid.id=cy-Enter a valid country-by-country ID
 
 subscribeFirst.mainHeading=cy-Enter details of the UK-registered company or partnership sending the report
-subscribeFirst.noMatchingBusiness.heading=cy-There is a problem
 subscribeFirst.noMatchingBusiness.suggestion=cy-Check the details and try again, or
 subscribeFirst.noMatchingBusiness.suggestion.link=cy-contact HMRC
 subscribeFirst.alreadyRegistered.heading=cy-This business already has a country-by-country ID
@@ -112,7 +113,6 @@ subscribeSuccessCbcId.nextLink2=cy-check and send a report
 
 contactInfoSubscriber.mainHeading=cy-Who should we contact about the content of the report?
 contactInfoSubscriber.additionalInfo=cy-This must be someone with a detailed knowledge of the information in the report.
-contactInfoSubscriber.errors=cy-There is a problem
 contactInfoSubscriber.subHeading=cy-Enter the name of the person we should contact if there are any questions about the information contained in the Country by Country report.
 contactInfoSubscriber.firstName.label=cy-First name
 contactInfoSubscriber.firstName.error=cy-Enter the first name
@@ -127,7 +127,6 @@ contactInfoSubscriber.phoneNumber.hint=cy-Enter numbers only
 contactInfoSubscriber.phoneNumber.error.invalid.header=cy-We didn''t recognise the phone number
 contactInfoSubscriber.phoneNumber.error.invalid.header.l1=cy-You must only include numbers
 contactInfoSubscriber.phoneNumber.error.invalid=cy-Enter a valid phone number
-contactInfoSubscriber.phoneNumber.error.empty.header=cy-You haven''t entered your phone number
 contactInfoSubscriber.phoneNumber.error.empty=cy-Enter the phone number
 contactInfoSubscriber.emailAddress.label=cy-Email address
 contactInfoSubscriber.emailAdress.hint=cy-The email address of the person we should contact
@@ -268,12 +267,10 @@ uploadReport.linkInfo=cy-HMRC and OECD guidelines.
 uploadReport.andMoreInfo=cy-Until you send the report, HMRC will not be able to access it.
 uploadReport.inputField.label=cy-Choose the file you want to check:
 uploadReport.uploadButton=cy-Check report
-uploadReport.error.heading=cy-There is a problem
 uploadReport.error=cy-You must select a file
 uploadReport.label=cy-Select a file
 
 submitterInfo.mainHeading=cy-Enter your contact details, as the sender of the report
-submitterInfo.error.heading=cy-There is a problem
 submitterInfo.fullName=cy-Your name
 submitterInfo.fullName.error=cy-Enter the full name
 submitterInfo.fullName.error.header=cy-You haven''t entered your full name

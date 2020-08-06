@@ -274,3 +274,22 @@ textarea:focus {
 .font-small-size19{
   font-size: 19px;
 }
+.flash.error-summary{
+border-color: #d4351c;
+}
+.form-field--error .error-notification{
+  font-weight: bold;
+  color: #d4351c;
+}
+.form-field--error .error-field{
+  border: 3px solid #d4351c;
+}
+.error-notification{
+  font-weight: bold;
+  color: #d4351c;
+}
+
+.flash.error-summary a{
+  font-weight: bold;
+  color: #d4351c;
+}

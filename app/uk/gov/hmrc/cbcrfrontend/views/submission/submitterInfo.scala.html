@@ -52,7 +52,7 @@
         @if(numberOfErrors == 1) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
             @form.errors.map { error =>
-                <h2 id="error-summary-heading" class="h2-heading"> @error.messages.map(e => Messages("submitterInfo.error.heading")) </h2>
+                <h2 id="error-summary-heading" class="h2-heading"> @error.messages.map(e => Messages("start.error.heading")) </h2>
             @if(maybeEmailError.contains("submitterInfo.emailAddress.error.invalid")) {
                 <p>@Messages("submitterInfo.emailAddress.error.invalid.header.l1")</p>
             }
@@ -68,7 +68,7 @@
             </div>
         } else {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                <h2 id="error-summary-heading" class="h2-heading">@Messages("submitterInfo.error.heading")</h2>
+                <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
                 @if(fullNameErrors) {
                 <p id="fullName-error-summary"><strong><a href="#fullName">@Messages("submitterInfo.fullName.error")</a></strong></p>
                 }

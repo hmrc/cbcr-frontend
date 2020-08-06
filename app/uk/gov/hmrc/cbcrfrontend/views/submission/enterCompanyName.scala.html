@@ -34,7 +34,7 @@
     <div class="column-full">
         @if(form.hasErrors) {
             <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                <h3 id="error-summary-heading" class="h2-heading">@Messages("enterCompanyName.form.error.header")</h3>
+                <h3 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h3>
                 @if(form.hasErrors){<p id="companyName-error-summary"><strong><a href="#companyName">@Messages("enterCompanyName.form.error")</a></strong></p>}
             </div>
             @errorFocus()
