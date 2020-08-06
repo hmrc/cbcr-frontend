@@ -509,7 +509,7 @@ class SubscriptionControllerSpec
       implicit val messages = getMessages(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
-      webPageAsString should include("There is a problem")
+      webPageAsString should include("Enter the email address")
       webPageAsString should not include ("found some errors")
       webPageAsString should not include (getMessages(fakeRequest)("contactInfoSubscriber.emailAddress.error.invalid"))
     }
