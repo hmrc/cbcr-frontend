@@ -56,7 +56,7 @@
                 <fieldset>
                     <div class="form-field form-field--tall ">
                     @formFieldDisplay(hasErrors, "utr",
-                        Some(Messages("subscribeFirst.error.message.utr-empty")),
+                        Some(if(knownFactsForm.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){ Messages("subscribeFirst.error.message.utr-empty")} else {Messages("subscribeFirst.error.message.utr-nonEmpty")}),
                         Messages("subscribeFirst.utr.label"),
                         knownFactsForm,
                         Some(Messages("subscribeFirst.utr.hint")))
@@ -64,7 +64,7 @@
 
                     <div class="form-field form-field--tall ">
                     @formFieldDisplay(hasErrors, "postCode",
-                        Some(Messages("subscribeFirst.error.message.postcode-empty")),
+                        Some(if(knownFactsForm.data.get("postCode").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){Messages("subscribeFirst.error.message.postcode-empty")} else {Messages("subscribeFirst.error.message.postcode-nonEmpty")}),
                         Messages("subscribeFirst.postcode.label"),
                         knownFactsForm,
                         Some(Messages("subscribeFirst.postcode.hint")))
