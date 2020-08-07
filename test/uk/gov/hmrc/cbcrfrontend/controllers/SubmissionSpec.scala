@@ -1098,6 +1098,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         val request = addToken(FakeRequest())
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
         when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
+        when(cache.read(EQ(AgencyBusinessName.format), any(), any())) thenReturn rightE(AgencyBusinessName("Company"))
         val result = controller.enterCompanyName(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)

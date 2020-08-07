@@ -85,7 +85,12 @@ class SharedController @Inject()(
 
   val enterCBCId = Action.async { implicit request =>
     authorised() {
-      Ok(views.enterCBCId(cbcIdForm))
+
+      for {
+        form <- cache.read[CBCId].map(cbcId => cbcIdForm.bind(Map("cbcId" -> cbcId.value))).getOrElse(cbcIdForm)
+      } yield {
+        Ok(views.enterCBCId(form))
+      }
     }
   }
 
