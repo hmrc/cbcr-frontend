@@ -103,7 +103,7 @@ textarea:focus {
 .form-control-error.form-control-error:focus {
   border-color: #0b0c0c;
   -webkit-box-shadow: none;
-  box-shadow: none
+  box-shadow: inset 0 0 0 2px;
 }
 
 // radios
@@ -273,4 +273,21 @@ textarea:focus {
 }
 .font-small-size19{
   font-size: 19px;
+}
+.flash.error-summary{
+border-color: #d4351c;
+}
+.form-field--error .error-notification{
+  font-weight: bold;
+  color: #d4351c;
+}
+
+.error-notification{
+  font-weight: bold;
+  color: #d4351c;
+}
+
+.flash.error-summary a{
+  font-weight: bold;
+  color: #d4351c;
 }

@@ -25,5 +25,5 @@
     @if(isError && errorMessage.isDefined) {
         @errorMessage.map(error => <span id={s"$name-error-notification"} class="error-notification">{error}</span>)
     }
-        <input type="@inputType" name="@name" class="@{if(isError){ "input--medium error-field" } else {"form-control"} }" id="@name" value="@form.data.get(name)">
+        <input type="@inputType" name="@name" class="@{if(isError){ "input--medium form-control-error error-field" } else {"form-control"} }" id="@name" value="@form.data.get(name)">
 </div>

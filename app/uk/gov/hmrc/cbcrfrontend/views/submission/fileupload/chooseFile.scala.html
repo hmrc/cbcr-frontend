@@ -41,9 +41,9 @@
     <div class="grid-row">
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-full">
-            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="0" class="js-hidden">
-                <h2 id="error-summary-heading">@Messages("uploadReport.error.heading")</h2>
-                <p id="file-input-error-summary"><strong><a id="file-input-error-link" href="#file-input">@Messages("uploadReport.error")</a></strong></p>
+            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display"  class="js-hidden">
+                <h2 id="error-summary-heading">@Messages("start.error.heading")</h2>
+                <p id="file-input-error-summary" class="form-label-bold"><a id="file-input-error-link" href="#file-input">@Messages("uploadReport.error")</a></p>
             </div>
             <h1>
                 @Messages("uploadReport.mainHeading")

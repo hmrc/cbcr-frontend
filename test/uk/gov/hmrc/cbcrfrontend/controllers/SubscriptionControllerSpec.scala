@@ -344,7 +344,7 @@ class SubscriptionControllerSpec
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
-      webPageAsString should include("recognise the phone number")
+      webPageAsString should include("There is a problem")
       webPageAsString should not include ("found some errors")
       webPageAsString should not include (getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty"))
     }
@@ -378,7 +378,7 @@ class SubscriptionControllerSpec
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty"))
-      webPageAsString should include("entered your phone number")
+      webPageAsString should include("Enter the phone number")
       webPageAsString should not include ("found some errors")
       webPageAsString should not include (getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
     }
@@ -412,7 +412,7 @@ class SubscriptionControllerSpec
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.emailAddress.error.invalid"))
-      webPageAsString should include("recognise the email address")
+      webPageAsString should include("There is a problem")
       webPageAsString should not include ("found some errors")
       webPageAsString should not include ("entered your email address")
     }
@@ -509,7 +509,7 @@ class SubscriptionControllerSpec
       implicit val messages = getMessages(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
-      webPageAsString should include("entered your email address")
+      webPageAsString should include("Enter the email address")
       webPageAsString should not include ("found some errors")
       webPageAsString should not include (getMessages(fakeRequest)("contactInfoSubscriber.emailAddress.error.invalid"))
     }
