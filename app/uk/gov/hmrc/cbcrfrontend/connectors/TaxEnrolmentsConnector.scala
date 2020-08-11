@@ -25,7 +25,6 @@ import configs.syntax._
 import play.api.libs.json.{JsArray, Json}
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 /**
   * Created by max on 23/05/17.

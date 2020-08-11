@@ -27,17 +27,18 @@ import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import cats.instances.future._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class CreationDateSpec
+    extends UnitSpec with ScalaFutures with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
 
   val connector = mock[CBCRBackendConnector]
   val reportingEntity = mock[ReportingEntityDataService]
@@ -49,7 +50,7 @@ class CreationDateSpec extends UnitSpec with ScalaFutures with MockitoSugar with
   when(configuration.getInt(s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(Some(12))
   when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(Some(2017))
 
-  implicit val ec: ExecutionContext = mock[ExecutionContext]
+  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val cds = new CreationDateService(connector, configuration, runMode, reportingEntity)

@@ -22,7 +22,7 @@ import play.api.mvc.{Action, AnyContent, Flash, MessagesControllerComponents}
 import play.api.{Application, Logger}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
 

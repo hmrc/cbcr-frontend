@@ -45,8 +45,6 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
-
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier

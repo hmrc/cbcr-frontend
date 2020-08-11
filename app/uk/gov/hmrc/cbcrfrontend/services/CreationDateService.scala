@@ -27,7 +27,6 @@ import java.time.{LocalDate, Period}
 import cats.instances.all._
 import play.api.Configuration
 
-import scala.concurrent.ExecutionContext.Implicits.global
 @Singleton
 class CreationDateService @Inject()(
   connector: CBCRBackendConnector,

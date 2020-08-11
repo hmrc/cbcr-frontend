@@ -20,12 +20,12 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
 val compile = Seq(
   ws,
-  "uk.gov.hmrc"              %% "bootstrap-play-26"   % "1.7.0",
-  "uk.gov.hmrc"              %% "govuk-template"      % "5.54.0-play-26",
-  "uk.gov.hmrc"              %% "play-ui"             % "8.9.0-play-26",
-  "uk.gov.hmrc"              %% "emailaddress"        % "3.3.0",
-  "uk.gov.hmrc"              %% "domain"              % "5.8.0-play-26",
-  "uk.gov.hmrc"              %% "http-caching-client" % "9.0.0-play-26",
+  "uk.gov.hmrc"              %% "bootstrap-frontend-play-26"   % "2.24.0",
+  "uk.gov.hmrc"              %% "govuk-template"      % "5.55.0-play-26",
+  "uk.gov.hmrc"              %% "play-ui"             % "8.11.0-play-26",
+  "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
+  "uk.gov.hmrc"              %% "domain"              % "5.9.0-play-26",
+  "uk.gov.hmrc"              %% "http-caching-client" % "9.1.0-play-26",
   "org.typelevel"            %% "cats"                % "0.9.0",
   "com.github.kxbmap"        %% "configs"             % "0.4.4",
   "com.scalawilliam"         %% "xs4s"                % "0.5",
@@ -98,7 +98,7 @@ lazy val microservice =
     .settings(majorVersion := 1)
     .settings(defaultSettings(): _*)
     .settings(
-      scalaVersion := "2.11.12",
+      scalaVersion := "2.12.11",
       libraryDependencies ++= appDependencies,
       retrieveManaged := true,
       evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
