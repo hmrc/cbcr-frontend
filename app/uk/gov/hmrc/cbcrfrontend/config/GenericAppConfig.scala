@@ -18,16 +18,13 @@ package uk.gov.hmrc.cbcrfrontend.config
 
 import akka.actor.ActorSystem
 import javax.inject.Inject
-import play.api.{Configuration, Mode, Play}
-import uk.gov.hmrc.play.bootstrap.config.RunMode
+import play.api.Configuration
 
-class GenericAppConfig @Inject()(configuration: Configuration, mode: Mode) extends RunMode(configuration, mode) {
+class GenericAppConfig @Inject()(configuration: Configuration, actor: ActorSystem) {
 
-  def mode: Mode = Play.current.mode
-
-  def runModeConfiguration: Configuration = Play.current.configuration
+  def runModeConfiguration: Configuration = configuration
 
   def appNameConfiguration: Configuration = runModeConfiguration
 
-  def actorSystem: ActorSystem = Play.current.actorSystem
+  def actorSystem: ActorSystem = actor
 }

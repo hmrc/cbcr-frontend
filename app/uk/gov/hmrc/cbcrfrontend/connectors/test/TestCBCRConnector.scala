@@ -27,8 +27,7 @@ import uk.gov.hmrc.cbcrfrontend.model.Email
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 
 @Singleton
 class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
