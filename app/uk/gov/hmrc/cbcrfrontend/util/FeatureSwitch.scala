@@ -62,11 +62,11 @@ object FeatureSwitch {
 }
 
 object CbcrSwitches {
-  private val WHITELIST_DISABLED = "whiteListDisabled"
+  private val ALLOWLIST_DISABLED = "allowListDisabled"
   private val CLEAR_SUBSCRIPTION_DATA_ROUTE = "clearSubscriptionData"
   private val LANGUAGE_TOGGLE_SWITCH = "enableLanguageSwitching"
-  def whitelistDisabled =
-    FeatureSwitch.forName(WHITELIST_DISABLED)
+  def allowlistDisabled =
+    FeatureSwitch.forName(ALLOWLIST_DISABLED)
   def clearSubscriptionDataRoute =
     FeatureSwitch.forName(CLEAR_SUBSCRIPTION_DATA_ROUTE)
   def enableLanguageSwitching =

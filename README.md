@@ -16,7 +16,7 @@ This service relies on the [CBCR](https://github.com/hmrc/cbcr) protected servic
 Use default JVM settings
 
 ```sbtshell
-sbt 'run -DwhiteListDisabled=true -Dapplication.router=testOnlyDoNotUseInAppConf.Routes'
+sbt 'run -DallowListDisabled=true -Dapplication.router=testOnlyDoNotUseInAppConf.Routes'
 ```
 
 ### Submission Metadata
