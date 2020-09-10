@@ -56,7 +56,7 @@ class FrontendAppConfig @Inject()(
   val cbcrGuidanceRegisterUrl: String = loadConfig("cbcr-guidance-register-url")
   val cbcrOecdGuideUrl: String = loadConfig("cbcr-OECD-guide-url")
 
-  private def whitelistConfig(key: String): Seq[String] =
+  private def allowlistConfig(key: String): Seq[String] =
     Some(
       new String(
         Base64.getDecoder
@@ -66,8 +66,8 @@ class FrontendAppConfig @Inject()(
       .getOrElse(Array.empty)
       .toSeq
 
-  val whitelist: Seq[String] = whitelistConfig("whitelist")
-  val whitelistExcluded: Seq[String] = whitelistConfig("whitelist-excluded")
+  val allowlist: Seq[String] = allowlistConfig("allowlist")
+  val allowlistExcluded: Seq[String] = allowlistConfig("allowlist-excluded")
 
   val timeOutSeconds = loadConfig("sessionTimeout.timeOutSeconds")
   val timeOutCountdownSeconds = loadConfig("sessionTimeout.timeOutCountdownSeconds")
