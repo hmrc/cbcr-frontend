@@ -223,8 +223,7 @@ class CBCBusinessRuleValidator @Inject()(
           Future.successful(re.docSpec.docRefId.validNel)
         }
 
-        (validateDocSpec(re.docSpec) *>
-          docRefId *>
+        (docRefId *>
           validateTIN(re.tin, re.reportingRole) *>
           validateReportingEntityName(re) *>
           validateConstEntities(in.constEntityNames)).map(_.andThen(_ => in.validNel))
@@ -293,7 +292,6 @@ class CBCBusinessRuleValidator @Inject()(
     val addDocSpec = in.additionalInfo.map(_.docSpec)
     val entDocSpecs = in.cbcReport.map(_.docSpec)
     val repDocSpec = in.reportingEntity.map(_.docSpec)
-    val entRepDocSpecs = entDocSpecs ++ repDocSpec
     val allDocSpecs = entDocSpecs ++ repDocSpec ++ addDocSpec
     val addCorrCheck = addDocSpec.flatMap(_.corrDocRefId).map(c => (c, extractCorrDRI(in).get))
 
