@@ -88,7 +88,15 @@ class CBCBusinessRuleValidator @Inject()(
         in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult, ReportingEntity] |@|
         in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult, CbcReports] |@|
         in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult, AdditionalInfo])
-        .map(XMLInfo(_, _, _, _, Some(LocalDate.now()), in.constEntityNames))
+        .map(
+          XMLInfo(
+            _,
+            _,
+            _,
+            _,
+            Some(LocalDate.now()),
+            in.constEntityNames,
+            in.currencyCodes.map(elem => elem.currCodes).flatten))
     }
 
   private def extractMessageSpec(in: RawMessageSpec): ValidBusinessResult[MessageSpec] =
@@ -683,13 +691,15 @@ class CBCBusinessRuleValidator @Inject()(
   def recoverReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[CompleteXMLInfo] =
     in.reportingEntity match {
       case Some(re) =>
-        Future.successful(CompleteXMLInfo(
-          in.messageSpec,
-          re,
-          in.cbcReport,
-          in.additionalInfo,
-          in.creationDate,
-          in.constEntityNames).validNel)
+        Future.successful(
+          CompleteXMLInfo(
+            in.messageSpec,
+            re,
+            in.cbcReport,
+            in.additionalInfo,
+            in.creationDate,
+            in.constEntityNames,
+            in.currencyCodes).validNel)
       case None =>
         val id = in.cbcReport
           .find(_.docSpec.corrDocRefId.isDefined)
