@@ -194,6 +194,32 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
   "The CBCBusinessRuleValidator" should {
 
+    "throw an error if currency codes are not consistent in same xml report " in {
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+      when(reportingEntity.queryReportingEntityDataTin(any(), any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](None)
+
+      val inconsistentCurrency =
+        new File("test/resources/cbcr-inconsistent-currency-codes" + ".xml")
+      val validFile = new File("test/resources/cbcr-valid-currency-codes" + ".xml")
+
+      val result1 = Await.result(
+        validator.validateBusinessRules(inconsistentCurrency, filename, Some(enrol), Some(Organisation)),
+        5.seconds)
+      val result2 =
+        Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+      result1.fold(
+        errors => errors.toList should contain(InconsistentCurrencyCodes),
+        _ => fail("InconsistentCurrencyCodes")
+      )
+      result2.fold(
+        errors => fail(s"Errors were generated ${errors.toList}"),
+        _ => ()
+      )
+
+    }
+
     "throw an error when multiple file uploaded for the same reporting period of original submission when the previous submission exists" in {
 
       val firstOriginalReportingEntityDri =

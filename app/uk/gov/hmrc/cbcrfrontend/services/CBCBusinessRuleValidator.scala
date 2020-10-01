@@ -682,8 +682,13 @@ class CBCBusinessRuleValidator @Inject()(
   private def validateCurrencyCodes(x: XMLInfo)(implicit hc: HeaderCarrier): ValidBusinessResult[XMLInfo] = {
     val currCodes = x.currencyCodes
     if (currCodes.forall(_ == currCodes.head)) {
+      determineMessageTypeIndic(x) match {
+        case Some(CBC401) => x.validNel
+        case _            => x.validNel
+          //reportingEntityDataService.queryReportingEntityDataTin(x.reportingEntity.get.tin.value, x.messageSpec.reportingPeriod.toString)
+      }
       //Then check if is correction to check against ReportinEntiyData curr code
-      x.validNel
+
     } else {
       InconsistentCurrencyCodes.invalidNel
     }
