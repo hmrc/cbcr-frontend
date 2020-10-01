@@ -160,6 +160,7 @@ class FileUploadControllerSpec
     List(CbcReports(DocSpec(OECD1, DocRefId(docRefId + "ENT").get, None, None))),
     List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None))),
     Some(LocalDate.now()),
+    List.empty[String],
     List.empty[String]
   )
 

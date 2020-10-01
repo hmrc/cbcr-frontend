@@ -220,7 +220,8 @@ class CBCBusinessRuleValidator @Inject()(
       validateCreationDate(x) *>
       validateReportingPeriod(x) *>
       validateMultipleFileUploadForSameReportingPeriod(x) *>
-      validateMessageRefIds(x)
+      validateMessageRefIds(x) *>
+      validateCurrencyCodes(x)
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     in.reportingEntity
@@ -676,6 +677,17 @@ class CBCBusinessRuleValidator @Inject()(
 
     if (corrMessageRefIdisPresent.isDefined) CorrMessageRefIdNotAllowedInDocSpec.invalidNel
     else x.validNel
+  }
+
+  private def validateCurrencyCodes(x: XMLInfo)(implicit hc: HeaderCarrier): ValidBusinessResult[XMLInfo] = {
+    val currCodes = x.currencyCodes
+    if (currCodes.forall(_ == currCodes.head)) {
+      //Then check if is correction to check against ReportinEntiyData curr code
+      x.validNel
+    } else {
+      InconsistentCurrencyCodes.invalidNel
+    }
+
   }
 
   def validateBusinessRules(

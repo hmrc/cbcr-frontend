@@ -53,7 +53,9 @@ class ReportingEntityDataServiceSpec
     UltimateParentEntity("Foo Corp"),
     CBC701,
     Some(LocalDate.now()),
-    None)
+    None,
+    Some("USD")
+  )
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 

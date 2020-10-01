@@ -126,6 +126,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     UltimateParentEntity("someone"),
     CBC701,
     Some(LocalDate.now()),
+    None,
     None
   )
   val redReportPeriod = ReportingEntityData(
@@ -136,7 +137,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     UltimateParentEntity("someone"),
     CBC701,
     Some(LocalDate.now()),
-    Some(LocalDate.of(2018, 1, 1))
+    Some(LocalDate.of(2018, 1, 1)),
+    None
   )
   val redmTrue = ReportingEntityDataModel(
     NonEmptyList.of(actualDocRefId),
@@ -147,7 +149,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     CBC701,
     Some(LocalDate.now()),
     None,
-    true
+    true,
+    None
   )
   val redmFalse = ReportingEntityDataModel(
     NonEmptyList.of(actualDocRefId),
@@ -158,7 +161,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     CBC701,
     Some(LocalDate.now()),
     None,
-    false
+    false,
+    None
   )
 
   val xmlinfo = XMLInfo(
@@ -175,6 +179,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     List(CbcReports(DocSpec(OECD1, DocRefId(docRefId + "ENT").get, None, None))),
     List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None))),
     Some(LocalDate.now()),
+    List.empty[String],
     List.empty[String]
   )
 
@@ -205,7 +210,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         UltimateParentEntity("someone"),
         CBC703,
         Some(LocalDate.now()),
-        Some(LocalDate.of(2016, 3, 31))
+        Some(LocalDate.of(2016, 3, 31)),
+        None
       )
 
       when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)

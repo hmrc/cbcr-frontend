@@ -378,6 +378,7 @@ error.AdditionalInfoDRINotFound3=Please move the information into the Additional
 error.AdditionalInfoDRINotFound4=and resubmit. You can also also contact ‘digitalservice.cbc@hmrc.gsi.gov.uk’ to discuss this issue if preferred.
 error.AdditionalInfoDRINotFound5=from the first AdditionalInfo section of the initial submission
 error.MessageRefIdDontMatchWithDocRefId=The report has not been uploaded. The DocRefID must begin with the MessageRefID contained within the message specification.
+error.InconsistentCurrencyCodes=You have used more than one currency in your report. You must use the same currency throughout your report.
 
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid
