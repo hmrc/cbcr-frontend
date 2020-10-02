@@ -132,6 +132,17 @@ class FileUploadControllerSpec
             case false => OptionT.none
           }
       }
+
+      override def create[T: Format: universe.TypeTag](f: => OptionT[Future, T])(
+        implicit hc: HeaderCarrier): OptionT[Future, T] = universe.typeOf[T] match {
+        case t if t =:= universe.typeOf[FileId] =>
+          OptionT.some[Future, FileId](FileId("fileId")).asInstanceOf[OptionT[Future, T]]
+        case t if t =:= universe.typeOf[EnvelopeId] =>
+          succeed match {
+            case true  => OptionT.some[Future, EnvelopeId](EnvelopeId("test")).asInstanceOf[OptionT[Future, T]]
+            case false => OptionT.none
+          }
+      }
     }
   }
 
@@ -229,7 +240,6 @@ class FileUploadControllerSpec
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(
           new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))))
-      when(cache.readOrCreate[EnvelopeId](any())) thenReturn OptionT.some[Future, EnvelopeId](EnvelopeId("12345678"))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }

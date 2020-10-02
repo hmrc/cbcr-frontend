@@ -223,8 +223,7 @@ class CBCBusinessRuleValidator @Inject()(
           Future.successful(re.docSpec.docRefId.validNel)
         }
 
-        (validateDocSpec(re.docSpec) *>
-          docRefId *>
+        (docRefId *>
           validateTIN(re.tin, re.reportingRole) *>
           validateReportingEntityName(re) *>
           validateConstEntities(in.constEntityNames)).map(_.andThen(_ => in.validNel))
@@ -293,7 +292,6 @@ class CBCBusinessRuleValidator @Inject()(
     val addDocSpec = in.additionalInfo.map(_.docSpec)
     val entDocSpecs = in.cbcReport.map(_.docSpec)
     val repDocSpec = in.reportingEntity.map(_.docSpec)
-    val entRepDocSpecs = entDocSpecs ++ repDocSpec
     val allDocSpecs = entDocSpecs ++ repDocSpec ++ addDocSpec
     val addCorrCheck = addDocSpec.flatMap(_.corrDocRefId).map(c => (c, extractCorrDRI(in).get))
 
@@ -347,11 +345,11 @@ class CBCBusinessRuleValidator @Inject()(
         (value: NonEmptyList[BusinessRuleErrors]) => Future.successful(value.invalid),
         (red: ReportingEntityDataModel) =>
           docRefIdService.queryDocRefId(aiCid._1.cid).map {
-            case DocRefIdResponses.Valid   => aiCid._1.validNel
-            case DocRefIdResponses.Invalid => CorrDocRefIdInvalidRecord.invalidNel
+            case DocRefIdResponses.Valid => aiCid._1.validNel
             case DocRefIdResponses.DoesNotExist =>
               if (red.oldModel) AdditionalInfoDRINotFound(red.additionalInfoDRI.head.show, aiCid._1.cid.show).invalidNel
-              else CorrDocRefIdUnknownRecord.invalidNel
+              else aiCid._1.validNel //To avoid duplicate error messages as this is also checked as part of another rule
+            case _ => aiCid._1.validNel //To avoid duplicate error messages
         }
       ))
 
