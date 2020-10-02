@@ -38,6 +38,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrieval, Retrievals}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import play.api.i18n.{I18nSupport, Lang, MessagesApi}
+import uk.gov.hmrc.cbcrfrontend.util.ComparisonUtil
 
 import scala.util.{Failure, Try}
 
@@ -679,18 +680,45 @@ class CBCBusinessRuleValidator @Inject()(
     else x.validNel
   }
 
-  private def validateCurrencyCodes(x: XMLInfo)(implicit hc: HeaderCarrier): ValidBusinessResult[XMLInfo] = {
+  private def validateCurrencyCodes(x: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
     val currCodes = x.currencyCodes
     if (currCodes.forall(_ == currCodes.head)) {
       determineMessageTypeIndic(x) match {
-        case Some(CBC401) => x.validNel
-        case _            => x.validNel
-          //reportingEntityDataService.queryReportingEntityDataTin(x.reportingEntity.get.tin.value, x.messageSpec.reportingPeriod.toString)
-      }
-      //Then check if is correction to check against ReportinEntiyData curr code
+        case Some(CBC401) => Future.successful(x.validNel)
+        case _ =>
+          val tin = x.reportingEntity.fold("")(_.tin.value)
+          val currentReportingPeriod = x.messageSpec.reportingPeriod
 
+          reportingEntityDataService
+            .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
+            .leftMap { cbcErrors =>
+              Logger.error(s"Got error back: $cbcErrors")
+              throw new Exception(s"Error communicating with backend: $cbcErrors")
+            }
+            .subflatMap {
+              case Some(reportEntityData) =>
+                reportEntityData.currencyCode match {
+                  case Some(code) =>
+                    val reports: List[String] = reportEntityData.cbcReportsDRI.map(_.show).toList
+                    val corrDocRefIds: List[String] = x.cbcReport.map(_.docSpec.corrDocRefId.get.cid.show)
+
+                    if (currCodes.head == code) {
+                      Right(x)
+                    } else {
+                      if (ComparisonUtil.isFullyCorrected(reports, corrDocRefIds)) {
+                        Right(x)
+                      } else {
+                        Left(InconsistentCurrencyCodes)
+                      }
+                    }
+                  case None => Right(x)
+                }
+              case None => Right(x)
+            }
+            .toValidatedNel
+      }
     } else {
-      InconsistentCurrencyCodes.invalidNel
+      Future.successful(InconsistentCurrencyCodes.invalidNel)
     }
 
   }
