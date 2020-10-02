@@ -90,10 +90,10 @@ class FileUploadController @Inject()(
   private def fileUploadUrl()(implicit hc: HeaderCarrier): EitherT[Future, CBCErrors, String] =
     for {
       envelopeId <- cache
-                     .readOrCreate[EnvelopeId](fileUploadService.createEnvelope.toOption)
+                     .create[EnvelopeId](fileUploadService.createEnvelope.toOption)
                      .toRight(UnexpectedState("Unable to get envelopeId"))
       fileId <- cache
-                 .readOrCreate[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString))))
+                 .create[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString))))
                  .toRight(UnexpectedState("Unable to get FileId"): CBCErrors)
       successRedirect = s"$hostName${routes.FileUploadController.fileUploadProgress(envelopeId.value, fileId.value).url}"
       fileUploadUrl = s"$fileUploadHost/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +

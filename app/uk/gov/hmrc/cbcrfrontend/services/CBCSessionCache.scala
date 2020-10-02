@@ -72,6 +72,11 @@ class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)
           }.value
         )(t => Future.successful(Some(t)))))
 
+  def create[T: Format: TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] =
+    OptionT(f.semiflatMap { t =>
+      save(t).map(_ => t)
+    }.value)
+
   def stripPackage(s: String): String = s.split('.').last
 
   def clear(implicit hc: HeaderCarrier): Future[Boolean] =
