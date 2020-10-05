@@ -706,7 +706,7 @@ class CBCBusinessRuleValidator @Inject()(
                       if (ComparisonUtil.isFullyCorrected(reports, corrDocRefIds)) {
                         Right(x)
                       } else {
-                        Left(InconsistentCurrencyCodes)
+                        Left(PartiallyCorrectedCurrency)
                       }
                     }
                   case None => Right(x)

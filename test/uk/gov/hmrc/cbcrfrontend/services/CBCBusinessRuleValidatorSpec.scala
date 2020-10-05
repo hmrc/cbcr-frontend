@@ -1433,7 +1433,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
       val firstOriginalReportingEntityDri =
         DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X1_7000000002OECD1ENT1").get
-      val firstOriginalCbcReportsDri = DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X1_7000000002OECD1REP1").get
+      val firstOriginalCbcReportsDri =
+        DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X1_7000000002OECD1REP1").get
       val secondOriginalCbcReportsDri =
         DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X1_7000000002OECD1REP2").get
       val firstOriginalAdditionalInfoDri =
@@ -1481,8 +1482,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         5.seconds)
 
       result1.fold(
-        errors => errors.toList should contain(InconsistentCurrencyCodes),
-        _ => fail("InconsistentCurrencyAccrossFiles")
+        errors => errors.toList should contain(PartiallyCorrectedCurrency),
+        _ => fail("PartiallyCorrectedCurrency")
       )
 
     }

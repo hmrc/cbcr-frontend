@@ -72,8 +72,8 @@
         <ns1:AdditionalInfo>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X1_7000000002OECD1ADD1</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X2_7000000002OECD1ADD12321</ns2:CorrDocRefId>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X2_7000000002OECD1ADD12321</ns2:DocRefId>
+                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X2_7000000002OECD1ADD1</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:OtherInfo>String_OtherInfo</ns1:OtherInfo>
             <ns1:ResCountryCode>GB</ns1:ResCountryCode>
