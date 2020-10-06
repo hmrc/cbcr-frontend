@@ -1487,5 +1487,73 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
       )
 
     }
+
+    "throw an error when the user partially deletes a file" in {
+
+      val firstOriginalReportingEntityDri =
+        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1ENT1").get
+      val firstOriginalCbcReportsDri =
+        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1REP1").get
+      val secondOriginalCbcReportsDri =
+        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1REP2").get
+      val firstOriginalAdditionalInfoDri =
+        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1ADD1").get
+
+      val reportEntityData = ReportingEntityData(
+        NonEmptyList.of(firstOriginalCbcReportsDri, secondOriginalCbcReportsDri),
+        List(firstOriginalAdditionalInfoDri),
+        firstOriginalReportingEntityDri,
+        TIN("7000000002", "GB"),
+        UltimateParentEntity("someone"),
+        CBC703,
+        Some(LocalDate.now()),
+        Some(LocalDate.of(2017, 3, 31)),
+        Some("USD")
+      )
+      val reportEntityDataModel = ReportingEntityDataModel(
+        NonEmptyList.of(firstOriginalCbcReportsDri, secondOriginalCbcReportsDri),
+        List(firstOriginalAdditionalInfoDri),
+        firstOriginalReportingEntityDri,
+        TIN("7000000002", "GB"),
+        UltimateParentEntity("someone"),
+        CBC703,
+        Some(LocalDate.now()),
+        Some(LocalDate.of(2017, 3, 31)),
+        false,
+        Some("USD")
+      )
+
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+      when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(Valid)
+      when(docRefIdService.queryDocRefId(EQ(DocRefId(
+        "GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ENTDeletion").get))(any())) thenReturn Future
+        .successful(DoesNotExist)
+      when(docRefIdService.queryDocRefId(EQ(DocRefId(
+        "GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3REP1Deletion").get))(any())) thenReturn Future
+        .successful(DoesNotExist)
+      when(docRefIdService.queryDocRefId(EQ(DocRefId(
+        "GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ADDDeletion").get))(any())) thenReturn Future
+        .successful(DoesNotExist)
+      when(reportingEntity.queryReportingEntityDataTin(any(), any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(reportEntityData))
+      when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[ReportingEntityDataModel]](Future.successful(Some(reportEntityDataModel)))
+
+      when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(reportEntityData))
+      val partialDeletionFile =
+        new File("test/resources/cbcr-partial-deletion" + ".xml")
+
+      val filenameOrig = "GB2017RGXLCBC0100000056CBC40120180311T090000X2017.xml"
+      val result1 = Await.result(
+        validator
+          .validateBusinessRules(partialDeletionFile, filenameOrig, Some(enrol), Some(Organisation)),
+        5.seconds)
+
+      result1.fold(
+        errors => errors.toList should contain(PartialDeletion),
+        _ => fail("PartialDeletion")
+      )
+    }
   }
 }

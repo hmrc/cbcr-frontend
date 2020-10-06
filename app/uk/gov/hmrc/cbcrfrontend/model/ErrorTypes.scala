@@ -91,6 +91,7 @@ case object MultipleFileUploadForSameReportingPeriod extends BusinessRuleErrors
 case object MessageRefIdDontMatchWithDocRefId extends BusinessRuleErrors
 case object InconsistentCurrencyCodes extends BusinessRuleErrors
 case object PartiallyCorrectedCurrency extends BusinessRuleErrors
+case object PartialDeletion extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
@@ -151,6 +152,7 @@ object BusinessRuleErrors {
       case MessageRefIdDontMatchWithDocRefId        => JsString(MessageRefIdDontMatchWithDocRefId.toString)
       case InconsistentCurrencyCodes                => JsString(InconsistentCurrencyCodes.toString)
       case PartiallyCorrectedCurrency               => JsString(PartiallyCorrectedCurrency.toString)
+      case PartialDeletion                          => JsString(PartialDeletion.toString)
       case aidnf: AdditionalInfoDRINotFound         => Json.toJson(aidnf)
     }
 
@@ -198,6 +200,7 @@ object BusinessRuleErrors {
             case Some(ci"messagerefiddontmatchwithdocrefid") => JsSuccess(MessageRefIdDontMatchWithDocRefId)
             case Some(ci"inconsistentCurrencyCodes")         => JsSuccess(InconsistentCurrencyCodes)
             case Some(ci"partiallyCorrectedCurrency")        => JsSuccess(PartiallyCorrectedCurrency)
+            case Some(ci"partialDeletion")                   => JsSuccess(PartialDeletion)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
             case other => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -243,6 +246,7 @@ object BusinessRuleErrors {
     case MessageRefIdDontMatchWithDocRefId => "error.MessageRefIdDontMatchWithDocRefId"
     case InconsistentCurrencyCodes         => "error.InconsistentCurrencyCodes"
     case PartiallyCorrectedCurrency        => "error.PartiallyCorrectedCurrency"
+    case PartialDeletion                   => "error.PartialDeletion"
   }
 }
 

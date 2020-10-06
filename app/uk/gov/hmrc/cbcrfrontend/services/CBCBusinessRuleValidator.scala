@@ -222,7 +222,8 @@ class CBCBusinessRuleValidator @Inject()(
       validateReportingPeriod(x) *>
       validateMultipleFileUploadForSameReportingPeriod(x) *>
       validateMessageRefIds(x) *>
-      validateCurrencyCodes(x)
+      validateCurrencyCodes(x) *>
+      validateDeletion(x)
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     in.reportingEntity
@@ -698,7 +699,10 @@ class CBCBusinessRuleValidator @Inject()(
                 reportEntityData.currencyCode match {
                   case Some(code) =>
                     val reports: List[String] = reportEntityData.cbcReportsDRI.map(_.show).toList
-                    val corrDocRefIds: List[String] = x.cbcReport.map(_.docSpec.corrDocRefId.get.cid.show)
+                    val corrDocRefIds: List[String] = x.cbcReport
+                      .map(_.docSpec.corrDocRefId)
+                      .filter(_.isDefined)
+                      .map(_.get.cid.show)
 
                     if (currCodes.head == code) {
                       Right(x)
@@ -719,6 +723,51 @@ class CBCBusinessRuleValidator @Inject()(
       Future.successful(InconsistentCurrencyCodes.invalidNel)
     }
 
+  }
+
+  private def validateDeletion(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
+    val reportingEntityDocTypeIndicator = in.reportingEntity.map(_.docSpec.docType)
+
+    reportingEntityDocTypeIndicator match {
+      case Some(indicator) if indicator == OECD3 =>
+        val tin = in.reportingEntity.fold("")(_.tin.value)
+        val currentReportingPeriod = in.messageSpec.reportingPeriod
+
+        reportingEntityDataService
+          .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
+          .leftMap { cbcErrors =>
+            Logger.error(s"Got error back: $cbcErrors")
+            throw new Exception(s"Error communicating with backend: $cbcErrors")
+          }
+          .subflatMap {
+            case Some(reportEntityData) =>
+              val allDocs = List(reportEntityData.reportingEntityDRI.show) ++ reportEntityData.cbcReportsDRI
+                .map(_.show)
+                .toList ++ reportEntityData.additionalInfoDRI.map(_.show)
+              val addDocSpec = in.additionalInfo
+                .filter(_.docSpec.corrDocRefId.isDefined)
+                .map(_.docSpec.corrDocRefId.get.cid.show)
+              val entDocSpecs = in.reportingEntity
+                .filter(_.docSpec.corrDocRefId.isDefined)
+                .map(_.docSpec.corrDocRefId.get.cid.show) match {
+                case Some(entDoc: String) => List(entDoc)
+                case None                 => List()
+              }
+              val repDocSpec = in.cbcReport
+                .filter(_.docSpec.corrDocRefId.isDefined)
+                .map(_.docSpec.corrDocRefId.get.cid.show)
+              val allCorrDocSpecs = entDocSpecs ++ repDocSpec ++ addDocSpec
+
+              if (ComparisonUtil.isFullyCorrected(allDocs, allCorrDocSpecs)) {
+                Right(in)
+              } else {
+                Left(PartialDeletion)
+              }
+            case None => Right(in)
+          }
+          .toValidatedNel
+      case _ => Future.successful(in.validNel)
+    }
   }
 
   def validateBusinessRules(

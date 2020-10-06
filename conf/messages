@@ -380,6 +380,7 @@ error.AdditionalInfoDRINotFound5=from the first AdditionalInfo section of the in
 error.MessageRefIdDontMatchWithDocRefId=The report has not been uploaded. The DocRefID must begin with the MessageRefID contained within the message specification.
 error.InconsistentCurrencyCodes=You have used more than one currency in your report. You must use the same currency throughout your report.
 error.PartiallyCorrectedCurrency=Your correction file has used a different currency than the currency used in your previous submission. You can only use one currency throughout your report.
+error.PartialDeletion=Error Code 80009: You cannot partially delete your report. The report can only be deleted in full.
 
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid
