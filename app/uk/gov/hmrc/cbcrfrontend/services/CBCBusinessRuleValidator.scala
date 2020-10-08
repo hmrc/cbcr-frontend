@@ -704,14 +704,18 @@ class CBCBusinessRuleValidator @Inject()(
                       .filter(_.isDefined)
                       .map(_.get.cid.show)
 
-                    if (currCodes.head == code) {
-                      Right(x)
-                    } else {
-                      if (ComparisonUtil.isFullyCorrected(reports, corrDocRefIds)) {
-                        Right(x)
-                      } else {
-                        Left(PartiallyCorrectedCurrency)
-                      }
+                    currCodes.headOption match {
+                      case Some(currCode) =>
+                        if (currCode == code) {
+                          Right(x)
+                        } else {
+                          if (ComparisonUtil.isFullyCorrected(reports, corrDocRefIds)) {
+                            Right(x)
+                          } else {
+                            Left(PartiallyCorrectedCurrency)
+                          }
+                        }
+                      case None => Right(x)
                     }
                   case None => Right(x)
                 }
@@ -741,25 +745,25 @@ class CBCBusinessRuleValidator @Inject()(
           }
           .subflatMap {
             case Some(reportEntityData) =>
-              val allDocs = List(reportEntityData.reportingEntityDRI.show) ++ reportEntityData.cbcReportsDRI
-                .map(_.show)
-                .toList ++ reportEntityData.additionalInfoDRI.map(_.show)
-              val addDocSpec = in.additionalInfo
-                .filter(_.docSpec.corrDocRefId.isDefined)
-                .map(_.docSpec.corrDocRefId.get.cid.show)
-              val entDocSpecs = in.reportingEntity
-                .filter(_.docSpec.corrDocRefId.isDefined)
-                .map(_.docSpec.corrDocRefId.get.cid.show) match {
-                case Some(entDoc: String) => List(entDoc)
-                case None                 => List()
-              }
-              val repDocSpec = in.cbcReport
-                .filter(_.docSpec.corrDocRefId.isDefined)
-                .map(_.docSpec.corrDocRefId.get.cid.show)
-              val allCorrDocSpecs = entDocSpecs ++ repDocSpec ++ addDocSpec
+              //extract only the doc ref ids that were not previously deleted
+              val allDocs =
+                (List(reportEntityData.reportingEntityDRI) ++ reportEntityData.cbcReportsDRI.toList ++ reportEntityData.additionalInfoDRI)
+                  .filterNot(_.docTypeIndic == OECD3)
+                  .map(_.show)
 
-              if (ComparisonUtil.isFullyCorrected(allDocs, allCorrDocSpecs)) {
-                Right(in)
+              val allCorrDocSpecs = extractAllCorrDocRefIds(in)
+              val allDocTypes = extractAllDocTypes(in)
+
+              if (allDocTypes.forall(_ == allDocTypes.head)) {
+                allDocs.nonEmpty match {
+                  case true =>
+                    if (ComparisonUtil.isFullyCorrected(allDocs, allCorrDocSpecs)) {
+                      Right(in)
+                    } else {
+                      Left(PartialDeletion)
+                    }
+                  case false => Right(in)
+                }
               } else {
                 Left(PartialDeletion)
               }
@@ -768,6 +772,34 @@ class CBCBusinessRuleValidator @Inject()(
           .toValidatedNel
       case _ => Future.successful(in.validNel)
     }
+  }
+
+  def extractAllCorrDocRefIds(in: XMLInfo): List[String] = {
+    val addDocSpec = in.additionalInfo
+      .filter(_.docSpec.corrDocRefId.isDefined)
+      .map(_.docSpec.corrDocRefId.get.cid.show)
+    val entDocSpecs = in.reportingEntity
+      .filter(_.docSpec.corrDocRefId.isDefined)
+      .map(_.docSpec.corrDocRefId.get.cid.show) match {
+      case Some(entDoc: String) => List(entDoc)
+      case None                 => List()
+    }
+    val repDocSpec = in.cbcReport
+      .filter(_.docSpec.corrDocRefId.isDefined)
+      .map(_.docSpec.corrDocRefId.get.cid.show)
+
+    entDocSpecs ++ repDocSpec ++ addDocSpec
+  }
+
+  def extractAllDocTypes(in: XMLInfo): List[String] = {
+    val addDocSpec = in.additionalInfo.map(_.docSpec.docType.toString)
+    val entDocSpecs = in.reportingEntity match {
+      case Some(ent) => List(ent.docSpec.docType.toString)
+      case None      => List()
+    }
+    val repDocSpec = in.cbcReport.map(_.docSpec.docType.toString)
+
+    entDocSpecs ++ repDocSpec ++ addDocSpec
   }
 
   def validateBusinessRules(
