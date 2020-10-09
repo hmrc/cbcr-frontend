@@ -351,6 +351,7 @@ error.MessageTypeIndicError=Error DocTypeIndic (Correction): If the Submission i
 error.CorrDocRefIdInvalidRecord=Error Code 80003 CorrDocRefId (record no longer valid): The corrected record is no longer valid (invalidated or outdated by a previous correction message). As a consequence, no further information should have been received on this version of the record.
 error.CorrDocRefIdUnknownRecord=Error Code 80002 CorrDocRefId (unknown record): The CorrDocRefId refers to an unknown record
 error.DocRefIdDuplicate=Error Code 80001: DocRefId (already used)
+error.DocRefIdMismatch=The DocTypeIndic does not match with the DocTypeIndic from inside the DocRefId
 error.DocRefIdInvalidParentGroupElement=Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide.
 error.CorrDocRefIdInvalidParentGroupElement=Error Code 80000 CorrDocRefId (format): The structure of the CorrDocRefId is not in the correct format, as set out in the User Guide.
 error.CorrDocRefIdMissing=Error Code 80005 CorrDocRefId (missing): CorrDocRefId must be provided when DocTypeIndic is OECD2 or OECD3

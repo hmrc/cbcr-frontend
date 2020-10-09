@@ -310,6 +310,7 @@ class CBCBusinessRuleValidator @Inject()(
       allDocSpecs.map(validateDocSpec).sequence[FutureValidBusinessResult, DocSpec] *>
         validateDocTypes(entDocSpecs, repDocSpec) *>
         validateDistinctDocRefIds(allDocSpecs.map(_.docRefId)) *>
+        allDocSpecs.map(docRefIdMatchDocTypeIndicCheck).sequence[ValidBusinessResult, DocRefId] *>
         validateDistinctCorrDocRefIds(allDocSpecs.map(_.corrDocRefId).flatten) *>
         addCorrCheck.map(validateAddInfoCorrDRI).sequence[FutureValidBusinessResult, CorrDocRefId]
     )(_ => in)
@@ -394,6 +395,19 @@ class CBCBusinessRuleValidator @Inject()(
         case DocRefIdResponses.DoesNotExist => docSpec.docRefId.validNel
         case _                              => DocRefIdDuplicate.invalidNel
       }
+
+  private def docRefIdMatchDocTypeIndicCheck(docSpec: DocSpec)(
+    implicit hc: HeaderCarrier): ValidBusinessResult[DocRefId] = {
+    val docRefId = docSpec.docRefId
+    docSpec.docType match {
+      case OECD0 => docRefId.validNel
+      case _ =>
+        if (docRefId.docTypeIndic == docSpec.docType)
+          docRefId.validNel
+        else
+          DocRefIdMismatch.invalidNel
+    }
+  }
 
   /** Ensure the messageTypes and docTypes are valid and not in conflict */
   private def validateMessageTypeIndic(xmlInfo: XMLInfo): ValidBusinessResult[XMLInfo] = {

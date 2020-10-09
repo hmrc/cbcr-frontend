@@ -75,6 +75,15 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
   val corrDocRefId5 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC2").getOrElse(fail("bad docrefid"))
 
+  val docRefId6 =
+    DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2ENT").getOrElse(fail("bad docrefid"))
+  val docRefId7 =
+    DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP").getOrElse(fail("bad docrefid"))
+  val docRefId8 =
+    DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2ADD").getOrElse(fail("bad docrefid"))
+  val docRefId9 =
+    DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP2").getOrElse(fail("bad docrefid"))
+
   val schemaVer: String = "1.0"
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
@@ -1159,10 +1168,10 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT
             .pure[Future, CBCErrors, Option[ReportingEntityData]](None)
 
-          when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
-          when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
-          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
-          when(docRefIdService.queryDocRefId(EQ(docRefId4))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId6))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId7))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId8))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId9))(any())) thenReturn Future.successful(DoesNotExist)
 
           when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(Valid)
           when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
