@@ -89,6 +89,7 @@ case object CorrMessageRefIdNotAllowedInDocSpec extends BusinessRuleErrors
 case object ReportingPeriodInvalid extends BusinessRuleErrors
 case object MultipleFileUploadForSameReportingPeriod extends BusinessRuleErrors
 case object MessageRefIdDontMatchWithDocRefId extends BusinessRuleErrors
+case object DocRefIdMismatch extends BusinessRuleErrors
 
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
@@ -148,6 +149,7 @@ object BusinessRuleErrors {
       case MultipleFileUploadForSameReportingPeriod => JsString(MultipleFileUploadForSameReportingPeriod.toString)
       case MessageRefIdDontMatchWithDocRefId        => JsString(MessageRefIdDontMatchWithDocRefId.toString)
       case aidnf: AdditionalInfoDRINotFound         => Json.toJson(aidnf)
+      case DocRefIdMismatch                         => JsString(DocRefIdMismatch.toString)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -191,6 +193,7 @@ object BusinessRuleErrors {
             case Some(ci"reportingperiodinvalid")                  => JsSuccess(ReportingPeriodInvalid)
             case Some(ci"multiplefileuploadforsamereportingperiod") =>
               JsSuccess(MultipleFileUploadForSameReportingPeriod)
+            case Some(ci"docrefidmismatch")                  => JsSuccess(DocRefIdMismatch)
             case Some(ci"messagerefiddontmatchwithdocrefid") => JsSuccess(MessageRefIdDontMatchWithDocRefId)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
@@ -235,6 +238,7 @@ object BusinessRuleErrors {
     case AdditionalInfoDRINotFound(f, m) =>
       s"error.AdditionalInfoDRINotFound1 $m error.AdditionalInfoDRINotFound2" + " \r\n" + s" error.AdditionalInfoDRINotFound3 $f error.AdditionalInfoDRINotFound4"
     case MessageRefIdDontMatchWithDocRefId => "error.MessageRefIdDontMatchWithDocRefId"
+    case DocRefIdMismatch                  => "error.DocRefIdMismatch"
   }
 }
 

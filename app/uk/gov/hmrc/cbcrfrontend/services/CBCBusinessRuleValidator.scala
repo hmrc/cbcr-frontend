@@ -298,7 +298,6 @@ class CBCBusinessRuleValidator @Inject()(
     functorInstance.map(
       allDocSpecs.map(validateDocSpec).sequence[FutureValidBusinessResult, DocSpec] *>
         validateDocTypes(entDocSpecs, repDocSpec) *>
-        //allDocSpecs.map(docRefIdValidCheck).sequence[ValidBusinessResult, DocRefId] *>
         validateDistinctDocRefIds(allDocSpecs.map(_.docRefId)) *>
         validateDistinctCorrDocRefIds(allDocSpecs.map(_.corrDocRefId).flatten) *>
         addCorrCheck.map(validateAddInfoCorrDRI).sequence[FutureValidBusinessResult, CorrDocRefId]
@@ -369,8 +368,10 @@ class CBCBusinessRuleValidator @Inject()(
     }
 
   /** Do further validation on the provided [[DocRefId]] */
-  private def validateDocRefId(docSpec: DocSpec)(implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] =
+  private def validateDocRefId(docSpec: DocSpec)(implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] = {
     docRefIdDuplicateCheck(docSpec)
+    docRefIdMatchDocTypeIndicCheck(docSpec)
+  }
 
   /**
     * Query the [[DocRefIdService]] to find out if this docRefId is a duplicate
@@ -385,13 +386,13 @@ class CBCBusinessRuleValidator @Inject()(
         case _                              => DocRefIdDuplicate.invalidNel
       }
 
-  private def docRefIdValidCheck(docSpec: DocSpec)(implicit hc: HeaderCarrier): ValidBusinessResult[DocRefId] = {
-    val docSpecIndicType = docSpec.docType
-    val fromDocRefId = docSpec.docRefId.docTypeIndic
-    if (docSpec.docRefId.parentGroupElement == ENT || docSpecIndicType == fromDocRefId)
-      docSpec.docRefId.validNel
+  private def docRefIdMatchDocTypeIndicCheck(docSpec: DocSpec)(
+    implicit hc: HeaderCarrier): ValidBusinessResult[DocRefId] = {
+    val docRefId = docSpec.docRefId
+    if (docRefId.parentGroupElement == ENT || docRefId.docTypeIndic == docSpec.docType)
+      docRefId.validNel
     else
-      DocRefIdDuplicate.invalidNel
+      DocRefIdMismatch.invalidNel
   }
 
   /** Ensure the messageTypes and docTypes are valid and not in conflict */
