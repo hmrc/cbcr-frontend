@@ -90,7 +90,9 @@ case object ReportingPeriodInvalid extends BusinessRuleErrors
 case object MultipleFileUploadForSameReportingPeriod extends BusinessRuleErrors
 case object MessageRefIdDontMatchWithDocRefId extends BusinessRuleErrors
 case object DocRefIdMismatch extends BusinessRuleErrors
-
+case object InconsistentCurrencyCodes extends BusinessRuleErrors
+case object PartiallyCorrectedCurrency extends BusinessRuleErrors
+case object PartialDeletion extends BusinessRuleErrors
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
 case object PrivateBetaCBCIdError extends BusinessRuleErrors
@@ -148,6 +150,9 @@ object BusinessRuleErrors {
       case ReportingPeriodInvalid                   => JsString(ReportingPeriodInvalid.toString)
       case MultipleFileUploadForSameReportingPeriod => JsString(MultipleFileUploadForSameReportingPeriod.toString)
       case MessageRefIdDontMatchWithDocRefId        => JsString(MessageRefIdDontMatchWithDocRefId.toString)
+      case InconsistentCurrencyCodes                => JsString(InconsistentCurrencyCodes.toString)
+      case PartiallyCorrectedCurrency               => JsString(PartiallyCorrectedCurrency.toString)
+      case PartialDeletion                          => JsString(PartialDeletion.toString)
       case aidnf: AdditionalInfoDRINotFound         => Json.toJson(aidnf)
       case DocRefIdMismatch                         => JsString(DocRefIdMismatch.toString)
     }
@@ -195,6 +200,9 @@ object BusinessRuleErrors {
               JsSuccess(MultipleFileUploadForSameReportingPeriod)
             case Some(ci"docrefidmismatch")                  => JsSuccess(DocRefIdMismatch)
             case Some(ci"messagerefiddontmatchwithdocrefid") => JsSuccess(MessageRefIdDontMatchWithDocRefId)
+            case Some(ci"inconsistentcurrencycodes")         => JsSuccess(InconsistentCurrencyCodes)
+            case Some(ci"partiallycorrectedcurrency")        => JsSuccess(PartiallyCorrectedCurrency)
+            case Some(ci"partialdeletion")                   => JsSuccess(PartialDeletion)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
             case other => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -239,6 +247,9 @@ object BusinessRuleErrors {
       s"error.AdditionalInfoDRINotFound1 $m error.AdditionalInfoDRINotFound2" + " \r\n" + s" error.AdditionalInfoDRINotFound3 $f error.AdditionalInfoDRINotFound4"
     case MessageRefIdDontMatchWithDocRefId => "error.MessageRefIdDontMatchWithDocRefId"
     case DocRefIdMismatch                  => "error.DocRefIdMismatch"
+    case InconsistentCurrencyCodes         => "error.InconsistentCurrencyCodes"
+    case PartiallyCorrectedCurrency        => "error.PartiallyCorrectedCurrency"
+    case PartialDeletion                   => "error.PartialDeletion"
   }
 }
 

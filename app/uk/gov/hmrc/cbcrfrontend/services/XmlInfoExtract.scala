@@ -25,7 +25,7 @@ import com.scalawilliam.xs4s.Implicits._
 import com.scalawilliam.xs4s.XmlElementExtractor
 import uk.gov.hmrc.cbcrfrontend.model._
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 import scala.util.control.Exception.nonFatalCatch
 import scala.xml.{Node, NodeSeq}
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
@@ -138,6 +138,23 @@ class XmlInfoExtract {
       ds =>
         RawConstEntityName(ds.text)
 
+    case List("CBC_OECD", "CbcBody", "CbcReports", "Summary") =>
+      su =>
+        {
+          val unrelated = (su \ "Revenues" \ "Unrelated") \@ "currCode"
+          val related = (su \ "Revenues" \ "Related") \@ "currCode"
+          val total = (su \ "Revenues" \ "Total") \@ "currCode"
+          val profitOrLoss = (su \ "ProfitOrLoss") \@ "currCode"
+          val taxPaid = (su \ "TaxPaid") \@ "currCode"
+          val taxAccrued = (su \ "TaxAccrued") \@ "currCode"
+          val capital = (su \ "Capital") \@ "currCode"
+          val earnings = (su \ "Earnings") \@ "currCode"
+          val assets = (su \ "Assets") \@ "currCode"
+
+          RawCurrencyCodes(
+            List(unrelated, related, total, profitOrLoss, taxPaid, taxAccrued, capital, earnings, assets))
+        }
+
     case List("CBC_OECD", "CbcBody", "AdditionalInfo", "DocSpec") =>
       ds =>
         RawAdditionalInfo(getDocSpec(ds))
@@ -150,7 +167,6 @@ class XmlInfoExtract {
 
       val xmlEventReader = nonFatalCatch opt xmlInputFactory.createXMLEventReader(
         Source.fromFile(file).bufferedReader())
-
       try {
         val fields = xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten
         val numBodies = countBodys(file)
@@ -165,12 +181,13 @@ class XmlInfoExtract {
     val ms = collectedData._1
       .collectFirst { case ms: RawMessageSpec => ms }
       .getOrElse(RawMessageSpec("", "", "", "", "", None, None))
-    val re = collectedData._1.collectFirst { case re: RawReportingEntity => re }
-    val ai = collectedData._1.collect { case ai: RawAdditionalInfo       => ai }
-    val cr = collectedData._1.collect { case cr: RawCbcReports           => cr }
-    val cen = collectedData._1.collect { case cen: RawConstEntityName    => cen.name }
+    val re = collectedData._1.collectFirst { case re: RawReportingEntity                             => re }
+    val ai = collectedData._1.collect { case ai: RawAdditionalInfo                                   => ai }
+    val cr = collectedData._1.collect { case cr: RawCbcReports                                       => cr }
+    val cen = collectedData._1.collect { case cen: RawConstEntityName                                => cen.name }
+    val currencyCodes: List[RawCurrencyCodes] = collectedData._1.collect { case cc: RawCurrencyCodes => cc }
 
-    RawXMLInfo(ms, re, cr, ai, cv, xe, collectedData._2, cen)
+    RawXMLInfo(ms, re, cr, ai, cv, xe, collectedData._2, cen, currencyCodes)
 
   }
 

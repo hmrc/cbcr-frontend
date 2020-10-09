@@ -94,6 +94,7 @@ class SharedControllerSpec
       List(CbcReports(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
       List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
       Some(LocalDate.now()),
+      List.empty[String],
       List.empty[String]
     )
   }
