@@ -38,7 +38,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrieval, Retrievals}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import play.api.i18n.{I18nSupport, Lang, MessagesApi}
-import uk.gov.hmrc.cbcrfrontend.util.ComparisonUtil
+import uk.gov.hmrc.cbcrfrontend.util.BusinessRulesUtil
 
 import scala.util.{Failure, Try}
 
@@ -709,7 +709,7 @@ class CBCBusinessRuleValidator @Inject()(
                         if (currCode == code) {
                           Right(x)
                         } else {
-                          if (ComparisonUtil.isFullyCorrected(reports, corrDocRefIds)) {
+                          if (BusinessRulesUtil.isFullyCorrected(reports, corrDocRefIds)) {
                             Right(x)
                           } else {
                             Left(PartiallyCorrectedCurrency)
@@ -751,13 +751,13 @@ class CBCBusinessRuleValidator @Inject()(
                   .filterNot(_.docTypeIndic == OECD3)
                   .map(_.show)
 
-              val allCorrDocSpecs = extractAllCorrDocRefIds(in)
-              val allDocTypes = extractAllDocTypes(in)
+              val allCorrDocSpecs = BusinessRulesUtil.extractAllCorrDocRefIds(in)
+              val allDocTypes = BusinessRulesUtil.extractAllDocTypes(in)
 
               if (allDocTypes.forall(_ == allDocTypes.head)) {
                 allDocs.nonEmpty match {
                   case true =>
-                    if (ComparisonUtil.isFullyCorrected(allDocs, allCorrDocSpecs)) {
+                    if (BusinessRulesUtil.isFullyCorrected(allDocs, allCorrDocSpecs)) {
                       Right(in)
                     } else {
                       Left(PartialDeletion)
@@ -772,34 +772,6 @@ class CBCBusinessRuleValidator @Inject()(
           .toValidatedNel
       case _ => Future.successful(in.validNel)
     }
-  }
-
-  def extractAllCorrDocRefIds(in: XMLInfo): List[String] = {
-    val addDocSpec = in.additionalInfo
-      .filter(_.docSpec.corrDocRefId.isDefined)
-      .map(_.docSpec.corrDocRefId.get.cid.show)
-    val entDocSpecs = in.reportingEntity
-      .filter(_.docSpec.corrDocRefId.isDefined)
-      .map(_.docSpec.corrDocRefId.get.cid.show) match {
-      case Some(entDoc: String) => List(entDoc)
-      case None                 => List()
-    }
-    val repDocSpec = in.cbcReport
-      .filter(_.docSpec.corrDocRefId.isDefined)
-      .map(_.docSpec.corrDocRefId.get.cid.show)
-
-    entDocSpecs ++ repDocSpec ++ addDocSpec
-  }
-
-  def extractAllDocTypes(in: XMLInfo): List[String] = {
-    val addDocSpec = in.additionalInfo.map(_.docSpec.docType.toString)
-    val entDocSpecs = in.reportingEntity match {
-      case Some(ent) => List(ent.docSpec.docType.toString)
-      case None      => List()
-    }
-    val repDocSpec = in.cbcReport.map(_.docSpec.docType.toString)
-
-    entDocSpecs ++ repDocSpec ++ addDocSpec
   }
 
   def validateBusinessRules(
