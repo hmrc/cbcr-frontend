@@ -388,10 +388,14 @@ class CBCBusinessRuleValidator @Inject()(
   private def docRefIdMatchDocTypeIndicCheck(docSpec: DocSpec)(
     implicit hc: HeaderCarrier): ValidBusinessResult[DocRefId] = {
     val docRefId = docSpec.docRefId
-    if (docSpec.docType == OECD0 || docRefId.docTypeIndic == docSpec.docType)
-      docRefId.validNel
-    else
-      DocRefIdMismatch.invalidNel
+    docSpec.docType match {
+      case OECD0 => docRefId.validNel
+      case _ =>
+        if (docRefId.docTypeIndic == docSpec.docType)
+          docRefId.validNel
+        else
+          DocRefIdMismatch.invalidNel
+    }
   }
 
   /** Ensure the messageTypes and docTypes are valid and not in conflict */
