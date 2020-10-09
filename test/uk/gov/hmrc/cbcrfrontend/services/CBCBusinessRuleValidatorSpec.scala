@@ -757,9 +757,10 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          _ => fail("No errors should be generated"),
-          _ => ()
+          errors => errors.toList should contain(DocRefIdMismatch),
+          _ => fail("No InvalidXMLError generated")
         )
+
       }
       "when the DocType is OECD1 but there are CorrDocRefIds defined" in {
         when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
@@ -1145,8 +1146,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
             .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
-            errors => fail(s"Error were generated: $errors"),
-            _ => ()
+            errors => errors.toList should contain(DocRefIdMismatch),
+            _ => fail("No original submission was <3 generated")
           )
         }
       }
@@ -1277,8 +1278,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => fail(s"Error were generated: $errors"),
-          _ => ()
+          errors => errors.toList should contain(DocRefIdMismatch),
+          _ => fail("No reporting period correction matching original submission generated")
         )
       }
 
@@ -1292,8 +1293,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => fail(s"Error were generated: $errors"),
-          _ => ()
+          errors => errors.toList should contain(DocRefIdMismatch),
+          _ => fail("No original submission di not persist a reporting period generated")
         )
       }
 
@@ -1332,8 +1333,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
             .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
-            errors => fail(s"Error were generated: $errors"),
-            _ => ()
+            errors => errors.toList should contain(DocRefIdMismatch),
+            _ => fail("No original submission only persisted the 1st AdditionalInfo DRI was generated")
           )
         }
 
@@ -1351,8 +1352,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
             .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
-            errors => fail(s"Error were generated: $errors"),
-            _ => ()
+            errors => errors.toList should contain(DocRefIdMismatch),
+            _ => fail("No original submission only persisted the 1st AdditionalInfo DRI was generated")
           )
         }
 

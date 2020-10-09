@@ -299,6 +299,7 @@ class CBCBusinessRuleValidator @Inject()(
       allDocSpecs.map(validateDocSpec).sequence[FutureValidBusinessResult, DocSpec] *>
         validateDocTypes(entDocSpecs, repDocSpec) *>
         validateDistinctDocRefIds(allDocSpecs.map(_.docRefId)) *>
+        allDocSpecs.map(docRefIdMatchDocTypeIndicCheck).sequence[ValidBusinessResult, DocRefId] *>
         validateDistinctCorrDocRefIds(allDocSpecs.map(_.corrDocRefId).flatten) *>
         addCorrCheck.map(validateAddInfoCorrDRI).sequence[FutureValidBusinessResult, CorrDocRefId]
     )(_ => in)
@@ -368,10 +369,8 @@ class CBCBusinessRuleValidator @Inject()(
     }
 
   /** Do further validation on the provided [[DocRefId]] */
-  private def validateDocRefId(docSpec: DocSpec)(implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] = {
+  private def validateDocRefId(docSpec: DocSpec)(implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] =
     docRefIdDuplicateCheck(docSpec)
-    docRefIdMatchDocTypeIndicCheck(docSpec)
-  }
 
   /**
     * Query the [[DocRefIdService]] to find out if this docRefId is a duplicate
@@ -389,7 +388,7 @@ class CBCBusinessRuleValidator @Inject()(
   private def docRefIdMatchDocTypeIndicCheck(docSpec: DocSpec)(
     implicit hc: HeaderCarrier): ValidBusinessResult[DocRefId] = {
     val docRefId = docSpec.docRefId
-    if (docRefId.parentGroupElement == ENT || docRefId.docTypeIndic == docSpec.docType)
+    if (docSpec.docType == OECD0 || docRefId.docTypeIndic == docSpec.docType)
       docRefId.validNel
     else
       DocRefIdMismatch.invalidNel
