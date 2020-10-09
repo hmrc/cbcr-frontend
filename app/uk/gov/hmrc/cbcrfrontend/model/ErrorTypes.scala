@@ -198,9 +198,9 @@ object BusinessRuleErrors {
             case Some(ci"multiplefileuploadforsamereportingperiod") =>
               JsSuccess(MultipleFileUploadForSameReportingPeriod)
             case Some(ci"messagerefiddontmatchwithdocrefid") => JsSuccess(MessageRefIdDontMatchWithDocRefId)
-            case Some(ci"inconsistentCurrencyCodes")         => JsSuccess(InconsistentCurrencyCodes)
-            case Some(ci"partiallyCorrectedCurrency")        => JsSuccess(PartiallyCorrectedCurrency)
-            case Some(ci"partialDeletion")                   => JsSuccess(PartialDeletion)
+            case Some(ci"inconsistentcurrencycodes")         => JsSuccess(InconsistentCurrencyCodes)
+            case Some(ci"partiallycorrectedcurrency")        => JsSuccess(PartiallyCorrectedCurrency)
+            case Some(ci"partialdeletion")                   => JsSuccess(PartialDeletion)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
             case other => JsError(s"Unable to serialise $other to a BusinessRuleError")
