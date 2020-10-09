@@ -38,6 +38,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrieval, Retrievals}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import play.api.i18n.{I18nSupport, Lang, MessagesApi}
+import uk.gov.hmrc.cbcrfrontend.util.BusinessRulesUtil
 
 import scala.util.{Failure, Try}
 
@@ -88,7 +89,15 @@ class CBCBusinessRuleValidator @Inject()(
         in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult, ReportingEntity] |@|
         in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult, CbcReports] |@|
         in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult, AdditionalInfo])
-        .map(XMLInfo(_, _, _, _, Some(LocalDate.now()), in.constEntityNames))
+        .map(
+          XMLInfo(
+            _,
+            _,
+            _,
+            _,
+            Some(LocalDate.now()),
+            in.constEntityNames,
+            in.currencyCodes.map(elem => elem.currCodes).flatten))
     }
 
   private def extractMessageSpec(in: RawMessageSpec): ValidBusinessResult[MessageSpec] =
@@ -212,7 +221,9 @@ class CBCBusinessRuleValidator @Inject()(
       validateCreationDate(x) *>
       validateReportingPeriod(x) *>
       validateMultipleFileUploadForSameReportingPeriod(x) *>
-      validateMessageRefIds(x)
+      validateMessageRefIds(x) *>
+      validateCurrencyCodes(x) *>
+      validateDeletion(x)
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     in.reportingEntity
@@ -668,6 +679,101 @@ class CBCBusinessRuleValidator @Inject()(
     else x.validNel
   }
 
+  private def validateCurrencyCodes(x: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
+    val currCodes = x.currencyCodes
+    if (currCodes.forall(_ == currCodes.head)) {
+      determineMessageTypeIndic(x) match {
+        case Some(CBC401) => Future.successful(x.validNel)
+        case _ =>
+          val tin = x.reportingEntity.fold("")(_.tin.value)
+          val currentReportingPeriod = x.messageSpec.reportingPeriod
+
+          reportingEntityDataService
+            .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
+            .leftMap { cbcErrors =>
+              Logger.error(s"Got error back: $cbcErrors")
+              throw new Exception(s"Error communicating with backend: $cbcErrors")
+            }
+            .subflatMap {
+              case Some(reportEntityData) =>
+                reportEntityData.currencyCode match {
+                  case Some(code) =>
+                    val reports: List[String] = reportEntityData.cbcReportsDRI.map(_.show).toList
+                    val corrDocRefIds: List[String] = x.cbcReport
+                      .map(_.docSpec.corrDocRefId)
+                      .filter(_.isDefined)
+                      .map(_.get.cid.show)
+
+                    currCodes.headOption match {
+                      case Some(currCode) =>
+                        if (currCode == code) {
+                          Right(x)
+                        } else {
+                          if (BusinessRulesUtil.isFullyCorrected(reports, corrDocRefIds)) {
+                            Right(x)
+                          } else {
+                            Left(PartiallyCorrectedCurrency)
+                          }
+                        }
+                      case None => Right(x)
+                    }
+                  case None => Right(x)
+                }
+              case None => Right(x)
+            }
+            .toValidatedNel
+      }
+    } else {
+      Future.successful(InconsistentCurrencyCodes.invalidNel)
+    }
+
+  }
+
+  private def validateDeletion(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
+    val reportingEntityDocTypeIndicator = in.reportingEntity.map(_.docSpec.docType)
+
+    reportingEntityDocTypeIndicator match {
+      case Some(indicator) if indicator == OECD3 =>
+        val tin = in.reportingEntity.fold("")(_.tin.value)
+        val currentReportingPeriod = in.messageSpec.reportingPeriod
+
+        reportingEntityDataService
+          .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
+          .leftMap { cbcErrors =>
+            Logger.error(s"Got error back: $cbcErrors")
+            throw new Exception(s"Error communicating with backend: $cbcErrors")
+          }
+          .subflatMap {
+            case Some(reportEntityData) =>
+              //extract only the doc ref ids that were not previously deleted
+              val allDocs =
+                (List(reportEntityData.reportingEntityDRI) ++ reportEntityData.cbcReportsDRI.toList ++ reportEntityData.additionalInfoDRI)
+                  .filterNot(_.docTypeIndic == OECD3)
+                  .map(_.show)
+
+              val allCorrDocSpecs = BusinessRulesUtil.extractAllCorrDocRefIds(in)
+              val allDocTypes = BusinessRulesUtil.extractAllDocTypes(in)
+
+              if (allDocTypes.forall(_ == allDocTypes.head)) {
+                allDocs.nonEmpty match {
+                  case true =>
+                    if (BusinessRulesUtil.isFullyCorrected(allDocs, allCorrDocSpecs)) {
+                      Right(in)
+                    } else {
+                      Left(PartialDeletion)
+                    }
+                  case false => Right(in)
+                }
+              } else {
+                Left(PartialDeletion)
+              }
+            case None => Right(in)
+          }
+          .toValidatedNel
+      case _ => Future.successful(in.validNel)
+    }
+  }
+
   def validateBusinessRules(
     in: RawXMLInfo,
     fileName: String,
@@ -681,13 +787,15 @@ class CBCBusinessRuleValidator @Inject()(
   def recoverReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[CompleteXMLInfo] =
     in.reportingEntity match {
       case Some(re) =>
-        Future.successful(CompleteXMLInfo(
-          in.messageSpec,
-          re,
-          in.cbcReport,
-          in.additionalInfo,
-          in.creationDate,
-          in.constEntityNames).validNel)
+        Future.successful(
+          CompleteXMLInfo(
+            in.messageSpec,
+            re,
+            in.cbcReport,
+            in.additionalInfo,
+            in.creationDate,
+            in.constEntityNames,
+            in.currencyCodes).validNel)
       case None =>
         val id = in.cbcReport
           .find(_.docSpec.corrDocRefId.isDefined)
