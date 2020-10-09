@@ -1476,13 +1476,23 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
       val partiallyCorrectedCurrency =
         new File("test/resources/cbcr-with-partially-corrected-currency" + ".xml")
 
+      val fullFile = new File("test/resources/cbcr-with-fully-corrected-currency" + ".xml")
       val result1 = Await.result(
         validator
           .validateBusinessRules(partiallyCorrectedCurrency, filename, Some(enrol), Some(Organisation)),
         5.seconds)
+      val result2 = Await.result(
+        validator
+          .validateBusinessRules(fullFile, filename, Some(enrol), Some(Organisation)),
+        5.seconds
+      )
 
       result1.fold(
         errors => errors.toList should contain(PartiallyCorrectedCurrency),
+        _ => fail("PartiallyCorrectedCurrency")
+      )
+      result2.fold(
+        errors => errors.toList shouldNot contain(PartiallyCorrectedCurrency),
         _ => fail("PartiallyCorrectedCurrency")
       )
 
@@ -1545,16 +1555,40 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(reportEntityData))
       val partialDeletionFile =
         new File("test/resources/cbcr-partial-deletion" + ".xml")
+      val anotherPartialDeletion = new File("test/resources/cbcr-inconsistent-OECD3" + ".xml")
 
-      val filenameOrig = "GB2017RGXLCBC0100000056CBC40120180311T090000X2017.xml"
+      val fullDeletion = new File("test/resources/cbcr-full-deletion" + ".xml")
+      val filenameOrig = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018.xml"
+      val filenameSecond = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018Second.xml"
+      val filenameThird = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018Third.xml"
       val result1 = Await.result(
         validator
           .validateBusinessRules(partialDeletionFile, filenameOrig, Some(enrol), Some(Organisation)),
         5.seconds)
+      val result2 = Await.result(
+        validator
+          .validateBusinessRules(anotherPartialDeletion, filenameSecond, Some(enrol), Some(Organisation)),
+        5.seconds
+      )
+
+      val result3 = Await.result(
+        validator
+          .validateBusinessRules(fullDeletion, filenameThird, Some(enrol), Some(Organisation)),
+        5.seconds
+      )
 
       result1.fold(
         errors => errors.toList should contain(PartialDeletion),
         _ => fail("PartialDeletion")
+      )
+      result2.fold(
+        errors => errors.toList should contain(PartialDeletion),
+        _ => fail("PartialDeletion")
+      )
+
+      result3.fold(
+        errors => errors.toList shouldNot contain(PartialDeletion),
+        _ => fail("FullDeletion")
       )
     }
   }
