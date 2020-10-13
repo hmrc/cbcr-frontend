@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ns1:CBC_OECD version="2.0" xmlns:ns1="urn:oecd:ties:cbc:v2">
+<ns1:CBC_OECD version="1.0" xmlns:ns1="urn:oecd:ties:cbc:v1">
     <ns1:MessageSpec>
         <ns1:SendingEntityIN>XLCBC0100000056</ns1:SendingEntityIN>
         <ns1:TransmittingCountry>US</ns1:TransmittingCountry>
@@ -8,10 +8,10 @@
         <ns1:Language>EN</ns1:Language>
         <ns1:Warning>String_Warning</ns1:Warning>
         <ns1:Contact>Contact ABCCorp</ns1:Contact>
-        <ns1:MessageRefId>GB2016RGXLCBC0100000056CBC40120170311T090000X</ns1:MessageRefId>
+        <ns1:MessageRefId>GB2017RGXLCBC0100000056CBC40220180311T090000X2018Second</ns1:MessageRefId>
         <ns1:MessageTypeIndic>CBC402</ns1:MessageTypeIndic>
-        <ns1:ReportingPeriod>2016-03-31</ns1:ReportingPeriod>
-        <ns1:Timestamp>2016-11-01T15:00:00</ns1:Timestamp>
+        <ns1:ReportingPeriod>2017-03-31</ns1:ReportingPeriod>
+        <ns1:Timestamp>2017-11-01T15:00:00</ns1:Timestamp>
     </ns1:MessageSpec>
     <ns1:CbcBody>
         <ns1:ReportingEntity>
@@ -27,16 +27,16 @@
             </ns1:Entity>
             <ns1:ReportingRole>CBC703</ns1:ReportingRole>
             <ns1:DocSpec>
-                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2ENT</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENTC</ns2:CorrDocRefId>
+                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD3</ns2:DocTypeIndic>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2017RGXLCBC0100000056CBC40220180311T090000X2018Second_7000000002OECD3ENTDeletion</ns2:DocRefId>
+                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1ENT1</ns2:CorrDocRefId>
             </ns1:DocSpec>
         </ns1:ReportingEntity>
         <ns1:CbcReports>
             <ns1:DocSpec>
-                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC</ns2:CorrDocRefId>
+                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD3</ns2:DocTypeIndic>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2017RGXLCBC0100000056CBC40220180311T090000X2018Second_7000000002OECD3REP1Deletion</ns2:DocRefId>
+                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1REP1</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>
@@ -71,9 +71,9 @@
         </ns1:CbcReports>
         <ns1:CbcReports>
             <ns1:DocSpec>
-                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP2</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC2</ns2:CorrDocRefId>
+                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD3</ns2:DocTypeIndic>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2017RGXLCBC0100000056CBC40220180311T090000X2018Second_7000000002OECD3REP2Deletion</ns2:DocRefId>
+                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1REP2</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>
@@ -109,8 +109,8 @@
         <ns1:AdditionalInfo>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD2</ns2:DocTypeIndic>
-                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2ADD</ns2:DocRefId>
-                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADDC</ns2:CorrDocRefId>
+                <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2017RGXLCBC0100000056CBC40220180311T090000X2018Second_7000000002OECD2ADDDeletion</ns2:DocRefId>
+                <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1ADD1</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:OtherInfo>String_OtherInfo</ns1:OtherInfo>
             <ns1:ResCountryCode>GB</ns1:ResCountryCode>

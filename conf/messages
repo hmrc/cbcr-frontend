@@ -351,6 +351,7 @@ error.MessageTypeIndicError=Error DocTypeIndic (Correction): If the Submission i
 error.CorrDocRefIdInvalidRecord=Error Code 80003 CorrDocRefId (record no longer valid): The corrected record is no longer valid (invalidated or outdated by a previous correction message). As a consequence, no further information should have been received on this version of the record.
 error.CorrDocRefIdUnknownRecord=Error Code 80002 CorrDocRefId (unknown record): The CorrDocRefId refers to an unknown record
 error.DocRefIdDuplicate=Error Code 80001: DocRefId (already used)
+error.DocRefIdMismatch=The DocTypeIndic does not match with the DocTypeIndic from inside the DocRefId
 error.DocRefIdInvalidParentGroupElement=Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide.
 error.CorrDocRefIdInvalidParentGroupElement=Error Code 80000 CorrDocRefId (format): The structure of the CorrDocRefId is not in the correct format, as set out in the User Guide.
 error.CorrDocRefIdMissing=Error Code 80005 CorrDocRefId (missing): CorrDocRefId must be provided when DocTypeIndic is OECD2 or OECD3
@@ -378,6 +379,9 @@ error.AdditionalInfoDRINotFound3=Please move the information into the Additional
 error.AdditionalInfoDRINotFound4=and resubmit. You can also also contact ‘digitalservice.cbc@hmrc.gsi.gov.uk’ to discuss this issue if preferred.
 error.AdditionalInfoDRINotFound5=from the first AdditionalInfo section of the initial submission
 error.MessageRefIdDontMatchWithDocRefId=The report has not been uploaded. The DocRefID must begin with the MessageRefID contained within the message specification.
+error.InconsistentCurrencyCodes=You have used more than one currency in your report. All amounts provided in the Country-by-Country Report should be reported in one and the same currency, being the currency of the Reporting MNE.
+error.PartiallyCorrectedCurrency=Your correction file has used a different currency than the currency used in your previous submission. A single year’s report cannot contain mixed currencies.
+error.PartialDeletion=Error Code 80009: You cannot partially delete your report. The report can only be deleted in full.
 
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid

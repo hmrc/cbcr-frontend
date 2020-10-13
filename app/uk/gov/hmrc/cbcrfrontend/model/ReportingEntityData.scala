@@ -47,7 +47,8 @@ case class ReportingEntityData(
   ultimateParentEntity: UltimateParentEntity,
   reportingRole: ReportingRole,
   creationDate: Option[LocalDate],
-  reportingPeriod: Option[LocalDate])
+  reportingPeriod: Option[LocalDate],
+  currencyCode: Option[String])
 
 case class DocRefIdPair(docRefId: DocRefId, corrDocRefId: Option[CorrDocRefId])
 object DocRefIdPair { implicit val format = Json.format[DocRefIdPair] }
@@ -60,7 +61,8 @@ case class PartialReportingEntityData(
   ultimateParentEntity: UltimateParentEntity,
   reportingRole: ReportingRole,
   creationDate: Option[LocalDate],
-  reportingPeriod: Option[LocalDate])
+  reportingPeriod: Option[LocalDate],
+  currencyCode: Option[String])
 
 object PartialReportingEntityData {
   implicit def formatNEL[A: Format] = new Format[NonEmptyList[A]] {
@@ -87,7 +89,8 @@ object PartialReportingEntityData {
       UltimateParentEntity(x.reportingEntity.name),
       x.reportingEntity.reportingRole,
       x.creationDate,
-      Some(x.messageSpec.reportingPeriod)
+      Some(x.messageSpec.reportingPeriod),
+      x.currencyCodes.headOption
     )
 }
 
@@ -106,7 +109,8 @@ object ReportingEntityData {
         UltimateParentEntity(x.reportingEntity.name),
         x.reportingEntity.reportingRole,
         x.creationDate,
-        Some(x.messageSpec.reportingPeriod)
+        Some(x.messageSpec.reportingPeriod),
+        x.currencyCodes.headOption
       )
 
     }
@@ -122,7 +126,8 @@ case class ReportingEntityDataModel(
   reportingRole: ReportingRole,
   creationDate: Option[LocalDate],
   reportingPeriod: Option[LocalDate],
-  oldModel: Boolean)
+  oldModel: Boolean,
+  currencyCode: Option[String])
 
 object ReportingEntityDataModel {
 

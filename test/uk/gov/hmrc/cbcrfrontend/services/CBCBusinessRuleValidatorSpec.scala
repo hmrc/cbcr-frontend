@@ -33,6 +33,7 @@ import scala.concurrent.{Await, Future}
 import cats.instances.future._
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import org.mockito.ArgumentMatchers.{eq => EQ, _}
+import org.scalatest.BeforeAndAfterEach
 import uk.gov.hmrc.emailaddress.EmailAddress
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
@@ -73,6 +74,15 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP2C").getOrElse(fail("bad docrefid"))
   val corrDocRefId5 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC2").getOrElse(fail("bad docrefid"))
+
+  val docRefId6 =
+    DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2ENT").getOrElse(fail("bad docrefid"))
+  val docRefId7 =
+    DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP").getOrElse(fail("bad docrefid"))
+  val docRefId8 =
+    DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2ADD").getOrElse(fail("bad docrefid"))
+  val docRefId9 =
+    DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP2").getOrElse(fail("bad docrefid"))
 
   val schemaVer: String = "1.0"
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
@@ -126,6 +136,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     UltimateParentEntity("someone"),
     CBC701,
     Some(LocalDate.now()),
+    None,
     None
   )
   val redReportPeriod = ReportingEntityData(
@@ -136,7 +147,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     UltimateParentEntity("someone"),
     CBC701,
     Some(LocalDate.now()),
-    Some(LocalDate.of(2018, 1, 1))
+    Some(LocalDate.of(2018, 1, 1)),
+    None
   )
   val redmTrue = ReportingEntityDataModel(
     NonEmptyList.of(actualDocRefId),
@@ -147,7 +159,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     CBC701,
     Some(LocalDate.now()),
     None,
-    true
+    true,
+    None
   )
   val redmFalse = ReportingEntityDataModel(
     NonEmptyList.of(actualDocRefId),
@@ -158,7 +171,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     CBC701,
     Some(LocalDate.now()),
     None,
-    false
+    false,
+    None
   )
 
   val xmlinfo = XMLInfo(
@@ -175,6 +189,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     List(CbcReports(DocSpec(OECD1, DocRefId(docRefId + "ENT").get, None, None))),
     List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None))),
     Some(LocalDate.now()),
+    List.empty[String],
     List.empty[String]
   )
 
@@ -188,6 +203,32 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     creationDateService)
 
   "The CBCBusinessRuleValidator" should {
+
+    "throw an error if currency codes are not consistent in same xml report " in {
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+      when(reportingEntity.queryReportingEntityDataTin(any(), any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](None)
+
+      val inconsistentCurrency =
+        new File("test/resources/cbcr-inconsistent-currency-codes" + ".xml")
+      val validFile = new File("test/resources/cbcr-valid-currency-codes" + ".xml")
+
+      val result1 = Await.result(
+        validator.validateBusinessRules(inconsistentCurrency, filename, Some(enrol), Some(Organisation)),
+        5.seconds)
+      val result2 =
+        Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+      result1.fold(
+        errors => errors.toList should contain(InconsistentCurrencyCodes),
+        _ => fail("InconsistentCurrencyCodes")
+      )
+      result2.fold(
+        errors => fail(s"Errors were generated ${errors.toList}"),
+        _ => ()
+      )
+
+    }
 
     "throw an error when multiple file uploaded for the same reporting period of original submission when the previous submission exists" in {
 
@@ -205,7 +246,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         UltimateParentEntity("someone"),
         CBC703,
         Some(LocalDate.now()),
-        Some(LocalDate.of(2016, 3, 31))
+        Some(LocalDate.of(2016, 3, 31)),
+        None
       )
 
       when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
@@ -1131,10 +1173,10 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT
             .pure[Future, CBCErrors, Option[ReportingEntityData]](None)
 
-          when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
-          when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
-          when(docRefIdService.queryDocRefId(EQ(docRefId3))(any())) thenReturn Future.successful(DoesNotExist)
-          when(docRefIdService.queryDocRefId(EQ(docRefId4))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId6))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId7))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId8))(any())) thenReturn Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(EQ(docRefId9))(any())) thenReturn Future.successful(DoesNotExist)
 
           when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(Valid)
           when(docRefIdService.queryDocRefId(EQ(corrDocRefId2))(any())) thenReturn Future.successful(Valid)
@@ -1399,6 +1441,169 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           )
         }
       }
+    }
+
+    "throw an error when the user partially changes the currency code in a correction" in {
+
+      val firstOriginalReportingEntityDri =
+        DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X1_7000000002OECD1ENT1").get
+      val firstOriginalCbcReportsDri =
+        DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X1_7000000002OECD1REP1").get
+      val secondOriginalCbcReportsDri =
+        DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X1_7000000002OECD1REP2").get
+      val firstOriginalAdditionalInfoDri =
+        DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X1_7000000002OECD1ADD1").get
+
+      val reportEntityData = ReportingEntityData(
+        NonEmptyList.of(firstOriginalCbcReportsDri, secondOriginalCbcReportsDri),
+        List(firstOriginalAdditionalInfoDri),
+        firstOriginalReportingEntityDri,
+        TIN("7000000002", "GB"),
+        UltimateParentEntity("someone"),
+        CBC703,
+        Some(LocalDate.now()),
+        Some(LocalDate.of(2016, 3, 31)),
+        Some("GBP")
+      )
+      val reportEntityDataModel = ReportingEntityDataModel(
+        NonEmptyList.of(firstOriginalCbcReportsDri, secondOriginalCbcReportsDri),
+        List(firstOriginalAdditionalInfoDri),
+        firstOriginalReportingEntityDri,
+        TIN("7000000002", "GB"),
+        UltimateParentEntity("someone"),
+        CBC703,
+        Some(LocalDate.now()),
+        Some(LocalDate.of(2016, 3, 31)),
+        false,
+        Some("GBP")
+      )
+
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+      when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(Valid)
+      when(reportingEntity.queryReportingEntityDataTin(any(), any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(reportEntityData))
+      when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[ReportingEntityDataModel]](Future.successful(Some(reportEntityDataModel)))
+
+      when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(reportEntityData))
+      val partiallyCorrectedCurrency =
+        new File("test/resources/cbcr-with-partially-corrected-currency" + ".xml")
+
+      val fullFile = new File("test/resources/cbcr-with-fully-corrected-currency" + ".xml")
+      val result1 = Await.result(
+        validator
+          .validateBusinessRules(partiallyCorrectedCurrency, filename, Some(enrol), Some(Organisation)),
+        5.seconds)
+      val result2 = Await.result(
+        validator
+          .validateBusinessRules(fullFile, filename, Some(enrol), Some(Organisation)),
+        5.seconds
+      )
+
+      result1.fold(
+        errors => errors.toList should contain(PartiallyCorrectedCurrency),
+        _ => fail("PartiallyCorrectedCurrency")
+      )
+      result2.fold(
+        errors => errors.toList shouldNot contain(PartiallyCorrectedCurrency),
+        _ => fail("PartiallyCorrectedCurrency")
+      )
+
+    }
+
+    "throw an error when the user partially deletes a file" in {
+
+      val firstOriginalReportingEntityDri =
+        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1ENT1").get
+      val firstOriginalCbcReportsDri =
+        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1REP1").get
+      val secondOriginalCbcReportsDri =
+        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1REP2").get
+      val thirdCbcReportsDri =
+        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD3REP3").get
+      val firstOriginalAdditionalInfoDri =
+        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1ADD1").get
+
+      val reportEntityData = ReportingEntityData(
+        NonEmptyList.of(firstOriginalCbcReportsDri, secondOriginalCbcReportsDri),
+        List(firstOriginalAdditionalInfoDri),
+        firstOriginalReportingEntityDri,
+        TIN("7000000002", "GB"),
+        UltimateParentEntity("someone"),
+        CBC703,
+        Some(LocalDate.now()),
+        Some(LocalDate.of(2017, 3, 31)),
+        Some("USD")
+      )
+      val reportEntityDataModel = ReportingEntityDataModel(
+        NonEmptyList.of(firstOriginalCbcReportsDri, secondOriginalCbcReportsDri),
+        List(firstOriginalAdditionalInfoDri),
+        firstOriginalReportingEntityDri,
+        TIN("7000000002", "GB"),
+        UltimateParentEntity("someone"),
+        CBC703,
+        Some(LocalDate.now()),
+        Some(LocalDate.of(2017, 3, 31)),
+        false,
+        Some("USD")
+      )
+
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+      when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(Valid)
+      when(docRefIdService.queryDocRefId(EQ(DocRefId(
+        "GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ENTDeletion").get))(any())) thenReturn Future
+        .successful(DoesNotExist)
+      when(docRefIdService.queryDocRefId(EQ(DocRefId(
+        "GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3REP1Deletion").get))(any())) thenReturn Future
+        .successful(DoesNotExist)
+      when(docRefIdService.queryDocRefId(EQ(DocRefId(
+        "GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ADDDeletion").get))(any())) thenReturn Future
+        .successful(DoesNotExist)
+      when(reportingEntity.queryReportingEntityDataTin(any(), any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(reportEntityData))
+      when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT
+        .right[Future, CBCErrors, Option[ReportingEntityDataModel]](Future.successful(Some(reportEntityDataModel)))
+
+      when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(reportEntityData))
+      val partialDeletionFile =
+        new File("test/resources/cbcr-partial-deletion" + ".xml")
+      val anotherPartialDeletion = new File("test/resources/cbcr-inconsistent-OECD3" + ".xml")
+
+      val fullDeletion = new File("test/resources/cbcr-full-deletion" + ".xml")
+      val filenameOrig = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018.xml"
+      val filenameSecond = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018Second.xml"
+      val filenameThird = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018Third.xml"
+      val result1 = Await.result(
+        validator
+          .validateBusinessRules(partialDeletionFile, filenameOrig, Some(enrol), Some(Organisation)),
+        5.seconds)
+      val result2 = Await.result(
+        validator
+          .validateBusinessRules(anotherPartialDeletion, filenameSecond, Some(enrol), Some(Organisation)),
+        5.seconds
+      )
+
+      val result3 = Await.result(
+        validator
+          .validateBusinessRules(fullDeletion, filenameThird, Some(enrol), Some(Organisation)),
+        5.seconds
+      )
+
+      result1.fold(
+        errors => errors.toList should contain(PartialDeletion),
+        _ => fail("PartialDeletion")
+      )
+      result2.fold(
+        errors => errors.toList should contain(PartialDeletion),
+        _ => fail("PartialDeletion")
+      )
+
+      result3.fold(
+        errors => errors.toList shouldNot contain(PartialDeletion),
+        _ => fail("FullDeletion")
+      )
     }
   }
 }

@@ -31,6 +31,7 @@ sealed trait RawXmlFields extends Product with Serializable
 case object RawBody extends RawXmlFields
 case class RawAdditionalInfo(docSpec: RawDocSpec) extends RawXmlFields
 case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
+case class RawCurrencyCodes(currCodes: List[String]) extends RawXmlFields
 case class RawDocSpec(docType: String, docRefId: String, corrDocRefId: Option[String], corrMessageRefId: Option[String])
     extends RawXmlFields
 case class RawCbcVal(cbcVer: String) extends RawXmlFields
@@ -60,7 +61,8 @@ case class RawXMLInfo(
   cbcVal: RawCbcVal,
   xmlEncoding: Option[RawXmlEncodingVal],
   numBodies: Int,
-  constEntityNames: List[String])
+  constEntityNames: List[String],
+  currencyCodes: List[RawCurrencyCodes])
     extends RawXmlFields
 
 /** These models represent the type-validated data, derived from the raw data */
@@ -178,7 +180,8 @@ case class XMLInfo(
   cbcReport: List[CbcReports],
   additionalInfo: List[AdditionalInfo],
   creationDate: Option[LocalDate],
-  constEntityNames: List[String])
+  constEntityNames: List[String],
+  currencyCodes: List[String])
 object XMLInfo { implicit val format = Json.format[XMLInfo] }
 
 case class CompleteXMLInfo(
@@ -187,9 +190,17 @@ case class CompleteXMLInfo(
   cbcReport: List[CbcReports],
   additionalInfo: List[AdditionalInfo],
   creationDate: Option[LocalDate],
-  constEntityNames: List[String])
+  constEntityNames: List[String],
+  currencyCodes: List[String])
 object CompleteXMLInfo {
   def apply(x: XMLInfo, reportingEntity: ReportingEntity): CompleteXMLInfo =
-    CompleteXMLInfo(x.messageSpec, reportingEntity, x.cbcReport, x.additionalInfo, x.creationDate, x.constEntityNames)
+    CompleteXMLInfo(
+      x.messageSpec,
+      reportingEntity,
+      x.cbcReport,
+      x.additionalInfo,
+      x.creationDate,
+      x.constEntityNames,
+      x.currencyCodes)
   implicit val format = Json.format[CompleteXMLInfo]
 }
