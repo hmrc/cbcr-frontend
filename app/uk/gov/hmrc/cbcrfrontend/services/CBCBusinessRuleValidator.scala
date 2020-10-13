@@ -70,7 +70,8 @@ class CBCBusinessRuleValidator @Inject()(
 
   private val testData = "OECD1[0123]"
 
-  private val cbcVersion = configuration
+  private val cbcVersion = "2.0"
+  private val cbcVersionOld = configuration
     .getString(s"${runMode.env}.oecd-schema-version")
     .getOrElse(
       throw new Exception(s"Missing configuration key: ${runMode.env}.oecd-schema-version")
@@ -189,9 +190,13 @@ class CBCBusinessRuleValidator @Inject()(
     if (!xe.xmlEncodingVal.equalsIgnoreCase("UTF-8")) XmlEncodingError.invalidNel
     else ().validNel
 
-  private def extractCbcOecdVersion(cv: RawCbcVal): ValidBusinessResult[Unit] =
-    if (cv.cbcVer != cbcVersion) CbcOecdVersionError.invalidNel
-    else ().validNel
+  private def extractCbcOecdVersion(cv: RawCbcVal): ValidBusinessResult[Unit] = {
+    println(
+      s"Mohan Error cbcVersion = $cbcVersion and cv.cbcVer = ${cv.cbcVer}  and runMode = ${runMode.env}.oecd-schema-version")
+    if (cv.cbcVer != cbcVersion) {
+      CbcOecdVersionError.invalidNel
+    } else ().validNel
+  }
 
   // <<<<<<<<<<:::Validation methods:::>>>>>>>>>>>>>
 

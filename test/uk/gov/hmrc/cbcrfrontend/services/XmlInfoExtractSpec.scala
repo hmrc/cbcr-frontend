@@ -39,7 +39,7 @@ class XmlInfoExtractSpec extends UnitSpec {
       e.messageSpec.timestamp shouldBe "2016-11-01T15:00:00"
 
       e.xmlEncoding.get.xmlEncodingVal shouldBe "UTF-8"
-      e.cbcVal.cbcVer shouldBe "1.0"
+      e.cbcVal.cbcVer shouldBe "2.0"
 
       val re = e.reportingEntity.get
       re.name shouldBe "ABCCorp"

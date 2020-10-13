@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ns1:CBC_OECD version="1.0" xmlns:ns1="urn:oecd:ties:cbc:v1">
+<ns1:CBC_OECD version="2.0" xmlns:ns1="urn:oecd:ties:cbc:v2">
     <ns1:MessageSpec>
         <ns1:SendingEntityIN>XMCBC0100000057</ns1:SendingEntityIN>
         <ns1:TransmittingCountry>US</ns1:TransmittingCountry>

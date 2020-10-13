@@ -365,7 +365,9 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         val result =
           Await.result(validator.validateBusinessRules(validFile, filename, None, Some(Organisation)), 5.seconds)
         result.fold(
-          errors => errors.toList should contain(SendingEntityOrganisationMatchError),
+          errors => {
+            println("MOHAN MOHAN 1" + errors.toList); errors.toList should contain(SendingEntityOrganisationMatchError)
+          },
           _ => fail("No Sending Entity Organisation Match Error")
         )
 
@@ -401,7 +403,10 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         val result = Await
           .result(validator.validateBusinessRules(validFile, filename, Some(enrol2), Some(Organisation)), 5.seconds)
         result.fold(
-          errors => errors.toList should contain(SendingEntityOrganisationMatchError),
+          errors => {
+            println("MOHAN MOHAN 2" + errors.toList);
+            errors.toList should contain(SendingEntityOrganisationMatchError)
+          },
           _ => fail("No Sending Entity Organisation Match Error")
         )
 
@@ -422,7 +427,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         val result =
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
         result.fold(
-          errors => fail(s"Errors were generated ${errors.toList}"),
+          errors => { println("MOHAN MOHAN 3 " + errors.toList); fail(s"Errors were generated ${errors.toList}") },
           _ => ()
         )
 

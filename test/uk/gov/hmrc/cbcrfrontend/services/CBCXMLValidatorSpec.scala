@@ -68,6 +68,7 @@ class CBCXMLValidatorSpec extends WordSpec with Matchers with GuiceOneAppPerSuit
     "return multiple errors if the file is invalid and has multiple errors" in {
       val validate = validator.validateSchema(invalidMultipleXmlFile)
       validate.hasErrors shouldBe true
+      println("MOHAN MOHAN ::: " + validate.errorsCollection)
       validate.errorsCollection.size shouldBe 20
     }
 
