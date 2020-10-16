@@ -43,12 +43,44 @@ class ReportingEntityDataServiceSpec
   val connector = mock[CBCRBackendConnector]
   val reds = new ReportingEntityDataService(connector)
   val docRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").get
+  val crnDocRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000A_7000000002OECD1REP").get
+  val corrDocRefId = CorrDocRefId(crnDocRefId)
   val cbcid = CBCId.create(1).toOption
+  val tin = TIN("90000000001", "")
+  val reportingPeriod = "31-03-2016"
+  val docRefIdpair = DocRefIdPair(docRefId: DocRefId, Some(corrDocRefId))
 
   val red = ReportingEntityData(
     NonEmptyList(docRefId, Nil),
     List(docRefId),
     docRefId,
+    TIN("90000000001", ""),
+    UltimateParentEntity("Foo Corp"),
+    CBC701,
+    Some(LocalDate.now()),
+    None,
+    Some("USD")
+  )
+
+  val redModel = ReportingEntityDataModel(
+    NonEmptyList(docRefId, Nil),
+    List(docRefId),
+    docRefId,
+    TIN("90000000001", ""),
+    UltimateParentEntity("Foo Corp"),
+    CBC701,
+    Some(LocalDate.now()),
+    None,
+    true,
+    Some("USD")
+  )
+
+  DocRefIdPair(docRefId: DocRefId, Some(corrDocRefId))
+
+  val partialRed = PartialReportingEntityData(
+    List(docRefIdpair),
+    List(docRefIdpair),
+    docRefIdpair,
     TIN("90000000001", ""),
     UltimateParentEntity("Foo Corp"),
     CBC701,
@@ -112,6 +144,123 @@ class ReportingEntityDataServiceSpec
         val result = Await.result(reds.queryReportingEntityDataByCbcId(cbcid.get, LocalDate.now()).value, 2.seconds)
         result.isLeft shouldBe true
       }
+    }
+  }
+
+  "ReportingEntityDataService" should {
+    "return ReportingEntityDataModel if it exists in the DB store" in {
+      when(connector.reportingEntityDataModelQuery(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.OK, Some(Json.toJson(redModel))))
+      val result = Await.result(reds.queryReportingEntityDataModel(docRefId).value, 2.seconds)
+      result shouldBe Right(Some(redModel))
+    }
+
+    "return an error if there is a serialisation error" in {
+      when(connector.reportingEntityDataModelQuery(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.OK, Some(JsString("Not the correct json"))))
+      val result = Await.result(reds.queryReportingEntityDataModel(docRefId).value, 2.seconds)
+      result.isLeft shouldBe true
+    }
+
+    "return NONE if the connector returns a NotFoundException" in {
+      when(connector.reportingEntityDataModelQuery(any())(any())) thenReturn Future.failed(
+        new NotFoundException("Not found"))
+      val result = Await.result(reds.queryReportingEntityDataModel(docRefId).value, 2.seconds)
+      result shouldBe Right(None)
+    }
+
+    "return an error if anything else goes wrong" in {
+      when(connector.reportingEntityDataModelQuery(any())(any())) thenReturn Future.failed(
+        new Exception("The sky is falling"))
+      val result = Await.result(reds.queryReportingEntityDataModel(docRefId).value, 2.seconds)
+      result.isLeft shouldBe true
+    }
+  }
+
+  "ReportingEntityDataService on a call to queryReportingEntityDataDocRefId" should {
+    "return ReportingEntityData if it exists in the DB store" in {
+      when(connector.reportingEntityDocRefId(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.OK, Some(Json.toJson(red))))
+      val result = Await.result(reds.queryReportingEntityDataDocRefId(docRefId).value, 2.seconds)
+      result shouldBe Right(Some(red))
+    }
+
+    "return an error if there is a serialisation error while parsing for ReportingEntityData" in {
+      when(connector.reportingEntityDocRefId(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.OK, Some(JsString("Not the correct json"))))
+      val result = Await.result(reds.queryReportingEntityDataDocRefId(docRefId).value, 2.seconds)
+      result.isLeft shouldBe true
+    }
+
+    "return NONE if the connector returns a NotFoundException" in {
+      when(connector.reportingEntityDocRefId(any())(any())) thenReturn Future.failed(new NotFoundException("Not found"))
+      val result = Await.result(reds.queryReportingEntityDataDocRefId(docRefId).value, 2.seconds)
+      result shouldBe Right(None)
+    }
+
+    "return an error if anything else goes wrong" in {
+      when(connector.reportingEntityDocRefId(any())(any())) thenReturn Future.failed(
+        new Exception("The sky is falling"))
+      val result = Await.result(reds.queryReportingEntityDataDocRefId(docRefId).value, 2.seconds)
+      result.isLeft shouldBe true
+    }
+  }
+
+  "ReportingEntityDataService on a call to queryReportingEntityDataTin" should {
+    "return ReportingEntityData if it exists in the DB store" in {
+      when(connector.reportingEntityDataQueryTin(any(), any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.OK, Some(Json.toJson(red))))
+      val result = Await.result(reds.queryReportingEntityDataTin(tin.value, reportingPeriod).value, 2.seconds)
+      result shouldBe Right(Some(red))
+    }
+
+    "return an error if there is a serialisation error while parsing for ReportingEntityData" in {
+      when(connector.reportingEntityDataQueryTin(any(), any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.OK, Some(JsString("Not the correct json"))))
+      val result = Await.result(reds.queryReportingEntityDataTin(tin.value, reportingPeriod).value, 2.seconds)
+      result.isLeft shouldBe true
+    }
+
+    "return NONE if the connector returns a NotFoundException" in {
+      when(connector.reportingEntityDataQueryTin(any(), any())(any())) thenReturn Future.failed(
+        new NotFoundException("Not found"))
+      val result = Await.result(reds.queryReportingEntityDataTin(tin.value, reportingPeriod).value, 2.seconds)
+      result shouldBe Right(None)
+    }
+
+    "return an error if anything else goes wrong" in {
+      when(connector.reportingEntityDataQueryTin(any(), any())(any())) thenReturn Future.failed(
+        new Exception("The sky is falling"))
+      val result = Await.result(reds.queryReportingEntityDataTin(tin.value, reportingPeriod).value, 2.seconds)
+      result.isLeft shouldBe true
+    }
+  }
+
+  "ReportingEntityDataService on a call to updateReportingEntityData" should {
+    "update ReportingEntityData if it exists in the DB store" in {
+      when(connector.reportingEntityDataUpdate(any())(any())) thenReturn Future.successful(HttpResponse(Status.OK))
+      val result = Await.result(reds.updateReportingEntityData(partialRed).value, 2.seconds)
+      result shouldBe Right()
+    }
+    "return an error if anything else goes wrong" in {
+      when(connector.reportingEntityDataUpdate(any())(any())) thenReturn Future.failed(
+        new Exception("The sky is falling"))
+      val result = Await.result(reds.updateReportingEntityData(partialRed).value, 2.seconds)
+      result.isLeft shouldBe true
+    }
+  }
+
+  "ReportingEntityDataService on a call to saveReportingEntityData" should {
+    "save ReportingEntityData if it does not exist in the DB store" in {
+      when(connector.reportingEntityDataSave(any())(any())) thenReturn Future.successful(HttpResponse(Status.OK))
+      val result = Await.result(reds.saveReportingEntityData(red).value, 2.seconds)
+      result shouldBe Right()
+    }
+    "return an error if anything else goes wrong" in {
+      when(connector.reportingEntityDataSave(any())(any())) thenReturn Future.failed(
+        new Exception("The sky is falling"))
+      val result = Await.result(reds.saveReportingEntityData(red).value, 2.seconds)
+      result.isLeft shouldBe true
     }
   }
 
