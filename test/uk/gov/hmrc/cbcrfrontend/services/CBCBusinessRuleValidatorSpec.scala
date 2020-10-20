@@ -84,7 +84,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
   val docRefId9 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP2").getOrElse(fail("bad docrefid"))
 
-  val schemaVer: String = "1.0"
+  val schemaVer: String = "2.0"
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
     .pure[Future, CBCErrors, Option[SubscriptionDetails]](Some(submissionData))
@@ -408,7 +408,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           Await.result(validator.validateBusinessRules(validFile, filename, None, Some(Organisation)), 5.seconds)
         result.fold(
           errors => {
-            println("MOHAN MOHAN 1" + errors.toList); errors.toList should contain(SendingEntityOrganisationMatchError)
+            errors.toList should contain(SendingEntityOrganisationMatchError)
           },
           _ => fail("No Sending Entity Organisation Match Error")
         )
