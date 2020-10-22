@@ -231,6 +231,8 @@ class CBCBusinessRuleValidator @Inject()(
       .map { re =>
         val docRefId = if (re.docSpec.docType == OECD0) {
           ensureDocRefIdExists(re.docSpec.docRefId)
+        } else if (re.docSpec.docType == OECD2 && re.docSpec.docRefId.parentGroupElement == ENT) {
+          ensureDocRefIdDoesNotExist(re.docSpec.docRefId) //Does not exist
         } else {
           Future.successful(re.docSpec.docRefId.validNel)
         }
@@ -262,6 +264,20 @@ class CBCBusinessRuleValidator @Inject()(
       .subflatMap {
         case Some(_) => Right(docRefId)
         case None    => Left(ResentDataIsUnknownError)
+      }
+      .toValidatedNel
+
+  private def ensureDocRefIdDoesNotExist(docRefId: DocRefId)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] =
+    reportingEntityDataService
+      .queryReportingEntityDataDocRefId(docRefId)
+      .leftMap(cbcErrors => {
+        Logger.error(s"Got error back: $cbcErrors")
+        throw new Exception(s"Error communicating with backend: $cbcErrors")
+      })
+      .subflatMap {
+        case None    => Right(docRefId)
+        case Some(_) => Left(ResentDataIsUnknownError)
       }
       .toValidatedNel
 
@@ -323,9 +339,10 @@ class CBCBusinessRuleValidator @Inject()(
     * Ensure that if a [[CorrDocRefId]] is not required, it does not exist
     */
   private def validateCorrDocRefIdRequired(d: DocSpec): ValidBusinessResult[DocSpec] = d.docType match {
-    case OECD2 | OECD3 if d.corrDocRefId.isEmpty => CorrDocRefIdMissing.invalidNel
-    case OECD1 if d.corrDocRefId.isDefined       => CorrDocRefIdNotNeeded.invalidNel
-    case _                                       => d.validNel
+    case OECD2 | OECD3 if d.corrDocRefId.isEmpty && d.docRefId.parentGroupElement != ENT =>
+      CorrDocRefIdMissing.invalidNel
+    case OECD1 if d.corrDocRefId.isDefined => CorrDocRefIdNotNeeded.invalidNel
+    case _                                 => d.validNel
   }
 
   /** Ensure that the list of CorrDocRefIds are unique */
