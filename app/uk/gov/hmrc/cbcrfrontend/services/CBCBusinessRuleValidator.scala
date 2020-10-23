@@ -712,7 +712,8 @@ class CBCBusinessRuleValidator @Inject()(
               case Some(reportEntityData) =>
                 reportEntityData.currencyCode match {
                   case Some(code) =>
-                    val reports: List[String] = reportEntityData.cbcReportsDRI.map(_.show).toList
+                    val reports: List[String] =
+                      reportEntityData.cbcReportsDRI.filterNot(_.docTypeIndic == OECD3).map(_.show)
                     val corrDocRefIds: List[String] = x.cbcReport
                       .map(_.docSpec.corrDocRefId)
                       .filter(_.isDefined)
