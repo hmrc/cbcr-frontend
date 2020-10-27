@@ -326,6 +326,7 @@ error.MessageTypeIndicError=cy-Error DocTypeIndic (Correction): If the Submissio
 error.CorrDocRefIdInvalidRecord=cy-Error Code 80003 CorrDocRefId (record no longer valid): The corrected record is no longer valid (invalidated or outdated by a previous correction message). As a consequence, no further information should have been received on this version of the record.
 error.CorrDocRefIdUnknownRecord=cy-Error Code 80002 CorrDocRefId (unknown record): The CorrDocRefId refers to an unknown record
 error.DocRefIdDuplicate=cy-Error Code 80001: DocRefId (already used)
+error.DocRefIdMismatch=cy-The DocTypeIndic does not match with the DocTypeIndic from inside the DocRefId
 error.DocRefIdInvalidParentGroupElement=cy-Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide.
 error.CorrDocRefIdInvalidParentGroupElement=cy-Error Code 80000 CorrDocRefId (format): The structure of the CorrDocRefId is not in the correct format, as set out in the User Guide.
 error.CorrDocRefIdMissing=cy-Error Code 80005 CorrDocRefId (missing): CorrDocRefId must be provided when DocTypeIndic is OECD2 or OECD3

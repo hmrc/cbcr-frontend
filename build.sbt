@@ -64,6 +64,8 @@ lazy val excludedPackages = Seq(
   "test",
   "uk.gov.hmrc.cbcrfrontend.connectors.test",
   "uk.gov.hmrc.cbcrfrontend.controllers.test",
+  "uk.gov.hmrc.cbcrfrontend.controllers.AdminController",
+  "uk.gov.hmrc.cbcrfrontend.controllers.AdminDocRefId",
   "uk.gov.hmrc.cbcrfrontend.views.*",
   "uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector.*",
   "uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector.*",
