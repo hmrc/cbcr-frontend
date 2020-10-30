@@ -591,7 +591,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should contain(MessageTypeIndicError),
+          errors => errors.toList should not contain (MessageTypeIndicError),
           _ => fail("No InvalidXMLError generated")
         )
 
@@ -602,7 +602,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should contain(MessageTypeIndicError),
+          errors => errors.toList should not contain (MessageTypeIndicError),
           _ => fail("No InvalidXMLError generated")
         )
 
@@ -613,7 +613,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should contain(MessageTypeIndicError),
+          errors => errors.toList should not contain (MessageTypeIndicError),
           _ => fail("No InvalidXMLError generated")
         )
 

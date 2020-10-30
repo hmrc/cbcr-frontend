@@ -252,18 +252,35 @@ class CBCBusinessRuleValidator @Inject()(
     else ReportingEntityOrConstituentEntityEmpty.invalidNel
 
   private def ensureDocRefIdExists(docRefId: DocRefId)(
-    implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] =
-    reportingEntityDataService
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[DocRefId] = {
+    val res1: EitherT[Future, Boolean, Boolean] = reportingEntityDataService
       .queryReportingEntityDataDocRefId(docRefId)
       .leftMap(cbcErrors => {
         Logger.error(s"Got error back: $cbcErrors")
         throw new Exception(s"Error communicating with backend: $cbcErrors")
       })
       .subflatMap {
-        case Some(_) => Right(docRefId)
-        case None    => Left(ResentDataIsUnknownError)
+        case Some(_) => Right(true)
+        case None    => Left(false)
       }
-      .toValidatedNel
+    for {
+      isValid: Boolean <- res1.isRight
+      result <- if (isValid) {
+                 val docRefIdToCheckForDeleteValid = docRefIdService.queryDocRefId(docRefId)
+                 docRefIdToCheckForDeleteValid.map {
+                   case DocRefIdResponses.Invalid => Left(ResentDataIsUnknownError)
+                   case _                         => Right(docRefId)
+                 }
+               } else {
+                 docRefIdResendCheck(docRefId).map(d => Left(d))
+               }
+    } yield {
+      result.toValidatedNel
+    }
+  }
+
+  private def bdskjfbdksjf: Boolean =
+    true
 
   private def determineMessageTypeIndic(r: XMLInfo): Option[MessageTypeIndic] = {
     lazy val docTypes = List(r.additionalInfo.map(_.docSpec.docType)).flatten ++ r.cbcReport.map(_.docSpec.docType) ++ r.reportingEntity
@@ -397,6 +414,16 @@ class CBCBusinessRuleValidator @Inject()(
         case _                              => DocRefIdDuplicate.invalidNel
       }
 
+  /**
+    * Query the [[DocRefIdService]] to find out if this docRefId is a duplicate
+    * If the doc type is OECD0, when don't check for duplicates
+    */
+  private def docRefIdResendCheck(d: DocRefId)(implicit hc: HeaderCarrier): Future[BusinessRuleErrors] =
+    docRefIdService.queryDocRefId(d).map {
+      case DocRefIdResponses.Invalid => ResendDocRefIdInvalid
+      case _                         => ResentDataIsUnknownError
+    }
+
   private def docRefIdMatchDocTypeIndicCheck(docSpec: DocSpec)(
     implicit hc: HeaderCarrier): ValidBusinessResult[DocRefId] = {
     val docRefId = docSpec.docRefId
@@ -419,12 +446,14 @@ class CBCBusinessRuleValidator @Inject()(
     lazy val CBCReportsAreNotAllCorrectionsOrDeletions: Boolean = !xmlInfo.cbcReport.forall(
       r =>
         r.docSpec.docType == OECD2 ||
-          r.docSpec.docType == OECD3)
+          r.docSpec.docType == OECD3 ||
+          r.docSpec.docType == OECD0)
 
     lazy val AdditionalInfoIsNotCorrectionsOrDeletions: Boolean = !xmlInfo.additionalInfo.forall(
       r =>
         r.docSpec.docType == OECD2 ||
-          r.docSpec.docType == OECD3)
+          r.docSpec.docType == OECD3 ||
+          r.docSpec.docType == OECD0)
 
     lazy val ReportingEntityIsNotCorrectionsOrDeletionsOrResent: Boolean = !xmlInfo.reportingEntity.forall(
       r =>
@@ -438,8 +467,9 @@ class CBCBusinessRuleValidator @Inject()(
             || AdditionalInfoIsNotCorrectionsOrDeletions
             || ReportingEntityIsNotCorrectionsOrDeletionsOrResent =>
         MessageTypeIndicError.invalidNel
-      case _ if CBCReportsAreNeverResent && AdditionalInfoIsNeverResent => xmlInfo.validNel
-      case _                                                            => MessageTypeIndicError.invalidNel
+      case _ if CBCReportsAreNeverResent && AdditionalInfoIsNeverResent   => xmlInfo.validNel
+      case _ if !CBCReportsAreNeverResent || !AdditionalInfoIsNeverResent => ResendOutsideRepEntError.invalidNel
+      case _                                                              => MessageTypeIndicError.invalidNel
     }
 
   }
