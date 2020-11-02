@@ -382,7 +382,7 @@ error.AdditionalInfoDRINotFound3=Please move the information into the Additional
 error.AdditionalInfoDRINotFound4=and resubmit. You can also also contact ‘digitalservice.cbc@hmrc.gsi.gov.uk’ to discuss this issue if preferred.
 error.AdditionalInfoDRINotFound5=from the first AdditionalInfo section of the initial submission
 error.MessageRefIdDontMatchWithDocRefId=The report has not been uploaded. The DocRefID must begin with the MessageRefID contained within the message specification.
-error.InconsistentCurrencyCodes=You have used more than one currency in your report. All amounts provided in the Country-by-Country Report should be reported in one and the same currency, being the currency of the Reporting MNE.
+error.InconsistentCurrencyCodes=You have used more than one currency in your report. All amounts provided in the Country-by-Country Report should be reported in one and the same currency.
 error.PartiallyCorrectedCurrency=Your correction file has used a different currency than the currency used in your previous submission. A single year’s report cannot contain mixed currencies.
 error.PartialDeletion=Error Code 80009: You cannot partially delete your report. The report can only be deleted in full.
 

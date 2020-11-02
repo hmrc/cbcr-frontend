@@ -161,6 +161,7 @@ object BusinessRuleErrors {
       case ReportingEntityElementMissing            => JsString(ReportingEntityElementMissing.toString)
       case ResendOutsideRepEntError                 => JsString(ResendOutsideRepEntError.toString)
       case ResendDocRefIdInvalid                    => JsString(ResendDocRefIdInvalid.toString)
+
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
