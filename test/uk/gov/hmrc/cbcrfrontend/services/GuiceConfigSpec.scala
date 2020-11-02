@@ -52,7 +52,6 @@ class GuiceConfigSpec extends FlatSpec with WithConfigFakeApplication with Match
   }
 
   "An Xml Validator" should "not return any error for a valid file" in {
-    println(">>>>>>" + validator.validateSchema(validXmlFile).errorsCollection)
     validator.validateSchema(validXmlFile).hasErrors shouldBe false
     validator.validateSchema(validXmlFile).hasFatalErrors shouldBe false
     validator.validateSchema(validXmlFile).hasWarnings shouldBe false

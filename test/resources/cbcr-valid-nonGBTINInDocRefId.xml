@@ -26,7 +26,6 @@
                 </ns1:Address>
             </ns1:Entity>
             <ns1:ReportingRole>CBC702</ns1:ReportingRole>
-            https://catalogue.tax.service.gov.uk/teams/API%20Services
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:cbcstf:v5">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:cbcstf:v5">GB2016RGXLCBC0100000056CBC40120170311T090000X_NONGBUTRNOT10CHARSOECD1ENT</ns2:DocRefId>

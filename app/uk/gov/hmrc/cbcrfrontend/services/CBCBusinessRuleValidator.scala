@@ -278,9 +278,6 @@ class CBCBusinessRuleValidator @Inject()(
     }
   }
 
-  private def bdskjfbdksjf: Boolean =
-    true
-
   private def determineMessageTypeIndic(r: XMLInfo): Option[MessageTypeIndic] = {
     lazy val docTypes = List(r.additionalInfo.map(_.docSpec.docType)).flatten ++ r.cbcReport.map(_.docSpec.docType) ++ r.reportingEntity
       .map(_.docSpec.docType)

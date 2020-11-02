@@ -43,7 +43,6 @@ class SubscriptionDataServiceSpec
     extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr" }
-  //implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
   val connector = mock[CBCRBackendConnector]
   val environment = mock[Environment]
   val runModeConfiguration = mock[Configuration]
