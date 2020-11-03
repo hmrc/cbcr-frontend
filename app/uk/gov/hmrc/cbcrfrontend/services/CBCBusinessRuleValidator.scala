@@ -267,7 +267,7 @@ class CBCBusinessRuleValidator @Inject()(
       result <- if (isValid) {
                  val docRefIdToCheckForDeleteValid = docRefIdService.queryDocRefId(docRefId)
                  docRefIdToCheckForDeleteValid.map {
-                   case DocRefIdResponses.Invalid => Left(ResentDataIsUnknownError)
+                   case DocRefIdResponses.Invalid => Left(ResendDocRefIdInvalid)
                    case _                         => Right(docRefId)
                  }
                } else {
