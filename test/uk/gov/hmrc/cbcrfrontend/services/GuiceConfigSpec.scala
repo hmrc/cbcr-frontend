@@ -43,7 +43,7 @@ class GuiceConfigSpec extends FlatSpec with WithConfigFakeApplication with Match
   "A WithConfigFakeApplication " should " be able to retrieve a property defined in the fake config file" in {
     val propertyName = "fake-oecd-schema-version"
     getString(propertyName) should not equal s"$propertyName does not exist"
-    getString(propertyName) shouldBe "1.0.1"
+    getString(propertyName) shouldBe "2.0"
   }
 
   it should "not return a value when the property does not exist" in {

@@ -96,6 +96,9 @@ case object PartialDeletion extends BusinessRuleErrors
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
 case object PrivateBetaCBCIdError extends BusinessRuleErrors
+case object ReportingEntityElementMissing extends BusinessRuleErrors
+case object ResendOutsideRepEntError extends BusinessRuleErrors
+case object ResendDocRefIdInvalid extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -155,6 +158,10 @@ object BusinessRuleErrors {
       case PartialDeletion                          => JsString(PartialDeletion.toString)
       case aidnf: AdditionalInfoDRINotFound         => Json.toJson(aidnf)
       case DocRefIdMismatch                         => JsString(DocRefIdMismatch.toString)
+      case ReportingEntityElementMissing            => JsString(ReportingEntityElementMissing.toString)
+      case ResendOutsideRepEntError                 => JsString(ResendOutsideRepEntError.toString)
+      case ResendDocRefIdInvalid                    => JsString(ResendDocRefIdInvalid.toString)
+
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -203,6 +210,9 @@ object BusinessRuleErrors {
             case Some(ci"inconsistentcurrencycodes")         => JsSuccess(InconsistentCurrencyCodes)
             case Some(ci"partiallycorrectedcurrency")        => JsSuccess(PartiallyCorrectedCurrency)
             case Some(ci"partialdeletion")                   => JsSuccess(PartialDeletion)
+            case Some(ci"reportingentityelementmissing")     => JsSuccess(ReportingEntityElementMissing)
+            case Some(ci"resendoutsiderepenterror")          => JsSuccess(ResendOutsideRepEntError)
+            case Some(ci"resenddocrefidinvalid")             => JsSuccess(ResendDocRefIdInvalid)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
             case other => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -250,6 +260,9 @@ object BusinessRuleErrors {
     case InconsistentCurrencyCodes         => "error.InconsistentCurrencyCodes"
     case PartiallyCorrectedCurrency        => "error.PartiallyCorrectedCurrency"
     case PartialDeletion                   => "error.PartialDeletion"
+    case ReportingEntityElementMissing     => "error.ReportingEntityElementMissing"
+    case ResendOutsideRepEntError          => "error.ResendOutsideRepEntError"
+    case ResendDocRefIdInvalid             => "error.ResendDocRefIdInvalid"
   }
 }
 

@@ -344,6 +344,7 @@ error.ResentDataIsUnknownError=cy-OECD0 must be used for resent data, but a prev
 error.MultipleCbcBodies=cy-File contains multiple occurrences of CbcBody: Only 1 occurrence of CbcBody is allowed per XML message
 error.CorrectedFileToOld=cy-Corrections only allowed up to 3 years after the initial submission date for the Reporting Period
 error.ReportingEntityOrConstituentEntityEmpty=cy-Organisation Name: The Name of the Reporting Entity or Constituent Entity cannot be an empty string
+error.ReportingEntityElementMissing=cy-The Reporting Entity data element is missing in the XML reporting file
 error.CorrMessageRefIdNotAllowedInMessageSpec=cy-The CorrMessageRefID element must not be provided in the MessageSpec
 error.CorrMessageRefIdNotAllowedInDocSpec=cy-Error Code 80006: The CorrMessageRefID element must not be provided in the DocSpec
 error.ReportingPeriodInvalid=cy-The ReportingPeriod cannot be corrected. If you wish to change the Reporting Period, then void (OECD3) the original submission and submit a new file (CBC 401)
