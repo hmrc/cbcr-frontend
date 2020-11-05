@@ -90,9 +90,14 @@ class SharedControllerSpec
         None
       ),
       Some(
-        ReportingEntity(CBC701, DocSpec(OECD1, DocRefId(docRefId).get, None, None), TIN("7000000002", "GB"), "name")),
+        ReportingEntity(
+          CBC701,
+          DocSpec(OECD1, DocRefId(docRefId).get, None, None),
+          TIN("7000000002", "GB"),
+          "name",
+          None)),
       List(CbcReports(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
-      List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
+      List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None), "Some Other Info")),
       Some(LocalDate.now()),
       List.empty[String],
       List.empty[String]

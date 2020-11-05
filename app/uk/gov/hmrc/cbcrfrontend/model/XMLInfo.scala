@@ -29,7 +29,7 @@ import play.api.libs.json._
 sealed trait RawXmlFields extends Product with Serializable
 
 case object RawBody extends RawXmlFields
-case class RawAdditionalInfo(docSpec: RawDocSpec) extends RawXmlFields
+case class RawAdditionalInfo(docSpec: RawDocSpec, otherInfo: String) extends RawXmlFields
 case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
 case class RawCurrencyCodes(currCodes: List[String]) extends RawXmlFields
 case class RawDocSpec(docType: String, docRefId: String, corrDocRefId: Option[String], corrMessageRefId: Option[String])
@@ -51,7 +51,8 @@ case class RawReportingEntity(
   docSpec: RawDocSpec,
   tin: String,
   tinIssuedBy: String,
-  name: String)
+  name: String,
+  address: Address)
     extends RawXmlFields
 case class RawXMLInfo(
   messageSpec: RawMessageSpec,
@@ -64,6 +65,12 @@ case class RawXMLInfo(
   constEntityNames: List[String],
   currencyCodes: List[RawCurrencyCodes])
     extends RawXmlFields
+
+case class AddressFix(city: Option[String])
+object AddressFix { implicit val format = Json.format[AddressFix] }
+
+case class Address(countryCode: String, addressFree: String, addressFix: AddressFix)
+object Address { implicit val format = Json.format[Address] }
 
 /** These models represent the type-validated data, derived from the raw data */
 class DocRefId private[model] (
@@ -139,7 +146,7 @@ case class DocSpec(
   corrMessageRefId: Option[String])
 object DocSpec { implicit val format = Json.format[DocSpec] }
 
-case class AdditionalInfo(docSpec: DocSpec)
+case class AdditionalInfo(docSpec: DocSpec, otherInfo: String)
 object AdditionalInfo { implicit val format = Json.format[AdditionalInfo] }
 
 case class CbcReports(docSpec: DocSpec)
@@ -168,7 +175,12 @@ object MessageSpec {
   implicit val format = Json.format[MessageSpec]
 }
 
-case class ReportingEntity(reportingRole: ReportingRole, docSpec: DocSpec, tin: TIN, name: String)
+case class ReportingEntity(
+  reportingRole: ReportingRole,
+  docSpec: DocSpec,
+  tin: TIN,
+  name: String,
+  address: Option[Address])
 object ReportingEntity { implicit val format = Json.format[ReportingEntity] }
 
 case class CbcOecdInfo(cbcVer: String)

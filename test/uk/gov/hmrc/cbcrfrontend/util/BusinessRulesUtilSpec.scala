@@ -28,7 +28,8 @@ class BusinessRulesUtilSpec extends UnitSpec {
       CBC701,
       DocSpec(OECD1, DocRefId(docRefId + "ENT").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "ENT").get)), None),
       TIN("1000000019", "GB"),
-      "Mne")
+      "Mne",
+      None)
 
   def xmlinfo(reportingEntity: Option[ReportingEntity]) = XMLInfo(
     MessageSpec(
@@ -42,7 +43,7 @@ class BusinessRulesUtilSpec extends UnitSpec {
     ),
     reportingEntity,
     List(CbcReports(DocSpec(OECD1, DocRefId(docRefId + "REP").get, None, None))),
-    List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None))),
+    List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None), "Some Other Info")),
     Some(LocalDate.now()),
     List.empty[String],
     List.empty[String]
@@ -64,7 +65,8 @@ class BusinessRulesUtilSpec extends UnitSpec {
         DocSpec(OECD1, DocRefId(docRefId + "REP").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "REP").get)), None))),
     List(
       AdditionalInfo(
-        DocSpec(OECD1, DocRefId(docRefId + "ADD").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "ADD").get)), None))),
+        DocSpec(OECD1, DocRefId(docRefId + "ADD").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "ADD").get)), None),
+        "Some Other Info")),
     Some(LocalDate.now()),
     List.empty[String],
     List.empty[String]

@@ -123,13 +123,13 @@ class CBCBusinessRuleValidator @Inject()(
   private def extractReportingEntity(in: RawReportingEntity): ValidBusinessResult[ReportingEntity] =
     (extractReportingRole(in) |@|
       extractDocSpec(in.docSpec, ENT) |@|
-      extractTIN(in)).map(ReportingEntity(_, _, _, in.name))
+      extractTIN(in)).map(ReportingEntity(_, _, _, in.name, Some(in.address)))
 
   private def extractCBCReports(in: RawCbcReports): ValidBusinessResult[CbcReports] =
     extractDocSpec(in.docSpec, REP).map(CbcReports(_))
 
   private def extractAdditionalInfo(in: RawAdditionalInfo): ValidBusinessResult[AdditionalInfo] =
-    extractDocSpec(in.docSpec, ADD).map(AdditionalInfo(_))
+    extractDocSpec(in.docSpec, ADD).map(AdditionalInfo(_, in.otherInfo))
 
   private def extractDocSpec(d: RawDocSpec, parentGroupElement: ParentGroupElement): ValidBusinessResult[DocSpec] =
     (extractDocTypeInidc(d.docType) |@|
@@ -862,7 +862,8 @@ class CBCBusinessRuleValidator @Inject()(
                     red.reportingRole,
                     DocSpec(OECD0, red.reportingEntityDRI, None, None),
                     TIN(red.tin.value, "gb"),
-                    red.ultimateParentEntity.ultimateParentEntity)
+                    red.ultimateParentEntity.ultimateParentEntity,
+                    None)
                   Right(CompleteXMLInfo(in, re))
                 }
                 case None => Left(OriginalSubmissionNotFound)

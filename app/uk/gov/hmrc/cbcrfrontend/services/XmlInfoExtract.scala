@@ -52,6 +52,22 @@ class XmlInfoExtract {
     RawDocSpec(docType, docRefId, corrDocRefId, corrMessageRefId)
   }
 
+  private def getAddress(e: Node): Address = {
+    val countryCode = (e \ "CountryCode").text
+    val addressFix = getAddressFix((e \ "AddressFix").headOption)
+    val addressFree = (e \ "AddressFree").text
+    Address(countryCode, addressFree, addressFix)
+  }
+
+  private def getAddressFix(e: Option[Node]): AddressFix =
+    e match {
+      case Some(node) => {
+        val city = (node \ "City").text
+        AddressFix(Some(city))
+      }
+      case None => AddressFix(None)
+    }
+
   // sorry but speed
   private def countBodys(input: File): Int = {
     val xmlStreamReader: XMLStreamReader2 = xmlInputFactory.createXMLStreamReader(input)
@@ -125,9 +141,10 @@ class XmlInfoExtract {
           val tin = (re \ "Entity" \ "TIN").text
           val tinIB = (re \ "Entity" \ "TIN") \@ "issuedBy"
           val name = (re \ "Entity" \ "Name").text
+          val address = getAddress((re \ "Entity" \ "Address").head)
           val rr = (re \ "ReportingRole").text
           val ds = getDocSpec((re \ "DocSpec").head) //DocSpec is required in ReportingEntity so this will exist!
-          RawReportingEntity(rr, ds, tin, tinIB, name)
+          RawReportingEntity(rr, ds, tin, tinIB, name, address)
         }
 
     case List("CBC_OECD", "CbcBody", "CbcReports", "DocSpec") =>
@@ -155,9 +172,12 @@ class XmlInfoExtract {
             List(unrelated, related, total, profitOrLoss, taxPaid, taxAccrued, capital, earnings, assets))
         }
 
-    case List("CBC_OECD", "CbcBody", "AdditionalInfo", "DocSpec") =>
+    case List("CBC_OECD", "CbcBody", "AdditionalInfo") =>
       ds =>
-        RawAdditionalInfo(getDocSpec(ds))
+        {
+          val otherInfo = (ds \ "OtherInfo").text
+          RawAdditionalInfo(getDocSpec((ds \ "DocSpec").head), otherInfo)
+        }
 
   }
 
