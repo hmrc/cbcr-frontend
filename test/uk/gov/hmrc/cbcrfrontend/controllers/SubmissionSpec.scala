@@ -1039,7 +1039,13 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         None,
         None
       ),
-      ReportingEntity(CBC701, DocSpec(OECD1, DocRefId(docRefId).get, None, None), TIN("7000000002", "gb"), "name"),
+      ReportingEntity(
+        CBC701,
+        DocSpec(OECD1, DocRefId(docRefId).get, None, None),
+        TIN("7000000002", "gb"),
+        "name",
+        EntityReportingPeriod(LocalDate.parse("2016-03-31"), LocalDate.parse("2017-03-30"))
+      ),
       List(CbcReports(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
       List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
       Some(LocalDate.now()),

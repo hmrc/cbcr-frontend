@@ -137,6 +137,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     CBC701,
     Some(LocalDate.now()),
     None,
+    None,
     None
   )
   val redReportPeriod = ReportingEntityData(
@@ -148,7 +149,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     CBC701,
     Some(LocalDate.now()),
     Some(LocalDate.of(2018, 1, 1)),
-    None
+    None,
+    Some(EntityReportingPeriod(LocalDate.parse("2017-01-02"), LocalDate.parse("2018-01-01")))
   )
   val redmTrue = ReportingEntityDataModel(
     NonEmptyList.of(actualDocRefId),
@@ -160,6 +162,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     Some(LocalDate.now()),
     None,
     true,
+    None,
     None
   )
   val redmFalse = ReportingEntityDataModel(
@@ -172,6 +175,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
     Some(LocalDate.now()),
     None,
     false,
+    None,
     None
   )
 
@@ -247,7 +251,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         CBC703,
         Some(LocalDate.now()),
         Some(LocalDate.of(2016, 3, 31)),
-        None
+        None,
+        Some(EntityReportingPeriod(LocalDate.parse("2016-01-01"), LocalDate.parse("2016-03-31")))
       )
 
       when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
@@ -578,7 +583,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         val result = Await.result(validator.recoverReportingEntity(xmlinfo), 5.seconds)
 
         result.fold(
-          errors => errors.toList should contain(OriginalSubmissionNotFound),
+          errors => errors.toList should contain(ReportingEntityElementMissing),
           _ => fail("No InvalidXMLError generated")
         )
       }
@@ -1501,7 +1506,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         CBC703,
         Some(LocalDate.now()),
         Some(LocalDate.of(2016, 3, 31)),
-        Some("GBP")
+        Some("GBP"),
+        Some(EntityReportingPeriod(LocalDate.parse("2016-01-02"), LocalDate.parse("2016-03-31")))
       )
       val reportEntityDataModel = ReportingEntityDataModel(
         NonEmptyList.of(firstOriginalCbcReportsDri, secondOriginalCbcReportsDri),
@@ -1513,7 +1519,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         Some(LocalDate.now()),
         Some(LocalDate.of(2016, 3, 31)),
         false,
-        Some("GBP")
+        Some("GBP"),
+        Some(EntityReportingPeriod(LocalDate.parse("2016-01-02"), LocalDate.parse("2016-03-31")))
       )
 
       when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
@@ -1572,7 +1579,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         CBC703,
         Some(LocalDate.now()),
         Some(LocalDate.of(2017, 3, 31)),
-        Some("USD")
+        Some("USD"),
+        Some(EntityReportingPeriod(LocalDate.parse("2017-01-02"), LocalDate.parse("2017-03-31")))
       )
       val reportEntityDataModel = ReportingEntityDataModel(
         NonEmptyList.of(firstOriginalCbcReportsDri, secondOriginalCbcReportsDri),
@@ -1584,7 +1592,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         Some(LocalDate.now()),
         Some(LocalDate.of(2017, 3, 31)),
         false,
-        Some("USD")
+        Some("USD"),
+        Some(EntityReportingPeriod(LocalDate.parse("2017-01-02"), LocalDate.parse("2017-03-31")))
       )
 
       when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
