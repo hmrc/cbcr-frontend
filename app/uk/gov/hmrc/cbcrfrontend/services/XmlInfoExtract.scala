@@ -52,20 +52,10 @@ class XmlInfoExtract {
     RawDocSpec(docType, docRefId, corrDocRefId, corrMessageRefId)
   }
 
-  private def getAddress(e: Node): Address = {
-    val countryCode = (e \ "CountryCode").text
-    val addressFix = getAddressFix((e \ "AddressFix").headOption)
-    val addressFree = (e \ "AddressFree").text
-    Address(countryCode, addressFree, addressFix)
-  }
-
-  private def getAddressFix(e: Option[Node]): AddressFix =
+  private def getAddressCity(e: Option[Node]): Option[String] =
     e match {
-      case Some(node) => {
-        val city = (node \ "City").text
-        AddressFix(Some(city))
-      }
-      case None => AddressFix(None)
+      case Some(node) => (node \ "AddressFix" \ "City").textOption
+      case None       => None
     }
 
   // sorry but speed
@@ -141,10 +131,10 @@ class XmlInfoExtract {
           val tin = (re \ "Entity" \ "TIN").text
           val tinIB = (re \ "Entity" \ "TIN") \@ "issuedBy"
           val name = (re \ "Entity" \ "Name").text
-          val address = getAddress((re \ "Entity" \ "Address").head)
+          val city = getAddressCity((re \ "Entity" \ "Address").headOption)
           val rr = (re \ "ReportingRole").text
           val ds = getDocSpec((re \ "DocSpec").head) //DocSpec is required in ReportingEntity so this will exist!
-          RawReportingEntity(rr, ds, tin, tinIB, name, address)
+          RawReportingEntity(rr, ds, tin, tinIB, name, city)
         }
 
     case List("CBC_OECD", "CbcBody", "CbcReports", "DocSpec") =>

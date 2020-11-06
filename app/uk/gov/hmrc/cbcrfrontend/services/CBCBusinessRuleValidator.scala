@@ -123,7 +123,7 @@ class CBCBusinessRuleValidator @Inject()(
   private def extractReportingEntity(in: RawReportingEntity): ValidBusinessResult[ReportingEntity] =
     (extractReportingRole(in) |@|
       extractDocSpec(in.docSpec, ENT) |@|
-      extractTIN(in)).map(ReportingEntity(_, _, _, in.name, Some(in.address)))
+      extractTIN(in)).map(ReportingEntity(_, _, _, in.name, in.city))
 
   private def extractCBCReports(in: RawCbcReports): ValidBusinessResult[CbcReports] =
     extractDocSpec(in.docSpec, REP).map(CbcReports(_))

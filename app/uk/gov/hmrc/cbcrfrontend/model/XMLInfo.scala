@@ -52,7 +52,7 @@ case class RawReportingEntity(
   tin: String,
   tinIssuedBy: String,
   name: String,
-  address: Address)
+  city: Option[String])
     extends RawXmlFields
 case class RawXMLInfo(
   messageSpec: RawMessageSpec,
@@ -65,12 +65,6 @@ case class RawXMLInfo(
   constEntityNames: List[String],
   currencyCodes: List[RawCurrencyCodes])
     extends RawXmlFields
-
-case class AddressFix(city: Option[String])
-object AddressFix { implicit val format = Json.format[AddressFix] }
-
-case class Address(countryCode: String, addressFree: String, addressFix: AddressFix)
-object Address { implicit val format = Json.format[Address] }
 
 /** These models represent the type-validated data, derived from the raw data */
 class DocRefId private[model] (
@@ -175,12 +169,7 @@ object MessageSpec {
   implicit val format = Json.format[MessageSpec]
 }
 
-case class ReportingEntity(
-  reportingRole: ReportingRole,
-  docSpec: DocSpec,
-  tin: TIN,
-  name: String,
-  address: Option[Address])
+case class ReportingEntity(reportingRole: ReportingRole, docSpec: DocSpec, tin: TIN, name: String, city: Option[String])
 object ReportingEntity { implicit val format = Json.format[ReportingEntity] }
 
 case class CbcOecdInfo(cbcVer: String)
