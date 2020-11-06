@@ -620,13 +620,13 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         )
 
       }
-      "MessageTypeIndic is blank and CBCReports.docTypeInidc is OECD0" in {
+      "MessageTypeIndic is blank and CBCReports.docTypeIndic is OECD0" in {
         val validFile = new File("test/resources/cbcr-cbcReportsOECD0-2.xml")
         val result =
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should contain(MessageTypeIndicError),
+          errors => errors.toList should contain(MessageTypeIndicBlank),
           _ => fail("No InvalidXMLError generated")
         )
 
@@ -680,14 +680,30 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
       }
 
       "MessageTypeIndic is not provided" in {
-        val validFile = new File("test/resources/cbcr-noMessageTypeIndic.xml")
+        val invalidFile = new File("test/resources/cbcr-noMessageTypeIndic.xml")
         when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT
           .right[Future, CBCErrors, Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
         val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          Await
+            .result(validator.validateBusinessRules(invalidFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should contain(MessageTypeIndicError),
+          errors => errors.toList should contain(MessageTypeIndicBlank),
+          _ => ()
+        )
+
+      }
+
+      "MessageTypeIndic is provided but invalid" in {
+        val invalidFile = new File("test/resources/cbcr-InvalidMessageTypeIndic.xml")
+        when(reportingEntity.queryReportingEntityDataModel(any())(any())) thenReturn EitherT
+          .right[Future, CBCErrors, Option[ReportingEntityDataModel]](Future.successful(Some(redmFalse)))
+        val result =
+          Await
+            .result(validator.validateBusinessRules(invalidFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(MessageTypeIndicInvalid),
           _ => ()
         )
 

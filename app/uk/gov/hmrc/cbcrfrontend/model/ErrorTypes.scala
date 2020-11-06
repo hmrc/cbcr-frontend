@@ -99,6 +99,8 @@ case object PrivateBetaCBCIdError extends BusinessRuleErrors
 case object ReportingEntityElementMissing extends BusinessRuleErrors
 case object ResendOutsideRepEntError extends BusinessRuleErrors
 case object ResendDocRefIdInvalid extends BusinessRuleErrors
+case object MessageTypeIndicBlank extends BusinessRuleErrors
+case object MessageTypeIndicInvalid extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -161,6 +163,8 @@ object BusinessRuleErrors {
       case ReportingEntityElementMissing            => JsString(ReportingEntityElementMissing.toString)
       case ResendOutsideRepEntError                 => JsString(ResendOutsideRepEntError.toString)
       case ResendDocRefIdInvalid                    => JsString(ResendDocRefIdInvalid.toString)
+      case MessageTypeIndicBlank                    => JsString(MessageTypeIndicBlank.toString)
+      case MessageTypeIndicInvalid                  => JsString(MessageTypeIndicInvalid.toString)
 
     }
 
@@ -213,6 +217,8 @@ object BusinessRuleErrors {
             case Some(ci"reportingentityelementmissing")     => JsSuccess(ReportingEntityElementMissing)
             case Some(ci"resendoutsiderepenterror")          => JsSuccess(ResendOutsideRepEntError)
             case Some(ci"resenddocrefidinvalid")             => JsSuccess(ResendDocRefIdInvalid)
+            case Some(ci"messagetypeindicblank")             => JsSuccess(MessageTypeIndicBlank)
+            case Some(ci"messagetypeindicinvalid")           => JsSuccess(MessageTypeIndicInvalid)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
             case other => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -263,6 +269,8 @@ object BusinessRuleErrors {
     case ReportingEntityElementMissing     => "error.ReportingEntityElementMissing"
     case ResendOutsideRepEntError          => "error.ResendOutsideRepEntError"
     case ResendDocRefIdInvalid             => "error.ResendDocRefIdInvalid"
+    case MessageTypeIndicBlank             => "error.MessageTypeIndicBlank"
+    case MessageTypeIndicInvalid           => "error.MessageTypeIndicInvalid"
   }
 }
 

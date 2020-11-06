@@ -170,6 +170,9 @@ object MessageSpec {
   implicit val format = Json.format[MessageSpec]
 }
 
+case class EntityReportingPeriod(startDate: LocalDate, endDate: LocalDate)
+object EntityReportingPeriod { implicit val format = Json.format[EntityReportingPeriod] }
+
 case class ReportingEntity(
   reportingRole: ReportingRole,
   docSpec: DocSpec,
@@ -177,9 +180,6 @@ case class ReportingEntity(
   name: String,
   entityReportingPeriod: EntityReportingPeriod)
 object ReportingEntity { implicit val format = Json.format[ReportingEntity] }
-
-case class EntityReportingPeriod(startDate: LocalDate, endDate: LocalDate)
-object EntityReportingPeriod { implicit val format = Json.format[EntityReportingPeriod] }
 
 case class CbcOecdInfo(cbcVer: String)
 object CbcOecdInfo { implicit val format = Json.format[CbcOecdInfo] }
