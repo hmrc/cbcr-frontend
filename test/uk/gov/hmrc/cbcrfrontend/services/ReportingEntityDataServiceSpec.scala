@@ -47,7 +47,7 @@ class ReportingEntityDataServiceSpec
   val corrDocRefId = CorrDocRefId(crnDocRefId)
   val cbcid = CBCId.create(1).toOption
   val tin = TIN("90000000001", "")
-  val reportingPeriod = "31-03-2016"
+  val reportingPeriod = "2016-03-31"
   val docRefIdpair = DocRefIdPair(docRefId: DocRefId, Some(corrDocRefId))
 
   val red = ReportingEntityData(
@@ -59,7 +59,8 @@ class ReportingEntityDataServiceSpec
     CBC701,
     Some(LocalDate.now()),
     None,
-    Some("USD")
+    Some("USD"),
+    Some(EntityReportingPeriod(LocalDate.parse("2016-01-01"), LocalDate.parse("2016-03-31")))
   )
 
   val redModel = ReportingEntityDataModel(
@@ -72,7 +73,8 @@ class ReportingEntityDataServiceSpec
     Some(LocalDate.now()),
     None,
     true,
-    Some("USD")
+    Some("USD"),
+    None
   )
 
   DocRefIdPair(docRefId: DocRefId, Some(corrDocRefId))
@@ -86,7 +88,8 @@ class ReportingEntityDataServiceSpec
     CBC701,
     Some(LocalDate.now()),
     None,
-    Some("USD")
+    Some("USD"),
+    Some(EntityReportingPeriod(LocalDate.parse("2016-01-01"), LocalDate.parse("2016-03-31")))
   )
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
