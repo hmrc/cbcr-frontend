@@ -26,6 +26,10 @@
                 </ns1:Address>
             </ns1:Entity>
             <ns1:ReportingRole>CBC702</ns1:ReportingRole>
+            <ns1:ReportingPeriod>
+                <ns1:StartDate>2016-01-02</ns1:StartDate>
+                <ns1:EndDate>2016-03-31</ns1:EndDate>
+            </ns1:ReportingPeriod>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:cbcstf:v5">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:cbcstf:v5">GB2016RGXLCBC0100000056CBC40120170311T090000X_NONGBUTRNOT10CHARSOECD1ENT</ns2:DocRefId>

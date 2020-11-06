@@ -123,7 +123,8 @@ class CBCBusinessRuleValidator @Inject()(
   private def extractReportingEntity(in: RawReportingEntity): ValidBusinessResult[ReportingEntity] =
     (extractReportingRole(in) |@|
       extractDocSpec(in.docSpec, ENT) |@|
-      extractTIN(in)).map(ReportingEntity(_, _, _, in.name, in.city))
+      extractTIN(in) |@|
+      extractEntityReportingPeriod(in)).map(ReportingEntity(_, _, _, in.name, in.city, _))
 
   private def extractCBCReports(in: RawCbcReports): ValidBusinessResult[CbcReports] =
     extractDocSpec(in.docSpec, REP).map(CbcReports(_))
@@ -183,6 +184,12 @@ class CBCBusinessRuleValidator @Inject()(
   private def extractReportingPeriod(in: RawMessageSpec): ValidBusinessResult[LocalDate] =
     Validated
       .catchNonFatal(LocalDate.parse(in.reportingPeriod))
+      .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate"))
+      .toValidatedNel
+
+  private def extractEntityReportingPeriod(in: RawReportingEntity): ValidBusinessResult[EntityReportingPeriod] =
+    Validated
+      .catchNonFatal(EntityReportingPeriod(LocalDate.parse(in.startDate), LocalDate.parse(in.endDate)))
       .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate"))
       .toValidatedNel
 
@@ -826,6 +833,7 @@ class CBCBusinessRuleValidator @Inject()(
       case Invalid(i) => Future.successful(i.invalid)
     }
 
+  //Because ReportingEntity is mandatory in version 2.0 we will not treat None as valid but instead throw and error
   def recoverReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[CompleteXMLInfo] =
     in.reportingEntity match {
       case Some(re) =>
@@ -838,41 +846,7 @@ class CBCBusinessRuleValidator @Inject()(
             in.creationDate,
             in.constEntityNames,
             in.currencyCodes).validNel)
-      case None =>
-        val id = in.cbcReport
-          .find(_.docSpec.corrDocRefId.isDefined)
-          .flatMap(_.docSpec.corrDocRefId)
-          .orElse(in.additionalInfo.headOption.flatMap(_.docSpec.corrDocRefId))
-        val rr =
-          in.cbcReport.headOption.map(_.docSpec.docType).orElse(in.additionalInfo.headOption.map(_.docSpec.docType))
-
-        (id |@| rr)
-          .map { (drid, dti) =>
-            reportingEntityDataService
-              .queryReportingEntityData(drid.cid)
-              .leftMap { cbcErrors =>
-                {
-                  Logger.error(s"Got error back: $cbcErrors")
-                  throw new Exception(s"Error communicating with backend: $cbcErrors")
-                }
-              }
-              .subflatMap {
-                case Some(red) => {
-                  val re = ReportingEntity(
-                    red.reportingRole,
-                    DocSpec(OECD0, red.reportingEntityDRI, None, None),
-                    TIN(red.tin.value, "gb"),
-                    red.ultimateParentEntity.ultimateParentEntity,
-                    None)
-                  Right(CompleteXMLInfo(in, re))
-                }
-                case None => Left(OriginalSubmissionNotFound)
-              }
-              .toValidatedNel
-          }
-          .getOrElse {
-            Future.successful(OriginalSubmissionNotFound.invalidNel)
-          }
+      case None => Future.successful(ReportingEntityElementMissing.invalidNel)
     }
 
 }

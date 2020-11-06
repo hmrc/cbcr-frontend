@@ -29,7 +29,9 @@ class BusinessRulesUtilSpec extends UnitSpec {
       DocSpec(OECD1, DocRefId(docRefId + "ENT").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "ENT").get)), None),
       TIN("1000000019", "GB"),
       "Mne",
-      None)
+      None,
+      EntityReportingPeriod(LocalDate.parse("2016-01-31"), LocalDate.parse("2017-01-30"))
+    )
 
   def xmlinfo(reportingEntity: Option[ReportingEntity]) = XMLInfo(
     MessageSpec(

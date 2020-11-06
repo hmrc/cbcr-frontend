@@ -134,7 +134,9 @@ class XmlInfoExtract {
           val city = getAddressCity((re \ "Entity" \ "Address").headOption)
           val rr = (re \ "ReportingRole").text
           val ds = getDocSpec((re \ "DocSpec").head) //DocSpec is required in ReportingEntity so this will exist!
-          RawReportingEntity(rr, ds, tin, tinIB, name, city)
+          val startDate = (re \ "ReportingPeriod" \ "StartDate").text
+          val endDate = (re \ "ReportingPeriod" \ "EndDate").text
+          RawReportingEntity(rr, ds, tin, tinIB, name, city, startDate, endDate)
         }
 
     case List("CBC_OECD", "CbcBody", "CbcReports", "DocSpec") =>
