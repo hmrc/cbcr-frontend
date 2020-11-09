@@ -124,13 +124,13 @@ class CBCBusinessRuleValidator @Inject()(
     (extractReportingRole(in) |@|
       extractDocSpec(in.docSpec, ENT) |@|
       extractTIN(in) |@|
-      extractEntityReportingPeriod(in)).map(ReportingEntity(_, _, _, in.name, _))
+      extractEntityReportingPeriod(in)).map(ReportingEntity(_, _, _, in.name, in.city, _))
 
   private def extractCBCReports(in: RawCbcReports): ValidBusinessResult[CbcReports] =
     extractDocSpec(in.docSpec, REP).map(CbcReports(_))
 
   private def extractAdditionalInfo(in: RawAdditionalInfo): ValidBusinessResult[AdditionalInfo] =
-    extractDocSpec(in.docSpec, ADD).map(AdditionalInfo(_))
+    extractDocSpec(in.docSpec, ADD).map(AdditionalInfo(_, in.otherInfo))
 
   private def extractDocSpec(d: RawDocSpec, parentGroupElement: ParentGroupElement): ValidBusinessResult[DocSpec] =
     (extractDocTypeInidc(d.docType) |@|
@@ -227,6 +227,7 @@ class CBCBusinessRuleValidator @Inject()(
       validateOrganisationCBCId(x, enrolment, affinityGroup) *>
       validateCreationDate(x) *>
       validateReportingPeriod(x) *>
+      validateOtherInfo(x) *>
       validateMultipleFileUploadForSameReportingPeriod(x) *>
       validateMessageRefIds(x) *>
       validateCurrencyCodes(x) *>
@@ -244,6 +245,7 @@ class CBCBusinessRuleValidator @Inject()(
         (docRefId *>
           validateTIN(re.tin, re.reportingRole) *>
           validateReportingEntityName(re) *>
+          validateReportingEntityAddressCity(re) *>
           validateConstEntities(in.constEntityNames)).map(_.andThen(_ => in.validNel))
 
       }
@@ -252,6 +254,16 @@ class CBCBusinessRuleValidator @Inject()(
   private def validateReportingEntityName(entity: ReportingEntity): ValidBusinessResult[ReportingEntity] =
     if (entity.name.trim.nonEmpty) entity.validNel
     else ReportingEntityOrConstituentEntityEmpty.invalidNel
+
+  private def validateReportingEntityAddressCity(entity: ReportingEntity): ValidBusinessResult[ReportingEntity] =
+    entity.city match {
+      case Some(x) => if (x.trim.isEmpty) AddressCityEmpty.invalidNel else entity.validNel
+      case None    => entity.validNel
+    }
+
+  private def validateOtherInfo(xmlInfo: XMLInfo): ValidBusinessResult[XMLInfo] =
+    if (xmlInfo.additionalInfo.forall(!_.otherInfo.trim.isEmpty)) xmlInfo.validNel
+    else OtherInfoEmpty.invalidNel
 
   private def validateConstEntities(reports: List[String]): ValidBusinessResult[List[String]] =
     if (reports.forall(_.trim.nonEmpty)) reports.validNel

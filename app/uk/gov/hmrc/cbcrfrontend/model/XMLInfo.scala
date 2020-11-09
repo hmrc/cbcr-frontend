@@ -29,7 +29,7 @@ import play.api.libs.json._
 sealed trait RawXmlFields extends Product with Serializable
 
 case object RawBody extends RawXmlFields
-case class RawAdditionalInfo(docSpec: RawDocSpec) extends RawXmlFields
+case class RawAdditionalInfo(docSpec: RawDocSpec, otherInfo: String) extends RawXmlFields
 case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
 case class RawCurrencyCodes(currCodes: List[String]) extends RawXmlFields
 case class RawDocSpec(docType: String, docRefId: String, corrDocRefId: Option[String], corrMessageRefId: Option[String])
@@ -52,6 +52,7 @@ case class RawReportingEntity(
   tin: String,
   tinIssuedBy: String,
   name: String,
+  city: Option[String],
   startDate: String,
   endDate: String)
     extends RawXmlFields
@@ -141,7 +142,7 @@ case class DocSpec(
   corrMessageRefId: Option[String])
 object DocSpec { implicit val format = Json.format[DocSpec] }
 
-case class AdditionalInfo(docSpec: DocSpec)
+case class AdditionalInfo(docSpec: DocSpec, otherInfo: String)
 object AdditionalInfo { implicit val format = Json.format[AdditionalInfo] }
 
 case class CbcReports(docSpec: DocSpec)
@@ -178,7 +179,9 @@ case class ReportingEntity(
   docSpec: DocSpec,
   tin: TIN,
   name: String,
+  city: Option[String],
   entityReportingPeriod: EntityReportingPeriod)
+
 object ReportingEntity { implicit val format = Json.format[ReportingEntity] }
 
 case class CbcOecdInfo(cbcVer: String)

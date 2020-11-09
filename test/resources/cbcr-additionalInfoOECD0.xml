@@ -184,7 +184,7 @@
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:cbcstf:v5">OECD0</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:cbcstf:v5">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD</ns2:DocRefId>
             </ns1:DocSpec>
-            <ns1:OtherInfo>String_OtherInfo</ns1:OtherInfo>
+            <ns1:OtherInfo>  </ns1:OtherInfo>
             <ns1:ResCountryCode>GB</ns1:ResCountryCode>
             <ns1:SummaryRef>CBC610</ns1:SummaryRef>
         </ns1:AdditionalInfo>
