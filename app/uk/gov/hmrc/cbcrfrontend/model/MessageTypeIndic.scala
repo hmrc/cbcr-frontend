@@ -22,6 +22,7 @@ sealed trait MessageTypeIndic
 
 case object CBC401 extends MessageTypeIndic
 case object CBC402 extends MessageTypeIndic
+case object CBCInvalidMessageTypeIndic extends MessageTypeIndic
 
 object MessageTypeIndic {
   implicit val format = new Format[MessageTypeIndic] {
@@ -35,8 +36,9 @@ object MessageTypeIndic {
 
   }
   def parseFrom(s: String): Option[MessageTypeIndic] = s.toLowerCase.trim match {
-    case "cbc401" => Some(CBC401)
-    case "cbc402" => Some(CBC402)
-    case _        => None
+    case "cbc401"                            => Some(CBC401)
+    case "cbc402"                            => Some(CBC402)
+    case otherValue if (!otherValue.isEmpty) => Some(CBCInvalidMessageTypeIndic)
+    case _                                   => None
   }
 }

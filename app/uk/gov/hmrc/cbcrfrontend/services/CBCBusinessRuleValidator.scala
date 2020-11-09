@@ -476,15 +476,20 @@ class CBCBusinessRuleValidator @Inject()(
           r.docSpec.docType == OECD3 ||
           r.docSpec.docType == OECD0)
 
-    determineMessageTypeIndic(xmlInfo) match {
+    val messaggeTypeIndic = xmlInfo.messageSpec.messageType
+    val determinedMessageTypeIndic = determineMessageTypeIndic(xmlInfo)
+
+    messaggeTypeIndic match {
       case Some(CBC402)
           if CBCReportsAreNotAllCorrectionsOrDeletions
             || AdditionalInfoIsNotCorrectionsOrDeletions
             || ReportingEntityIsNotCorrectionsOrDeletionsOrResent =>
         MessageTypeIndicError.invalidNel
-      case _ if CBCReportsAreNeverResent && AdditionalInfoIsNeverResent   => xmlInfo.validNel
-      case _ if !CBCReportsAreNeverResent || !AdditionalInfoIsNeverResent => ResendOutsideRepEntError.invalidNel
-      case _                                                              => MessageTypeIndicError.invalidNel
+      case Some(CBCInvalidMessageTypeIndic)                                     => MessageTypeIndicInvalid.invalidNel
+      case Some(_) if CBCReportsAreNeverResent && AdditionalInfoIsNeverResent   => xmlInfo.validNel
+      case Some(_) if !CBCReportsAreNeverResent || !AdditionalInfoIsNeverResent => ResendOutsideRepEntError.invalidNel
+      case Some(CBC401) if (determinedMessageTypeIndic == None)                 => MessageTypeIndicError.invalidNel
+      case _                                                                    => MessageTypeIndicBlank.invalidNel
     }
 
   }
@@ -639,8 +644,8 @@ class CBCBusinessRuleValidator @Inject()(
             Future.successful(xmlInfo.validNel)
           }
       }
-      case None if xmlInfo.messageSpec.messageType.contains(CBC401) => Future.successful(xmlInfo.validNel)
-      case _                                                        => Future.successful(ReportingPeriodInvalid.invalidNel)
+      case _ =>
+        Future.successful(xmlInfo.validNel) //No extra checks needed here as message type indic is mandatory so it will be validated against another business rule
     }
 
   private def validateMultipleFileUploadForSameReportingPeriod(x: XMLInfo)(

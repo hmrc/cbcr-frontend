@@ -99,6 +99,8 @@ case object PrivateBetaCBCIdError extends BusinessRuleErrors
 case object ReportingEntityElementMissing extends BusinessRuleErrors
 case object ResendOutsideRepEntError extends BusinessRuleErrors
 case object ResendDocRefIdInvalid extends BusinessRuleErrors
+case object MessageTypeIndicBlank extends BusinessRuleErrors
+case object MessageTypeIndicInvalid extends BusinessRuleErrors
 case object AddressCityEmpty extends BusinessRuleErrors
 case object OtherInfoEmpty extends BusinessRuleErrors
 
@@ -163,6 +165,8 @@ object BusinessRuleErrors {
       case ReportingEntityElementMissing            => JsString(ReportingEntityElementMissing.toString)
       case ResendOutsideRepEntError                 => JsString(ResendOutsideRepEntError.toString)
       case ResendDocRefIdInvalid                    => JsString(ResendDocRefIdInvalid.toString)
+      case MessageTypeIndicBlank                    => JsString(MessageTypeIndicBlank.toString)
+      case MessageTypeIndicInvalid                  => JsString(MessageTypeIndicInvalid.toString)
       case AddressCityEmpty                         => JsString(AddressCityEmpty.toString)
       case OtherInfoEmpty                           => JsString(OtherInfoEmpty.toString)
     }
@@ -216,6 +220,8 @@ object BusinessRuleErrors {
             case Some(ci"reportingentityelementmissing")     => JsSuccess(ReportingEntityElementMissing)
             case Some(ci"resendoutsiderepenterror")          => JsSuccess(ResendOutsideRepEntError)
             case Some(ci"resenddocrefidinvalid")             => JsSuccess(ResendDocRefIdInvalid)
+            case Some(ci"messagetypeindicblank")             => JsSuccess(MessageTypeIndicBlank)
+            case Some(ci"messagetypeindicinvalid")           => JsSuccess(MessageTypeIndicInvalid)
             case Some(ci"addresscityempty")                  => JsSuccess(AddressCityEmpty)
             case Some(ci"otherinfoempty")                    => JsSuccess(OtherInfoEmpty)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
@@ -268,6 +274,8 @@ object BusinessRuleErrors {
     case ReportingEntityElementMissing     => "error.ReportingEntityElementMissing"
     case ResendOutsideRepEntError          => "error.ResendOutsideRepEntError"
     case ResendDocRefIdInvalid             => "error.ResendDocRefIdInvalid"
+    case MessageTypeIndicBlank             => "error.MessageTypeIndicBlank"
+    case MessageTypeIndicInvalid           => "error.MessageTypeIndicInvalid"
     case AddressCityEmpty                  => "error.AddressCityEmpty"
     case OtherInfoEmpty                    => "error.OtherInfoEmpty"
   }
