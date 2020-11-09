@@ -23,6 +23,9 @@
                 <ns1:Address legalAddressType="OECD303">
                     <ns1:CountryCode>US</ns1:CountryCode>
                     <ns1:AddressFree>Free Text</ns1:AddressFree>
+                    <ns1:AddressFix>
+                        <ns1:City>   </ns1:City>
+                    </ns1:AddressFix>
                 </ns1:Address>
             </ns1:Entity>
             <ns1:ReportingRole>CBC703</ns1:ReportingRole>

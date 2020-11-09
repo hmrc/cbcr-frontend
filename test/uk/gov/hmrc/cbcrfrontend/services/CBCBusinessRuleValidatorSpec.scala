@@ -333,6 +333,23 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
       }
 
+      "the City inside addressFix tag is an empty string" in {
+        when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT
+          .pure[Future, CBCErrors, Option[ReportingEntityData]](None)
+
+        when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+        val multipleCbcBodies = new File("test/resources/cbcr-valid-reporting-entity-name.xml")
+        val result = Await.result(
+          validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)),
+          5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(AddressCityEmpty),
+          _ => fail("No ReportingEntityName error generated")
+        )
+
+      }
+
       "the constEntity name is an empty string" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
         val multipleCbcBodies = new File("test/resources/cbcr-valid-const-entity-name.xml")
@@ -605,6 +622,17 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
         result.fold(
           errors => errors.toList should not contain (MessageTypeIndicError),
+          _ => fail("No InvalidXMLError generated")
+        )
+
+      }
+      "AdditionalInfo.otherInfo is Empty" in {
+        val validFile = new File("test/resources/cbcr-additionalInfoOECD0.xml")
+        val result =
+          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => errors.toList should contain(OtherInfoEmpty),
           _ => fail("No InvalidXMLError generated")
         )
 
