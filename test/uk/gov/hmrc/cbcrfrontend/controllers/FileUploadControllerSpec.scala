@@ -168,10 +168,11 @@ class FileUploadControllerSpec
         DocSpec(OECD1, DocRefId(docRefId + "REP").get, None, None),
         TIN("7000000002", "gb"),
         "name",
+        None,
         EntityReportingPeriod(LocalDate.parse("2016-03-31"), LocalDate.parse("2017-03-30"))
       )),
     List(CbcReports(DocSpec(OECD1, DocRefId(docRefId + "ENT").get, None, None))),
-    List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None))),
+    List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None), "Some Other Info")),
     Some(LocalDate.now()),
     List.empty[String],
     List.empty[String]
@@ -184,6 +185,7 @@ class FileUploadControllerSpec
       DocSpec(OECD1, DocRefId(docRefId + "REP").get, None, None),
       TIN("7000000002", "gb"),
       "name",
+      None,
       EntityReportingPeriod(LocalDate.parse("2016-03-31"), LocalDate.parse("2017-03-30"))
     )
   )

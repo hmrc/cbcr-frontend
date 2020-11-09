@@ -99,6 +99,8 @@ case object PrivateBetaCBCIdError extends BusinessRuleErrors
 case object ReportingEntityElementMissing extends BusinessRuleErrors
 case object ResendOutsideRepEntError extends BusinessRuleErrors
 case object ResendDocRefIdInvalid extends BusinessRuleErrors
+case object AddressCityEmpty extends BusinessRuleErrors
+case object OtherInfoEmpty extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -161,7 +163,8 @@ object BusinessRuleErrors {
       case ReportingEntityElementMissing            => JsString(ReportingEntityElementMissing.toString)
       case ResendOutsideRepEntError                 => JsString(ResendOutsideRepEntError.toString)
       case ResendDocRefIdInvalid                    => JsString(ResendDocRefIdInvalid.toString)
-
+      case AddressCityEmpty                         => JsString(AddressCityEmpty.toString)
+      case OtherInfoEmpty                           => JsString(OtherInfoEmpty.toString)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -213,6 +216,8 @@ object BusinessRuleErrors {
             case Some(ci"reportingentityelementmissing")     => JsSuccess(ReportingEntityElementMissing)
             case Some(ci"resendoutsiderepenterror")          => JsSuccess(ResendOutsideRepEntError)
             case Some(ci"resenddocrefidinvalid")             => JsSuccess(ResendDocRefIdInvalid)
+            case Some(ci"addresscityempty")                  => JsSuccess(AddressCityEmpty)
+            case Some(ci"otherinfoempty")                    => JsSuccess(OtherInfoEmpty)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
             case other => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -263,6 +268,8 @@ object BusinessRuleErrors {
     case ReportingEntityElementMissing     => "error.ReportingEntityElementMissing"
     case ResendOutsideRepEntError          => "error.ResendOutsideRepEntError"
     case ResendDocRefIdInvalid             => "error.ResendDocRefIdInvalid"
+    case AddressCityEmpty                  => "error.AddressCityEmpty"
+    case OtherInfoEmpty                    => "error.OtherInfoEmpty"
   }
 }
 

@@ -29,6 +29,7 @@ class BusinessRulesUtilSpec extends UnitSpec {
       DocSpec(OECD1, DocRefId(docRefId + "ENT").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "ENT").get)), None),
       TIN("1000000019", "GB"),
       "Mne",
+      None,
       EntityReportingPeriod(LocalDate.parse("2016-01-31"), LocalDate.parse("2017-01-30"))
     )
 
@@ -44,7 +45,7 @@ class BusinessRulesUtilSpec extends UnitSpec {
     ),
     reportingEntity,
     List(CbcReports(DocSpec(OECD1, DocRefId(docRefId + "REP").get, None, None))),
-    List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None))),
+    List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None), "Some Other Info")),
     Some(LocalDate.now()),
     List.empty[String],
     List.empty[String]
@@ -66,7 +67,8 @@ class BusinessRulesUtilSpec extends UnitSpec {
         DocSpec(OECD1, DocRefId(docRefId + "REP").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "REP").get)), None))),
     List(
       AdditionalInfo(
-        DocSpec(OECD1, DocRefId(docRefId + "ADD").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "ADD").get)), None))),
+        DocSpec(OECD1, DocRefId(docRefId + "ADD").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "ADD").get)), None),
+        "Some Other Info")),
     Some(LocalDate.now()),
     List.empty[String],
     List.empty[String]
