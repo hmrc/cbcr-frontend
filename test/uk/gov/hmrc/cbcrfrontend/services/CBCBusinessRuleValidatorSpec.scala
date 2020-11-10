@@ -91,6 +91,9 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
   when(runMode.env) thenReturn "Dev"
   when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
+  when(reportingEntity.queryReportingEntityDatesOverlaping(any(), any())(any())) thenReturn EitherT
+    .pure[Future, CBCErrors, Option[DatesOverlap]](Some(DatesOverlap(false)))
+
   def makeTheUserAnAgent =
     when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())).thenReturn(Future.successful(None))
 

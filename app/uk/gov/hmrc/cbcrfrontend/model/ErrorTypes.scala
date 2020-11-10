@@ -103,6 +103,7 @@ case object MessageTypeIndicBlank extends BusinessRuleErrors
 case object MessageTypeIndicInvalid extends BusinessRuleErrors
 case object AddressCityEmpty extends BusinessRuleErrors
 case object OtherInfoEmpty extends BusinessRuleErrors
+case object DatesOverlapInvalid extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -169,6 +170,7 @@ object BusinessRuleErrors {
       case MessageTypeIndicInvalid                  => JsString(MessageTypeIndicInvalid.toString)
       case AddressCityEmpty                         => JsString(AddressCityEmpty.toString)
       case OtherInfoEmpty                           => JsString(OtherInfoEmpty.toString)
+      case DatesOverlapInvalid                      => JsString(DatesOverlapInvalid.toString)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -224,6 +226,7 @@ object BusinessRuleErrors {
             case Some(ci"messagetypeindicinvalid")           => JsSuccess(MessageTypeIndicInvalid)
             case Some(ci"addresscityempty")                  => JsSuccess(AddressCityEmpty)
             case Some(ci"otherinfoempty")                    => JsSuccess(OtherInfoEmpty)
+            case Some(ci"datesoverlapinvalid")               => JsSuccess(DatesOverlapInvalid)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
             case other => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -278,6 +281,7 @@ object BusinessRuleErrors {
     case MessageTypeIndicInvalid           => "error.MessageTypeIndicInvalid"
     case AddressCityEmpty                  => "error.AddressCityEmpty"
     case OtherInfoEmpty                    => "error.OtherInfoEmpty"
+    case DatesOverlapInvalid               => "error.DatesOverlapInvalid"
   }
 }
 

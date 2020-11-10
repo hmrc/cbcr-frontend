@@ -98,6 +98,11 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET(url + s"/reporting-entity/query-tin/$tin/$reportingPeriod")
 
+  def overlapQuery(tin: String, entityReportingPeriod: EntityReportingPeriod)(
+    implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.GET(
+      url + s"/reporting-entity/query-dates/$tin/start-date/${entityReportingPeriod.startDate.toString}/end-date/${entityReportingPeriod.endDate.toString}")
+
   def getDocRefIdOver200(implicit hc: HeaderCarrier) =
     http.GET[ListDocRefIdRecord](url + s"/getDocsRefId")
 

@@ -25,7 +25,7 @@ import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, DocRefId, PartialReportingEntityData, ReportingEntityData, ReportingEntityDataModel, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.model._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -137,6 +137,24 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
               .fold(
                 failed =>
                   Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+                data => Right(Some(data))
+            ))
+        .recover {
+          case _: NotFoundException => Right(None)
+          case NonFatal(e)          => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+        })
+
+  def queryReportingEntityDatesOverlaping(tin: String, entityReportingPeriod: EntityReportingPeriod)(
+    implicit hc: HeaderCarrier): ServiceResponse[Option[DatesOverlap]] =
+    EitherT(
+      connector
+        .overlapQuery(tin, entityReportingPeriod)
+        .map(
+          response =>
+            response.json
+              .validate[DatesOverlap]
+              .fold(
+                failed => Left(UnexpectedState(s"Unable to serialise response as DatesOverlap: ${failed.mkString}")),
                 data => Right(Some(data))
             ))
         .recover {
