@@ -389,7 +389,8 @@ error.PartiallyCorrectedCurrency=Your correction file has used a different curre
 error.PartialDeletion=Error Code 80009: You cannot partially delete your report. The report can only be deleted in full.
 error.MessageTypeIndicBlank=Error Code 50007 -The MessageTypeIndic data element is blank. It must be set to the value of ''CBC401'' or ''CBC402''
 error.MessageTypeIndicInvalid=Error Code 50007 -The MessageTypeIndic data element must be set to the value of ''CBC401'' or ''CBC402''
-error.DatesOverlapInvalid=The StartDate to EndDate period cannot overlap with the StartDate to EndDate period of a previously submitted report
+error.DatesOverlapInvalid=The Reporting Period Start / End Dates cannot overlap those from a previous submission.
+
 xmlValidationError.InvalidDocType=Invalid DocTypeIndic
 xmlValidationError.ReportingRole=ReportingEntity.ReportingRole not found or invalid
 xmlValidationError.InvalidDate=Invalid Date for reporting period

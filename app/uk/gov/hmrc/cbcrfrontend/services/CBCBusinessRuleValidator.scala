@@ -851,7 +851,7 @@ class CBCBusinessRuleValidator @Inject()(
           .queryReportingEntityDatesOverlaping(tin, erp)
           .leftMap { cbcErrors =>
             Logger.error(s"Got error back: $cbcErrors")
-            throw new Exception(s"Error communicating with backend to get dates overlaping check: $cbcErrors")
+            throw new Exception(s"Error communicating with backend to get dates overlap check: $cbcErrors")
           }
           .subflatMap {
             case Some(datesOverlap) =>
