@@ -168,6 +168,7 @@ class XmlInfoExtract {
       ds =>
         {
           val otherInfo = (ds \ "OtherInfo").text
+          val otherInfoLanguage = (ds \ "OtherInfo") \@ "language"
           RawAdditionalInfo(getDocSpec((ds \ "DocSpec").head), otherInfo)
         }
 

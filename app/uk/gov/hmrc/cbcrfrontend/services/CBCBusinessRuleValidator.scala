@@ -193,6 +193,12 @@ class CBCBusinessRuleValidator @Inject()(
       .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate"))
       .toValidatedNel
 
+  private def extractEntityReportingPeriod1(in: RawReportingEntity): ValidBusinessResult[Boolean] =
+    Validated
+      .catchNonFatal("Mohan".contains("Moha"))
+      .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate"))
+      .toValidatedNel
+
   private def extractMessageRefID(in: RawMessageSpec): ValidBusinessResult[MessageRefID] =
     MessageRefID(in.messageRefID).fold(
       errors => errors.invalid[MessageRefID],
@@ -246,6 +252,10 @@ class CBCBusinessRuleValidator @Inject()(
           validateTIN(re.tin, re.reportingRole) *>
           validateReportingEntityName(re) *>
           validateReportingEntityAddressCity(re) *>
+          validateRepPeriodSameAsEndDate(re, in.messageSpec.reportingPeriod) *>
+          validateStartDateBeforeEndDate(re) *>
+          validateDatesNotInFuture(re, in.messageSpec.reportingPeriod) *>
+          validateStartDateOnlyAfter01012016(re) *>
           validateConstEntities(in.constEntityNames)).map(_.andThen(_ => in.validNel))
 
       }
@@ -264,6 +274,40 @@ class CBCBusinessRuleValidator @Inject()(
   private def validateOtherInfo(xmlInfo: XMLInfo): ValidBusinessResult[XMLInfo] =
     if (xmlInfo.additionalInfo.forall(!_.otherInfo.trim.isEmpty)) xmlInfo.validNel
     else OtherInfoEmpty.invalidNel
+
+  private def validateStartDateBeforeEndDate(entity: ReportingEntity): ValidBusinessResult[ReportingEntity] =
+    if (entity.entityReportingPeriod.startDate.isAfter(entity.entityReportingPeriod.endDate))
+      StartDateAfterEndDate.invalidNel
+    else
+      entity.validNel
+
+  private def validateDatesNotInFuture(
+    entity: ReportingEntity,
+    reportingPeriod: LocalDate): ValidBusinessResult[ReportingEntity] = {
+    val currentDate = LocalDate.now()
+    if (reportingPeriod.isAfter(currentDate)
+        || entity.entityReportingPeriod.startDate.isAfter(currentDate)
+        || entity.entityReportingPeriod.endDate.isAfter(currentDate))
+      AllReportingdatesInFuture.invalidNel
+    else
+      entity.validNel
+  }
+
+  private def validateRepPeriodSameAsEndDate(
+    entity: ReportingEntity,
+    reportingPeriod: LocalDate): ValidBusinessResult[ReportingEntity] =
+    if (!entity.entityReportingPeriod.endDate.equals(reportingPeriod))
+      EndDateSameAsReportingPeriod.invalidNel
+    else
+      entity.validNel
+
+  private def validateStartDateOnlyAfter01012016(entity: ReportingEntity): ValidBusinessResult[ReportingEntity] = {
+    val historicalStartDate = LocalDate.of(2016, 1, 1)
+    if (entity.entityReportingPeriod.startDate.isBefore(historicalStartDate))
+      StartDateNotBefore01012016.invalidNel
+    else
+      entity.validNel
+  }
 
   private def validateConstEntities(reports: List[String]): ValidBusinessResult[List[String]] =
     if (reports.forall(_.trim.nonEmpty)) reports.validNel
