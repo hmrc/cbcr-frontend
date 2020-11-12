@@ -192,13 +192,7 @@ class CBCBusinessRuleValidator @Inject()(
       .catchNonFatal(EntityReportingPeriod(LocalDate.parse(in.startDate), LocalDate.parse(in.endDate)))
       .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate"))
       .toValidatedNel
-
-  private def extractEntityReportingPeriod1(in: RawReportingEntity): ValidBusinessResult[Boolean] =
-    Validated
-      .catchNonFatal("Mohan".contains("Moha"))
-      .leftMap(_ => InvalidXMLError("xmlValidationError.InvalidDate"))
-      .toValidatedNel
-
+  
   private def extractMessageRefID(in: RawMessageSpec): ValidBusinessResult[MessageRefID] =
     MessageRefID(in.messageRefID).fold(
       errors => errors.invalid[MessageRefID],
