@@ -24,7 +24,7 @@ import org.mockito.ArgumentMatchers.any
 import cats.data.{EitherT, NonEmptyList, Validated}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.{EndDateSameAsReportingPeriod, MessageRefID, ReportingEntityDataModel, _}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,9 +37,7 @@ import org.scalatest.BeforeAndAfterEach
 import uk.gov.hmrc.emailaddress.EmailAddress
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
-import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityDataModel
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.cbcrfrontend.model.MessageRefID
 
 /**
   * Created by max on 24/05/17.
@@ -110,6 +108,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
   val cbcId = CBCId.create(56).toOption
   val filename = "GB2016RGXLCBC0100000056CBC40120170311T090000X.xml"
+  val filenameTemp = "GB2017RGXLCBC0100000056CBC40120170311T090000X.xml"
   val filenamePB = "GB2016RGXVCBC0000000056CBC40120170311T090000X.xml"
 
   val cbcId2 = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
@@ -224,7 +223,8 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         validator.validateBusinessRules(inconsistentCurrency, filename, Some(enrol), Some(Organisation)),
         5.seconds)
       val result2 =
-        Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        Await
+          .result(validator.validateBusinessRules(validFile, filenameTemp, Some(enrol), Some(Organisation)), 5.seconds)
 
       result1.fold(
         errors => errors.toList should contain(InconsistentCurrencyCodes),
@@ -639,6 +639,32 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
           _ => fail("No InvalidXMLError generated")
         )
 
+      }
+      "ReportingEntity.ReportingStartDate is after ReportingPeriod EndDate " in {
+        val validFile = new File("test/resources/cbcr-invalidReportingDates1.xml")
+        val result =
+          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => {
+            errors.toList should contain(StartDateAfterEndDate)
+            errors.toList should contain(AllReportingdatesInFuture)
+          },
+          _ => fail("No InvalidXMLError generated")
+        )
+      }
+      "ReportingEntity.ReportingStartDate is in Future " in {
+        val validFile = new File("test/resources/cbcr-invalidReportingDates2.xml")
+        val result =
+          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+        result.fold(
+          errors => {
+            errors.toList should contain(EndDateSameAsReportingPeriod)
+            errors.toList should contain(StartDateNotBefore01012016)
+          },
+          _ => fail("No InvalidXMLError generated")
+        )
       }
       "MessageTypeIndic is blank and AdditionalInfo.docTypeInidc is OECD0" in {
         val validFile = new File("test/resources/cbcr-additionalInfoOECD0-2.xml")

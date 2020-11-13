@@ -9,8 +9,9 @@
         <ns1:Warning>String_Warning</ns1:Warning>
         <ns1:Contact>Contact ABCCorp</ns1:Contact>
         <ns1:MessageRefId>GB2016RGXLCBC0100000056CBC40120170311T090000X</ns1:MessageRefId>
-        <ns1:ReportingPeriod>2017-03-31</ns1:ReportingPeriod>
-        <ns1:Timestamp>2017-11-01T15:00:00</ns1:Timestamp>
+        <ns1:MessageTypeIndic>CBC401</ns1:MessageTypeIndic>
+        <ns1:ReportingPeriod>2016-03-31</ns1:ReportingPeriod>
+        <ns1:Timestamp>2016-11-01T15:00:00</ns1:Timestamp>
     </ns1:MessageSpec>
     <ns1:CbcBody>
         <ns1:ReportingEntity>
@@ -26,8 +27,8 @@
             </ns1:Entity>
             <ns1:ReportingRole>CBC703</ns1:ReportingRole>
             <ns1:ReportingPeriod>
-                <ns1:StartDate>2016-04-01</ns1:StartDate>
-                <ns1:EndDate>2017-03-31</ns1:EndDate>
+                <ns1:StartDate>2025-04-10</ns1:StartDate>
+                <ns1:EndDate>2016-03-31</ns1:EndDate>
             </ns1:ReportingPeriod>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:cbcstf:v5">OECD1</ns2:DocTypeIndic>
@@ -46,7 +47,7 @@
                     <ns1:Related currCode="USD">602</ns1:Related>
                     <ns1:Total currCode="USD">603</ns1:Total>
                 </ns1:Revenues>
-                <ns1:ProfitOrLoss currCode="GBP">604</ns1:ProfitOrLoss>
+                <ns1:ProfitOrLoss currCode="USD">604</ns1:ProfitOrLoss>
                 <ns1:TaxPaid currCode="USD">605</ns1:TaxPaid>
                 <ns1:TaxAccrued currCode="USD">606</ns1:TaxAccrued>
                 <ns1:Capital currCode="USD">607</ns1:Capital>
@@ -59,7 +60,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>name</ns1:Name>
+                    <ns1:Name/>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -95,7 +96,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>I am not empty</ns1:Name>
+                    <ns1:Name/>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -131,7 +132,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>Name</ns1:Name>
+                    <ns1:Name/>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -167,7 +168,7 @@
                     <ns1:ResCountryCode>US</ns1:ResCountryCode>
                     <ns1:TIN issuedBy="US">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="US">TEST</ns1:IN>
-                    <ns1:Name>constEntityName</ns1:Name>
+                    <ns1:Name/>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>US</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -180,10 +181,10 @@
         </ns1:CbcReports>
         <ns1:AdditionalInfo>
             <ns1:DocSpec>
-                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:cbcstf:v5">OECD1</ns2:DocTypeIndic>
+                <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:cbcstf:v5">OECD0</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:cbcstf:v5">GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD</ns2:DocRefId>
             </ns1:DocSpec>
-            <ns1:OtherInfo>String_OtherInfo</ns1:OtherInfo>
+            <ns1:OtherInfo>OtherInfo sample text</ns1:OtherInfo>
             <ns1:ResCountryCode>GB</ns1:ResCountryCode>
             <ns1:SummaryRef>CBC610</ns1:SummaryRef>
         </ns1:AdditionalInfo>
