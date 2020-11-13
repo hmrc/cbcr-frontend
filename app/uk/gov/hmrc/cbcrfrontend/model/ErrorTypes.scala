@@ -103,6 +103,7 @@ case object MessageTypeIndicBlank extends BusinessRuleErrors
 case object MessageTypeIndicInvalid extends BusinessRuleErrors
 case object AddressCityEmpty extends BusinessRuleErrors
 case object OtherInfoEmpty extends BusinessRuleErrors
+case object DatesOverlapInvalid extends BusinessRuleErrors
 case object StartDateNotBefore01012016 extends BusinessRuleErrors
 case object StartDateAfterEndDate extends BusinessRuleErrors
 case object EndDateSameAsReportingPeriod extends BusinessRuleErrors
@@ -173,6 +174,7 @@ object BusinessRuleErrors {
       case MessageTypeIndicInvalid                  => JsString(MessageTypeIndicInvalid.toString)
       case AddressCityEmpty                         => JsString(AddressCityEmpty.toString)
       case OtherInfoEmpty                           => JsString(OtherInfoEmpty.toString)
+      case DatesOverlapInvalid                      => JsString(DatesOverlapInvalid.toString)
       case StartDateNotBefore01012016               => JsString(StartDateNotBefore01012016.toString)
       case StartDateAfterEndDate                    => JsString(StartDateAfterEndDate.toString)
       case EndDateSameAsReportingPeriod             => JsString(EndDateSameAsReportingPeriod.toString)
@@ -232,6 +234,7 @@ object BusinessRuleErrors {
             case Some(ci"messagetypeindicinvalid")           => JsSuccess(MessageTypeIndicInvalid)
             case Some(ci"addresscityempty")                  => JsSuccess(AddressCityEmpty)
             case Some(ci"otherinfoempty")                    => JsSuccess(OtherInfoEmpty)
+            case Some(ci"datesoverlapinvalid")               => JsSuccess(DatesOverlapInvalid)
             case Some(ci"startdatenotbefore01012016")        => JsSuccess(StartDateNotBefore01012016)
             case Some(ci"startdateafterenddate")             => JsSuccess(StartDateAfterEndDate)
             case Some(ci"enddatesameasreportingperiod")      => JsSuccess(EndDateSameAsReportingPeriod)
@@ -290,6 +293,7 @@ object BusinessRuleErrors {
     case MessageTypeIndicInvalid           => "error.MessageTypeIndicInvalid"
     case AddressCityEmpty                  => "error.AddressCityEmpty"
     case OtherInfoEmpty                    => "error.OtherInfoEmpty"
+    case DatesOverlapInvalid               => "error.DatesOverlapInvalid"
     case StartDateNotBefore01012016        => "error.StartDateNotBefore01012016"
     case StartDateAfterEndDate             => "error.StartDateAfterEndDate"
     case EndDateSameAsReportingPeriod      => "error.EndDateSameAsReportingPeriod"

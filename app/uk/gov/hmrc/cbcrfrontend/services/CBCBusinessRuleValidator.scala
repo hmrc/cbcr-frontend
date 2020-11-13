@@ -231,7 +231,8 @@ class CBCBusinessRuleValidator @Inject()(
       validateMultipleFileUploadForSameReportingPeriod(x) *>
       validateMessageRefIds(x) *>
       validateCurrencyCodes(x) *>
-      validateDeletion(x)
+      validateDeletion(x) *>
+      validateDatesNotOverlapping(x)
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     in.reportingEntity
@@ -872,6 +873,32 @@ class CBCBusinessRuleValidator @Inject()(
                 Left(PartialDeletion)
               }
             case None => Right(in)
+          }
+          .toValidatedNel
+      case _ => Future.successful(in.validNel)
+    }
+  }
+
+  private def validateDatesNotOverlapping(in: XMLInfo)(
+    implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
+    val tin = in.reportingEntity.fold("")(_.tin.value)
+    val entityReportingPeriod = in.reportingEntity.map(_.entityReportingPeriod)
+    entityReportingPeriod match {
+      case Some(erp) =>
+        reportingEntityDataService
+          .queryReportingEntityDatesOverlaping(tin, erp)
+          .leftMap { cbcErrors =>
+            Logger.error(s"Got error back: $cbcErrors")
+            throw new Exception(s"Error communicating with backend to get dates overlap check: $cbcErrors")
+          }
+          .subflatMap {
+            case Some(datesOverlap) =>
+              if (datesOverlap.isOverlapping == true)
+                Left(DatesOverlapInvalid)
+              else {
+                Right(in)
+              }
+            case _ => Right(in)
           }
           .toValidatedNel
       case _ => Future.successful(in.validNel)

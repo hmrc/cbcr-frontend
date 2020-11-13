@@ -335,7 +335,7 @@ error.IncompatibleOECDTypes=cy-Error DocTypeIndic: Document must not contain a m
 error.MessageTypeIndicDocTypeIncompatible=cy-Error DocTypeIndic (New): If the Submission is an original, DocTypeIndic must be "OECD1"
 error.InvalidDocRefId=cy-Error Code 80000 DocRefId (format): The structure of the DocRefID is not in the correct format, as set out in the User Guide.
 error.InvalidCorrDocRefId=cy-Error Code 8000 CorrDocRefId (format): The structure of the CorrDocRefID is not in the correct format, as set out in the User Guide.
-error.CbcOecdVersionError=cy-CBC_OECD version must equal 1.0.1
+error.CbcOecdVersionError=cy-The CBC_OECD version attribute must be set to the value of ''2.0''
 error.XmlEncodingError=cy-XML encoding must equal UTF8
 error.OriginalSubmissionNotFound=cy-Original submission could not be identified
 error.PrivateBetaCBCIdError=cy-The country-by-country ID you entered has changed. You will need to use the new ID which we have emailed to you. If you are operating as an agent, contact your client for the new country-by-country ID.
@@ -361,6 +361,13 @@ error.AdditionalInfoDRINotFound2=cy-was not found.
 error.AdditionalInfoDRINotFound3=cy-Please move the information into the AdditionalInfo section with CorrDocRefId
 error.AdditionalInfoDRINotFound4=cy-and resubmit. You can also also contact ‘digitalservice.cbc@hmrc.gsi.gov.uk’ to discuss this issue if preferred.
 error.AdditionalInfoDRINotFound5=cy-from the first AdditionalInfo section of the initial submission
+error.InconsistentCurrencyCodes=cy-You have used more than one currency in your report. All amounts provided in the Country-by-Country Report should be reported in one and the same currency.
+error.PartiallyCorrectedCurrency=cy-Your correction file has used a different currency than the currency used in your previous submission. A single year’s report cannot contain mixed currencies.
+error.PartialDeletion=cy-Error Code 80009: You cannot partially delete your report. The report can only be deleted in full.
+error.MessageTypeIndicBlank=cy-Error Code 50007 -The MessageTypeIndic data element is blank. It must be set to the value of ''CBC401'' or ''CBC402''
+error.MessageTypeIndicInvalid=cy-Error Code 50007 -The MessageTypeIndic data element must be set to the value of ''CBC401'' or ''CBC402''
+error.DatesOverlapInvalid=cy-The Reporting Period Start / End Dates cannot overlap those from a previous submission.
+
 
 xmlValidationError.InvalidDocType=cy-Invalid DocTypeIndic
 xmlValidationError.ReportingRole=cy-ReportingEntity.ReportingRole not found or invalid
