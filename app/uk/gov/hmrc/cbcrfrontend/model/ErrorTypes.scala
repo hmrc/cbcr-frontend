@@ -104,6 +104,10 @@ case object MessageTypeIndicInvalid extends BusinessRuleErrors
 case object AddressCityEmpty extends BusinessRuleErrors
 case object OtherInfoEmpty extends BusinessRuleErrors
 case object DatesOverlapInvalid extends BusinessRuleErrors
+case object StartDateNotBefore01012016 extends BusinessRuleErrors
+case object StartDateAfterEndDate extends BusinessRuleErrors
+case object EndDateSameAsReportingPeriod extends BusinessRuleErrors
+case object AllReportingdatesInFuture extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -171,6 +175,10 @@ object BusinessRuleErrors {
       case AddressCityEmpty                         => JsString(AddressCityEmpty.toString)
       case OtherInfoEmpty                           => JsString(OtherInfoEmpty.toString)
       case DatesOverlapInvalid                      => JsString(DatesOverlapInvalid.toString)
+      case StartDateNotBefore01012016               => JsString(StartDateNotBefore01012016.toString)
+      case StartDateAfterEndDate                    => JsString(StartDateAfterEndDate.toString)
+      case EndDateSameAsReportingPeriod             => JsString(EndDateSameAsReportingPeriod.toString)
+      case AllReportingdatesInFuture                => JsString(AllReportingdatesInFuture.toString)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -227,6 +235,10 @@ object BusinessRuleErrors {
             case Some(ci"addresscityempty")                  => JsSuccess(AddressCityEmpty)
             case Some(ci"otherinfoempty")                    => JsSuccess(OtherInfoEmpty)
             case Some(ci"datesoverlapinvalid")               => JsSuccess(DatesOverlapInvalid)
+            case Some(ci"startdatenotbefore01012016")        => JsSuccess(StartDateNotBefore01012016)
+            case Some(ci"startdateafterenddate")             => JsSuccess(StartDateAfterEndDate)
+            case Some(ci"enddatesameasreportingperiod")      => JsSuccess(EndDateSameAsReportingPeriod)
+            case Some(ci"allreportingdatesinfuture")         => JsSuccess(AllReportingdatesInFuture)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
             case other => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -282,6 +294,10 @@ object BusinessRuleErrors {
     case AddressCityEmpty                  => "error.AddressCityEmpty"
     case OtherInfoEmpty                    => "error.OtherInfoEmpty"
     case DatesOverlapInvalid               => "error.DatesOverlapInvalid"
+    case StartDateNotBefore01012016        => "error.StartDateNotBefore01012016"
+    case StartDateAfterEndDate             => "error.StartDateAfterEndDate"
+    case EndDateSameAsReportingPeriod      => "error.EndDateSameAsReportingPeriod"
+    case AllReportingdatesInFuture         => "error.AllReportingdatesInFuture"
   }
 }
 
