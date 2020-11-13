@@ -1699,5 +1699,49 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         _ => fail("FullDeletion")
       )
     }
+
+    "validate dates overlapping should return invalid if dates are overlapping" in {
+      when(reportingEntity.queryReportingEntityDatesOverlaping(any(), any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[DatesOverlap]](Some(DatesOverlap(true)))
+
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+      when(reportingEntity.queryReportingEntityDataTin(any(), any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](None)
+
+      val validFile = new File("test/resources/cbcr-valid-2" + ".xml")
+      val filename = "GB2019RGXLCBC0100000056CBC40120201101T090000Xvalid2.xml"
+
+      val result = Await.result(
+        validator
+          .validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)),
+        5.seconds
+      )
+      result.fold(
+        errors => errors.toList should contain(DatesOverlapInvalid),
+        _ => fail("Dates Overlap")
+      )
+    }
+
+    "validate dates overlapping should return valid if dates are not overlapping" in {
+      when(reportingEntity.queryReportingEntityDatesOverlaping(any(), any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[DatesOverlap]](Some(DatesOverlap(false)))
+
+      when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
+      when(reportingEntity.queryReportingEntityDataTin(any(), any())(any())) thenReturn EitherT
+        .pure[Future, CBCErrors, Option[ReportingEntityData]](None)
+
+      val validFile = new File("test/resources/cbcr-valid-2" + ".xml")
+      val filename = "GB2019RGXLCBC0100000056CBC40120201101T090000Xvalid2.xml"
+
+      val result = Await.result(
+        validator
+          .validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)),
+        5.seconds
+      )
+      result.fold(
+        errors => errors.toList should not contain (DatesOverlapInvalid),
+        _ => fail("Dates Overlap")
+      )
+    }
   }
 }

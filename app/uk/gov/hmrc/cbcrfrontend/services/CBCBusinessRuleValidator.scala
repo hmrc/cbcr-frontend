@@ -232,7 +232,7 @@ class CBCBusinessRuleValidator @Inject()(
       validateMessageRefIds(x) *>
       validateCurrencyCodes(x) *>
       validateDeletion(x) *>
-      validateDatesNotOverlaping(x)
+      validateDatesNotOverlapping(x)
 
   private def validateReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     in.reportingEntity
@@ -841,7 +841,7 @@ class CBCBusinessRuleValidator @Inject()(
     }
   }
 
-  private def validateDatesNotOverlaping(in: XMLInfo)(
+  private def validateDatesNotOverlapping(in: XMLInfo)(
     implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
     val tin = in.reportingEntity.fold("")(_.tin.value)
     val entityReportingPeriod = in.reportingEntity.map(_.entityReportingPeriod)
