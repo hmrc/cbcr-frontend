@@ -100,7 +100,11 @@
             </div>
             <div class="tabular-data__entry divider--bottom">
                 <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.timestamp")</span>
-                <div class="tabular-data__data-1">@summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))</div>
+                @if(summaryData.doesCreationTimeStampHaveMillis) {
+                    <div class="tabular-data__data-1">@summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))</div>
+                } else {
+                    <div class="tabular-data__data-1">@summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))</div>
+                }
             </div>
             <br>
 

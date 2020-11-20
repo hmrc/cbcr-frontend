@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.time.LocalDateTime
+import java.time.{Duration, LocalDateTime, temporal}
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.all._
@@ -387,9 +388,28 @@ class SubmissionController @Inject()(
     for {
       keyXMLFileInfo <- cache.read[CompleteXMLInfo]
       bpr            <- cache.read[BusinessPartnerRecord]
-      summaryData = SummaryData(bpr, submissionMetaData, keyXMLFileInfo)
+      summaryData = SummaryData(
+        bpr,
+        submissionMetaData,
+        updateCreationTimeStamp(keyXMLFileInfo),
+        doesCreationTimeStampHaveMillis(keyXMLFileInfo))
       _ <- right(cache.save[SummaryData](summaryData))
     } yield summaryData
+
+  def updateCreationTimeStamp(keyXMLFileInfo: CompleteXMLInfo) =
+    if (keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).forall(_.isDigit)) {
+      val millisInfo = keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).toLong
+      val toModify = keyXMLFileInfo.messageSpec.timestamp.plus(Duration.ofMillis(millisInfo))
+      keyXMLFileInfo.copy(messageSpec = keyXMLFileInfo.messageSpec.copy(timestamp = toModify))
+    } else {
+      keyXMLFileInfo
+    }
+
+  def doesCreationTimeStampHaveMillis(keyXMLFileInfo: CompleteXMLInfo) =
+    if (keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).forall(_.isDigit))
+      true
+    else
+      false
 
   def enterCompanyName = Action.async { implicit request =>
     authorised() {
