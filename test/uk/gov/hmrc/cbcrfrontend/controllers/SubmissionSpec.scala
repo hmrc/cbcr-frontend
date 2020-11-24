@@ -588,7 +588,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
 
     "provide an action '/confirm'" which {
       "returns a 303 when the call to the cache fails and redirect to session expired" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
           .thenReturn(
@@ -601,7 +601,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         result.header.headers("Location") should endWith("/session-expired")
       }
       "returns a 500 when the call to file-upload fails" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
           .thenReturn(
@@ -615,7 +615,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
 
       }
       "returns a 500 when the call to save the docRefIds fail" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
           .thenReturn(
@@ -632,7 +632,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
 
       "returns 303 when the there is data and " should {
         "call saveReportingEntityData when the submissionType is OECD1" in {
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
           when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
             .thenReturn(
@@ -657,7 +657,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
         }
         "call updateReportingEntityData when the submissionType is OECD[023]" in {
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
           lazy val updateXml = keyXMLInfo.copy(
             reportingEntity =
@@ -685,7 +685,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
         }
         "return 500 if saveMessageRefId fails and does NOT callsaveReportingEntityData " in {
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
           when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
             .thenReturn(
@@ -732,7 +732,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         }
         "looking for the SubmissionDate" in {
           when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
           when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
@@ -745,7 +745,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         }
         "looking for the CBCId" in {
           when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
           when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
@@ -759,7 +759,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         }
       }
       "sends an email" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
@@ -788,7 +788,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           "submitSuccessReceipt.sendAnotherReport.link"))
       }
       "will still return a 200 if the email fails" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -817,7 +817,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           "submitSuccessReceipt.sendAnotherReport.link"))
       }
       "will write  a ConfirmationEmailSent to the cache if an email is sent" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -846,7 +846,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           "submitSuccessReceipt.sendAnotherReport.link"))
       }
       "not send the email if it has already been sent and not save to the cache" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt:Organisation"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -876,7 +876,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           "submitSuccessReceipt.sendAnotherReport.link"))
       }
       "returns a 200 otherwise" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt:Organisation"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -904,7 +904,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           "submitSuccessReceipt.sendAnotherReport.link"))
       }
       "show show link to submit another report if AffinityGroup is Agent and cache.clear succeeds" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt:Agent"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -931,7 +931,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
       }
       "show NOT show link to submit another reportf AffinityGroup is Agent but cache.clear fails" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -958,7 +958,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           "submitSuccessReceipt.sendAnotherReport.link"))
       }
       "show NOT show link to submit another report if AffinityGroup is NOT Agent and cache.clear succeeds" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -994,7 +994,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         .replace("PM", "pm") shouldEqual "01 December 2017 at 11:59pm"
     }
     "display the audit information correctly" in {
-      val sd = SummaryData(bpr, submissionData, keyXMLInfo)
+      val sd = SummaryData(bpr, submissionData, keyXMLInfo, false)
       val sdj = Json.toJson(sd)
       (sdj \ "submissionMetaData" \ "submissionInfo" \ "ultimateParentEntity")
         .as[String] shouldEqual "ultimateParentEntity"
