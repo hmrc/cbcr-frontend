@@ -314,7 +314,7 @@ class CBCBusinessRuleValidator @Inject()(
     val res1: EitherT[Future, Boolean, Boolean] = reportingEntityDataService
       .queryReportingEntityDataDocRefId(docRefId)
       .leftMap(cbcErrors => {
-        Logger.error(s"Got error back: $cbcErrors")
+        Logger.error(s"Got error back from backend: $cbcErrors")
         throw new Exception(s"Error communicating with backend: $cbcErrors")
       })
       .subflatMap {
