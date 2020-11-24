@@ -435,7 +435,7 @@ class SubmissionController @Inject()(
               .map { fd =>
                 BadRequest(views.enterCompanyName(errors, fd.envelopeId, fd.fileId))
               }
-              .getOrElse(throw new RuntimeException("Missing file upload details")),
+              .getOrElse(throw new RuntimeException("Missing file upload details.")),
           name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
         )
     }
