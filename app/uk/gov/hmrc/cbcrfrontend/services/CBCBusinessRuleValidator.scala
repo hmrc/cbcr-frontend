@@ -271,7 +271,8 @@ class CBCBusinessRuleValidator @Inject()(
     else OtherInfoEmpty.invalidNel
 
   private def validateStartDateBeforeEndDate(entity: ReportingEntity): ValidBusinessResult[ReportingEntity] =
-    if (entity.entityReportingPeriod.startDate.isAfter(entity.entityReportingPeriod.endDate))
+    if (entity.entityReportingPeriod.startDate.isAfter(entity.entityReportingPeriod.endDate)
+        || entity.entityReportingPeriod.startDate.equals(entity.entityReportingPeriod.endDate))
       StartDateAfterEndDate.invalidNel
     else
       entity.validNel
