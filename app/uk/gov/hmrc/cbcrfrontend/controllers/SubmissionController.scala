@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.time.{Duration, LocalDateTime, temporal}
+import java.time.{Duration, LocalDateTime}
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -436,7 +436,7 @@ class SubmissionController @Inject()(
               .map { fd =>
                 BadRequest(views.enterCompanyName(errors, fd.envelopeId, fd.fileId))
               }
-              .getOrElse(throw new RuntimeException("Missing file upload details")),
+              .getOrElse(throw new RuntimeException("Missing file upload details.")),
           name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
         )
     }
