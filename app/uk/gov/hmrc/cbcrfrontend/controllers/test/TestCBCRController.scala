@@ -124,9 +124,9 @@ class TestCBCRController @Inject()(
       .updateReportingEntityReportingPeriod(docRefId)
       .map { s =>
         s.status match {
-          case OK           => Ok("Reporting entity createDate updated")
-          case NOT_MODIFIED => Ok("Reporting entity createDate NOT updated")
-          case _            => Ok("Something went wrong")
+          case OK           => Ok("EntityReportingPeriod is deleted for the ReportingEntity")
+          case NOT_MODIFIED => Ok("EntityReportingPeriod is NOT deleted for the ReportingEntity")
+          case _            => Ok("Something went wrong while deleting EntityReportingPeriod for the ReportingEntity")
         }
       }
       .recover {
