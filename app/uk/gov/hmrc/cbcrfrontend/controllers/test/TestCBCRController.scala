@@ -118,6 +118,23 @@ class TestCBCRController @Inject()(
     }
   }
 
+  def updateReportingEntityReportingPeriod(docRefId: String) = Action.async { implicit request =>
+    authorised() {
+    testCBCRConnector
+      .updateReportingEntityReportingPeriod(docRefId)
+      .map { s =>
+        s.status match {
+          case OK           => Ok("Reporting entity createDate updated")
+          case NOT_MODIFIED => Ok("Reporting entity createDate NOT updated")
+          case _            => Ok("Something went wrong")
+        }
+      }
+      .recover {
+        case _: NotFoundException => Ok("Reporting entity not found")
+      }
+    }
+  }
+
   def updateReportingEntityCreationDate(createDate: String, docRefId: String) = Action.async { implicit request =>
     authorised() {
       testCBCRConnector
