@@ -7,6 +7,9 @@ GET        /deleteReportingEntityData/$docRefId<(.*)>                           
 GET        /dropReportingEntityData                                               @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.dropReportingEntityDataCollection()
 GET        /updateReportingEntityCreationDate/:createDate/$docRefId<(.*)>         @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.updateReportingEntityCreationDate(createDate: String, docRefId: String)
 GET        /deleteReportingEntityCreationDate/$docRefId<(.*)>                     @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteReportingEntityCreationDate(docRefId: String)
+
+GET        /updateReportingEntityReportingPeriod/$docRefId<(.*)>                  @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.updateReportingEntityReportingPeriod(docRefId: String)
+
 GET        /confirmReportingEntityCreationDate/:createDate/$docRefId<(.*)>        @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.confirmReportingEntityCreationDate(createDate: String, docRefId: String)
 GET        /deleteReportingEntityReportingPeriod/$docRefId<(.*)>                  @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.deleteReportingEntityReportingPeriod(docRefId: String)
 GET        /retrieveBusinessRuleValidationErrors                                  @uk.gov.hmrc.cbcrfrontend.controllers.test.TestCBCRController.retrieveBusinessRuleValidationErrors()
