@@ -120,18 +120,18 @@ class TestCBCRController @Inject()(
 
   def updateReportingEntityReportingPeriod(docRefId: String) = Action.async { implicit request =>
     authorised() {
-    testCBCRConnector
-      .updateReportingEntityReportingPeriod(docRefId)
-      .map { s =>
-        s.status match {
-          case OK           => Ok("EntityReportingPeriod is deleted for the ReportingEntity")
-          case NOT_MODIFIED => Ok("EntityReportingPeriod is NOT deleted for the ReportingEntity")
-          case _            => Ok("Something went wrong while deleting EntityReportingPeriod for the ReportingEntity")
+      testCBCRConnector
+        .updateReportingEntityReportingPeriod(docRefId)
+        .map { s =>
+          s.status match {
+            case OK           => Ok("EntityReportingPeriod is deleted for the ReportingEntity")
+            case NOT_MODIFIED => Ok("EntityReportingPeriod is NOT deleted for the ReportingEntity")
+            case _            => Ok("Something went wrong while deleting EntityReportingPeriod for the ReportingEntity")
+          }
         }
-      }
-      .recover {
-        case _: NotFoundException => Ok("Reporting entity not found")
-      }
+        .recover {
+          case _: NotFoundException => Ok("Reporting entity not found")
+        }
     }
   }
 
