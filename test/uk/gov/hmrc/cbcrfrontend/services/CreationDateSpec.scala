@@ -68,7 +68,8 @@ class CreationDateSpec
     CBC701,
     None,
     None,
-    Some("USD")
+    Some("USD"),
+    None
   )
   val redOldCreationDate = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
@@ -79,7 +80,8 @@ class CreationDateSpec
     CBC701,
     Some(LocalDate.parse("2010-01-01")),
     None,
-    Some("USD")
+    Some("USD"),
+    None
   )
   val red = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
@@ -90,7 +92,8 @@ class CreationDateSpec
     CBC701,
     Some(LocalDate.now()),
     None,
-    Some("USD")
+    Some("USD"),
+    Some(EntityReportingPeriod(LocalDate.parse("2017-05-05"), LocalDate.parse("2018-01-01")))
   )
 
   val messageSpec = MessageSpec(
@@ -107,7 +110,7 @@ class CreationDateSpec
     messageSpec,
     None,
     List(CbcReports(DocSpec(OECD2, DocRefId(docRefId + "ENT").get, Some(CorrDocRefId(actualDocRefId)), None))),
-    List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None))),
+    List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None), "Some Other Info")),
     Some(LocalDate.now()),
     List.empty[String],
     List.empty[String]

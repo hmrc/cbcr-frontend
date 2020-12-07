@@ -96,6 +96,18 @@ case object PartialDeletion extends BusinessRuleErrors
 case object CbcOecdVersionError extends BusinessRuleErrors
 case object XmlEncodingError extends BusinessRuleErrors
 case object PrivateBetaCBCIdError extends BusinessRuleErrors
+case object ReportingEntityElementMissing extends BusinessRuleErrors
+case object ResendOutsideRepEntError extends BusinessRuleErrors
+case object ResendDocRefIdInvalid extends BusinessRuleErrors
+case object MessageTypeIndicBlank extends BusinessRuleErrors
+case object MessageTypeIndicInvalid extends BusinessRuleErrors
+case object AddressCityEmpty extends BusinessRuleErrors
+case object OtherInfoEmpty extends BusinessRuleErrors
+case object DatesOverlapInvalid extends BusinessRuleErrors
+case object StartDateNotBefore01012016 extends BusinessRuleErrors
+case object StartDateAfterEndDate extends BusinessRuleErrors
+case object EndDateSameAsReportingPeriod extends BusinessRuleErrors
+case object AllReportingdatesInFuture extends BusinessRuleErrors
 
 sealed trait MessageRefIDError extends BusinessRuleErrors
 case object MessageRefIDMissing extends MessageRefIDError
@@ -155,6 +167,18 @@ object BusinessRuleErrors {
       case PartialDeletion                          => JsString(PartialDeletion.toString)
       case aidnf: AdditionalInfoDRINotFound         => Json.toJson(aidnf)
       case DocRefIdMismatch                         => JsString(DocRefIdMismatch.toString)
+      case ReportingEntityElementMissing            => JsString(ReportingEntityElementMissing.toString)
+      case ResendOutsideRepEntError                 => JsString(ResendOutsideRepEntError.toString)
+      case ResendDocRefIdInvalid                    => JsString(ResendDocRefIdInvalid.toString)
+      case MessageTypeIndicBlank                    => JsString(MessageTypeIndicBlank.toString)
+      case MessageTypeIndicInvalid                  => JsString(MessageTypeIndicInvalid.toString)
+      case AddressCityEmpty                         => JsString(AddressCityEmpty.toString)
+      case OtherInfoEmpty                           => JsString(OtherInfoEmpty.toString)
+      case DatesOverlapInvalid                      => JsString(DatesOverlapInvalid.toString)
+      case StartDateNotBefore01012016               => JsString(StartDateNotBefore01012016.toString)
+      case StartDateAfterEndDate                    => JsString(StartDateAfterEndDate.toString)
+      case EndDateSameAsReportingPeriod             => JsString(EndDateSameAsReportingPeriod.toString)
+      case AllReportingdatesInFuture                => JsString(AllReportingdatesInFuture.toString)
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
@@ -203,6 +227,18 @@ object BusinessRuleErrors {
             case Some(ci"inconsistentcurrencycodes")         => JsSuccess(InconsistentCurrencyCodes)
             case Some(ci"partiallycorrectedcurrency")        => JsSuccess(PartiallyCorrectedCurrency)
             case Some(ci"partialdeletion")                   => JsSuccess(PartialDeletion)
+            case Some(ci"reportingentityelementmissing")     => JsSuccess(ReportingEntityElementMissing)
+            case Some(ci"resendoutsiderepenterror")          => JsSuccess(ResendOutsideRepEntError)
+            case Some(ci"resenddocrefidinvalid")             => JsSuccess(ResendDocRefIdInvalid)
+            case Some(ci"messagetypeindicblank")             => JsSuccess(MessageTypeIndicBlank)
+            case Some(ci"messagetypeindicinvalid")           => JsSuccess(MessageTypeIndicInvalid)
+            case Some(ci"addresscityempty")                  => JsSuccess(AddressCityEmpty)
+            case Some(ci"otherinfoempty")                    => JsSuccess(OtherInfoEmpty)
+            case Some(ci"datesoverlapinvalid")               => JsSuccess(DatesOverlapInvalid)
+            case Some(ci"startdatenotbefore01012016")        => JsSuccess(StartDateNotBefore01012016)
+            case Some(ci"startdateafterenddate")             => JsSuccess(StartDateAfterEndDate)
+            case Some(ci"enddatesameasreportingperiod")      => JsSuccess(EndDateSameAsReportingPeriod)
+            case Some(ci"allreportingdatesinfuture")         => JsSuccess(AllReportingdatesInFuture)
             case Some(otherError) if otherError.startsWith("InvalidXMLError:") =>
               JsSuccess(InvalidXMLError(otherError.replaceAll("^InvalidXMLError: ", "")))
             case other => JsError(s"Unable to serialise $other to a BusinessRuleError")
@@ -250,6 +286,18 @@ object BusinessRuleErrors {
     case InconsistentCurrencyCodes         => "error.InconsistentCurrencyCodes"
     case PartiallyCorrectedCurrency        => "error.PartiallyCorrectedCurrency"
     case PartialDeletion                   => "error.PartialDeletion"
+    case ReportingEntityElementMissing     => "error.ReportingEntityElementMissing"
+    case ResendOutsideRepEntError          => "error.ResendOutsideRepEntError"
+    case ResendDocRefIdInvalid             => "error.ResendDocRefIdInvalid"
+    case MessageTypeIndicBlank             => "error.MessageTypeIndicBlank"
+    case MessageTypeIndicInvalid           => "error.MessageTypeIndicInvalid"
+    case AddressCityEmpty                  => "error.AddressCityEmpty"
+    case OtherInfoEmpty                    => "error.OtherInfoEmpty"
+    case DatesOverlapInvalid               => "error.DatesOverlapInvalid"
+    case StartDateNotBefore01012016        => "error.StartDateNotBefore01012016"
+    case StartDateAfterEndDate             => "error.StartDateAfterEndDate"
+    case EndDateSameAsReportingPeriod      => "error.EndDateSameAsReportingPeriod"
+    case AllReportingdatesInFuture         => "error.AllReportingdatesInFuture"
   }
 }
 

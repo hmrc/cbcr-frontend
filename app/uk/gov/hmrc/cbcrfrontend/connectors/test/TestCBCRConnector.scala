@@ -65,6 +65,9 @@ class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(impli
     implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT(s"$url/test-only/updateReportingEntityCreationDate/$createDate/$docRefId", JsNull)
 
+  def updateReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.PUT(s"$url/test-only/deleteReportingPeriodByRepEntDocRefId/$docRefId", JsNull)
+
   def deleteReportingEntityCreationDate(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.DELETE(s"$url/test-only/deleteReportingEntityCreationDate/$docRefId")
 

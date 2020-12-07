@@ -82,9 +82,16 @@ class ExitSurveyControllerSpec
         None
       ),
       Some(
-        ReportingEntity(CBC701, DocSpec(OECD1, DocRefId(docRefId).get, None, None), TIN("7000000002", "GB"), "name")),
+        ReportingEntity(
+          CBC701,
+          DocSpec(OECD1, DocRefId(docRefId).get, None, None),
+          TIN("7000000002", "GB"),
+          "name",
+          None,
+          EntityReportingPeriod(LocalDate.parse("2016-03-31"), LocalDate.parse("2017-03-30"))
+        )),
       List(CbcReports(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
-      List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
+      List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None), "Some Other Info")),
       Some(LocalDate.now()),
       List.empty[String],
       List.empty[String]

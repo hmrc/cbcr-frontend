@@ -62,7 +62,7 @@ class CBCXMLValidatorSpec extends WordSpec with Matchers with GuiceOneAppPerSuit
     "return an error if the file is invalid and a single error" in {
       val validate = validator.validateSchema(invalidXmlFile)
       validate.hasErrors shouldBe true
-      validate.errorsCollection.size shouldBe 1
+      validate.errorsCollection.size shouldBe 5
     }
 
     "return multiple errors if the file is invalid and has multiple errors" in {
