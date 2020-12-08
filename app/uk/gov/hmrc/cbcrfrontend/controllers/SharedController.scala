@@ -144,8 +144,8 @@ class SharedController @Inject()(
 
   val signOut = Action.async { implicit request =>
     authorised() {
-      Future.successful(
-        Redirect(s"${feConfig.governmentGatewaySignOutUrl}/gg/sign-out?continue=${feConfig.cbcrGuidanceUrl}"))
+      Future.successful(Redirect(
+        s"${feConfig.governmentGatewaySignOutUrl}/bas-gateway/sign-out-without-state?continue=${feConfig.cbcrGuidanceUrl}"))
     }
   }
 
@@ -159,7 +159,8 @@ class SharedController @Inject()(
   val signOutSurvey = Action.async { implicit request =>
     authorised() {
       val continue = s"?continue=${feConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey().url}"
-      Future.successful(Redirect(s"${feConfig.governmentGatewaySignOutUrl}/gg/sign-out$continue"))
+      Future.successful(
+        Redirect(s"${feConfig.governmentGatewaySignOutUrl}/bas-gateway/sign-out-without-state$continue"))
     }
   }
 
