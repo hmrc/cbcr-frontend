@@ -25,7 +25,7 @@
                     <ns1:AddressFree>Free Text</ns1:AddressFree>
                 </ns1:Address>
             </ns1:Entity>
-            <ns1:ReportingRole>CBC703</ns1:ReportingRole>
+            <ns1:ReportingRole>CBC704</ns1:ReportingRole>
             <ns1:ReportingPeriod>
                 <ns1:StartDate>2016-01-01</ns1:StartDate>
                 <ns1:EndDate>2016-03-31</ns1:EndDate>

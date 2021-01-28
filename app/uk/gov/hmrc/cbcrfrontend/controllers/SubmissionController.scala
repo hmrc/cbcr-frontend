@@ -234,9 +234,10 @@ class SubmissionController @Inject()(
                        success =>
                          cache.save(success).map { _ =>
                            (userType, reportingRole) match {
-                             case (_, CBC702)           => Redirect(routes.SubmissionController.utr())
-                             case (Some(Agent), CBC703) => Redirect(routes.SubmissionController.enterCompanyName())
-                             case (Some(Organisation), CBC703) =>
+                             case (_, CBC702) => Redirect(routes.SubmissionController.utr())
+                             case (Some(Agent), CBC703 | CBC704) =>
+                               Redirect(routes.SubmissionController.enterCompanyName())
+                             case (Some(Organisation), CBC703 | CBC704) =>
                                Redirect(routes.SubmissionController.submitterInfo())
                              case _ =>
                                errorRedirect(
@@ -306,7 +307,7 @@ class SubmissionController @Inject()(
               (cache.save(FilingType(CBC701)) *>
                 cache.save(UltimateParentEntity(kXml.reportingEntity.name))).map(_ => ())
 
-            case CBC702 | CBC703 =>
+            case CBC702 | CBC703 | CBC704 =>
               cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
         })

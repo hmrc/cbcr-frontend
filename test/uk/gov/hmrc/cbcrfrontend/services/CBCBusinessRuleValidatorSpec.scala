@@ -1159,6 +1159,35 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
       }
 
+      "when the FilingType == CBC704" when {
+        "the TIN field is not a valid UTR" in {
+          val validFile = new File("test/resources/cbcr-CBC704-badTIN.xml")
+          val result = Await
+            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(InvalidXMLError("xmlValidationError.InvalidTIN")),
+            _ => fail("No InvalidXMLError generated for CBC704 invalid TIN check")
+          )
+
+        }
+        "the @issuedBy attribute of the TIN is not 'GB' " in {
+          when(reportingEntity.queryReportingEntityDataByCbcId(any(), any())(any())) thenReturn EitherT
+            .pure[Future, CBCErrors, Option[ReportingEntityData]](None)
+
+          val validFile = new File("test/resources/cbcr-CBC704-badTINAttribute.xml")
+          val result = Await
+            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(InvalidXMLError("xmlValidationError.TINIssuedBy")),
+            _ => fail("No InvalidXMLError generated for CBC704 invalid TIN issuedBy check")
+          )
+
+        }
+
+      }
+
       "when the FilingType == CBC702" when {
         "the TIN field is unrestricted" in {
           val validFile = new File("test/resources/cbcr-CBC702-badTIN.xml")

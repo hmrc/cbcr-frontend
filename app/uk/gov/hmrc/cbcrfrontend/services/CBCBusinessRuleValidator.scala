@@ -536,9 +536,9 @@ class CBCBusinessRuleValidator @Inject()(
 
   /** Validate the TIN and TIN.issuedBy against the [[ReportingRole]] */
   private def validateTIN(tin: TIN, rr: ReportingRole): ValidBusinessResult[TIN] = rr match {
-    case CBC701 | CBC703 if !tin.issuedBy.equalsIgnoreCase("gb") =>
+    case CBC701 | CBC703 | CBC704 if !tin.issuedBy.equalsIgnoreCase("gb") =>
       InvalidXMLError("xmlValidationError.TINIssuedBy").invalidNel
-    case CBC701 | CBC703 if !Utr(tin.value).isValid =>
+    case CBC701 | CBC703 | CBC704 if !Utr(tin.value).isValid =>
       InvalidXMLError("xmlValidationError.InvalidTIN").invalidNel
     case _ =>
       tin.validNel
