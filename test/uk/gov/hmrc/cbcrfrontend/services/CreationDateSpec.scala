@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class CreationDateSpec
   when(runMode.env) thenReturn "Dev"
   when(configuration.getInt(s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(Some(23))
   when(configuration.getInt(s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(Some(12))
-  when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(Some(2017))
+  when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(Some(2018))
 
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   implicit val hc: HeaderCarrier = HeaderCarrier()
