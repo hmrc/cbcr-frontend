@@ -32,11 +32,11 @@ object FilingType {
       } yield v
 
       value match {
-        case Some("PRIMARY")         => JsSuccess(FilingType(CBC701))
-        case Some("VOLUNTARY")       => JsSuccess(FilingType(CBC702))
-        case Some("LOCAL")           => JsSuccess(FilingType(CBC703))
-        case Some("LOCALINCOMPLETE") => JsSuccess(FilingType(CBC704))
-        case _                       => JsError(s"Unable to parse $json as FilingType")
+        case Some("PRIMARY")          => JsSuccess(FilingType(CBC701))
+        case Some("VOLUNTARY")        => JsSuccess(FilingType(CBC702))
+        case Some("LOCAL")            => JsSuccess(FilingType(CBC703))
+        case Some("LOCAL INCOMPLETE") => JsSuccess(FilingType(CBC704))
+        case _                        => JsError(s"Unable to parse $json as FilingType")
       }
     }
   }

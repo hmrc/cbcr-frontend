@@ -27,19 +27,20 @@ case object CBC703 extends ReportingRole
 case object CBC704 extends ReportingRole
 
 object ReportingRole {
-  def parseFromString(s: String): Option[ReportingRole] = s.toLowerCase.trim match {
-    case "cbc701" | "primary"         => Some(CBC701)
-    case "cbc702" | "voluntary"       => Some(CBC702)
-    case "cbc703" | "local"           => Some(CBC703)
-    case "cbc704" | "localincomplete" => Some(CBC704)
-    case _                            => None
-  }
+  def parseFromString(s: String): Option[ReportingRole] =
+    s.toLowerCase.trim match {
+      case "cbc701" | "primary"          => Some(CBC701)
+      case "cbc702" | "voluntary"        => Some(CBC702)
+      case "cbc703" | "local"            => Some(CBC703)
+      case "cbc704" | "local incomplete" => Some(CBC704)
+      case _                             => None
+    }
 
   implicit val shows = Show.show[ReportingRole] {
     case CBC701 => "PRIMARY"
     case CBC702 => "VOLUNTARY"
     case CBC703 => "LOCAL"
-    case CBC704 => "LOCALINCOMPLETE"
+    case CBC704 => "LOCAL INCOMPLETE"
   }
 
   implicit val format = new Format[ReportingRole] {
