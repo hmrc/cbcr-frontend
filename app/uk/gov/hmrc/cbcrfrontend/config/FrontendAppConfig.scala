@@ -35,8 +35,6 @@ class FrontendAppConfig @Inject()(
   val contactHost = runModeConfiguration.getOptional[String](s"contact-frontend.host").getOrElse("")
   val contactFormServiceIdentifier = "CountryByCountryReporting"
 
-  val analyticsToken: String = loadConfig(s"google-analytics.token")
-  val analyticsHost: String = loadConfig(s"google-analytics.host")
   val assetsPrefix: String = loadConfig(s"assets.url") + loadConfig(s"assets.version")
   val cbcrFrontendHost: String = loadConfig(s"cbcr-frontend.host")
   val fileUploadFrontendHost: String = loadConfig(s"file-upload-public-frontend.host")

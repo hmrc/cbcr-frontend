@@ -68,9 +68,6 @@ class SharedControllerSpec
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
   val views: Views = app.injector.instanceOf[Views]
 
-  when(feConfig.analyticsHost) thenReturn "host"
-  when(feConfig.analyticsToken) thenReturn "token"
-
   val id: CBCId = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
   val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
 

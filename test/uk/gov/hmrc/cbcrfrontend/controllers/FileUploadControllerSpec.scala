@@ -89,9 +89,6 @@ class FileUploadControllerSpec
   implicit val configuration = new Configuration(ConfigFactory.load("application.conf"))
   implicit val feConfig = mock[FrontendAppConfig]
 
-  when(feConfig.analyticsHost) thenReturn "host"
-  when(feConfig.analyticsToken) thenReturn "token"
-
   val creds: Credentials = Credentials("totally", "legit")
 
   override protected def afterEach(): Unit = {
