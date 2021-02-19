@@ -62,9 +62,6 @@ class ExitSurveyControllerSpec
   val runMode = mock[RunMode]
   val views: Views = app.injector.instanceOf[Views]
 
-  when(conf.analyticsHost) thenReturn "host"
-  when(conf.analyticsToken) thenReturn "token"
-
   val id: CBCId = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
   val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
 

@@ -65,9 +65,6 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
   implicit val timeout = Timeout(5 seconds)
   def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
-  when(feConfig.analyticsHost) thenReturn "host"
-  when(feConfig.analyticsToken) thenReturn "token"
-
   val creds: Credentials = Credentials("totally", "legit")
 
   val cache = mock[CBCSessionCache]

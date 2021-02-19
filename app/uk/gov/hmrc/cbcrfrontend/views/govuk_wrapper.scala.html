@@ -64,32 +64,9 @@
 
 @afterHeader = {}
 
-@analyticsCode(url: String, analyticsToken: String) = {
-    ga('create', '@analyticsToken', 'auto');
-    ga('send', 'pageview', { 'anonymizeIp': true });
-}
-
-
-@bodyEnd = {
-@viewsHelpers.footer(
-    analyticsToken = Some(config.analyticsToken),
-    analyticsHost = config.analyticsHost,
-    ssoUrl = None,
-    scriptElem = None,
-    gaCalls = Option((a,b) => analyticsCode("", config.analyticsToken))
-)
-}
+@bodyEnd = {}
 
 @footerTop = {}
-@footerLinks = {}
-
-@serviceInfo = {
-@viewsHelpers.serviceInfo(
-    betaBanner = HtmlFormat.empty,
-    includeGridWrapper = false,
-    serviceInfoContent = Some(serviceInfoContent))
-}
-
 
 @serviceInfoContent = {
 @viewsHelpers.serviceInfo(HtmlFormat.empty, includeGridWrapper = false, Option.empty, includeHMRCBranding = false)

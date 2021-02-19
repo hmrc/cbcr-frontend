@@ -67,8 +67,6 @@ class StartControllerSpec
 
   "Calling start controller" should {
     val fakeRequest = addToken(FakeRequest("GET", "/"))
-    when(feConf.analyticsHost) thenReturn "host"
-    when(feConf.analyticsToken) thenReturn "token"
 
     "return 303 if authorised and Agent" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
