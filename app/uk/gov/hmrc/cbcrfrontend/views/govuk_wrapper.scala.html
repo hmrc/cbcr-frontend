@@ -64,7 +64,15 @@
 
 @afterHeader = {}
 
-@bodyEnd = {}
+@bodyEnd = {
+@viewsHelpers.footer(
+    analyticsToken = None,
+    analyticsHost = "",
+    ssoUrl = None,
+    scriptElem = None,
+    gaCalls = None
+)
+}
 
 @footerTop = {}
 
