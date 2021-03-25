@@ -152,7 +152,7 @@ class SharedController @Inject()(
   val signOutGG = Action.async { implicit request =>
     {
       Future.successful(Redirect(
-        s"${feConfig.governmentGatewaySignInUrl}?continue=${feConfig.cbcrFrontendBaseUrl}/country-by-country-reporting/"))
+        s"${feConfig.governmentGatewaySignInUrl}?continue_url=${feConfig.cbcrFrontendBaseUrl}/country-by-country-reporting/"))
     }
   }
 
