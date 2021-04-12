@@ -56,5 +56,5 @@ class FileUploadFrontEndWS @Inject()(override val wsClient: WSClient, appConfig:
 
   override val hooks: Seq[HttpHook] = Seq.empty[HttpHook]
   override lazy val actorSystem = appConfig.actorSystem
-  override protected def configuration: Config = appConfig.runModeConfiguration.underlying
+  override protected def configuration: Option[Config] = Some(appConfig.runModeConfiguration.underlying)
 }
