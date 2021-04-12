@@ -68,7 +68,7 @@ class SubscriptionDataServiceSpec
   "SubscriptionDataService on a call to saveReportingEntityData" should {
     "save ReportingEntityData if it does not exist in the DB store" in {
       val json = Json.toJson(Some(subscriptionDetails)).toString()
-      when(mockHttp.GET[HttpResponse](any())(any(), any(), any()))
+      when(mockHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(Status.OK, json)))
       val result = Await.result(sds.retrieveSubscriptionData(idUtr).value, 2.seconds)
       result shouldBe Right(Some(subscriptionDetails))
@@ -79,19 +79,19 @@ class SubscriptionDataServiceSpec
 
     "return an error if there is a serialisation error while parsing for SubscriptionDetails" in {
       val invalidJson = Json.toJson("Invalid Json, so we should have Left() error").toString()
-      when(mockHttp.GET[HttpResponse](any())(any(), any(), any()))
+      when(mockHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(Status.OK, invalidJson)))
       val result = Await.result(sds.retrieveSubscriptionData(idUtr).value, 2.seconds)
       result.isLeft shouldBe true
     }
     "return NONE if the connector returns a NotFoundException" in {
-      when(mockHttp.GET[HttpResponse](any())(any(), any(), any())) thenReturn Future.failed(
+      when(mockHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any())) thenReturn Future.failed(
         new NotFoundException("Not found"))
       val result = Await.result(sds.retrieveSubscriptionData(idUtr).value, 2.seconds)
       result shouldBe Right(None)
     }
     "return an error if anything else goes wrong" in {
-      when(mockHttp.GET[HttpResponse](any())(any(), any(), any())) thenReturn Future.failed(
+      when(mockHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any())) thenReturn Future.failed(
         new Exception("The sky is falling"))
       val result = Await.result(sds.retrieveSubscriptionData(idUtr).value, 2.seconds)
       result.isLeft shouldBe true

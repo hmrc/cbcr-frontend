@@ -49,7 +49,7 @@ class FileUploadFrontEndWS @Inject()(override val wsClient: WSClient, appConfig:
     val source = Source(FilePart(fileName, fileName, Some(contentType), Source.single(body)) :: Nil)
 
     withTracing(POST_VERB, url) {
-      val httpResponse = buildRequest(url, Seq.empty).post(source).map(new WSHttpResponse(_))
+      val httpResponse = buildRequest(url, Seq()).withHeaders(headers: _*).post(source).map(new WSHttpResponse(_))
       mapErrors(POST_VERB, url, httpResponse).map(rds.read(POST_VERB, url, _))
     }
   }
