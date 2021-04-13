@@ -42,6 +42,8 @@ class ExitSurveyController @Inject()(
   views: Views)(implicit conf: FrontendAppConfig, override val messagesApi: MessagesApi, val ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   val doSurvey = Action { implicit request =>
     Ok(views.exitSurvey(SurveyForm.surveyForm))
   }
@@ -58,7 +60,7 @@ class ExitSurveyController @Inject()(
         answers =>
           auditSurveyAnswers(answers).fold(
             errors => {
-              Logger.error(errors.toString) //          Redirect(routes.SharedController.guidance())
+              logger.error(errors.toString) //          Redirect(routes.SharedController.guidance())
               Redirect(routes.ExitSurveyController.surveyAcknowledge())
             },
             _ => Redirect(routes.ExitSurveyController.surveyAcknowledge())

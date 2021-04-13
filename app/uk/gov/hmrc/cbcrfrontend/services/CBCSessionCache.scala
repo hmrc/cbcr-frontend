@@ -40,6 +40,8 @@ class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)
 
   val conf: Config = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   override def defaultSource: String = "cbcr-frontend"
 
   override def baseUri: String =
@@ -91,7 +93,7 @@ class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)
       }
       .recover {
         case NonFatal(t) =>
-          Logger.info(s"CBCSessionCache Failed - error message: ${t.getMessage}")
+          logger.info(s"CBCSessionCache Failed - error message: ${t.getMessage}")
           false
       }
 }

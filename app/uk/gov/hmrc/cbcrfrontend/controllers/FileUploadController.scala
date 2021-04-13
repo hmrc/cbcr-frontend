@@ -69,10 +69,11 @@ class FileUploadController @Inject()(
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
-  val assetsLocation = (config.getString(s"assets.url") |+| config.getString(s"assets.version")).get
-  lazy val hostName = config.getString("cbcr-frontend.host").get
+  val assetsLocation = (config.get[String](s"assets.url") |+| config.get[String](s"assets.version"))
+  lazy val hostName = config.get[String]("cbcr-frontend.host")
   lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
-  lazy val fileUploadHost = config.getString(s"file-upload-public-frontend.host").get
+  lazy val fileUploadHost = config.get[String](s"file-upload-public-frontend.host")
+  lazy val logger: Logger = Logger(this.getClass)
 
   private def allowedToSubmit(affinityGroup: AffinityGroup, enrolled: Boolean)(implicit hc: HeaderCarrier) =
     affinityGroup match {
@@ -133,7 +134,7 @@ class FileUploadController @Inject()(
         .read[EnvelopeId]
         .subflatMap { e =>
           if (e.value != envelopeId) {
-            Logger.error("BAD_ENVELOPE_ID")
+            logger.error("BAD_ENVELOPE_ID")
             cache.remove()
             Left(UnexpectedState(
               s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
@@ -189,11 +190,11 @@ class FileUploadController @Inject()(
     result.value.onComplete {
       case Failure(_) =>
         val endValidation = LocalDateTime.now()
-        Logger.info(
+        logger.info(
           s"File validation failed for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
       case Success(_) =>
         val endValidation = LocalDateTime.now()
-        Logger.info(
+        logger.info(
           s"File validation succeeded for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
 
     }
@@ -253,13 +254,13 @@ class FileUploadController @Inject()(
             case InvalidFileType(_) =>
               Redirect(routes.FileUploadController.fileInvalid())
             case e: CBCErrors =>
-              Logger.error(e.toString)
+              logger.error(e.toString)
               Redirect(routes.SharedController.technicalDifficulties())
           }
           .merge
           .recover {
             case NonFatal(e) =>
-              Logger.error(e.getMessage, e)
+              logger.error(e.getMessage, e)
               Redirect(routes.SharedController.technicalDifficulties())
           }
 
@@ -332,7 +333,7 @@ class FileUploadController @Inject()(
 
   def handleError(errorCode: Int, reason: String) = Action.async { implicit request =>
     authorised() {
-      Logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
+      logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
       errorCode match {
         case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
         case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
@@ -349,16 +350,16 @@ class FileUploadController @Inject()(
     */
   def fileUploadResponse(envelopeId: String) = Action.async { implicit request =>
     authorised() {
-      Logger.info(s"Received a file-upload-response query for $envelopeId")
+      logger.info(s"Received a file-upload-response query for $envelopeId")
       fileUploadService
         .getFileUploadResponse(envelopeId)
         .fold(
           error => {
-            Logger.error(s"File not ready: $error")
+            logger.error(s"File not ready: $error")
             NoContent
           },
           response => {
-            Logger.info(s"Response back was: $response")
+            logger.info(s"Response back was: $response")
             fileUploadResponseToResult(response)
           }
         )

@@ -74,6 +74,8 @@ class SubmissionController @Inject()(
 
   val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' h:mma")
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   def saveDocRefIds(x: CompleteXMLInfo)(
     implicit hc: HeaderCarrier): EitherT[Future, NonEmptyList[UnexpectedState], Unit] = {
     val cbcReportIds = x.cbcReport.map(reports => reports.docSpec.docRefId           -> reports.docSpec.corrDocRefId)
@@ -133,11 +135,11 @@ class SubmissionController @Inject()(
         xml         <- cache.read[CompleteXMLInfo]
         _           <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
         _ <- saveDocRefIds(xml).leftMap[CBCErrors] { es =>
-              Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
+              logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
             }
         _ <- messageRefIdService.saveMessageRefId(xml.messageSpec.messageRefID).toLeft {
-              Logger.error(s"Errors saving MessageRefId")
+              logger.error(s"Errors saving MessageRefId")
               UnexpectedState("Errors in saving MessageRefId aborting submission")
             }
         _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
@@ -376,7 +378,7 @@ class SubmissionController @Inject()(
         .merge
         .recover {
           case NonFatal(e) =>
-            Logger.error(e.getMessage, e)
+            logger.error(e.getMessage, e)
             errorRedirect(UnexpectedState(e.getMessage), views.notAuthorisedIndividual, views.errorTemplate)
         }
     }

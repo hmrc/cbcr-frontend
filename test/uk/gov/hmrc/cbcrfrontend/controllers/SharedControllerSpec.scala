@@ -188,7 +188,7 @@ class SharedControllerSpec
       val result: Result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
       status(result) shouldBe Status.SEE_OTHER
       val maybeUri = result.header.headers.getOrElse("location", "")
-      Logger.debug(s"location: $maybeUri")
+      logger.debug(s"location: $maybeUri")
       maybeUri shouldBe s"http://localhost:9553/bas-gateway/sign-out-without-state?continue=$guidanceUrl"
 
     }

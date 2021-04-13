@@ -44,6 +44,8 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
 
   private def sanitisePostCode(s: String): String = s.toLowerCase.replaceAll("\\s", "")
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   def checkBPRKnownFacts(kf: BPRKnownFacts)(implicit hc: HeaderCarrier): OptionT[Future, BusinessPartnerRecord] = {
     val response = OptionT(
       dc.lookup(kf.utr.value)
@@ -65,7 +67,7 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
 
   private def auditBpr(bpr: Option[BusinessPartnerRecord], kf: BPRKnownFacts)(
     implicit hc: HeaderCarrier): Future[Unit] =
-    bpr.fold(Future.successful(Logger.error("Des Connector did not return anything from lookup")))(
+    bpr.fold(Future.successful(logger.error("Des Connector did not return anything from lookup")))(
       bpr =>
         audit
           .sendExtendedEvent(
@@ -78,9 +80,9 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
                 "bpr"      -> Json.toJson(bpr)
               )))
           .map {
-            case AuditResult.Disabled        => Logger.info("Audit disabled for BPRKnownFactsService")
-            case AuditResult.Success         => Logger.info("Successful Audit for BPRKnownFactsService")
-            case AuditResult.Failure(msg, _) => Logger.error(s"Unable to audit a BPRKnowFacts lookup: $msg")
+            case AuditResult.Disabled        => logger.info("Audit disabled for BPRKnownFactsService")
+            case AuditResult.Success         => logger.info("Successful Audit for BPRKnownFactsService")
+            case AuditResult.Failure(msg, _) => logger.error(s"Unable to audit a BPRKnowFacts lookup: $msg")
         })
 
 }

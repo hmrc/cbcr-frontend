@@ -35,6 +35,8 @@ import scala.util.control.NonFatal
 
 class XmlInfoExtract {
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   private val xmlInputFactory: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
   xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false)
   xmlInputFactory.setProperty("javax.xml.stream.isSupportingExternalEntities", false)
@@ -69,7 +71,7 @@ class XmlInfoExtract {
           count = count + 1
       }
     } catch {
-      case NonFatal(e) => Logger.warn(s"Error counting CBCBody elements: ${e.getMessage}")
+      case NonFatal(e) => logger.warn(s"Error counting CBCBody elements: ${e.getMessage}")
     }
     count
   }
@@ -102,7 +104,7 @@ class XmlInfoExtract {
 
     value.fold(
       e => {
-        Logger.warn(s"extractCbcVal encountered the following error: ${e.getMessage}")
+        logger.warn(s"extractCbcVal encountered the following error: ${e.getMessage}")
         RawCbcVal("")
       },
       cbcVal => cbcVal

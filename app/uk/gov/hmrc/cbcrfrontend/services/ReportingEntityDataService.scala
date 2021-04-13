@@ -34,6 +34,8 @@ import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
 @Singleton
 class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   def updateReportingEntityData(data: PartialReportingEntityData)(implicit hc: HeaderCarrier): ServiceResponse[Unit] =
     EitherT(connector.reportingEntityDataUpdate(data).map(_ => Right(())).recover {
       case NonFatal(t) => Left(UnexpectedState(s"Attempt to update reporting entity data failed: ${t.getMessage}"))
@@ -59,7 +61,7 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
         }
         .recover {
           case _: NotFoundException =>
-            Logger.error("Got a NotFoundException - backend returned 404")
+            logger.error("Got a NotFoundException - backend returned 404")
             Right(None)
           case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         }
@@ -81,7 +83,7 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
         }
         .recover {
           case _: NotFoundException =>
-            Logger.error("Got a NotFoundException - backend returned 404")
+            logger.error("Got a NotFoundException - backend returned 404")
             Right(None)
           case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         }

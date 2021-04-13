@@ -32,6 +32,8 @@ import scala.util.control.Exception.nonFatalCatch
 class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValidationSchema)(
   implicit system: ActorSystem) {
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
   xmlInputFactory2.setProperty(XMLInputFactory.SUPPORT_DTD, false)
   xmlInputFactory2.setProperty("javax.xml.stream.isSupportingExternalEntities", false)
@@ -49,7 +51,7 @@ class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValid
         xmlErrorHandler.reportProblem(
           new XMLValidationProblem(e.getLocation, e.getMessage, XMLValidationProblem.SEVERITY_FATAL))
       case ErrorLimitExceededException =>
-        Logger.warn(s"Errors exceeding the ${xmlErrorHandler.errorMessageLimit} encountered, validation aborting.")
+        logger.warn(s"Errors exceeding the ${xmlErrorHandler.errorMessageLimit} encountered, validation aborting.")
     }
 
     xmlErrorHandler

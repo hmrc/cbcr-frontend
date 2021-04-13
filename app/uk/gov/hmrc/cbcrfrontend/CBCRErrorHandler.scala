@@ -16,10 +16,12 @@
 
 package uk.gov.hmrc.cbcrfrontend
 
+import play.Logger
+
 import javax.inject.Inject
 import play.api.i18n.MessagesApi
 import play.api.mvc._
-import play.api.{Configuration, Environment, Logger}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{NoActiveSession, UnsupportedAffinityGroup, UnsupportedCredentialRole, _}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.routes
@@ -45,7 +47,7 @@ class CBCRErrorHandler @Inject()(
     case _: UnsupportedAffinityGroup =>
       Redirect(routes.SharedController.unsupportedAffinityGroup())
     case _ =>
-      Logger.error(s"Unresolved error: ${ex.getMessage}", ex)
+      logger.error(s"Unresolved error: ${ex.getMessage}", ex)
       super.resolveError(rh, ex)
   }
 

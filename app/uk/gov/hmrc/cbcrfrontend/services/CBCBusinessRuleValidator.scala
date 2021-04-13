@@ -71,11 +71,15 @@ class CBCBusinessRuleValidator @Inject()(
 
   private val testData = "OECD1[0123]"
 
+  println(
+    "MOHAN MOHAN 2 " + configuration
+      .get[String](s"${runMode.env}.oecd-schema-version"))
+
   private val cbcVersion = configuration
-    .getString(s"${runMode.env}.oecd-schema-version")
-    .getOrElse(
-      throw new Exception(s"Missing configuration key: ${runMode.env}.oecd-schema-version")
-    )
+    .get[String](s"${runMode.env}.oecd-schema-version")
+    .orElse(throw new Exception(s"Missing configuration key: ${runMode.env}.oecd-schema-version"))
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   // <<<<<<<<<<<<:::Extraction Methods:::>>>>>>>>>>>>
 
@@ -314,7 +318,7 @@ class CBCBusinessRuleValidator @Inject()(
     val res1: EitherT[Future, Boolean, Boolean] = reportingEntityDataService
       .queryReportingEntityDataDocRefId(docRefId)
       .leftMap(cbcErrors => {
-        Logger.error(s"Got error back: $cbcErrors")
+        logger.error(s"Got error back: $cbcErrors")
         throw new Exception(s"Error communicating with backend: $cbcErrors")
       })
       .subflatMap {
@@ -666,7 +670,7 @@ class CBCBusinessRuleValidator @Inject()(
               .queryReportingEntityData(drid.cid)
               .leftMap { cbcErrors =>
                 {
-                  Logger.error(s"Got error back: $cbcErrors")
+                  logger.error(s"Got error back: $cbcErrors")
                   throw new Exception(s"Error communicating with backend: $cbcErrors")
                 }
               }
@@ -700,7 +704,7 @@ class CBCBusinessRuleValidator @Inject()(
           .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
           .leftMap { cbcErrors =>
             {
-              Logger.error(s"Got error back: $cbcErrors")
+              logger.error(s"Got error back: $cbcErrors")
               throw new Exception(s"Error communicating with backend: $cbcErrors")
             }
           }
@@ -796,7 +800,7 @@ class CBCBusinessRuleValidator @Inject()(
           reportingEntityDataService
             .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
             .leftMap { cbcErrors =>
-              Logger.error(s"Got error back: $cbcErrors")
+              logger.error(s"Got error back: $cbcErrors")
               throw new Exception(s"Error communicating with backend: $cbcErrors")
             }
             .subflatMap {
@@ -846,7 +850,7 @@ class CBCBusinessRuleValidator @Inject()(
         reportingEntityDataService
           .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
           .leftMap { cbcErrors =>
-            Logger.error(s"Got error back: $cbcErrors")
+            logger.error(s"Got error back: $cbcErrors")
             throw new Exception(s"Error communicating with backend: $cbcErrors")
           }
           .subflatMap {
@@ -889,7 +893,7 @@ class CBCBusinessRuleValidator @Inject()(
         reportingEntityDataService
           .queryReportingEntityDatesOverlaping(tin, erp)
           .leftMap { cbcErrors =>
-            Logger.error(s"Got error back: $cbcErrors")
+            logger.error(s"Got error back: $cbcErrors")
             throw new Exception(s"Error communicating with backend to get dates overlap check: $cbcErrors")
           }
           .subflatMap {

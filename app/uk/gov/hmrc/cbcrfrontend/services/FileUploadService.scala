@@ -42,7 +42,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -61,6 +61,8 @@ class FileUploadService @Inject()(
 
   implicit val materializer = ActorMaterializer()
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = servicesConfig.baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = servicesConfig.baseUrl("file-upload-frontend") }
   implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
@@ -69,7 +71,7 @@ class FileUploadService @Inject()(
 
     val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
 
-    val envelopeExpiryDays: Option[Int] = configuration.getInt("envelope-expire-days")
+    val envelopeExpiryDays: Option[Int] = Some(configuration.get[Int]("envelope-expire-days"))
 
     def envelopeExpiryDate(numberOfDays: Option[Int]) = numberOfDays match {
       case Some(n) => Some(formatter.print(new DateTime().plusDays(n)))
@@ -91,7 +93,7 @@ class FileUploadService @Inject()(
     val fileNamePrefix = s"oecd-${LocalDateTime.now}"
     val xmlByteArray: Array[Byte] = org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(xmlFile))
 
-    Logger.debug(s"Country by Country: FileUpload service: Uploading the file to the envelope - fileId = $fileId")
+    logger.debug(s"Country by Country: FileUpload service: Uploading the file to the envelope - fileId = $fileId")
     fromFutureOptA(
       HttpExecutor(
         fusFeUrl,

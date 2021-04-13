@@ -23,12 +23,13 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 val compile = Seq(
   ws,
   "uk.gov.hmrc"              %% "bootstrap-frontend-play-26"      % "4.2.0",
-  "uk.gov.hmrc"              %% "govuk-template"      % "5.55.0-play-26",
+  "uk.gov.hmrc"              %% "govuk-template"      % "5.65.0-play-26",
   "uk.gov.hmrc"              %% "play-ui"             % "8.15.0-play-26",
   "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
-  "uk.gov.hmrc"              %% "domain"              % "5.9.0-play-26",
-  "uk.gov.hmrc"              %% "http-caching-client" % "9.1.0-play-26",
-  "uk.gov.hmrc"               %% "http-verbs-play-26" % "11.5.0",
+  "uk.gov.hmrc"              %% "domain"              % "5.11.0-play-26",
+  "uk.gov.hmrc"              %% "http-caching-client" % "9.3.0-play-26",
+  "uk.gov.hmrc"              %% "http-verbs"          % "13.3.0",
+  "uk.gov.hmrc"              %% "http-core"           % "2.5.0",
   "org.typelevel"            %% "cats"                % "0.9.0",
   "com.github.kxbmap"        %% "configs"             % "0.4.4",
   "com.scalawilliam"         %% "xs4s"                % "0.5",
@@ -125,38 +126,8 @@ lazy val microservice =
       scalafmtOnCompile in IntegrationTest := true
     )
     .settings(scalacOptions ++= List(
-      "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
-      "-encoding", "utf-8",                // Specify character encoding used by source files.
-      "-explaintypes",                     // Explain type errors in more detail.
-      "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
-      "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
-      "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
-      "-Xfuture",                          // Turn on future language features.
-      "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
-      "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
-      "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
-      "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
-      "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
-      "-Xlint:infer-any",                  // Warn when a type argument is inferred to be `Any`.
-      "-Xlint:missing-interpolator",       // A string literal appears to be missing an interpolator id.
-      "-Xlint:nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-      "-Xlint:nullary-unit",               // Warn when nullary methods return Unit.
-      "-Xlint:option-implicit",            // Option.apply used implicit view.
-      "-Xlint:package-object-classes",     // Class or object defined in package object.
-      "-Xlint:poly-implicit-overload",     // Parameterized overloaded implicit methods are not visible as view bounds.
-      "-Xlint:private-shadow",             // A private field (or class parameter) shadows a superclass field.
-      "-Xlint:stars-align",                // Pattern sequence wildcard must align with sequence component.
-      "-Xlint:type-parameter-shadow",      // A local type parameter shadows a type already in scope.
-      "-Xlint:unsound-match",              // Pattern match may not be typesafe.
-      "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-      "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
-      "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
-      "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
-      "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
-      "-Ywarn-numeric-widen",              // Warn when numerics are widened.
-      "-Ywarn-unused",                     // Warn if an import selector is not referenced.
-      "-P:silencer:lineContentFilters=^\\[@]",// Avoid '^\\w' warnings for Twirl template
-      "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
+      // Warn if an import selector is not referenced.
+      "-P:silencer:pathFilters=routes;html"
     ))
     .settings(resolvers ++= Seq(
       "hmrc-releases" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases/",

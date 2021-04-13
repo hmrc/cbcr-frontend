@@ -40,6 +40,8 @@ class SubscriptionDataService @Inject()(
 
   val mode = environment.mode
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
 
   def alreadySubscribed(utr: Utr)(
@@ -70,7 +72,7 @@ class SubscriptionDataService @Inject()(
         .recover {
           case _: NotFoundException => Right[CBCErrors, Option[SubscriptionDetails]](None)
           case NonFatal(t) =>
-            Logger.error("GET future failed", t)
+            logger.error("GET future failed", t)
             Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
         }
     )

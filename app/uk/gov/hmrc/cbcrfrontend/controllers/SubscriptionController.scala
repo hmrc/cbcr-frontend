@@ -64,6 +64,8 @@ class SubscriptionController @Inject()(
   feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   val alreadySubscribed = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)) {
       Future.successful(Ok(views.alreadySubscribed()))
@@ -72,7 +74,7 @@ class SubscriptionController @Inject()(
 
   val submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and (User or Admin)).retrieve(Retrievals.credentials) { creds =>
-      Logger.debug("Country by Country: Generate CBCId and Store Data")
+      logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm.bindFromRequest.fold(
         errors => BadRequest(views.contactInfoSubscriber(errors)),
         data => {
@@ -107,7 +109,7 @@ class SubscriptionController @Inject()(
                 result
                   .fold[Future[Result]](
                     error => {
-                      Logger.error(error.show)
+                      logger.error(error.show)
                       (createFailedSubscriptionAuditEvent(creds, id, bpr, utr) *>
                         subscriptionDataService.clearSubscriptionData(id)).fold(
                         (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),

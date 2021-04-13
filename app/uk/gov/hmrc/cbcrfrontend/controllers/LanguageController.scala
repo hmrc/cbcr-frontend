@@ -35,6 +35,8 @@ class LanguageController @Inject()(
   val english = Lang("en")
   val welsh = Lang("cy")
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   def switchToEnglish: Action[AnyContent] = switchToLang(english)
   def switchToWelsh: Action[AnyContent] = switchToLang(welsh)
 
@@ -43,7 +45,7 @@ class LanguageController @Inject()(
     request.headers.get(REFERER) match {
       case Some(referrer) => Redirect(referrer).withLang(newLang).flashing(Flash(Map("switching-language" -> "true")))
       case None =>
-        Logger.warn(s"Unable to get the referrer, so sending them to ${configuration.fallbackURLForLanguageSwitcher}")
+        logger.warn(s"Unable to get the referrer, so sending them to ${configuration.fallbackURLForLanguageSwitcher}")
         Redirect(configuration.fallbackURLForLanguageSwitcher).withLang(newLang)
     }
   }

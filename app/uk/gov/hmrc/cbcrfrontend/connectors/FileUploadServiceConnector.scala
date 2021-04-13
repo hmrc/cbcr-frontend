@@ -29,13 +29,15 @@ class FileUploadServiceConnector() {
 
   val EnvelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   def envelopeRequest(cbcrsUrl: String, expiryDate: Option[String]): JsObject = {
 
     //@todo refactor the hardcode of the /cbcr/file-upload-response
     val jsObject = Json
       .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
       .as[JsObject]
-    Logger.info(s"Envelope Request built as $jsObject")
+    logger.info(s"Envelope Request built as $jsObject")
     jsObject
   }
 
@@ -64,7 +66,7 @@ class FileUploadServiceConnector() {
   def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
     resp.status match {
       case 200 => {
-        Logger.debug("FileMetaData: " + resp.json)
+        logger.debug("FileMetaData: " + resp.json)
         Right(resp.json.asOpt[FileMetadata])
       }
       case _ => Left(UnexpectedState("Problems getting File Metadata"))
