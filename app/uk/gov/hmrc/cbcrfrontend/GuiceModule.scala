@@ -35,7 +35,10 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
       val runMode: RunMode = new RunMode(configuration)
       val env = runMode.env
       val path = s"$env.oecd-schema-version"
-      val schemaVer: String = "2.0"
+      val schemaVer: String = configuration.getOptional[String](path).getOrElse {
+        Logger.error(s"Failed to find $path in config")
+        throw new Exception(s"Missing configuration $path")
+      }
       val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
         XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
       val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")

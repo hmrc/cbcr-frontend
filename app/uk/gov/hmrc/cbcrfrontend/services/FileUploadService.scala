@@ -71,7 +71,7 @@ class FileUploadService @Inject()(
 
     val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
 
-    val envelopeExpiryDays: Option[Int] = Some(configuration.get[Int]("envelope-expire-days"))
+    val envelopeExpiryDays: Option[Int] = configuration.getOptional[Int]("envelope-expire-days")
 
     def envelopeExpiryDate(numberOfDays: Option[Int]) = numberOfDays match {
       case Some(n) => Some(formatter.print(new DateTime().plusDays(n)))

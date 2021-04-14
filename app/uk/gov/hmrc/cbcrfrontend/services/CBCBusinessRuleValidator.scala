@@ -71,11 +71,11 @@ class CBCBusinessRuleValidator @Inject()(
 
   private val testData = "OECD1[0123]"
 
-  println(
-    "MOHAN MOHAN 2 " + configuration
-      .get[String](s"${runMode.env}.oecd-schema-version"))
-
-  private val cbcVersion = "2.0"
+  private val cbcVersion = configuration
+    .getOptional[String](s"${runMode.env}.oecd-schema-version")
+    .getOrElse(
+      throw new Exception(s"Missing configuration key: ${runMode.env}.oecd-schema-version")
+    )
 
   lazy val logger: Logger = Logger(this.getClass)
 
