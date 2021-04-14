@@ -27,7 +27,6 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SurveyForm
 import uk.gov.hmrc.cbcrfrontend.model.{SurveyAnswers, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController

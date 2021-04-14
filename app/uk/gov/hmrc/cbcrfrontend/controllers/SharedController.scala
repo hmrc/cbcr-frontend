@@ -41,8 +41,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import scala.concurrent.{ExecutionContext, Future}
+
 @Singleton
 class SharedController @Inject()(
   override val messagesApi: MessagesApi,
@@ -172,7 +173,7 @@ class SharedController @Inject()(
     }
   }
 
-  val pred = AffinityGroup.Organisation and (User or Admin)
+  val pred = AffinityGroup.Organisation and User
 
   val verifyKnownFactsOrganisation = Action.async { implicit request =>
     authorised(pred).retrieve(cbcEnrolment) { enrolment =>

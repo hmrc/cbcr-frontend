@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 import javax.inject.{Inject, Singleton}
 import com.typesafe.config.Config
 import play.api.Configuration
-
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import scala.concurrent.{ExecutionContext, Future}
 import configs.syntax._
 import play.api.libs.json.{JsArray, Json}

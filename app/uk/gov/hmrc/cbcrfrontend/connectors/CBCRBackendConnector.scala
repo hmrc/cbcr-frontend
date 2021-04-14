@@ -27,7 +27,7 @@ import play.api.libs.json.{JsNull, JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.controllers.{AdminDocRefId, AdminDocRefIdRecord, AdminReportingEntityData, ListDocRefIdRecord}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.Email
-
+import uk.gov.hmrc.http.HttpReads.Implicits.{readFromJson, readRaw}
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http._
 

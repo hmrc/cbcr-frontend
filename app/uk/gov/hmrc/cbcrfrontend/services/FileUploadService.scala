@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.{File, FileInputStream, PrintWriter}
 import java.time.LocalDateTime
 import java.util.UUID
-
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
@@ -30,7 +30,7 @@ import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.http.Status
-import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
