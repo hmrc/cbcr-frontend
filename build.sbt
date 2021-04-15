@@ -27,7 +27,7 @@ val compile = Seq(
   "uk.gov.hmrc"              %% "play-ui"             % "8.15.0-play-26",
   "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
   "uk.gov.hmrc"              %% "domain"              % "5.11.0-play-26",
-  "uk.gov.hmrc"              %% "http-caching-client" % "9.3.0-play-26",
+  "uk.gov.hmrc"              %% "http-caching-client" % "9.4.0-play-26",
   "uk.gov.hmrc"              %% "http-verbs"          % "13.3.0",
   "uk.gov.hmrc"              %% "http-core"           % "2.5.0",
   "org.typelevel"            %% "cats"                % "0.9.0",
