@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.form
 
 import play.api.data.Form
-import play.api.data.Forms.{email, mapping, text}
+import play.api.data.Forms.{mapping, text}
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm.condTrue
 import uk.gov.hmrc.cbcrfrontend.model.SubmitterInfo
 import uk.gov.hmrc.emailaddress.EmailAddress

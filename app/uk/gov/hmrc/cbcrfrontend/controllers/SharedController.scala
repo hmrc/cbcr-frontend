@@ -36,7 +36,6 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
@@ -151,7 +150,7 @@ class SharedController @Inject()(
     }
   }
 
-  val signOutGG = Action.async { implicit request =>
+  val signOutGG = Action.async { _ =>
     {
       Future.successful(Redirect(
         s"${feConfig.governmentGatewaySignInUrl}?continue_url=${feConfig.cbcrFrontendBaseUrl}/country-by-country-reporting/"))

@@ -21,17 +21,15 @@ import java.time.LocalDate
 import javax.inject.Inject
 import play.api.Configuration
 import play.api.data.{Form, FormError}
-import play.api.data.Forms.{list, localDate, mapping, nonEmptyText, of, optional}
+import play.api.data.Forms.{localDate, mapping, nonEmptyText, of, optional}
 import play.api.data.format.{Formats, Formatter}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
-import uk.gov.hmrc.cbcrfrontend.model.{DocRefId, ReportingEntityData}
-import uk.gov.hmrc.cbcrfrontend.services.ReportingEntityDataService
+import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityData
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController

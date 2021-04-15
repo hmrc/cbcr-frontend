@@ -25,7 +25,6 @@ import cats.instances.all._
 import cats.syntax.all._
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.{Json, _}
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
@@ -74,19 +73,6 @@ class FileUploadController @Inject()(
   lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
   lazy val fileUploadHost = config.get[String](s"file-upload-public-frontend.host")
   lazy val logger: Logger = Logger(this.getClass)
-
-  private def allowedToSubmit(affinityGroup: AffinityGroup, enrolled: Boolean)(implicit hc: HeaderCarrier) =
-    affinityGroup match {
-      case AffinityGroup.Organisation =>
-        if (enrolled) { Future.successful(true) } else { cache.readOption[CBCId].map(_.isDefined) }
-      case AffinityGroup.Agent      => Future.successful(true)
-      case AffinityGroup.Individual => Future.successful(false)
-    }
-
-  private def isEn()(implicit hc: HeaderCarrier): Future[Boolean] = {
-    val enrolled = cache.readOption[CBCId].map(_.isDefined)
-    enrolled
-  }
 
   private def fileUploadUrl()(implicit hc: HeaderCarrier): EitherT[Future, CBCErrors, String] =
     for {
@@ -276,23 +262,6 @@ class FileUploadController @Inject()(
 
   private def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =
     e.map(x => x.show.split(" ").map(x => messages(x)).map(_.toString).mkString(" "))
-
-  private def errorsToMap(e: List[ValidationErrors])(implicit messages: Messages): Map[String, String] =
-    errorsToList(e).foldLeft(Map[String, String]()) { (m, t) =>
-      m + ("error_" + (m.size + 1).toString -> t)
-    }
-
-  private def errorsToString(e: List[ValidationErrors])(implicit messages: Messages): String =
-    errorsToList(e).map(_.toString).mkString("\r\n")
-
-  private def errorsToFile(e: List[ValidationErrors], name: String)(implicit messages: Messages): File = {
-    val b = SingletonTemporaryFileCreator.create(name, ".txt")
-    val writer = new PrintWriter(b.file)
-    writer.write(errorsToString(e))
-    writer.flush()
-    writer.close()
-    b.file
-  }
 
   private def fileUploadName(fname: String)(implicit messages: Messages): String =
     messages(fname)
