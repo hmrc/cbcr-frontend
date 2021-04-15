@@ -67,13 +67,13 @@ class SubscriptionController @Inject()(
   lazy val logger: Logger = Logger(this.getClass)
 
   val alreadySubscribed = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       Future.successful(Ok(views.alreadySubscribed()))
     }
   }
 
   val submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)).retrieve(Retrievals.credentials) { creds =>
+    authorised(AffinityGroup.Organisation and User).retrieve(Retrievals.credentials) { creds =>
       logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm.bindFromRequest.fold(
         errors => BadRequest(views.contactInfoSubscriber(errors)),
@@ -140,13 +140,13 @@ class SubscriptionController @Inject()(
     )
 
   val contactInfoSubscriber = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactInfoSubscriber(subscriptionDataForm))
     }
   }
 
   val updateInfoSubscriber = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)).retrieve(cbcEnrolment) { cbcEnrolment =>
+    authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
         cbcId           <- fromEither(cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
         optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
@@ -177,7 +177,7 @@ class SubscriptionController @Inject()(
   }
 
   val saveUpdatedInfoSubscriber = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)).retrieve(cbcEnrolment) { cbcEnrolment =>
+    authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val ci: ServiceResponse[CBCId] = for {
         cbcId <- fromEither(cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
       } yield cbcId
@@ -219,7 +219,7 @@ class SubscriptionController @Inject()(
   }
 
   def subscribeSuccessCbcId(id: String) = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       CBCId(id).fold[Future[Result]](
         errorRedirect(UnexpectedState(s"CBCId: $id is not valid"), views.notAuthorisedIndividual, views.errorTemplate)
       )((cbcId: CBCId) => Ok(views.subscribeSuccessCbcId(cbcId, request.session.get("companyName"))))
@@ -227,7 +227,7 @@ class SubscriptionController @Inject()(
   }
 
   def clearSubscriptionData(u: Utr) = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       if (CbcrSwitches.clearSubscriptionDataRoute.enabled) {
         subscriptionDataService
           .clearSubscriptionData(u)

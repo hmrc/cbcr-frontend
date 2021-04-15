@@ -172,7 +172,7 @@ class SharedController @Inject()(
     }
   }
 
-  val pred = AffinityGroup.Organisation and (User or Admin)
+  val pred = AffinityGroup.Organisation and User
 
   val verifyKnownFactsOrganisation = Action.async { implicit request =>
     authorised(pred).retrieve(cbcEnrolment) { enrolment =>

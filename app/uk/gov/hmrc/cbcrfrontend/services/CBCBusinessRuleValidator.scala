@@ -23,9 +23,6 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
-import cats.{Applicative, Functor}
-import play.api.i18n.{Lang, Messages, MessagesApi}
-import play.api.mvc.Result
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult, applicativeInstance, functorInstance}
 import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, DocRefIdDuplicate, ReportingEntityDataModel, _}
@@ -34,9 +31,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrieval, Retrievals}
-import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import play.api.i18n.{I18nSupport, Lang, MessagesApi}
 import uk.gov.hmrc.cbcrfrontend.util.BusinessRulesUtil
 
 import scala.util.{Failure, Try}

@@ -23,7 +23,6 @@ import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import scala.concurrent.{ExecutionContext, Future}
-
 @Singleton
 class BPRKnownFactsConnector @Inject()(http: HttpClient)(
   implicit ec: ExecutionContext,
