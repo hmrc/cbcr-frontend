@@ -49,7 +49,7 @@ class EnrolController @Inject()(
   } yield s"$protocol://$host:$port/$service").value
 
   def deEnrol() = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and User) {
+    authorised(AffinityGroup.Organisation and (User or Admin)) {
       enrolConnector.deEnrol.map(r => Ok(r.body))
     }
   }

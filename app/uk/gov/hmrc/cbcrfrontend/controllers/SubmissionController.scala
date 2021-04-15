@@ -156,7 +156,7 @@ class SubmissionController @Inject()(
   }
 
   def notRegistered = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and User) {
+    authorised(AffinityGroup.Organisation and (User or Admin)) {
       Ok(views.notRegistered())
     }
   }

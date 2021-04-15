@@ -30,7 +30,6 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.http.NotFoundException
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import scala.concurrent.ExecutionContext
 
 @Singleton

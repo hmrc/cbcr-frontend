@@ -438,7 +438,7 @@ class FileUploadController @Inject()(
     } yield result
 
   val unregisteredGGAccount = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and User) {
+    authorised(AffinityGroup.Organisation and (User or Admin)) {
       fileUploadUrl()
         .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation))))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
