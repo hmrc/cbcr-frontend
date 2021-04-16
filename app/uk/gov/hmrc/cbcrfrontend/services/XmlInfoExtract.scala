@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{File, InputStream}
+import java.io.File
 
 import javax.xml.stream.{XMLInputFactory, XMLStreamConstants}
 import cats.instances.all._
@@ -25,7 +25,7 @@ import com.scalawilliam.xs4s.Implicits._
 import com.scalawilliam.xs4s.XmlElementExtractor
 import uk.gov.hmrc.cbcrfrontend.model._
 
-import scala.io.{BufferedSource, Source}
+import scala.io.Source
 import scala.util.control.Exception.nonFatalCatch
 import scala.xml.{Node, NodeSeq}
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}

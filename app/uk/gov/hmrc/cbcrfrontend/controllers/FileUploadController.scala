@@ -352,7 +352,7 @@ class FileUploadController @Inject()(
     }
 
   private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(
-    implicit hc: HeaderCarrier,
+    implicit
     messages: Messages): JsObject =
     (
       all_errors._1.exists(bre => if (bre.errors.isEmpty) false else true),

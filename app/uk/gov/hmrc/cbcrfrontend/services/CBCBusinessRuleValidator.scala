@@ -471,8 +471,7 @@ class CBCBusinessRuleValidator @Inject()(
       case _                         => ResentDataIsUnknownError
     }
 
-  private def docRefIdMatchDocTypeIndicCheck(docSpec: DocSpec)(
-    implicit hc: HeaderCarrier): ValidBusinessResult[DocRefId] = {
+  private def docRefIdMatchDocTypeIndicCheck(docSpec: DocSpec): ValidBusinessResult[DocRefId] = {
     val docRefId = docSpec.docRefId
     docSpec.docType match {
       case OECD0 => docRefId.validNel
@@ -714,7 +713,7 @@ class CBCBusinessRuleValidator @Inject()(
       case _ => Future.successful(x.validNel)
     }
 
-  private def validateMessageRefIds(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
+  private def validateMessageRefIds(in: XMLInfo): FutureValidBusinessResult[XMLInfo] = {
 
     val messageSpecMessageRefId = in.messageSpec.messageRefID.show
     val cbcrReportsRefIds = in.cbcReport.map(_.docSpec.docRefId.msgRefID.show)
@@ -765,7 +764,7 @@ class CBCBusinessRuleValidator @Inject()(
     if (x.messageSpec.corrMessageRefId.isDefined) CorrMessageRefIdNotAllowedInMessageSpec.invalidNel
     else x.validNel
 
-  private def validateCorrMsgRefIdNotInDocSpec(x: XMLInfo)(implicit hc: HeaderCarrier): ValidBusinessResult[XMLInfo] = {
+  private def validateCorrMsgRefIdNotInDocSpec(x: XMLInfo): ValidBusinessResult[XMLInfo] = {
     val corrMessageRefIdisPresent = x.cbcReport
       .find(_.docSpec.corrMessageRefId.isDefined)
       .flatMap(_.docSpec.corrMessageRefId)

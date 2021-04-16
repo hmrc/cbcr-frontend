@@ -34,7 +34,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
-import play.api.{Configuration, Environment, Logger}
+import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
@@ -55,7 +55,6 @@ class FileUploadService @Inject()(
   servicesConfig: ServicesConfig)(
   implicit http: HttpClient,
   ac: ActorSystem,
-  environment: Environment,
   fileUploadFrontEndWS: FileUploadFrontEndWS)
     extends I18nSupport {
 

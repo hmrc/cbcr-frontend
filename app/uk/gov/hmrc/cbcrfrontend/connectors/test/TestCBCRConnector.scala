@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.connectors.test
 
 import javax.inject.{Inject, Singleton}
-import cats.syntax.show._
 import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration

@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.views
 
 import javax.inject.Inject
-import uk.gov.hmrc.cbcrfrontend.views.html._
 
 class Views @Inject()(
   val start: uk.gov.hmrc.cbcrfrontend.views.html.start,

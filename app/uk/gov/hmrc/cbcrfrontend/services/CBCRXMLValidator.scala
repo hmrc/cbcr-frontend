@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{File, InputStream}
+import java.io.File
 import javax.inject.Inject
 import javax.xml.stream.XMLInputFactory
 
