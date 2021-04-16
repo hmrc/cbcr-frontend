@@ -20,11 +20,9 @@ import javax.inject.{Inject, Singleton}
 import cats.data.OptionT
 import cats.instances.future._
 import play.api.Logger
-import play.api.libs.json
 import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 

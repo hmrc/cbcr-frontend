@@ -260,9 +260,6 @@ class FileUploadController @Inject()(
     Math.incrementExact(kb.toInt)
   }
 
-  private def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =
-    e.map(x => x.show.split(" ").map(x => messages(x)).map(_.toString).mkString(" "))
-
   private def fileUploadName(fname: String)(implicit messages: Messages): String =
     messages(fname)
 

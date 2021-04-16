@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.time.{LocalDate, LocalDateTime}
-import akka.actor.Status.Success
+import java.time.LocalDate
 import javax.inject.Inject
 import cats.data.Validated.{Invalid, Valid}
 import cats.data._
@@ -32,8 +31,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.util.BusinessRulesUtil
-
-import scala.util.{Failure, Try}
 
 /**
   * This class exposes two methods:

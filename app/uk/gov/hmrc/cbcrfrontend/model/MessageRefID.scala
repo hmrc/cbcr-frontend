@@ -22,7 +22,6 @@ import java.time.format.DateTimeFormatter
 import cats.Show
 import cats.data.ValidatedNel
 import cats.syntax.validated._
-import cats.syntax.option._
 import cats.syntax.either._
 import cats.syntax.show._
 import play.api.libs.json._
