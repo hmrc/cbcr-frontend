@@ -241,8 +241,7 @@ class SubscriptionController @Inject()(
   }
 
   def createFailedSubscriptionAuditEvent(credentials: Credentials, cbcId: CBCId, bpr: BusinessPartnerRecord, utr: Utr)(
-    implicit hc: HeaderCarrier,
-    request: Request[_]): ServiceResponse[AuditResult.Success.type] =
+    implicit hc: HeaderCarrier): ServiceResponse[AuditResult.Success.type] =
     for {
       result <- eitherT[AuditResult.Success.type](
                  audit

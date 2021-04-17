@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import javax.inject.Inject
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc.{Action, AnyContent, Flash, MessagesControllerComponents}
-import play.api.{Application, Logger}
+import play.api.Logger
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
@@ -28,9 +28,7 @@ import scala.concurrent.ExecutionContext
 
 class LanguageController @Inject()(
   configuration: FrontendAppConfig,
-  messagesControllerComponents: MessagesControllerComponents)(
-  implicit val ec: ExecutionContext,
-  application: Application)
+  messagesControllerComponents: MessagesControllerComponents)(implicit val ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
   val english = Lang("en")
   val welsh = Lang("cy")

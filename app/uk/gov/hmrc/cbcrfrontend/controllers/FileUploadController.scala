@@ -19,10 +19,10 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.io._
 import java.time.{Duration, LocalDateTime}
 import java.util.UUID
-
 import cats.data.{EitherT, _}
 import cats.instances.all._
 import cats.syntax.all._
+
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.{Json, _}
@@ -30,7 +30,8 @@ import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Retrievals, _}
+import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -199,7 +200,7 @@ class FileUploadController @Inject()(
 
   def fileValidate(envelopeId: String, fileId: String) = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
-      case creds ~ affinity ~ enrolment =>
+      case Some(creds) ~ affinity ~ enrolment =>
         val result = for {
           file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
           _             <- right(cache.save(file_metadata._2))
@@ -289,7 +290,7 @@ class FileUploadController @Inject()(
 
   private def fileUploadError(errorType: FileUploadErrorType) = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
-      case creds ~ affinity ~ enrolment =>
+      case Some(creds) ~ affinity ~ enrolment =>
         auditFailedSubmission(creds, affinity, enrolment, errorType.toString)
           .map(_ => Ok(views.fileUploadError(errorType)))
           .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
@@ -334,7 +335,7 @@ class FileUploadController @Inject()(
 
   //Turn a Case class into a map
   private[controllers] def getCCParams(cc: AnyRef): Map[String, String] =
-    (Map[String, String]() /: cc.getClass.getDeclaredFields) { (acc, field) =>
+    cc.getClass.getDeclaredFields.foldLeft[Map[String, String]](Map.empty) { (acc, field) =>
       field.setAccessible(true)
       acc + (field.getName -> field.get(cc).toString)
     }

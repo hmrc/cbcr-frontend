@@ -26,13 +26,12 @@ import play.api.libs.json.{Format, Reads, Writes}
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
 import scala.util.control.NonFatal
 import play.api.http.Status
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 @Singleton
 class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)

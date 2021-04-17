@@ -31,7 +31,7 @@ import play.api.mvc.{AnyContent, MessagesControllerComponents, Request, Result}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrievals}
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -45,6 +45,7 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
@@ -144,7 +145,7 @@ class SubmissionController @Inject()(
             }
         _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
         _ <- storeOrUpdateReportingEntityData(xml)
-        _ <- createSuccessfulSubmissionAuditEvent(retrieval.a, summaryData)
+        _ <- createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData)
         userType = retrieval.b match {
           case Some(Agent) => "Agent"
           case _           => "Other"
@@ -369,8 +370,11 @@ class SubmissionController @Inject()(
   val submitSummary = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrievedInformation =>
       val result = for {
-        smd <- EitherT(generateMetadataFile(cache, retrievedInformation.a).map(_.toEither)).leftMap(_.head)
-        sd  <- createSummaryData(smd)
+        smd <- retrievedInformation.a match {
+                case Some(cred) => EitherT(generateMetadataFile(cache, cred).map(_.toEither)).leftMap(_.head)
+                case None       => left(UnexpectedState("Errors in saving MessageRefId aborting submission"))
+              }
+        sd <- createSummaryData(smd)
       } yield Ok(views.submitSummary(sd, retrievedInformation.b))
 
       result

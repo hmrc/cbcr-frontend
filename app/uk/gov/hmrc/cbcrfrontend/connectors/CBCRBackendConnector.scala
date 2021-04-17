@@ -29,7 +29,6 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.Email
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http._
-
 @Singleton
 class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
 

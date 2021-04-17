@@ -43,6 +43,7 @@ import uk.gov.hmrc.cbcrfrontend.typesclasses._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -110,7 +111,7 @@ class FileUploadService @Inject()(
     ec: ExecutionContext): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
       http
-        .GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response/$envelopeId")
+        .GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response/$envelopeId", Seq.empty)
         .map(resp =>
           resp.status match {
             case 200 =>
@@ -208,11 +209,11 @@ class FileUploadService @Inject()(
 
   def errorsToFile(e: List[ValidationErrors], name: String)(implicit messages: Messages): File = {
     val b = SingletonTemporaryFileCreator.create(name, ".txt")
-    val writer = new PrintWriter(b.file)
+    val writer = new PrintWriter(b.path.toFile)
     writer.write(errorsToString(e))
     writer.flush()
     writer.close()
-    b.file
+    b.path.toFile
   }
 
 }

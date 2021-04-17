@@ -20,7 +20,6 @@ import java.io.{File, FileInputStream}
 
 import _root_.play.api.Logger
 import _root_.play.api.i18n.Messages
-import _root_.play.api.i18n.Lang
 import _root_.play.api.libs.json.Reads
 import _root_.play.api.mvc.Results._
 import _root_.play.api.mvc._

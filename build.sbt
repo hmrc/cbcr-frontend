@@ -28,8 +28,6 @@ val compile = Seq(
   "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
   "uk.gov.hmrc"              %% "domain"              % "5.11.0-play-26",
   "uk.gov.hmrc"              %% "http-caching-client" % "9.4.0-play-26",
-  "uk.gov.hmrc"              %% "http-verbs"          % "13.3.0",
-  "uk.gov.hmrc"              %% "http-core"           % "2.5.0",
   "org.typelevel"            %% "cats"                % "0.9.0",
   "com.github.kxbmap"        %% "configs"             % "0.4.4",
   "com.scalawilliam"         %% "xs4s"                % "0.5",

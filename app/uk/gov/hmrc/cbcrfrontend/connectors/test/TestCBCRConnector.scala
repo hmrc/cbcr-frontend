@@ -24,6 +24,7 @@ import play.api.libs.json.{JsNull, JsValue}
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+
 @Singleton
 class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
 
