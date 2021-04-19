@@ -25,12 +25,13 @@ import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
-import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, NotFoundException}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+
 @Singleton
 class SubscriptionDataService @Inject()(
   environment: Environment,
@@ -44,16 +45,12 @@ class SubscriptionDataService @Inject()(
 
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
 
-  def alreadySubscribed(utr: Utr)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext,
-    rds: HttpReads[HttpResponse]): ServiceResponse[Boolean] =
+  def alreadySubscribed(utr: Utr)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Boolean] =
     retrieveSubscriptionData(Left(utr)).map(_.isDefined)
 
   def retrieveSubscriptionData(id: Either[Utr, CBCId])(
     implicit hc: HeaderCarrier,
-    ec: ExecutionContext,
-    rds: HttpReads[HttpResponse]): ServiceResponse[Option[SubscriptionDetails]] = {
+    ec: ExecutionContext): ServiceResponse[Option[SubscriptionDetails]] = {
     val fullUrl = id.fold(
       utr => url.url + s"/cbcr/subscription-data/utr/${utr.utr}",
       id => url.url + s"/cbcr/subscription-data/cbc-id/$id"
@@ -80,8 +77,7 @@ class SubscriptionDataService @Inject()(
   }
   def updateSubscriptionData(cbcId: CBCId, data: SubscriberContact)(
     implicit hc: HeaderCarrier,
-    ec: ExecutionContext,
-    rds: HttpReads[HttpResponse]): ServiceResponse[String] = {
+    ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data/$cbcId"
     eitherT(
       http
@@ -98,10 +94,8 @@ class SubscriptionDataService @Inject()(
     )
   }
 
-  def saveSubscriptionData(data: SubscriptionDetails)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext,
-    rds: HttpReads[HttpResponse]): ServiceResponse[String] = {
+  def saveSubscriptionData(
+    data: SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data"
     eitherT(
       http
@@ -118,10 +112,8 @@ class SubscriptionDataService @Inject()(
     )
   }
 
-  def clearSubscriptionData(id: Either[Utr, CBCId])(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext,
-    rds: HttpReads[HttpResponse]): ServiceResponse[Option[String]] = {
+  def clearSubscriptionData(
+    id: Either[Utr, CBCId])(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]] = {
 
     val fullUrl = (cbcId: CBCId) => url.url + s"/cbcr/subscription-data/$cbcId"
 

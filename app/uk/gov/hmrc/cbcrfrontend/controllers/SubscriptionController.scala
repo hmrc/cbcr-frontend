@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import cats.data.EitherT
 import cats.instances.all._
 import cats.syntax.all._
@@ -40,7 +41,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -212,7 +212,7 @@ class SubscriptionController @Inject()(
   }
 
   val savedUpdatedInfoSubscriber = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactDetailsUpdated())
     }
   }

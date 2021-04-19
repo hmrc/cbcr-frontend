@@ -46,10 +46,10 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 @Singleton
 class SubmissionController @Inject()(
@@ -157,7 +157,7 @@ class SubmissionController @Inject()(
   }
 
   def notRegistered = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       Ok(views.notRegistered())
     }
   }

@@ -20,8 +20,8 @@ import akka.util.ByteString
 import play.api.libs.json.{JsObject, Json, Writes}
 import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
-import uk.gov.hmrc.http._
-
+import uk.gov.hmrc.http.{HeaderCarrier, HttpPut, HttpResponse}
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import scala.concurrent.{ExecutionContext, Future}
 
 trait GetBody[O, T] {
@@ -65,7 +65,6 @@ trait HttpExecutor[U, P, I] {
     implicit
     hc: HeaderCarrier,
     wts: Writes[I],
-    rds: HttpReads[HttpResponse],
     getBody: GetBody[P, I],
 //              TO DO - is http2 required
     http2: HttpPut,
@@ -83,7 +82,6 @@ object HttpExecutor {
       implicit
       hc: HeaderCarrier,
       wts: Writes[JsObject],
-      rds: HttpReads[HttpResponse],
       getBody: GetBody[CreateEnvelope, JsObject],
       //              TO DO - is http2 required
       http2: HttpPut,
@@ -101,7 +99,6 @@ object HttpExecutor {
       implicit
       hc: HeaderCarrier,
       wts: Writes[Array[Byte]],
-      rds: HttpReads[HttpResponse],
       getBody: GetBody[UploadFile, Array[Byte]],
       //              TO DO - is http2 required
       http2: HttpPut,
@@ -123,7 +120,6 @@ object HttpExecutor {
       implicit
       hc: HeaderCarrier,
       wts: Writes[JsObject],
-      rds: HttpReads[HttpResponse],
       getBody: GetBody[FUCallbackResponse, JsObject],
       //              TO DO - is http2 required
       http2: HttpPut,
@@ -142,7 +138,6 @@ object HttpExecutor {
       implicit
       hc: HeaderCarrier,
       wts: Writes[RouteEnvelopeRequest],
-      rds: HttpReads[HttpResponse],
       getBody: GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest],
       //              TO DO - is http2 required
       http2: HttpPut,

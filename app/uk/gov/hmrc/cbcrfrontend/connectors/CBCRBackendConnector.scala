@@ -27,8 +27,10 @@ import play.api.libs.json.{JsNull, JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.controllers.{AdminDocRefId, AdminReportingEntityData, ListDocRefIdRecord}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.Email
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+
 @Singleton
 class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
 
