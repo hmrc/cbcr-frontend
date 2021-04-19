@@ -43,7 +43,7 @@
         <appender-ref ref="STDOUT_IGNORE_NETTY" />
     </logger>
 
-    <logger name="org.asynchttpclient" level="INFO" />
+    <logger name="org.asynchttpclient" level="ERROR" />
 
     <logger name="com.google.inject" level="INFO"/>
 
@@ -55,7 +55,7 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="play.core.netty" level="INFO"/>
+    <logger name="play.core.netty" level="ERROR"/>
 
 
     <root level="DEBUG">

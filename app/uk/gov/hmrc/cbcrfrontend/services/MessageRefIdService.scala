@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
-
 import cats.data.OptionT
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model.{MessageRefID, UnexpectedState}
@@ -25,7 +24,7 @@ import uk.gov.hmrc.cbcrfrontend.model.{MessageRefID, UnexpectedState}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import cats.syntax.show._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, Upstream4xxResponse, UpstreamErrorResponse}
 
 @Singleton
 class MessageRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
@@ -38,7 +37,7 @@ class MessageRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec
 
   def messageRefIdExists(m: MessageRefID)(implicit hc: HeaderCarrier): Future[Boolean] =
     connector.messageRefIdExists(m.show).map(_ => true).recover {
-      case _: NotFoundException => false
+      case UpstreamErrorResponse.Upstream4xxResponse(x) => false
     }
 
 }

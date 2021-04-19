@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers.test
 
 import cats.data.OptionT
 import cats.instances.all._
+
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{Json, _}
@@ -27,8 +28,9 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
-import uk.gov.hmrc.http.NotFoundException
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+
 import scala.concurrent.ExecutionContext
 
 @Singleton
@@ -95,7 +97,7 @@ class TestCBCRController @Inject()(
   def deleteReportingEntityData(docRefId: String) = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.deleteReportingEntityData(docRefId).map(_ => Ok("Reporting entity data deleted")).recover {
-        case _: NotFoundException => Ok("Reporting entity data deleted")
+        case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity data deleted")
       }
     }
   }
@@ -105,7 +107,7 @@ class TestCBCRController @Inject()(
       testCBCRConnector.dropReportingEntityDataCollection
         .map(_ => Ok("Reporting entity data collection dropped"))
         .recover {
-          case _: NotFoundException => Ok("Reporting entity data collection dropped")
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity data collection dropped")
         }
     }
   }
@@ -128,7 +130,7 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case _: NotFoundException => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
         }
     }
   }
@@ -145,7 +147,7 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case _: NotFoundException => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
         }
     }
   }
@@ -162,7 +164,7 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case _: NotFoundException => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
         }
     }
   }
@@ -179,7 +181,7 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case _: NotFoundException => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
         }
     }
   }
@@ -196,7 +198,7 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case _: NotFoundException => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
         }
     }
   }
@@ -225,7 +227,7 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case _: NotFoundException => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
         }
     }
   }
@@ -254,7 +256,7 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case _: NotFoundException => Ok("Subscription data not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Subscription data not found")
         }
     }
   }
@@ -262,7 +264,7 @@ class TestCBCRController @Inject()(
   def dropSubscription() = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.dropSubscriptionData.map(_ => Ok("Subscription data collection dropped")).recover {
-        case _: NotFoundException => Ok("Subscription data collection dropped")
+        case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Subscription data collection dropped")
       }
     }
   }

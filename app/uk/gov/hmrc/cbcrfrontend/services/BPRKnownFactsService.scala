@@ -28,7 +28,8 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, Upstream5xxResponse, UpstreamErrorResponse}
 
 /**
   * Use the provided KnownFactsConnector to query a UTR
@@ -53,7 +54,8 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
           bpr
         }
         .recover {
-          case _: NotFoundException => None
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => None
+
         })
     response.subflatMap { r =>
       val bprPostCode = r.address.postalCode.getOrElse("")

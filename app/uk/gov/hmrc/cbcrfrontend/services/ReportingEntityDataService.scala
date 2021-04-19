@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import java.time.LocalDate
-
 import javax.inject.{Inject, Singleton}
 import cats.data.EitherT
 import play.api.Logger
@@ -27,7 +26,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, UpstreamErrorResponse}
 
 @Singleton
 class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
@@ -58,7 +57,7 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
             )
         }
         .recover {
-          case _: NotFoundException =>
+          case UpstreamErrorResponse.Upstream4xxResponse(x) =>
             logger.error("Got a NotFoundException - backend returned 404")
             Right(None)
           case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
@@ -80,7 +79,7 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
             )
         }
         .recover {
-          case _: NotFoundException =>
+          case UpstreamErrorResponse.Upstream4xxResponse(x) =>
             logger.error("Got a NotFoundException - backend returned 404")
             Right(None)
           case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
@@ -102,8 +101,8 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
             )
         }
         .recover {
-          case _: NotFoundException => Right(None)
-          case NonFatal(e)          => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Right(None)
+          case NonFatal(e)                                  => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         })
 
   def queryReportingEntityDataDocRefId(d: DocRefId)(
@@ -121,8 +120,8 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
                 data => Right(Some(data))
             ))
         .recover {
-          case _: NotFoundException => Right(None)
-          case NonFatal(e)          => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Right(None)
+          case NonFatal(e)                                  => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         })
 
   def queryReportingEntityDataTin(tin: String, reportingPeriod: String)(
@@ -140,8 +139,8 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
                 data => Right(Some(data))
             ))
         .recover {
-          case _: NotFoundException => Right(None)
-          case NonFatal(e)          => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Right(None)
+          case NonFatal(e)                                  => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         })
 
   def queryReportingEntityDatesOverlaping(tin: String, entityReportingPeriod: EntityReportingPeriod)(
@@ -158,8 +157,8 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
                 data => Right(Some(data))
             ))
         .recover {
-          case _: NotFoundException => Right(None)
-          case NonFatal(e)          => Left(UnexpectedState(s"Call to QueryDatesOverlap failed: ${e.getMessage}"))
+          case UpstreamErrorResponse.Upstream4xxResponse(x) => Right(None)
+          case NonFatal(e)                                  => Left(UnexpectedState(s"Call to QueryDatesOverlap failed: ${e.getMessage}"))
         })
 
 }

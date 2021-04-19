@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
-
 import cats.data.OptionT
 import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
@@ -26,7 +25,8 @@ import uk.gov.hmrc.cbcrfrontend.model.{CorrDocRefId, DocRefId, UnexpectedState}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, NotFoundException, Upstream4xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, NotFoundException, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
 
 @Singleton
 class DocRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
@@ -45,8 +45,8 @@ class DocRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Ex
 
   def queryDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): Future[DocRefIdQueryResponse] =
     connector.docRefIdQuery(d).map(_ => Valid).recover {
-      case _: NotFoundException                                                => DoesNotExist
-      case e: Upstream4xxResponse if e.upstreamResponseCode == Status.CONFLICT => Invalid
+      case UpstreamErrorResponse.Upstream4xxResponse(x) => DoesNotExist
+      case _                                            => Invalid
     }
 
 }
