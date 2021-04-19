@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.StandardCopyOption._
 import java.time.{LocalDate, LocalDateTime}
 import org.mockito.ArgumentMatchers.any
@@ -27,13 +26,8 @@ import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.future._
 import com.ctc.wstx.exc.WstxException
 import com.typesafe.config.ConfigFactory
-import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import org.mockito.ArgumentMatchers.{eq => EQ, _}
 
-import javax.xml.stream.Location
-import org.codehaus.stax2.validation.{XMLValidationProblem, XMLValidationSchema, XMLValidationSchemaFactory}
-
-import javax.xml.stream.Location
 import org.codehaus.stax2.validation.{XMLValidationProblem, XMLValidationSchema, XMLValidationSchemaFactory}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
@@ -42,7 +36,6 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
-import play.api.libs.Files
 import play.api.libs.json.{Format, JsNull, Reads}
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest

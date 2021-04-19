@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.mockito.ArgumentMatchers.any
@@ -25,9 +24,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.{Configuration, Environment}
-import play.api.http.HeaderNames.LOCATION
-import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.Configuration
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}

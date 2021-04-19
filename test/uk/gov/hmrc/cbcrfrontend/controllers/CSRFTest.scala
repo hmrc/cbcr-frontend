@@ -16,13 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import play.api.Application
 import play.api.test.CSRFTokenHelper._
 import play.api.test.FakeRequest
 
-import scala.language.postfixOps
-
 trait CSRFTest {
-  def addToken[T](fakeRequest: FakeRequest[T])(implicit app: Application): FakeRequest[T] =
+  def addToken[T](fakeRequest: FakeRequest[T]): FakeRequest[T] =
     new FakeRequest(addCSRFToken(fakeRequest))
 }
