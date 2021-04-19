@@ -21,7 +21,7 @@ import java.time.{LocalDate, LocalDateTime}
 
 import cats.data.Validated._
 import org.mockito.ArgumentMatchers.any
-import cats.data.{EitherT, NonEmptyList, Validated}
+import cats.data.{EitherT, NonEmptyList}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.cbcrfrontend.model.{EndDateSameAsReportingPeriod, MessageRefID, ReportingEntityDataModel, _}
@@ -33,7 +33,6 @@ import scala.concurrent.{Await, Future}
 import cats.instances.future._
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import org.mockito.ArgumentMatchers.{eq => EQ, _}
-import org.scalatest.BeforeAndAfterEach
 import uk.gov.hmrc.emailaddress.EmailAddress
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
@@ -82,12 +81,24 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
   val docRefId9 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP2").getOrElse(fail("bad docrefid"))
 
+  val cbcId = CBCId.create(56).toOption
+  val submissionData = SubscriptionDetails(
+    BusinessPartnerRecord(
+      "SAFEID",
+      Some(OrganisationResponse("blagh")),
+      EtmpAddress("Line1", None, None, None, Some("TF3 XFE"), "GB")),
+    SubscriberContact("Brian", "Lastname", "phonenum", EmailAddress("test@test.com")),
+    cbcId,
+    Utr("7000000002")
+  )
+
   val schemaVer: String = "2.0"
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
     .pure[Future, CBCErrors, Option[SubscriptionDetails]](Some(submissionData))
   when(runMode.env) thenReturn "Dev"
-  when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
+  when(configuration.getOptional[String](s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(
+    Some(schemaVer))
 
   when(reportingEntity.queryReportingEntityDatesOverlaping(any(), any())(any())) thenReturn EitherT
     .pure[Future, CBCErrors, Option[DatesOverlap]](Some(DatesOverlap(false)))
@@ -106,23 +117,12 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
   val extract = new XmlInfoExtract()
   implicit def fileToXml(f: File): RawXMLInfo = extract.extract(f)
 
-  val cbcId = CBCId.create(56).toOption
   val filename = "GB2016RGXLCBC0100000056CBC40120170311T090000X.xml"
   val filenameTemp = "GB2017RGXLCBC0100000056CBC40120170311T090000X.xml"
   val filenamePB = "GB2016RGXVCBC0000000056CBC40120170311T090000X.xml"
 
   val cbcId2 = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
   val enrol = CBCEnrolment(cbcId2, Utr("7000000002"))
-
-  val submissionData = SubscriptionDetails(
-    BusinessPartnerRecord(
-      "SAFEID",
-      Some(OrganisationResponse("blagh")),
-      EtmpAddress("Line1", None, None, None, Some("TF3 XFE"), "GB")),
-    SubscriberContact("Brian", "Lastname", "phonenum", EmailAddress("test@test.com")),
-    cbcId,
-    Utr("7000000002")
-  )
 
   val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
 
@@ -1667,8 +1667,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
         DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1REP1").get
       val secondOriginalCbcReportsDri =
         DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1REP2").get
-      val thirdCbcReportsDri =
-        DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD3REP3").get
       val firstOriginalAdditionalInfoDri =
         DocRefId("GB2017RGXLCBC0100000056CBC40120180311T090000X2017_7000000002OECD1ADD1").get
 
