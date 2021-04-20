@@ -26,8 +26,9 @@ import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
+import uk.gov.hmrc.http.UpstreamErrorResponse.Upstream4xxResponse
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse, NotFoundException, UpstreamErrorResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -60,18 +61,25 @@ class SubscriptionDataService @Inject()(
       http
         .GET[HttpResponse](fullUrl)
         .map { response =>
-          response.json
-            .validate[SubscriptionDetails]
-            .fold(
-              errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
-              details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
-            )
+          response.status match {
+            case 200 =>
+              response.json
+                .validate[SubscriptionDetails]
+                .fold(
+                  errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
+                  details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
+                )
+            case 404 => {
+              println("Fucked Up")
+              Right(None)
+            }
+          }
         }
         .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(x) => Right[CBCErrors, Option[SubscriptionDetails]](None)
           case NonFatal(t) =>
             logger.error("GET future failed", t)
             Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
+
         }
     )
 

@@ -24,6 +24,7 @@ import play.api.libs.json.{JsNull, JsValue}
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 @Singleton

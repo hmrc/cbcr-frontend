@@ -94,7 +94,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
   val schemaVer: String = "2.0"
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
-  when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+  when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
     .pure[Future, CBCErrors, Option[SubscriptionDetails]](Some(submissionData))
   when(runMode.env) thenReturn "Dev"
   when(configuration.getOptional[String](s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(
@@ -558,7 +558,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
       "SendingEntityIn does not match any CBCId in the database" in {
         when(messageRefIdService.messageRefIdExists(any())(any())) thenReturn Future.successful(false)
-        when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+        when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
           .pure[Future, CBCErrors, Option[SubscriptionDetails]](None)
         val validFile = new File("test/resources/cbcr-valid.xml")
         val result =
@@ -571,7 +571,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
       }
 
       "ReceivingCountry does not equal GB" in {
-        when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+        when(subscriptionDataService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
           .pure[Future, CBCErrors, Option[SubscriptionDetails]](Some(submissionData))
         val validFile = new File("test/resources/cbcr-invalidReceivingCountry.xml")
         val result =

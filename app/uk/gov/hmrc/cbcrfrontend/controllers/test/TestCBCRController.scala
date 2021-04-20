@@ -32,6 +32,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, UpstreamErrorRespon
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.ExecutionContext
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 @Singleton
 class TestCBCRController @Inject()(
