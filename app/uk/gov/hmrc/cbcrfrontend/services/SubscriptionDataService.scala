@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.EitherT
 import cats.instances.future._
+
 import javax.inject.{Inject, Singleton}
 import play.api.http.Status
 import play.api.{Configuration, Environment, Logger}
@@ -25,8 +26,9 @@ import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
+import uk.gov.hmrc.http.UpstreamErrorResponse.Upstream4xxResponse
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse, NotFoundException, UpstreamErrorResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -59,18 +61,41 @@ class SubscriptionDataService @Inject()(
       http
         .GET[HttpResponse](fullUrl)
         .map { response =>
-          response.json
-            .validate[SubscriptionDetails]
-            .fold(
-              errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
-              details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
-            )
+          response.status match {
+            case 200 =>
+              response.json
+                .validate[SubscriptionDetails]
+                .fold(
+                  errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
+                  details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
+                )
+            case 404 => {
+              println("Fucked Up")
+              Right(None)
+            }
+          }
         }
         .recover {
-          case _: NotFoundException => Right[CBCErrors, Option[SubscriptionDetails]](None)
+          case UpstreamErrorResponse.WithStatusCode(404, _) => {
+            println("Caught with an Exception1")
+            Right[CBCErrors, Option[SubscriptionDetails]](None)
+          }
+          case Upstream4xxResponse(z) => {
+            println("Caught with an Exception2")
+            Right[CBCErrors, Option[SubscriptionDetails]](None)
+
+          }
+
+          case zoopla: NotFoundException => {
+            println("Caught with an Exception3")
+            Right[CBCErrors, Option[SubscriptionDetails]](None)
+
+          }
+
           case NonFatal(t) =>
             logger.error("GET future failed", t)
             Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
+
         }
     )
 

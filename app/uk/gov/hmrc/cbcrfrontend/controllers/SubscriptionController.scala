@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import cats.data.EitherT
 import cats.instances.all._
 import cats.syntax.all._

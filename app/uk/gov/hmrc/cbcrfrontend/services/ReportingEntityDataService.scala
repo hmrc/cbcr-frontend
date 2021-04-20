@@ -49,18 +49,21 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
       connector
         .reportingEntityDataQuery(d)
         .map { response =>
-          response.json
-            .validate[ReportingEntityData]
-            .fold(
-              failed =>
-                Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
-              data => Right(Some(data))
-            )
+          response.status match {
+            case 200 =>
+              response.json
+                .validate[ReportingEntityData]
+                .fold(
+                  failed =>
+                    Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+                  data => Right(Some(data))
+                )
+            case 404 =>
+              logger.error("Got a NotFoundException - backend returned 404")
+              Right(None)
+          }
         }
         .recover {
-          case _: NotFoundException =>
-            logger.error("Got a NotFoundException - backend returned 404")
-            Right(None)
           case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         }
     )
@@ -71,18 +74,21 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
       connector
         .reportingEntityDataModelQuery(d)
         .map { response =>
-          response.json
-            .validate[ReportingEntityDataModel]
-            .fold(
-              failed =>
-                Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
-              data => Right(Some(data))
-            )
+          response.status match {
+            case 200 =>
+              response.json
+                .validate[ReportingEntityDataModel]
+                .fold(
+                  failed =>
+                    Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+                  data => Right(Some(data))
+                )
+            case 404 =>
+              logger.error("Got a NotFoundException - backend returned 404")
+              Right(None)
+          }
         }
         .recover {
-          case _: NotFoundException =>
-            logger.error("Got a NotFoundException - backend returned 404")
-            Right(None)
           case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         }
     )
@@ -93,17 +99,21 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
       connector
         .reportingEntityCBCIdAndReportingPeriod(cbcId, reportingPeriod)
         .map { response =>
-          response.json
-            .validate[ReportingEntityData]
-            .fold(
-              failed =>
-                Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
-              data => Right(Some(data))
-            )
+          response.status match {
+            case 200 =>
+              response.json
+                .validate[ReportingEntityData]
+                .fold(
+                  failed =>
+                    Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+                  data => Right(Some(data))
+                )
+            case 404 => Right(None)
+          }
+
         }
         .recover {
-          case _: NotFoundException => Right(None)
-          case NonFatal(e)          => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         })
 
   def queryReportingEntityDataDocRefId(d: DocRefId)(
@@ -111,18 +121,21 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
     EitherT(
       connector
         .reportingEntityDocRefId(d)
-        .map(
-          response =>
-            response.json
-              .validate[ReportingEntityData]
-              .fold(
-                failed =>
-                  Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
-                data => Right(Some(data))
-            ))
+        .map { response =>
+          response.status match {
+            case 200 =>
+              response.json
+                .validate[ReportingEntityData]
+                .fold(
+                  failed =>
+                    Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+                  data => Right(Some(data))
+                )
+            case 404 => Right(None)
+          }
+        }
         .recover {
-          case _: NotFoundException => Right(None)
-          case NonFatal(e)          => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         })
 
   def queryReportingEntityDataTin(tin: String, reportingPeriod: String)(
@@ -130,18 +143,20 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
     EitherT(
       connector
         .reportingEntityDataQueryTin(tin, reportingPeriod)
-        .map(
-          response =>
-            response.json
-              .validate[ReportingEntityData]
-              .fold(
-                failed =>
-                  Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
-                data => Right(Some(data))
-            ))
+        .map { response =>
+          response.status match {
+            case 200 =>
+              response.json
+                .validate[ReportingEntityData]
+                .fold(
+                  failed =>
+                    Left(UnexpectedState(s"Unable to serialise response as ReportingEntityData: ${failed.mkString}")),
+                  data => Right(Some(data)))
+            case 404 => Right(None)
+          }
+        }
         .recover {
-          case _: NotFoundException => Right(None)
-          case NonFatal(e)          => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         })
 
   def queryReportingEntityDatesOverlaping(tin: String, entityReportingPeriod: EntityReportingPeriod)(
@@ -151,15 +166,19 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
         .overlapQuery(tin, entityReportingPeriod)
         .map(
           response =>
-            response.json
-              .validate[DatesOverlap]
-              .fold(
-                failed => Left(UnexpectedState(s"Unable to serialise response as DatesOverlap: ${failed.mkString}")),
-                data => Right(Some(data))
-            ))
+            response.status match {
+              case 200 =>
+                response.json
+                  .validate[DatesOverlap]
+                  .fold(
+                    failed =>
+                      Left(UnexpectedState(s"Unable to serialise response as DatesOverlap: ${failed.mkString}")),
+                    data => Right(Some(data)))
+              case 404 => Right(None)
+          }
+        )
         .recover {
-          case _: NotFoundException => Right(None)
-          case NonFatal(e)          => Left(UnexpectedState(s"Call to QueryDatesOverlap failed: ${e.getMessage}"))
+          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryDatesOverlap failed: ${e.getMessage}"))
         })
 
 }

@@ -49,8 +49,6 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-
 @Singleton
 class SubmissionController @Inject()(
   override val messagesApi: MessagesApi,

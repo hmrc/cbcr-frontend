@@ -152,7 +152,7 @@ class SharedControllerSpec
     "return 400 if the CBCId has not been registered" in {
       when(authC.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(CBCEnrolment(id, utr)))
-      when(subService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, Option[SubscriptionDetails]](None)
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.BAD_REQUEST
@@ -160,7 +160,7 @@ class SharedControllerSpec
     "return 400 if the CBCId has been registered but doesnt match the CBCId in the bearer token" in {
       when(authC.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(CBCEnrolment(CBCId.create(99).getOrElse(fail("bad cbcid")), utr)))
-      when(subService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
       val result = controller.submitCBCId(fakeRequestEnterCBCId.withJsonBody(Json.obj("cbcId" -> id.toString)))
       status(result) shouldBe Status.BAD_REQUEST
@@ -168,7 +168,7 @@ class SharedControllerSpec
     "return a redirect if successful" in {
       when(authC.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(CBCEnrolment(id, utr)))
-      when(subService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
@@ -265,7 +265,7 @@ class SharedControllerSpec
         .successful(None)
       when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(None)
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.none[Future, BusinessPartnerRecord]
-      when(subService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, Option[SubscriptionDetails]](None)
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
@@ -288,7 +288,7 @@ class SharedControllerSpec
         CacheMap("cache", Map.empty[String, JsValue]))
       when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(subService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
@@ -304,7 +304,7 @@ class SharedControllerSpec
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts").withJsonBody(Json.toJson(kf)))
       when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Agent))
-      when(subService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future, BusinessPartnerRecord](response)
       when(cache.readOption[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn Future.successful(
@@ -335,7 +335,7 @@ class SharedControllerSpec
         None)
       when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(subService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, Option[SubscriptionDetails]](None)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
@@ -358,7 +358,7 @@ class SharedControllerSpec
         None)
       when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(subService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, Option[SubscriptionDetails]](None)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
@@ -375,7 +375,7 @@ class SharedControllerSpec
       when(authC.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Agent))
       when(bprKF.checkBPRKnownFacts(any())(any())) thenReturn OptionT.some[Future, BusinessPartnerRecord](response)
-      when(subService.retrieveSubscriptionData(any())(any(), any(), any())) thenReturn EitherT
+      when(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, Option[SubscriptionDetails]](Some(subDetails))
       when(cache.readOption[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn Future
         .successful(None)
