@@ -114,7 +114,7 @@ class FileUploadService @Inject()(
         .GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response/$envelopeId", Seq.empty)
         .map(resp =>
           resp.status match {
-            case 200 =>
+            case Status.OK =>
               resp.json
                 .validate[FileUploadCallbackResponse]
                 .fold(

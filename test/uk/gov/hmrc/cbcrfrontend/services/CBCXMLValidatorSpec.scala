@@ -45,7 +45,7 @@ class CBCXMLValidatorSpec extends WordSpec with Matchers with GuiceOneAppPerSuit
 
   when(runMode.env) thenReturn "Dev"
   val schemaVer: String = configuration
-    .getString(s"${runMode.env}.oecd-schema-version")
+    .getOptional[String](s"${runMode.env}.oecd-schema-version")
     .getOrElse(s"${runMode.env}.oecd-schema-version deos not exist")
   val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)

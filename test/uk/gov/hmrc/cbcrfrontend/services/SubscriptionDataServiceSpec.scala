@@ -17,13 +17,12 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Matchers
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
-import play.api.libs.json.{JsString, JsValue, Json}
+import play.api.libs.json.Json
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
@@ -86,7 +85,7 @@ class SubscriptionDataServiceSpec
     }
     "return NONE if the connector returns a NotFoundException" in {
       when(mockHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any())) thenReturn Future.successful(
-        HttpResponse(Status.NOT_FOUND, None))
+        HttpResponse(Status.NOT_FOUND, None, Map.empty, None))
       val result = Await.result(sds.retrieveSubscriptionData(idUtr).value, 2.seconds)
       result shouldBe Right(None)
     }

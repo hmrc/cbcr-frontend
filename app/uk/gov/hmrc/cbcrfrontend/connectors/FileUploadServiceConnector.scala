@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 
 import javax.inject.Singleton
 import play.api.Logger
+import play.api.http.Status
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.core.CBCErrorOr
@@ -53,19 +54,19 @@ class FileUploadServiceConnector() {
 
   def extractFileUploadMessage(resp: HttpResponse): CBCErrorOr[String] =
     resp.status match {
-      case 200 => Right(resp.body)
-      case _   => Left(UnexpectedState("Problems uploading the file"))
+      case Status.OK => Right(resp.body)
+      case _         => Left(UnexpectedState("Problems uploading the file"))
     }
 
   def extractEnvelopeDeleteMessage(resp: HttpResponse): CBCErrorOr[String] =
     resp.status match {
-      case 200 => Right(resp.body)
-      case _   => Left(UnexpectedState("Problems deleting the envelope"))
+      case Status.OK => Right(resp.body)
+      case _         => Left(UnexpectedState("Problems deleting the envelope"))
     }
 
   def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
     resp.status match {
-      case 200 => {
+      case Status.OK => {
         logger.debug("FileMetaData: " + resp.json)
         Right(resp.json.asOpt[FileMetadata])
       }

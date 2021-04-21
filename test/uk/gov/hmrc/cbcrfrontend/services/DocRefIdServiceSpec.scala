@@ -27,7 +27,7 @@ import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, CorrDocRefId, DocRefId, DocRefIdPair, TIN}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse, NotFoundException, Upstream4xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

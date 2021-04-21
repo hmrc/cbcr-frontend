@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.time.{LocalDate, LocalDateTime}
 import org.mockito.ArgumentMatchers.any
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
@@ -75,36 +74,6 @@ class SharedControllerSpec
   val logger: Logger = Logger(this.getClass)
 
   def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
-
-  private lazy val keyXMLInfo = {
-    XMLInfo(
-      MessageSpec(
-        MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
-        "GB",
-        CBCId.create(99).getOrElse(fail("booo")),
-        LocalDateTime.now(),
-        LocalDate.parse("2017-01-30"),
-        None,
-        None
-      ),
-      Some(
-        ReportingEntity(
-          CBC701,
-          DocSpec(OECD1, DocRefId(docRefId).get, None, None),
-          TIN("7000000002", "GB"),
-          "name",
-          None,
-          EntityReportingPeriod(LocalDate.parse("2016-03-31"), LocalDate.parse("2017-03-30"))
-        )),
-      List(CbcReports(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
-      List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None), "Some Other Info")),
-      Some(LocalDate.now()),
-      List.empty[String],
-      List.empty[String]
-    )
-  }
-
-  private val affinityGroupOrgansiation = AffinityGroup.Organisation
 
   when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
     CacheMap("id", Map.empty[String, JsValue]))

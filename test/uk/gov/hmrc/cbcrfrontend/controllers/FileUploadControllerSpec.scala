@@ -40,9 +40,7 @@ import play.api.libs.json.{Format, JsNull, Reads}
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -52,7 +50,7 @@ import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, Servic
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
 
@@ -192,7 +190,7 @@ class FileUploadControllerSpec
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
   when(runMode.env) thenReturn "Dev"
   val schemaVer: String = configuration
-    .getString(s"${runMode.env}.oecd-schema-version")
+    .getOptional[String](s"${runMode.env}.oecd-schema-version")
     .getOrElse(throw new Exception(s"Missing configuration ${runMode.env}.oecd-schema-version"))
   val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
 
@@ -717,7 +715,6 @@ class FileUploadControllerSpec
 
     "return success if audit disabled and sendExtendedEvent succeeds" in {
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
-      val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
       val request = addToken(FakeRequest())
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Disabled)
       when(cache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future

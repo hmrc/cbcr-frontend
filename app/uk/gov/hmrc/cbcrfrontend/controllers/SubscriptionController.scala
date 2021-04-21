@@ -291,8 +291,8 @@ class SubscriptionController @Inject()(
         Json.obj(
           "path"             -> JsString(request.uri),
           c.providerType     -> JsString(c.providerId),
-          "subscriptionData" -> Json.toJson("subscriptionData"))
-      case None => Json.obj("path" -> JsString(request.uri), "subscriptionData" -> Json.toJson("subscriptionData"))
+          "subscriptionData" -> Json.toJson(subscrDetails))
+      case None => Json.obj("path" -> JsString(request.uri), "subscriptionData" -> Json.toJson(subscrDetails))
     }
 
   private def getDetailsFailedSubscription(

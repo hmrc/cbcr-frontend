@@ -50,7 +50,6 @@ class LanguageControllerSpec
       "switching to welsh enableLanguageSwitching = false and referer set in request header" in {
         val result: Result = Await.result(controller.switchToWelsh()(requestWithReferer), 5.second)
         status(result) shouldBe 303
-        val headers = result.header.headers.getOrElse("Set-Cookie", "")
 
         val switchingFlashValue = result.newFlash.head.data("switching-language")
         val cookieName = result.newCookies.head.name

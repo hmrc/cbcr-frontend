@@ -17,10 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import java.time.LocalDate
-
 import org.mockito.ArgumentMatchers.any
 import cats.data.NonEmptyList
-import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
@@ -30,7 +28,7 @@ import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, NotFoundException}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -104,7 +102,7 @@ class ReportingEntityDataServiceSpec
       }
       "return NONE if the connector returns a NotFoundException" in {
         when(connector.reportingEntityDataQuery(any())(any())) thenReturn Future.successful(
-          HttpResponse(Status.NOT_FOUND, None))
+          HttpResponse(Status.NOT_FOUND, None, Map.empty, None))
         val result = Await.result(reds.queryReportingEntityData(docRefId).value, 2.seconds)
         result shouldBe Right(None)
       }
@@ -244,7 +242,7 @@ class ReportingEntityDataServiceSpec
     "update ReportingEntityData if it exists in the DB store" in {
       when(connector.reportingEntityDataUpdate(any())(any())) thenReturn Future.successful(HttpResponse(Status.OK))
       val result = Await.result(reds.updateReportingEntityData(partialRed).value, 2.seconds)
-      result shouldBe Right()
+      result.isRight shouldBe true
     }
     "return an error if anything else goes wrong" in {
       when(connector.reportingEntityDataUpdate(any())(any())) thenReturn Future.failed(
@@ -258,7 +256,7 @@ class ReportingEntityDataServiceSpec
     "save ReportingEntityData if it does not exist in the DB store" in {
       when(connector.reportingEntityDataSave(any())(any())) thenReturn Future.successful(HttpResponse(Status.OK))
       val result = Await.result(reds.saveReportingEntityData(red).value, 2.seconds)
-      result shouldBe Right()
+      result.isRight shouldBe true
     }
     "return an error if anything else goes wrong" in {
       when(connector.reportingEntityDataSave(any())(any())) thenReturn Future.failed(

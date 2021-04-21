@@ -36,7 +36,6 @@ import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import uk.gov.hmrc.auth.core.retrieve.Credentials
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
@@ -341,7 +340,6 @@ class SubscriptionControllerSpec
       val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
-      implicit val messages = getMessages(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
@@ -375,7 +373,6 @@ class SubscriptionControllerSpec
       val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
-      implicit val messages = getMessages(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty"))
@@ -409,7 +406,6 @@ class SubscriptionControllerSpec
       val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
-      implicit val messages = getMessages(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.emailAddress.error.invalid"))
@@ -443,7 +439,6 @@ class SubscriptionControllerSpec
       val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
-      implicit val messages = getMessages(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.firstName.error"))
@@ -475,7 +470,6 @@ class SubscriptionControllerSpec
       val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
-      implicit val messages = getMessages(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.lastName.error"))
@@ -507,7 +501,6 @@ class SubscriptionControllerSpec
       val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
-      implicit val messages = getMessages(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include("Enter the email address")
@@ -571,7 +564,7 @@ class SubscriptionControllerSpec
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat), any(), any())) thenReturn rightE(
         subscriptionDetails)
-      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT[Future, CBCId](Future.successful(None))
+      when(cbcId.subscribe(any())(any())) thenReturn OptionT[Future, CBCId](Future.successful(None))
       when(cache.readOption[Subscribed.type](EQ(Implicits.format), any(), any())) thenReturn Future.successful(None)
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), EQ(bprTag), any())) thenReturn rightE(
         BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB")))
@@ -679,8 +672,8 @@ class SubscriptionControllerSpec
       when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
         Some(GGId("ggid", "type")))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(any(), any())) thenReturn right("done")
-      when(cbcId.subscribe(anyObject())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
-      when(cbcKF.enrol(anyObject())(anyObject())) thenReturn EitherT.pure[Future, CBCErrors, Unit](())
+      when(cbcId.subscribe(any())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
+      when(cbcKF.enrol(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Unit](())
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), EQ(bprTag), any())) thenReturn rightE(
         BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB")))
       when(cache.read[Utr](EQ(Utr.utrRead), EQ(utrTag), any())) thenReturn rightE(Utr("123456789"))

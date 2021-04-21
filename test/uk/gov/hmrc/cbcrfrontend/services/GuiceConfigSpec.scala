@@ -20,8 +20,6 @@ import java.io.File
 
 import akka.actor.ActorSystem
 import org.scalatest.{FlatSpec, Matchers}
-import com.kenshoo.play.metrics.PlayModule
-import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Environment
