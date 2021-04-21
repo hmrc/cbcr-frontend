@@ -64,7 +64,7 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.PUT(url + s"/message-ref-id/$id", JsNull)
 
   def docRefIdQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/doc-ref-id/${d.show}")
+    http.GET(url + s"/doc-ref-id/${d.show}").map(response => response)
 
   def docRefIdSave(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT(url + s"/doc-ref-id/${d.show}", JsNull)

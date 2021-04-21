@@ -85,8 +85,8 @@ class SubscriptionDataServiceSpec
       result.isLeft shouldBe true
     }
     "return NONE if the connector returns a NotFoundException" in {
-      when(mockHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any())) thenReturn Future.failed(
-        new NotFoundException("Not found"))
+      when(mockHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any())) thenReturn Future.successful(
+        HttpResponse(Status.NOT_FOUND, None))
       val result = Await.result(sds.retrieveSubscriptionData(idUtr).value, 2.seconds)
       result shouldBe Right(None)
     }

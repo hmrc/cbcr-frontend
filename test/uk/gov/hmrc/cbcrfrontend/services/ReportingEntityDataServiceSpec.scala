@@ -103,8 +103,8 @@ class ReportingEntityDataServiceSpec
         result shouldBe Right(Some(red))
       }
       "return NONE if the connector returns a NotFoundException" in {
-        when(connector.reportingEntityDataQuery(any())(any())) thenReturn Future.failed(
-          new NotFoundException("Not found"))
+        when(connector.reportingEntityDataQuery(any())(any())) thenReturn Future.successful(
+          HttpResponse(Status.NOT_FOUND, None))
         val result = Await.result(reds.queryReportingEntityData(docRefId).value, 2.seconds)
         result shouldBe Right(None)
       }
@@ -130,8 +130,8 @@ class ReportingEntityDataServiceSpec
         result shouldBe Right(Some(red))
       }
       "return NONE if the connector returns a NotFoundException" in {
-        when(connector.reportingEntityCBCIdAndReportingPeriod(any(), any())(any())) thenReturn Future.failed(
-          new NotFoundException("Not found"))
+        when(connector.reportingEntityCBCIdAndReportingPeriod(any(), any())(any())) thenReturn Future.successful(
+          HttpResponse(Status.NOT_FOUND, None))
         val result = Await.result(reds.queryReportingEntityDataByCbcId(cbcid.get, LocalDate.now()).value, 2.seconds)
         result shouldBe Right(None)
       }
@@ -166,8 +166,8 @@ class ReportingEntityDataServiceSpec
     }
 
     "return NONE if the connector returns a NotFoundException" in {
-      when(connector.reportingEntityDataModelQuery(any())(any())) thenReturn Future.failed(
-        new NotFoundException("Not found"))
+      when(connector.reportingEntityDataModelQuery(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.NOT_FOUND, None))
       val result = Await.result(reds.queryReportingEntityDataModel(docRefId).value, 2.seconds)
       result shouldBe Right(None)
     }
@@ -196,7 +196,8 @@ class ReportingEntityDataServiceSpec
     }
 
     "return NONE if the connector returns a NotFoundException" in {
-      when(connector.reportingEntityDocRefId(any())(any())) thenReturn Future.failed(new NotFoundException("Not found"))
+      when(connector.reportingEntityDocRefId(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.NOT_FOUND, None))
       val result = Await.result(reds.queryReportingEntityDataDocRefId(docRefId).value, 2.seconds)
       result shouldBe Right(None)
     }
@@ -225,8 +226,8 @@ class ReportingEntityDataServiceSpec
     }
 
     "return NONE if the connector returns a NotFoundException" in {
-      when(connector.reportingEntityDataQueryTin(any(), any())(any())) thenReturn Future.failed(
-        new NotFoundException("Not found"))
+      when(connector.reportingEntityDataQueryTin(any(), any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.NOT_FOUND, None))
       val result = Await.result(reds.queryReportingEntityDataTin(tin.value, reportingPeriod).value, 2.seconds)
       result shouldBe Right(None)
     }

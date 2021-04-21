@@ -62,15 +62,14 @@ class SubscriptionDataService @Inject()(
         .GET[HttpResponse](fullUrl)
         .map { response =>
           response.status match {
-            case 200 =>
+            case Status.OK =>
               response.json
                 .validate[SubscriptionDetails]
                 .fold(
                   errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
                   details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
                 )
-            case 404 => {
-              println("Fucked Up")
+            case Status.NOT_FOUND => {
               Right(None)
             }
           }

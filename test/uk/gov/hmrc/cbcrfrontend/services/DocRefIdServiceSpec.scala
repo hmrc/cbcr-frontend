@@ -96,15 +96,13 @@ class DocRefIdServiceSpec extends UnitSpec with ScalaFutures with GuiceOneAppPer
       result shouldBe Valid
     }
     "return DoesNotExist error state with message if the docRefId is not found in the DB" in {
-      when(connector.docRefIdQuery(any())(any())) thenReturn Future.failed(
-        new NotFoundException("HttpException occurred"))
+      when(connector.docRefIdQuery(any())(any())) thenReturn Future.successful(HttpResponse(Status.NOT_FOUND, None))
       val result = Await.result(docRefIdService.queryDocRefId(docRefId), 2.seconds)
       result shouldBe DoesNotExist
     }
 
     "return an Invalid state of DocerefId if an exception occurs while retrieving " in {
-      when(connector.docRefIdQuery(any())(any())) thenReturn Future.failed(
-        new Upstream4xxResponse("MsgErrorResponse", 409, 500))
+      when(connector.docRefIdQuery(any())(any())) thenReturn Future.successful(HttpResponse(Status.CONFLICT, None))
       val result = Await.result(docRefIdService.queryDocRefId(docRefId), 2.seconds)
       result shouldBe Invalid
     }
