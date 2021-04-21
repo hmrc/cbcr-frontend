@@ -22,7 +22,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
-import play.api.libs.json.Json
+import play.api.libs.json.{JsNull, Json}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
@@ -85,7 +85,7 @@ class SubscriptionDataServiceSpec
     }
     "return NONE if the connector returns a NotFoundException" in {
       when(mockHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any())) thenReturn Future.successful(
-        HttpResponse(Status.NOT_FOUND, None, Map.empty, None))
+        HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(sds.retrieveSubscriptionData(idUtr).value, 2.seconds)
       result shouldBe Right(None)
     }
@@ -100,7 +100,7 @@ class SubscriptionDataServiceSpec
   "SubscriptionDataService on a call to saveSubscriptionData" should {
     "save saveSubscriptionData if it exists in the DB store" in {
       when(mockHttp.POST[SubscriptionDetails, HttpResponse](any(), any(), any())(any(), any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(Status.OK)))
+        .thenReturn(Future.successful(HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]])))
       val result = Await.result(sds.saveSubscriptionData(subscriptionDetails).value, 2.seconds)
       result.isRight shouldBe true
 
@@ -108,7 +108,7 @@ class SubscriptionDataServiceSpec
 
     "return Left() unexpected error if it does not exist in the DB store" in {
       when(mockHttp.POST[SubscriptionDetails, HttpResponse](any(), any(), any())(any(), any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(Status.NOT_FOUND)))
+        .thenReturn(Future.successful(HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]])))
       val result = Await.result(sds.saveSubscriptionData(subscriptionDetails).value, 2.seconds)
       result.isLeft shouldBe true
 
@@ -126,13 +126,13 @@ class SubscriptionDataServiceSpec
   "SubscriptionDataService on a call to updateSubscriptionData" should {
     "update subscriptionDetails if it exists in the DB store" in {
       when(mockHttp.PUT[SubscriptionDetails, HttpResponse](any(), any(), any())(any(), any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(200)))
+        .thenReturn(Future.successful(HttpResponse(200, JsNull, Map.empty[String, Seq[String]])))
       val result = Await.result(sds.updateSubscriptionData(cbcId.get, subscriberContact).value, 2.seconds)
       result.isRight shouldBe true
     }
     "not update subscriptionDetails and return unexpected error if it fails to exist in the DB store" in {
       when(mockHttp.PUT[SubscriptionDetails, HttpResponse](any(), any(), any())(any(), any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(300)))
+        .thenReturn(Future.successful(HttpResponse(300, JsNull, Map.empty[String, Seq[String]])))
       val result = Await.result(sds.updateSubscriptionData(cbcId.get, subscriberContact).value, 2.seconds)
       result.isLeft shouldBe true
     }
