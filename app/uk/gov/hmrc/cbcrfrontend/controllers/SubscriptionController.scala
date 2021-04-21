@@ -25,7 +25,8 @@ import play.api.libs.json.{JsString, Json}
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrievals}
+import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
@@ -239,21 +240,20 @@ class SubscriptionController @Inject()(
     }
   }
 
-  def createFailedSubscriptionAuditEvent(credentials: Credentials, cbcId: CBCId, bpr: BusinessPartnerRecord, utr: Utr)(
-    implicit hc: HeaderCarrier): ServiceResponse[AuditResult.Success.type] =
+  def createFailedSubscriptionAuditEvent(
+    credentials: Option[Credentials],
+    cbcId: CBCId,
+    bpr: BusinessPartnerRecord,
+    utr: Utr)(implicit hc: HeaderCarrier): ServiceResponse[AuditResult.Success.type] =
     for {
       result <- eitherT[AuditResult.Success.type](
                  audit
-                   .sendExtendedEvent(ExtendedDataEvent(
-                     "Country-By-Country-Frontend",
-                     "CBCRFailedSubscription",
-                     detail = Json.obj(
-                       "cbcId"                  -> JsString(cbcId.value),
-                       credentials.providerType -> JsString(credentials.providerId),
-                       "businessPartnerRecord"  -> Json.toJson(bpr),
-                       "utr"                    -> JsString(utr.value)
-                     )
-                   ))
+                   .sendExtendedEvent(
+                     ExtendedDataEvent(
+                       "Country-By-Country-Frontend",
+                       "CBCRFailedSubscription",
+                       detail = getDetailsFailedSubscription(cbcId, credentials, bpr, utr)
+                     ))
                    .map {
                      case AuditResult.Disabled => Right(AuditResult.Success)
                      case AuditResult.Success  => Right(AuditResult.Success)
@@ -262,21 +262,18 @@ class SubscriptionController @Inject()(
                    })
     } yield result
 
-  def createSuccessfulSubscriptionAuditEvent(credentials: Credentials, subscriptionData: SubscriptionDetails)(
+  def createSuccessfulSubscriptionAuditEvent(credentials: Option[Credentials], subscriptionData: SubscriptionDetails)(
     implicit hc: HeaderCarrier,
     request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
       result <- eitherT[AuditResult.Success.type](
                  audit
-                   .sendExtendedEvent(ExtendedDataEvent(
-                     "Country-By-Country-Frontend",
-                     "CBCRSubscription",
-                     detail = Json.obj(
-                       "path"                   -> JsString(request.uri),
-                       credentials.providerType -> JsString(credentials.providerId),
-                       "subscriptionData"       -> Json.toJson(subscriptionData)
-                     )
-                   ))
+                   .sendExtendedEvent(
+                     ExtendedDataEvent(
+                       "Country-By-Country-Frontend",
+                       "CBCRSubscription",
+                       detail = getDetailsSuccesfulSubscription(request, credentials, subscriptionData)
+                     ))
                    .map {
                      case AuditResult.Disabled => Right(AuditResult.Success)
                      case AuditResult.Success  => Right(AuditResult.Success)
@@ -284,5 +281,37 @@ class SubscriptionController @Inject()(
                        Left(UnexpectedState(s"Unable to audit a successful subscription: $msg"))
                    })
     } yield result
+
+  private def getDetailsSuccesfulSubscription(
+    request: Request[_],
+    creds: Option[Credentials],
+    subscrDetails: SubscriptionDetails) =
+    creds match {
+      case Some(c) =>
+        Json.obj(
+          "path"             -> JsString(request.uri),
+          c.providerType     -> JsString(c.providerId),
+          "subscriptionData" -> Json.toJson("subscriptionData"))
+      case None => Json.obj("path" -> JsString(request.uri), "subscriptionData" -> Json.toJson("subscriptionData"))
+    }
+
+  private def getDetailsFailedSubscription(
+    cbcId: CBCId,
+    creds: Option[Credentials],
+    bpr: BusinessPartnerRecord,
+    utr: Utr) =
+    creds match {
+      case Some(c) =>
+        Json.obj(
+          "path"                  -> JsString(cbcId.value),
+          c.providerType          -> JsString(c.providerId),
+          "businessPartnerRecord" -> Json.toJson(bpr),
+          "utr"                   -> JsString(utr.value))
+      case None =>
+        Json.obj(
+          "path"                  -> JsString(cbcId.value),
+          "businessPartnerRecord" -> Json.toJson(bpr),
+          "utr"                   -> JsString(utr.value))
+    }
 
 }

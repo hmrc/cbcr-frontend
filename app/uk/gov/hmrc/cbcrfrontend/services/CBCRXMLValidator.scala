@@ -20,7 +20,6 @@ import java.io.File
 import javax.inject.Inject
 import javax.xml.stream.XMLInputFactory
 
-import akka.actor.ActorSystem
 import com.ctc.wstx.exc.WstxException
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
 import org.codehaus.stax2.validation._
@@ -29,8 +28,7 @@ import play.api.{Environment, Logger}
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Exception.nonFatalCatch
 
-class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValidationSchema)(
-  implicit system: ActorSystem) {
+class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValidationSchema) {
 
   lazy val logger: Logger = Logger(this.getClass)
 

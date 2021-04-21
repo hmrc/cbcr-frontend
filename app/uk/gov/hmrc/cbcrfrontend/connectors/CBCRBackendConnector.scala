@@ -58,7 +58,7 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   }
 
   def messageRefIdExists(id: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/message-ref-id/$id")
+    http.GET(url + s"/message-ref-id/$id").map(response => response)
 
   def saveMessageRefId(id: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT(url + s"/message-ref-id/$id", JsNull)
@@ -107,11 +107,11 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.GET[ListDocRefIdRecord](url + s"/getDocsRefId")
 
   def adminReportingEntityDataQuery(d: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/admin/reporting-entity/doc-ref-id/$d")
+    http.GET(url + s"/admin/reporting-entity/doc-ref-id/$d").map(response => response)
 
   def adminReportingEntityCBCIdAndReportingPeriod(cbcId: String, reportingPeriod: LocalDate)(
     implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/admin/reporting-entity/query-cbc-id/$cbcId/${reportingPeriod.toString}")
+    http.GET(url + s"/admin/reporting-entity/query-cbc-id/$cbcId/${reportingPeriod.toString}").map(response => response)
 
   def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(
     implicit hc: HeaderCarrier): Future[HttpResponse] =

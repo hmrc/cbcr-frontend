@@ -25,8 +25,7 @@ import uk.gov.hmrc.cbcrfrontend.model.{CorrDocRefId, DocRefId, UnexpectedState}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, NotFoundException, UpstreamErrorResponse}
-import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
 
 @Singleton
 class DocRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
@@ -44,9 +43,17 @@ class DocRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Ex
     })
 
   def queryDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): Future[DocRefIdQueryResponse] =
-    connector.docRefIdQuery(d).map(_ => Valid).recover {
-      case UpstreamErrorResponse.Upstream4xxResponse(x) => DoesNotExist
-      case _                                            => Invalid
-    }
-
+    connector
+      .docRefIdQuery(d)
+      .map { response =>
+        response.status match {
+          case Status.NOT_FOUND => DoesNotExist
+          case Status.CONFLICT  => Invalid
+          case Status.OK        => Valid
+          case _                => Invalid
+        }
+      }
+      .recover {
+        case NonFatal(e) => Invalid
+      }
 }

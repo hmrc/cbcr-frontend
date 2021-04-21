@@ -23,7 +23,8 @@ import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.MessagesControllerComponents
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
-import uk.gov.hmrc.auth.core.retrieve.{Retrievals, _}
+import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
@@ -60,6 +61,7 @@ class StartController @Inject()(
           UnexpectedState("Individuals are not permitted to use this service"),
           views.notAuthorisedIndividual,
           views.errorTemplate)
+      case _ => BadRequest(views.start(startForm))
     }
   }
 

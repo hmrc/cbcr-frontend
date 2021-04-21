@@ -26,7 +26,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
 class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {

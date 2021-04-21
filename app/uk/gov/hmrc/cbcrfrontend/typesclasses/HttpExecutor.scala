@@ -21,6 +21,7 @@ import play.api.libs.json.{JsObject, Json, Writes}
 import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpPut, HttpResponse}
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -88,7 +89,9 @@ object HttpExecutor {
       fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] =
-      fileUploadFrontEndWS.POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", getBody(obj))
+      fileUploadFrontEndWS
+        .POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", getBody(obj))
+        .map(response => response)
   }
 
   implicit object uploadFile extends HttpExecutor[FusFeUrl, UploadFile, Array[Byte]] {
@@ -109,6 +112,7 @@ object HttpExecutor {
       val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
       fileUploadFrontEndWS
         .doFormPartPost(url, fileName, contentType, ByteString.fromArray(getBody(obj)), Seq("CSRF-token" -> "nocheck"))
+        .map(response => response)
     }
   }
 
@@ -126,7 +130,9 @@ object HttpExecutor {
       fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] =
-      fileUploadFrontEndWS.POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", getBody(obj))
+      fileUploadFrontEndWS
+        .POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", getBody(obj))
+        .map(response => response)
 
   }
 
@@ -146,6 +152,7 @@ object HttpExecutor {
     ): Future[HttpResponse] =
       fileUploadFrontEndWS
         .POST[RouteEnvelopeRequest, HttpResponse](s"${fusUrl.url}/file-routing/requests", getBody(obj))
+        .map(response => response)
   }
 
   def apply[U, P, I](
