@@ -68,7 +68,6 @@ class ExitSurveyControllerSpec
   when(runMode.env) thenReturn "Dev"
 
   val schemaVer: String = "1.0"
-  when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
   val controller = new ExitSurveyController(configuration, auditC, mcc, views)
 

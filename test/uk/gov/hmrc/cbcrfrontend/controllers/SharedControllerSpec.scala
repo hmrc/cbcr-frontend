@@ -80,7 +80,6 @@ class SharedControllerSpec
   when(runMode.env) thenReturn "Dev"
 
   val schemaVer: String = "2.0"
-  when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
   val controller =
     new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc, views)(cache, config, feConfig, ec)
