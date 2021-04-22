@@ -31,8 +31,6 @@
 @(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
-@agencyBusinessNameErrors = @{form.error("agencyBusinessName").isDefined}
-@jobRoleErrors = @{form.error("jobRole").isDefined}
 
 @numberOfErrors = @{form.errors.length}
 @maybePhoneError =  @{form.error("contactPhone").map(_.message).getOrElse("")}
