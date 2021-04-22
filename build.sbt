@@ -16,8 +16,6 @@ import play.sbt.PlayImport._
 
 val appName = "cbcr-frontend"
 
-resolvers += Resolver.bintrayRepo("hmrc", "releases")
-
 lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
 val compile = Seq(
