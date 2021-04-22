@@ -65,7 +65,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPe
 
       val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(kf1).value, 2.second)
 
-      maybeKnownFact.isDefined shouldBe true
+      maybeKnownFact.isDefined shouldBe false
 
     }
 
@@ -93,7 +93,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPe
       val maybeKnownFact = Await
         .result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value, 2.second)
 
-      maybeKnownFact.isDefined shouldBe true
+      maybeKnownFact.isDefined shouldBe false
 
     }
 

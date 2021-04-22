@@ -36,8 +36,7 @@ class BPRKnownFactsConnector @Inject()(http: HttpClient)(
 
   def lookup(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http
-      .GET(generateUrl(url, utr).toString)
-      .map(response => response)
+      .GET[HttpResponse](generateUrl(url, utr).toString)
 
   private def generateUrl(baseUrl: String, utr: String): URL = new URL(s"$baseUrl/cbcr/business-partner-record/$utr")
 }

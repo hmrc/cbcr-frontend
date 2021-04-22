@@ -20,6 +20,7 @@ import javax.inject.{Inject, Singleton}
 import cats.data.OptionT
 import cats.instances.future._
 import play.api.Logger
+import play.api.http.Status
 import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -28,7 +29,7 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
 
 import scala.util.control.NonFatal
 
@@ -50,9 +51,13 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
     val response = OptionT(
       dc.lookup(kf.utr.value)
         .map { response =>
-          val bpr: Option[BusinessPartnerRecord] = Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
-          auditBpr(bpr, kf)
-          bpr
+          response.status match {
+            case Status.OK =>
+              val bpr: Option[BusinessPartnerRecord] = Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
+              auditBpr(bpr, kf)
+              bpr
+            case Status.NOT_FOUND => None
+          }
         }
         .recover {
           case NonFatal(_) => None

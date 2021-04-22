@@ -19,9 +19,10 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 import javax.inject.{Inject, Singleton}
 import com.typesafe.config.Config
 import play.api.Configuration
+
 import scala.concurrent.{ExecutionContext, Future}
 import configs.syntax._
-import play.api.libs.json.{JsArray, Json}
+import play.api.libs.json.{JsArray, JsObject, Json}
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
@@ -43,10 +44,7 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient, config: Configuration)(
 
   def deEnrol(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http
-      .POST(url + "/de-enrol/HMRC-CBC-ORG", Json.obj("keepAgentAllocations" -> false))
-      .map { response =>
-        response
-      }
+      .POST[JsObject, HttpResponse](url + "/de-enrol/HMRC-CBC-ORG", Json.obj("keepAgentAllocations" -> false))
 
   def enrol(cBCId: CBCId, utr: Utr)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http

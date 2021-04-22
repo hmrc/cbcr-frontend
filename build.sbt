@@ -22,7 +22,7 @@ val compile = Seq(
   ws,
   "uk.gov.hmrc"              %% "bootstrap-frontend-play-26"      % "4.2.0",
   "uk.gov.hmrc"              %% "govuk-template"      % "5.65.0-play-26",
-  "uk.gov.hmrc"              %% "play-ui"             % "8.15.0-play-26",
+  "uk.gov.hmrc"              %% "play-ui"             % "9.2.0-play-26",
   "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
   "uk.gov.hmrc"              %% "domain"              % "5.11.0-play-26",
   "uk.gov.hmrc"              %% "http-caching-client" % "9.4.0-play-26",
@@ -124,8 +124,8 @@ lazy val microservice =
     )
     .settings(scalacOptions ++= List(
       // Warn if an import selector is not referenced.
-      "-P:silencer:pathFilters=routes;html"
-    ))
+      "-P:silencer:globalFilters=Unused import"
+))
     .settings(resolvers ++= Seq(
       "hmrc-releases" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases/",
       Resolver.jcenterRepo
