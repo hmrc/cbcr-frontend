@@ -49,7 +49,7 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.POST(url + s"/email", email)
 
   def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/subscription/$safeId")
+    http.GET[HttpResponse](url + s"/subscription/$safeId")
 
   def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(
     implicit hc: HeaderCarrier): Future[HttpResponse] = {
@@ -58,13 +58,13 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   }
 
   def messageRefIdExists(id: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/message-ref-id/$id").map(response => response)
+    http.GET[HttpResponse](url + s"/message-ref-id/$id")
 
   def saveMessageRefId(id: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT(url + s"/message-ref-id/$id", JsNull)
 
   def docRefIdQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/doc-ref-id/${d.show}").map(response => response)
+    http.GET[HttpResponse](url + s"/doc-ref-id/${d.show}")
 
   def docRefIdSave(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT(url + s"/doc-ref-id/${d.show}", JsNull)
@@ -82,40 +82,42 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.PUT[PartialReportingEntityData, HttpResponse](url + "/reporting-entity", r)
 
   def reportingEntityDataQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/reporting-entity/query/${d.show}")
+    http.GET[HttpResponse](url + s"/reporting-entity/query/${d.show}")
 
   def reportingEntityDataModelQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/reporting-entity/model/${d.show}")
+    http.GET[HttpResponse](url + s"/reporting-entity/model/${d.show}")
 
   def reportingEntityDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/reporting-entity/doc-ref-id/${d.show}")
+    http.GET[HttpResponse](url + s"/reporting-entity/doc-ref-id/${d.show}")
 
   def reportingEntityCBCIdAndReportingPeriod(cbcId: CBCId, reportingPeriod: LocalDate)(
     implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/reporting-entity/query-cbc-id/${cbcId.toString}/${reportingPeriod.toString}")
+    http.GET[HttpResponse](url + s"/reporting-entity/query-cbc-id/${cbcId.toString}/${reportingPeriod.toString}")
 
   def reportingEntityDataQueryTin(tin: String, reportingPeriod: String)(
     implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/reporting-entity/query-tin/$tin/$reportingPeriod")
+    http.GET[HttpResponse](url + s"/reporting-entity/query-tin/$tin/$reportingPeriod")
 
   def overlapQuery(tin: String, entityReportingPeriod: EntityReportingPeriod)(
     implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(
+    http.GET[HttpResponse](
       url + s"/reporting-entity/query-dates/$tin/start-date/${entityReportingPeriod.startDate.toString}/end-date/${entityReportingPeriod.endDate.toString}")
 
   def getDocRefIdOver200(implicit hc: HeaderCarrier) =
     http.GET[ListDocRefIdRecord](url + s"/getDocsRefId")
 
   def adminReportingEntityDataQuery(d: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/admin/reporting-entity/doc-ref-id/$d").map(response => response)
+    http.GET[HttpResponse](url + s"/admin/reporting-entity/doc-ref-id/$d").map(response => response)
 
   def adminReportingEntityCBCIdAndReportingPeriod(cbcId: String, reportingPeriod: LocalDate)(
     implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/admin/reporting-entity/query-cbc-id/$cbcId/${reportingPeriod.toString}").map(response => response)
+    http
+      .GET[HttpResponse](url + s"/admin/reporting-entity/query-cbc-id/$cbcId/${reportingPeriod.toString}")
+      .map(response => response)
 
   def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(
     implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET(url + s"/admin/reporting-entity/query-tin/$tin/$reportingPeriod")
+    http.GET[HttpResponse](url + s"/admin/reporting-entity/query-tin/$tin/$reportingPeriod")
 
   def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT(url + s"/admin/updateDocRefId/$docRefId", JsNull)
