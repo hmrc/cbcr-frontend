@@ -46,9 +46,12 @@ class CreationDateSpec
   val runMode: RunMode = mock[RunMode]
 
   when(runMode.env) thenReturn "Dev"
-  when(configuration.getInt(s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(Some(23))
-  when(configuration.getInt(s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(Some(12))
-  when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(Some(2018))
+  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(
+    Some(23))
+  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(
+    Some(12))
+  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
+    Some(2018))
 
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -144,13 +147,15 @@ class CreationDateSpec
         result shouldBe false
       }
       "repotingEntity creationDate is Null and default date is more than 3 years ago" in {
-        when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
+        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
           Some(2017))
         when(runMode.env) thenReturn "Dev"
-        when(configuration.getInt(s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
+        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
           Some(2010))
-        when(configuration.getInt(s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(Some(23))
-        when(configuration.getInt(s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(Some(12))
+        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(
+          Some(23))
+        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Future
+          .successful(Some(12))
         val cds2 = new CreationDateService(connector, configuration, runMode, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlinfo), 5.seconds)
         result shouldBe false

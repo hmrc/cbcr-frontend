@@ -19,19 +19,19 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import java.io._
 import java.time.{Duration, LocalDateTime}
 import java.util.UUID
-
 import cats.data.{EitherT, _}
 import cats.instances.all._
 import cats.syntax.all._
+
 import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.{Json, _}
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Retrievals, _}
+import uk.gov.hmrc.auth.core.retrieve._
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -69,23 +69,11 @@ class FileUploadController @Inject()(
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
-  val assetsLocation = (config.getString(s"assets.url") |+| config.getString(s"assets.version")).get
-  lazy val hostName = config.getString("cbcr-frontend.host").get
+  val assetsLocation = (config.get[String](s"assets.url") |+| config.get[String](s"assets.version"))
+  lazy val hostName = config.get[String]("cbcr-frontend.host")
   lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
-  lazy val fileUploadHost = config.getString(s"file-upload-public-frontend.host").get
-
-  private def allowedToSubmit(affinityGroup: AffinityGroup, enrolled: Boolean)(implicit hc: HeaderCarrier) =
-    affinityGroup match {
-      case AffinityGroup.Organisation =>
-        if (enrolled) { Future.successful(true) } else { cache.readOption[CBCId].map(_.isDefined) }
-      case AffinityGroup.Agent      => Future.successful(true)
-      case AffinityGroup.Individual => Future.successful(false)
-    }
-
-  private def isEn()(implicit hc: HeaderCarrier): Future[Boolean] = {
-    val enrolled = cache.readOption[CBCId].map(_.isDefined)
-    enrolled
-  }
+  lazy val fileUploadHost = config.get[String](s"file-upload-public-frontend.host")
+  lazy val logger: Logger = Logger(this.getClass)
 
   private def fileUploadUrl()(implicit hc: HeaderCarrier): EitherT[Future, CBCErrors, String] =
     for {
@@ -133,7 +121,7 @@ class FileUploadController @Inject()(
         .read[EnvelopeId]
         .subflatMap { e =>
           if (e.value != envelopeId) {
-            Logger.error("BAD_ENVELOPE_ID")
+            logger.error("BAD_ENVELOPE_ID")
             cache.remove()
             Left(UnexpectedState(
               s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
@@ -189,11 +177,11 @@ class FileUploadController @Inject()(
     result.value.onComplete {
       case Failure(_) =>
         val endValidation = LocalDateTime.now()
-        Logger.info(
+        logger.info(
           s"File validation failed for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
       case Success(_) =>
         val endValidation = LocalDateTime.now()
-        Logger.info(
+        logger.info(
           s"File validation succeeded for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
 
     }
@@ -212,7 +200,7 @@ class FileUploadController @Inject()(
 
   def fileValidate(envelopeId: String, fileId: String) = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
-      case creds ~ affinity ~ enrolment =>
+      case Some(creds) ~ affinity ~ enrolment =>
         val result = for {
           file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
           _             <- right(cache.save(file_metadata._2))
@@ -253,13 +241,13 @@ class FileUploadController @Inject()(
             case InvalidFileType(_) =>
               Redirect(routes.FileUploadController.fileInvalid())
             case e: CBCErrors =>
-              Logger.error(e.toString)
+              logger.error(e.toString)
               Redirect(routes.SharedController.technicalDifficulties())
           }
           .merge
           .recover {
             case NonFatal(e) =>
-              Logger.error(e.getMessage, e)
+              logger.error(e.getMessage, e)
               Redirect(routes.SharedController.technicalDifficulties())
           }
 
@@ -271,26 +259,6 @@ class FileUploadController @Inject()(
     val kb = f.length() * 0.001
     f.delete()
     Math.incrementExact(kb.toInt)
-  }
-
-  private def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =
-    e.map(x => x.show.split(" ").map(x => messages(x)).map(_.toString).mkString(" "))
-
-  private def errorsToMap(e: List[ValidationErrors])(implicit messages: Messages): Map[String, String] =
-    errorsToList(e).foldLeft(Map[String, String]()) { (m, t) =>
-      m + ("error_" + (m.size + 1).toString -> t)
-    }
-
-  private def errorsToString(e: List[ValidationErrors])(implicit messages: Messages): String =
-    errorsToList(e).map(_.toString).mkString("\r\n")
-
-  private def errorsToFile(e: List[ValidationErrors], name: String)(implicit messages: Messages): File = {
-    val b = SingletonTemporaryFileCreator.create(name, ".txt")
-    val writer = new PrintWriter(b.file)
-    writer.write(errorsToString(e))
-    writer.flush()
-    writer.close()
-    b.file
   }
 
   private def fileUploadName(fname: String)(implicit messages: Messages): String =
@@ -322,7 +290,7 @@ class FileUploadController @Inject()(
 
   private def fileUploadError(errorType: FileUploadErrorType) = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
-      case creds ~ affinity ~ enrolment =>
+      case Some(creds) ~ affinity ~ enrolment =>
         auditFailedSubmission(creds, affinity, enrolment, errorType.toString)
           .map(_ => Ok(views.fileUploadError(errorType)))
           .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
@@ -332,7 +300,7 @@ class FileUploadController @Inject()(
 
   def handleError(errorCode: Int, reason: String) = Action.async { implicit request =>
     authorised() {
-      Logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
+      logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
       errorCode match {
         case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
         case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
@@ -349,16 +317,16 @@ class FileUploadController @Inject()(
     */
   def fileUploadResponse(envelopeId: String) = Action.async { implicit request =>
     authorised() {
-      Logger.info(s"Received a file-upload-response query for $envelopeId")
+      logger.info(s"Received a file-upload-response query for $envelopeId")
       fileUploadService
         .getFileUploadResponse(envelopeId)
         .fold(
           error => {
-            Logger.error(s"File not ready: $error")
+            logger.error(s"File not ready: $error")
             NoContent
           },
           response => {
-            Logger.info(s"Response back was: $response")
+            logger.info(s"Response back was: $response")
             fileUploadResponseToResult(response)
           }
         )
@@ -367,7 +335,7 @@ class FileUploadController @Inject()(
 
   //Turn a Case class into a map
   private[controllers] def getCCParams(cc: AnyRef): Map[String, String] =
-    (Map[String, String]() /: cc.getClass.getDeclaredFields) { (acc, field) =>
+    cc.getClass.getDeclaredFields.foldLeft[Map[String, String]](Map.empty) { (acc, field) =>
       field.setAccessible(true)
       acc + (field.getName -> field.get(cc).toString)
     }
@@ -385,7 +353,7 @@ class FileUploadController @Inject()(
     }
 
   private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(
-    implicit hc: HeaderCarrier,
+    implicit
     messages: Messages): JsObject =
     (
       all_errors._1.exists(bre => if (bre.errors.isEmpty) false else true),
@@ -437,7 +405,7 @@ class FileUploadController @Inject()(
     } yield result
 
   val unregisteredGGAccount = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       fileUploadUrl()
         .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation))))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))

@@ -16,14 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import java.time.LocalDateTime
 import java.time.LocalDate
 
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.all._
-import cats.instances.all._
 import play.api.libs.json._
-import play.api.libs.json.Json._
 
 /**
   * This Data is stored in our mongo store on initial submission of an XML

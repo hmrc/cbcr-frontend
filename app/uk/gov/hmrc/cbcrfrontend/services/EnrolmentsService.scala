@@ -18,12 +18,11 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import javax.inject.{Inject, Singleton}
 
-import cats.data.EitherT
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, CBCKnownFacts, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.model.{CBCKnownFacts, UnexpectedState}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.http.HeaderCarrier

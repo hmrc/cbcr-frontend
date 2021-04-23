@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{File, InputStream}
+import java.io.File
 
 import javax.xml.stream.{XMLInputFactory, XMLStreamConstants}
 import cats.instances.all._
@@ -25,7 +25,7 @@ import com.scalawilliam.xs4s.Implicits._
 import com.scalawilliam.xs4s.XmlElementExtractor
 import uk.gov.hmrc.cbcrfrontend.model._
 
-import scala.io.{BufferedSource, Source}
+import scala.io.Source
 import scala.util.control.Exception.nonFatalCatch
 import scala.xml.{Node, NodeSeq}
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
@@ -34,6 +34,8 @@ import play.api.Logger
 import scala.util.control.NonFatal
 
 class XmlInfoExtract {
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   private val xmlInputFactory: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
   xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false)
@@ -69,7 +71,7 @@ class XmlInfoExtract {
           count = count + 1
       }
     } catch {
-      case NonFatal(e) => Logger.warn(s"Error counting CBCBody elements: ${e.getMessage}")
+      case NonFatal(e) => logger.warn(s"Error counting CBCBody elements: ${e.getMessage}")
     }
     count
   }
@@ -102,7 +104,7 @@ class XmlInfoExtract {
 
     value.fold(
       e => {
-        Logger.warn(s"extractCbcVal encountered the following error: ${e.getMessage}")
+        logger.warn(s"extractCbcVal encountered the following error: ${e.getMessage}")
         RawCbcVal("")
       },
       cbcVal => cbcVal

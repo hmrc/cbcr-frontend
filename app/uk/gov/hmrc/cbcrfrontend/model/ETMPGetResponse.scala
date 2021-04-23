@@ -23,7 +23,6 @@ import play.api.libs.json._
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.emailaddress.PlayJsonFormats._
 import play.api.libs.json.Reads._ // Custom validation helpers
-import play.api.libs.functional.syntax._ // Combinator syntax
 
 class PhoneNumber private (val number: String)
 

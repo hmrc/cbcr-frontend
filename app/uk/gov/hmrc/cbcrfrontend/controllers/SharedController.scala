@@ -36,12 +36,10 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-
 import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SharedController @Inject()(
@@ -58,6 +56,8 @@ class SharedController @Inject()(
   feConfig: FrontendAppConfig,
   val ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck") {
     case utr if Utr(utr).isValid => Valid
@@ -149,7 +149,7 @@ class SharedController @Inject()(
     }
   }
 
-  val signOutGG = Action.async { implicit request =>
+  val signOutGG = Action.async { _ =>
     {
       Future.successful(Redirect(
         s"${feConfig.governmentGatewaySignInUrl}?continue_url=${feConfig.cbcrFrontendBaseUrl}/country-by-country-reporting/"))
@@ -170,7 +170,7 @@ class SharedController @Inject()(
     }
   }
 
-  val pred = AffinityGroup.Organisation and (User or Admin)
+  val pred = AffinityGroup.Organisation and User
 
   val verifyKnownFactsOrganisation = Action.async { implicit request =>
     authorised(pred).retrieve(cbcEnrolment) { enrolment =>
@@ -202,7 +202,7 @@ class SharedController @Inject()(
         ))
       .map {
         case AuditResult.Success         => ()
-        case AuditResult.Failure(msg, _) => Logger.error(s"Failed to audit $cbcrKnownFactsFailure")
+        case AuditResult.Failure(msg, _) => logger.error(s"Failed to audit $cbcrKnownFactsFailure")
         case AuditResult.Disabled        => ()
       }
   }
@@ -240,7 +240,7 @@ class SharedController @Inject()(
           knownFacts =>
             for {
               bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight {
-                      Logger.warn("The BPR was not found when looking it up with the knownFactsService")
+                      logger.warn("The BPR was not found when looking it up with the knownFactsService")
                       NotFoundView(knownFacts, userType)
                     }
               cbcIdFromXml <- EitherT.right[Future, Result, Option[CBCId]](
@@ -251,18 +251,18 @@ class SharedController @Inject()(
                                         errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
               _ <- EitherT.fromEither[Future](userType match {
                     case AffinityGroup.Agent if subscriptionDetails.isEmpty =>
-                      Logger.error(
+                      logger.error(
                         s"Agent supplying known facts for a UTR that is not registered. Check for an internal error!")
                       Left(NotFoundView(knownFacts, AffinityGroup.Agent))
                     case AffinityGroup.Agent
                         if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined => {
-                      Logger.warn(
+                      logger.warn(
                         s"Agent submitting Xml where the CBCId associated with the UTR does not match that in the Xml File. Request the original Xml File and Known Facts from the Agent")
                       auditBPRKnowFactsFailure(cbcIdFromXml, bpr, knownFacts)
                       Left(NotFoundView(knownFacts, AffinityGroup.Agent))
                     }
                     case AffinityGroup.Agent if cbcIdFromXml.isEmpty => {
-                      Logger.error(
+                      logger.error(
                         s"Agent submitting Xml where the CBCId is not in the Xml. Check for an internal error!")
                       Left(NotFoundView(knownFacts, AffinityGroup.Agent))
                     }

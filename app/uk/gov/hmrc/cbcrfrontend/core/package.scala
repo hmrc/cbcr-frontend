@@ -48,7 +48,7 @@ package object core {
   def fromFutureA[A](fa: Future[A])(implicit ec: ExecutionContext): ServiceResponse[A] =
     EitherT[Future, CBCErrors, A](fa.map(Right(_)))
 
-  def fromOptA[A](oa: CBCErrorOr[A])(implicit ec: ExecutionContext): ServiceResponse[A] =
+  def fromOptA[A](oa: CBCErrorOr[A]): ServiceResponse[A] =
     EitherT[Future, CBCErrors, A](Future.successful(oa))
 
   def fromFutureOptionA[A](fo: Future[Option[A]])(invalid: => UnexpectedState)(

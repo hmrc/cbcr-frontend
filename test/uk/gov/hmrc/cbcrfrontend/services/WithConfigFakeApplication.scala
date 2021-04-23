@@ -45,7 +45,7 @@ trait WithConfigFakeApplication extends BeforeAndAfterAll {
   }
 
   def getString(tag: String): String =
-    Application.configuration.getString(tag).getOrElse(tag + " does not exist")
+    Application.configuration.getOptional[String](tag).getOrElse(tag + " does not exist")
 
   def evaluateUsingPlay[T](block: => T): T =
     running(Application) {

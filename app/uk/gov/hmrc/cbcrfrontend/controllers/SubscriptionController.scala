@@ -25,7 +25,8 @@ import play.api.libs.json.{JsString, Json}
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrievals}
+import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
@@ -36,12 +37,10 @@ import uk.gov.hmrc.cbcrfrontend.model.{SubscriptionEmailSent, _}
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -64,15 +63,17 @@ class SubscriptionController @Inject()(
   feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   val alreadySubscribed = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       Future.successful(Ok(views.alreadySubscribed()))
     }
   }
 
   val submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)).retrieve(Retrievals.credentials) { creds =>
-      Logger.debug("Country by Country: Generate CBCId and Store Data")
+    authorised(AffinityGroup.Organisation and User).retrieve(Retrievals.credentials) { creds =>
+      logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm.bindFromRequest.fold(
         errors => BadRequest(views.contactInfoSubscriber(errors)),
         data => {
@@ -107,7 +108,7 @@ class SubscriptionController @Inject()(
                 result
                   .fold[Future[Result]](
                     error => {
-                      Logger.error(error.show)
+                      logger.error(error.show)
                       (createFailedSubscriptionAuditEvent(creds, id, bpr, utr) *>
                         subscriptionDataService.clearSubscriptionData(id)).fold(
                         (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
@@ -138,13 +139,13 @@ class SubscriptionController @Inject()(
     )
 
   val contactInfoSubscriber = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactInfoSubscriber(subscriptionDataForm))
     }
   }
 
   val updateInfoSubscriber = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)).retrieve(cbcEnrolment) { cbcEnrolment =>
+    authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
         cbcId           <- fromEither(cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
         optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
@@ -175,7 +176,7 @@ class SubscriptionController @Inject()(
   }
 
   val saveUpdatedInfoSubscriber = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)).retrieve(cbcEnrolment) { cbcEnrolment =>
+    authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val ci: ServiceResponse[CBCId] = for {
         cbcId <- fromEither(cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
       } yield cbcId
@@ -211,13 +212,13 @@ class SubscriptionController @Inject()(
   }
 
   val savedUpdatedInfoSubscriber = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactDetailsUpdated())
     }
   }
 
   def subscribeSuccessCbcId(id: String) = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       CBCId(id).fold[Future[Result]](
         errorRedirect(UnexpectedState(s"CBCId: $id is not valid"), views.notAuthorisedIndividual, views.errorTemplate)
       )((cbcId: CBCId) => Ok(views.subscribeSuccessCbcId(cbcId, request.session.get("companyName"))))
@@ -225,7 +226,7 @@ class SubscriptionController @Inject()(
   }
 
   def clearSubscriptionData(u: Utr) = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       if (CbcrSwitches.clearSubscriptionDataRoute.enabled) {
         subscriptionDataService
           .clearSubscriptionData(u)
@@ -239,22 +240,20 @@ class SubscriptionController @Inject()(
     }
   }
 
-  def createFailedSubscriptionAuditEvent(credentials: Credentials, cbcId: CBCId, bpr: BusinessPartnerRecord, utr: Utr)(
-    implicit hc: HeaderCarrier,
-    request: Request[_]): ServiceResponse[AuditResult.Success.type] =
+  def createFailedSubscriptionAuditEvent(
+    credentials: Option[Credentials],
+    cbcId: CBCId,
+    bpr: BusinessPartnerRecord,
+    utr: Utr)(implicit hc: HeaderCarrier): ServiceResponse[AuditResult.Success.type] =
     for {
       result <- eitherT[AuditResult.Success.type](
                  audit
-                   .sendExtendedEvent(ExtendedDataEvent(
-                     "Country-By-Country-Frontend",
-                     "CBCRFailedSubscription",
-                     detail = Json.obj(
-                       "cbcId"                  -> JsString(cbcId.value),
-                       credentials.providerType -> JsString(credentials.providerId),
-                       "businessPartnerRecord"  -> Json.toJson(bpr),
-                       "utr"                    -> JsString(utr.value)
-                     )
-                   ))
+                   .sendExtendedEvent(
+                     ExtendedDataEvent(
+                       "Country-By-Country-Frontend",
+                       "CBCRFailedSubscription",
+                       detail = getDetailsFailedSubscription(cbcId, credentials, bpr, utr)
+                     ))
                    .map {
                      case AuditResult.Disabled => Right(AuditResult.Success)
                      case AuditResult.Success  => Right(AuditResult.Success)
@@ -263,21 +262,18 @@ class SubscriptionController @Inject()(
                    })
     } yield result
 
-  def createSuccessfulSubscriptionAuditEvent(credentials: Credentials, subscriptionData: SubscriptionDetails)(
+  def createSuccessfulSubscriptionAuditEvent(credentials: Option[Credentials], subscriptionData: SubscriptionDetails)(
     implicit hc: HeaderCarrier,
     request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
       result <- eitherT[AuditResult.Success.type](
                  audit
-                   .sendExtendedEvent(ExtendedDataEvent(
-                     "Country-By-Country-Frontend",
-                     "CBCRSubscription",
-                     detail = Json.obj(
-                       "path"                   -> JsString(request.uri),
-                       credentials.providerType -> JsString(credentials.providerId),
-                       "subscriptionData"       -> Json.toJson(subscriptionData)
-                     )
-                   ))
+                   .sendExtendedEvent(
+                     ExtendedDataEvent(
+                       "Country-By-Country-Frontend",
+                       "CBCRSubscription",
+                       detail = getDetailsSuccesfulSubscription(request, credentials, subscriptionData)
+                     ))
                    .map {
                      case AuditResult.Disabled => Right(AuditResult.Success)
                      case AuditResult.Success  => Right(AuditResult.Success)
@@ -285,5 +281,37 @@ class SubscriptionController @Inject()(
                        Left(UnexpectedState(s"Unable to audit a successful subscription: $msg"))
                    })
     } yield result
+
+  private def getDetailsSuccesfulSubscription(
+    request: Request[_],
+    creds: Option[Credentials],
+    subscrDetails: SubscriptionDetails) =
+    creds match {
+      case Some(c) =>
+        Json.obj(
+          "path"             -> JsString(request.uri),
+          c.providerType     -> JsString(c.providerId),
+          "subscriptionData" -> Json.toJson(subscrDetails))
+      case None => Json.obj("path" -> JsString(request.uri), "subscriptionData" -> Json.toJson(subscrDetails))
+    }
+
+  private def getDetailsFailedSubscription(
+    cbcId: CBCId,
+    creds: Option[Credentials],
+    bpr: BusinessPartnerRecord,
+    utr: Utr) =
+    creds match {
+      case Some(c) =>
+        Json.obj(
+          "path"                  -> JsString(cbcId.value),
+          c.providerType          -> JsString(c.providerId),
+          "businessPartnerRecord" -> Json.toJson(bpr),
+          "utr"                   -> JsString(utr.value))
+      case None =>
+        Json.obj(
+          "path"                  -> JsString(cbcId.value),
+          "businessPartnerRecord" -> Json.toJson(bpr),
+          "utr"                   -> JsString(utr.value))
+    }
 
 }

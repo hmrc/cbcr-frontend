@@ -31,7 +31,7 @@ import play.api.mvc.{AnyContent, MessagesControllerComponents, Request, Result}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrievals}
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -45,11 +45,10 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
-
 @Singleton
 class SubmissionController @Inject()(
   override val messagesApi: MessagesApi,
@@ -73,6 +72,8 @@ class SubmissionController @Inject()(
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
   val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' h:mma")
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   def saveDocRefIds(x: CompleteXMLInfo)(
     implicit hc: HeaderCarrier): EitherT[Future, NonEmptyList[UnexpectedState], Unit] = {
@@ -133,16 +134,16 @@ class SubmissionController @Inject()(
         xml         <- cache.read[CompleteXMLInfo]
         _           <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
         _ <- saveDocRefIds(xml).leftMap[CBCErrors] { es =>
-              Logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
+              logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
             }
         _ <- messageRefIdService.saveMessageRefId(xml.messageSpec.messageRefID).toLeft {
-              Logger.error(s"Errors saving MessageRefId")
+              logger.error(s"Errors saving MessageRefId")
               UnexpectedState("Errors in saving MessageRefId aborting submission")
             }
         _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
         _ <- storeOrUpdateReportingEntityData(xml)
-        _ <- createSuccessfulSubmissionAuditEvent(retrieval.a, summaryData)
+        _ <- createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData)
         userType = retrieval.b match {
           case Some(Agent) => "Agent"
           case _           => "Other"
@@ -154,7 +155,7 @@ class SubmissionController @Inject()(
   }
 
   def notRegistered = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and (User or Admin)) {
+    authorised(AffinityGroup.Organisation and User) {
       Ok(views.notRegistered())
     }
   }
@@ -367,8 +368,11 @@ class SubmissionController @Inject()(
   val submitSummary = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrievedInformation =>
       val result = for {
-        smd <- EitherT(generateMetadataFile(cache, retrievedInformation.a).map(_.toEither)).leftMap(_.head)
-        sd  <- createSummaryData(smd)
+        smd <- retrievedInformation.a match {
+                case Some(cred) => EitherT(generateMetadataFile(cache, cred).map(_.toEither)).leftMap(_.head)
+                case None       => left(UnexpectedState("Errors in saving MessageRefId aborting submission"))
+              }
+        sd <- createSummaryData(smd)
       } yield Ok(views.submitSummary(sd, retrievedInformation.b))
 
       result
@@ -376,7 +380,7 @@ class SubmissionController @Inject()(
         .merge
         .recover {
           case NonFatal(e) =>
-            Logger.error(e.getMessage, e)
+            logger.error(e.getMessage, e)
             errorRedirect(UnexpectedState(e.getMessage), views.notAuthorisedIndividual, views.errorTemplate)
         }
     }

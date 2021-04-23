@@ -16,17 +16,12 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.time.{LocalDate, LocalDateTime}
-
-import akka.actor.Status.Success
+import java.time.LocalDate
 import javax.inject.Inject
 import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
-import cats.{Applicative, Functor}
-import play.api.i18n.{Lang, Messages, MessagesApi}
-import play.api.mvc.Result
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult, applicativeInstance, functorInstance}
 import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, DocRefIdDuplicate, ReportingEntityDataModel, _}
@@ -35,12 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, LegacyCredentials, Retrieval, Retrievals}
-import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import play.api.i18n.{I18nSupport, Lang, MessagesApi}
 import uk.gov.hmrc.cbcrfrontend.util.BusinessRulesUtil
-
-import scala.util.{Failure, Try}
 
 /**
   * This class exposes two methods:
@@ -71,11 +61,13 @@ class CBCBusinessRuleValidator @Inject()(
 
   private val testData = "OECD1[0123]"
 
-  private val cbcVersion = configuration
-    .getString(s"${runMode.env}.oecd-schema-version")
+  private val cbcVersion: String = configuration
+    .getOptional[String](s"${runMode.env}.oecd-schema-version")
     .getOrElse(
       throw new Exception(s"Missing configuration key: ${runMode.env}.oecd-schema-version")
     )
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   // <<<<<<<<<<<<:::Extraction Methods:::>>>>>>>>>>>>
 
@@ -314,7 +306,7 @@ class CBCBusinessRuleValidator @Inject()(
     val res1: EitherT[Future, Boolean, Boolean] = reportingEntityDataService
       .queryReportingEntityDataDocRefId(docRefId)
       .leftMap(cbcErrors => {
-        Logger.error(s"Got error back: $cbcErrors")
+        logger.error(s"Got error back: $cbcErrors")
         throw new Exception(s"Error communicating with backend: $cbcErrors")
       })
       .subflatMap {
@@ -479,8 +471,7 @@ class CBCBusinessRuleValidator @Inject()(
       case _                         => ResentDataIsUnknownError
     }
 
-  private def docRefIdMatchDocTypeIndicCheck(docSpec: DocSpec)(
-    implicit hc: HeaderCarrier): ValidBusinessResult[DocRefId] = {
+  private def docRefIdMatchDocTypeIndicCheck(docSpec: DocSpec): ValidBusinessResult[DocRefId] = {
     val docRefId = docSpec.docRefId
     docSpec.docType match {
       case OECD0 => docRefId.validNel
@@ -666,7 +657,7 @@ class CBCBusinessRuleValidator @Inject()(
               .queryReportingEntityData(drid.cid)
               .leftMap { cbcErrors =>
                 {
-                  Logger.error(s"Got error back: $cbcErrors")
+                  logger.error(s"Got error back: $cbcErrors")
                   throw new Exception(s"Error communicating with backend: $cbcErrors")
                 }
               }
@@ -700,7 +691,7 @@ class CBCBusinessRuleValidator @Inject()(
           .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
           .leftMap { cbcErrors =>
             {
-              Logger.error(s"Got error back: $cbcErrors")
+              logger.error(s"Got error back: $cbcErrors")
               throw new Exception(s"Error communicating with backend: $cbcErrors")
             }
           }
@@ -722,7 +713,7 @@ class CBCBusinessRuleValidator @Inject()(
       case _ => Future.successful(x.validNel)
     }
 
-  private def validateMessageRefIds(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] = {
+  private def validateMessageRefIds(in: XMLInfo): FutureValidBusinessResult[XMLInfo] = {
 
     val messageSpecMessageRefId = in.messageSpec.messageRefID.show
     val cbcrReportsRefIds = in.cbcReport.map(_.docSpec.docRefId.msgRefID.show)
@@ -773,7 +764,7 @@ class CBCBusinessRuleValidator @Inject()(
     if (x.messageSpec.corrMessageRefId.isDefined) CorrMessageRefIdNotAllowedInMessageSpec.invalidNel
     else x.validNel
 
-  private def validateCorrMsgRefIdNotInDocSpec(x: XMLInfo)(implicit hc: HeaderCarrier): ValidBusinessResult[XMLInfo] = {
+  private def validateCorrMsgRefIdNotInDocSpec(x: XMLInfo): ValidBusinessResult[XMLInfo] = {
     val corrMessageRefIdisPresent = x.cbcReport
       .find(_.docSpec.corrMessageRefId.isDefined)
       .flatMap(_.docSpec.corrMessageRefId)
@@ -796,7 +787,7 @@ class CBCBusinessRuleValidator @Inject()(
           reportingEntityDataService
             .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
             .leftMap { cbcErrors =>
-              Logger.error(s"Got error back: $cbcErrors")
+              logger.error(s"Got error back: $cbcErrors")
               throw new Exception(s"Error communicating with backend: $cbcErrors")
             }
             .subflatMap {
@@ -846,7 +837,7 @@ class CBCBusinessRuleValidator @Inject()(
         reportingEntityDataService
           .queryReportingEntityDataTin(tin, currentReportingPeriod.toString)
           .leftMap { cbcErrors =>
-            Logger.error(s"Got error back: $cbcErrors")
+            logger.error(s"Got error back: $cbcErrors")
             throw new Exception(s"Error communicating with backend: $cbcErrors")
           }
           .subflatMap {
@@ -889,7 +880,7 @@ class CBCBusinessRuleValidator @Inject()(
         reportingEntityDataService
           .queryReportingEntityDatesOverlaping(tin, erp)
           .leftMap { cbcErrors =>
-            Logger.error(s"Got error back: $cbcErrors")
+            logger.error(s"Got error back: $cbcErrors")
             throw new Exception(s"Error communicating with backend to get dates overlap check: $cbcErrors")
           }
           .subflatMap {

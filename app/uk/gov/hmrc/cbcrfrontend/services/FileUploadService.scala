@@ -30,11 +30,11 @@ import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.http.Status
-import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
-import play.api.{Configuration, Environment, Logger}
+import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
@@ -42,7 +42,8 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -55,11 +56,12 @@ class FileUploadService @Inject()(
   servicesConfig: ServicesConfig)(
   implicit http: HttpClient,
   ac: ActorSystem,
-  environment: Environment,
   fileUploadFrontEndWS: FileUploadFrontEndWS)
     extends I18nSupport {
 
   implicit val materializer = ActorMaterializer()
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = servicesConfig.baseUrl("file-upload") }
   implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = servicesConfig.baseUrl("file-upload-frontend") }
@@ -69,7 +71,7 @@ class FileUploadService @Inject()(
 
     val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
 
-    val envelopeExpiryDays: Option[Int] = configuration.getInt("envelope-expire-days")
+    val envelopeExpiryDays: Option[Int] = configuration.getOptional[Int]("envelope-expire-days")
 
     def envelopeExpiryDate(numberOfDays: Option[Int]) = numberOfDays match {
       case Some(n) => Some(formatter.print(new DateTime().plusDays(n)))
@@ -91,7 +93,7 @@ class FileUploadService @Inject()(
     val fileNamePrefix = s"oecd-${LocalDateTime.now}"
     val xmlByteArray: Array[Byte] = org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(xmlFile))
 
-    Logger.debug(s"Country by Country: FileUpload service: Uploading the file to the envelope - fileId = $fileId")
+    logger.debug(s"Country by Country: FileUpload service: Uploading the file to the envelope - fileId = $fileId")
     fromFutureOptA(
       HttpExecutor(
         fusFeUrl,
@@ -109,10 +111,10 @@ class FileUploadService @Inject()(
     ec: ExecutionContext): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
       http
-        .GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response/$envelopeId")
+        .GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response/$envelopeId", Seq.empty)
         .map(resp =>
           resp.status match {
-            case 200 =>
+            case Status.OK =>
               resp.json
                 .validate[FileUploadCallbackResponse]
                 .fold(
@@ -207,11 +209,11 @@ class FileUploadService @Inject()(
 
   def errorsToFile(e: List[ValidationErrors], name: String)(implicit messages: Messages): File = {
     val b = SingletonTemporaryFileCreator.create(name, ".txt")
-    val writer = new PrintWriter(b.file)
+    val writer = new PrintWriter(b.path.toFile)
     writer.write(errorsToString(e))
     writer.flush()
     writer.close()
-    b.file
+    b.path.toFile
   }
 
 }

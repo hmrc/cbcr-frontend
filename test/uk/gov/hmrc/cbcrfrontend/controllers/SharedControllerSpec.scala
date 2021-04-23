@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.time.{LocalDate, LocalDateTime}
-
 import org.mockito.ArgumentMatchers.any
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
@@ -28,8 +26,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.Logger
-import play.api.{Configuration, Environment}
+import play.api.{Configuration, Environment, Logger}
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json}
@@ -45,6 +42,7 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
+
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -73,44 +71,15 @@ class SharedControllerSpec
 
   val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
 
+  val logger: Logger = Logger(this.getClass)
+
   def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
-
-  private lazy val keyXMLInfo = {
-    XMLInfo(
-      MessageSpec(
-        MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
-        "GB",
-        CBCId.create(99).getOrElse(fail("booo")),
-        LocalDateTime.now(),
-        LocalDate.parse("2017-01-30"),
-        None,
-        None
-      ),
-      Some(
-        ReportingEntity(
-          CBC701,
-          DocSpec(OECD1, DocRefId(docRefId).get, None, None),
-          TIN("7000000002", "GB"),
-          "name",
-          None,
-          EntityReportingPeriod(LocalDate.parse("2016-03-31"), LocalDate.parse("2017-03-30"))
-        )),
-      List(CbcReports(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
-      List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None), "Some Other Info")),
-      Some(LocalDate.now()),
-      List.empty[String],
-      List.empty[String]
-    )
-  }
-
-  private val affinityGroupOrgansiation = AffinityGroup.Organisation
 
   when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
     CacheMap("id", Map.empty[String, JsValue]))
   when(runMode.env) thenReturn "Dev"
 
   val schemaVer: String = "2.0"
-  when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
   val controller =
     new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc, views)(cache, config, feConfig, ec)
@@ -188,7 +157,7 @@ class SharedControllerSpec
       val result: Result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
       status(result) shouldBe Status.SEE_OTHER
       val maybeUri = result.header.headers.getOrElse("location", "")
-      Logger.debug(s"location: $maybeUri")
+      logger.debug(s"location: $maybeUri")
       maybeUri shouldBe s"http://localhost:9553/bas-gateway/sign-out-without-state?continue=$guidanceUrl"
 
     }

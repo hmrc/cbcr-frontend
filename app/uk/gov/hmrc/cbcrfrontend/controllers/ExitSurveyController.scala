@@ -27,7 +27,6 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SurveyForm
 import uk.gov.hmrc.cbcrfrontend.model.{SurveyAnswers, UnexpectedState}
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.cbcrfrontend.views.html._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
@@ -41,6 +40,8 @@ class ExitSurveyController @Inject()(
   messagesControllerComponents: MessagesControllerComponents,
   views: Views)(implicit conf: FrontendAppConfig, override val messagesApi: MessagesApi, val ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   val doSurvey = Action { implicit request =>
     Ok(views.exitSurvey(SurveyForm.surveyForm))
@@ -58,7 +59,7 @@ class ExitSurveyController @Inject()(
         answers =>
           auditSurveyAnswers(answers).fold(
             errors => {
-              Logger.error(errors.toString) //          Redirect(routes.SharedController.guidance())
+              logger.error(errors.toString) 
               Redirect(routes.ExitSurveyController.surveyAcknowledge())
             },
             _ => Redirect(routes.ExitSurveyController.surveyAcknowledge())

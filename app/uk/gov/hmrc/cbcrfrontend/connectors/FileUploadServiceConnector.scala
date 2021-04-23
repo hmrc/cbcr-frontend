@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 
 import javax.inject.Singleton
 import play.api.Logger
+import play.api.http.Status
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.core.CBCErrorOr
@@ -29,13 +30,15 @@ class FileUploadServiceConnector() {
 
   val EnvelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   def envelopeRequest(cbcrsUrl: String, expiryDate: Option[String]): JsObject = {
 
     //@todo refactor the hardcode of the /cbcr/file-upload-response
     val jsObject = Json
       .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
       .as[JsObject]
-    Logger.info(s"Envelope Request built as $jsObject")
+    logger.info(s"Envelope Request built as $jsObject")
     jsObject
   }
 
@@ -51,20 +54,20 @@ class FileUploadServiceConnector() {
 
   def extractFileUploadMessage(resp: HttpResponse): CBCErrorOr[String] =
     resp.status match {
-      case 200 => Right(resp.body)
-      case _   => Left(UnexpectedState("Problems uploading the file"))
+      case Status.OK => Right(resp.body)
+      case _         => Left(UnexpectedState("Problems uploading the file"))
     }
 
   def extractEnvelopeDeleteMessage(resp: HttpResponse): CBCErrorOr[String] =
     resp.status match {
-      case 200 => Right(resp.body)
-      case _   => Left(UnexpectedState("Problems deleting the envelope"))
+      case Status.OK => Right(resp.body)
+      case _         => Left(UnexpectedState("Problems deleting the envelope"))
     }
 
   def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
     resp.status match {
-      case 200 => {
-        Logger.debug("FileMetaData: " + resp.json)
+      case Status.OK => {
+        logger.debug("FileMetaData: " + resp.json)
         Right(resp.json.asOpt[FileMetadata])
       }
       case _ => Left(UnexpectedState("Problems getting File Metadata"))

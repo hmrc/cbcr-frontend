@@ -33,6 +33,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 @Singleton
 class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   def subscribe(s: SubscriptionDetails)(implicit hc: HeaderCarrier): OptionT[Future, CBCId] =
     OptionT(
       connector
@@ -45,7 +47,7 @@ class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
         }
         .recover {
           case NonFatal(t) => {
-            Logger.error("Failed to call subscribe", t)
+            logger.error("Failed to call subscribe", t)
             None
           }
         })

@@ -20,17 +20,18 @@ import javax.inject.{Inject, Singleton}
 import cats.data.OptionT
 import cats.instances.future._
 import play.api.Logger
-import play.api.libs.json
+import play.api.http.Status
 import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
+
+import scala.util.control.NonFatal
 
 /**
   * Use the provided KnownFactsConnector to query a UTR
@@ -44,16 +45,22 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
 
   private def sanitisePostCode(s: String): String = s.toLowerCase.replaceAll("\\s", "")
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   def checkBPRKnownFacts(kf: BPRKnownFacts)(implicit hc: HeaderCarrier): OptionT[Future, BusinessPartnerRecord] = {
     val response = OptionT(
       dc.lookup(kf.utr.value)
         .map { response =>
-          val bpr: Option[BusinessPartnerRecord] = Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
-          auditBpr(bpr, kf)
-          bpr
+          response.status match {
+            case Status.OK =>
+              val bpr: Option[BusinessPartnerRecord] = Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
+              auditBpr(bpr, kf)
+              bpr
+            case Status.NOT_FOUND => None
+          }
         }
         .recover {
-          case _: NotFoundException => None
+          case NonFatal(_) => None
         })
     response.subflatMap { r =>
       val bprPostCode = r.address.postalCode.getOrElse("")
@@ -65,7 +72,7 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
 
   private def auditBpr(bpr: Option[BusinessPartnerRecord], kf: BPRKnownFacts)(
     implicit hc: HeaderCarrier): Future[Unit] =
-    bpr.fold(Future.successful(Logger.error("Des Connector did not return anything from lookup")))(
+    bpr.fold(Future.successful(logger.error("Des Connector did not return anything from lookup")))(
       bpr =>
         audit
           .sendExtendedEvent(
@@ -78,9 +85,9 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
                 "bpr"      -> Json.toJson(bpr)
               )))
           .map {
-            case AuditResult.Disabled        => Logger.info("Audit disabled for BPRKnownFactsService")
-            case AuditResult.Success         => Logger.info("Successful Audit for BPRKnownFactsService")
-            case AuditResult.Failure(msg, _) => Logger.error(s"Unable to audit a BPRKnowFacts lookup: $msg")
+            case AuditResult.Disabled        => logger.info("Audit disabled for BPRKnownFactsService")
+            case AuditResult.Success         => logger.info("Successful Audit for BPRKnownFactsService")
+            case AuditResult.Failure(msg, _) => logger.error(s"Unable to audit a BPRKnowFacts lookup: $msg")
         })
 
 }

@@ -22,12 +22,13 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
+import play.api.libs.json.JsNull
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, CorrDocRefId, DocRefId, DocRefIdPair, TIN}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse, NotFoundException, Upstream4xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -48,7 +49,8 @@ class DocRefIdServiceSpec extends UnitSpec with ScalaFutures with GuiceOneAppPer
 
   "DocRefIdService" should {
     "save a DocRefId in backend CBCR" in {
-      when(connector.docRefIdSave(any())(any())) thenReturn Future.successful(HttpResponse(Status.OK))
+      when(connector.docRefIdSave(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.saveDocRefId(docRefId).value, 2.seconds)
       result shouldBe None
     }
@@ -69,7 +71,8 @@ class DocRefIdServiceSpec extends UnitSpec with ScalaFutures with GuiceOneAppPer
 
   "DocRefIdService" should {
     "save a CorrDocRefId in backend CBCR" in {
-      when(connector.corrDocRefIdSave(any(), any())(any())) thenReturn Future.successful(HttpResponse(Status.OK))
+      when(connector.corrDocRefIdSave(any(), any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.saveCorrDocRefID(corrDocRefId, docRefId).value, 2.seconds)
       result shouldBe None
     }
@@ -91,20 +94,21 @@ class DocRefIdServiceSpec extends UnitSpec with ScalaFutures with GuiceOneAppPer
 
   "DocRefIdService" should {
     "return a docRefId valid state from backend CBCR if it exists in the DB" in {
-      when(connector.docRefIdQuery(any())(any())) thenReturn Future.successful(HttpResponse(Status.OK))
+      when(connector.docRefIdQuery(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.queryDocRefId(docRefId), 2.seconds)
       result shouldBe Valid
     }
     "return DoesNotExist error state with message if the docRefId is not found in the DB" in {
-      when(connector.docRefIdQuery(any())(any())) thenReturn Future.failed(
-        new NotFoundException("HttpException occurred"))
+      when(connector.docRefIdQuery(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.queryDocRefId(docRefId), 2.seconds)
       result shouldBe DoesNotExist
     }
 
     "return an Invalid state of DocerefId if an exception occurs while retrieving " in {
-      when(connector.docRefIdQuery(any())(any())) thenReturn Future.failed(
-        new Upstream4xxResponse("MsgErrorResponse", 409, 500))
+      when(connector.docRefIdQuery(any())(any())) thenReturn Future.successful(
+        HttpResponse(Status.CONFLICT, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.queryDocRefId(docRefId), 2.seconds)
       result shouldBe Invalid
     }

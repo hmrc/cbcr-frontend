@@ -20,12 +20,13 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
 val compile = Seq(
   ws,
-  "uk.gov.hmrc"              %% "bootstrap-frontend-play-26"   % "3.4.0",
-  "uk.gov.hmrc"              %% "govuk-template"      % "5.55.0-play-26",
-  "uk.gov.hmrc"              %% "play-ui"             % "8.15.0-play-26",
+  "uk.gov.hmrc"              %% "bootstrap-frontend-play-26"      % "4.2.0",
+  "uk.gov.hmrc"              %% "govuk-template"      % "5.65.0-play-26",
+  "uk.gov.hmrc"              %% "play-ui"             % "9.2.0-play-26",
   "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
-  "uk.gov.hmrc"              %% "domain"              % "5.9.0-play-26",
-  "uk.gov.hmrc"              %% "http-caching-client" % "9.1.0-play-26",
+  "uk.gov.hmrc"              %% "domain"              % "5.11.0-play-26",
+  "uk.gov.hmrc"              %% "http-caching-client" % "9.4.0-play-26",
+  "uk.gov.hmrc"              %% "http-verbs-play-26"  % "13.3.0",
   "org.typelevel"            %% "cats"                % "0.9.0",
   "com.github.kxbmap"        %% "configs"             % "0.4.4",
   "com.scalawilliam"         %% "xs4s"                % "0.5",
@@ -84,7 +85,10 @@ lazy val scoverageSettings = {
     ScoverageKeys.coverageHighlighting := true
   )
 }
-
+libraryDependencies ++= Seq(
+  compilerPlugin("com.github.ghik" % "silencer-plugin" % "1.7.1" cross CrossVersion.full),
+  "com.github.ghik" % "silencer-lib" % "1.7.1" % Provided cross CrossVersion.full
+)
 lazy val microservice =
   Project(appName, file("."))
     .enablePlugins(Seq(
@@ -118,6 +122,10 @@ lazy val microservice =
       parallelExecution in IntegrationTest := false,
       scalafmtOnCompile in IntegrationTest := true
     )
+    .settings(scalacOptions ++= List(
+      // Warn if an import selector is not referenced.
+      "-P:silencer:globalFilters=Unused import"
+))
     .settings(resolvers ++= Seq(
       "hmrc-releases" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases/",
       Resolver.jcenterRepo

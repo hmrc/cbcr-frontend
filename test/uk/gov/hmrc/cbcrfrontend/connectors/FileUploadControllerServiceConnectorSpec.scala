@@ -19,14 +19,13 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import org.scalatest.{EitherValues, FlatSpec, Matchers, WordSpec}
+import org.scalatest.{EitherValues, Matchers}
 import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, EnvelopeId, FileMetadata, UnexpectedState}
+import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, UnexpectedState}
 import play.api.http.HeaderNames.LOCATION
 
 class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers with EitherValues with MockitoSugar {
@@ -56,8 +55,6 @@ class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers wi
     }
 
     "return the expected Json Object when the expiry Date is Not specified" in {
-      val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-      val envelopeExpiryDate = LocalDateTime.now.plusDays(7).format(formatter)
 
       val expectedEnvelopeRequest = Json.obj(
         "callbackUrl" -> "http://localhost:9797/cbcr/file-upload-response",

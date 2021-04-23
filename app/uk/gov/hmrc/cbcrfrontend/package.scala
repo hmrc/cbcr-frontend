@@ -20,7 +20,6 @@ import java.io.{File, FileInputStream}
 
 import _root_.play.api.Logger
 import _root_.play.api.i18n.Messages
-import _root_.play.api.i18n.Lang
 import _root_.play.api.libs.json.Reads
 import _root_.play.api.mvc.Results._
 import _root_.play.api.mvc._
@@ -42,6 +41,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
 package object cbcrfrontend {
+
+  lazy val logger: Logger = Logger(this.getClass)
 
 //  class ErrorRedirect @Ine
   val cbcEnrolment: Retrieval[Option[CBCEnrolment]] = SimpleRetrieval(
@@ -80,7 +81,7 @@ package object cbcrfrontend {
     implicit request: Request[_],
     msgs: Messages,
     feConfig: FrontendAppConfig): Result = {
-    Logger.error(error.show)
+    logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())
       case UnexpectedState(error, _) if error.equals("Individuals are not permitted to use this service") =>

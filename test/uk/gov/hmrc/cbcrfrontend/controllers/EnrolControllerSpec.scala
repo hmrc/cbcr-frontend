@@ -25,8 +25,8 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
-import play.api.mvc.{DefaultMessagesControllerComponents, MessagesControllerComponents}
-import play.api.test.{FakeRequest, Helpers}
+import play.api.mvc.MessagesControllerComponents
+import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector

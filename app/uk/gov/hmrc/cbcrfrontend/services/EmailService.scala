@@ -31,6 +31,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 @Singleton
 class EmailService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   def sendEmail(email: Email)(implicit hc: HeaderCarrier): OptionT[Future, Boolean] =
     OptionT(
       connector
@@ -42,7 +44,7 @@ class EmailService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
         }
         .recover {
           case NonFatal(e) =>
-            Logger.error("The email has failed to send :( " + email + " exception " + e)
+            logger.error("The email has failed to send :( " + email + " exception " + e)
             Some(false)
         })
 }

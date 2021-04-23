@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{File, FileInputStream}
+import java.io.File
 
 import uk.gov.hmrc.cbcrfrontend.model.RawCbcReports
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec

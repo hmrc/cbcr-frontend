@@ -26,19 +26,20 @@ import play.api.libs.json.{Format, Reads, Writes}
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
 import scala.util.control.NonFatal
 import play.api.http.Status
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 @Singleton
 class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)
     extends SessionCache {
 
   val conf: Config = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   override def defaultSource: String = "cbcr-frontend"
 
@@ -91,7 +92,7 @@ class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)
       }
       .recover {
         case NonFatal(t) =>
-          Logger.info(s"CBCSessionCache Failed - error message: ${t.getMessage}")
+          logger.info(s"CBCSessionCache Failed - error message: ${t.getMessage}")
           false
       }
 }

@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.EitherT
 import cats.instances.future._
+
 import javax.inject.{Inject, Singleton}
 import play.api.http.Status
 import play.api.{Configuration, Environment, Logger}
@@ -25,12 +26,13 @@ import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
-import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+
 @Singleton
 class SubscriptionDataService @Inject()(
   environment: Environment,
@@ -39,6 +41,8 @@ class SubscriptionDataService @Inject()(
   servicesConfig: ServicesConfig) {
 
   val mode = environment.mode
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
 
@@ -56,18 +60,24 @@ class SubscriptionDataService @Inject()(
       http
         .GET[HttpResponse](fullUrl)
         .map { response =>
-          response.json
-            .validate[SubscriptionDetails]
-            .fold(
-              errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
-              details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
-            )
+          response.status match {
+            case Status.OK =>
+              response.json
+                .validate[SubscriptionDetails]
+                .fold(
+                  errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
+                  details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
+                )
+            case Status.NOT_FOUND => {
+              Right(None)
+            }
+          }
         }
         .recover {
-          case _: NotFoundException => Right[CBCErrors, Option[SubscriptionDetails]](None)
           case NonFatal(t) =>
-            Logger.error("GET future failed", t)
+            logger.error("GET future failed", t)
             Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
+
         }
     )
 
@@ -128,8 +138,8 @@ class SubscriptionDataService @Inject()(
                          Right[CBCErrors, Option[String]](Some(response.body))
                        }
                        .recover {
-                         case _: NotFoundException => Right[CBCErrors, Option[String]](None)
-                         case NonFatal(t)          => Left[CBCErrors, Option[String]](UnexpectedState(t.getMessage))
+                         case UpstreamErrorResponse.Upstream4xxResponse(x) => Right[CBCErrors, Option[String]](None)
+                         case NonFatal(t)                                  => Left[CBCErrors, Option[String]](UnexpectedState(t.getMessage))
                        }
                  ))
     } yield result

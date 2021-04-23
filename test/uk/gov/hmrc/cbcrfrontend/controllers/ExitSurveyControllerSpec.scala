@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.time.{LocalDate, LocalDateTime}
-
 import akka.util.Timeout
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -67,38 +65,9 @@ class ExitSurveyControllerSpec
 
   val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
 
-  private lazy val keyXMLInfo = {
-    XMLInfo(
-      MessageSpec(
-        MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
-        "GB",
-        CBCId.create(99).getOrElse(fail("booo")),
-        LocalDateTime.now(),
-        LocalDate.parse("2017-01-30"),
-        None,
-        None
-      ),
-      Some(
-        ReportingEntity(
-          CBC701,
-          DocSpec(OECD1, DocRefId(docRefId).get, None, None),
-          TIN("7000000002", "GB"),
-          "name",
-          None,
-          EntityReportingPeriod(LocalDate.parse("2016-03-31"), LocalDate.parse("2017-03-30"))
-        )),
-      List(CbcReports(DocSpec(OECD1, DocRefId(docRefId).get, None, None))),
-      List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId).get, None, None), "Some Other Info")),
-      Some(LocalDate.now()),
-      List.empty[String],
-      List.empty[String]
-    )
-  }
-
   when(runMode.env) thenReturn "Dev"
 
   val schemaVer: String = "1.0"
-  when(configuration.getString(s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(Some(schemaVer))
 
   val controller = new ExitSurveyController(configuration, auditC, mcc, views)
 

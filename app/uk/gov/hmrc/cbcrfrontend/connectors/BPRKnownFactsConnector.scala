@@ -22,8 +22,8 @@ import javax.inject.{Inject, Singleton}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 @Singleton
 class BPRKnownFactsConnector @Inject()(http: HttpClient)(
@@ -34,7 +34,9 @@ class BPRKnownFactsConnector @Inject()(http: HttpClient)(
 
   implicit lazy val url = servicesConfig.baseUrl("cbcr")
 
-  def lookup(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = http.GET(generateUrl(url, utr).toString)
+  def lookup(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http
+      .GET[HttpResponse](generateUrl(url, utr).toString)
 
   private def generateUrl(baseUrl: String, utr: String): URL = new URL(s"$baseUrl/cbcr/business-partner-record/$utr")
 }

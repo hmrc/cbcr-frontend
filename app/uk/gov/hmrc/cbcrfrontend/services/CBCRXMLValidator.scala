@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{File, InputStream}
+import java.io.File
 import javax.inject.Inject
 import javax.xml.stream.XMLInputFactory
 
-import akka.actor.ActorSystem
 import com.ctc.wstx.exc.WstxException
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
 import org.codehaus.stax2.validation._
@@ -29,8 +28,9 @@ import play.api.{Environment, Logger}
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Exception.nonFatalCatch
 
-class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValidationSchema)(
-  implicit system: ActorSystem) {
+class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValidationSchema) {
+
+  lazy val logger: Logger = Logger(this.getClass)
 
   val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
   xmlInputFactory2.setProperty(XMLInputFactory.SUPPORT_DTD, false)
@@ -49,7 +49,7 @@ class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValid
         xmlErrorHandler.reportProblem(
           new XMLValidationProblem(e.getLocation, e.getMessage, XMLValidationProblem.SEVERITY_FATAL))
       case ErrorLimitExceededException =>
-        Logger.warn(s"Errors exceeding the ${xmlErrorHandler.errorMessageLimit} encountered, validation aborting.")
+        logger.warn(s"Errors exceeding the ${xmlErrorHandler.errorMessageLimit} encountered, validation aborting.")
     }
 
     xmlErrorHandler

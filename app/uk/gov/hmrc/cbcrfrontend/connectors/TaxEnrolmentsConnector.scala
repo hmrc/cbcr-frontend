@@ -22,9 +22,10 @@ import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
 import configs.syntax._
-import play.api.libs.json.{JsArray, Json}
+import play.api.libs.json.{JsArray, JsObject, Json}
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 /**
   * Created by max on 23/05/17.
@@ -42,19 +43,24 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient, config: Configuration)(
   } yield s"$protocol://$host:$port/$service").value
 
   def deEnrol(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.POST(url + "/de-enrol/HMRC-CBC-ORG", Json.obj("keepAgentAllocations" -> false))
+    http
+      .POST[JsObject, HttpResponse](url + "/de-enrol/HMRC-CBC-ORG", Json.obj("keepAgentAllocations" -> false))
 
   def enrol(cBCId: CBCId, utr: Utr)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT(
-      url + "/service/HMRC-CBC-ORG/enrolment",
-      Json.obj(
-        "identifiers" -> JsArray(
-          List(
-            Json.obj("key" -> "cbcId", "value" -> cBCId.value),
-            Json.obj("key" -> "UTR", "value"   -> utr.value)
-          )),
-        "verifiers" -> JsArray()
+    http
+      .PUT(
+        url + "/service/HMRC-CBC-ORG/enrolment",
+        Json.obj(
+          "identifiers" -> JsArray(
+            List(
+              Json.obj("key" -> "cbcId", "value" -> cBCId.value),
+              Json.obj("key" -> "UTR", "value"   -> utr.value)
+            )),
+          "verifiers" -> JsArray()
+        )
       )
-    )
+      .map { response =>
+        response
+      }
 
 }

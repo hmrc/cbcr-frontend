@@ -16,9 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 import cats.Show
-import cats.kernel.Semigroup
 import cats.syntax.show._
-import play.api.Logger
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
 

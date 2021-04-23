@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.mockito.ArgumentMatchers.any
@@ -25,24 +24,22 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.{Configuration, Environment}
-import play.api.http.HeaderNames.LOCATION
-import play.api.i18n.{Lang, Messages, MessagesApi}
-import play.api.mvc.{MessagesControllerComponents, Result}
+import play.api.Configuration
+import play.api.i18n.{Messages, MessagesApi}
+import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, UnexpectedState, Utr}
+import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import play.api.http.Status
-import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.Ok
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
 import uk.gov.hmrc.cbcrfrontend.views.Views
 

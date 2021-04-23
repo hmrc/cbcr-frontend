@@ -16,13 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import javax.xml.stream.Location
-
 import org.apache.xerces.stax.ImmutableLocation
-import org.codehaus.stax2.validation.{XMLValidationException, XMLValidationProblem}
+import org.codehaus.stax2.validation.XMLValidationProblem
 import org.scalatest.{FlatSpec, Matchers}
-
-import scala.xml.SAXParseException
 
 class XmlErrorHandlerSpec extends FlatSpec with Matchers {
 
