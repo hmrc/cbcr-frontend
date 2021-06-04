@@ -59,7 +59,7 @@ class ExitSurveyController @Inject()(
         answers =>
           auditSurveyAnswers(answers).fold(
             errors => {
-              logger.error(errors.toString) 
+              logger.error(errors.toString)
               Redirect(routes.ExitSurveyController.surveyAcknowledge())
             },
             _ => Redirect(routes.ExitSurveyController.surveyAcknowledge())

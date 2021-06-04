@@ -103,8 +103,10 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.GET[HttpResponse](
       url + s"/reporting-entity/query-dates/$tin/start-date/${entityReportingPeriod.startDate.toString}/end-date/${entityReportingPeriod.endDate.toString}")
 
-  def getDocRefIdOver200(implicit hc: HeaderCarrier) =
+  def getDocRefIdOver200(implicit hc: HeaderCarrier) = {
+    import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
     http.GET[ListDocRefIdRecord](url + s"/getDocsRefId")
+  }
 
   def adminReportingEntityDataQuery(d: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET[HttpResponse](url + s"/admin/reporting-entity/doc-ref-id/$d")

@@ -15,10 +15,9 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.cbcrfrontend.views.html.govuk_wrapper
 
 @this(
-govUkWrapper: govuk_wrapper
+govUkWrapper: uk.gov.hmrc.cbcrfrontend.views.html.govuk_wrapper
 )
 
 @(pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
