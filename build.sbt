@@ -18,12 +18,12 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
 val compile = Seq(
   ws,
-  "uk.gov.hmrc"              %% "bootstrap-frontend-play-26"      % "5.3.0",
-  "uk.gov.hmrc"              %% "govuk-template"      % "5.68.0-play-26",
-  "uk.gov.hmrc"              %% "play-ui"             % "9.5.0-play-26",
+  "uk.gov.hmrc"              %% "bootstrap-frontend-play-28"      % "5.3.0",
+  "uk.gov.hmrc"              %% "govuk-template"      % "5.68.0-play-28",
+  "uk.gov.hmrc"              %% "play-ui"             % "9.5.0-play-28",
   "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
-  "uk.gov.hmrc"              %% "domain"              % "5.11.0-play-26",
-  "uk.gov.hmrc"              %% "http-caching-client" % "9.5.0-play-26",
+  "uk.gov.hmrc"              %% "domain"              % "5.11.0-play-27",
+  "uk.gov.hmrc"              %% "http-caching-client" % "9.5.0-play-28",
   "org.typelevel"            %% "cats"                % "0.9.0",
   "com.github.kxbmap"        %% "configs"             % "0.6.0",
   "com.scalawilliam"         %% "xs4s"                % "0.5",
@@ -37,7 +37,7 @@ val compile = Seq(
 
 def test(scope: String = "test") = Seq(
   "org.pegdown"            % "pegdown"             % "1.6.0"  % scope,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2"  % scope,
+  "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0"  % scope,
   "org.mockito"            % "mockito-core"        % "3.11.0" % scope
 )
 

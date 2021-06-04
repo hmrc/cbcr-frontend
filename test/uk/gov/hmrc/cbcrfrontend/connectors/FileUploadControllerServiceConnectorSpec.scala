@@ -18,13 +18,12 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
 import org.scalatest.{EitherValues, Matchers}
 import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, UnexpectedState}
 import play.api.http.HeaderNames.LOCATION
 

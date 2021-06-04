@@ -17,11 +17,9 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import java.time.{LocalDate, LocalDateTime}
-
 import cats.data.{EitherT, NonEmptyList}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
 import play.api.Configuration
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -32,6 +30,7 @@ import scala.concurrent.Await
 import cats.instances.future._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.http.HeaderCarrier
 

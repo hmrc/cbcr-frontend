@@ -27,12 +27,11 @@ import cats.instances.future._
 import com.ctc.wstx.exc.WstxException
 import com.typesafe.config.ConfigFactory
 import org.mockito.ArgumentMatchers.{eq => EQ, _}
-
 import org.codehaus.stax2.validation.{XMLValidationProblem, XMLValidationSchema, XMLValidationSchemaFactory}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi

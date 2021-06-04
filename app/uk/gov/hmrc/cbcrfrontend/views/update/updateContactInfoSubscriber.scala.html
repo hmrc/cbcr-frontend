@@ -35,7 +35,7 @@
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.update.title")} else {Messages("contactInfoSubscriber.update.title")}) {
-  @back_link(routes.StartController.start().url)
+  @back_link(routes.StartController.start.url)
 
     <div class="grid-row">
         <div class="column-full">
@@ -71,7 +71,7 @@
                 @Messages("contactInfoSubscriber.cbcId") @cBCId.value
             </p>
             <div class="form-group">
-            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.saveUpdatedInfoSubscriber()){
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.saveUpdatedInfoSubscriber){
                 @formFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)
                 @formFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None)
                 @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"), form, None)

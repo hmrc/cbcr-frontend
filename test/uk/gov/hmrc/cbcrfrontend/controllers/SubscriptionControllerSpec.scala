@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.time.LocalDateTime
-
 import org.mockito.ArgumentMatchers.any
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
@@ -26,7 +25,7 @@ import org.mockito.ArgumentMatchers.{eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.{Configuration, Environment}
 import play.api.http.Status

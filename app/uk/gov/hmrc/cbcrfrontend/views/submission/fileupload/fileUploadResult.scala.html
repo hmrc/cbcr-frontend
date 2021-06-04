@@ -40,7 +40,7 @@ else {
 },
     sidebarLinks = None) {
 
-  @back_link(routes.FileUploadController.chooseXMLFile().url)
+  @back_link(routes.FileUploadController.chooseXMLFile.url)
 
     <div>
         @if(!errors) {
@@ -57,7 +57,7 @@ else {
             }
             <h2>@messages("fileUploadResult.whatToDo")</h2>
             @schemaErrors.map { size =>
-                <p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors()">@Messages("fileUploadResult.error.data.link")
+                <p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors">@Messages("fileUploadResult.error.data.link")
                     (Text, @{
                     size
                 }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
@@ -88,7 +88,7 @@ else {
                 </table>
             </div>
             <p></p>
-            <p>@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey()">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
+            <p>@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
 
             @if(reportingRole == Some(CBC701)){
                 @if(userType == Some(Organisation)){
@@ -101,7 +101,7 @@ else {
             }
         } else {
             @errorFocus()
-            <a class="button" role="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@Messages("form.controls.finished")</a>
+            <a class="button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@Messages("form.controls.finished")</a>
         }
     </div>
 }
