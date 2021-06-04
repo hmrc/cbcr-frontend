@@ -18,8 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector

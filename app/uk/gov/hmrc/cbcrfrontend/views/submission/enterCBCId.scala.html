@@ -44,7 +44,7 @@
                 @errorFocus()
             }
             <h1>@Messages("enterCBCId.mainHeading")</h1>
-            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId){
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId()){
                 <fieldset>
                     <div class="form-group">
                         @formFieldDisplay(errors,"cbcId",

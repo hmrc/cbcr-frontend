@@ -27,7 +27,7 @@
 @mainTemplate(Messages("unregisteredGG.title")) {
   @{ request.headers.get("Referer") match {
       case Some(referrer)
-      if(referrer.contains("already-subscribed")) => back_link(routes.SubscriptionController.alreadySubscribed.url)
+      if(referrer.contains("already-subscribed")) => back_link(routes.SubscriptionController.alreadySubscribed().url)
       case _ => {}
   }}
 
@@ -37,14 +37,14 @@
         <h1>@Messages("unregisteredGG.heading")</h1>
             <div>
                 <p>@Messages("unregisteredGG.message1")
-                    <a id="checkAndSendHref" href="@routes.FileUploadController.unregisteredGGAccount">@Messages("unregisteredGG.checkAndSend")</a>.
+                    <a id="checkAndSendHref" href="@routes.FileUploadController.unregisteredGGAccount()">@Messages("unregisteredGG.checkAndSend")</a>.
                 </p>
                 <p> @Messages("unregisteredGG.message2")
-                    <a id="registerHref" href="@routes.SharedController.verifyKnownFactsOrganisation">@messages("unregisteredGG.register")</a>
+                    <a id="registerHref" href="@routes.SharedController.verifyKnownFactsOrganisation()">@messages("unregisteredGG.register")</a>
                     <span>@Messages("unregisteredGG.message3")</span>
                 </p>
                 <p>@Messages("unregisteredGG.message4")
-                    <a id="signInHref" href="@routes.SharedController.signOutGG">@Messages("unregisteredGG.signOut")</a>.
+                    <a id="signInHref" href="@routes.SharedController.signOutGG()">@Messages("unregisteredGG.signOut")</a>.
                 </p>
          </div>
     </div>

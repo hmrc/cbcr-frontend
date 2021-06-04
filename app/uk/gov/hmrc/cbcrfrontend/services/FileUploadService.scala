@@ -19,7 +19,9 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.{File, FileInputStream, PrintWriter}
 import java.time.LocalDateTime
 import java.util.UUID
+
 import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import cats.data.EitherT
@@ -56,6 +58,8 @@ class FileUploadService @Inject()(
   ac: ActorSystem,
   fileUploadFrontEndWS: FileUploadFrontEndWS)
     extends I18nSupport {
+
+  implicit val materializer = ActorMaterializer()
 
   lazy val logger: Logger = Logger(this.getClass)
 

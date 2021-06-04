@@ -98,7 +98,7 @@ class FileUploadController @Inject()(
           views.errorTemplate)
       case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
         Ok(views.unregisteredGGAccount())
-      case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals)
+      case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals())
       case affinityGroup ~ _ =>
         fileUploadUrl()
           .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml", affinityGroup)))
@@ -239,16 +239,16 @@ class FileUploadController @Inject()(
             case FatalSchemaErrors(size) =>
               Ok(views.fileUploadResult(None, None, None, size, None, None))
             case InvalidFileType(_) =>
-              Redirect(routes.FileUploadController.fileInvalid)
+              Redirect(routes.FileUploadController.fileInvalid())
             case e: CBCErrors =>
               logger.error(e.toString)
-              Redirect(routes.SharedController.technicalDifficulties)
+              Redirect(routes.SharedController.technicalDifficulties())
           }
           .merge
           .recover {
             case NonFatal(e) =>
               logger.error(e.getMessage, e)
-              Redirect(routes.SharedController.technicalDifficulties)
+              Redirect(routes.SharedController.technicalDifficulties())
           }
 
     }
@@ -302,9 +302,9 @@ class FileUploadController @Inject()(
     authorised() {
       logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
       errorCode match {
-        case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge)
-        case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid)
-        case _                        => Redirect(routes.SharedController.technicalDifficulties)
+        case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge())
+        case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid())
+        case _                        => Redirect(routes.SharedController.technicalDifficulties())
       }
     }
   }

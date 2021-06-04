@@ -52,7 +52,7 @@
             }
             <h1>@Messages("subscribeFirst.mainHeading")</h1>
 
-            @form(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts) {
+            @form(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts()) {
                 <fieldset>
                     <div class="form-field form-field--tall ">
                     @formFieldDisplay(hasErrors, "utr",

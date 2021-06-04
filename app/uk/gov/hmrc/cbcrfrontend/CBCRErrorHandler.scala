@@ -40,9 +40,9 @@ class CBCRErrorHandler @Inject()(
     case _: NoActiveSession =>
       toGGLogin(rh.uri)
     case _: UnsupportedCredentialRole =>
-      Redirect(routes.SubmissionController.noAssistants)
+      Redirect(routes.SubmissionController.noAssistants())
     case _: UnsupportedAffinityGroup =>
-      Redirect(routes.SharedController.unsupportedAffinityGroup)
+      Redirect(routes.SharedController.unsupportedAffinityGroup())
     case _ =>
       logger.error(s"Unresolved error: ${ex.getMessage}", ex)
       super.resolveError(rh, ex)

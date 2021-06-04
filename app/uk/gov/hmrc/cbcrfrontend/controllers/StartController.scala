@@ -53,9 +53,9 @@ class StartController @Inject()(
 
   def start = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup and cbcEnrolment) {
-      case Some(Agent) ~ _                      => Future.successful(Redirect(routes.FileUploadController.chooseXMLFile))
+      case Some(Agent) ~ _                      => Future.successful(Redirect(routes.FileUploadController.chooseXMLFile()))
       case Some(Organisation) ~ Some(enrolment) => Ok(views.start(startForm))
-      case Some(Organisation) ~ None            => Redirect(routes.SharedController.verifyKnownFactsOrganisation)
+      case Some(Organisation) ~ None            => Redirect(routes.SharedController.verifyKnownFactsOrganisation())
       case Some(Individual) ~ _ =>
         errorRedirect(
           UnexpectedState("Individuals are not permitted to use this service"),
@@ -71,8 +71,8 @@ class StartController @Inject()(
         .bindFromRequest()
         .fold(
           errors => BadRequest(views.start(errors)), {
-            case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile)
-            case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber)
+            case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile())
+            case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber())
             case _                    => BadRequest(views.start(startForm))
           }
         )

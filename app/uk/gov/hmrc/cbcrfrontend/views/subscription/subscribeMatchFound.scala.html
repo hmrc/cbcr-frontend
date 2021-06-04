@@ -29,9 +29,9 @@
 @mainTemplate(Messages("subscribeMatchFound.title")) {
 
   @{if(userType == AffinityGroup.Organisation)
-      back_link(routes.SharedController.verifyKnownFactsOrganisation.url)
+      back_link(routes.SharedController.verifyKnownFactsOrganisation().url)
     else
-      back_link(routes.SharedController.verifyKnownFactsAgent.url)
+      back_link(routes.SharedController.verifyKnownFactsAgent().url)
   }
          <div>
             <table>

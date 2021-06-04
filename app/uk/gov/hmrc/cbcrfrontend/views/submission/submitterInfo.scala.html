@@ -43,7 +43,7 @@
 
   @{userType match {
       case Some(Organisation) => back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
-      case _ => back_link(routes.SubmissionController.enterCompanyName.url)
+      case _ => back_link(routes.SubmissionController.enterCompanyName().url)
   }}
 
     @if(form.hasErrors) {
@@ -84,7 +84,7 @@
     @Messages("submitterInfo.mainHeading")
 </h1>
 <div class="form-group">
-    @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo){
+    @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo()){
     @formFieldDisplay(fullNameErrors,"fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
     @formFieldDisplay(contactPhoneErrors,"contactPhone", Some(Messages(maybePhoneError)),Messages("submitterInfo.phoneNumber"), form, Some(Messages("submitterInfo.phoneNumber.hint")))
     @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("submitterInfo.emailAddress"), form)
