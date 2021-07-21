@@ -125,7 +125,7 @@ class SharedController @Inject()(
                             },
                             _ =>
                               cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
-                                Redirect(routes.SubmissionController.submitSummary()))
+                                Redirect(routes.SubmissionController.submitSummary))
                           )
 
                       /**************************************************
@@ -134,7 +134,7 @@ class SharedController @Inject()(
                 **************************************************/
                       case None =>
                         cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
-                          Redirect(routes.SubmissionController.submitSummary()))
+                          Redirect(routes.SubmissionController.submitSummary))
                   })
               ))
           }
@@ -158,7 +158,7 @@ class SharedController @Inject()(
 
   val signOutSurvey = Action.async { implicit request =>
     authorised() {
-      val continue = s"?continue=${feConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey().url}"
+      val continue = s"?continue=${feConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey.url}"
       Future.successful(
         Redirect(s"${feConfig.governmentGatewaySignOutUrl}/bas-gateway/sign-out-without-state$continue"))
     }
@@ -267,7 +267,7 @@ class SharedController @Inject()(
                       Left(NotFoundView(knownFacts, AffinityGroup.Agent))
                     }
                     case AffinityGroup.Organisation if subscriptionDetails.isDefined =>
-                      Left(Redirect(routes.SubscriptionController.alreadySubscribed()))
+                      Left(Redirect(routes.SubscriptionController.alreadySubscribed))
                     case _ =>
                       Right(())
                   })
@@ -275,7 +275,7 @@ class SharedController @Inject()(
                     (cache.save(bpr) *>
                       cache.save(knownFacts.utr) *>
                       cache.save(TIN(knownFacts.utr.value, ""))).map(_ => ()))
-            } yield Redirect(routes.SharedController.knownFactsMatch())
+            } yield Redirect(routes.SharedController.knownFactsMatch)
         )
       }.merge
     }

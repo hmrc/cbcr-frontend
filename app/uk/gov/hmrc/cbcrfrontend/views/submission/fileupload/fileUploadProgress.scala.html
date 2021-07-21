@@ -33,7 +33,7 @@ implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
     @Messages("fileUploadProgress.mainHeading")
    </h1>
    
-   <body onload="poll('@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileUploadResponse(envelopeId)', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileValidate(envelopeId, fileId)', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileContainsVirus', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.technicalDifficulties()')" >
+   <body onload="poll('@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileUploadResponse(envelopeId)', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileValidate(envelopeId, fileId)', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileContainsVirus', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.technicalDifficulties')" >
 
    <img alt="loading..." src="@assetsLocationPrefix/images/loading.gif" />
    </body>

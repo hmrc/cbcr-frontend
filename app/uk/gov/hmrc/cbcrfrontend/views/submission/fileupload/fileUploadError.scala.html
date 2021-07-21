@@ -27,7 +27,7 @@
 
 @mainTemplate(Messages("fileUploadResult.error.title")) {
 
-  @back_link(routes.FileUploadController.chooseXMLFile().url)
+  @back_link(routes.FileUploadController.chooseXMLFile.url)
 
 <div class="grid-row">
     <div class="column-full">
@@ -36,7 +36,7 @@
                 <p>@Messages(key)</p>
             }
 
-        <a class="button" role="button" href="@routes.SharedController.signOutSurvey()" id="btn-continue">@messages("form.controls.finished")</a>
+        <a class="button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@messages("form.controls.finished")</a>
     </div>
 </div>
 }
