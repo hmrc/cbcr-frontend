@@ -34,8 +34,8 @@
 
 @mainTemplate(Messages("submitSummary.title")) {
     @{userType match {
-        case Some(Organisation) => back_link(routes.SharedController.enterCBCId().url)
-        case _ => back_link(routes.SharedController.knownFactsMatch().url)
+        case Some(Organisation) => back_link(routes.SharedController.enterCBCId.url)
+        case _ => back_link(routes.SharedController.knownFactsMatch.url)
     }}
 
     <div class="grid-row">
@@ -111,7 +111,7 @@
             <br>
 
 
-            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm()) {
+            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm) {
                 @CSRF.formField
                 <div class="form-group">
                     <p>@Messages("submitSummary.declaration.text")<p>

@@ -235,11 +235,11 @@ class SubmissionController @Inject()(
                        success =>
                          cache.save(success).map { _ =>
                            (userType, reportingRole) match {
-                             case (_, CBC702) => Redirect(routes.SubmissionController.utr())
+                             case (_, CBC702) => Redirect(routes.SubmissionController.utr)
                              case (Some(Agent), CBC703 | CBC704) =>
-                               Redirect(routes.SubmissionController.enterCompanyName())
+                               Redirect(routes.SubmissionController.enterCompanyName)
                              case (Some(Organisation), CBC703 | CBC704) =>
-                               Redirect(routes.SubmissionController.submitterInfo())
+                               Redirect(routes.SubmissionController.submitterInfo(None))
                              case _ =>
                                errorRedirect(
                                  UnexpectedState(
@@ -268,8 +268,8 @@ class SubmissionController @Inject()(
         utr =>
           cache.save(TIN(utr.utr, "")).map { _ =>
             userType match {
-              case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo())
-              case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName())
+              case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo(None))
+              case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName)
               case _ =>
                 errorRedirect(
                   UnexpectedState(s"Bad affinityGroup: $userType"),
@@ -347,11 +347,11 @@ class SubmissionController @Inject()(
             _ <- right[CacheMap](cache.save(success.copy(affinityGroup = userType, agencyBusinessName = Some(name))))
             result <- userType match {
                        case Some(Organisation) if straightThrough =>
-                         pure(Redirect(routes.SubmissionController.submitSummary()))
-                       case Some(Organisation) => pure(Redirect(routes.SharedController.enterCBCId()))
+                         pure(Redirect(routes.SubmissionController.submitSummary))
+                       case Some(Organisation) => pure(Redirect(routes.SharedController.enterCBCId))
                        case Some(Agent) =>
                          right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ =>
-                           Redirect(routes.SharedController.verifyKnownFactsAgent()))
+                           Redirect(routes.SharedController.verifyKnownFactsAgent))
                        case _ => left[Result](UnexpectedState(s"Invalid affinityGroup: $userType"))
                      }
           } yield result

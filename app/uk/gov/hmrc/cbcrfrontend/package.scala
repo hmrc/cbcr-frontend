@@ -83,7 +83,7 @@ package object cbcrfrontend {
     feConfig: FrontendAppConfig): Result = {
     logger.error(error.show)
     error match {
-      case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired())
+      case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired)
       case UnexpectedState(error, _) if error.equals("Individuals are not permitted to use this service") =>
         Forbidden(
           notAuthorisedIndividual()

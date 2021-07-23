@@ -202,7 +202,7 @@ class SubscriptionController @Inject()(
             _ <- subscriptionDataService.updateSubscriptionData(
                   cbcId,
                   SubscriberContact(data.firstName, data.lastName, data.phoneNumber, data.email))
-          } yield Redirect(routes.SubscriptionController.savedUpdatedInfoSubscriber())).fold(
+          } yield Redirect(routes.SubscriptionController.savedUpdatedInfoSubscriber)).fold(
             errors => errorRedirect(errors, views.notAuthorisedIndividual, views.errorTemplate),
             result => result
           )
