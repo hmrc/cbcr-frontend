@@ -1,0 +1,16 @@
+@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcLayout
+@import uk.gov.hmrc.hmrcfrontend.views.config.StandardBetaBanner
+@import views.html.helper.CSPNonce
+
+@this(hmrcLayout: HmrcLayout, standardBetaBanner: StandardBetaBanner)
+
+@(pageTitle: String)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
+
+@hmrcLayout(
+  pageTitle = Some(pageTitle),
+  isWelshTranslationAvailable = true, /* or false if your service has not been translated */
+  serviceUrl = None,
+  signOutUrl = None,
+  phaseBanner = None,
+  nonce = CSPNonce.get,
+)(contentBlock)
