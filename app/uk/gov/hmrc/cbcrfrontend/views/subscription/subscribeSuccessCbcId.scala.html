@@ -17,30 +17,25 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
 
 @(cbcId:CBCId, companyName:Option[String])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @mainTemplate(Messages("subscribeSuccessCbcId.title")) {
-    <div class="grid-row">
-        <div class="column-full">
-            <section>
-                <div class="govuk-box-highlight">
-                    <h1><span class="transaction-banner__heading h1-heading">@Messages("subscribeSuccessCbcId.mainHeading") @companyName</span></h1>
-                    <p>@Messages("subscribeSuccessCbcId.subHeading")<br>
-                    <strong>@cbcId.value</strong></p>
+                <div class="govuk-panel govuk-panel--confirmation">
+                    <h1 class="govuk-panel__title">@Messages("subscribeSuccessCbcId.mainHeading") @companyName</h1>
+                    <div class="govuk-panel__body">
+                    @Messages("subscribeSuccessCbcId.subHeading")<br><strong>@cbcId.value</strong>
+                    </div>
                 </div>
-            </section>
+
             <p><a href="#" onclick="window.print()" class="print-link">@Messages("subscribeSuccessCbcId.printThisButton")</a></p>
 
-            <h2>@Messages("subscribeSuccessCbcId.next")</h2>
+            <h2 class="govuk-heading-m">@Messages("subscribeSuccessCbcId.next")</h2>
             <p>@Messages("subscribeSuccessCbcId.email")</p>
             <p>@Messages("subscribeSuccessCbcId.next2") <a href="@routes.SharedController.signOutSurvey">@messages("subscribeSuccessCbcId.nextLink")</a>
                 @Messages("subscribeSuccessCbcId.next3") <a href="@routes.FileUploadController.chooseXMLFile">@messages("subscribeSuccessCbcId.nextLink2")</a>
             </p>
-        </div>
-
-    </div>
 }

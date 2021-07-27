@@ -17,15 +17,13 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import helper._
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.auth.core.AffinityGroup
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 
-@this(mainTemplate: main_template, formHelper: FormWithCSRF, govukErrorSummary: GovukErrorSummary)
-
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
 @(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -39,55 +37,43 @@
             back_link(routes.SubmissionController.submitterInfo().url)
         } else {}
     }
-     <div class="govuk-grid-row">
-        <div class="govuk-grid-column-full">
 
-            <h1>@Messages("subscribeFirst.mainHeading")</h1>
+            @if(hasErrors) {
+                <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" data-module="govuk-error-summary">
+                    <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
+                    <div class="govuk-error-summary__body">
+                        <ul class="govuk-list govuk-error-summary__list">
+                            <li id="utr-error-summary"><a href="#utr">@if(knownFactsForm.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.utr-empty")} else {@Messages("subscribeFirst.error.message.utr-nonEmpty")} </a></li>
+                            <li id="postCode-error-summary"><a href="#postCode">@if(knownFactsForm.data.get("postCode").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.postcode-empty")} else {@Messages("subscribeFirst.error.message.postcode-nonEmpty")} </a></li>
+                        </ul>
+                    </div>
+                </div>
+                @errorFocus()
+            }
+
+            <h1 class="govuk-heading-l">@Messages("subscribeFirst.mainHeading")</h1>
 
             @formHelper(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts) {
-                @if(hasErrors) {
 
-                    <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" data-module="govuk-error-summary">
-                        <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
-                        <div class="govuk-error-summary__body">
-                            <ul class="govuk-list govuk-error-summary__list">
-                                <li ><a href="#utr">@if(knownFactsForm.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.utr-empty")} else {@Messages("subscribeFirst.error.message.utr-nonEmpty")} </a></li>
-                                <li ><a href="#postCode">@if(knownFactsForm.data.get("postCode").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){@Messages("subscribeFirst.error.message.postcode-empty")} else {@Messages("subscribeFirst.error.message.postcode-nonEmpty")} </a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                }
-
+              <div class="govuk-form-group @if(hasErrors){govuk-form-group--error}">
                 <fieldset class="govuk-fieldset">
-                    <div class="govuk-form-group">
-                    @formFieldDisplay(hasErrors, "utr",
+                    @govukFormFieldDisplay(hasErrors, "utr",
                         Some(if(knownFactsForm.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){ Messages("subscribeFirst.error.message.utr-empty")} else {Messages("subscribeFirst.error.message.utr-nonEmpty")}),
                         Messages("subscribeFirst.utr.label"),
                         knownFactsForm,
-                        Some(Messages("subscribeFirst.utr.hint")),
-                        Some("govuk-input"))
-                    </div>
-
-                    <div class="govuk-form-group">
-                    @formFieldDisplay(hasErrors, "postCode",
+                        Some(Messages("subscribeFirst.utr.hint")))
+                    @govukFormFieldDisplay(hasErrors, "postCode",
                         Some(if(knownFactsForm.data.get("postCode").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){Messages("subscribeFirst.error.message.postcode-empty")} else {Messages("subscribeFirst.error.message.postcode-nonEmpty")}),
                         Messages("subscribeFirst.postcode.label"),
                         knownFactsForm,
-                        Some(Messages("subscribeFirst.postcode.hint")),
-                        Some("govuk-input"))
-                    </div>
+                        Some(Messages("subscribeFirst.postcode.hint")))
                 </fieldset>
+              </div>
                 <p>
                     <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@Messages("form.controls.continue")</button>
                 </p>
                 @if(!hasErrors) {
                     <script>document.getElementById("utr").focus();</script>
                 }
-
             }
-
-        </div>
-    </div>
-
 }

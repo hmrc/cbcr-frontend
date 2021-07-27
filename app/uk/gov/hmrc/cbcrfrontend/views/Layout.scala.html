@@ -8,9 +8,9 @@
 
 @hmrcLayout(
   pageTitle = Some(pageTitle),
-  isWelshTranslationAvailable = true, /* or false if your service has not been translated */
+  isWelshTranslationAvailable = false,
   serviceUrl = None,
-  signOutUrl = None,
+  signOutUrl = Some(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.signOut.url),
   phaseBanner = None,
   nonce = CSPNonce.get,
 )(contentBlock)
