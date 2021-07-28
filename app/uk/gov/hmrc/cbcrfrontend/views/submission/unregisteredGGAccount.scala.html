@@ -20,7 +20,7 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -31,10 +31,7 @@
       case _ => {}
   }}
 
-<div class="grid-row">
-    <div class="column-full">
-
-        <h1>@Messages("unregisteredGG.heading")</h1>
+        <h1 class="govuk-heading-l">@Messages("unregisteredGG.heading")</h1>
             <div>
                 <p>@Messages("unregisteredGG.message1")
                     <a id="checkAndSendHref" href="@routes.FileUploadController.unregisteredGGAccount">@Messages("unregisteredGG.checkAndSend")</a>.
@@ -47,6 +44,4 @@
                     <a id="signInHref" href="@routes.SharedController.signOutGG">@Messages("unregisteredGG.signOut")</a>.
                 </p>
          </div>
-    </div>
-</div>
 }

@@ -17,64 +17,64 @@
 @import helper._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
 @(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @isError= @{form.hasErrors}
 
-@mainTemplate(Messages("survey.title"),
-    sessionTimeout=false) {
-    <h1>@Messages("survey.header")</h1>
+@mainTemplate(Messages("survey.title")) {
+    <h1 class="govuk-heading-l">@Messages("survey.header")</h1>
     <p class="font-small-size19">@Messages("survey.intro")</p>
     <br aria-hidden="true"/>
 
-    @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.ExitSurveyController.submit){
+    @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.ExitSurveyController.submit){
 
-        <div class="form-group @if(isError){form-field-group--error}">
-            <fieldset>
-                <legend>
-                    <span class="form-label-bold">@Messages("survey.question1") </span>
-                    @if(isError){ <span class="error-notification">@Messages("survey.required")</span> }
+        <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
+            <fieldset class="govuk-fieldset">
+                <legend class="govuk-fieldset__legend">
+                    <label class="govuk-label govuk-label--m">@Messages("survey.question1")</label>
+                    @if(isError){ <span class="govuk-error-message">@Messages("survey.required")</span> }
                 </legend>
-
-                <div class="multiple-choice">
-                    <input id="radio-1" type="radio" name="satisfied" value="@Messages("survey.one")">
-                    <label for="radio-1">@Messages("survey.one")</label>
+                <div class="govuk-radios">
+                <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="radio-1" type="radio" name="satisfied" value="@Messages("survey.one")">
+                    <label class="govuk-label govuk-radios__label" for="radio-1">@Messages("survey.one")</label>
                 </div>
-                <div class="multiple-choice">
-                    <input id="radio-2" type="radio" name="satisfied" value="@Messages("survey.two")">
-                    <label for="radio-2">@Messages("survey.two")</label>
+                <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="radio-2" type="radio" name="satisfied" value="@Messages("survey.two")">
+                    <label class="govuk-label govuk-radios__label" for="radio-2">@Messages("survey.two")</label>
                 </div>
-                <div class="multiple-choice">
-                    <input id="radio-3" type="radio" name="satisfied" value="@Messages("survey.three")">
-                    <label for="radio-3">@Messages("survey.three")</label>
+                <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="radio-3" type="radio" name="satisfied" value="@Messages("survey.three")">
+                    <label class="govuk-label govuk-radios__label" for="radio-3">@Messages("survey.three")</label>
                 </div>
-                <div class="multiple-choice">
-                    <input id="radio-4" type="radio" name="satisfied" value="@Messages("survey.four")">
-                    <label for="radio-4">@Messages("survey.four")</label>
+                <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="radio-4" type="radio" name="satisfied" value="@Messages("survey.four")">
+                    <label class="govuk-label govuk-radios__label" for="radio-4">@Messages("survey.four")</label>
                 </div>
-                <div class="multiple-choice">
-                    <input id="radio-5" type="radio" name="satisfied" value="@Messages("survey.five")">
-                    <label for="radio-5">@Messages("survey.five")</label>
+                <div class="govuk-radios__item">
+                    <input class="govuk-radios__input" id="radio-5" type="radio" name="satisfied" value="@Messages("survey.five")">
+                    <label class="govuk-label govuk-radios__label" for="radio-5">@Messages("survey.five")</label>
+                </div>
                 </div>
             </fieldset>
         </div>
 
-        <h2>@Messages("survey.question2")</h2>
+        <h2 class="govuk-heading-m">@Messages("survey.question2")</h2>
 
         <div>
-            <label for="suggestions">@Messages("survey.enterFeedback")
-                <span class="form-hint">@Messages("survey.question2.hint")</span>
+            <label class="govuk-label" for="suggestions">@Messages("survey.enterFeedback")
+                <span class="govuk-hint">@Messages("survey.question2.hint")</span>
             </label>
-            <textarea class="form-control form-control-3-4" name="suggestions" id="suggestions" rows="5">@form.data.get("suggestions")</textarea>
+            <textarea class="govuk-textarea" name="suggestions" id="suggestions" rows="5">@form.data.get("suggestions")</textarea>
         </div>
-        <div class="form-field">
-            <p></p>
-            <button role="button" class="button" type="submit" id="continue">@Messages("survey.send")</button>
-        </div>
-        @CSRF.formField
+
+            <button role="button" class="govuk-button" type="submit" id="continue">@Messages("survey.send")</button>
+
         <script>document.getElementById("radio-1").focus();</script>
     }
 

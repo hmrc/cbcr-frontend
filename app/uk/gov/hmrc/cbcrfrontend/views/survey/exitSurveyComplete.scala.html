@@ -17,17 +17,16 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 
-@mainTemplate(Messages("survey.acknowledge.title"),
-    sessionTimeout=false) {
+@mainTemplate(Messages("survey.acknowledge.title")) {
 
 
-    <h1>@Messages("survey.acknowledge.header")</h1>
+    <h1 class="govuk-heading-l">@Messages("survey.acknowledge.header")</h1>
     <p>@messages("survey.acknowledge.message")</p>
 
-    <p><a class="button" role="button" href="@config.cbcrGuidanceUrl">@Messages("form.controls.finished")</a></p>
+    <p><a class="govuk-button" role="button" href="@config.cbcrGuidanceUrl">@Messages("form.controls.finished")</a></p>
 }

@@ -19,13 +19,13 @@
 @(enableLanguageSwitching: Boolean)(implicit messages: Messages)
 
 @if(enableLanguageSwitching) {
-    <div class="available-languages">
+    <div>
     @if(messages.lang==Lang("cy")) {
-        <div class="available-languages" style="float:right">
+        <div style="float:right">
             <a id="switch-to-english" href="@routes.LanguageController.switchToEnglish" >English</a> | Cymraeg
         </div>
     } else {
-        <div class="available-languages" style="float:right">
+        <div style="float:right">
             English | <a id="switch-to-welsh" href="@routes.LanguageController.switchToWelsh" >Cymraeg</a>
         </div>
     }

@@ -16,25 +16,22 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
+
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @mainTemplate(messages("subscribeFirst.alreadyRegistered.title")) {
     @back_link(routes.SharedController.verifyKnownFactsOrganisation.url)
-<div class="grid-row">
-    <div class="column-full">
 
-        <h1>@messages("subscribeFirst.alreadyRegistered.heading")</h1>
+        <h1 class="govuk-heading-l">@messages("subscribeFirst.alreadyRegistered.heading")</h1>
         <div>
             <p>@messages("subscribeFirst.alreadyRegistered")</p>
             <p>@messages("subscribeFirst.alreadyRegistered2") <a href="@routes.FileUploadController.chooseXMLFile">@messages("subscribeFirst.alreadyRegistered2.link")</a>.</p>
             <p>@messages("subscribeFirst.alreadyRegistered5") <a href="@routes.SharedController.signOutGG">@messages("subscribeFirst.alreadyRegistered5.link")</a>.</p>
             <p>@messages("subscribeFirst.alreadyRegistered3") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@messages("subscribeFirst.alreadyRegistered4")</a></p>
         </div>
-    </div>
-</div>
 }

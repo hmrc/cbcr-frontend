@@ -15,19 +15,17 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
 @this(
-govUkWrapper: uk.gov.hmrc.cbcrfrontend.views.html.govuk_wrapper
+govUkWrapper: Layout
 )
 
 @(pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@contentHeader = {
-  <h1>@heading</h1>
-}
-
 @mainContent = {
-  <p>@message</p>
+ <h1 class="govuk-heading-l">@heading</h1>
+  <p class="govuk-body">@message</p>
 }
 
-@govUkWrapper(title = pageTitle, contentHeader = Some(contentHeader), mainContent = mainContent)
+@govUkWrapper(pageTitle = pageTitle)(contentBlock = mainContent)

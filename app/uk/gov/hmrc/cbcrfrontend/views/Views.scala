@@ -47,10 +47,10 @@ class Views @Inject()(
   val enterKnownFacts: uk.gov.hmrc.cbcrfrontend.views.html.shared.enterKnownFacts,
   val exitSurvey: uk.gov.hmrc.cbcrfrontend.views.html.survey.exitSurvey,
   val exitSurveyComplete: uk.gov.hmrc.cbcrfrontend.views.html.survey.exitSurveyComplete,
-  val tepmAdminPage: uk.gov.hmrc.cbcrfrontend.views.html.tepm_admin_page,
-  val showAllDocRefIds: uk.gov.hmrc.cbcrfrontend.views.html.show_all_docRefIds,
-  val adminDocRefIdEditor: uk.gov.hmrc.cbcrfrontend.views.html.admin_docRefId_Editor,
-  val addReportingEntityPage: uk.gov.hmrc.cbcrfrontend.views.html.addReportingEntityPage,
-  val showReportingEntity: uk.gov.hmrc.cbcrfrontend.views.html.showReportingEntity,
-  val adminEditReportingEntityData: uk.gov.hmrc.cbcrfrontend.views.html.adminEditReportingEntityData
+  val tepmAdminPage: uk.gov.hmrc.cbcrfrontend.views.html.admin.tepm_admin_page,
+  val showAllDocRefIds: uk.gov.hmrc.cbcrfrontend.views.html.admin.show_all_docRefIds,
+  val adminDocRefIdEditor: uk.gov.hmrc.cbcrfrontend.views.html.admin.admin_docRefId_Editor,
+  val addReportingEntityPage: uk.gov.hmrc.cbcrfrontend.views.html.admin.addReportingEntityPage,
+  val showReportingEntity: uk.gov.hmrc.cbcrfrontend.views.html.admin.showReportingEntity,
+  val adminEditReportingEntityData: uk.gov.hmrc.cbcrfrontend.views.html.admin.adminEditReportingEntityData
 )
