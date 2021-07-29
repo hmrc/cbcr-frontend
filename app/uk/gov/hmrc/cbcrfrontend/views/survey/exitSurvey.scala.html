@@ -14,21 +14,18 @@
  * limitations under the License.
  *@
 
-@import helper._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
 @import uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
 @this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_])(implicit request: Request[_], messages: Messages)
 
 @isError= @{form.hasErrors}
 
 @mainTemplate(Messages("survey.title")) {
     <h1 class="govuk-heading-l">@Messages("survey.header")</h1>
-    <p class="font-small-size19">@Messages("survey.intro")</p>
+    <p class="govuk-body">@Messages("survey.intro")</p>
     <br aria-hidden="true"/>
 
     @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.ExitSurveyController.submit){

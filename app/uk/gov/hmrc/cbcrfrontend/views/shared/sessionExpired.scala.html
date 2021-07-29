@@ -26,7 +26,7 @@
 @mainTemplate(Messages("sessionExpired.title")) {
 
         <h1 class="govuk-heading-l">@Messages("sessionExpired.mainHeading")</h1>
-        <p>@Messages("sessionExpired.continue")</p>
-        <p><a href="@config.cbcrGuidanceUrl">@Messages("sessionExpired.link")</a></p>
+        <p class="govuk-body">@Messages("sessionExpired.continue")</p>
+        <p class="govuk-body"><a class="govuk-link" href="@config.cbcrGuidanceUrl">@Messages("sessionExpired.link")</a></p>
 
 }

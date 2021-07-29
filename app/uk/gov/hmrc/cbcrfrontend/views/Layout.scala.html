@@ -1,8 +1,11 @@
 @import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcLayout
 @import uk.gov.hmrc.hmrcfrontend.views.config.StandardBetaBanner
 @import views.html.helper.CSPNonce
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(hmrcLayout: HmrcLayout, hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper)
+@this(hmrcLayout: HmrcLayout,
+      hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
+      hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper)
 
 @(pageTitle: String)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
@@ -14,7 +17,8 @@
   pageTitle = Some(pageTitle),
   isWelshTranslationAvailable = false,
   serviceUrl = None,
-  signOutUrl = Some(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.signOutSurvey.url),
+  signOutUrl = Some(routes.SharedController.signOutSurvey.url),
   phaseBanner = None,
+  additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)),
   nonce = CSPNonce.get,
 )(content)

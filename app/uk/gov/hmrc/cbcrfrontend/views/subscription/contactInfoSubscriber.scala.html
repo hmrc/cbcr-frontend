@@ -14,17 +14,15 @@
  * limitations under the License.
  *@
 
-@import helper._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
 
 @this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_])(implicit request: Request[_], messages: Messages)
 
 @firstNameErrors = @{form.error("firstName").isDefined}
 @lastNameErrors = @{form.error("lastName").isDefined}
@@ -72,7 +70,7 @@
             <h1 class="govuk-heading-l" tabindex="-1">
                 @Messages("contactInfoSubscriber.mainHeading")
             </h1>
-            <p>@Messages("contactInfoSubscriber.additionalInfo")</p>
+            <p class="govuk-body">@Messages("contactInfoSubscriber.additionalInfo")</p>
 
             @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.submitSubscriptionData, 'novalidate -> "novalidate"){
             <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">

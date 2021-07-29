@@ -14,7 +14,6 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
@@ -22,16 +21,16 @@
 
 @this(mainTemplate: Layout)
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(messages("subscribeFirst.alreadyRegistered.title")) {
     @back_link(routes.SharedController.verifyKnownFactsOrganisation.url)
 
         <h1 class="govuk-heading-l">@messages("subscribeFirst.alreadyRegistered.heading")</h1>
         <div>
-            <p>@messages("subscribeFirst.alreadyRegistered")</p>
-            <p>@messages("subscribeFirst.alreadyRegistered2") <a href="@routes.FileUploadController.chooseXMLFile">@messages("subscribeFirst.alreadyRegistered2.link")</a>.</p>
-            <p>@messages("subscribeFirst.alreadyRegistered5") <a href="@routes.SharedController.signOutGG">@messages("subscribeFirst.alreadyRegistered5.link")</a>.</p>
-            <p>@messages("subscribeFirst.alreadyRegistered3") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@messages("subscribeFirst.alreadyRegistered4")</a></p>
+            <p class="govuk-body">@messages("subscribeFirst.alreadyRegistered")</p>
+            <p class="govuk-body">@messages("subscribeFirst.alreadyRegistered2") <a class="govuk-link" href="@routes.FileUploadController.chooseXMLFile">@messages("subscribeFirst.alreadyRegistered2.link")</a>.</p>
+            <p class="govuk-body">@messages("subscribeFirst.alreadyRegistered5") <a class="govuk-link" href="@routes.SharedController.signOutGG">@messages("subscribeFirst.alreadyRegistered5.link")</a>.</p>
+            <p class="govuk-body">@messages("subscribeFirst.alreadyRegistered3") <a class="govuk-link" href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" target="_blank">@messages("subscribeFirst.alreadyRegistered4")</a></p>
         </div>
 }

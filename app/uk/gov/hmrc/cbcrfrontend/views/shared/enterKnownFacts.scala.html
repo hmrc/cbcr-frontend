@@ -16,7 +16,6 @@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
@@ -25,7 +24,7 @@
 
 @this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false, userType: AffinityGroup)(implicit request: Request[_], messages: Messages)
 
 @hasErrors = @{
     knownFactsForm.hasErrors || noMatchingBusiness
