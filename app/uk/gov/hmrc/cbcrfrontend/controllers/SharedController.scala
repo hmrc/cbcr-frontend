@@ -306,6 +306,10 @@ class SharedController @Inject()(
     }
   }
 
+  def enhancementUnavailable = Action.async { implicit request =>
+    Unauthorized(views.notAuthorizedEnhancement())
+  }
+
   def unsupportedAffinityGroup = Action.async { implicit request =>
     {
       authorised().retrieve(Retrievals.affinityGroup) {
