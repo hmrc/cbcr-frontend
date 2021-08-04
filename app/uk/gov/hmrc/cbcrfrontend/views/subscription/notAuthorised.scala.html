@@ -15,23 +15,17 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
 @this(
-        mainTemplate: main_template
+        mainTemplate: Layout
 )
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("notAuthorised.agent.title"),
-    sessionTimeout=false) {
+@mainTemplate(Messages("notAuthorised.agent.title")) {
 
-    <div class="grid-row">
-        <div class="column-full">
-            <h1>@Messages("notAuthorised.mainHeading")</h1>
-            <p>@Messages("notAuthorised.message.start")</p>
-        </div>
-    </div>
-    <p><a class="button" role="button" href="@routes.SharedController.signOutSurvey">@Messages("notAuthorised.individual.button")</a></p>
+            <h1 class="govuk-heading-l">@Messages("notAuthorised.mainHeading")</h1>
+            <p class="govuk-body">@Messages("notAuthorised.message.start")</p>
+    <p><a class="govuk-button" role="button" href="@routes.SharedController.signOutSurvey">@Messages("notAuthorised.individual.button")</a></p>
 }

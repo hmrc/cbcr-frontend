@@ -14,15 +14,14 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(Messages("unregisteredGG.title")) {
   @{ request.headers.get("Referer") match {
@@ -31,22 +30,17 @@
       case _ => {}
   }}
 
-<div class="grid-row">
-    <div class="column-full">
-
-        <h1>@Messages("unregisteredGG.heading")</h1>
+        <h1 class="govuk-heading-l">@Messages("unregisteredGG.heading")</h1>
             <div>
-                <p>@Messages("unregisteredGG.message1")
-                    <a id="checkAndSendHref" href="@routes.FileUploadController.unregisteredGGAccount">@Messages("unregisteredGG.checkAndSend")</a>.
+                <p class="govuk-body">@Messages("unregisteredGG.message1")
+                    <a id="checkAndSendHref" class="govuk-link" href="@routes.FileUploadController.unregisteredGGAccount">@Messages("unregisteredGG.checkAndSend")</a>.
                 </p>
-                <p> @Messages("unregisteredGG.message2")
-                    <a id="registerHref" href="@routes.SharedController.verifyKnownFactsOrganisation">@messages("unregisteredGG.register")</a>
+                <p class="govuk-body"> @Messages("unregisteredGG.message2")
+                    <a id="registerHref" class="govuk-link" href="@routes.SharedController.verifyKnownFactsOrganisation">@messages("unregisteredGG.register")</a>
                     <span>@Messages("unregisteredGG.message3")</span>
                 </p>
-                <p>@Messages("unregisteredGG.message4")
-                    <a id="signInHref" href="@routes.SharedController.signOutGG">@Messages("unregisteredGG.signOut")</a>.
+                <p class="govuk-body">@Messages("unregisteredGG.message4")
+                    <a id="signInHref" class="govuk-link" href="@routes.SharedController.signOutGG">@Messages("unregisteredGG.signOut")</a>.
                 </p>
          </div>
-    </div>
-</div>
 }

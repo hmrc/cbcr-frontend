@@ -14,32 +14,26 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
 
-@(cbcId:CBCId)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(cbcId:CBCId)(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(Messages("regenerate.title")) {
 
-    <div class="grid-row">
-        <div class="column-full">
-            <h1>@Messages("regenerate.mainHeading")</h1>
-            <p>
+            <h1 class="govuk-heading-l">@Messages("regenerate.mainHeading")</h1>
+            <p class="govuk-body">
                 @Messages("regenerate.message")
-                <h2>@cbcId</h2>
+                <h2 class="govuk-heading-m">@cbcId</h2>
             </p>
-            <p>@Messages("regenerate.message2")</p>
+            <p class="govuk-body">@Messages("regenerate.message2")</p>
 
-            <h2>@Messages("regenerate.next")</h2>
-            <p>
-                @Messages("regenerate.continue") <a href="@routes.FileUploadController.chooseXMLFile">@Messages("form.controls.signOut")</a>, @Messages("regenerate.continue2")
+            <h2 class="govuk-heading-m">@Messages("regenerate.next")</h2>
+            <p class="govuk-body">
+                @Messages("regenerate.continue") <a class="govuk-link" href="@routes.FileUploadController.chooseXMLFile">@Messages("form.controls.signOut")</a>, @Messages("regenerate.continue2")
             </p>
-
-        </div>
-    </div>
 
 }

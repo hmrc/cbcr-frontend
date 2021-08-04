@@ -16,17 +16,16 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@this(mainTemplate: uk.gov.hmrc.cbcrfrontend.views.html.main_template)
+@this(mainTemplate: uk.gov.hmrc.cbcrfrontend.views.html.Layout)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 
-@mainTemplate(Messages("notAuthorised.individual.title"),
-    sessionTimeout=false) {
+@mainTemplate(Messages("notAuthorised.individual.title")) {
 
-    <div class="grid-row" style="margin-left: 0.5%">
-        <h1>@Messages("notAuthorised.individual.mainHeading")</h1>
-        <p>@messages("notAuthorised.Individual.message.start") <a href="@config.cbcrGuidanceRegisterUrl">@Messages("notAuthorised.Individual.message.link")</a></p>
-        <a class="button" role="button" href="@config.cbcrGuidanceUrl">@Messages("notAuthorised.individual.button")</a>
+    <div class="govuk-grid-row" style="margin-left: 0.5%">
+        <h1 class="govuk-heading-l">@Messages("notAuthorised.individual.mainHeading")</h1>
+        <p class="govuk-body">@messages("notAuthorised.Individual.message.start") <a href="@config.cbcrGuidanceRegisterUrl">@Messages("notAuthorised.Individual.message.link")</a></p>
+        <a class="govuk-button" role="button" href="@config.cbcrGuidanceUrl">@Messages("notAuthorised.individual.button")</a>
     </div>
         }
