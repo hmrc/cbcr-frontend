@@ -34,7 +34,7 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.cbcrfrontend.views.html.{ErrorTemplate, error_template, not_authorised_individual}
+import uk.gov.hmrc.cbcrfrontend.views.html.{ErrorTemplate, not_authorised_individual}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
