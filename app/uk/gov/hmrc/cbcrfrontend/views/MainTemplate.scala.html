@@ -26,8 +26,6 @@
   sessionTimeout:Boolean = true,
   scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, conf: FrontendAppConfig)
 
-<p>Hello! MainTemplate</p>
-
 @serviceInfoContent = {}
 
 @layout(title)(mainContent)
