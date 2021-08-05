@@ -24,7 +24,7 @@
 @import uk.gov.hmrc.auth.core.AffinityGroup
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: MainTemplate)
 
 
 @(knownFactsForm: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false, userType: AffinityGroup)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)

@@ -20,6 +20,8 @@ import javax.inject.Inject
 
 import uk.gov.hmrc.play.views.html.helpers._
 import uk.gov.hmrc.play.views.html.layouts._
+
+@deprecated("Use new stuff.")
 class ViewHelpers @Inject()(
   //copied from uk.gov.hmrc.play.views.html.helpers
   val address: Address,

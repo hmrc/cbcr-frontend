@@ -21,7 +21,7 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: MainTemplate)
 @(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @firstNameErrors = @{form.error("firstName").isDefined}

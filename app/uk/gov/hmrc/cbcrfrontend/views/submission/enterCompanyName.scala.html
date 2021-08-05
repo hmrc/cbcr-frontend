@@ -20,9 +20,7 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(
-    mainTemplate: main_template
-)
+@this(mainTemplate: MainTemplate)
 
 @(form:Form[_], envelopeId: String, fileId: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 

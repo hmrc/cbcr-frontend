@@ -17,9 +17,9 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.MainTemplate
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: MainTemplate)
 
 @(cbcId:CBCId, companyName:Option[String])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 

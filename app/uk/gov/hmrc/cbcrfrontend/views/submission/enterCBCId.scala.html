@@ -21,7 +21,7 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: MainTemplate)
 
 @(form:Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(
         implicit request: Request[_], messages: Messages, config:FrontendAppConfig)

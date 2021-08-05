@@ -34,7 +34,7 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.cbcrfrontend.views.html.{error_template, not_authorised_individual}
+import uk.gov.hmrc.cbcrfrontend.views.html.{ErrorTemplate, error_template, not_authorised_individual}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -74,10 +74,7 @@ package object cbcrfrontend {
   implicit def toTheFuture[A](a: ValidBusinessResult[A]): FutureValidBusinessResult[A] = Future.successful(a)
   implicit def resultFuture(r: Result): Future[Result] = Future.successful(r)
 
-  def errorRedirect(
-    error: CBCErrors,
-    notAuthorisedIndividual: not_authorised_individual,
-    errorTemplate: error_template)(
+  def errorRedirect(error: CBCErrors, notAuthorisedIndividual: not_authorised_individual, errorTemplate: ErrorTemplate)(
     implicit request: Request[_],
     msgs: Messages,
     feConfig: FrontendAppConfig): Result = {

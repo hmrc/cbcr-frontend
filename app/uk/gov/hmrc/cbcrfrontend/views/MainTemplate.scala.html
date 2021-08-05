@@ -14,23 +14,20 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.cbcrfrontend.views.html.MainTemplate
 
-@this(mainTemplate: MainTemplate)
+@this(layout: Layout)
 
+@(title: String,
+  sidebarLinks: Option[Html] = None,
+  contentHeader: Option[Html] = None,
+  bodyClasses: Option[String] = None,
+  mainClass: Option[String] = None,
+  sessionTimeout:Boolean = true,
+  scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, conf: FrontendAppConfig)
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+<p>Hello! MainTemplate</p>
 
-@mainTemplate(Messages("notAuthorised.agent.title"),
-    sessionTimeout=false) {
+@serviceInfoContent = {}
 
-    <div class="grid-row">
-        <div class="column-full">
-            <h1>@Messages("notAuthorised.mainHeading")</h1>
-            <p>@Messages("notAuthorised.message.start")</p>
-        </div>
-    </div>
-    <p><a class="button" role="button" href="@routes.SharedController.signOutSurvey">@Messages("notAuthorised.individual.button")</a></p>
-}
+@layout(title)(mainContent)

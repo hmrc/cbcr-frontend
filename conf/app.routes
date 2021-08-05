@@ -82,3 +82,5 @@ POST          /admin/editReportingEntity                            @uk.gov.hmrc
 POST          /admin/saveDocRefId                                   @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.adminAddDocRefId
 
 
+->      /hmrc-frontend              hmrcfrontend.Routes
+->      /govuk-frontend             govuk.Routes

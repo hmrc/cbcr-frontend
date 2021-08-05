@@ -20,7 +20,6 @@ import play.api.libs.json._
 
 case class Email(to: List[String], templateId: String, parameters: Map[String, String])
 
-//todo if anyone cant get this working as case object be my quest!
 case class SubscriptionEmailSent(defaultValue: String = "")
 
 case object SubscriptionEmailSent {
