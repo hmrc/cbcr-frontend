@@ -83,4 +83,5 @@ POST          /admin/edit-DIR                                       @uk.gov.hmrc
 POST          /admin/editReportingEntity                            @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.editReportingEntity
 POST          /admin/saveDocRefId                                   @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.adminAddDocRefId
 
+GET           /unregistered-gg-account-view                         @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.unregisteredGGAccount
 
