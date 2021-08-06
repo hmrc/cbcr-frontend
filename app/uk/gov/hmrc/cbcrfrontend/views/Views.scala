@@ -52,5 +52,6 @@ class Views @Inject()(
   val adminDocRefIdEditor: uk.gov.hmrc.cbcrfrontend.views.html.admin.admin_docRefId_Editor,
   val addReportingEntityPage: uk.gov.hmrc.cbcrfrontend.views.html.admin.addReportingEntityPage,
   val showReportingEntity: uk.gov.hmrc.cbcrfrontend.views.html.admin.showReportingEntity,
-  val adminEditReportingEntityData: uk.gov.hmrc.cbcrfrontend.views.html.admin.adminEditReportingEntityData
+  val adminEditReportingEntityData: uk.gov.hmrc.cbcrfrontend.views.html.admin.adminEditReportingEntityData,
+  val uploadForm: uk.gov.hmrc.cbcrfrontend.views.html.upscan.uploadForm
 )

@@ -39,7 +39,8 @@ val compile = Seq(
 def test(scope: String = "test") = Seq(
   "org.pegdown"            % "pegdown"             % "1.6.0"  % scope,
   "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0"  % scope,
-  "org.mockito"            % "mockito-core"        % "3.11.0" % scope
+  "org.mockito"            % "mockito-core"        % "3.11.0" % scope,
+  "com.github.tomakehurst" %  "wiremock-jre8"      % "2.26.0"
 )
 
 lazy val plugins: Seq[Plugins] = Seq.empty
