@@ -399,11 +399,6 @@ class SharedControllerSpec
       status(result) shouldBe Status.OK
     }
 
-    "enhancementUnavailable returns 401" in {
-      val request = addToken(FakeRequest())
-      val result = controller.enhancementUnavailable(request)
-      status(result) shouldBe Status.UNAUTHORIZED
-    }
   }
 
   "unsupportedAffinityGroup" should {

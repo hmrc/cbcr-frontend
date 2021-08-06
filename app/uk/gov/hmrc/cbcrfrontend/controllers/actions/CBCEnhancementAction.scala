@@ -34,6 +34,7 @@ class CBCEnhancementAction @Inject()(
     if (appConfig.cbcEnhancementFeature) {
       block(request)
     } else {
-      Future.successful(Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.enhancementUnavailable))
+      Future.successful(
+        Redirect(uk.gov.hmrc.cbcrfrontend.controllers.routes.CBCEnhancementsController.enhancementUnavailable))
     }
 }

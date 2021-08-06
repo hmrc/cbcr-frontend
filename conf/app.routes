@@ -83,6 +83,6 @@ POST          /admin/edit-DIR                                       @uk.gov.hmrc
 POST          /admin/editReportingEntity                            @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.editReportingEntity
 POST          /admin/saveDocRefId                                   @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.adminAddDocRefId
 
-GET           /enhancement-unauthorised                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enhancementUnavailable
+GET           /enhancement-unauthorised                             @uk.gov.hmrc.cbcrfrontend.controllers.CBCEnhancementsController.enhancementUnavailable
 
 
