@@ -20,7 +20,7 @@ val compile = Seq(
   ws,
   "uk.gov.hmrc"              %% "bootstrap-frontend-play-28"      % "5.7.0",
   "uk.gov.hmrc"              %% "govuk-template"      % "5.68.0-play-28",
-  "uk.gov.hmrc"              %% "play-ui"             % "9.5.0-play-28",
+  "uk.gov.hmrc"              %% "play-ui"             % "9.6.0-play-28",
   "uk.gov.hmrc"              %% "play-frontend-hmrc"  % "0.85.0-play-28",
   "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
   "uk.gov.hmrc"              %% "domain"              % "6.1.0-play-28",
@@ -134,3 +134,9 @@ def oneForkedJvmPerTest(tests: Seq[TestDefinition]) =
     new Group(test.name, Seq(test), SubProcess(ForkOptions().withRunJVMOptions(Vector(s"-Dtest.name=${test.name}"))))
   }
 
+TwirlKeys.templateImports ++= Seq(
+  "uk.gov.hmrc.govukfrontend.views.html.components._",
+  "uk.gov.hmrc.govukfrontend.views.html.helpers._",
+  "uk.gov.hmrc.hmrcfrontend.views.html.components._",
+  "uk.gov.hmrc.hmrcfrontend.views.html.helpers._"
+)

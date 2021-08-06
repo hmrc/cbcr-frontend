@@ -1,4 +1,6 @@
 # microservice specific routes
+->            /hmrc-frontend                                        hmrcfrontend.Routes
+->            /govuk-frontend                                       govuk.Routes
 
 GET           /                                                     @uk.gov.hmrc.cbcrfrontend.controllers.StartController.start
 POST          /                                                     @uk.gov.hmrc.cbcrfrontend.controllers.StartController.submit

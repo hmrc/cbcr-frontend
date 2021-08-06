@@ -1,15 +1,11 @@
 @import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcLayout
-@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcReportTechnicalIssueHelper
-@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcTimeoutDialogHelper
 @import uk.gov.hmrc.hmrcfrontend.views.config.StandardBetaBanner
 @import views.html.helper.CSPNonce
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-
 @this(hmrcLayout: HmrcLayout,
-        hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
-        hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper)
+      hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
+      hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper)
 
 @(pageTitle: String)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
@@ -18,11 +14,11 @@
 @hmrcReportTechnicalIssueHelper()
 }
 @hmrcLayout(
-    pageTitle = Some(pageTitle),
-    isWelshTranslationAvailable = false,
-    serviceUrl = None,
-    signOutUrl = Some(routes.SharedController.signOutSurvey.url),
-    phaseBanner = None,
-    additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)),
-    nonce = CSPNonce.get,
+  pageTitle = Some(pageTitle),
+  isWelshTranslationAvailable = false,
+  serviceUrl = None,
+  signOutUrl = Some(routes.SharedController.signOutSurvey.url),
+  phaseBanner = None,
+  additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)),
+  nonce = CSPNonce.get,
 )(content)

@@ -18,19 +18,15 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
 @this(
-    mainTemplate: MainTemplate
+    mainTemplate: Layout
 )
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("notAuthorised.assistant.title"),
-    sessionTimeout=false) {
+@mainTemplate(Messages("notAuthorised.assistant.title")) {
 
-    <div class="grid-row">
-        <div class="column-full">
-        <h1>@Messages("notAuthorised.assistant.mainHeading")</h1>
-        <p>@Messages("notAuthorised.assistant.message")</p>
-        </div>
-    </div>
-    <p><a class="button" role="button" href="@config.cbcrGuidanceUrl">@Messages("notAuthorised.assistant.button")</a></p>
+        <h1 class="govuk-heading-l">@Messages("notAuthorised.assistant.mainHeading")</h1>
+        <p class="govuk-body">@Messages("notAuthorised.assistant.message")</p>
+
+    <p><a class="govuk-button" role="button" href="@config.cbcrGuidanceUrl">@Messages("notAuthorised.assistant.button")</a></p>
 }

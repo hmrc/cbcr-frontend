@@ -15,21 +15,17 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.cbcrfrontend.views.html.MainTemplate
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
-@this(mainTemplate: MainTemplate)
+@this(mainTemplate: Layout)
+
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("sessionExpired.title"),
-    sessionTimeout=false) {
+@mainTemplate(Messages("sessionExpired.title")) {
 
-<div class="grid-row">
-    <div class="column-full">
-        <h1>@Messages("sessionExpired.mainHeading")</h1>
-        <p>@Messages("sessionExpired.continue")</p>
-        <p><a href="@config.cbcrGuidanceUrl">@Messages("sessionExpired.link")</a></p>
-    </div>
-</div>
+        <h1 class="govuk-heading-l">@Messages("sessionExpired.mainHeading")</h1>
+        <p class="govuk-body">@Messages("sessionExpired.continue")</p>
+        <p class="govuk-body"><a class="govuk-link" href="@config.cbcrGuidanceUrl">@Messages("sessionExpired.link")</a></p>
 
 }
