@@ -58,7 +58,7 @@ class UploadFormController @Inject()(
   cache: CBCSessionCache,
   val config: Configuration,
   feConfig: FrontendAppConfig)
-    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
+    extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 

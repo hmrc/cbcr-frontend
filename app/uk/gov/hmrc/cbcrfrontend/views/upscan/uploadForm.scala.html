@@ -18,7 +18,11 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model.upscan._
+@import uk.gov.hmrc.auth.core.AffinityGroup._
+@import uk.gov.hmrc.auth.core.AffinityGroup
 
 @this(mainTemplate: main_template)
 
@@ -27,13 +31,13 @@
 @mainTemplate(Messages("uploadReport.title")) {
 
 @{
-if(request.uri.contains("/unregistered-gg-account")) {
-back_link(routes.FileUploadController.chooseXMLFile.url)
-} else {
-userType match {
-case Some(Organisation) => back_link(routes.StartController.start.url)
-case _ =>
-}
+    if(request.uri.contains("/unregistered-gg-account")) {
+        back_link(routes.FileUploadController.chooseXMLFile.url)
+    } else {
+    userType match {
+        case Some(Organisation) => back_link(routes.StartController.start.url)
+        case _ =>
+    }
 }}
 
 
@@ -53,9 +57,9 @@ case _ =>
             <div class="form-group">
                 <div class="form-field-group">
                     <label class="form-label" for="file-input">@Messages("uploadReport.label")</label>
-                    <span id="@fileName-error-message" class="error-notification" role="alert" data-input-name="@fileName">
+                    <span id="fileName-error-message" class="error-notification" role="alert" >
                     </span>
-                    <input type="file" id="file-input" class="govuk-file-upload" name="@fileName" accept=".xml, .XML" required data-msg-required="@Messages("uploadReport.error")">
+                    <input type="file" id="file-input" class="govuk-file-upload" name="fileName" accept=".xml, .XML" required data-msg-required="@Messages("uploadReport.error")">
                 </div>
                 <div class="form-field-group form-field--submit">
                     @csrf_token()
