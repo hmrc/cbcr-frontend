@@ -84,6 +84,7 @@ POST          /admin/editReportingEntity                            @uk.gov.hmrc
 POST          /admin/saveDocRefId                                   @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.adminAddDocRefId
 
 GET           /unregistered-gg-account-view                         @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.unregisteredGGAccount
-GET           /failed-callback1                                     @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.handleError(errorCode: String= "", errorMessage: String="")
-GET           /file-upload-progress1/:uploadId/:fileId              @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.fileUploadProgress(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId, fileId: String)
-GET           /file-upload-response1/:uploadId                      @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.fileUploadResponse(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId)
+GET           /upscan/choose-file                                   @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.onPageLoad
+GET           /upscan/failed-callback1                              @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.handleError(errorCode: String= "", errorMessage: String="")
+GET           /upscan/file-upload-progress/:uploadId/:fileId        @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.fileUploadProgress(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId, fileId: String)
+GET           /upscan/file-upload-response/:uploadId                @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.fileUploadResponse(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId)

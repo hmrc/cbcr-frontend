@@ -17,24 +17,45 @@
 package base
 
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.{FreeSpec, Matchers, OptionValues, TryValues}
+import org.scalatest._
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.i18n.{Messages, MessagesApi}
-import play.api.inject.bind
+import play.api.inject.{Injector, bind}
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.actions.{FakeIdentifierAction, IdentifierAction}
+import uk.gov.hmrc.http.HeaderCarrier
 
 trait SpecBase
-    extends FreeSpec with Matchers with TryValues with OptionValues with ScalaFutures with IntegrationPatience {
-
-  val userAnswersId: String = "id"
+    extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with TryValues with ScalaFutures
+    with IntegrationPatience with MockitoSugar with BeforeAndAfterEach {
 
   def messages(app: Application): Messages = app.injector.instanceOf[MessagesApi].preferred(FakeRequest())
+  def injector: Injector = app.injector
 
-  protected def applicationBuilder(): GuiceApplicationBuilder =
+  def frontendAppConfig: FrontendAppConfig = injector.instanceOf[FrontendAppConfig]
+
+  def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
+
+  def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
+
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+
+  val mockAppConfig: FrontendAppConfig = mock[FrontendAppConfig]
+
+  implicit def messages: Messages = messagesApi.preferred(fakeRequest)
+
+  override def fakeApplication(): Application =
+    guiceApplicationBuilder()
+      .build()
+
+  protected def guiceApplicationBuilder(): GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .overrides(
-        bind[IdentifierAction].to[FakeIdentifierAction],
+        bind[IdentifierAction].to[FakeIdentifierAction]
       )
 }
