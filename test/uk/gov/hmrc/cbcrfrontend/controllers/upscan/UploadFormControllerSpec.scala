@@ -17,28 +17,40 @@
 package uk.gov.hmrc.cbcrfrontend.controllers.upscan
 
 import base.SpecBase
-import org.mockito.Mockito.reset
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, route, status, _}
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
+import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.util.FakeUpscanConnector
+import uk.gov.hmrc.http.cache.client.CacheMap
+
+import scala.concurrent.Future
 
 class UploadFormControllerSpec extends SpecBase {
-  val mockUpscanConnector = app.injector.instanceOf[FakeUpscanConnector]
+
+  val mockUpscanConnector: FakeUpscanConnector = app.injector.instanceOf[FakeUpscanConnector]
+  val mockCache = mock[CBCSessionCache]
 
   override def guiceApplicationBuilder(): GuiceApplicationBuilder =
-    super
-      .guiceApplicationBuilder()
+    super.
+      guiceApplicationBuilder()
       .overrides(
-        bind[UpscanConnector].toInstance(mockUpscanConnector)
+        bind[UpscanConnector].to[FakeUpscanConnector],
+        bind[CBCSessionCache].toInstance(mockCache)
       )
 
   lazy val UploadFormRoutes: String = routes.UploadFormController.onPageLoad.url
 
   "upload form controller" - {
     "must initiate a request to upscan to bring back an upload form" in {
+
+      when(mockCache.save(any())(any(),any(),any())).thenReturn(Future.successful(CacheMap("x",Map("x"  -> Json.toJson[String]("x")))))
+
       val request = FakeRequest(GET, UploadFormRoutes)
 
       val result = route(app, request).value
