@@ -315,7 +315,7 @@ class FileUploadController @Inject()(
     * @param envelopeId
     * @return
     */
-  def fileUploadResponse(envelopeId: String) = Action.async { implicit request =>
+  def fileUploadResponse(envelopeId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       logger.info(s"Received a file-upload-response query for $envelopeId")
       fileUploadService

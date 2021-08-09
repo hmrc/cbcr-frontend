@@ -22,16 +22,17 @@ import org.slf4j.LoggerFactory
 import play.api.data.Form
 import play.api.data.Forms.{single, text}
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.{Json, _}
 import play.api.mvc._
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend._
+
+import uk.gov.hmrc.cbcrfrontend.controllers.{routes => fileRoutes}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.actions.IdentifierAction
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{Failed, Quarantined, UploadRejected, UploadedSuccessfully, UpscanInitiateResponse}
+import uk.gov.hmrc.cbcrfrontend.model.upscan._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
@@ -61,6 +62,9 @@ class UploadFormController @Inject()(
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
+  val assetsLocation = (config.get[String](s"assets.url") |+| config.get[String](s"assets.version"))
+  lazy val hostName = config.get[String]("cbcr-frontend.host")
+  lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.UploadFormController.handleError().url}"
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -73,9 +77,7 @@ class UploadFormController @Inject()(
   }
 
   private[controllers] def toResponse(
-    preparedForm: Form[String])(implicit request: IdentifierRequest[AnyContent], hc: HeaderCarrier): Future[Result] =
-    //    def json(upscanInitiateResponse: UpscanInitiateResponse): JsObject =
-    //      Json.obj("form" -> preparedForm, "upscanInitiateResponse" -> Json.toJson(upscanInitiateResponse), "status" -> Json.toJson(0))
+    form: Form[String])(implicit request: IdentifierRequest[AnyContent], hc: HeaderCarrier): Future[Result] =
     (for {
       upscanInitiateResponse <- upscanConnector.getUpscanFormData
       uploadId               <- upscanConnector.requestUpload(upscanInitiateResponse.fileReference)
@@ -83,65 +85,55 @@ class UploadFormController @Inject()(
       html                   <- Future.successful(views.uploadForm(upscanInitiateResponse, request.affinityGroup))
     } yield html).map(Ok(_))
 
-//  def showResult: Action[AnyContent] = Action.async { implicit uploadResponse =>
-//    renderer.render("upload-result.njk").map(Ok(_))
-//  }
+  def fileUploadProgress(uploadId: UploadId, fileId: String) = identify.async { implicit request =>
+    cache
+      .read[UploadId]
+      .subflatMap { e =>
+        if (e != uploadId) {
+          logger.error("BAD_ENVELOPE_ID")
+          cache.remove()
+          Left(
+            UnexpectedState(
+              s"The envelopeId in the cache was: ${e.value} while the progress request was for $uploadId"))
+        } else {
+          Right(Ok(views.uploadProgress(uploadId, fileId, hostName, assetsLocation)))
+        }
+      }
+      .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
+      .merge
+  }
 
-//  def showError(errorCode: String, errorMessage: String, errorRequestId: String): Action[AnyContent] =
-//    identify.async { implicit request =>
-//      errorCode match {
-//        case "EntityTooLarge" =>
-//          renderer
-//            .render(
-//              "fileTooLargeError.njk",
-//              Json.obj("xmlTechnicalGuidanceUrl" -> Json.toJson(appConfig.xmlTechnicalGuidanceUrl))
-//            )
-//            .map(Ok(_))
-//        case "InvalidArgument" =>
-//          val formWithErrors: Form[String] = form.withError("file", "upload_form.error.file.empty")
-//          toResponse(formWithErrors)
-//        case _ =>
-//          renderer
-//            .render(
-//              "error.njk",
-//              Json.obj(
-//                "pageTitle" -> "Upload Error",
-//                "heading"   -> errorMessage,
-//                "message"   -> s"Code: $errorCode, RequestId: $errorRequestId")
-//            )
-//            .map(Ok(_))
-//      }
-//    }
-//
-//  def getStatus: Action[AnyContent] = identify.async { implicit request =>
-//    logger.debug("Show status called")
-//    request.userAnswers.flatMap(_.get(UploadIDPage)) match {
-//      case Some(uploadId) =>
-//        upscanConnector.getUploadStatus(uploadId) flatMap {
-//          case Some(_: UploadedSuccessfully) =>
-//            Future.successful(Redirect(routes.FileValidationController.onPageLoad()))
-//          case Some(r: UploadRejected) =>
-//            val errorMessage = if (r.details.message.contains("octet-stream")) {
-//              "upload_form.error.file.empty"
-//            } else {
-//              "upload_form.error.file.invalid"
-//            }
-//            val errorForm: Form[String] = form.withError("file", errorMessage)
-//            logger.debug(s"Show errorForm on rejection $errorForm")
-//            toResponse(errorForm)
-//          case Some(Quarantined) =>
-//            Future.successful(Redirect(routes.VirusErrorController.onPageLoad()))
-//          case Some(Failed) =>
-//            errorHandler.onServerError(request, new Throwable("Upload to upscan failed"))
-//          case Some(_) =>
-//            renderer.render("upload-result.njk").map(Ok(_))
-//          case None =>
-//            errorHandler.onServerError(request, new Throwable(s"Upload with id $uploadId not found"))
-//        }
-//      case None =>
-//        errorHandler.onServerError(request, new Throwable("UploadId not found"))
-//    }
-//  }
+  def fileUploadResponse(uploadId: UploadId): Action[AnyContent] = identify.async { implicit request =>
+    logger.debug("Show status called")
+    upscanConnector.getUploadStatus(uploadId) flatMap {
+      case Some(_: UploadedSuccessfully) =>
+        Accepted
+      case Some(r: UploadRejected) =>
+        val errorMessage = if (r.details.message.contains("octet-stream")) {
+          "upload_form.error.file.empty"
+        } else {
+          "upload_form.error.file.invalid"
+        }
+        val errorForm: Form[String] = form.withError("file", errorMessage)
+        logger.debug(s"Show errorForm on rejection $errorForm")
+        toResponse(errorForm)
+      case Some(Quarantined) =>
+        Conflict
+      case Some(Failed) =>
+        errorHandler.onServerError(request, new Throwable("Upload to upscan failed"))
+      case _ =>
+        NoContent
+    }
+  }
+
+  def handleError(errorCode: String, errorMessage: String) = identify.async { implicit request =>
+    logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $errorMessage")
+    errorCode match {
+      case "EntityTooLarge"  => Redirect(fileRoutes.FileUploadController.fileTooLarge)
+      case "InvalidArgument" => Redirect(fileRoutes.FileUploadController.fileInvalid)
+      case _                 => Redirect(fileRoutes.SharedController.technicalDifficulties)
+    }
+  }
 
   def unregisteredGGAccount: Action[AnyContent] = Action.async { implicit request =>
     Ok(views.unregisteredGGAccount())

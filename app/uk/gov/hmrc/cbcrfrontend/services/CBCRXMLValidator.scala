@@ -19,12 +19,12 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.File
 import javax.inject.Inject
 import javax.xml.stream.XMLInputFactory
-
 import com.ctc.wstx.exc.WstxException
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
 import org.codehaus.stax2.validation._
 import play.api.{Environment, Logger}
 
+import java.net.URL
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Exception.nonFatalCatch
 
@@ -41,6 +41,26 @@ class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValid
 
     try {
       val xmlStreamReader: XMLStreamReader2 = xmlInputFactory2.createXMLStreamReader(input)
+      xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
+      xmlStreamReader.validateAgainst(xmlValidationSchema)
+      while (xmlStreamReader.hasNext) { xmlStreamReader.next }
+    } catch {
+      case e: WstxException =>
+        xmlErrorHandler.reportProblem(
+          new XMLValidationProblem(e.getLocation, e.getMessage, XMLValidationProblem.SEVERITY_FATAL))
+      case ErrorLimitExceededException =>
+        logger.warn(s"Errors exceeding the ${xmlErrorHandler.errorMessageLimit} encountered, validation aborting.")
+    }
+
+    xmlErrorHandler
+
+  }
+
+  def validateSchema(url: URL): XmlErrorHandler = {
+    val xmlErrorHandler = new XmlErrorHandler()
+
+    try {
+      val xmlStreamReader: XMLStreamReader2 = xmlInputFactory2.createXMLStreamReader(url)
       xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
       xmlStreamReader.validateAgainst(xmlValidationSchema)
       while (xmlStreamReader.hasNext) { xmlStreamReader.next }
