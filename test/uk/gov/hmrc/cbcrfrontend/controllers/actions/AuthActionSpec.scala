@@ -40,31 +40,27 @@ class AuthActionSpec extends SpecBase {
     }
   }
 
+  val bodyParsers: BodyParsers.Default = app.injector.instanceOf[BodyParsers.Default]
+  val errorHandler: CBCRErrorHandler = app.injector.instanceOf[CBCRErrorHandler]
+  val sessionCache: CBCSessionCache = app.injector.instanceOf[CBCSessionCache]
+
   "Auth Action" - {
 
     "when the user hasn't logged in" - {
 
       "must redirect the user to log in " in {
 
-        val application = applicationBuilder().build()
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new MissingBearerToken),
+          bodyParsers,
+          sessionCache,
+          errorHandler
+        )
+        val controller = new Harness(authAction)
+        val result = controller.onPageLoad()(FakeRequest())
 
-        running(application) {
-          val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val errorHandler = application.injector.instanceOf[CBCRErrorHandler]
-          val sessionCache = application.injector.instanceOf[CBCSessionCache]
-
-          val authAction = new AuthenticatedIdentifierAction(
-            new FakeFailingAuthConnector(new MissingBearerToken),
-            bodyParsers,
-            sessionCache,
-            errorHandler
-          )
-          val controller = new Harness(authAction)
-          val result = controller.onPageLoad()(FakeRequest())
-
-          status(result) mustBe SEE_OTHER
-          redirectLocation(result).value mustBe "/bas-gateway/sign-in?continue_url=%2F&origin=cbcr-frontend"
-        }
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result).value mustBe "/bas-gateway/sign-in?continue_url=%2F&origin=cbcr-frontend"
       }
     }
 
@@ -72,25 +68,17 @@ class AuthActionSpec extends SpecBase {
 
       "must redirect the user to log in " in {
 
-        val application = applicationBuilder().build()
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new BearerTokenExpired),
+          bodyParsers,
+          sessionCache,
+          errorHandler
+        )
+        val controller = new Harness(authAction)
+        val result = controller.onPageLoad()(FakeRequest())
 
-        running(application) {
-          val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val errorHandler = application.injector.instanceOf[CBCRErrorHandler]
-          val sessionCache = application.injector.instanceOf[CBCSessionCache]
-
-          val authAction = new AuthenticatedIdentifierAction(
-            new FakeFailingAuthConnector(new BearerTokenExpired),
-            bodyParsers,
-            sessionCache,
-            errorHandler
-          )
-          val controller = new Harness(authAction)
-          val result = controller.onPageLoad()(FakeRequest())
-
-          status(result) mustBe SEE_OTHER
-          redirectLocation(result).value mustBe "/bas-gateway/sign-in?continue_url=%2F&origin=cbcr-frontend"
-        }
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result).value mustBe "/bas-gateway/sign-in?continue_url=%2F&origin=cbcr-frontend"
       }
     }
 
@@ -98,25 +86,17 @@ class AuthActionSpec extends SpecBase {
 
       "must redirect the user to the unauthorised page" in {
 
-        val application = applicationBuilder().build()
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new InsufficientEnrolments),
+          bodyParsers,
+          sessionCache,
+          errorHandler
+        )
+        val controller = new Harness(authAction)
+        val result = controller.onPageLoad()(FakeRequest())
 
-        running(application) {
-          val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val errorHandler = application.injector.instanceOf[CBCRErrorHandler]
-          val sessionCache = application.injector.instanceOf[CBCSessionCache]
-
-          val authAction = new AuthenticatedIdentifierAction(
-            new FakeFailingAuthConnector(new InsufficientEnrolments),
-            bodyParsers,
-            sessionCache,
-            errorHandler
-          )
-          val controller = new Harness(authAction)
-          val result = controller.onPageLoad()(FakeRequest())
-
-          status(result) mustBe SEE_OTHER
-          redirectLocation(result).value mustBe "/country-by-country-reporting/unregistered-gg-account-view"
-        }
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result).value mustBe "/country-by-country-reporting/unregistered-gg-account-view"
       }
     }
 
@@ -124,25 +104,17 @@ class AuthActionSpec extends SpecBase {
 
       "must redirect the user to the unauthorised page" in {
 
-        val application = applicationBuilder().build()
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new UnsupportedAuthProvider),
+          bodyParsers,
+          sessionCache,
+          errorHandler
+        )
+        val controller = new Harness(authAction)
+        val result = controller.onPageLoad()(FakeRequest())
 
-        running(application) {
-          val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val errorHandler = application.injector.instanceOf[CBCRErrorHandler]
-          val sessionCache = application.injector.instanceOf[CBCSessionCache]
-
-          val authAction = new AuthenticatedIdentifierAction(
-            new FakeFailingAuthConnector(new UnsupportedAuthProvider),
-            bodyParsers,
-            sessionCache,
-            errorHandler
-          )
-          val controller = new Harness(authAction)
-          val result = controller.onPageLoad()(FakeRequest())
-
-          status(result) mustBe SEE_OTHER
-          redirectLocation(result).value mustBe "/country-by-country-reporting/unregistered-gg-account-view"
-        }
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result).value mustBe "/country-by-country-reporting/unregistered-gg-account-view"
       }
     }
 
@@ -150,25 +122,17 @@ class AuthActionSpec extends SpecBase {
 
       "must redirect the user to the unauthorised page" in {
 
-        val application = applicationBuilder().build()
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new UnsupportedAffinityGroup),
+          bodyParsers,
+          sessionCache,
+          errorHandler
+        )
+        val controller = new Harness(authAction)
+        val result = controller.onPageLoad()(FakeRequest())
 
-        running(application) {
-          val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val errorHandler = application.injector.instanceOf[CBCRErrorHandler]
-          val sessionCache = application.injector.instanceOf[CBCSessionCache]
-
-          val authAction = new AuthenticatedIdentifierAction(
-            new FakeFailingAuthConnector(new UnsupportedAffinityGroup),
-            bodyParsers,
-            sessionCache,
-            errorHandler
-          )
-          val controller = new Harness(authAction)
-          val result = controller.onPageLoad()(FakeRequest())
-
-          status(result) mustBe SEE_OTHER
-          redirectLocation(result) mustBe Some("/country-by-country-reporting/unsupportedAffinityGroup")
-        }
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result) mustBe Some("/country-by-country-reporting/unsupportedAffinityGroup")
       }
     }
 
@@ -176,25 +140,17 @@ class AuthActionSpec extends SpecBase {
 
       "must redirect the user to the unauthorised page" in {
 
-        val application = applicationBuilder().build()
+        val authAction = new AuthenticatedIdentifierAction(
+          new FakeFailingAuthConnector(new UnsupportedCredentialRole),
+          bodyParsers,
+          sessionCache,
+          errorHandler
+        )
+        val controller = new Harness(authAction)
+        val result = controller.onPageLoad()(FakeRequest())
 
-        running(application) {
-          val bodyParsers = application.injector.instanceOf[BodyParsers.Default]
-          val errorHandler = application.injector.instanceOf[CBCRErrorHandler]
-          val sessionCache = application.injector.instanceOf[CBCSessionCache]
-
-          val authAction = new AuthenticatedIdentifierAction(
-            new FakeFailingAuthConnector(new UnsupportedCredentialRole),
-            bodyParsers,
-            sessionCache,
-            errorHandler
-          )
-          val controller = new Harness(authAction)
-          val result = controller.onPageLoad()(FakeRequest())
-
-          status(result) mustBe SEE_OTHER
-          redirectLocation(result) mustBe Some("/country-by-country-reporting/no-assistants")
-        }
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result) mustBe Some("/country-by-country-reporting/no-assistants")
       }
     }
   }

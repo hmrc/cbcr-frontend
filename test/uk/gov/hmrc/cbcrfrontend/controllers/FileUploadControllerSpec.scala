@@ -405,7 +405,7 @@ class FileUploadControllerSpec
       val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
       when(fuService.getFile(any(), any())(any(), any())) thenReturn right(evenMoreValidFile)
       when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
-      when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
+      when(schemaValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(new CacheMap("", Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
         Option(AffinityGroup.Organisation))
@@ -427,7 +427,7 @@ class FileUploadControllerSpec
       verify(fuService).getFileMetaData(any(), any())(any(), any())
       verify(cache, atLeastOnce()).save(any())(any(), any(), any())
       verify(businessRulesValidator).validateBusinessRules(any(), any(), any(), any())(any())
-      verify(schemaValidator).validateSchema(any())
+      verify(schemaValidator).validateSchema(any[File]())
     }
 
     "return a 303 when the fileValidate call is successful and schemaValidator returns errors" in {
@@ -441,7 +441,7 @@ class FileUploadControllerSpec
 
       when(fuService.getFile(any(), any())(any(), any())) thenReturn right(evenMoreValidFile)
       when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
-      when(schemaValidator.validateSchema(any())) thenReturn xmlErrorHandler
+      when(schemaValidator.validateSchema(any[File]())) thenReturn xmlErrorHandler
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(new CacheMap("", Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
         Option(AffinityGroup.Organisation))
@@ -462,7 +462,7 @@ class FileUploadControllerSpec
       verify(fuService).getFile(any(), any())(any(), any())
       verify(fuService).getFileMetaData(any(), any())(any(), any())
       verify(cache, atLeastOnce()).save(any())(any(), any(), any())
-      verify(schemaValidator).validateSchema(any())
+      verify(schemaValidator).validateSchema(any[File]())
     }
 
     "return a 303 when the fileValidate call is successful but validateBusinessRules returns errors" in {
@@ -473,7 +473,7 @@ class FileUploadControllerSpec
       val businessRuleErrors = NonEmptyList.of(TestDataError)
       when(fuService.getFile(any(), any())(any(), any())) thenReturn right(evenMoreValidFile)
       when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
-      when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
+      when(schemaValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(new CacheMap("", Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
         Option(AffinityGroup.Organisation))
@@ -495,7 +495,7 @@ class FileUploadControllerSpec
       verify(fuService).getFileMetaData(any(), any())(any(), any())
       verify(cache, atLeastOnce()).save(any())(any(), any(), any())
       verify(businessRulesValidator).validateBusinessRules(any(), any(), any(), any())(any())
-      verify(schemaValidator).validateSchema(any())
+      verify(schemaValidator).validateSchema(any[File]())
     }
 
     "be redirected to an error page" when {

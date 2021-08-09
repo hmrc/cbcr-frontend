@@ -85,7 +85,7 @@ class UploadFormController @Inject()(
       html                   <- Future.successful(views.uploadForm(upscanInitiateResponse, request.affinityGroup))
     } yield html).map(Ok(_))
 
-  def fileUploadProgress(uploadId: UploadId, fileId: String) = identify.async { implicit request =>
+  def fileUploadProgress(uploadId: UploadId, fileId: String): Action[AnyContent] = identify.async { implicit request =>
     cache
       .read[UploadId]
       .subflatMap { e =>
@@ -126,7 +126,7 @@ class UploadFormController @Inject()(
     }
   }
 
-  def handleError(errorCode: String, errorMessage: String) = identify.async { implicit request =>
+  def handleError(errorCode: String, errorMessage: String): Action[AnyContent] = identify.async { implicit request =>
     logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $errorMessage")
     errorCode match {
       case "EntityTooLarge"  => Redirect(fileRoutes.FileUploadController.fileTooLarge)
