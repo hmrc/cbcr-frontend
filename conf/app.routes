@@ -83,6 +83,9 @@ POST          /admin/edit-DIR                                       @uk.gov.hmrc
 POST          /admin/editReportingEntity                            @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.editReportingEntity
 POST          /admin/saveDocRefId                                   @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.adminAddDocRefId
 
+GET           /enhancement-unauthorised                             @uk.gov.hmrc.cbcrfrontend.controllers.CBCEnhancementsController.enhancementUnavailable
+
+
 GET           /unregistered-gg-account-view                         @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.unregisteredGGAccount
 GET           /upscan/choose-file                                   @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.onPageLoad
 GET           /upscan/failed-callback1                              @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.handleError(errorCode: String= "", errorMessage: String="")
