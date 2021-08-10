@@ -14,14 +14,15 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.auth.core.AffinityGroup
+@import uk.gov.hmrc.auth.core.AffinityGroup._
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.cbcrfrontend.views.html.csrf_token
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 
-@this(mainTemplate: MainTemplate)
+@this(mainTemplate: Layout)
 
 @(fileUploadUrl: String, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -37,12 +38,11 @@
             }
     }}
 
-
     <div class="grid-row">
         <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
         <div class="column-full">
-            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display"  class="js-hidden">
-                <h2 id="error-summary-heading">@Messages("start.error.heading")</h2>
+            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display" class="js-hidden">
+                <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
                 <p id="file-input-error-summary" class="form-label-bold"><a id="file-input-error-link" href="#file-input">@Messages("uploadReport.error")</a></p>
             </div>
             <h1>
@@ -60,27 +60,26 @@
                 </div>
                 <div class="form-field-group form-field--submit">
                     @csrf_token()
-                    <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
-                </div>
+                    <p><button class="govuk-button" role="button"  type="submit" id="upload-button"   href="@fileUploadUrl"    >@Messages("uploadReport.uploadButton")</button></p>
+
+@*              <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>*@
+               </div>
             </div>
         </div>
         </form>
     </div>
 
     <script>
-        var form = document.getElementsByTagName('form')[0];
-        var error_summary = document.getElementById('error-summary-display');
-        var title = document.title;
-
-        form.addEventListener("submit", function() {
-            error_summary.className = "flash error-summary error-summary--show";
-
-            document.title = "Error: " + title
-            window.setTimeout(function () {
-                error_summary.focus();
-            }, 0);
-        });
-
+            var form = document.getElementsByTagName('form')[0];
+            var error_summary = document.getElementById('error-summary-display');
+            var title = document.title;
+            form.addEventListener("submit", function() {
+                error_summary.className = "govuk-error-summary";
+                document.title = "Error: " + title
+                window.setTimeout(function () {
+                    error_summary.focus();
+                }, 0);
+            });
     </script>
 
 }
