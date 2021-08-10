@@ -63,7 +63,7 @@
                     <label class="form-label" for="file-input">@Messages("uploadReport.label")</label>
                     <span id="fileName-error-message" class="error-notification" role="alert" >
                     </span>
-                    <input type="file" id="file-input" class="govuk-file-upload" name="fileName" accept=".xml, .XML" required data-msg-required="@Messages("uploadReport.error")">
+                    <input type="file" id="file-input" class="govuk-file-upload" name="file" accept=".xml,application/xml" required data-msg-required="@Messages("uploadReport.error")">
                 </div>
                 <div class="form-field-group form-field--submit">
                     @csrf_token()

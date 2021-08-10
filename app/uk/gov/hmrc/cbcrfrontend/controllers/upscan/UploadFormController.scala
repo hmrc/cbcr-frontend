@@ -64,7 +64,6 @@ class UploadFormController @Inject()(
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
   val assetsLocation = (config.get[String](s"assets.url") |+| config.get[String](s"assets.version"))
   lazy val hostName = config.get[String]("cbcr-frontend.host")
-  lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.UploadFormController.handleError().url}"
 
   private val logger = LoggerFactory.getLogger(getClass)
 
