@@ -21,7 +21,7 @@ import play.api.http.HeaderNames
 import play.api.http.Status.OK
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.controllers.routes
+import uk.gov.hmrc.cbcrfrontend.controllers.upscan.routes
 import uk.gov.hmrc.cbcrfrontend.model.upscan._
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
@@ -38,11 +38,10 @@ class UpscanConnector @Inject()(configuration: FrontendAppConfig, httpClient: Ht
     HeaderNames.CONTENT_TYPE -> "application/json"
   )
 
-  def getUpscanFormData(implicit hc: HeaderCarrier): Future[UpscanInitiateResponse] = {
+  def getUpscanFormData(uploadId: UploadId)(implicit hc: HeaderCarrier): Future[UpscanInitiateResponse] = {
     val callbackUrl = s"$backendUrl/callback"
-    //TODO Upscan successRedirectUrl
-    val successRedirectUrl = configuration.upscanRedirectBase + routes.FileUploadController
-      .fileUploadResponse("test")
+    val successRedirectUrl = configuration.upscanRedirectBase + routes.UploadFormController
+      .fileUploadResponse(uploadId)
       .url
     val errorRedirectUrl = configuration.upscanRedirectBase + "/disclose-cross-border-arrangements/upload/error"
     val body = UpscanInitiateRequest(
@@ -57,8 +56,7 @@ class UpscanConnector @Inject()(configuration: FrontendAppConfig, httpClient: Ht
     }
   }
 
-  def requestUpload(fileReference: Reference)(implicit hc: HeaderCarrier): Future[UploadId] = {
-    val uploadId: UploadId = UploadId.generate
+  def requestUpload(uploadId: UploadId, fileReference: Reference)(implicit hc: HeaderCarrier): Future[UploadId] = {
     val uploadUrl = s"$backendUrl/upscan/upload"
     httpClient.POST[UpscanIdentifiers, HttpResponse](uploadUrl, UpscanIdentifiers(uploadId, fileReference)).map { _ =>
       uploadId
