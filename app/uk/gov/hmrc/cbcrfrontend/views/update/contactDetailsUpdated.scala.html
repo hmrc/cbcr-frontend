@@ -16,30 +16,26 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
 @this(
-        mainTemplate: main_template
+        mainTemplate: Layout
 )
+
 
 @()(implicit request: Request[_], messages: Messages, conf: FrontendAppConfig)
 
 @mainTemplate(Messages("contactDetailsUpdate.title")) {
-    <div class="grid-row">
-        <div class="column-full">
-            <section>
-                <div class="govuk-box-highlight">
-                    <h1>@Messages("contactDetailsUpdate.mainHeading")</h1>
-                </div>
-            </section>
-            <p><a href="#" onclick="window.print()" class="print-link">@Messages("contactDetailsUpdate.printThisButton")</a></p>
-            <h2>@Messages("contactDetailsUpdate.next")</h2>
-            <p>@Messages("contactDetailsUpdate.email")</p>
+
+    <div class="govuk-panel govuk-panel--confirmation">
+        <h1 class="govuk-panel__title">@Messages("contactDetailsUpdate.mainHeading")</h1>
+    </div>
+    <p><a href="#" onclick="window.print()" class="govuk-link">@Messages("contactDetailsUpdate.printThisButton")</a></p>
+
+    <h2 class="govuk-heading-m">@Messages("contactDetailsUpdate.next")</h2>
+    <p class="govuk-body">@Messages("contactDetailsUpdate.email")</p>
 
             <p>
-                <a class="button" href="@routes.StartController.start">@Messages("contactDetailsUpdate.next2")</a>
+                <a class="govuk-button" href="@routes.StartController.start">@Messages("contactDetailsUpdate.next2")</a>
             </p>
-        </div>
-
-    </div>
 }

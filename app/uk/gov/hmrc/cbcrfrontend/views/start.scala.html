@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *@
-
-@import helper._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
 
-@this(mainTemplate: uk.gov.hmrc.cbcrfrontend.views.html.main_template)
+@this(mainTemplate: uk.gov.hmrc.cbcrfrontend.views.html.Layout, formHelper: FormWithCSRF)
 
 @(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -26,40 +25,44 @@
 @mainTemplate(if(isError){"Error: " + Messages("start.title")} else {Messages("start.title")}) {
 
     @if(form.hasErrors) {
-        <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-            <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
-            <p id="radio-error-summary"><a href="#radio-1">@Messages("start.required")</a></p>
+        <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1" data-module="govuk-error-summary">
+            <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list">
+                    <li id="radio-error-summary">
+                        <a href="#radio-1">@Messages("start.required")</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     }
 
-<h1>@Messages("start.mainHeading")</h1>
-@Messages("start.intro")
+<h1 class="govuk-heading-l">@Messages("start.mainHeading")</h1>
+<legend class="govuk-label">@Messages("start.intro")</legend>
 <br/>
-<br/>
 
-@helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.StartController.submit){
+@formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.StartController.submit){
 
-
-
-<div class="form-group @if(isError){form-field-group--error}">
-    @if(isError){ <span class="error-notification">@Messages("start.required")</span> }
-    <fieldset>
-        <div class="multiple-choice">
-            <input id="radio-1" type="radio" name="choice" value="upload">
-            <label for="radio-1">@Messages("start.choice.one")</label>
-        </div>
-        <div class="multiple-choice">
-            <input id="radio-2" type="radio" name="choice" value="editSubscriberInfo">
-            <label for="radio-2">@Messages("start.choice.two")</label>
+<div class="govuk-form-group @if(isError){govuk-form-group--error}">
+    @if(isError){ <span class="govuk-error-message">@Messages("start.required")</span> }
+    <fieldset class="govuk-fieldset">
+        <div class="govuk-radios">
+            <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="radio-1" name="choice" type="radio" value="upload">
+                <label class="govuk-label govuk-radios__label" for="radio-1">
+                @Messages("start.choice.one")
+                </label>
+            </div>
+            <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="radio-2" name="choice" type="radio" value="editSubscriberInfo">
+                <label class="govuk-label govuk-radios__label" for="radio-2">
+                @Messages("start.choice.two")
+                </label>
+            </div>
         </div>
     </fieldset>
 </div>
-
-
-<div class="form-field">
-    <button role="button" class="button" type="submit" id="continue">@Messages("start.button")</button>
-</div>
-@CSRF.formField
+    <button role="button" class="govuk-button" type="submit" id="continue" data-module="govuk-button">@Messages("start.button")</button>
 }
 
 

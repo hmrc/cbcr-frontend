@@ -14,15 +14,15 @@
  * limitations under the License.
  *@
 
-@import helper._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
 @(form:Form[_], cBCId:CBCId)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -37,51 +37,57 @@
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.update.title")} else {Messages("contactInfoSubscriber.update.title")}) {
   @back_link(routes.StartController.start.url)
 
-    <div class="grid-row">
-        <div class="column-full">
             @if(form.hasErrors) {
                 @if(numberOfErrors == 1) {
-                    <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                     @form.errors.map{  error =>
-                        <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
+                        <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
+                        <div class="govuk-error-summary__body">
+                            <ul class="govuk-list govuk-error-summary__list">
                             @if(maybeEmailError.contains("contactInfoSubscriber.emailAddress.error.invalid")) {
-                                <p>@Messages("contactInfoSubscriber.emailAddress.error.invalid.header.l1")</p>
+                                <li>@Messages("contactInfoSubscriber.emailAddress.error.invalid.header.l1")</li>
                             }
                             @if(maybePhoneError.contains("contactInfoSubscriber.phoneNumber.error.invalid")) {
-                                <p>@Messages("contactInfoSubscriber.phoneNumber.error.invalid.header.l1")</p>
+                                <li>@Messages("contactInfoSubscriber.phoneNumber.error.invalid.header.l1")</li>
                             }
-                            <p><strong><a href="#@error.key" id="@{error.key}-error-summary"> @error.messages.map(x => Messages(x))</a></strong></p>
-
+                            <li><a href="#@error.key" id="@{error.key}-error-summary"> @error.messages.map(x => Messages(x))</a></li>
+                            </ul>
+                        </div>
                         }
                     </div>
                 } else {
-                    <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                        <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
-                        @form.errors.map { error =><p><strong><a href="#@error.key" id="@{error.key}-error-summary">
-                            @error.messages.map(x => Messages(x))</a></strong></p>
+                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                        <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
+                        <div class="govuk-error-summary__body">
+                            <ul class="govuk-list govuk-error-summary__list">
+                        @form.errors.map { error =><li><a href="#@error.key" id="@{error.key}-error-summary">
+                            @error.messages.map(x => Messages(x))</a></li>
                         }
+                            </ul>
+                        </div>
                     </div>
                 }
                 <script>document.getElementById("error-summary-display").focus();</script>
             }
-            <h1>
+            <h1 class="govuk-heading-l">
                 @Messages("contactInfoSubscriber.updateHeading")
             </h1>
-            <p>
+            <p class="govuk-body">
                 @Messages("contactInfoSubscriber.cbcId") @cBCId.value
             </p>
-            <div class="form-group">
-            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.saveUpdatedInfoSubscriber){
-                @formFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)
-                @formFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None)
-                @formFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"), form, None)
-                @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None)
-                @CSRF.formField
-                <div class="form-field">
-                    <button role="button" class="button" type="submit" id="continue">@Messages("form.controls.save")</button>
+
+
+            @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.saveUpdatedInfoSubscriber){
+
+                <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
+                <fieldset class="govuk-fieldset">
+                @govukFormFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)
+                @govukFormFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None)
+                @govukFormFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"), form, None)
+                @govukFormFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None)
+                </fieldset>
                 </div>
+
+                <button role="button" class="govuk-button" type="submit" id="continue">@Messages("form.controls.save")</button>
             }
-            </div>
-        </div>
-    </div>
 }
