@@ -16,6 +16,7 @@
 
 package base
 
+import org.mockito.Mockito.reset
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest._
 import org.scalatestplus.mockito.MockitoSugar
@@ -28,11 +29,19 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.actions.{FakeIdentifierAction, IdentifierAction}
+import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.http.HeaderCarrier
 
 trait SpecBase
     extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with TryValues with ScalaFutures
     with IntegrationPatience with MockitoSugar with BeforeAndAfterEach {
+
+  val mockCache: CBCSessionCache = mock[CBCSessionCache]
+
+  override def beforeEach = {
+    super.beforeEach()
+    reset(mock)
+  }
 
   def messages(app: Application): Messages = app.injector.instanceOf[MessagesApi].preferred(FakeRequest())
   def injector: Injector = app.injector
@@ -56,6 +65,7 @@ trait SpecBase
   protected def guiceApplicationBuilder(): GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .overrides(
-        bind[IdentifierAction].to[FakeIdentifierAction]
+        bind[IdentifierAction].to[FakeIdentifierAction],
+        bind[CBCSessionCache].toInstance(mockCache)
       )
 }

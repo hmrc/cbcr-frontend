@@ -20,6 +20,7 @@ import java.io.File
 import com.google.inject.AbstractModule
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import play.api.{Configuration, Environment, Mode}
+import uk.gov.hmrc.cbcrfrontend.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction}
 import uk.gov.hmrc.cbcrfrontend.services.RunMode
 
 class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule {
@@ -27,7 +28,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
   val mode: Mode = environment.mode
   val runModeConfiguration: Configuration = configuration
 
-  override def configure(): Unit =
+  override def configure(): Unit = {
     bind(classOf[XMLValidationSchema]).toInstance {
       val runMode: RunMode = new RunMode(configuration)
       val env = runMode.env
@@ -41,4 +42,6 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
       val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
+    bind(classOf[IdentifierAction]).to(classOf[AuthenticatedIdentifierAction]).asEagerSingleton()
+  }
 }
