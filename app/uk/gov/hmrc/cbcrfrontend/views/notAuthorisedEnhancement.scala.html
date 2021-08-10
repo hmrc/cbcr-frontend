@@ -20,11 +20,9 @@
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("notAuthorised.enhancement.heading")) {
+@mainTemplate(Messages("notAuthorised.enhancement.title")) {
 
-    <div class="grid-row">
-        <div class="column-full">
-            <h1>@Messages("notAuthorised.enhancement.heading")</h1>
-        </div>
+    <div class="govuk-grid-row" style="margin-left: 0.5%">
+            <h1 class="govuk-heading-l">@Messages("notAuthorised.enhancement.heading")</h1>
     </div>
 }
