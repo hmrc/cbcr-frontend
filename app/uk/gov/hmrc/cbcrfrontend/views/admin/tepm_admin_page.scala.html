@@ -14,20 +14,18 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@this(mainTemplate: uk.gov.hmrc.cbcrfrontend.views.html.Layout)
 
-@this(mainTemplate: uk.gov.hmrc.cbcrfrontend.views.html.main_template)
+@()(implicit request: Request[_], messages: Messages)
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@mainTemplate(pageTitle = Messages("")) {
+        <h1 class="govuk-heading-l">@Messages("")</h1>
 
-@mainTemplate(title = Messages("")) {
-        <h1>@Messages("")</h1>
+        <p class="govuk-body"><a class="govuk-button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAllDocRefIdOver200">Get All DRI</a></p>
 
-        <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAllDocRefIdOver200">Get All DRI</a></p>
+        <p class="govuk-body"><a class="govuk-button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAddReportingEntityPage">Get Reporting Entity Data</a></p>
 
-        <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAddReportingEntityPage">Get Reporting Entity Data</a></p>
+        <p class="govuk-body"><a class="govuk-button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAmendDocRefIdPage">Add/Revalidate DRI</a></p>
 
-        <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAmendDocRefIdPage">Add/Revalidate DRI</a></p>
-
-        <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.editReportingEntity">Update Reporting Entity Data</a></p>
+        <p class="govuk-body"><a class="govuk-button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.editReportingEntity">Update Reporting Entity Data</a></p>
     }

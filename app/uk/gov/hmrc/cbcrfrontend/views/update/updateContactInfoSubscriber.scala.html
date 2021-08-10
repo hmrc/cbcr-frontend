@@ -16,15 +16,13 @@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.play.views.html.helpers.FormWithCSRF
 
 @this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(form:Form[_], cBCId:CBCId)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_], cBCId:CBCId)(implicit request: Request[_], messages: Messages)
 
 @firstNameErrors = @{form.error("firstName").isDefined}
 @lastNameErrors = @{form.error("lastName").isDefined}

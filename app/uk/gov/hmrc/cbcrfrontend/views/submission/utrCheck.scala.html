@@ -20,31 +20,33 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
 @this(
-    mainTemplate: main_template
+    mainTemplate: Layout,
+    formHelper: FormWithCSRF
 )
 @(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @error = @{form.error("utr").isDefined}
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("utrCheck.title")}else{Messages("utrCheck.title")}) {
 
-<div class="grid-row">
-    <div class="column-full">
         @if(form.hasErrors) {
-            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                <h2 id="error-summary-heading" class="h2-heading">@Messages("utrCheck.error.header")</h2>
-                @if(form.hasErrors){<p id="utr-error-summary"><strong><a href="#utr">@Messages("utrCheck.error")</a></strong></p>}
+            <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("utrCheck.error.header")</h2>
+                <div class="govuk-error-summary__body">
+                    <ul class="govuk-list govuk-error-summary__list">
+                @if(form.hasErrors){<li id="utr-error-summary"><a href="#utr">@Messages("utrCheck.error")</a></li>}
+                    </ul>
+                </div>
             </div>
             @errorFocus()
         }
-        <h1>@Messages("utrCheck.mainHeading")</h1>
-        @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
-        @CSRF.formField
-        <fieldset>
-            @formFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form, Some(Messages("utrCheck.hint")))
-        </fieldset>
-        <p><button type="submit" class="button" role="button">@Messages("form.controls.continue")</button></p>
+        <h1 class="govuk-heading-l">@Messages("utrCheck.mainHeading")</h1>
+        @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
+            <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
+                <fieldset class="govuk-fieldset">
+            @govukFormFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form, Some(Messages("utrCheck.hint")))
+                </fieldset>
+            </div>
+        <button type="submit" class="govuk-button" role="button">@Messages("form.controls.continue")</button>
         }
-    </div>
-</div>
 
 }
