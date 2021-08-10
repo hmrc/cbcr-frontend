@@ -56,7 +56,7 @@
     </logger>
 
     <logger name="play.core.netty" level="INFO"/>
-
+    <logger name="play" level="INFO"/>
 
     <root level="DEBUG">
         <appender-ref ref="FILE"/>

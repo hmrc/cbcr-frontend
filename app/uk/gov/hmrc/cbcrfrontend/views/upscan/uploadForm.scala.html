@@ -42,7 +42,7 @@
 
 
 <div class="grid-row">
-    <form id ="fileUploadForm"  name = "fpForm" action="{{upscanInitiateResponse.postTarget}}" method="post" enctype="multipart/form-data" class="js-form"  novalidate>
+    <form id ="fileUploadForm"  name = "fpForm" action="@upscanInitiateResponse.postTarget" method="post" enctype="multipart/form-data" class="js-form"  novalidate>
         <div class="column-full">
             <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display"  class="js-hidden">
                 <h2 id="error-summary-heading">@Messages("start.error.heading")</h2>
@@ -51,6 +51,10 @@
             <h1>
                 @Messages("uploadReport.mainHeading")
             </h1>
+
+            @upscanInitiateResponse.formFields.map {case (key, value) =>
+                <input type="hidden" name="@key" value="@value"/>
+            }
 
             <p>@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
             <br aria-hidden="true"/>
