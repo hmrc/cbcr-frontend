@@ -77,26 +77,26 @@ class UploadFormController @Inject()(
   }
 
   private[controllers] def toResponse(
-    form: Form[String])(implicit request: IdentifierRequest[AnyContent], hc: HeaderCarrier): Future[Result] =
+    form: Form[String])(implicit request: IdentifierRequest[AnyContent], hc: HeaderCarrier): Future[Result] = {
+    val uploadId: UploadId = UploadId.generate
     (for {
-      upscanInitiateResponse <- upscanConnector.getUpscanFormData
-      uploadId               <- upscanConnector.requestUpload(upscanInitiateResponse.fileReference)
+      upscanInitiateResponse <- upscanConnector.getUpscanFormData(uploadId)
+      uploadId               <- upscanConnector.requestUpload(uploadId, upscanInitiateResponse.fileReference)
       _                      <- cache.save(uploadId)
       html                   <- Future.successful(views.uploadForm(upscanInitiateResponse, request.affinityGroup))
     } yield html).map(Ok(_))
+  }
 
-  def fileUploadProgress(uploadId: UploadId, fileId: String): Action[AnyContent] = identify.async { implicit request =>
+  def fileUploadProgress(uploadId: UploadId): Action[AnyContent] = identify.async { implicit request =>
     cache
       .read[UploadId]
       .subflatMap { e =>
         if (e != uploadId) {
-          logger.error("BAD_ENVELOPE_ID")
+          logger.error("BAD_UPLOAD_ID")
           cache.remove()
-          Left(
-            UnexpectedState(
-              s"The envelopeId in the cache was: ${e.value} while the progress request was for $uploadId"))
+          Left(UnexpectedState(s"The upload in the cache was: ${e.value} while the progress request was for $uploadId"))
         } else {
-          Right(Ok(views.uploadProgress(uploadId, fileId, hostName, assetsLocation)))
+          Right(Ok(views.uploadProgress(uploadId, hostName, assetsLocation)))
         }
       }
       .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
@@ -124,6 +124,10 @@ class UploadFormController @Inject()(
       case _ =>
         NoContent
     }
+  }
+
+  def fileValidate(uploadId: UploadId) = Action.async { implicit request =>
+    Future.successful(Ok(views.fileUploadResult(None, None, None, None, None, None)))
   }
 
   def handleError(errorCode: String, errorMessage: String): Action[AnyContent] = identify.async { implicit request =>
