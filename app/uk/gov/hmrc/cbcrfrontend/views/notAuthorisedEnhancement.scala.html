@@ -14,18 +14,13 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
 
-@this(
-        mainTemplate: main_template
-)
+@this(mainTemplate: uk.gov.hmrc.cbcrfrontend.views.html.Layout)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("notAuthorised.enhancement.heading"),
-    sessionTimeout=false) {
+@mainTemplate(Messages("notAuthorised.enhancement.heading")) {
 
     <div class="grid-row">
         <div class="column-full">

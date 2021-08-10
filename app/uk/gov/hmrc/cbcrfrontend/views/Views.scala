@@ -53,5 +53,5 @@ class Views @Inject()(
   val addReportingEntityPage: uk.gov.hmrc.cbcrfrontend.views.html.admin.addReportingEntityPage,
   val showReportingEntity: uk.gov.hmrc.cbcrfrontend.views.html.admin.showReportingEntity,
   val adminEditReportingEntityData: uk.gov.hmrc.cbcrfrontend.views.html.admin.adminEditReportingEntityData,
-  val notAuthorizedEnhancement: uk.gov.hmrc.cbcrfrontend.views.html.shared.notAuthorisedEnhancement
+  val notAuthorizedEnhancement: uk.gov.hmrc.cbcrfrontend.views.html.notAuthorisedEnhancement
 )
