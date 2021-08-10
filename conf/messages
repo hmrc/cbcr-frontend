@@ -427,3 +427,6 @@ unregisteredGG.message4=If you need to change the registration details for your 
 unregisteredGG.signOut=sign in using the Government Gateway account you registered with
 
 back = Back
+
+notAuthorised.enhancement.title=You cannot access this URL - Send a country-by-country report - GOV.UK
+notAuthorised.enhancement.heading=You cannot access this URL

@@ -398,6 +398,7 @@ class SharedControllerSpec
       val result = controller.keepSessionAlive(request)
       status(result) shouldBe Status.OK
     }
+
   }
 
   "unsupportedAffinityGroup" should {
