@@ -54,7 +54,7 @@ class FrontendAppConfig @Inject()(
   val cbcrGuidanceRegisterUrl: String = loadConfig("cbcr-guidance-register-url")
   val cbcrOecdGuideUrl: String = loadConfig("cbcr-OECD-guide-url")
 
-  val cbcEnhancementFeature: Boolean = loadConfig("cbcEnhancementFeature").toBoolean
+  val cbcEnhancementFeature: Boolean = loadConfig("features.cbcEnhancementFeature").toBoolean
 
   private def allowlistConfig(key: String): Seq[String] =
     Some(
