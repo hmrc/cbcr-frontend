@@ -41,9 +41,9 @@ class UpscanConnector @Inject()(configuration: FrontendAppConfig, httpClient: Ht
   def getUpscanFormData(uploadId: UploadId)(implicit hc: HeaderCarrier): Future[UpscanInitiateResponse] = {
     val callbackUrl = s"$backendUrl/callback"
     val successRedirectUrl = configuration.upscanRedirectBase + routes.UploadFormController
-      .fileUploadResponse(uploadId)
+      .fileUploadProgress(uploadId)
       .url
-    val errorRedirectUrl = configuration.upscanRedirectBase + "/disclose-cross-border-arrangements/upload/error"
+    val errorRedirectUrl = configuration.upscanRedirectBase + "/country-by-country-reporting/upscan/failed-callback"
     val body = UpscanInitiateRequest(
       callbackUrl,
       successRedirectUrl,
