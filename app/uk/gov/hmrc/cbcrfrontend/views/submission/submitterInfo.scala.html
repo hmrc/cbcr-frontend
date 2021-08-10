@@ -71,7 +71,7 @@
                 @govukFormFieldDisplay(emailErrors, "email", Some(Messages(maybeEmailError)), Messages("submitterInfo.emailAddress"), form)
                 @CSRF.formField
                 <div class="form-field">
-                    <button role="button" class="button" type="submit" id="btn-continue">Continue</button>
+                    <button class="govuk-button" role="button" class="button" type="submit" id="btn-continue">Continue</button>
                 </div>
                 @if(!form.hasErrors) {
                     <script>document.getElementById("@field.getOrElse("fullName")").focus();</script>
