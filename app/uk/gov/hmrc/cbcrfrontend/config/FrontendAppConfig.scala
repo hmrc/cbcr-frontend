@@ -81,8 +81,7 @@ class FrontendAppConfig @Inject()(
   lazy val username = servicesConfig.getString("credentials.username")
   lazy val password = servicesConfig.getString("credentials.password")
 
-  //Upscan enhancement
-  val crossBorderArrangementsUrl: String = servicesConfig.baseUrl("cross-border-arrangements")
+  val cbcrBackendUrl: String = servicesConfig.baseUrl("cbcr")
 
   val upscanInitiateHost: String = servicesConfig.baseUrl("upscan")
   val upscanBucketHost: String = servicesConfig.baseUrl("upscan")

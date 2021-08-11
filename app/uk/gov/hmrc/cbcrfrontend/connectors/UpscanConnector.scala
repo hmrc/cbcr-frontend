@@ -95,8 +95,7 @@ class UpscanConnector @Inject()(configuration: FrontendAppConfig, httpClient: Ht
   }
 
   private[connectors] val upscanInitiatePath: String = "/upscan/v2/initiate"
-  //TODO replace with actual backend end point
-  private val backendUrl = s"${configuration.crossBorderArrangementsUrl}/disclose-cross-border-arrangements"
+  private val backendUrl = s"${configuration.cbcrBackendUrl}/cbcr"
   private val upscanInitiateUrl = s"${configuration.upscanInitiateHost}$upscanInitiatePath"
   private val upscanMaxSize = configuration.upscanMaxFileSize
 }
