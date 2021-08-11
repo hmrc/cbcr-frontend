@@ -17,11 +17,10 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.cbcrfrontend.views.html.MainTemplate
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: MainTemplate)
+@this(mainTemplate: Layout)
 
 @(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 

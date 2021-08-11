@@ -15,13 +15,14 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.cbcrfrontend.views.html.MainTemplate
+@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
 
-@this(mainTemplate: MainTemplate)
+@this(mainTemplate: main_template)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(title = Messages("")) {
+
+@mainTemplate(Messages("")) {
         <h1>@Messages("")</h1>
 
         <p><a class="button" type="submit" href="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.showAllDocRefIdOver200">Get All DRI</a></p>

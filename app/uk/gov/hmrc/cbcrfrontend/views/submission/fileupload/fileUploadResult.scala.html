@@ -22,9 +22,8 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: MainTemplate)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
 @(userType: Option[AffinityGroup], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], reportingRole: Option[ReportingRole])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -37,8 +36,7 @@
 }
 else {
     Messages("fileUploadResult.error.title")
-},
-    sidebarLinks = None) {
+}) {
 
   @back_link(routes.FileUploadController.chooseXMLFile.url)
 

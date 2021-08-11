@@ -17,7 +17,7 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: MainTemplate)
+@this(mainTemplate: Layout)
 
 @(envelopeId: String, fileId: String, hostName: String, assetsLocationPrefix: String)(
 implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
@@ -38,7 +38,7 @@ implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
    <img alt="loading..." src="@assetsLocationPrefix/images/loading.gif" />
    </body>
 
-   <p>@Messages("fileUploadProgress.message")</p>
+   <p class="govuk-body">@Messages("fileUploadProgress.message")</p>
   
 
   </div>

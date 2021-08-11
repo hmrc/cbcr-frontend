@@ -21,7 +21,8 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: MainTemplate)
+@*              // use enterKnownFacts as an example//. crscr thing*@
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
 @(form:Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(
         implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
@@ -46,7 +47,7 @@
             <h1>@Messages("enterCBCId.mainHeading")</h1>
             @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId){
                 <div class="govuk-form-group @if(errors) {govuk-form-group--error}">
-                <fieldset>
+                <fieldset  //use new class>
                     <div class="form-group">
                         @govukFormFieldDisplay(errors,"cbcId",
                             Some(if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){Messages("enterCBCId.error.message.empty.id")} else {Messages("enterCBCId.error.message.invalid.id")}),
@@ -59,6 +60,7 @@
                         }
                     </div>
                 </fieldset>
+@*                    remeove this*@
                 @csrf_token()
 
                 <input class="button" role="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">

@@ -24,7 +24,7 @@
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.auth.core.AffinityGroup
 
-@this(mainTemplate: MainTemplate)
+@this(mainTemplate: Layout)
 
 @(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 

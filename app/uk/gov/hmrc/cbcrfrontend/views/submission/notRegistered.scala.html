@@ -16,14 +16,14 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.cbcrfrontend.views.html.MainTemplate
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
-@this(mainTemplate: MainTemplate)
+@this(mainTemplate: Layout)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("notRegistered.title"),
-    sessionTimeout=false) {
+@mainTemplate(Messages("notRegistered.title")) {
+
 <div class="grid-row">
     <div class="column-full">
         <h1>@Messages("notRegistered.heading")</h1>
