@@ -71,17 +71,23 @@ else {
         @if(!errors) {
                 <table class="govuk-table" id="table-successReport">
                     <caption class="govuk-table__caption govuk-table__caption--m" tabindex="0">@Messages("fileUploadResult.caption")</caption>
+                    <thead class="=govuk-table__head">
+                        <tr class="govuk-table__row">
+                            <th class="govuk-table__header" tabindex="0"></th>
+                            <th class="govuk-table__header" tabindex="0"></th>
+                        </tr>
+                    </thead>
                     <tbody class="govuk-table__body">
                         <tr class="govuk-table__row">
-                            <td class="govuk-table__header" tabindex="0">@Messages("fileUploadResult.fileName")</td>
-                            <td class="govuk-table__header" tabindex="0">@fileName</td>
+                            <td class=govuk-table__cell tabindex="0">@Messages("fileUploadResult.fileName")</td>
+                            <td class=govuk-table__cell tabindex="0">@fileName</td>
                         <tr>
-                            <td class="govuk-table__header" tabindex="0">@Messages("fileUploadResult.fileSize")</td>
-                            <td class="govuk-table__header" tabindex="0">@fileSize KB</td>
+                            <td class=govuk-table__cell tabindex="0">@Messages("fileUploadResult.fileSize")</td>
+                            <td class=govuk-table__cell tabindex="0">@fileSize KB</td>
                         </tr>
                     </tbody>
                 </table>
-            <p>@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
+            <p class="gov-uk">@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
 
             @if(reportingRole == Some(CBC701)){
                 @if(userType == Some(Organisation)){
