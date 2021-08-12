@@ -201,8 +201,8 @@ class FileUploadController @Inject()(
   def fileValidate(envelopeId: String, fileId: String) = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
       case Some(creds) ~ affinity ~ enrolment =>
-        val result = for {
-          file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
+        val result: EitherT[Future, CBCErrors, Result] = for {
+          file_metadata: (File, FileMetadata) <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
           _             <- right(cache.save(file_metadata._2))
           _             <- right(cache.save(FileDetails(envelopeId, fileId)))
           _ <- EitherT.cond[Future](
