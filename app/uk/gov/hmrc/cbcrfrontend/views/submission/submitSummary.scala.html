@@ -38,110 +38,99 @@
         }
     }
 
-    <table class="govuk-table">
-        <caption class="govuk-table__caption govuk-table__caption--l" tabindex="0"> @Messages("submitSummary.mainHeading")</caption>
-
-        <thead class="=govuk-table__head">
-            <tr class="govuk-table__row">
-                <th class="govuk-table__header govuk-!-width-full" tabindex="0">@Messages("submitSummary.companyDetails.heading") </th>
-                <th class="govuk-table__header" tabindex="0"></th>
-                <th class="govuk-table__header" tabindex="0"></th>
-            </tr>
-        </thead>
-
-        <tbody class="govuk-table__body">
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell govuk-!-width-full" tabindex="0">@Messages("submitSummary.companyDetails.cbcId")</td>
-                <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submissionInfo.cbcId</td>
-            </tr>
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell govuk-!-width-full" tabindex="0">@Messages("submitSummary.companyDetails.companyName")</td>
-                <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity</td>
-            </tr>
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell govuk-!-width-full" tabindex="0">@Messages("submitSummary.companyDetails.utr")</td>
-                <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submissionInfo.tin.value</td>
-            </tr>
-        </tbody>
-
-    </table>
-
-    @* Contact details *@
-    <table class="govuk-table">
-        <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-                <th class="govuk-table__header" tabindex="0">@Messages("submitSummary.contactDetails.heading") </h2></th>
-                <th class="govuk-table__header" tabindex="0"></th>
-                <th class="govuk-table__header" tabindex="0"></th>
-            </tr>
-        </thead>
-
-        <tbody class="govuk-table__body">
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.name")</td>
-                <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.fullName</td>
-                <td class="govuk-table__cell" tabindex="0"><a id="change-contact-name" href="@routes.SubmissionController.submitterInfo(Some("fullName"))">@Messages("submitSummary.contactDetails.change") <span class="visuallyhidden"> @Messages("submitSummary.contactDetails.name")</span></a></td>
-            </tr>
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.phone")</td>
-                <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.contactPhone</td>
-                <td class="govuk-table__cell" tabindex="0"><a id="change-contact-phone" href="@routes.SubmissionController.submitterInfo(Some("contactPhone"))">@Messages("submitSummary.contactDetails.change") <span class="visuallyhidden"> @Messages("submitSummary.contactDetails.phone")</span></a></td>
-            </tr>
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.email")</td>
-                <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.email.value</td>
-                <td class="govuk-table__cell" tabindex="0"><a id="change-contact-email" href="@routes.SubmissionController.submitterInfo(Some("email"))">@Messages("submitSummary.contactDetails.change") <span class="visuallyhidden"> @Messages("submitSummary.contactDetails.email")</span></a></td>
-            </tr>
-        </tbody>
-    </table>
-
-    @* Report details *@
-    <table class="govuk-table">
-        <thead class="=govuk-table__head">
-            <tr class="govuk-table__row">
-                <th class="govuk-table__header" tabindex="0">@Messages("submitSummary.reportDetails.heading") </h2></th>
-                <th class="govuk-table__header" tabindex="0"></th>
-                <th class="govuk-table__header" tabindex="0"></th>
-            </tr>
-        </thead>
-
-        <tbody class="govuk-table__body">
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.filename")</td>
-                <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.fileInfo.name</td>
-            </tr>
-
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.fileSize")</td>
-                <td class="govuk-table__cell" tabindex="0">@ModifySize.calculateFileSize(summaryData.submissionMetaData.fileInfo.length)
-                    KB</td>
-            </tr>
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.period")</td>
-                <td class="govuk-table__cell" tabindex="0">@summaryData.xmlInfo.messageSpec.reportingPeriod</td>
-            </tr>
-            <tr class="govuk-table__row">
-                <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.timestamp")</td>
-
-                @defining(if(summaryData.doesCreationTimeStampHaveMillis) {
-                    "yyyy-MM-dd HH:mm:ss.SSS"
-                } else {
-                    "yyyy-MM-dd HH:mm:ss"
-                }) { formatToUse =>
-                    <td class="govuk-table__cell" tabindex="0">@summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern(formatToUse))</td>
-                }
-                
-
-            </tr>
-        </tbody>
-    </table>
-    @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm) {
-        <div>
-            <p class="govuk-body">@Messages("submitSummary.declaration.text")<p>
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <table class="govuk-table">
+                @* Company or partnership details *@
+                <caption class="govuk-table__caption govuk-table__caption--l" tabindex="0"> @Messages("submitSummary.mainHeading")</caption>
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                        <th colspan="2" class="govuk-table__header" tabindex="0">@Messages("submitSummary.companyDetails.heading") </th>
+                    </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.companyDetails.cbcId")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submissionInfo.cbcId</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.companyDetails.companyName")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.companyDetails.utr")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submissionInfo.tin.value</td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <table class="govuk-table">
+                @* Contact details *@
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                        <th colspan="3" class="govuk-table__header" tabindex="0">@Messages("submitSummary.contactDetails.heading") </h2></th>
+                    </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.name")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.fullName</td>
+                        <td class="govuk-table__cell" tabindex="0"><a class="govuk-link" id="change-contact-name" href="@routes.SubmissionController.submitterInfo(Some("fullName"))">@Messages("submitSummary.contactDetails.change") <span class="govuk-visually-hidden"> @Messages("submitSummary.contactDetails.name")</span></a></td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.phone")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.contactPhone</td>
+                        <td class="govuk-table__cell" tabindex="0"><a class="govuk-link" id="change-contact-phone" href="@routes.SubmissionController.submitterInfo(Some("contactPhone"))">@Messages("submitSummary.contactDetails.change") <span class="govuk-visually-hidden"> @Messages("submitSummary.contactDetails.phone")</span></a></td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.email")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.email.value</td>
+                        <td class="govuk-table__cell" tabindex="0"><a class="govuk-link" id="change-contact-email" href="@routes.SubmissionController.submitterInfo(Some("email"))">@Messages("submitSummary.contactDetails.change") <span class="govuk-visually-hidden"> @Messages("submitSummary.contactDetails.email")</span></a></td>
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            @* Report details *@
+            <table class="govuk-table">
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                        <th colspan="2" class="govuk-table__header" tabindex="0">@Messages("submitSummary.reportDetails.heading") </h2></th>
+                    </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.filename")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.fileInfo.name</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.fileSize")</td>
+                        <td class="govuk-table__cell" tabindex="0">@ModifySize.calculateFileSize(summaryData.submissionMetaData.fileInfo.length) KB</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.period")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.xmlInfo.messageSpec.reportingPeriod</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.timestamp")</td>
+                        @defining(if(summaryData.doesCreationTimeStampHaveMillis) {
+                            "yyyy-MM-dd HH:mm:ss.SSS"
+                        } else {
+                            "yyyy-MM-dd HH:mm:ss"
+                        }) { formatToUse =>
+                            <td class="govuk-table__cell" tabindex="0">@summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern(formatToUse))</td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+            @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm) {
+                <div>
+                    <p class="govuk-body">@Messages("submitSummary.declaration.text")<p>
+                </div>
+                <p>
+                    <button type="submit" class="govuk-button" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
+                </p>
+                <script>document.getElementById("change-contact-details").focus();</script>
+            }
         </div>
-        <p>
-            <button type="submit" class="govuk-button" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
-        </p>
-        <script>document.getElementById("change-contact-details").focus();</script>
-    }
+    </div>
 }
