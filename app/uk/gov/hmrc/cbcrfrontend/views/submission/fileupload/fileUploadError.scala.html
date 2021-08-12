@@ -17,11 +17,10 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
-@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
 
 @(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -31,12 +30,12 @@
 
 <div class="grid-row">
     <div class="column-full">
-        <h1>@Messages("fileUploadResult.error")</h1>
+        <h1 class="govuk-heading-l">@Messages("fileUploadResult.error")</h1>
             @defining("fileUploadResult.error." + errorType.toString) { key =>
-                <p>@Messages(key)</p>
+                <p class="govuk-body">@Messages(key)</p>
             }
 
-        <a class="button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@messages("form.controls.finished")</a>
+        <a class="govuk-button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@messages("form.controls.finished")</a>
     </div>
 </div>
 }

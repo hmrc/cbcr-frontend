@@ -16,24 +16,22 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
-@this(
-        mainTemplate: main_template
-)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("notRegistered.title"),
-    sessionTimeout=false) {
-<div class="grid-row">
-    <div class="column-full">
-        <h1>@Messages("notRegistered.heading")</h1>
+@mainTemplate(Messages("notRegistered.title")) {
 
-            <p>@Messages("notRegistered.message.start") <a href="@routes.SharedController.verifyKnownFactsOrganisation">@messages("notRegistered.message.link")</a>
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-l">@Messages("notRegistered.heading")</h1>
+
+            <p class="govuk-body">@Messages("notRegistered.message.start") <a href="@routes.SharedController.verifyKnownFactsOrganisation">@messages("notRegistered.message.link")</a>
             @messages("notRegistered.message.end")</p>
 
-        <a class="button" role="button" href="@routes.SharedController.signOut">@Messages("form.controls.finished")</a>
+        <a class="govuk-button" role="button" href="@routes.SharedController.signOut">@Messages("form.controls.finished")</a>
     </div>
 </div>
 

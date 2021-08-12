@@ -1,127 +1,134 @@
 @*
- * Copyright 2021 HM Revenue & Customs
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *@
-
+* Copyright 2021 HM Revenue & Customs
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*@
 @import java.time.format.DateTimeFormatter
 
-@import helper._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.cbcrfrontend.views.html.main_template
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.auth.core.AffinityGroup
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.cbcrfrontend.util.ModifySize
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-
-@(summaryData: SummaryData, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(summaryData: SummaryData, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 
 @mainTemplate(Messages("submitSummary.title")) {
-    @{userType match {
-        case Some(Organisation) => back_link(routes.SharedController.enterCBCId.url)
-        case _ => back_link(routes.SharedController.knownFactsMatch.url)
-    }}
+    @{
+        userType match {
+            case Some(Organisation) => back_link(routes.SharedController.enterCBCId.url)
+            case _ => back_link(routes.SharedController.knownFactsMatch.url)
+        }
+    }
 
-    <div class="grid-row">
-        <div class="column-full">
-            <h1>
-            @Messages("submitSummary.mainHeading")
-            </h1>
-
-            <div class="tabular-data__entry divider--bottom">
-                <h2 class="tabular-data__heading tabular-data__heading--label">@Messages("submitSummary.companyDetails.heading")</h2>
-                <div class="tabular-data__data-1"></div>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.companyDetails.cbcId")</span>
-                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submissionInfo.cbcId</div>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.companyDetails.companyName")</span>
-                <div class="tabular-data__data-0" style="margin-left:6.5%">@summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity</div>
-
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.companyDetails.utr")</span>
-                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submissionInfo.tin.value</div>
-            </div>
+    <div class="govuk-grid-row">
+        <div class="govuk-grid-column-full">
+            <table class="govuk-table">
+                @* Company or partnership details *@
+                <caption class="govuk-table__caption govuk-table__caption--l" tabindex="0"> @Messages("submitSummary.mainHeading")</caption>
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                        <th colspan="2" class="govuk-table__header" tabindex="0">@Messages("submitSummary.companyDetails.heading") </th>
+                    </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.companyDetails.cbcId")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submissionInfo.cbcId</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.companyDetails.companyName")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submissionInfo.ultimateParentEntity.ultimateParentEntity</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.companyDetails.utr")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submissionInfo.tin.value</td>
+                    </tr>
+                </tbody>
+            </table>
             <br>
-            <div class="tabular-data__entry divider--bottom">
-                <h2 class="tabular-data__heading tabular-data__heading--label">@Messages("submitSummary.contactDetails.heading")</h2>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.name")</span>
-                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submitterInfo.fullName</div>
-                <a class="tabular-data__data-2" id="change-contact-name" href="@routes.SubmissionController.submitterInfo(Some("fullName"))">@Messages("submitSummary.contactDetails.change")<span class="visuallyhidden"> @Messages("submitSummary.contactDetails.name")</span></a>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.phone")</span>
-                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submitterInfo.contactPhone</div>
-                <a class="tabular-data__data-2" id="change-contact-phone" href="@routes.SubmissionController.submitterInfo(Some("contactPhone"))">@Messages("submitSummary.contactDetails.change")<span class="visuallyhidden"> @Messages("submitSummary.contactDetails.phone")</span></a>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.contactDetails.email")</span>
-                <div class="tabular-data__data-1">@summaryData.submissionMetaData.submitterInfo.email.value</div>
-                <a class="tabular-data__data-2" id="change-contact-email" href="@routes.SubmissionController.submitterInfo(Some("email"))">@Messages("submitSummary.contactDetails.change")<span class="visuallyhidden"> @Messages("submitSummary.contactDetails.email")</span></a>
-            </div>
+            <table class="govuk-table">
+                @* Contact details *@
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                        <th colspan="3" class="govuk-table__header" tabindex="0">@Messages("submitSummary.contactDetails.heading") </h2></th>
+                    </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.name")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.fullName</td>
+                        <td class="govuk-table__cell" tabindex="0"><a class="govuk-link" id="change-contact-name" href="@routes.SubmissionController.submitterInfo(Some("fullName"))">@Messages("submitSummary.contactDetails.change") <span class="govuk-visually-hidden"> @Messages("submitSummary.contactDetails.name")</span></a></td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.phone")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.contactPhone</td>
+                        <td class="govuk-table__cell" tabindex="0"><a class="govuk-link" id="change-contact-phone" href="@routes.SubmissionController.submitterInfo(Some("contactPhone"))">@Messages("submitSummary.contactDetails.change") <span class="govuk-visually-hidden"> @Messages("submitSummary.contactDetails.phone")</span></a></td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.email")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.email.value</td>
+                        <td class="govuk-table__cell" tabindex="0"><a class="govuk-link" id="change-contact-email" href="@routes.SubmissionController.submitterInfo(Some("email"))">@Messages("submitSummary.contactDetails.change") <span class="govuk-visually-hidden"> @Messages("submitSummary.contactDetails.email")</span></a></td>
+                    </tr>
+                </tbody>
+            </table>
             <br>
-
-            <div class="tabular-data__entry divider--bottom">
-                <h2 class="tabular-data__heading tabular-data__heading--label">@Messages("submitSummary.reportDetails.heading")</h2>
-                <div class="tabular-data__data-1"></div>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.filename")</span>
-                <div style="word-break: break-all; word-wrap: break-word;" class="tabular-data__data-1">@summaryData.submissionMetaData.fileInfo.name</div>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.fileSize")</span>
-                <div class="tabular-data__data-1">@ModifySize.calculateFileSize(summaryData.submissionMetaData.fileInfo.length) KB</div>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.period")</span>
-                <div class="tabular-data__data-1">@summaryData.xmlInfo.messageSpec.reportingPeriod</div>
-            </div>
-            <div class="tabular-data__entry divider--bottom">
-                <span class="tabular-data__heading">@Messages("submitSummary.reportDetails.timestamp")</span>
-                <div class="tabular-data__data-1">
-                    @if(summaryData.doesCreationTimeStampHaveMillis) {
-                        @summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
-                    } else {
-                        @summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                    }
-                </div>
-            </div>
-            <br>
-
-
-            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm) {
-                @CSRF.formField
-                <div class="form-group">
-                    <p>@Messages("submitSummary.declaration.text")<p>
+            @* Report details *@
+            <table class="govuk-table">
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                        <th colspan="2" class="govuk-table__header" tabindex="0">@Messages("submitSummary.reportDetails.heading") </h2></th>
+                    </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.filename")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.fileInfo.name</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.fileSize")</td>
+                        <td class="govuk-table__cell" tabindex="0">@ModifySize.calculateFileSize(summaryData.submissionMetaData.fileInfo.length) KB</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.period")</td>
+                        <td class="govuk-table__cell" tabindex="0">@summaryData.xmlInfo.messageSpec.reportingPeriod</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.timestamp")</td>
+                        @defining(if(summaryData.doesCreationTimeStampHaveMillis) {
+                            "yyyy-MM-dd HH:mm:ss.SSS"
+                        } else {
+                            "yyyy-MM-dd HH:mm:ss"
+                        }) { formatToUse =>
+                            <td class="govuk-table__cell" tabindex="0">@summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern(formatToUse))</td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+            @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm) {
+                <div>
+                    <p class="govuk-body">@Messages("submitSummary.declaration.text")<p>
                 </div>
                 <p>
-                    <button type="submit" class="button" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
+                    <button type="submit" class="govuk-button" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
                 </p>
-                <script>document.getElementById("change-contact-details").focus();</script>
             }
-
         </div>
     </div>
 }

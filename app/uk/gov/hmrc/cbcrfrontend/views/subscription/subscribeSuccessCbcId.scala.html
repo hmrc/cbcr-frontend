@@ -23,18 +23,19 @@
 @(cbcId:CBCId, companyName:Option[String])(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(Messages("subscribeSuccessCbcId.title")) {
-                <div class="govuk-panel govuk-panel--confirmation">
-                    <h1 class="govuk-panel__title">@Messages("subscribeSuccessCbcId.mainHeading") @companyName</h1>
-                    <div class="govuk-panel__body">
-                    @Messages("subscribeSuccessCbcId.subHeading")<br><strong>@cbcId.value</strong>
-                    </div>
-                </div>
+    <div class="govuk-panel govuk-panel--confirmation">
+        <h1 class="govuk-panel__title">@Messages("subscribeSuccessCbcId.mainHeading") @companyName</h1>
+        <div class="govuk-panel__body">
+            @Messages("subscribeSuccessCbcId.subHeading") <br>
+            <strong>@cbcId.value</strong>
+        </div>
+    </div>
 
-            <p><a href="#" onclick="window.print()" class="govuk-link">@Messages("subscribeSuccessCbcId.printThisButton")</a></p>
+    <p><a href="#" onclick="window.print()" class="govuk-link">@Messages("subscribeSuccessCbcId.printThisButton")</a></p>
 
-            <h2 class="govuk-heading-m">@Messages("subscribeSuccessCbcId.next")</h2>
-            <p class="govuk-body">@Messages("subscribeSuccessCbcId.email")</p>
-            <p class="govuk-body">@Messages("subscribeSuccessCbcId.next2") <a class="govuk-link" href="@routes.SharedController.signOutSurvey">@messages("subscribeSuccessCbcId.nextLink")</a>
-                @Messages("subscribeSuccessCbcId.next3") <a class="govuk-link" href="@routes.FileUploadController.chooseXMLFile">@messages("subscribeSuccessCbcId.nextLink2")</a>
-            </p>
+    <h2 class="govuk-heading-m">@Messages("subscribeSuccessCbcId.next")</h2>
+    <p class="govuk-body">@Messages("subscribeSuccessCbcId.email")</p>
+    <p class="govuk-body">@Messages("subscribeSuccessCbcId.next2") <a class="govuk-link" href="@routes.SharedController.signOutSurvey">@messages("subscribeSuccessCbcId.nextLink")</a>
+        @Messages("subscribeSuccessCbcId.next3") <a class="govuk-link" href="@routes.FileUploadController.chooseXMLFile">@messages("subscribeSuccessCbcId.nextLink2")</a>
+    </p>
 }
