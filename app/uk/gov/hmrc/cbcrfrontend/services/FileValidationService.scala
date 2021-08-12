@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.services
 import cats.data.{EitherT, NonEmptyList}
 import cats.instances.all._
-import cats.syntax.all._
 import play.api.i18n.Messages
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup
@@ -25,11 +24,9 @@ import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.actions.IdentifierAction
-import uk.gov.hmrc.cbcrfrontend.controllers.routes
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadId, UploadSessionDetails, UploadedSuccessfully}
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.util.ModifySize.calculateFileSize
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadId, UploadSessionDetails, UploadedSuccessfully}
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.cbcrfrontend.{CBCRErrorHandler, sha256Hash}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -40,7 +37,6 @@ import java.io.File
 import java.time.{Duration, LocalDateTime}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
 class FileValidationService @Inject()(
@@ -59,30 +55,34 @@ class FileValidationService @Inject()(
   val config: Configuration,
   feConfig: FrontendAppConfig) {
 
-
-  case class FileValidationSuccess(userType: Option[AffinityGroup], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], reportingRole: Option[ReportingRole])
+  case class FileValidationSuccess(
+    userType: Option[AffinityGroup],
+    fileName: Option[String],
+    fileSize: Option[BigDecimal],
+    schemaErrors: Option[Int],
+    busErrors: Option[Int],
+    reportingRole: Option[ReportingRole])
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  def fileValidate(creds: Credentials, affinity: Option[AffinityGroup], enrolment: Option[CBCEnrolment]):
-  EitherT[Future, CBCErrors, FileValidationSuccess] = { implicit request =>
+  def fileValidate(creds: Credentials, affinity: Option[AffinityGroup], enrolment: Option[CBCEnrolment])(
+    implicit hc: HeaderCarrier): EitherT[Future, CBCErrors, FileValidationSuccess] = {
 
     val fileDtls: Future[(String, String, UploadId)] = for {
-      uploadId <- getUploadId()
+      uploadId       <- getUploadId()
       uploadSessions <- upscanConnector.getUploadDetails(uploadId)
       (fileName, upScanUrl) = getDownloadUrl(uploadSessions)
     } yield (fileName, upScanUrl, uploadId)
 
-
-    val result = for {
-      (fileName, upScanUrl, uploadId) <-  EitherT.right[Future, CBCErrors, (String, String, UploadId)](fileDtls)
-      file <- fileUploadService.getFileUrl( uploadId, upScanUrl)
+    for {
+      file_meta <- EitherT.right[Future, CBCErrors, (String, String, UploadId)](fileDtls)
+      file      <- fileUploadService.getFileUrl(file_meta._3, file_meta._2)
       schemaErrors = schemaValidator.validateSchema(file)
       xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
-      schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
-      _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
-      result <- validateBusinessRules(file, fileName, enrolment, affinity)
-      businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
+      //   schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
+      _      <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
+      result <- validateBusinessRules(file, file_meta._1, enrolment, affinity)
+      //     businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
 //      length = calculateFileSize(file_metadata._2)
 //      _ <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
 //          else if (result.isLeft) auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
@@ -90,47 +90,29 @@ class FileValidationService @Inject()(
 //      _ = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
     } yield
       FileValidationSuccess(
-          affinity,
-          Some(fileName),
-          Some(BigDecimal.valueOf(0l)),
-          schemaSize,
-          businessSize,
-          result.map(_.reportingEntity.reportingRole).toOption)
-
-    result
-      .leftMap {
-        case FatalSchemaErrors(size) =>
-          Ok(views.fileUploadResult(None, None, None, size, None, None))
-        case InvalidFileType(_) =>
-          Redirect(routes.FileUploadController.fileInvalid)
-        case e: CBCErrors =>
-          logger.error(e.toString)
-          Redirect(routes.SharedController.technicalDifficulties)
-      }
-      .merge
-      .recover {
-        case NonFatal(e) =>
-          logger.error(e.getMessage, e)
-          Redirect(routes.SharedController.technicalDifficulties)
-      }
-
+        affinity,
+        Some(file_meta._1),
+        Some(BigDecimal.valueOf(0l)),
+        Some(1),
+        Some(1),
+        result.map(_.reportingEntity.reportingRole).toOption)
   }
 
   def validateBusinessRules(
-                             xmlFile: File,
-                             fileName: String,
-                             enrolment: Option[CBCEnrolment],
-                             affinityGroup: Option[AffinityGroup])(
-                             implicit hc: HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors], CompleteXMLInfo]] = {
+    xmlFile: File,
+    fileName: String,
+    enrolment: Option[CBCEnrolment],
+    affinityGroup: Option[AffinityGroup])(
+    implicit hc: HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors], CompleteXMLInfo]] = {
     val startValidation = LocalDateTime.now()
 
     val rawXmlInfo = xmlExtractor.extract(xmlFile)
 
     val result = for {
       xmlInfo <- EitherT(
-        businessRuleValidator
-          .validateBusinessRules(rawXmlInfo, fileName = fileName, enrolment, affinityGroup)
-          .map(_.toEither))
+                  businessRuleValidator
+                    .validateBusinessRules(rawXmlInfo, fileName = fileName, enrolment, affinityGroup)
+                    .map(_.toEither))
       completeXI <- EitherT(businessRuleValidator.recoverReportingEntity(xmlInfo).map(_.toEither))
     } yield completeXI
 
@@ -138,11 +120,11 @@ class FileValidationService @Inject()(
       case Failure(_) =>
         val endValidation = LocalDateTime.now()
         logger.info(
-          s"File validation failed for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
+          s"File validation failed for file in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
       case Success(_) =>
         val endValidation = LocalDateTime.now()
         logger.info(
-          s"File validation succeeded for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
+          s"File validation succeeded for file in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
 
     }
 
@@ -154,7 +136,6 @@ class FileValidationService @Inject()(
         )
         .flatten)
   }
-
 
   private def getErrorFileSize(e: List[ValidationErrors])(implicit messages: Messages): Int = {
     val f = fileUploadService.errorsToFile(e, "")
