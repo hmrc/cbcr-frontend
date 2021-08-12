@@ -31,8 +31,8 @@
 
 @fullNameErrors = @{form.error("fullName").isDefined}
 
-@maybePhoneError =  @{form.error("contactPhone").map(_.message).getOrElse("")}
-@maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
+@maybePhoneError = @{form.error("contactPhone").map(_.message).getOrElse("")}
+@maybeEmailError = @{form.error("email").map(_.message).getOrElse("")}
 
 @contactPhoneErrors = @{form.error("contactPhone").isDefined}
 @emailErrors = @{form.error("email").isDefined}
@@ -61,16 +61,13 @@
             </div>
     @errorFocus()
 }
-<h1>
-    @Messages("submitterInfo.mainHeading")
-</h1>
+    <h1 class="govuk-heading-l">@Messages("submitterInfo.mainHeading")</h1>
     @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo) {
         <div class="govuk-form-group @if(hasErrors) {govuk-form-group--error}">
             <fieldset class="govuk-fieldset">
                 @govukFormFieldDisplay(fullNameErrors, "fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
                 @govukFormFieldDisplay(contactPhoneErrors, "contactPhone", Some(Messages(maybePhoneError)), Messages("submitterInfo.phoneNumber"), form, Some(Messages("submitterInfo.phoneNumber.hint")))
                 @govukFormFieldDisplay(emailErrors, "email", Some(Messages(maybeEmailError)), Messages("submitterInfo.emailAddress"), form)
-                @CSRF.formField
                 <div class="form-field">
                     <button class="govuk-button" role="button" class="button" type="submit" id="btn-continue">Continue</button>
                 </div>
