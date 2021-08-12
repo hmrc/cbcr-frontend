@@ -80,17 +80,17 @@
             <tr class="govuk-table__row">
                 <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.name")</td>
                 <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.fullName</td>
-                <td class="govuk-table__cell" tabindex="0" href="@routes.SubmissionController.submitterInfo(Some("fullName"))">@Messages("submitSummary.contactDetails.change") <span class="visuallyhidden"> @Messages("submitSummary.contactDetails.name")</span></td>
+                <td class="govuk-table__cell" tabindex="0"><a id="change-contact-name" href="@routes.SubmissionController.submitterInfo(Some("fullName"))">@Messages("submitSummary.contactDetails.change") <span class="visuallyhidden"> @Messages("submitSummary.contactDetails.name")</span></a></td>
             </tr>
             <tr class="govuk-table__row">
                 <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.phone")</td>
                 <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.contactPhone</td>
-                <td class="govuk-table__cell" tabindex="0" href="@routes.SubmissionController.submitterInfo(Some("contactPhone"))">@Messages("submitSummary.contactDetails.change") <span class="visuallyhidden"> @Messages("submitSummary.contactDetails.phone")</span></td>
+                <td class="govuk-table__cell" tabindex="0"><a id="change-contact-phone" href="@routes.SubmissionController.submitterInfo(Some("contactPhone"))">@Messages("submitSummary.contactDetails.change") <span class="visuallyhidden"> @Messages("submitSummary.contactDetails.phone")</span></a></td>
             </tr>
             <tr class="govuk-table__row">
                 <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.contactDetails.email")</td>
                 <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.submitterInfo.email.value</td>
-                <td class="govuk-table__cell" tabindex="0" href="@routes.SubmissionController.submitterInfo(Some("email"))">@Messages("submitSummary.contactDetails.change") <span class="visuallyhidden"> @Messages("submitSummary.contactDetails.email")</span></td>
+                <td class="govuk-table__cell" tabindex="0"><a id="change-contact-email" href="@routes.SubmissionController.submitterInfo(Some("email"))">@Messages("submitSummary.contactDetails.change") <span class="visuallyhidden"> @Messages("submitSummary.contactDetails.email")</span></a></td>
             </tr>
         </tbody>
     </table>
