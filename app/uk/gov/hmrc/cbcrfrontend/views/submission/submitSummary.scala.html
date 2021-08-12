@@ -136,8 +136,8 @@
         </tbody>
     </table>
     @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.confirm) {
-        <div class="form-group">
-            <p>@Messages("submitSummary.declaration.text")<p>
+        <div>
+            <p class="govuk-body">@Messages("submitSummary.declaration.text")<p>
         </div>
         <p>
             <button type="submit" class="govuk-button" role="button" id="btn-submitSummary">@Messages("submitSummary.submit")</button>
