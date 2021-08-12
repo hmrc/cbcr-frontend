@@ -42,7 +42,7 @@ else {
 
     <div>
         @if(!errors) {
-            <h1>@Messages("fileUploadResult.mainHeading.ok")</h1>
+            <h1 class="govuk-heading-l" >@Messages("fileUploadResult.mainHeading.ok")</h1>
         } else {
             @if(schemaErrors.isDefined && busErrors.isDefined) {
                 <h1>@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
@@ -69,37 +69,32 @@ else {
             <p><a href="@config.cbcrOecdGuideUrl">@Messages("fileUploadResult.error.oecdUrl")</a> @Messages("fileUploadResult.error.oecdInfo")</p>
         }
         @if(!errors) {
-            <div>
-                <br>
-                <table class="table--top-border" id="table-successReport">
-                    <caption tabindex="0">@Messages("fileUploadResult.caption")</caption>
-                    <tbody>
+                <table class="govuk-table" id="table-successReport">
+                    <caption class="govuk-table__caption govuk-table__caption--m" tabindex="0">@Messages("fileUploadResult.caption")</caption>
+                    <tbody class="govuk-table__body">
+                        <tr class="govuk-table__row">
+                            <td class="govuk-table__header" tabindex="0">@Messages("fileUploadResult.fileName")</td>
+                            <td class="govuk-table__header" tabindex="0">@fileName</td>
                         <tr>
-                            <td tabindex="0">@Messages("fileUploadResult.fileName")</td>
-                            <td tabindex="0">@fileName</td>
-                        </tr>
-                        <tr>
-                            <td tabindex="0">@Messages("fileUploadResult.fileSize")</td>
-                            <td tabindex="0">@fileSize KB</td>
+                            <td class="govuk-table__header" tabindex="0">@Messages("fileUploadResult.fileSize")</td>
+                            <td class="govuk-table__header" tabindex="0">@fileSize KB</td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
-            <p></p>
             <p>@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
 
             @if(reportingRole == Some(CBC701)){
                 @if(userType == Some(Organisation)){
-                    <p><a class="button" role="button" href="@routes.SubmissionController.submitterInfo()" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.submitterInfo()" id="btn-continue">@Messages("form.controls.continue")</a></p>
                 } else {
-                    <p><a class="button" role="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
                 }
             } else {
-                <p><a class="button" role="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
             }
         } else {
             @errorFocus()
-            <a class="button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@Messages("form.controls.finished")</a>
+            <a type="submit" class="govuk-button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@Messages("form.controls.finished")</a>
         }
     </div>
 }
