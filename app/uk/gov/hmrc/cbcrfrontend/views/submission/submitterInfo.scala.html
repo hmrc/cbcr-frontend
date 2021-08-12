@@ -24,7 +24,8 @@
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.auth.core.AffinityGroup
 
-@this(mainTemplate: Layout)
+@* Ian does *@
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
 @(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -63,7 +64,7 @@
 <h1>
     @Messages("submitterInfo.mainHeading")
 </h1>
-    @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo) {
+    @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo) {
         <div class="govuk-form-group @if(hasErrors) {govuk-form-group--error}">
             <fieldset class="govuk-fieldset">
                 @govukFormFieldDisplay(fullNameErrors, "fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
