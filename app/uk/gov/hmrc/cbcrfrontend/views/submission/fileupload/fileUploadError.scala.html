@@ -14,7 +14,6 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
@@ -22,7 +21,7 @@
 
 @this(mainTemplate: Layout)
 
-@(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(Messages("fileUploadResult.error.title")) {
 

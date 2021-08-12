@@ -1,6 +1,5 @@
 # Add all the application routes to the app.routes file
-->         /country-by-country-reporting app.Routes
-->         /                       health.Routes
-->     	   /template                     template.Routes
+->         /country-by-country-reporting        app.Routes
+->         /                                    health.Routes
 
-GET        /admin/metrics             @com.kenshoo.play.metrics.MetricsController.metrics
+GET        /admin/metrics                       @com.kenshoo.play.metrics.MetricsController.metrics

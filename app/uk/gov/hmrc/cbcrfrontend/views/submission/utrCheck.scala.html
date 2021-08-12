@@ -14,16 +14,14 @@
  * limitations under the License.
  *@
 
-@import helper._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
 @this(
     mainTemplate: Layout,
     formHelper: FormWithCSRF
 )
-@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_])(implicit request: Request[_], messages: Messages)
 
 @error = @{form.error("utr").isDefined}
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("utrCheck.title")}else{Messages("utrCheck.title")}) {

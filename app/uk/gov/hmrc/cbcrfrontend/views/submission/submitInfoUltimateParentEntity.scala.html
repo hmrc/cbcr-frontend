@@ -16,14 +16,13 @@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
 @this(
     mainTemplate: Layout,
     formHelper: FormWithCSRF
 )
 
-@(form:Form[_])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_])(implicit request: Request[_], messages: Messages)
 
 @ultimateParentEntityErrors = @{form.error("ultimateParentEntity").isDefined}
 

@@ -15,9 +15,7 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import helper._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.FieldName
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
@@ -26,7 +24,7 @@
 
 @this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
 

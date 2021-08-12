@@ -20,7 +20,7 @@
 
 @this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(Messages("submitSuccessReceipt.submissionDateLabel.title")) {
     <div class="govuk-panel govuk-panel--confirmation">

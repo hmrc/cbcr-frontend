@@ -14,7 +14,6 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
@@ -23,7 +22,7 @@
 )
 
 
-@()(implicit request: Request[_], messages: Messages, conf: FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(Messages("contactDetailsUpdate.title")) {
 

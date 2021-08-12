@@ -16,13 +16,12 @@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(form :Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form :Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(implicit request: Request[_], messages: Messages)
 
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 
