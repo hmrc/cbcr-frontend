@@ -35,8 +35,7 @@
             <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
             <div class="govuk-error-summary__body">
                 <ul class="govuk-list govuk-error-summary__list">
-                    <li id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</li>
-                    <li id="cbcId-error-summary"><a href="#cbcId"> @if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty) {@Messages("enterCBCId.error.message.empty.id")} else {
+                      <li id="cbcId-error-summary"><a href="#cbcId"> @if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty) {@Messages("enterCBCId.error.message.empty.id")} else {
                         @Messages("enterCBCId.error.message.invalid.id")
                     }</a></li>
                 </ul>
@@ -57,8 +56,9 @@
                             form,
                             Some(Messages("enterCBCId.formHint")))
 
-                        @if(errors){
-                            <p>@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" class="">@Messages("enterCBCId.error.message.link")</a></p>
+                        @if(errors) {
+                            <br>
+                            <p class="govuk-body">@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" class="govuk-link">@Messages("enterCBCId.error.message.link")</a></p>
                         }
                     </fieldset>
                 </div>
