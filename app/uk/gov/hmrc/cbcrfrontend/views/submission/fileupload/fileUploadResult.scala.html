@@ -45,28 +45,28 @@ else {
             <h1 class="govuk-heading-l" >@Messages("fileUploadResult.mainHeading.ok")</h1>
         } else {
             @if(schemaErrors.isDefined && busErrors.isDefined) {
-                <h1>@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
+                <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
             } else {
                 @if(schemaErrors.isDefined) {
-                    <h1>@messages("fileUploadResult.mainHeading.xmlError")</h1>
+                    <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.xmlError")</h1>
                 } else {
-                    <h1>@messages("fileUploadResult.mainHeading.dataError")</h1>
+                    <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.dataError")</h1>
                 }
             }
-            <h2>@messages("fileUploadResult.whatToDo")</h2>
+            <h2 class="govuk-heading-m">@messages("fileUploadResult.whatToDo")</h2>
             @schemaErrors.map { size =>
-                <p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors">@Messages("fileUploadResult.error.data.link")
+                <p class="govuk-body">@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors" class="govuk-link">@Messages("fileUploadResult.error.data.link")
                     (Text, @{
                     size
                 }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
             }
             @busErrors.map { size =>
-                <p>@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
+                <p class="govuk-body">@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getBusinessRuleErrors" class="govuk-link">@Messages("fileUploadResult.error.data.link")
                     (Text, @{
                     size
                 }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
             }
-            <p><a href="@config.cbcrOecdGuideUrl">@Messages("fileUploadResult.error.oecdUrl")</a> @Messages("fileUploadResult.error.oecdInfo")</p>
+            <p class="govuk-body"><a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("fileUploadResult.error.oecdUrl")</a> @Messages("fileUploadResult.error.oecdInfo")</p>
         }
         @if(!errors) {
                 <table class="govuk-table" id="table-successReport">

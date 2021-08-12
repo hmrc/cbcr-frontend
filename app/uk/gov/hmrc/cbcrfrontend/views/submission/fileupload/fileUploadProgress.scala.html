@@ -29,7 +29,7 @@ implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
  <div class="grid-row">
   <div class="column-full">
-   <h1>
+   <h1 class="govuk-heading-l">
     @Messages("fileUploadProgress.mainHeading")
    </h1>
    
@@ -38,6 +38,7 @@ implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
    <img alt="loading..." src="@assetsLocationPrefix/images/loading.gif" />
    </body>
 
+   <p></p>
    <p class="govuk-body">@Messages("fileUploadProgress.message")</p>
   
 
