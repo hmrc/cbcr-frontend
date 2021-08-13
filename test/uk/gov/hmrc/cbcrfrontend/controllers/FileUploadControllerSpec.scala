@@ -219,7 +219,7 @@ class FileUploadControllerSpec
 
   val testFile: File = new File("test/resources/cbcr-valid.xml")
   val tempFile: File = File.createTempFile("test", ".xml")
-  val validFile = java.nio.file.Files.copy(testFile.toPath, tempFile.toPath, REPLACE_EXISTING).toFile
+  val validFile: File = java.nio.file.Files.copy(testFile.toPath, tempFile.toPath, REPLACE_EXISTING).toFile
   val newEnrolments = Set(
     Enrolment(
       "HMRC-CBC-ORG",

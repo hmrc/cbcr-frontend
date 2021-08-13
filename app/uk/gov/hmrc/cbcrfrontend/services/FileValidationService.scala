@@ -15,23 +15,28 @@
  */
 
 package uk.gov.hmrc.cbcrfrontend.services
+import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
+import akka.util.ByteString
 import cats.data.{EitherT, NonEmptyList}
 import cats.instances.all._
+import play.api.http.Status
 import play.api.i18n.Messages
+import play.api.libs.ws.WSClient
+import play.api.mvc.{AnyContent, Request}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
-import uk.gov.hmrc.cbcrfrontend.controllers.actions.IdentifierAction
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadId, UploadSessionDetails, UploadedSuccessfully}
-import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.cbcrfrontend.{CBCRErrorHandler, sha256Hash}
+import uk.gov.hmrc.cbcrfrontend.sha256Hash
+import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
+import uk.gov.hmrc.cbcrfrontend.util.ModifySize.calculateFileSize
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
-import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import java.io.File
 import java.time.{Duration, LocalDateTime}
@@ -43,17 +48,15 @@ class FileValidationService @Inject()(
   val schemaValidator: CBCRXMLValidator,
   val businessRuleValidator: CBCBusinessRuleValidator,
   val xmlExtractor: XmlInfoExtract,
-  val audit: AuditConnector,
   val env: Environment,
   val upscanConnector: UpscanConnector,
-  identify: IdentifierAction,
-  errorHandler: CBCRErrorHandler,
-  fileUploadService: FileUploadService,
-  views: Views)(
+  ws: WSClient,
+  val auditService: AuditService)(
   implicit ec: ExecutionContext,
   cache: CBCSessionCache,
   val config: Configuration,
-  feConfig: FrontendAppConfig) {
+  feConfig: FrontendAppConfig,
+  materializer: Materializer) {
 
   case class FileValidationSuccess(
     userType: Option[AffinityGroup],
@@ -66,7 +69,9 @@ class FileValidationService @Inject()(
   lazy val logger: Logger = Logger(this.getClass)
 
   def fileValidate(creds: Credentials, affinity: Option[AffinityGroup], enrolment: Option[CBCEnrolment])(
-    implicit hc: HeaderCarrier): EitherT[Future, CBCErrors, FileValidationSuccess] = {
+    implicit hc: HeaderCarrier,
+    messages: Messages,
+    request: Request[AnyContent]): EitherT[Future, CBCErrors, FileValidationSuccess] = {
 
     val fileDtls: Future[(String, String, UploadId)] = for {
       uploadId       <- getUploadId()
@@ -76,25 +81,27 @@ class FileValidationService @Inject()(
 
     for {
       file_meta <- EitherT.right[Future, CBCErrors, (String, String, UploadId)](fileDtls)
-      file      <- fileUploadService.getFileUrl(file_meta._3, file_meta._2)
-      schemaErrors = schemaValidator.validateSchema(file)
+      file      <- getFile(file_meta._3, file_meta._2)
+      schemaErrors: XmlErrorHandler = schemaValidator.validateSchema(file)
       xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
-      //   schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
+      schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
       _      <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
       result <- validateBusinessRules(file, file_meta._1, enrolment, affinity)
-      //     businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
-//      length = calculateFileSize(file_metadata._2)
-//      _ <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
-//          else if (result.isLeft) auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
-//          else EitherT.pure[Future, CBCErrors, Unit](())
-//      _ = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
+      businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
+      length = calculateFileSize(10l) //TODO
+      _ <- if (schemaErrors.hasErrors)
+            auditService.auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
+          else if (result.isLeft)
+            auditService.auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
+          else EitherT.pure[Future, CBCErrors, Unit](())
+      _ = java.nio.file.Files.deleteIfExists(file.toPath)
     } yield
       FileValidationSuccess(
         affinity,
         Some(file_meta._1),
         Some(BigDecimal.valueOf(0l)),
-        Some(1),
-        Some(1),
+        schemaSize,
+        businessSize,
         result.map(_.reportingEntity.reportingRole).toOption)
   }
 
@@ -138,7 +145,7 @@ class FileValidationService @Inject()(
   }
 
   private def getErrorFileSize(e: List[ValidationErrors])(implicit messages: Messages): Int = {
-    val f = fileUploadService.errorsToFile(e, "")
+    val f = ErrorUtil.errorsToFile(e, "")
     val kb = f.length() * 0.001
     f.delete()
     Math.incrementExact(kb.toInt)
@@ -159,4 +166,39 @@ class FileValidationService @Inject()(
         }
       case _ => throw new RuntimeException("File not uploaded successfully")
     }
+
+  def getFile(uploadId: UploadId, url: String)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext): ServiceResponse[File] =
+    EitherT(
+      ws.url(s"$url")
+        .withMethod("GET")
+        .stream()
+        .flatMap { res =>
+          res.status match {
+            case Status.OK =>
+              val file = java.nio.file.Files.createTempFile(uploadId.value, "xml")
+              val outputStream = java.nio.file.Files.newOutputStream(file)
+
+              val sink = Sink.foreach[ByteString] { bytes =>
+                outputStream.write(bytes.toArray)
+              }
+
+              res.bodyAsSource
+                .runWith(sink)
+                .andThen {
+                  case result =>
+                    outputStream.close()
+                    result.get
+                }
+                .map(_ => Right(file.toFile))
+            case otherStatus =>
+              Future.successful(
+                Left(
+                  UnexpectedState(
+                    s"Failed to retrieve a file with uploadId: ${uploadId.value} from upscan - received $otherStatus response")
+                ))
+          }
+        }
+    )
 }

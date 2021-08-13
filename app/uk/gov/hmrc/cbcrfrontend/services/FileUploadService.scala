@@ -161,41 +161,6 @@ class FileUploadService @Inject()(
         }
     )
 
-  def getFileUrl(uploadId: UploadId, url: String)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): ServiceResponse[File] =
-    EitherT(
-      ws.url(s"$url")
-        .withMethod("GET")
-        .stream()
-        .flatMap { res =>
-          res.status match {
-            case Status.OK =>
-              val file = java.nio.file.Files.createTempFile(uploadId.value, "xml")
-              val outputStream = java.nio.file.Files.newOutputStream(file)
-
-              val sink = Sink.foreach[ByteString] { bytes =>
-                outputStream.write(bytes.toArray)
-              }
-
-              res.bodyAsSource
-                .runWith(sink)
-                .andThen {
-                  case result =>
-                    outputStream.close()
-                    result.get
-                }
-                .map(_ => Right(file.toFile))
-            case otherStatus =>
-              Future.successful(
-                Left(
-                  UnexpectedState(
-                    s"Failed to retrieve a file with uploadId: ${uploadId.value} from upscan - received $otherStatus response")
-                ))
-          }
-        }
-    )
-
   def deleteEnvelope(envelopeId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] =
     fromFutureOptA(
       http
