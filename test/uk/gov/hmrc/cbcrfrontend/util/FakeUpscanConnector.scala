@@ -37,7 +37,7 @@ class FakeUpscanConnector @Inject()(configuration: FrontendAppConfig, httpClient
   def setDetails(uploadDetails: UploadSessionDetails): Unit =
     detailsBuffer = Some(uploadDetails)
 
-  override def getUpscanFormData(implicit hc: HeaderCarrier): Future[UpscanInitiateResponse] =
+  override def getUpscanFormData(uploadId: UploadId)(implicit hc: HeaderCarrier): Future[UpscanInitiateResponse] =
     Future.successful(
       UpscanInitiateResponse(
         fileReference = Reference("file-reference"),
@@ -46,7 +46,8 @@ class FakeUpscanConnector @Inject()(configuration: FrontendAppConfig, httpClient
       )
     )
 
-  override def requestUpload(fileReference: Reference)(implicit hc: HeaderCarrier): Future[UploadId] =
+  override def requestUpload(uploadId: UploadId, fileReference: Reference)(
+    implicit hc: HeaderCarrier): Future[UploadId] =
     Future.successful(UploadId("UploadId"))
 
   override def getUploadStatus(uploadId: UploadId)(implicit hc: HeaderCarrier): Future[Option[UploadStatus]] =

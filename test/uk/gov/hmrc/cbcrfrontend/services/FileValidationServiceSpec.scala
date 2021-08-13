@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.cbcrfrontend.services
 
 import akka.actor.ActorSystem
@@ -6,7 +22,7 @@ import cats.data.EitherT
 import cats.data.Validated.Valid
 import cats.instances.future._
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{reset, when}
 import play.api.Environment
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -31,15 +47,22 @@ class FileValidationServiceSpec extends SpecBase {
   val mockAuditService: AuditService = mock[AuditService]
   val mockFile: File = mock[File]
 
-  override def guiceApplicationBuilder(): GuiceApplicationBuilder = {
-    super.guiceApplicationBuilder().overrides(
-      bind[CBCBusinessRuleValidator].toInstance(mockCBCBusinessRuleValidator),
-      bind[CBCRXMLValidator].toInstance(mockCBCRXMLValidator),
-      bind[XmlInfoExtract].toInstance(mockXmlInfoExtract),
-      bind[UpscanConnector].toInstance(mockUpscanConnector),
-      bind[AuditService].toInstance(mockAuditService)
-    )
+  override protected def afterEach(): Unit = {
+    reset(mockCBCRXMLValidator, mockCBCBusinessRuleValidator, mockXmlInfoExtract, mockUpscanConnector, mockAuditService)
+    super.afterEach()
   }
+  implicit def liftFuture[A](v: A): Future[A] = Future.successful(v)
+
+  override def guiceApplicationBuilder(): GuiceApplicationBuilder =
+    super
+      .guiceApplicationBuilder()
+      .overrides(
+        bind[CBCBusinessRuleValidator].toInstance(mockCBCBusinessRuleValidator),
+        bind[CBCRXMLValidator].toInstance(mockCBCRXMLValidator),
+        bind[XmlInfoExtract].toInstance(mockXmlInfoExtract),
+        bind[UpscanConnector].toInstance(mockUpscanConnector),
+        bind[AuditService].toInstance(mockAuditService)
+      )
 
   val fileValidationService: FileValidationService = app.injector.instanceOf[FileValidationService]
 
@@ -48,7 +71,7 @@ class FileValidationServiceSpec extends SpecBase {
   def pure[A](a: A): ServiceResponse[A] = EitherT.pure[Future, CBCErrors, A](a)
 
   val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
-  val xmlinfo = XMLInfo(
+  val xmlinfo: XMLInfo = XMLInfo(
     MessageSpec(
       MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
       "GB",
@@ -73,7 +96,7 @@ class FileValidationServiceSpec extends SpecBase {
     List.empty[String],
     List.empty[String]
   )
-  val completeXmlInfo = CompleteXMLInfo(
+  val completeXmlInfo: CompleteXMLInfo = CompleteXMLInfo(
     xmlinfo,
     ReportingEntity(
       CBC701,
@@ -86,7 +109,7 @@ class FileValidationServiceSpec extends SpecBase {
   )
 
   "FileValidationService" - {
-    "must validate xml schema and business rules and return FileValidationSuccess" in  {
+    "validate xml schema and business rules and return FileValidationSuccess" in {
 
       when(fileValidationService.getFile(any(), any())(any(), any())).thenReturn(right(mockFile))
       when(mockCBCRXMLValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()

@@ -24,7 +24,7 @@ import play.api.Application
 import play.api.http.Status.{BAD_REQUEST, OK, SERVICE_UNAVAILABLE}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{PreparedUpload, Reference, UploadForm, UpscanInitiateRequest, UpscanInitiateResponse}
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{PreparedUpload, Reference, UploadForm, UploadId, UpscanInitiateRequest, UpscanInitiateResponse}
 import uk.gov.hmrc.cbcrfrontend.util.WireMockHelper
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
@@ -44,10 +44,12 @@ class UpscanConnectorSpec
   lazy val connector: UpscanConnector = app.injector.instanceOf[UpscanConnector]
   implicit val hc: HeaderCarrier = HeaderCarrier()
   val request: UpscanInitiateRequest = UpscanInitiateRequest("callbackUrl", "successRedirectUrl", "errorRedirectUrl")
+  val uploadId: UploadId = UploadId("123")
 
   "getUpscanFormData" - {
     "should return an UpscanInitiateResponse" - {
       "when upscan returns a valid successful response" in {
+
         val body = PreparedUpload(Reference("Reference"), UploadForm("downloadUrl", Map("formKey" -> "formValue")))
         server.stubFor(
           post(urlEqualTo(connector.upscanInitiatePath))
@@ -58,7 +60,7 @@ class UpscanConnectorSpec
             )
         )
 
-        val result: Future[UpscanInitiateResponse] = connector.getUpscanFormData
+        val result: Future[UpscanInitiateResponse] = connector.getUpscanFormData(uploadId)
         result.futureValue mustBe body.toUpscanInitiateResponse
       }
     }
@@ -73,7 +75,7 @@ class UpscanConnectorSpec
             )
         )
 
-        val result: Future[UpscanInitiateResponse] = connector.getUpscanFormData
+        val result: Future[UpscanInitiateResponse] = connector.getUpscanFormData(uploadId)
 
         whenReady(result.failed) { e =>
           e mustBe an[UpstreamErrorResponse]
@@ -91,7 +93,7 @@ class UpscanConnectorSpec
             )
         )
 
-        val result = connector.getUpscanFormData
+        val result = connector.getUpscanFormData(uploadId)
         whenReady(result.failed) { e =>
           e mustBe an[UpstreamErrorResponse]
           val error = e.asInstanceOf[UpstreamErrorResponse]
