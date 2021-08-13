@@ -50,7 +50,7 @@ class FileValidationService @Inject()(
   val xmlExtractor: XmlInfoExtract,
   val env: Environment,
   val upscanConnector: UpscanConnector,
-  ws: WSClient,
+  fileService: FileService,
   val auditService: AuditService)(
   implicit ec: ExecutionContext,
   cache: CBCSessionCache,
@@ -73,6 +73,8 @@ class FileValidationService @Inject()(
     messages: Messages,
     request: Request[AnyContent]): EitherT[Future, CBCErrors, FileValidationSuccess] = {
 
+    println(s"\n\nIN FILE VALIDATE\n\n")
+
     val fileDtls: Future[(String, String, UploadId)] = for {
       uploadId       <- getUploadId()
       uploadSessions <- upscanConnector.getUploadDetails(uploadId)
@@ -81,7 +83,9 @@ class FileValidationService @Inject()(
 
     for {
       file_meta <- EitherT.right[Future, CBCErrors, (String, String, UploadId)](fileDtls)
-      file      <- getFile(file_meta._3, file_meta._2)
+      _ = println(s"\n\nAfter get file_meta\n\n")
+      file <- fileService.getFile(file_meta._3, file_meta._2)
+      _ = println(s"\n\nAfter getfile\n\n")
       schemaErrors: XmlErrorHandler = schemaValidator.validateSchema(file)
       xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
       schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
@@ -94,7 +98,7 @@ class FileValidationService @Inject()(
           else if (result.isLeft)
             auditService.auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
           else EitherT.pure[Future, CBCErrors, Unit](())
-      _ = java.nio.file.Files.deleteIfExists(file.toPath)
+      _ = fileService.deleteFile(file)
     } yield
       FileValidationSuccess(
         affinity,
@@ -167,38 +171,4 @@ class FileValidationService @Inject()(
       case _ => throw new RuntimeException("File not uploaded successfully")
     }
 
-  def getFile(uploadId: UploadId, url: String)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): ServiceResponse[File] =
-    EitherT(
-      ws.url(s"$url")
-        .withMethod("GET")
-        .stream()
-        .flatMap { res =>
-          res.status match {
-            case Status.OK =>
-              val file = java.nio.file.Files.createTempFile(uploadId.value, "xml")
-              val outputStream = java.nio.file.Files.newOutputStream(file)
-
-              val sink = Sink.foreach[ByteString] { bytes =>
-                outputStream.write(bytes.toArray)
-              }
-
-              res.bodyAsSource
-                .runWith(sink)
-                .andThen {
-                  case result =>
-                    outputStream.close()
-                    result.get
-                }
-                .map(_ => Right(file.toFile))
-            case otherStatus =>
-              Future.successful(
-                Left(
-                  UnexpectedState(
-                    s"Failed to retrieve a file with uploadId: ${uploadId.value} from upscan - received $otherStatus response")
-                ))
-          }
-        }
-    )
 }

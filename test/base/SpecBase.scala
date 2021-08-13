@@ -17,6 +17,7 @@
 package base
 
 import org.mockito.Mockito.reset
+import org.scalatest.Matchers.fail
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest._
 import org.scalatestplus.mockito.MockitoSugar
@@ -27,8 +28,10 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.{Injector, bind}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.actions.{FakeIdentifierAction, IdentifierAction}
+import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -52,7 +55,7 @@ trait SpecBase
 
   def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
-  def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
+  implicit def fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("", "")
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -70,4 +73,8 @@ trait SpecBase
         bind[IdentifierAction].to[FakeIdentifierAction],
         bind[CBCSessionCache].toInstance(mockCache)
       )
+
+  val enrolment: CBCEnrolment = CBCEnrolment(CBCId.create(99).getOrElse(fail("booo")), Utr("1234567890"))
+
+  val creds: Credentials = Credentials("totally", "legit")
 }
