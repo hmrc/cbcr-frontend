@@ -21,11 +21,13 @@ import base.SpecBase
 import cats.data.EitherT
 import cats.data.Validated.Valid
 import cats.instances.future._
+import org.codehaus.stax2.validation.XMLValidationSchema
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import play.api.Environment
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -46,6 +48,7 @@ class FileValidationServiceSpec extends SpecBase {
   val mockUpscanConnector: UpscanConnector = mock[UpscanConnector]
   val mockAuditService: AuditService = mock[AuditService]
   val mockFile: File = mock[File]
+  val mockFileService = mock[FileService]
 
   override protected def afterEach(): Unit = {
     reset(mockCBCRXMLValidator, mockCBCBusinessRuleValidator, mockXmlInfoExtract, mockUpscanConnector, mockAuditService)
@@ -57,11 +60,12 @@ class FileValidationServiceSpec extends SpecBase {
     super
       .guiceApplicationBuilder()
       .overrides(
-        bind[CBCBusinessRuleValidator].toInstance(mockCBCBusinessRuleValidator),
-        bind[CBCRXMLValidator].toInstance(mockCBCRXMLValidator),
-        bind[XmlInfoExtract].toInstance(mockXmlInfoExtract),
-        bind[UpscanConnector].toInstance(mockUpscanConnector),
-        bind[AuditService].toInstance(mockAuditService)
+        bind[CBCBusinessRuleValidator].to(mockCBCBusinessRuleValidator),
+        bind[CBCRXMLValidator].to(mockCBCRXMLValidator),
+        bind[XmlInfoExtract].to(mockXmlInfoExtract),
+        bind[UpscanConnector].to(mockUpscanConnector),
+        bind[AuditService].to(mockAuditService),
+        bind[FileService].to(mockFileService)
       )
 
   val fileValidationService: FileValidationService = app.injector.instanceOf[FileValidationService]
@@ -111,13 +115,17 @@ class FileValidationServiceSpec extends SpecBase {
   "FileValidationService" - {
     "validate xml schema and business rules and return FileValidationSuccess" in {
 
-      when(fileValidationService.getFile(any(), any())(any(), any())).thenReturn(right(mockFile))
+      println(s"\n\n$mockFileService\n\n")
+      println(s"\n\n$mockFile\n\n")
+      //when(mockFileService.getFile(any(), any())(any(), any())).thenReturn(any())
+      when(mockFileService.deleteFile(any())).thenReturn(true)
       when(mockCBCRXMLValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()
       when(mockCBCBusinessRuleValidator.validateBusinessRules(any(), any(), any(), any())(any())) thenReturn Future
         .successful(Valid(xmlinfo))
       when(mockCBCBusinessRuleValidator.recoverReportingEntity(any())(any())) thenReturn Future.successful(
         Valid(completeXmlInfo))
 
+      fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
     }
   }
 }
