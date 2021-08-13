@@ -31,6 +31,7 @@ import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
 
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
@@ -117,7 +118,10 @@ class FileValidationServiceSpec extends SpecBase {
 
       println(s"\n\n$mockFileService\n\n")
       println(s"\n\n$mockFile\n\n")
-      //when(mockFileService.getFile(any(), any())(any(), any())).thenReturn(any())
+
+      when(mockFileService.getFile(UploadId("x"), "x")(hc, ec))
+        .thenReturn(EitherT.right[Future, CBCErrors, File](mockFile))
+      when(mockCache.
       when(mockFileService.deleteFile(any())).thenReturn(true)
       when(mockCBCRXMLValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()
       when(mockCBCBusinessRuleValidator.validateBusinessRules(any(), any(), any(), any())(any())) thenReturn Future
