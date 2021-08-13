@@ -44,7 +44,7 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
         bind[UpscanConnector].to[FakeUpscanConnector]
       )
 
-  val upscanInitiateResponse = UpscanInitiateResponse(
+  val upscanInitiateResponse: UpscanInitiateResponse = UpscanInitiateResponse(
     fileReference = Reference("file-reference"),
     postTarget = "target",
     formFields = Map.empty
