@@ -16,22 +16,19 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 import akka.stream.Materializer
-import akka.stream.scaladsl.Sink
-import akka.util.ByteString
 import cats.data.{EitherT, NonEmptyList}
 import cats.instances.all._
-import play.api.http.Status
 import play.api.i18n.Messages
-import play.api.libs.ws.WSClient
 import play.api.mvc.{AnyContent, Request}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
+import uk.gov.hmrc.cbcrfrontend.controllers.routes
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadId, UploadSessionDetails, UploadedSuccessfully}
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{FileValidation, FileValidationError, FileValidationSuccess, UploadId, UploadSessionDetails, UploadedSuccessfully}
 import uk.gov.hmrc.cbcrfrontend.sha256Hash
 import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
 import uk.gov.hmrc.cbcrfrontend.util.ModifySize.calculateFileSize
@@ -42,6 +39,7 @@ import java.io.File
 import java.time.{Duration, LocalDateTime}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
 class FileValidationService @Inject()(
@@ -57,14 +55,6 @@ class FileValidationService @Inject()(
   val config: Configuration,
   feConfig: FrontendAppConfig,
   materializer: Materializer) {
-
-  case class FileValidationSuccess(
-    userType: Option[AffinityGroup],
-    fileName: Option[String],
-    fileSize: Option[BigDecimal],
-    schemaErrors: Option[Int],
-    busErrors: Option[Int],
-    reportingRole: Option[ReportingRole])
 
   lazy val logger: Logger = Logger(this.getClass)
 
@@ -85,21 +75,27 @@ class FileValidationService @Inject()(
       file_meta <- EitherT.right[Future, CBCErrors, (String, String, UploadId)](fileDtls)
       _ = println(s"\n\nAfter get file_meta\n\n")
       file <- fileService.getFile(file_meta._3, file_meta._2)
-      _ = println(s"\n\nAfter getfile\n\n")
+
       schemaErrors: XmlErrorHandler = schemaValidator.validateSchema(file)
+
       xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
+
       schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
-      _      <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
+      _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
+      _ = println(s"\n\nschemaValidator.validateSchema\n\n  $xmlErrors")
       result <- validateBusinessRules(file, file_meta._1, enrolment, affinity)
+      _ = println(s"\n\nvalidateBusinessRules.result ${result.isLeft}\n\n")
       businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
-      length = calculateFileSize(10l) //TODO
+      length = calculateFileSize(100000) //TODO
       _ <- if (schemaErrors.hasErrors)
             auditService.auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
           else if (result.isLeft)
             auditService.auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
           else EitherT.pure[Future, CBCErrors, Unit](())
+      _ = println(s"\n\nschemaValidator.deleteFile\n\n")
       _ = fileService.deleteFile(file)
-    } yield
+    } yield {
+      println("======================================i am here")
       FileValidationSuccess(
         affinity,
         Some(file_meta._1),
@@ -107,6 +103,7 @@ class FileValidationService @Inject()(
         schemaSize,
         businessSize,
         result.map(_.reportingEntity.reportingRole).toOption)
+    }
   }
 
   def validateBusinessRules(
@@ -143,7 +140,7 @@ class FileValidationService @Inject()(
       result
         .fold(
           errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => Left(errors)),
-          info => cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(xmlFile))).map(_ => Right(info)))
+          info => cache.save(info).flatMap(_ => cache.save(Hash(fileService.sha256Hash(xmlFile))).map(_ => Right(info)))
         )
         .flatten)
   }

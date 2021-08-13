@@ -27,7 +27,7 @@ import uk.gov.hmrc.cbcrfrontend.model.UnexpectedState
 import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.io.File
+import java.io.{File, FileInputStream}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -69,4 +69,19 @@ class FileService @Inject()(ws: WSClient)(implicit materializer: Materializer) {
     )
 
   def deleteFile(file: File): Boolean = java.nio.file.Files.deleteIfExists(file.toPath)
+
+  def sha256Hash(file: File): String = {
+    val test = String.format(
+      "%064x",
+      new java.math.BigInteger(
+        1,
+        java.security.MessageDigest
+          .getInstance("SHA-256")
+          .digest(
+            org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
+          ))
+    )
+    println(s"===========sha256Hash=============$test")
+    test
+  }
 }

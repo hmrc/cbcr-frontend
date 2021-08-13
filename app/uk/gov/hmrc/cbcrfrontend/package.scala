@@ -98,8 +98,8 @@ package object cbcrfrontend {
   implicit def utrToLeft(u: Utr): Either[Utr, CBCId] = Left[Utr, CBCId](u)
   implicit def cbcToRight(c: CBCId): Either[Utr, CBCId] = Right[Utr, CBCId](c)
 
-  def sha256Hash(file: File): String =
-    String.format(
+  def sha256Hash(file: File): String = {
+    val test = String.format(
       "%064x",
       new java.math.BigInteger(
         1,
@@ -109,6 +109,9 @@ package object cbcrfrontend {
             org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
           ))
     )
+    println(s"===========sha256Hash=============$test")
+    test
+  }
 
   def generateMetadataFile(cache: CBCSessionCache, creds: Credentials)(
     implicit hc: HeaderCarrier,

@@ -26,14 +26,17 @@ import play.api.Application
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.{Injector, bind}
+import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.actions.{FakeIdentifierAction, IdentifierAction}
+import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
 import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.cache.client.CacheMap
 
 import scala.concurrent.Future
 
@@ -75,6 +78,7 @@ trait SpecBase
       )
 
   val enrolment: CBCEnrolment = CBCEnrolment(CBCId.create(99).getOrElse(fail("booo")), Utr("1234567890"))
-
+  val uploadId: UploadId = UploadId("123")
   val creds: Credentials = Credentials("totally", "legit")
+  val cacheMap = CacheMap("x", Map("x" -> Json.toJson[String]("x")))
 }
