@@ -59,8 +59,8 @@ class AuthActionSpec extends SpecBase {
         val controller = new Harness(authAction)
         val result = controller.onPageLoad()(FakeRequest())
 
-        status(result) mustBe SEE_OTHER
-        redirectLocation(result).value mustBe "/bas-gateway/sign-in?continue_url=%2F&origin=cbcr-frontend"
+        status(result) shouldBe SEE_OTHER
+        redirectLocation(result).value shouldBe "/bas-gateway/sign-in?continue_url=%2F&origin=cbcr-frontend"
       }
     }
 
@@ -77,8 +77,8 @@ class AuthActionSpec extends SpecBase {
         val controller = new Harness(authAction)
         val result = controller.onPageLoad()(FakeRequest())
 
-        status(result) mustBe SEE_OTHER
-        redirectLocation(result).value mustBe "/bas-gateway/sign-in?continue_url=%2F&origin=cbcr-frontend"
+        status(result) shouldBe SEE_OTHER
+        redirectLocation(result).value shouldBe "/bas-gateway/sign-in?continue_url=%2F&origin=cbcr-frontend"
       }
     }
 
@@ -95,8 +95,8 @@ class AuthActionSpec extends SpecBase {
         val controller = new Harness(authAction)
         val result = controller.onPageLoad()(FakeRequest())
 
-        status(result) mustBe SEE_OTHER
-        redirectLocation(result).value mustBe "/country-by-country-reporting/unregistered-gg-account-view"
+        status(result) shouldBe SEE_OTHER
+        redirectLocation(result).value shouldBe "/country-by-country-reporting/unregistered-gg-account-view"
       }
     }
 
@@ -113,8 +113,8 @@ class AuthActionSpec extends SpecBase {
         val controller = new Harness(authAction)
         val result = controller.onPageLoad()(FakeRequest())
 
-        status(result) mustBe SEE_OTHER
-        redirectLocation(result).value mustBe "/country-by-country-reporting/unregistered-gg-account-view"
+        status(result) shouldBe SEE_OTHER
+        redirectLocation(result).value shouldBe "/country-by-country-reporting/unregistered-gg-account-view"
       }
     }
 
@@ -131,8 +131,8 @@ class AuthActionSpec extends SpecBase {
         val controller = new Harness(authAction)
         val result = controller.onPageLoad()(FakeRequest())
 
-        status(result) mustBe SEE_OTHER
-        redirectLocation(result) mustBe Some("/country-by-country-reporting/unsupportedAffinityGroup")
+        status(result) shouldBe SEE_OTHER
+        redirectLocation(result) shouldBe Some("/country-by-country-reporting/unsupportedAffinityGroup")
       }
     }
 
@@ -149,8 +149,8 @@ class AuthActionSpec extends SpecBase {
         val controller = new Harness(authAction)
         val result = controller.onPageLoad()(FakeRequest())
 
-        status(result) mustBe SEE_OTHER
-        redirectLocation(result) mustBe Some("/country-by-country-reporting/no-assistants")
+        status(result) shouldBe SEE_OTHER
+        redirectLocation(result) shouldBe Some("/country-by-country-reporting/no-assistants")
       }
     }
   }

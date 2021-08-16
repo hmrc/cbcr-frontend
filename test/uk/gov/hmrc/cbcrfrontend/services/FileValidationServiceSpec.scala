@@ -58,7 +58,6 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
     reset(mockCBCRXMLValidator, mockCBCBusinessRuleValidator, mockXmlInfoExtract, mockAuditService)
     super.afterEach()
   }
-  //implicit def liftFuture[A](v: A): Future[A] = Future.successful(v)
 
   override def guiceApplicationBuilder(): GuiceApplicationBuilder =
     super
@@ -118,11 +117,12 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
 
   "FileValidationService" - {
     "validate xml schema and business rules and return FileValidationSuccess" in {
-      val expectedResult = FileValidationSuccess(Some(Organisation), Some("afile"), Some(0), None, None, Some(CBC701))
+      val expectedResult =
+        FileValidationSuccess(Some(Organisation), Some("afile.xml"), Some(123), None, None, Some(CBC701))
       val uploadDetails = UploadSessionDetails(
         uploadId,
         Reference("123"),
-        UploadedSuccessfully("afile", "downloadURL")
+        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(123))
       )
       mockUpscanConnector.setDetails(uploadDetails)
 
@@ -145,8 +145,8 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       val result: EitherT[Future, CBCErrors, FileValidationSuccess] =
         fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
 
-      val eitherResult: Either[CBCErrors, FileValidationSuccess] =  result.value.futureValue
-      eitherResult.right.value mustBe expectedResult
+      val eitherResult: Either[CBCErrors, FileValidationSuccess] = result.value.futureValue
+      eitherResult.right.value shouldBe expectedResult
 
     }
   }
