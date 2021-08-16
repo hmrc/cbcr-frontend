@@ -27,7 +27,7 @@ case object FileValidationError extends FileValidation
 case class FileValidationSuccess(
   userType: Option[AffinityGroup],
   fileName: Option[String],
-  fileSize: Option[BigDecimal],
+  fileSize: Option[Long],
   schemaErrors: Option[Int],
   busErrors: Option[Int],
   reportingRole: Option[ReportingRole])

@@ -112,19 +112,4 @@ class FileValidationController @Inject()(
       }
   }*/
 
-  private def getUploadId()(implicit hc: HeaderCarrier): Future[UploadId] =
-    cache.readOption[UploadId] map {
-      case Some(uploadId) => uploadId
-      case None           => throw new RuntimeException("Cannot find uploadId")
-    }
-
-  private def getDownloadUrl(uploadSessions: Option[UploadSessionDetails]) =
-    uploadSessions match {
-      case Some(uploadDetails) =>
-        uploadDetails.status match {
-          case UploadedSuccessfully(name, downloadUrl) => (name, downloadUrl)
-          case _                                       => throw new RuntimeException("File not uploaded successfully")
-        }
-      case _ => throw new RuntimeException("File not uploaded successfully")
-    }
 }

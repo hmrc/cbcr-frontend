@@ -64,9 +64,9 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
       val view = app.injector.instanceOf[uploadForm]
 
-      status(result) mustEqual OK
+      status(result) shouldBe OK
 
-      contentAsString(result) mustEqual view(upscanInitiateResponse, None)(request, messages(app), frontendAppConfig).toString
+      contentAsString(result) shouldBe view(upscanInitiateResponse, None)(request, messages(app), frontendAppConfig).toString
 
     }
   }

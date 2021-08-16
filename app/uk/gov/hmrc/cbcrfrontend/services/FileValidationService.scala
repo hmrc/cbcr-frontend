@@ -49,12 +49,7 @@ class FileValidationService @Inject()(
   val env: Environment,
   val upscanConnector: UpscanConnector,
   fileService: FileService,
-  val auditService: AuditService)(
-  implicit ec: ExecutionContext,
-  cache: CBCSessionCache,
-  val config: Configuration,
-  feConfig: FrontendAppConfig,
-  materializer: Materializer) {
+  val auditService: AuditService)(implicit ec: ExecutionContext, cache: CBCSessionCache, val config: Configuration) {
 
   lazy val logger: Logger = Logger(this.getClass)
 
@@ -63,28 +58,28 @@ class FileValidationService @Inject()(
     messages: Messages,
     request: Request[AnyContent]): EitherT[Future, CBCErrors, FileValidationSuccess] = {
 
-    println(s"\n\nIN FILE VALIDATE\n\n")
-
-    val fileDtls: Future[(String, String, UploadId)] = for {
+    val fileDtls: Future[(UploadedSuccessfully, UploadId)] = for {
       uploadId       <- getUploadId()
       uploadSessions <- upscanConnector.getUploadDetails(uploadId)
-      (fileName, upScanUrl) = getDownloadUrl(uploadSessions)
-    } yield (fileName, upScanUrl, uploadId)
+      uploadDetails = getUploadDetails(uploadSessions)
+    } yield (uploadDetails, uploadId)
 
     for {
-      file_meta <- EitherT.right[Future, CBCErrors, (String, String, UploadId)](fileDtls)
-      _ = println(s"\n\nAfter get file_meta\n\n")
-      file <- fileService.getFile(file_meta._3, file_meta._2)
-
+      file_meta <- EitherT.right[Future, CBCErrors, (UploadedSuccessfully, UploadId)](fileDtls)
+      file      <- fileService.getFile(file_meta._2, file_meta._1.downloadUrl)
+      _         <- EitherT.cond[Future](file_meta._1.name.toLowerCase endsWith ".xml", (), InvalidFileType(file_meta._1.name))
       schemaErrors: XmlErrorHandler = schemaValidator.validateSchema(file)
 
       xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
 
       schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
       _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
-      _ = println(s"\n\nschemaValidator.validateSchema\n\n  $xmlErrors")
-      result <- validateBusinessRules(file, file_meta._1, enrolment, affinity)
-      _ = println(s"\n\nvalidateBusinessRules.result ${result.isLeft}\n\n")
+      _ <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
+          else
+            auditService
+              .auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
+              .flatMap(_ => EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize))))
+      result <- validateBusinessRules(file, file_meta._1.name, enrolment, affinity)
       businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
       length = calculateFileSize(100000) //TODO
       _ <- if (schemaErrors.hasErrors)
@@ -92,14 +87,12 @@ class FileValidationService @Inject()(
           else if (result.isLeft)
             auditService.auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
           else EitherT.pure[Future, CBCErrors, Unit](())
-      _ = println(s"\n\nschemaValidator.deleteFile\n\n")
       _ = fileService.deleteFile(file)
     } yield {
-      println("======================================i am here")
       FileValidationSuccess(
         affinity,
-        Some(file_meta._1),
-        Some(BigDecimal.valueOf(0l)),
+        Some(file_meta._1.name),
+        file_meta._1.size,
         schemaSize,
         businessSize,
         result.map(_.reportingEntity.reportingRole).toOption)
@@ -158,12 +151,12 @@ class FileValidationService @Inject()(
       case None           => throw new RuntimeException("Cannot find uploadId")
     }
 
-  private def getDownloadUrl(uploadSessions: Option[UploadSessionDetails]) =
+  private def getUploadDetails(uploadSessions: Option[UploadSessionDetails]): UploadedSuccessfully =
     uploadSessions match {
       case Some(uploadDetails) =>
         uploadDetails.status match {
-          case UploadedSuccessfully(name, downloadUrl) => (name, downloadUrl)
-          case _                                       => throw new RuntimeException("File not uploaded successfully")
+          case uploadDetails: UploadedSuccessfully => uploadDetails
+          case _                                   => throw new RuntimeException("File not uploaded successfully")
         }
       case _ => throw new RuntimeException("File not uploaded successfully")
     }

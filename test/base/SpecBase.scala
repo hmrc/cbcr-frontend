@@ -17,9 +17,8 @@
 package base
 
 import org.mockito.Mockito.reset
-import org.scalatest.Matchers.fail
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest._
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
@@ -38,10 +37,8 @@ import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 
-import scala.concurrent.Future
-
 trait SpecBase
-    extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with TryValues with ScalaFutures
+    extends FreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with TryValues with ScalaFutures
     with IntegrationPatience with MockitoSugar with BeforeAndAfterEach {
 
   val mockCache: CBCSessionCache = mock[CBCSessionCache]
