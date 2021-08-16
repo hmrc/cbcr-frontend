@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import base.SpecBase
 import org.mockito.ArgumentMatchers.{any, eq => EQ}
 import org.mockito.Mockito._
+import org.scalatest.EitherValues
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.JsNull
@@ -31,7 +32,7 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import scala.concurrent.Future
 
-class AuditServiceSpec extends SpecBase with CSRFTest {
+class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
 
   val auditC: AuditConnector = mock[AuditConnector]
   val md = FileMetadata("", "", "something.xml", "", 1.0, "", JsNull, "")
@@ -74,7 +75,7 @@ class AuditServiceSpec extends SpecBase with CSRFTest {
           request,
           messages)
 
-      result.value.futureValue.right shouldBe AuditResult.Success
+      result.value.futureValue.right.value shouldBe AuditResult.Success
     }
 
     "return success if audit disabled and sendExtendedEvent succeeds" in {
@@ -93,7 +94,7 @@ class AuditServiceSpec extends SpecBase with CSRFTest {
       val result = auditService
         .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), None, "just because")(hc, request, messages)
 
-      result.value.futureValue.right shouldBe AuditResult.Success
+      result.value.futureValue.right.value shouldBe AuditResult.Success
     }
 
     "return error if sendExtendedEvent fails" in {
@@ -117,7 +118,7 @@ class AuditServiceSpec extends SpecBase with CSRFTest {
           request,
           messages)
 
-      result.value.futureValue.left shouldBe AuditResult.Success
+      result.value.futureValue.left.value shouldBe UnexpectedState("Unable to audit a failed submission: boo hoo", None)
     }
   }
 }
