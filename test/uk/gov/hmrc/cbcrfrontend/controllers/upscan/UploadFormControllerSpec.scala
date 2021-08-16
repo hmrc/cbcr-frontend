@@ -66,7 +66,7 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
       status(result) shouldBe OK
 
-      contentAsString(result) shouldBe view(upscanInitiateResponse, None)(request, messages(app), frontendAppConfig).toString
+      contentAsString(result).contains(messages("uploadReport.mainHeading")) shouldBe true
 
     }
   }

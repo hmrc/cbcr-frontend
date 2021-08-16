@@ -18,9 +18,12 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import akka.actor.ActorSystem
 import base.SpecBase
-import cats.data.EitherT
-import cats.data.Validated.Valid
+import cats.data.{EitherT, NonEmptyList}
+import cats.data.Validated.{Invalid, Valid}
+import cats.implicits.catsSyntaxValidatedId
 import cats.instances.future._
+import com.ctc.wstx.exc.WstxException
+import org.codehaus.stax2.validation.XMLValidationProblem
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.EitherValues
@@ -34,6 +37,7 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.upscan._
 import uk.gov.hmrc.cbcrfrontend.util.FakeUpscanConnector
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
@@ -149,5 +153,102 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       eitherResult.right.value shouldBe expectedResult
 
     }
+
+    "return either left when file name does not end with xml" in {
+      val expectedResult =
+        InvalidFileType("afile.txt")
+
+      val uploadDetails = UploadSessionDetails(
+        uploadId,
+        Reference("123"),
+        UploadedSuccessfully("afile.txt", "", "downloadURL", Some(123))
+      )
+      mockUpscanConnector.setDetails(uploadDetails)
+
+      when(mockFileService.getFile(uploadId, "downloadURL")(hc, ec))
+        .thenReturn(EitherT.right[Future, CBCErrors, File](Future.successful(mockFile)))
+      when(mockCache.readOption[UploadId])
+        .thenReturn(Future.successful(Some(uploadId)))
+      when(mockCache.save(any())(any(), any(), any()))
+        .thenReturn(Future.successful(cacheMap))
+
+      val result: EitherT[Future, CBCErrors, FileValidationSuccess] =
+        fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
+
+      val eitherResult: Either[CBCErrors, FileValidationSuccess] = result.value.futureValue
+      eitherResult.left.value shouldBe expectedResult
+
+    }
+
+    "should return FatalSchema when xmlSchema validation fails" in {
+      val expectedResult =
+        FatalSchemaErrors(Some(1))
+      val uploadDetails = UploadSessionDetails(
+        uploadId,
+        Reference("123"),
+        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(123))
+      )
+      mockUpscanConnector.setDetails(uploadDetails)
+
+      when(mockFileService.getFile(uploadId, "downloadURL")(hc, ec))
+        .thenReturn(EitherT.right[Future, CBCErrors, File](Future.successful(mockFile)))
+      when(mockFileService.deleteFile(any())).thenReturn(true)
+      when(mockCache.readOption[UploadId])
+        .thenReturn(Future.successful(Some(uploadId)))
+      when(mockCache.save(any())(any(), any(), any()))
+        .thenReturn(Future.successful(cacheMap))
+      when(mockAuditService.auditFailedSubmission(any(), any(), any(), any())(any(), any(), any()))
+        .thenReturn(right(Future.successful(AuditResult.Success)))
+      val xmlErrorHandler = new XmlErrorHandler()
+      val e = new WstxException("error")
+      xmlErrorHandler.reportProblem(new XMLValidationProblem(e.getLocation, "", XMLValidationProblem.SEVERITY_FATAL))
+      when(mockCBCRXMLValidator.validateSchema(any[File]())) thenReturn xmlErrorHandler
+
+      val result: EitherT[Future, CBCErrors, FileValidationSuccess] =
+        fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
+
+      val eitherResult: Either[CBCErrors, FileValidationSuccess] = result.value.futureValue
+      eitherResult.left.value shouldBe expectedResult
+    }
+
+    "validate should return business errors when xmlSchema validation fails" in {
+
+      val businessRuleErrors = NonEmptyList.of(TestDataError)
+      val expectedResult =
+        FileValidationSuccess(Some(Organisation), Some("afile.xml"), Some(123), None, Some(1), None)
+      val uploadDetails = UploadSessionDetails(
+        uploadId,
+        Reference("123"),
+        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(123))
+      )
+      mockUpscanConnector.setDetails(uploadDetails)
+      when(mockAuditService.auditFailedSubmission(any(), any(), any(), any())(any(), any(), any()))
+        .thenReturn(right(Future.successful(AuditResult.Success)))
+      when(mockFileService.getFile(uploadId, "downloadURL")(hc, ec))
+        .thenReturn(EitherT.right[Future, CBCErrors, File](Future.successful(mockFile)))
+      when(mockFileService.deleteFile(any())).thenReturn(true)
+      when(mockCache.readOption[UploadId])
+        .thenReturn(Future.successful(Some(uploadId)))
+      when(mockCache.save(any())(any(), any(), any()))
+        .thenReturn(Future.successful(cacheMap))
+      when(mockXmlInfoExtract.extract(any())).thenReturn(mockRawXMLInfo)
+      when(mockFileService.sha256Hash(any()))
+        .thenReturn("63fe78532fed67be93556c62ec9242fdeb3635dd86b03aa81f631779fe378e18")
+
+
+      when(mockCBCRXMLValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()
+
+      when(mockCBCBusinessRuleValidator.validateBusinessRules(any(), any(), any(), any())(any())) thenReturn Future
+        .successful(Invalid(businessRuleErrors))
+
+
+      val result: EitherT[Future, CBCErrors, FileValidationSuccess] =
+        fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
+
+      val eitherResult: Either[CBCErrors, FileValidationSuccess] = result.value.futureValue
+      eitherResult.right.value shouldBe expectedResult
+
+    }
+
   }
 }
