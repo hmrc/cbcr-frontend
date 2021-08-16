@@ -26,7 +26,7 @@ import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.right
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{FileValidationSuccess, UploadId, UploadSessionDetails, UploadedSuccessfully}
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{FileValidationResult, UploadId, UploadSessionDetails, UploadedSuccessfully}
 import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
 import uk.gov.hmrc.cbcrfrontend.util.ModifySize.calculateFileSize
 import uk.gov.hmrc.http.HeaderCarrier
@@ -36,6 +36,7 @@ import java.io.File
 import java.time.{Duration, LocalDateTime}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.math.BigDecimal.int2bigDecimal
 import scala.util.{Failure, Success}
 
 class FileValidationService @Inject()(
@@ -52,7 +53,7 @@ class FileValidationService @Inject()(
   def fileValidate(creds: Credentials, affinity: Option[AffinityGroup], enrolment: Option[CBCEnrolment])(
     implicit hc: HeaderCarrier,
     messages: Messages,
-    request: Request[AnyContent]): EitherT[Future, CBCErrors, FileValidationSuccess] = {
+    request: Request[AnyContent]): EitherT[Future, CBCErrors, FileValidationResult] = {
 
     val fileDtls: Future[(UploadedSuccessfully, UploadId)] = for {
       uploadId       <- getUploadId()
@@ -79,7 +80,6 @@ class FileValidationService @Inject()(
       result <- validateBusinessRules(file, file_meta._1.name, enrolment, affinity)
       _ = println(s"\n\n\n\nafter business rules $result")
       businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
-      length = calculateFileSize(100000) //TODO
       _ <- if (schemaErrors.hasErrors)
             auditService.auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
           else if (result.isLeft)
@@ -87,7 +87,7 @@ class FileValidationService @Inject()(
           else EitherT.pure[Future, CBCErrors, Unit](())
       _ = fileService.deleteFile(file)
     } yield {
-      FileValidationSuccess(
+      FileValidationResult(
         affinity,
         Some(file_meta._1.name),
         file_meta._1.size,
