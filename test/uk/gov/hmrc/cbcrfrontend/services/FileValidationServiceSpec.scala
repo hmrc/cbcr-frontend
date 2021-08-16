@@ -30,11 +30,16 @@ import org.scalatest.EitherValues
 import play.api.Environment
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.AnyContentAsEmpty
+import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
+import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
 import uk.gov.hmrc.cbcrfrontend.model.upscan._
 import uk.gov.hmrc.cbcrfrontend.util.FakeUpscanConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
@@ -48,6 +53,14 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   implicit val env = app.injector.instanceOf[Environment]
   implicit val as = app.injector.instanceOf[ActorSystem]
+
+  val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
+  val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
+  implicit val request: IdentifierRequest[AnyContentAsEmpty.type] = IdentifierRequest(
+    addToken(FakeRequest()),
+    Some(Credentials("totally", "legit")),
+    Some(Organisation),
+    Some(enrole))
 
   val mockCBCRXMLValidator: CBCRXMLValidator = mock[CBCRXMLValidator]
   val mockCBCBusinessRuleValidator: CBCBusinessRuleValidator = mock[CBCBusinessRuleValidator]
@@ -147,7 +160,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
         Valid(completeXmlInfo))
 
       val result: EitherT[Future, CBCErrors, FileValidationResult] =
-        fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
+        fileValidationService.fileValidate()
 
       val eitherResult: Either[CBCErrors, FileValidationResult] = result.value.futureValue
       eitherResult.right.value shouldBe expectedResult
@@ -173,7 +186,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
         .thenReturn(Future.successful(cacheMap))
 
       val result: EitherT[Future, CBCErrors, FileValidationResult] =
-        fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
+        fileValidationService.fileValidate()
 
       val eitherResult: Either[CBCErrors, FileValidationResult] = result.value.futureValue
       eitherResult.left.value shouldBe expectedResult
