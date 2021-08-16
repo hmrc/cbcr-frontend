@@ -28,6 +28,7 @@ import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadStatus, UploadedSuccessfully}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import scala.concurrent.Future
@@ -35,7 +36,7 @@ import scala.concurrent.Future
 class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
 
   val auditC: AuditConnector = mock[AuditConnector]
-  val md = FileMetadata("", "", "something.xml", "", 1.0, "", JsNull, "")
+  val uploadedSuccessfully = UploadedSuccessfully("something.xml", "text/xml", "downloadUrl", Some(456))
 
   override protected def afterEach(): Unit = {
     reset(auditC)
@@ -63,8 +64,8 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
         Some(XMLErrors(List("Big xml error"))))
       when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
         Some(XMLErrors(List("Big xml error"))))
-      when(mockCache.readOption[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn Future
-        .successful(Some(md))
+      when(mockCache.readOption[UploadedSuccessfully](EQ(UploadStatus.uploadedSuccessfullyFormat), any(), any())) thenReturn Future
+        .successful(Some(uploadedSuccessfully))
       when(mockCache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
       when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
         Some(Utr("1234567890")))
@@ -86,8 +87,8 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
         Some(XMLErrors(List("Big xml error"))))
-      when(mockCache.readOption[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn Future
-        .successful(Some(md))
+      when(mockCache.readOption[UploadedSuccessfully](EQ(UploadStatus.uploadedSuccessfullyFormat), any(), any())) thenReturn Future
+        .successful(Some(uploadedSuccessfully))
       when(mockCache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
       when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
         Some(Utr("1234567890")))
@@ -107,8 +108,8 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
         Some(XMLErrors(List("Big xml error"))))
-      when(mockCache.readOption[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn Future
-        .successful(Some(md))
+      when(mockCache.readOption[UploadedSuccessfully](EQ(UploadStatus.uploadedSuccessfullyFormat), any(), any())) thenReturn Future
+        .successful(Some(uploadedSuccessfully))
       when(mockCache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
       when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
         Some(Utr("1234567890")))
