@@ -18,7 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import base.SpecBase
 import org.mockito.ArgumentMatchers.{any, eq => EQ}
-import org.mockito.Mockito.{reset, when}
+import org.mockito.Mockito._
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.JsNull
@@ -34,7 +34,6 @@ import scala.concurrent.Future
 class AuditServiceSpec extends SpecBase with CSRFTest {
 
   val auditC: AuditConnector = mock[AuditConnector]
-  val cache: CBCSessionCache = mock[CBCSessionCache]
   val md = FileMetadata("", "", "something.xml", "", 1.0, "", JsNull, "")
 
   override protected def afterEach(): Unit = {
@@ -55,17 +54,20 @@ class AuditServiceSpec extends SpecBase with CSRFTest {
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
       val request = addToken(FakeRequest())
+
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
-      when(cache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
+      when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
-      when(cache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
+      when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
         Some(XMLErrors(List("Big xml error"))))
-      when(cache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
+      when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
         Some(XMLErrors(List("Big xml error"))))
-      when(cache.readOption[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn Future
+      when(mockCache.readOption[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn Future
         .successful(Some(md))
-      when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
-      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(Some(Utr("1234567890")))
+      when(mockCache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
+      when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
+        Some(Utr("1234567890")))
+
       val result: ServiceResponse[AuditResult.Success.type] = auditService
         .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrole), "just because")(
           hc,
@@ -79,14 +81,15 @@ class AuditServiceSpec extends SpecBase with CSRFTest {
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val request = addToken(FakeRequest())
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Disabled)
-      when(cache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
+      when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
-      when(cache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
+      when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
         Some(XMLErrors(List("Big xml error"))))
-      when(cache.readOption[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn Future
+      when(mockCache.readOption[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn Future
         .successful(Some(md))
-      when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
-      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(Some(Utr("1234567890")))
+      when(mockCache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
+      when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
+        Some(Utr("1234567890")))
       val result = auditService
         .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), None, "just because")(hc, request, messages)
 
@@ -99,14 +102,15 @@ class AuditServiceSpec extends SpecBase with CSRFTest {
       val request = addToken(FakeRequest())
       val failure = AuditResult.Failure("boo hoo")
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(failure)
-      when(cache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
+      when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
-      when(cache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
+      when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
         Some(XMLErrors(List("Big xml error"))))
-      when(cache.readOption[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn Future
+      when(mockCache.readOption[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn Future
         .successful(Some(md))
-      when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
-      when(cache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(Some(Utr("1234567890")))
+      when(mockCache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
+      when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
+        Some(Utr("1234567890")))
       val result = auditService
         .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrole), "just because")(
           hc,

@@ -48,10 +48,6 @@ class AuditService @Inject()(cache: CBCSessionCache, val audit: AuditConnector) 
     implicit hc: HeaderCarrier,
     request: Request[_],
     messages: Messages): ServiceResponse[AuditResult.Success.type] = {
-    println("=======================FileMetadata==========+" + cache.readOption[FileMetadata])
-    println("=========================AllBusinessRuleErrors========+" + cache.readOption[AllBusinessRuleErrors])
-    println("=====================CBCId============+" + cache.readOption[CBCId])
-    println("===================Utr==============+" + cache.readOption[Utr])
     for {
       md        <- right(cache.readOption[FileMetadata])
       all_error <- (right(cache.readOption[AllBusinessRuleErrors]) |@| right(cache.readOption[XMLErrors])).tupled
