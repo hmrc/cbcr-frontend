@@ -20,14 +20,14 @@ import cats.instances.all._
 import cats.syntax.all._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsObject, JsString, Json, OFormat}
-import play.api.mvc.Request
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.controllers.{eitherT, right}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadId, UploadedSuccessfully}
+import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
+import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadedSuccessfully
 import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
@@ -40,21 +40,17 @@ class AuditService @Inject()(cache: CBCSessionCache, val audit: AuditConnector) 
 
   implicit val credentialsFormat: OFormat[Credentials] = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
-  def auditFailedSubmission(
-    creds: Credentials,
-    affinity: Option[AffinityGroup],
-    enrolment: Option[CBCEnrolment],
-    reason: String)(
+  def auditFailedSubmission(reason: String)(
     implicit hc: HeaderCarrier,
-    request: Request[_],
+    request: IdentifierRequest[_],
     messages: Messages): ServiceResponse[AuditResult.Success.type] =
     for {
       md        <- right(cache.readOption[UploadedSuccessfully])
       all_error <- (right(cache.readOption[AllBusinessRuleErrors]) |@| right(cache.readOption[XMLErrors])).tupled
       c         <- right(cache.readOption[CBCId])
-      cbcId = if (enrolment.isEmpty) c else Option(enrolment.get.cbcId)
+      cbcId = if (request.enrolment.isEmpty) c else request.enrolment.map(_.cbcId)
       u <- right(cache.readOption[Utr])
-      utr = if (enrolment.isEmpty) u else Option(enrolment.get.utr)
+      utr = if (request.enrolment.isEmpty) u else request.enrolment.map(_.utr)
       result <- eitherT[AuditResult.Success.type](
                  audit
                    .sendExtendedEvent(ExtendedDataEvent(
@@ -64,8 +60,8 @@ class AuditService @Inject()(cache: CBCSessionCache, val audit: AuditConnector) 
                        "reason"        -> JsString(reason),
                        "path"          -> JsString(request.uri),
                        "file metadata" -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String, String])),
-                       "creds"         -> Json.toJson(creds),
-                       "registration"  -> auditDetailAffinity(affinity.get, cbcId, utr),
+                       "creds"         -> Json.toJson(request.credentials),
+                       "registration"  -> auditDetailAffinity(request.affinityGroup.get, cbcId, utr),
                        "errorTypes"    -> auditDetailErrors(all_error)
                      )
                    ))

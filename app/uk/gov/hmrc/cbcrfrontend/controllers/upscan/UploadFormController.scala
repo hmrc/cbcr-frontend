@@ -125,10 +125,6 @@ class UploadFormController @Inject()(
     }
   }
 
-  def fileValidate(uploadId: UploadId) = Action.async { implicit request =>
-    Future.successful(Ok(views.fileUploadResult(None, None, None, None, None, None)))
-  }
-
   def handleError(errorCode: String, errorMessage: String): Action[AnyContent] = identify.async { implicit request =>
     logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $errorMessage")
     errorCode match {

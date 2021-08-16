@@ -91,4 +91,4 @@ GET           /upscan/choose-file                                   @uk.gov.hmrc
 GET           /upscan/failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.handleError(errorCode: String, errorMessage: String)
 GET           /upscan/file-upload-progress/:uploadId                @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.fileUploadProgress(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId)
 GET           /upscan/file-upload-response/:uploadId                @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.fileUploadResponse(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId)
-GET           /upscan/file-validate/:uploadId                       @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.fileValidate(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId)
+GET           /upscan/file-validate                                 @uk.gov.hmrc.cbcrfrontend.controllers.upscan.FileValidationController.fileValidate()

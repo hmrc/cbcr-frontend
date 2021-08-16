@@ -26,6 +26,7 @@ import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.right
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
 import uk.gov.hmrc.cbcrfrontend.model.upscan.{FileValidationResult, UploadId, UploadSessionDetails, UploadedSuccessfully}
 import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
 import uk.gov.hmrc.cbcrfrontend.util.ModifySize.calculateFileSize
@@ -50,10 +51,10 @@ class FileValidationService @Inject()(
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  def fileValidate(creds: Credentials, affinity: Option[AffinityGroup], enrolment: Option[CBCEnrolment])(
+  def fileValidate()(
     implicit hc: HeaderCarrier,
     messages: Messages,
-    request: Request[AnyContent]): EitherT[Future, CBCErrors, FileValidationResult] = {
+    request: IdentifierRequest[AnyContent]): EitherT[Future, CBCErrors, FileValidationResult] = {
 
     val fileDtls: Future[(UploadedSuccessfully, UploadId)] = for {
       uploadId       <- getUploadId()
@@ -74,21 +75,21 @@ class FileValidationService @Inject()(
       _ <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
           else
             auditService
-              .auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
+              .auditFailedSubmission("schema validation errors")
               .flatMap(_ => EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize))))
       _ = println("\n\n\n\nBefore business rules")
-      result <- validateBusinessRules(file, file_meta._1.name, enrolment, affinity)
+      result <- validateBusinessRules(file, file_meta._1.name, request.enrolment, request.affinityGroup)
       _ = println(s"\n\n\n\nafter business rules $result")
       businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
       _ <- if (schemaErrors.hasErrors)
-            auditService.auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
+            auditService.auditFailedSubmission("schema validation errors")
           else if (result.isLeft)
-            auditService.auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
+            auditService.auditFailedSubmission("business rules errors")
           else EitherT.pure[Future, CBCErrors, Unit](())
       _ = fileService.deleteFile(file)
     } yield {
       FileValidationResult(
-        affinity,
+        request.affinityGroup,
         Some(file_meta._1.name),
         file_meta._1.size,
         schemaSize,

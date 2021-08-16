@@ -22,12 +22,13 @@ import org.mockito.Mockito._
 import org.scalatest.EitherValues
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.JsNull
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
 import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadStatus, UploadedSuccessfully}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
@@ -55,7 +56,11 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
     "return success if audit enabled and sendExtendedEvent succeeds" in {
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      val request = addToken(FakeRequest())
+      val request = IdentifierRequest(
+        addToken(FakeRequest()),
+        Some(Credentials("totally", "legit")),
+        Some(Organisation),
+        Some(enrole))
 
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
@@ -71,17 +76,18 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
         Some(Utr("1234567890")))
 
       val result: ServiceResponse[AuditResult.Success.type] = auditService
-        .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrole), "just because")(
-          hc,
-          request,
-          messages)
+        .auditFailedSubmission("just because")(hc, request, messages)
 
       result.value.futureValue.right.value shouldBe AuditResult.Success
     }
 
     "return success if audit disabled and sendExtendedEvent succeeds" in {
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
-      val request = addToken(FakeRequest())
+      val request = IdentifierRequest(
+        addToken(FakeRequest()),
+        Some(Credentials("totally", "legit")),
+        Some(Organisation),
+        Some(enrolment))
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Disabled)
       when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
@@ -93,7 +99,7 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
       when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
         Some(Utr("1234567890")))
       val result = auditService
-        .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), None, "just because")(hc, request, messages)
+        .auditFailedSubmission("just because")(hc, request, messages)
 
       result.value.futureValue.right.value shouldBe AuditResult.Success
     }
@@ -101,7 +107,11 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
     "return error if sendExtendedEvent fails" in {
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      val request = addToken(FakeRequest())
+      val request = IdentifierRequest(
+        addToken(FakeRequest()),
+        Some(Credentials("totally", "legit")),
+        Some(Organisation),
+        Some(enrole))
       val failure = AuditResult.Failure("boo hoo")
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(failure)
       when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
@@ -114,10 +124,7 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
       when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
         Some(Utr("1234567890")))
       val result = auditService
-        .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrole), "just because")(
-          hc,
-          request,
-          messages)
+        .auditFailedSubmission("just because")(hc, request, messages)
 
       result.value.futureValue.left.value shouldBe UnexpectedState("Unable to audit a failed submission: boo hoo", None)
     }
