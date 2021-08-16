@@ -122,7 +122,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
   "FileValidationService" - {
     "validate xml schema and business rules and return FileValidationSuccess" in {
       val expectedResult =
-        FileValidationSuccess(Some(Organisation), Some("afile.xml"), Some(123), None, None, Some(CBC701))
+        FileValidationResult(Some(Organisation), Some("afile.xml"), Some(123), None, None, Some(CBC701))
       val uploadDetails = UploadSessionDetails(
         uploadId,
         Reference("123"),
@@ -146,10 +146,10 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       when(mockCBCBusinessRuleValidator.recoverReportingEntity(any())(any())) thenReturn Future.successful(
         Valid(completeXmlInfo))
 
-      val result: EitherT[Future, CBCErrors, FileValidationSuccess] =
+      val result: EitherT[Future, CBCErrors, FileValidationResult] =
         fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
 
-      val eitherResult: Either[CBCErrors, FileValidationSuccess] = result.value.futureValue
+      val eitherResult: Either[CBCErrors, FileValidationResult] = result.value.futureValue
       eitherResult.right.value shouldBe expectedResult
 
     }
@@ -172,10 +172,10 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       when(mockCache.save(any())(any(), any(), any()))
         .thenReturn(Future.successful(cacheMap))
 
-      val result: EitherT[Future, CBCErrors, FileValidationSuccess] =
+      val result: EitherT[Future, CBCErrors, FileValidationResult] =
         fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
 
-      val eitherResult: Either[CBCErrors, FileValidationSuccess] = result.value.futureValue
+      val eitherResult: Either[CBCErrors, FileValidationResult] = result.value.futureValue
       eitherResult.left.value shouldBe expectedResult
 
     }
@@ -204,18 +204,18 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       xmlErrorHandler.reportProblem(new XMLValidationProblem(e.getLocation, "", XMLValidationProblem.SEVERITY_FATAL))
       when(mockCBCRXMLValidator.validateSchema(any[File]())) thenReturn xmlErrorHandler
 
-      val result: EitherT[Future, CBCErrors, FileValidationSuccess] =
+      val result: EitherT[Future, CBCErrors, FileValidationResult] =
         fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
 
-      val eitherResult: Either[CBCErrors, FileValidationSuccess] = result.value.futureValue
+      val eitherResult: Either[CBCErrors, FileValidationResult] = result.value.futureValue
       eitherResult.left.value shouldBe expectedResult
     }
 
-    "validate should return business errors when xmlSchema validation fails" in {
+    "validate should return business errors when business rule validation fails" in {
 
       val businessRuleErrors = NonEmptyList.of(TestDataError)
       val expectedResult =
-        FileValidationSuccess(Some(Organisation), Some("afile.xml"), Some(123), None, Some(1), None)
+        FileValidationResult(Some(Organisation), Some("afile.xml"), Some(123), None, Some(1), None)
       val uploadDetails = UploadSessionDetails(
         uploadId,
         Reference("123"),
@@ -232,23 +232,50 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       when(mockCache.save(any())(any(), any(), any()))
         .thenReturn(Future.successful(cacheMap))
       when(mockXmlInfoExtract.extract(any())).thenReturn(mockRawXMLInfo)
-      when(mockFileService.sha256Hash(any()))
-        .thenReturn("63fe78532fed67be93556c62ec9242fdeb3635dd86b03aa81f631779fe378e18")
-
 
       when(mockCBCRXMLValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()
 
       when(mockCBCBusinessRuleValidator.validateBusinessRules(any(), any(), any(), any())(any())) thenReturn Future
         .successful(Invalid(businessRuleErrors))
 
-
-      val result: EitherT[Future, CBCErrors, FileValidationSuccess] =
+      val result: EitherT[Future, CBCErrors, FileValidationResult] =
         fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
 
-      val eitherResult: Either[CBCErrors, FileValidationSuccess] = result.value.futureValue
+      val eitherResult: Either[CBCErrors, FileValidationResult] = result.value.futureValue
       eitherResult.right.value shouldBe expectedResult
 
     }
 
+    "if keystore fails should return" in {
+      val expectedResult =
+        FileValidationResult(Some(Organisation), Some("afile.xml"), Some(123), None, None, Some(CBC701))
+      val uploadDetails = UploadSessionDetails(
+        uploadId,
+        Reference("123"),
+        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(123))
+      )
+      mockUpscanConnector.setDetails(uploadDetails)
+
+      when(mockFileService.getFile(uploadId, "downloadURL")(hc, ec))
+        .thenReturn(EitherT.right[Future, CBCErrors, File](Future.successful(mockFile)))
+      when(mockFileService.deleteFile(any())).thenReturn(true)
+      when(mockCache.readOption[UploadId])
+        .thenReturn(Future.successful(Some(uploadId)))
+      when(mockCache.save(any())(any(), any(), any())) thenReturn Future.failed(new Exception("bad"))
+      when(mockXmlInfoExtract.extract(any())).thenReturn(mockRawXMLInfo)
+      when(mockFileService.sha256Hash(any()))
+        .thenReturn("63fe78532fed67be93556c62ec9242fdeb3635dd86b03aa81f631779fe378e18")
+      when(mockCBCRXMLValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()
+      when(mockCBCBusinessRuleValidator.validateBusinessRules(any(), any(), any(), any())(any())) thenReturn Future
+        .successful(Valid(xmlinfo))
+      when(mockCBCBusinessRuleValidator.recoverReportingEntity(any())(any())) thenReturn Future.successful(
+        Valid(completeXmlInfo))
+
+      an[Exception] should be thrownBy fileValidationService
+        .fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
+        .value
+        .futureValue
+
+    }
   }
 }

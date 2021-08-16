@@ -20,19 +20,14 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.cbcrfrontend.model._
 
-sealed trait FileValidation
-
-case object FileValidationError extends FileValidation
-
-case class FileValidationSuccess(
+case class FileValidationResult(
   userType: Option[AffinityGroup],
   fileName: Option[String],
   fileSize: Option[Long],
   schemaErrors: Option[Int],
   busErrors: Option[Int],
   reportingRole: Option[ReportingRole])
-    extends FileValidation
 
-object FileValidationSuccess {
-  implicit val format: OFormat[FileValidationSuccess] = Json.format[FileValidationSuccess]
+object FileValidationResult {
+  implicit val format: OFormat[FileValidationResult] = Json.format[FileValidationResult]
 }
