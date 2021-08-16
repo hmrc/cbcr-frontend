@@ -65,10 +65,9 @@ class FileValidationService @Inject()(
       file      <- fileService.getFile(file_meta._2, file_meta._1.downloadUrl)
       _         <- right(cache.save[UploadedSuccessfully](file_meta._1))
       _         <- EitherT.cond[Future](file_meta._1.name.toLowerCase endsWith ".xml", (), InvalidFileType(file_meta._1.name))
+
       schemaErrors: XmlErrorHandler = schemaValidator.validateSchema(file)
-
       xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
-
       schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
       _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
       _ <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
@@ -76,7 +75,9 @@ class FileValidationService @Inject()(
             auditService
               .auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
               .flatMap(_ => EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize))))
+      _ = println("\n\n\n\nBefore business rules")
       result <- validateBusinessRules(file, file_meta._1.name, enrolment, affinity)
+      _ = println(s"\n\n\n\nafter business rules $result")
       businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
       length = calculateFileSize(100000) //TODO
       _ <- if (schemaErrors.hasErrors)

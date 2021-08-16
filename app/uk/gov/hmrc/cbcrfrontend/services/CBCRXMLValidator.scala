@@ -55,26 +55,6 @@ class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValid
     xmlErrorHandler
 
   }
-
-  def validateSchema(url: URL): XmlErrorHandler = {
-    val xmlErrorHandler = new XmlErrorHandler()
-
-    try {
-      val xmlStreamReader: XMLStreamReader2 = xmlInputFactory2.createXMLStreamReader(url)
-      xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
-      xmlStreamReader.validateAgainst(xmlValidationSchema)
-      while (xmlStreamReader.hasNext) { xmlStreamReader.next }
-    } catch {
-      case e: WstxException =>
-        xmlErrorHandler.reportProblem(
-          new XMLValidationProblem(e.getLocation, e.getMessage, XMLValidationProblem.SEVERITY_FATAL))
-      case ErrorLimitExceededException =>
-        logger.warn(s"Errors exceeding the ${xmlErrorHandler.errorMessageLimit} encountered, validation aborting.")
-    }
-
-    xmlErrorHandler
-
-  }
 }
 
 class XmlErrorHandler() extends ValidationProblemHandler {
