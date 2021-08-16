@@ -1,0 +1,106 @@
+@*
+ * Copyright 2021 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import uk.gov.hmrc.auth.core.AffinityGroup
+@import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+@import uk.gov.hmrc.cbcrfrontend.model.{CBC701, ReportingRole}
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import tags._
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers
+
+@this(mainTemplate: main_template)
+
+@(userType: Option[AffinityGroup], fileName: Option[String], fileSize: Option[Long], schemaErrors: Option[Int], busErrors: Option[Int], reportingRole: Option[ReportingRole])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@errors = @{
+    schemaErrors.isDefined || busErrors.isDefined
+}
+
+@mainTemplate(if(!errors) {
+    Messages("fileUploadResult.title.ok")
+}
+else {
+    Messages("fileUploadResult.error.title")
+},
+    sidebarLinks = None) {
+
+  @back_link(controllers.upscan.routes.UploadFormController.onPageLoad.url)
+
+    <div>
+        @if(!errors) {
+            <h1>@Messages("fileUploadResult.mainHeading.ok")</h1>
+        } else {
+            @if(schemaErrors.isDefined && busErrors.isDefined) {
+                <h1>@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
+            } else {
+                @if(schemaErrors.isDefined) {
+                    <h1>@messages("fileUploadResult.mainHeading.xmlError")</h1>
+                } else {
+                    <h1>@messages("fileUploadResult.mainHeading.dataError")</h1>
+                }
+            }
+            <h2>@messages("fileUploadResult.whatToDo")</h2>
+            @schemaErrors.map { size =>
+                <p>@Messages("fileUploadResult.error.report") <a href="@controllers.upscan.routes.FileValidationController.getXmlSchemaErrors">@Messages("fileUploadResult.error.data.link")
+                    (Text, @{
+                    size
+                }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
+            }
+            @busErrors.map { size =>
+                <p>@Messages("fileUploadResult.error.report") <a href="@controllers.upscan.routes.FileValidationController.getBusinessRuleErrors">@Messages("fileUploadResult.error.data.link")
+                    (Text, @{
+                    size
+                }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
+            }
+            <p><a href="@config.cbcrOecdGuideUrl">@Messages("fileUploadResult.error.oecdUrl")</a> @Messages("fileUploadResult.error.oecdInfo")</p>
+        }
+        @if(!errors) {
+            <div>
+                <br>
+                <table class="table--top-border" id="table-successReport">
+                    <caption tabindex="0">@Messages("fileUploadResult.caption")</caption>
+                    <tbody>
+                        <tr>
+                            <td tabindex="0">@Messages("fileUploadResult.fileName")</td>
+                            <td tabindex="0">@fileName</td>
+                        </tr>
+                        <tr>
+                            <td tabindex="0">@Messages("fileUploadResult.fileSize")</td>
+                            <td tabindex="0">@fileSize KB</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p></p>
+            <p>@Messages("fileUploadResult.notYetSubmitted") <a href="@controllers.routes.SharedController.signOutSurvey">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
+
+            @if(reportingRole == Some(CBC701)){
+                @if(userType == Some(Organisation)){
+                    <p><a class="button" role="button" href="@controllers.routes.SubmissionController.submitterInfo()" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                } else {
+                    <p><a class="button" role="button" href="@controllers.routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                }
+            } else {
+                <p><a class="button" role="button" href="@controllers.routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+            }
+        } else {
+            @errorFocus()
+            <a class="button" role="button" href="@controllers.routes.SharedController.signOutSurvey" id="btn-continue">@Messages("form.controls.finished")</a>
+        }
+    </div>
+}

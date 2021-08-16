@@ -24,8 +24,8 @@ case class FileValidationResult(
   userType: Option[AffinityGroup],
   fileName: Option[String],
   fileSize: Option[Long],
-  schemaErrors: Option[Int],
-  busErrors: Option[Int],
+  schemaErrorSize: Option[Int],
+  businessErrorSize: Option[Int],
   reportingRole: Option[ReportingRole])
 
 object FileValidationResult {
