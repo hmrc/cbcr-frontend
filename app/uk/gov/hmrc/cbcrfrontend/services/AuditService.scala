@@ -27,7 +27,7 @@ import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.controllers.{eitherT, right}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadId, UploadedSuccessfully}
 import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
@@ -47,9 +47,9 @@ class AuditService @Inject()(cache: CBCSessionCache, val audit: AuditConnector) 
     reason: String)(
     implicit hc: HeaderCarrier,
     request: Request[_],
-    messages: Messages): ServiceResponse[AuditResult.Success.type] = {
+    messages: Messages): ServiceResponse[AuditResult.Success.type] =
     for {
-      md        <- right(cache.readOption[FileMetadata])
+      md        <- right(cache.readOption[UploadedSuccessfully])
       all_error <- (right(cache.readOption[AllBusinessRuleErrors]) |@| right(cache.readOption[XMLErrors])).tupled
       c         <- right(cache.readOption[CBCId])
       cbcId = if (enrolment.isEmpty) c else Option(enrolment.get.cbcId)
@@ -76,7 +76,6 @@ class AuditService @Inject()(cache: CBCSessionCache, val audit: AuditConnector) 
                      case AuditResult.Disabled => Right(AuditResult.Success)
                    })
     } yield result
-  }
 
   //Turn a Case class into a map
   private def getCCParams(cc: AnyRef): Map[String, String] =

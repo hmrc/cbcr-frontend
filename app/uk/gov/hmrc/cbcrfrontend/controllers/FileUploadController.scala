@@ -198,7 +198,7 @@ class FileUploadController @Inject()(
   def calculateFileSize(md: FileMetadata): BigDecimal =
     (md.length / 1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
 
-  def fileValidate(envelopeId: String, fileId: String) = Action.async { implicit request =>
+  def fileValidate(envelopeId: String, fileId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
       case Some(creds) ~ affinity ~ enrolment =>
         val result = for {
