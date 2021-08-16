@@ -18,9 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import akka.actor.ActorSystem
 import base.SpecBase
-import cats.data.{EitherT, NonEmptyList}
 import cats.data.Validated.{Invalid, Valid}
-import cats.implicits.catsSyntaxValidatedId
+import cats.data.{EitherT, NonEmptyList}
 import cats.instances.future._
 import com.ctc.wstx.exc.WstxException
 import org.codehaus.stax2.validation.XMLValidationProblem
@@ -30,13 +29,12 @@ import org.scalatest.EitherValues
 import play.api.Environment
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.AnyContent
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
-import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
@@ -51,25 +49,20 @@ import scala.concurrent.{ExecutionContext, Future}
 class FileValidationServiceSpec extends SpecBase with EitherValues {
 
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-  implicit val env = app.injector.instanceOf[Environment]
-  implicit val as = app.injector.instanceOf[ActorSystem]
+  implicit val env: Environment = app.injector.instanceOf[Environment]
+  implicit val as: ActorSystem = app.injector.instanceOf[ActorSystem]
 
-  val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
-  val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-  implicit val request: IdentifierRequest[AnyContentAsEmpty.type] = IdentifierRequest(
-    addToken(FakeRequest()),
-    Some(Credentials("totally", "legit")),
-    Some(Organisation),
-    Some(enrole))
+  implicit val request: IdentifierRequest[AnyContent] =
+    IdentifierRequest(FakeRequest(), Some(Credentials("totally", "legit")), Some(Organisation), Some(enrolment))
 
   val mockCBCRXMLValidator: CBCRXMLValidator = mock[CBCRXMLValidator]
   val mockCBCBusinessRuleValidator: CBCBusinessRuleValidator = mock[CBCBusinessRuleValidator]
   val mockXmlInfoExtract: XmlInfoExtract = mock[XmlInfoExtract]
-  val mockUpscanConnector = app.injector.instanceOf[FakeUpscanConnector]
+  val mockUpscanConnector: FakeUpscanConnector = app.injector.instanceOf[FakeUpscanConnector]
   val mockAuditService: AuditService = mock[AuditService]
   val mockFile: File = mock[File]
-  val mockFileService = mock[FileService]
-  val mockRawXMLInfo = mock[RawXMLInfo]
+  val mockFileService: FileService = mock[FileService]
+  val mockRawXMLInfo: RawXMLInfo = mock[RawXMLInfo]
 
   override protected def afterEach(): Unit = {
     reset(mockCBCRXMLValidator, mockCBCBusinessRuleValidator, mockXmlInfoExtract, mockAuditService)
@@ -210,7 +203,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
         .thenReturn(Future.successful(Some(uploadId)))
       when(mockCache.save(any())(any(), any(), any()))
         .thenReturn(Future.successful(cacheMap))
-      when(mockAuditService.auditFailedSubmission(any(), any(), any(), any())(any(), any(), any()))
+      when(mockAuditService.auditFailedSubmission(any())(any(), any(), any()))
         .thenReturn(right(Future.successful(AuditResult.Success)))
       val xmlErrorHandler = new XmlErrorHandler()
       val e = new WstxException("error")
@@ -218,7 +211,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       when(mockCBCRXMLValidator.validateSchema(any[File]())) thenReturn xmlErrorHandler
 
       val result: EitherT[Future, CBCErrors, FileValidationResult] =
-        fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
+        fileValidationService.fileValidate()
 
       val eitherResult: Either[CBCErrors, FileValidationResult] = result.value.futureValue
       eitherResult.left.value shouldBe expectedResult
@@ -235,7 +228,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
         UploadedSuccessfully("afile.xml", "", "downloadURL", Some(123))
       )
       mockUpscanConnector.setDetails(uploadDetails)
-      when(mockAuditService.auditFailedSubmission(any(), any(), any(), any())(any(), any(), any()))
+      when(mockAuditService.auditFailedSubmission(any())(any(), any(), any()))
         .thenReturn(right(Future.successful(AuditResult.Success)))
       when(mockFileService.getFile(uploadId, "downloadURL")(hc, ec))
         .thenReturn(EitherT.right[Future, CBCErrors, File](Future.successful(mockFile)))
@@ -251,8 +244,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       when(mockCBCBusinessRuleValidator.validateBusinessRules(any(), any(), any(), any())(any())) thenReturn Future
         .successful(Invalid(businessRuleErrors))
 
-      val result: EitherT[Future, CBCErrors, FileValidationResult] =
-        fileValidationService.fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
+      val result: EitherT[Future, CBCErrors, FileValidationResult] = fileValidationService.fileValidate()
 
       val eitherResult: Either[CBCErrors, FileValidationResult] = result.value.futureValue
       eitherResult.right.value shouldBe expectedResult
@@ -284,10 +276,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       when(mockCBCBusinessRuleValidator.recoverReportingEntity(any())(any())) thenReturn Future.successful(
         Valid(completeXmlInfo))
 
-      an[Exception] should be thrownBy fileValidationService
-        .fileValidate(creds, Some(AffinityGroup.Organisation), Some(enrolment))
-        .value
-        .futureValue
+      an[Exception] should be thrownBy fileValidationService.fileValidate().value.futureValue
 
     }
   }

@@ -39,6 +39,13 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
   val auditC: AuditConnector = mock[AuditConnector]
   val uploadedSuccessfully = UploadedSuccessfully("something.xml", "text/xml", "downloadUrl", Some(456))
 
+  val request =
+    IdentifierRequest(
+      addToken(FakeRequest()),
+      Some(Credentials("totally", "legit")),
+      Some(Organisation),
+      Some(enrolment))
+
   override protected def afterEach(): Unit = {
     reset(auditC)
     super.afterEach()
@@ -54,14 +61,6 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
 
   "a call to auditFailedSubmission" - {
     "return success if audit enabled and sendExtendedEvent succeeds" in {
-      val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
-      val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      val request = IdentifierRequest(
-        addToken(FakeRequest()),
-        Some(Credentials("totally", "legit")),
-        Some(Organisation),
-        Some(enrole))
-
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
@@ -82,12 +81,6 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
     }
 
     "return success if audit disabled and sendExtendedEvent succeeds" in {
-      val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
-      val request = IdentifierRequest(
-        addToken(FakeRequest()),
-        Some(Credentials("totally", "legit")),
-        Some(Organisation),
-        Some(enrolment))
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Disabled)
       when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
@@ -105,13 +98,7 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
     }
 
     "return error if sendExtendedEvent fails" in {
-      val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
-      val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      val request = IdentifierRequest(
-        addToken(FakeRequest()),
-        Some(Credentials("totally", "legit")),
-        Some(Organisation),
-        Some(enrole))
+
       val failure = AuditResult.Failure("boo hoo")
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(failure)
       when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
