@@ -44,7 +44,7 @@ package object cbcrfrontend {
 
   lazy val logger: Logger = Logger(this.getClass)
 
-//  class ErrorRedirect @Ine
+  //  class ErrorRedirect @Ine
   val cbcEnrolment: Retrieval[Option[CBCEnrolment]] = SimpleRetrieval(
     "allEnrolments",
     Reads.set[Enrolment].map { e =>

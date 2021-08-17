@@ -13,42 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *@
-
-@import helper._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
+@()(implicit request: Request[_], messages: Messages)
 
-@()(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
-
-@mainTemplate(title = Messages("")) {
+@mainTemplate(pageTitle = Messages("")) {
 
     <div class="tin">
+        @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.editDIR, 'method -> "post") {
 
-        <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.editDIR" method="post">
-
-            <input type="text" name="id" label="id"><br>
-            @CSRF.formField
-            <div class="form-field">
-                <button role="button" type="submit" id="continue">Re-Validate DIR</button>
-            </div>
-        </form>
+            <input class="govuk-input" type="text" name="id" label="id"><br>
+            <button class="govuk-button" role="button" type="submit" id="continue">Re-Validate DIR</button>
+        }
     </div>
 
     <div class="tin">
+       @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.adminAddDocRefId, 'method -> "post") {
 
-        <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.adminAddDocRefId" method="post">
-
-            <input type="text" name="id" label="id"><br>
-            @CSRF.formField
-            <div class="form-field">
-                <button role="button" type="submit" id="continue">Add Doc Ref ID</button>
-            </div>
-        </form>
+            <input class="govuk-input" type="text" name="id" label="id"><br>
+            <button class="govuk-button" role="button" type="submit" id="continue">Add Doc Ref ID</button>
+       }
     </div>
-
-
 
 }

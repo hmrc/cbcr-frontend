@@ -13,35 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *@
-
-@import helper._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.AdminReportingEntityDataRequestForm
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
+@(adminReportingEntityDataRequestForm: Form[AdminReportingEntityDataRequestForm])(implicit request: Request[_], messages: Messages)
 
-@(adminReportingEntityDataRequestForm: Form[AdminReportingEntityDataRequestForm])(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
-
-@mainTemplate(title = Messages("")) {
+@mainTemplate(pageTitle = Messages("")) {
 
     <div class="cbcId">
 
-        <form action="@uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.editReportingEntity" method="post">
+        @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.AdminController.editReportingEntity, 'method -> "post") {
 
-            <p><b>Selector Id</b></p>
-            <textarea type="text" name="selector" label="selector" placeholder="DRI"></textarea><br>
-            <p><b>cbcReportsDRI</b></p>
-            <textarea type="text" name="cbcReportsDRI" label="cbcReportsDRI" placeholder="cbcReportsDRI(comma separated)"></textarea><br>
-            <p><b>additionalInfoDRI</b></p>
-            <textarea type="text" name="additionalInfoDRI" label="additionalInfoDRI" placeholder="additionalInfoDRI(comma separated)"></textarea><br>
-            <p><b>reportingEntityDRI</b></p>
-            <textarea type="text" name="reportingEntityDRI" label="reportingEntityDRI" placeholder="reportingEntityDRI"></textarea><br>
-            @CSRF.formField
-            <div class="form-field">
-                <button role="button" type="submit" id="continue">Submit</button>
-            </div>
-        </form>
+            <p class="govuk-body"><b>Selector Id</b></p>
+            <textarea class="govuk-textarea" type="text" name="selector" label="selector" placeholder="DRI"></textarea><br>
+            <p class="govuk-body"><b>cbcReportsDRI</b></p>
+            <textarea class="govuk-textarea" type="text" name="cbcReportsDRI" label="cbcReportsDRI" placeholder="cbcReportsDRI(comma separated)"></textarea><br>
+            <p class="govuk-body"><b>additionalInfoDRI</b></p>
+            <textarea class="govuk-textarea" type="text" name="additionalInfoDRI" label="additionalInfoDRI" placeholder="additionalInfoDRI(comma separated)"></textarea><br>
+            <p class="govuk-body"><b>reportingEntityDRI</b></p>
+            <textarea class="govuk-textarea" type="text" name="reportingEntityDRI" label="reportingEntityDRI" placeholder="reportingEntityDRI"></textarea><br>
+
+            <button class="govuk-button" role="button" type="submit" id="continue">Submit</button>
+            }
     </div>
 
 

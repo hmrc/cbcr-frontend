@@ -89,7 +89,6 @@ class FileUploadService @Inject()(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): ServiceResponse[String] = {
 
-    //@todo replace this wit the Joda Equivalent
     val fileNamePrefix = s"oecd-${LocalDateTime.now}"
     val xmlByteArray: Array[Byte] = org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(xmlFile))
 
