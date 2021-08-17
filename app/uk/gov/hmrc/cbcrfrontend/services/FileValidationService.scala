@@ -77,9 +77,7 @@ class FileValidationService @Inject()(
             auditService
               .auditFailedSubmission("schema validation errors")
               .flatMap(_ => EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize))))
-      _ = println("\n\n\n\nBefore business rules")
       result <- validateBusinessRules(file, file_meta._1.name, request.enrolment, request.affinityGroup)
-      _ = println(s"\n\n\n\nafter business rules $result")
       businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
       _ <- if (schemaErrors.hasErrors)
             auditService.auditFailedSubmission("schema validation errors")

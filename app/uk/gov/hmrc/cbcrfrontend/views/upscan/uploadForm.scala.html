@@ -18,6 +18,7 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.cbcrfrontend.controllers
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.auth.core.AffinityGroup
 @import uk.gov.hmrc.cbcrfrontend.model.upscan._
@@ -30,7 +31,7 @@
 
 @{
     if(request.uri.contains("/unregistered-gg-account")) {
-        back_link(routes.FileUploadController.chooseXMLFile.url)
+        back_link(controllers.upscan.routes.UploadFormController.onPageLoad.url)
     } else {
     userType match {
         case Some(Organisation) => back_link(routes.StartController.start.url)
@@ -53,6 +54,9 @@
             <h1 class="govuk-heading-l">
                 @Messages("uploadReport.mainHeading")
             </h1>
+            @upscanInitiateResponse.formFields.map {case (key, value) =>
+                <input type="hidden" name="@key" value="@value"/>
+            }
 
             <p class="govuk-body">@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
             <br aria-hidden="true"/>
