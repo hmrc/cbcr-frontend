@@ -128,8 +128,8 @@ class UploadFormController @Inject()(
   def handleError(errorCode: String, errorMessage: String): Action[AnyContent] = identify.async { implicit request =>
     logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $errorMessage")
     errorCode match {
-      case "EntityTooLarge"  => Redirect(fileRoutes.FileUploadController.fileTooLarge)
-      case "InvalidArgument" => Redirect(fileRoutes.FileUploadController.fileInvalid)
+      case "EntityTooLarge"  => Redirect(routes.FileValidationController.fileTooLarge)
+      case "InvalidArgument" => Redirect(routes.FileValidationController.fileInvalid)
       case _                 => Redirect(fileRoutes.SharedController.technicalDifficulties)
     }
   }

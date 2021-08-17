@@ -24,7 +24,7 @@
     mainTemplate: Layout
 )
 
-@(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(Messages("fileUploadResult.error.title")) {
 

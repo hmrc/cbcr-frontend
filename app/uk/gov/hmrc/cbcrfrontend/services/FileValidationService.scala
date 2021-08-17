@@ -28,7 +28,7 @@ import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
 import uk.gov.hmrc.cbcrfrontend.model.upscan.{FileValidationResult, UploadId, UploadSessionDetails, UploadedSuccessfully}
-import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
+import uk.gov.hmrc.cbcrfrontend.util.{ErrorUtil, ModifySize}
 import uk.gov.hmrc.cbcrfrontend.util.ModifySize.calculateFileSize
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
@@ -89,10 +89,11 @@ class FileValidationService @Inject()(
       FileValidationResult(
         request.affinityGroup,
         Some(file_meta._1.name),
-        file_meta._1.size,
+        file_meta._1.size.map(x => ModifySize.calculateFileSize(BigDecimal(x))),
         schemaSize,
         businessSize,
-        result.map(_.reportingEntity.reportingRole).toOption)
+        result.map(_.reportingEntity.reportingRole).toOption
+      )
     }
   }
 

@@ -23,7 +23,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 case class FileValidationResult(
   userType: Option[AffinityGroup],
   fileName: Option[String],
-  fileSize: Option[Long],
+  fileSize: Option[BigDecimal],
   schemaErrorSize: Option[Int],
   businessErrorSize: Option[Int],
   reportingRole: Option[ReportingRole])
