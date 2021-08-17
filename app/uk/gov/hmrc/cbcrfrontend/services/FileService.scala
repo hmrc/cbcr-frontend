@@ -70,8 +70,8 @@ class FileService @Inject()(ws: WSClient)(implicit materializer: Materializer) {
 
   def deleteFile(file: File): Boolean = java.nio.file.Files.deleteIfExists(file.toPath)
 
-  def sha256Hash(file: File): String = {
-    val test = String.format(
+  def sha256Hash(file: File): String =
+    String.format(
       "%064x",
       new java.math.BigInteger(
         1,
@@ -81,7 +81,4 @@ class FileService @Inject()(ws: WSClient)(implicit materializer: Materializer) {
             org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
           ))
     )
-    println(s"===========sha256Hash=============$test")
-    test
-  }
 }
