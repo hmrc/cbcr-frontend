@@ -52,7 +52,7 @@
 
             <h1 class="govuk-heading-l">@Messages("subscribeFirst.mainHeading")</h1>
 
-            @formHelper(action = uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts) {
+            @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts) {
 
               <div class="govuk-form-group @if(hasErrors){govuk-form-group--error}">
                 <fieldset class="govuk-fieldset">

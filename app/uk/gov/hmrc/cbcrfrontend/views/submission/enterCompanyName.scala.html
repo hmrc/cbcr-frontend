@@ -16,39 +16,42 @@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(
-    mainTemplate: main_template
+    mainTemplate: Layout,
+    formHelper: FormWithCSRF
 )
 
-@(form:Form[_], envelopeId: String, fileId: String)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_], envelopeId: String, fileId: String)(implicit request: Request[_], messages: Messages)
 
 @error = @{form.error("companyName").isDefined}
 
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCompanyName.title")}else{Messages("enterCompanyName.title")}) {
 @back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
-    <div class="grid-row">
-    <div class="column-full">
+
         @if(form.hasErrors) {
-            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                <h3 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h3>
-                @if(form.hasErrors){<p id="companyName-error-summary"><strong><a href="#companyName">@Messages("enterCompanyName.form.error")</a></strong></p>}
+            <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
+                <div class="govuk-error-summary__body">
+                    <ul class="govuk-list govuk-error-summary__list">
+                @if(form.hasErrors){<li id="companyName-error-summary"><a href="#companyName">@Messages("enterCompanyName.form.error")</a></li>}
+                    </ul>
+                </div>
             </div>
             @errorFocus()
         }
-        <h1>@Messages("enterCompanyName.mainHeading")</h1>
-        @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.saveCompanyName){
-        <fieldset>
-            @formFieldDisplay(error,"companyName",Some(Messages("enterCompanyName.form.error")),Messages("enterCompanyName.formHintWhereYouGotIt"),form,None)
-        </fieldset>
-        @csrf_token()
+        <h1 class="govuk-heading-l">@Messages("enterCompanyName.mainHeading")</h1>
 
-        <input class="button" role="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">
+        @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.saveCompanyName){
+            <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
+                <fieldset class="govuk-fieldset">
+                @govukFormFieldDisplay(error,"companyName",Some(Messages("enterCompanyName.form.error")),Messages("enterCompanyName.formHintWhereYouGotIt"),form,None)
+                </fieldset>
+            </div>
+
+            <button class="govuk-button" role="button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>
         }
-    </div>
-</div>
 
 }

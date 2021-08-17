@@ -14,17 +14,15 @@
 * limitations under the License.
 *@
 
-@import helper._
-@import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.cbcrfrontend.model.upscan._
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.auth.core.AffinityGroup
+@import uk.gov.hmrc.cbcrfrontend.model.upscan._
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
 
 @(upscanInitiateResponse:UpscanInitiateResponse, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -41,52 +39,68 @@
 }}
 
 
-<div class="grid-row">
-    <form id ="fileUploadForm"  name = "fpForm" action="@upscanInitiateResponse.postTarget" method="post" enctype="multipart/form-data" class="js-form"  novalidate>
-        <div class="column-full">
+<div class="govuk-grid-row">
+    <form id ="fileUploadForm"  name = "fpForm" action = "@upscanInitiateResponse.postTarget" method="post" enctype="multipart/form-data" class="js-form">
+        <div class="govuk-grid-column-full">
             <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display"  class="js-hidden">
                 <h2 id="error-summary-heading">@Messages("start.error.heading")</h2>
-                <p id="file-input-error-summary" class="form-label-bold"><a id="file-input-error-link" href="#file-input">@Messages("uploadReport.error")</a></p>
+                <div class="govuk-error-summary__body">
+                    <ul class="govuk-list govuk-error-summary__list">
+                        <li id="file-input-error-summary" class="form-label-bold"><a id="file-input-error-link" href="#file-input">@Messages("uploadReport.error")</a></li>
+                    </ul>
+                </div>
             </div>
-            <h1>
+            <h1 class="govuk-heading-l">
                 @Messages("uploadReport.mainHeading")
             </h1>
 
-            @upscanInitiateResponse.formFields.map {case (key, value) =>
-                <input type="hidden" name="@key" value="@value"/>
-            }
-
-            <p>@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
+            <p class="govuk-body">@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
             <br aria-hidden="true"/>
-            <div class="form-group">
-                <div class="form-field-group">
-                    <label class="form-label" for="file-input">@Messages("uploadReport.label")</label>
-                    <span id="fileName-error-message" class="error-notification" role="alert" >
-                    </span>
-                    <input type="file" id="file-input" class="govuk-file-upload" name="file" accept=".xml,application/xml" required data-msg-required="@Messages("uploadReport.error")">
-                </div>
-                <div class="form-field-group form-field--submit">
-                    @csrf_token()
-                    <button class="btn button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
-                </div>
+
+            <div id="formGroup" class="govuk-form-group">
+
+                <label class="govuk-label" for="file-input">@Messages("uploadReport.label")</label>
+                <span id="error-message" class="js-hidden" role="alert" data-input-name="file">
+                        @Messages("uploadReport.error")
+                        </span>
+                <input
+                        type="file"
+                        id="file-input"
+                        class="govuk-file-upload"
+                        name="file" accept=".xml, .XML"
+                        required
+                        oninvalid="InvalidMsg(this);"
+                        oninput="InvalidMsg(this);">
+                @csrf_token()
             </div>
+            <p><button class="govuk-button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
+            </p>
         </div>
     </form>
 </div>
 
 <script>
-        var form = document.getElementsByTagName('form')[0];
-        var error_summary = document.getElementById('error-summary-display');
-        var title = document.title;
+            var form = document.getElementsByTagName('form')[0];
+            var error_summary = document.getElementById('error-summary-display');
+            var formgroup = document.getElementById('formGroup');
+            var errorMessage = document.getElementById('error-message');
+            var title = document.title;
 
-        form.addEventListener("submit", function() {
-            error_summary.className = "flash error-summary error-summary--show";
+            function InvalidMsg(textbox) {
+                if (textbox.value === '') {
+                    document.title = "Error: " + title
+                    error_summary.className = "govuk-error-summary";
+                    formgroup.className = "govuk-form-group--error";
+                    errorMessage.className = "govuk-error-message"
+                    error_summary.focus();
+                    textbox.setCustomValidity('');
+                } else {
+                    textbox.setCustomValidity('');
+                }
 
-            document.title = "Error: " + title
-            window.setTimeout(function () {
-                error_summary.focus();
-            }, 0);
-        });
+                return true;
+            }
 
     </script>
+
 }

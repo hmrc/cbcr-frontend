@@ -85,7 +85,6 @@ POST          /admin/saveDocRefId                                   @uk.gov.hmrc
 
 GET           /enhancement-unauthorised                             @uk.gov.hmrc.cbcrfrontend.controllers.CBCEnhancementsController.enhancementUnavailable
 
-
 GET           /unregistered-gg-account-view                         @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.unregisteredGGAccount
 GET           /upscan/choose-file                                   @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.onPageLoad
 GET           /upscan/failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.handleError(errorCode: String, errorMessage: String)

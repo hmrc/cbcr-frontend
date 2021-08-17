@@ -13,54 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *@
-
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.ReportingEntityData
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
 
-@(reportingEntity: ReportingEntityData)(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(reportingEntity: ReportingEntityData)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(title = Messages("")) {
+@mainTemplate(pageTitle = Messages("")) {
 
     <div class="doc-ref-id">
-        <table >
-            <tr>
-                <th>cbcReportsDRI</th>
-                <th>@for(cbcReports <- reportingEntity.cbcReportsDRI.toList) {
+        <table class="govuk-table">
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header">cbcReportsDRI</th>
+                <td class="govuk-table__cell">@for(cbcReports <- reportingEntity.cbcReportsDRI.toList) {
                     @{cbcReports}
-                }</th>
+                }</td>
             </tr>
-            <tr>
-                <th>additionalInfoDRI</th>
-                <th>@for(addintonalInfo <- reportingEntity.additionalInfoDRI) {
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header">additionalInfoDRI</th>
+                <td class="govuk-table__cell">@for(addintonalInfo <- reportingEntity.additionalInfoDRI) {
                     @{addintonalInfo}
-                }</th>
+                }</td>
             </tr>
-            <tr>
-                <th>reportingEntityDRI</th>
-                <th>@{reportingEntity.reportingEntityDRI}</th>
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header">reportingEntityDRI</th>
+                <td class="govuk-table__cell">@{reportingEntity.reportingEntityDRI}</td>
             </tr>
-            <tr>
-                <th>tin</th>
-                <th>@{reportingEntity.tin}</th>
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header">tin</th>
+                <td class="govuk-table__cell">@{reportingEntity.tin}</td>
             </tr>
-            <tr>
-                <th>ultimateParentEntity</th>
-                <th>@{reportingEntity.ultimateParentEntity}</th>
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header">ultimateParentEntity</th>
+                <td class="govuk-table__cell">@{reportingEntity.ultimateParentEntity}</td>
             </tr>
-            <tr>
-                <th>reportingRole</th>
-                <th>@{reportingEntity.reportingRole}</th>
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header">reportingRole</th>
+                <td class="govuk-table__cell">@{reportingEntity.reportingRole}</td>
             </tr>
-            <tr>
-                <th>creationDate</th>
-                <th>@{reportingEntity.creationDate}</th>
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header">creationDate</th>
+                <td class="govuk-table__cell">@{reportingEntity.creationDate}</td>
             </tr>
-            <tr>
-                <th>reportingPeriod</th>
-                <th>@{reportingEntity.reportingPeriod}</th>
+            <tr class="govuk-table__row">
+                <th class="govuk-table__header">reportingPeriod</th>
+                <td class="govuk-table__cell">@{reportingEntity.reportingPeriod}</td>
             </tr>
         </table>
 

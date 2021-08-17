@@ -15,87 +15,64 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import helper._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.model.FieldName
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.auth.core.AffinityGroup
 
-@this(
-    mainTemplate: main_template
-)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
 
-@numberOfErrors = @{form.errors.length}
-@maybePhoneError =  @{form.error("contactPhone").map(_.message).getOrElse("")}
-@maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
+@maybePhoneError = @{form.error("contactPhone").map(_.message).getOrElse("")}
+@maybeEmailError = @{form.error("email").map(_.message).getOrElse("")}
 
 @contactPhoneErrors = @{form.error("contactPhone").isDefined}
 @emailErrors = @{form.error("email").isDefined}
+
+@hasErrors = @{
+    form.errors.length > 0
+}
 
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("submitterInfo.title")}else{Messages("submitterInfo.title")}) {
 
   @{userType match {
       case Some(Organisation) => back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
-      case _ => back_link(routes.SubmissionController.enterCompanyName.url)
+      case _                  => back_link(routes.SubmissionController.enterCompanyName.url)
   }}
 
     @if(form.hasErrors) {
-        @if(numberOfErrors == 1) {
-            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-            @form.errors.map { error =>
-                <h2 id="error-summary-heading" class="h2-heading"> @error.messages.map(e => Messages("start.error.heading")) </h2>
-            @if(maybeEmailError.contains("submitterInfo.emailAddress.error.invalid")) {
-                <p>@Messages("submitterInfo.emailAddress.error.invalid.header.l1")</p>
-            }
-            @if(maybePhoneError.contains("submitterInfo.phoneNumber.error.invalid")) {
-                <p>@Messages("submitterInfo.phoneNumber.error.invalid.header.l1")</p>
-            }
-                <p><strong><a href="#@error.key" id="@{
-                    error.key
-                }-error-summary">
-                @error.messages.map(x => Messages(x))</a></strong></p>
-
-            }
-            </div>
-        } else {
-            <div class="flash error-summary error-summary--show" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+            <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" data-module="govuk-error-summary">
                 <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
-                @if(fullNameErrors) {
-                <p id="fullName-error-summary"><strong><a href="#fullName">@Messages("submitterInfo.fullName.error")</a></strong></p>
-                }
-                @if(contactPhoneErrors) {
-                <p id="contactPhone-error-summary"><strong><a href="#contactPhone">@Messages(maybePhoneError)</a></strong></p>
-                }
-                @if(emailErrors) {
-                <p id="email-error-summary"><strong><a href="#email">@Messages(maybeEmailError )</a></strong></p>
-                }
+                <div class="govuk-error-summary__body">
+                    <ul class="govuk-list govuk-error-summary__list">
+                        @if(fullNameErrors) {<li id="fullName-error-summary"><strong><a href="#fullName">@Messages("submitterInfo.fullName.error")</a></strong></li>}
+                        @if(contactPhoneErrors) {<li id="contactPhone-error-summary"><strong><a href="#contactPhone">@Messages(maybePhoneError)</a></strong></li>}
+                        @if(emailErrors) {<li id="email-error-summary"><strong><a href="#email">@Messages(maybeEmailError)</a></strong></li>}
+                    </ul>
+                </div>
             </div>
-        }
     @errorFocus()
 }
-<h1>
-    @Messages("submitterInfo.mainHeading")
-</h1>
-<div class="form-group">
-    @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo){
-    @formFieldDisplay(fullNameErrors,"fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
-    @formFieldDisplay(contactPhoneErrors,"contactPhone", Some(Messages(maybePhoneError)),Messages("submitterInfo.phoneNumber"), form, Some(Messages("submitterInfo.phoneNumber.hint")))
-    @formFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("submitterInfo.emailAddress"), form)
-    @CSRF.formField
-    <div class="form-field">
-        <button role="button" class="button" type="submit" id="btn-continue">Continue</button>
-    </div>
-    @if(!form.hasErrors) {
-        <script>document.getElementById("@field.getOrElse("fullName")").focus();</script>
-    }
-    }
+    <h1 class="govuk-heading-l">@Messages("submitterInfo.mainHeading")</h1>
+    @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo) {
+        <div class="govuk-form-group @if(hasErrors) {govuk-form-group--error}">
+            <fieldset class="govuk-fieldset">
+                @govukFormFieldDisplay(fullNameErrors, "fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
+                @govukFormFieldDisplay(contactPhoneErrors, "contactPhone", Some(Messages(maybePhoneError)), Messages("submitterInfo.phoneNumber"), form, Some(Messages("submitterInfo.phoneNumber.hint")))
+                @govukFormFieldDisplay(emailErrors, "email", Some(Messages(maybeEmailError)), Messages("submitterInfo.emailAddress"), form)
+                <div class="form-field">
+                    <button class="govuk-button" role="button" class="button" type="submit" id="btn-continue">Continue</button>
+                </div>
+                @if(!form.hasErrors) {
+                    <script>document.getElementById("@field.getOrElse("fullName")").focus();</script>
+                }
+            </fieldset>
+            }
 </div>
 
 }

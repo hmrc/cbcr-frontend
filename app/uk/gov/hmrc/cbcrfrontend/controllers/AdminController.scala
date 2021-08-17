@@ -108,8 +108,7 @@ class AdminController @Inject()(
   val audit: AuditConnector,
   cbcrBackendConnector: CBCRBackendConnector,
   views: Views)(
-  implicit conf: FrontendAppConfig,
-  override val messagesApi: MessagesApi,
+  implicit override val messagesApi: MessagesApi,
   val ec: ExecutionContext,
   messagesControllerComponents: MessagesControllerComponents)
     extends FrontendController(messagesControllerComponents) with I18nSupport {

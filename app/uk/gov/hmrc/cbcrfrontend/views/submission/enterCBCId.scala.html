@@ -16,53 +16,56 @@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-@import tags.formFieldDisplay
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(form:Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(
-        implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(form :Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(implicit request: Request[_], messages: Messages)
 
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
+
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCBCId.title")}else {Messages("enterCBCId.title")}) {
+
     @back_link(routes.SubmissionController.submitterInfo().url)
 
-    <div class="grid-row">
-        <div class="column-full">
-            @if(errors){
-                <div class="flash error-summary error-summary--show"
-                id="error-summary-display"
-                role="alert"
-                aria-labelledby="error-summary-display"
-                tabindex="-1">
-                    <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
-                    <p id="cbcId-error-summary"><a href="#cbcId"> @if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){@Messages("enterCBCId.error.message.empty.id")} else {@Messages("enterCBCId.error.message.invalid.id")}</a></p>
-                </div>
-                @errorFocus()
-            }
-            <h1>@Messages("enterCBCId.mainHeading")</h1>
-            @helper.form(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId){
-                <fieldset>
-                    <div class="form-group">
-                        @formFieldDisplay(errors,"cbcId",
+    @if(errors) {
+        <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" data-module="govuk-error-summary">
+            <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
+            <div class="govuk-error-summary__body">
+                <ul class="govuk-list govuk-error-summary__list">
+                      <li id="cbcId-error-summary"><a href="#cbcId"> @if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty) {@Messages("enterCBCId.error.message.empty.id")} else {
+                        @Messages("enterCBCId.error.message.invalid.id")
+                    }</a></li>
+                </ul>
+            </div>
+        </div>
+        @errorFocus()
+    }
+
+    <h1 class="govuk-heading-l">@Messages("enterCBCId.mainHeading")</h1>
+
+            @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId) {
+
+                <div class="govuk-form-group @if(errors) {govuk-form-group--error}">
+                    <fieldset class="govuk-fieldset">
+                            @govukFormFieldDisplay(errors,"cbcId",
                             Some(if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){Messages("enterCBCId.error.message.empty.id")} else {Messages("enterCBCId.error.message.invalid.id")}),
                             Messages("enterCBCId.formHintWhereYouGotIt"),
                             form,
                             Some(Messages("enterCBCId.formHint")))
 
-                        @if(errors){
-                            <p>@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" class="">@Messages("enterCBCId.error.message.link")</a></p>
+                        @if(errors) {
+                            <br>
+                            <p class="govuk-body">@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" class="govuk-link">@Messages("enterCBCId.error.message.link")</a></p>
                         }
-                    </div>
-                </fieldset>
-                @csrf_token()
-
-                <input class="button" role="button" type="submit" id="btn-continue" value="@Messages("form.controls.continue")" id="btn-submit">
-                }
-        </div>
-    </div>
-
+                    </fieldset>
+                </div>
+                <p>
+                    <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@Messages("form.controls.continue")</button>
+                </p>
+            }
 }
+
+
+

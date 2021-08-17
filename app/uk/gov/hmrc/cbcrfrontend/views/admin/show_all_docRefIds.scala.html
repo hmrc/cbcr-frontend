@@ -13,42 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *@
-
-@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.AdminDocRefIdRecord
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: main_template)
+@this(mainTemplate: Layout)
 
-@(submissionList: List[AdminDocRefIdRecord])(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
+@(submissionList: List[AdminDocRefIdRecord])(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(title = Messages("")) {
+@mainTemplate(pageTitle = Messages("")) {
 
-    <table >
-        <tr>
-            <th>isValid</th>
-            <th>DocRefId</th>
-            <th>Length</th>
+    <table class="govuk-table">
+        <tr class="govuk-table__row">
+            <th class="govuk-table__header">isValid</th>
+            <th class="govuk-table__header">DocRefId</th>
+            <th class="govuk-table__header">Length</th>
         </tr>
 
         @for(elem <- submissionList) {
 
-            <tr>
-                <td>@{
+            <tr class="govuk-table__row">
+                <td class="govuk-table__cell">@{
                     elem.valid
                 }</td>
-                <td>@{
+                <td class="govuk-table__cell">@{
                     elem.id.id
                 }</td>
-                <td>@{
+                <td class="govuk-table__cell">@{
                     elem.id.id.length
                 }</td>
             </tr>
-
-
         }
-
     </table>
 
-    <p>Total records of DRI: @submissionList.length</p>
+    <p class="govuk-body">Total records of DRI: @submissionList.length</p>
 }
