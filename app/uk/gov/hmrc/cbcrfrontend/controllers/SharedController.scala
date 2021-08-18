@@ -128,10 +128,10 @@ class SharedController @Inject()(
                                 Redirect(routes.SubmissionController.submitSummary))
                           )
 
-                      /**************************************************
+                      /** ************************************************
                         * user logged in with GG account
                         * not used to register the organisation
-                **************************************************/
+                        * ************************************************ */
                       case None =>
                         cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                           Redirect(routes.SubmissionController.submitSummary))

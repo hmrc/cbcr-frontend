@@ -16,13 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.time.{Duration, LocalDateTime}
-import java.time.format.DateTimeFormatter
-
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.all._
 import cats.syntax.all._
-import javax.inject.{Inject, Singleton}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -32,6 +28,7 @@ import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -45,7 +42,10 @@ import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
-import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+
+import java.time.format.DateTimeFormatter
+import java.time.{Duration, LocalDateTime}
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
@@ -127,12 +127,19 @@ class SubmissionController @Inject()(
         reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
     }
 
+  private def submitSummaryData(summaryData: SummaryData)(implicit hc: HeaderCarrier): ServiceResponse[String] =
+    if (feConfig.cbcEnhancementFeature) {
+      EitherT.pure("url") // TODO new end point to submit to backend DAC6-1015
+    } else {
+      fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+    }
+
   def confirm = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrieval =>
       (for {
         summaryData <- cache.read[SummaryData]
         xml         <- cache.read[CompleteXMLInfo]
-        _           <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
+        _           <- submitSummaryData(summaryData)
         _ <- saveDocRefIds(xml).leftMap[CBCErrors] { es =>
               logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
               UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
@@ -281,6 +288,21 @@ class SubmissionController @Inject()(
     }
   }
 
+  private def getBackLinkURL(userType: Option[AffinityGroup])(implicit hc: HeaderCarrier): Future[String] =
+    userType match {
+      case Some(AffinityGroup.Organisation) =>
+        if (feConfig.cbcEnhancementFeature) {
+          Future.successful(controllers.upscan.routes.FileValidationController.fileValidate().url)
+        } else {
+          for {
+            fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
+          } yield {
+            routes.FileUploadController.fileValidate(fileDetails.envelopeId, fileDetails.fileId).url
+          }
+        }
+      case _ => Future.successful(routes.SubmissionController.enterCompanyName.url)
+    }
+
   def enterSubmitterInfo(fn: Option[FieldName], userType: Option[AffinityGroup])(
     implicit request: Request[AnyContent]): Future[Result] =
     for {
@@ -291,10 +313,9 @@ class SubmissionController @Inject()(
                  }
                  .getOrElse(submitterInfoForm)
              }
-      fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
-
+      backLinkURL <- getBackLinkURL(userType)
     } yield {
-      Ok(views.submitterInfo(form, fn, fileDetails.envelopeId, fileDetails.fileId, userType))
+      Ok(views.submitterInfo(form, fn, backLinkURL))
     }
 
   def submitterInfo(field: Option[String] = None) = Action.async { implicit request =>
@@ -323,19 +344,14 @@ class SubmissionController @Inject()(
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       submitterInfoForm.bindFromRequest.fold(
         formWithErrors => {
-          cache
-            .read[FileDetails]
-            .map { fd =>
-              BadRequest(
-                views.submitterInfo(
-                  formWithErrors,
-                  None,
-                  fd.envelopeId,
-                  fd.fileId,
-                  userType
-                ))
-            }
-            .getOrElse(throw new RuntimeException("Missing file upload details"))
+          getBackLinkURL(userType) map { url =>
+            BadRequest(
+              views.submitterInfo(
+                formWithErrors,
+                None,
+                url
+              ))
+          }
         },
         success => {
           val result = for {

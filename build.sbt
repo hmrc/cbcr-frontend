@@ -31,7 +31,8 @@ val compile = Seq(
   "com.sun.xml"              % "relaxngDatatype"      % "1.0",
   "com.sun.msv.datatype.xsd" % "xsdlib"               % "2013.2",
   "commons-io"               % "commons-io"           % "2.6",
-  "org.mindrot"              % "jbcrypt"              % "0.4"
+  "org.mindrot"              % "jbcrypt"              % "0.4",
+  "org.julienrf"             %% "play-json-derived-codecs"   % "7.0.0",
 )
 
 def test(scope: String = "test") = Seq(

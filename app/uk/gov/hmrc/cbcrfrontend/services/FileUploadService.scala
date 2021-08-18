@@ -179,7 +179,10 @@ class FileUploadService @Inject()(
     metaData: SubmissionMetaData)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
 
     val metadataFileId = UUID.randomUUID.toString
-    val envelopeId = metaData.fileInfo.envelopeId
+    val envelopeId = metaData.fileInfo match {
+      case f: FileInfo => f.envelopeId
+      case _           => throw new RuntimeException("Cannot find envelopeId")
+    }
 
     for {
       _ <- EitherT.right(
