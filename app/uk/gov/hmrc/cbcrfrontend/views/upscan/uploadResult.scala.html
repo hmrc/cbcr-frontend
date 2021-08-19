@@ -33,10 +33,10 @@ schemaErrors.isDefined || busErrors.isDefined
 }
 
 @mainTemplate(if(!errors) {
-Messages("fileUploadResult.title.ok")
+    Messages("fileUploadResult.title.ok")
 }
 else {
-Messages("fileUploadResult.error.title")
+    Messages("fileUploadResult.error.title")
 }) {
 
 @back_link(controllers.upscan.routes.UploadFormController.onPageLoad.url)

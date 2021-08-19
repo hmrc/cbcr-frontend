@@ -18,10 +18,9 @@ package uk.gov.hmrc.cbcrfrontend.services
 import cats.data.{EitherT, NonEmptyList}
 import cats.instances.all._
 import play.api.i18n.Messages
-import play.api.mvc.{AnyContent, Request}
+import play.api.mvc.AnyContent
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup
-import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.right
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -29,7 +28,6 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
 import uk.gov.hmrc.cbcrfrontend.model.upscan.{FileValidationResult, UploadId, UploadSessionDetails, UploadedSuccessfully}
 import uk.gov.hmrc.cbcrfrontend.util.{ErrorUtil, ModifySize}
-import uk.gov.hmrc.cbcrfrontend.util.ModifySize.calculateFileSize
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 
@@ -37,7 +35,6 @@ import java.io.File
 import java.time.{Duration, LocalDateTime}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.math.BigDecimal.int2bigDecimal
 import scala.util.{Failure, Success}
 
 class FileValidationService @Inject()(
