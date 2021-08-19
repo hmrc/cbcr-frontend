@@ -128,11 +128,11 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
   "FileValidationService" - {
     "validate xml schema and business rules and return FileValidationSuccess" in {
       val expectedResult =
-        FileValidationResult(Some(Organisation), Some("afile.xml"), Some(123), None, None, Some(CBC701))
+        FileValidationResult(Some(Organisation), Some("afile.xml"), Some(1), None, None, Some(CBC701))
       val uploadDetails = UploadSessionDetails(
         uploadId,
         Reference("123"),
-        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(123))
+        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(1000))
       )
       mockUpscanConnector.setDetails(uploadDetails)
 
@@ -167,7 +167,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
       val uploadDetails = UploadSessionDetails(
         uploadId,
         Reference("123"),
-        UploadedSuccessfully("afile.txt", "", "downloadURL", Some(123))
+        UploadedSuccessfully("afile.txt", "", "downloadURL", Some(1000))
       )
       mockUpscanConnector.setDetails(uploadDetails)
 
@@ -187,8 +187,7 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
     }
 
     "should return FatalSchema when xmlSchema validation fails" in {
-      val expectedResult =
-        FatalSchemaErrors(Some(1))
+      val expectedResult = FatalSchemaErrors(Some(1))
       val uploadDetails = UploadSessionDetails(
         uploadId,
         Reference("123"),
@@ -221,11 +220,12 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
 
       val businessRuleErrors = NonEmptyList.of(TestDataError)
       val expectedResult =
-        FileValidationResult(Some(Organisation), Some("afile.xml"), Some(123), None, Some(1), None)
+        FileValidationResult(Some(Organisation), Some("afile.xml"), Some(1), None, Some(1), None)
+
       val uploadDetails = UploadSessionDetails(
         uploadId,
         Reference("123"),
-        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(123))
+        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(1000))
       )
       mockUpscanConnector.setDetails(uploadDetails)
       when(mockAuditService.auditFailedSubmission(any())(any(), any(), any()))
@@ -252,12 +252,10 @@ class FileValidationServiceSpec extends SpecBase with EitherValues {
     }
 
     "if keystore fails should return" in {
-      val expectedResult =
-        FileValidationResult(Some(Organisation), Some("afile.xml"), Some(123), None, None, Some(CBC701))
       val uploadDetails = UploadSessionDetails(
         uploadId,
         Reference("123"),
-        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(123))
+        UploadedSuccessfully("afile.xml", "", "downloadURL", Some(1000))
       )
       mockUpscanConnector.setDetails(uploadDetails)
 
