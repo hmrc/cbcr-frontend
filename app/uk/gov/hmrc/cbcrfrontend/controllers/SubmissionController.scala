@@ -288,19 +288,21 @@ class SubmissionController @Inject()(
     }
   }
 
-  private def getBackLinkURL(userType: Option[AffinityGroup])(implicit hc: HeaderCarrier): Future[String] =
+  private def getFileValidationURL()(implicit hc: HeaderCarrier): Future[String] =
+    if (feConfig.cbcEnhancementFeature) {
+      Future.successful(controllers.upscan.routes.FileValidationController.fileValidate().url)
+    } else {
+      for {
+        fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
+      } yield {
+        routes.FileUploadController.fileValidate(fileDetails.envelopeId, fileDetails.fileId).url
+      }
+    }
+
+  private def getSubmitterInfoBackLink(userType: Option[AffinityGroup])(implicit hc: HeaderCarrier): Future[String] =
     userType match {
-      case Some(AffinityGroup.Organisation) =>
-        if (feConfig.cbcEnhancementFeature) {
-          Future.successful(controllers.upscan.routes.FileValidationController.fileValidate().url)
-        } else {
-          for {
-            fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
-          } yield {
-            routes.FileUploadController.fileValidate(fileDetails.envelopeId, fileDetails.fileId).url
-          }
-        }
-      case _ => Future.successful(routes.SubmissionController.enterCompanyName.url)
+      case Some(AffinityGroup.Organisation) => getFileValidationURL()
+      case _                                => Future.successful(routes.SubmissionController.enterCompanyName.url)
     }
 
   def enterSubmitterInfo(fn: Option[FieldName], userType: Option[AffinityGroup])(
@@ -313,7 +315,7 @@ class SubmissionController @Inject()(
                  }
                  .getOrElse(submitterInfoForm)
              }
-      backLinkURL <- getBackLinkURL(userType)
+      backLinkURL <- getSubmitterInfoBackLink(userType)
     } yield {
       Ok(views.submitterInfo(form, fn, backLinkURL))
     }
@@ -344,7 +346,7 @@ class SubmissionController @Inject()(
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       submitterInfoForm.bindFromRequest.fold(
         formWithErrors => {
-          getBackLinkURL(userType) map { url =>
+          getSubmitterInfoBackLink(userType) map { url =>
             BadRequest(
               views.submitterInfo(
                 formWithErrors,
@@ -434,13 +436,13 @@ class SubmissionController @Inject()(
   def enterCompanyName = Action.async { implicit request =>
     authorised() {
       for {
-        fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
+        backLink <- getFileValidationURL
         form <- cache
                  .read[AgencyBusinessName]
                  .map(abn => enterCompanyNameForm.bind(Map("companyName" -> abn.name)))
                  .getOrElse(enterCompanyNameForm)
       } yield {
-        Ok(views.enterCompanyName(form, fileDetails.envelopeId, fileDetails.fileId))
+        Ok(views.enterCompanyName(form, backLink))
       }
     }
   }
@@ -451,12 +453,10 @@ class SubmissionController @Inject()(
         .bindFromRequest()
         .fold(
           errors =>
-            cache
-              .read[FileDetails]
-              .map { fd =>
-                BadRequest(views.enterCompanyName(errors, fd.envelopeId, fd.fileId))
-              }
-              .getOrElse(throw new RuntimeException("Missing file upload details")),
+            getFileValidationURL
+              .map { url =>
+                BadRequest(views.enterCompanyName(errors, url))
+            },
           name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
         )
     }
