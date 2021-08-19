@@ -35,6 +35,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 import java.io.File
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 class FileValidationController @Inject()(
   override val messagesApi: MessagesApi,
@@ -77,6 +78,11 @@ class FileValidationController @Inject()(
               result.reportingRole))
         }
       )
+      .recover {
+        case NonFatal(e) =>
+          logger.error(e.getMessage, e)
+          Redirect(mainRoutes.SharedController.technicalDifficulties)
+      }
   }
 
   def getBusinessRuleErrors: Action[AnyContent] = identify.async { implicit request =>
