@@ -21,11 +21,12 @@ import cats.syntax.all._
 import org.slf4j.LoggerFactory
 import play.api.data.Form
 import play.api.data.Forms.{single, text}
+import play.api.http.Writeable.wByteArray
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import play.api.{Configuration, Environment}
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthorisedFunctions, User}
 import uk.gov.hmrc.cbcrfrontend._
-
 import uk.gov.hmrc.cbcrfrontend.controllers.{routes => fileRoutes}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
@@ -49,6 +50,7 @@ class UploadFormController @Inject()(
   val businessRuleValidator: CBCBusinessRuleValidator,
   val xmlExtractor: XmlInfoExtract,
   val audit: AuditConnector,
+  val authConnector: AuthConnector,
   val env: Environment,
   identify: IdentifierAction,
   messagesControllerComponents: MessagesControllerComponents,
@@ -59,7 +61,7 @@ class UploadFormController @Inject()(
   cache: CBCSessionCache,
   val config: Configuration,
   feConfig: FrontendAppConfig)
-    extends FrontendController(messagesControllerComponents) with I18nSupport {
+    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
   val assetsLocation = (config.get[String](s"assets.url") |+| config.get[String](s"assets.version"))
@@ -72,11 +74,6 @@ class UploadFormController @Inject()(
   )
 
   def onPageLoad: Action[AnyContent] = identify.async { implicit request =>
-    toResponse(form)
-  }
-
-  private[controllers] def toResponse(
-    form: Form[String])(implicit request: IdentifierRequest[AnyContent], hc: HeaderCarrier): Future[Result] = {
     val uploadId: UploadId = UploadId.generate
     (for {
       upscanInitiateResponse <- upscanConnector.getUpscanFormData(uploadId)
@@ -108,15 +105,10 @@ class UploadFormController @Inject()(
       case Some(_: UploadedSuccessfully) =>
         Accepted
       case Some(r: UploadRejected) =>
-        val errorMessage = if (r.details.message.contains("octet-stream")) {
-          "upload_form.error.file.empty"
-        } else {
-          "upload_form.error.file.invalid"
-        }
-        val errorForm: Form[String] = form.withError("file", errorMessage)
-        logger.debug(s"Show errorForm on rejection $errorForm")
-        toResponse(errorForm)
+        logger.debug(s"fileUploadResponse- UploadRejected with ${r.details}")
+        BadRequest
       case Some(Quarantined) =>
+        logger.debug(s"fileUploadResponse - Quarantined")
         Conflict
       case Some(Failed) =>
         errorHandler.onServerError(request, new Throwable("Upload to upscan failed"))
@@ -125,7 +117,7 @@ class UploadFormController @Inject()(
     }
   }
 
-  def handleError(errorCode: String, errorMessage: String): Action[AnyContent] = identify.async { implicit request =>
+  def handleError(errorCode: String, errorMessage: String): Action[AnyContent] = Action.async { implicit request =>
     logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $errorMessage")
     errorCode match {
       case "EntityTooLarge"  => Redirect(routes.FileValidationController.fileTooLarge)
@@ -135,7 +127,15 @@ class UploadFormController @Inject()(
   }
 
   def unregisteredGGAccount: Action[AnyContent] = Action.async { implicit request =>
-    Ok(views.unregisteredGGAccount())
+    authorised(AffinityGroup.Organisation and User) {
+      val uploadId: UploadId = UploadId.generate
+      (for {
+        upscanInitiateResponse <- upscanConnector.getUpscanFormData(uploadId)
+        uploadId               <- upscanConnector.requestUpload(uploadId, upscanInitiateResponse.fileReference)
+        _                      <- cache.save(uploadId)
+        html                   <- Future.successful(views.uploadForm(upscanInitiateResponse, Some(AffinityGroup.Organisation)))
+      } yield html).map(Ok(_))
+    }
   }
 
 }

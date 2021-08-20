@@ -97,7 +97,7 @@ class FileUploadController @Inject()(
           views.notAuthorisedIndividual,
           views.errorTemplate)
       case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
-        Ok(views.unregisteredGGAccount())
+        Future.successful(Redirect(routes.SharedController.unregisteredGGAccount))
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals)
       case affinityGroup ~ _ =>
         fileUploadUrl()

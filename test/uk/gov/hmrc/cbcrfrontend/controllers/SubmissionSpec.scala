@@ -53,7 +53,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
 
-class SubmissionControllerSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
+class SubmissionControllerSpec
+    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]

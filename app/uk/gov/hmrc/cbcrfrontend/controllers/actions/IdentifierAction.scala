@@ -17,6 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.controllers.actions
 
 import com.google.inject.Inject
+import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.AffinityGroup.{Individual, Organisation}
@@ -46,6 +47,8 @@ class AuthenticatedIdentifierAction @Inject()(
 )(implicit val executionContext: ExecutionContext)
     extends IdentifierAction with AuthorisedFunctions {
 
+  lazy val logger: Logger = Logger(this.getClass)
+
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
@@ -56,15 +59,18 @@ class AuthenticatedIdentifierAction @Inject()(
           Future.successful(Redirect(routes.SharedController.unsupportedAffinityGroup))
         case _ ~ Some(Organisation) ~ None
             if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
-          Future.successful(Redirect(upscanRoutes.UploadFormController.unregisteredGGAccount))
+          Future.successful(Redirect(routes.SharedController.unregisteredGGAccount))
         case cred ~ affinityGroup ~ enrolments =>
           block(IdentifierRequest(request, cred, affinityGroup, enrolments))
       } recover {
       case _: InsufficientEnrolments =>
-        Redirect(upscanRoutes.UploadFormController.unregisteredGGAccount) //TODO new unauthorised page
-      case _: UnsupportedAuthProvider =>
-        Redirect(upscanRoutes.UploadFormController.unregisteredGGAccount)
+        logger.info(s"User has InsufficientEnrolments")
+        Redirect(routes.SharedController.unregisteredGGAccount) //TODO new unauthorised page
+      case e: UnsupportedAuthProvider =>
+        logger.info(s"UnsupportedAuthProvider:Failed to login: ${e.msg}")
+        Redirect(routes.SharedController.unregisteredGGAccount)
       case e: Exception =>
+        logger.info(s"Failed to login: ${e.getMessage}")
         errorHandler.resolveError(request, e)
     }
   }

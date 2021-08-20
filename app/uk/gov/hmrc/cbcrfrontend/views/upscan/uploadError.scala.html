@@ -17,12 +17,10 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers
 @import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 
-@this(
-    mainTemplate: Layout
-)
+@this(mainTemplate: Layout)
 
 @(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages)
 
@@ -30,11 +28,11 @@
 
   @back_link(controllers.upscan.routes.UploadFormController.onPageLoad.url)
 
-<div class="grid-row">
-    <div class="column-full">
-        <h1>@Messages("fileUploadResult.error")</h1>
+<div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+        <h1 class="govuk-heading-l">@Messages("fileUploadResult.error")</h1>
             @defining("fileUploadResult.error." + errorType.toString) { key =>
-                <p>@Messages(key)</p>
+                <p class="govuk-body">@Messages(key)</p>
             }
 
         <a class="button" role="button" href="@controllers.routes.SharedController.signOutSurvey" id="btn-continue">@messages("form.controls.finished")</a>
