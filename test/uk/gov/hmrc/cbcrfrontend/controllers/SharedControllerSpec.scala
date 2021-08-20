@@ -454,7 +454,7 @@ class SharedControllerSpec
       val result = controller.unregisteredGGAccount(request)
       status(result) shouldBe Status.OK
       val page = Jsoup.parse(contentAsString(result))
-      page.getElementById("checkAndSendHref").attr("href").toString shouldBe
+      page.getElementById("checkAndSendHref").attr("href") shouldBe
         controllers.upscan.routes.UploadFormController.unregisteredGGAccount.url
     }
 
@@ -467,8 +467,7 @@ class SharedControllerSpec
       val page = Jsoup.parse(contentAsString(result))
       page
         .getElementById("checkAndSendHref")
-        .attr("href")
-        .toString shouldBe routes.FileUploadController.unregisteredGGAccount.url
+        .attr("href") shouldBe routes.FileUploadController.unregisteredGGAccount.url
 
     }
   }
