@@ -31,7 +31,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.controllers.actions.{FakeIdentifierAction, IdentifierAction}
+import uk.gov.hmrc.cbcrfrontend.controllers.actions.{FakeIdentifierAction, FakeNoEnrolmentIdentifierAction, IdentifierAction, NoEnrolmentIdentifierAction}
 import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
 import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
 import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, Utr}
@@ -73,6 +73,7 @@ trait SpecBase
     new GuiceApplicationBuilder()
       .overrides(
         bind[IdentifierAction].to[FakeIdentifierAction],
+        bind[NoEnrolmentIdentifierAction].to[FakeNoEnrolmentIdentifierAction],
         bind[CBCSessionCache].toInstance(mockCache)
       )
 

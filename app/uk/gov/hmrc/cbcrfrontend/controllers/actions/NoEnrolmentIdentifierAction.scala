@@ -32,15 +32,15 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait IdentifierAction1
+trait NoEnrolmentIdentifierAction
     extends ActionBuilder[IdentifierRequest, AnyContent] with ActionFunction[Request, IdentifierRequest]
 
-class AuthenticatedIdentifierAction @Inject()(
+class NoEnrolmentAction @Inject()(
   override val authConnector: AuthConnector,
   val parser: BodyParsers.Default,
   errorHandler: CBCRErrorHandler,
 )(implicit val executionContext: ExecutionContext)
-    extends IdentifierAction1 with AuthorisedFunctions {
+    extends NoEnrolmentIdentifierAction with AuthorisedFunctions {
 
   lazy val logger: Logger = Logger(this.getClass)
 

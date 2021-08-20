@@ -30,7 +30,7 @@ import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.controllers.{routes => fileRoutes}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
-import uk.gov.hmrc.cbcrfrontend.controllers.actions.IdentifierAction
+import uk.gov.hmrc.cbcrfrontend.controllers.actions.{IdentifierAction, NoEnrolmentIdentifierAction}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
 import uk.gov.hmrc.cbcrfrontend.model.upscan._
@@ -53,6 +53,7 @@ class UploadFormController @Inject()(
   val authConnector: AuthConnector,
   val env: Environment,
   identify: IdentifierAction,
+  noEnrolmentIdentify: NoEnrolmentIdentifierAction,
   messagesControllerComponents: MessagesControllerComponents,
   upscanConnector: UpscanConnector,
   errorHandler: CBCRErrorHandler,
@@ -83,7 +84,7 @@ class UploadFormController @Inject()(
     } yield html).map(Ok(_))
   }
 
-  def fileUploadProgress(uploadId: UploadId): Action[AnyContent] = identify.async { implicit request =>
+  def fileUploadProgress(uploadId: UploadId): Action[AnyContent] = noEnrolmentIdentify.async { implicit request =>
     cache
       .read[UploadId]
       .subflatMap { e =>
@@ -99,7 +100,7 @@ class UploadFormController @Inject()(
       .merge
   }
 
-  def fileUploadResponse(uploadId: UploadId): Action[AnyContent] = identify.async { implicit request =>
+  def fileUploadResponse(uploadId: UploadId): Action[AnyContent] = noEnrolmentIdentify.async { implicit request =>
     logger.debug("Show status called")
     upscanConnector.getUploadStatus(uploadId) flatMap {
       case Some(_: UploadedSuccessfully) =>

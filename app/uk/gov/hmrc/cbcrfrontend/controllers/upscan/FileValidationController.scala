@@ -23,7 +23,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.controllers.actions.IdentifierAction
+import uk.gov.hmrc.cbcrfrontend.controllers.actions.{IdentifierAction, NoEnrolmentAction, NoEnrolmentIdentifierAction}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.{AuditService, CBCSessionCache, FileValidationService}
 import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
@@ -40,7 +40,7 @@ import scala.util.control.NonFatal
 class FileValidationController @Inject()(
   override val messagesApi: MessagesApi,
   val env: Environment,
-  identify: IdentifierAction,
+  identify: NoEnrolmentIdentifierAction,
   messagesControllerComponents: MessagesControllerComponents,
   errorHandler: CBCRErrorHandler,
   auditService: AuditService,

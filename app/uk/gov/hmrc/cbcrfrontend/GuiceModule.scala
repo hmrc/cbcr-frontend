@@ -20,7 +20,7 @@ import java.io.File
 import com.google.inject.AbstractModule
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import play.api.{Configuration, Environment, Mode}
-import uk.gov.hmrc.cbcrfrontend.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction}
+import uk.gov.hmrc.cbcrfrontend.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction, NoEnrolmentAction, NoEnrolmentIdentifierAction}
 import uk.gov.hmrc.cbcrfrontend.services.RunMode
 
 class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule {
@@ -43,5 +43,6 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
     bind(classOf[IdentifierAction]).to(classOf[AuthenticatedIdentifierAction]).asEagerSingleton()
+    bind(classOf[NoEnrolmentIdentifierAction]).to(classOf[NoEnrolmentAction]).asEagerSingleton()
   }
 }
