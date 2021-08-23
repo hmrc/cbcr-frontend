@@ -16,13 +16,21 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json._ // JSON library
-import play.api.libs.json.Reads._ // Custom validation helpers
+import play.api.libs.json._
+import play.api.libs.json.Reads._
 import cats.syntax.show._
+import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
+import julienrf.json.derived
 
 /**
   * Created by max on 11/05/17.
   */
+sealed trait FileInformation
+
+object FileInformation {
+  implicit val jsonFormat: OFormat[FileInformation] = derived.oformat[FileInformation]()
+}
+
 case class FileInfo(
   id: FileId,
   envelopeId: EnvelopeId,
@@ -31,8 +39,15 @@ case class FileInfo(
   contentType: String,
   length: BigDecimal,
   created: String)
+    extends FileInformation
 object FileInfo {
-  implicit val format = Json.format[FileInfo]
+  implicit val format: OFormat[FileInfo] = Json.format[FileInfo]
+}
+
+case class UpscanFileInfo(uploadId: UploadId, name: String, contentType: String, length: Option[BigDecimal])
+    extends FileInformation
+object UpscanFileInfo {
+  implicit val format: OFormat[UpscanFileInfo] = Json.format[UpscanFileInfo]
 }
 
 case class SubmissionInfo(
@@ -79,7 +94,7 @@ object SubmissionInfo {
   }
 }
 
-case class SubmissionMetaData(submissionInfo: SubmissionInfo, submitterInfo: SubmitterInfo, fileInfo: FileInfo)
+case class SubmissionMetaData(submissionInfo: SubmissionInfo, submitterInfo: SubmitterInfo, fileInfo: FileInformation)
 object SubmissionMetaData {
 
   implicit val format = Json.format[SubmissionMetaData]

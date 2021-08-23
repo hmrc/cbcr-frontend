@@ -58,7 +58,6 @@ class DocRefIdServiceSpec extends UnitSpec with ScalaFutures with GuiceOneAppPer
       when(connector.docRefIdSave(any())(any())) thenReturn Future.failed(
         new HttpException("HttpException occurred", 400))
       val result = Await.result(docRefIdService.saveDocRefId(docRefId).value, 2.seconds)
-      println("Returned = " + result.get.errorMsg)
       result.get.getClass.getName shouldBe "uk.gov.hmrc.cbcrfrontend.model.UnexpectedState"
     }
 
@@ -80,7 +79,6 @@ class DocRefIdServiceSpec extends UnitSpec with ScalaFutures with GuiceOneAppPer
       when(connector.corrDocRefIdSave(any(), any())(any())) thenReturn Future.failed(
         new HttpException("HttpException occurred", 400))
       val result = Await.result(docRefIdService.saveCorrDocRefID(corrDocRefId, docRefId).value, 2.seconds)
-      println("Returned = " + result.get.errorMsg)
       result.get.getClass.getName shouldBe "uk.gov.hmrc.cbcrfrontend.model.UnexpectedState"
     }
 

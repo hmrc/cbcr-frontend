@@ -21,7 +21,7 @@
 
 @this(mainTemplate: Layout)
 
-@()(implicit request: Request[_], messages: Messages)
+@(reportURL: String)(implicit request: Request[_], messages: Messages)
 
 @mainTemplate(Messages("unregisteredGG.title")) {
   @{ request.headers.get("Referer") match {
@@ -33,7 +33,7 @@
         <h1 class="govuk-heading-l">@Messages("unregisteredGG.heading")</h1>
             <div>
                 <p class="govuk-body">@Messages("unregisteredGG.message1")
-                    <a id="checkAndSendHref" class="govuk-link" href="@routes.FileUploadController.unregisteredGGAccount">@Messages("unregisteredGG.checkAndSend")</a>.
+                    <a id="checkAndSendHref" class="govuk-link" href="@reportURL">@Messages("unregisteredGG.checkAndSend")</a>.
                 </p>
                 <p class="govuk-body"> @Messages("unregisteredGG.message2")
                     <a id="registerHref" class="govuk-link" href="@routes.SharedController.verifyKnownFactsOrganisation">@messages("unregisteredGG.register")</a>

@@ -128,10 +128,10 @@ class SharedController @Inject()(
                                 Redirect(routes.SubmissionController.submitSummary))
                           )
 
-                      /**************************************************
+                      /** ************************************************
                         * user logged in with GG account
                         * not used to register the organisation
-                **************************************************/
+                        * ************************************************ */
                       case None =>
                         cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                           Redirect(routes.SubmissionController.submitSummary))
@@ -318,6 +318,15 @@ class SharedController @Inject()(
         case _                => Unauthorized(views.notAuthorised())
       }
     }
+  }
+
+  def unregisteredGGAccount: Action[AnyContent] = Action.async { implicit request =>
+    val reportFileURL = if (feConfig.cbcEnhancementFeature) {
+      controllers.upscan.routes.UploadFormController.unregisteredGGAccount.url
+    } else {
+      routes.FileUploadController.unregisteredGGAccount.url
+    }
+    Ok(views.unregisteredGGAccount(reportFileURL))
   }
 
 }

@@ -24,12 +24,12 @@
     formHelper: FormWithCSRF
 )
 
-@(form:Form[_], envelopeId: String, fileId: String)(implicit request: Request[_], messages: Messages)
+@(form:Form[_], backLink: String)(implicit request: Request[_], messages: Messages)
 
 @error = @{form.error("companyName").isDefined}
 
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCompanyName.title")}else{Messages("enterCompanyName.title")}) {
-@back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
+@back_link(backLink)
 
         @if(form.hasErrors) {
             <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
