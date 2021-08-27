@@ -88,7 +88,12 @@ class FileValidationController @Inject()(
 
   def getBusinessRuleErrors: Action[AnyContent] = identify.async { implicit request =>
     OptionT(cache.readOption[AllBusinessRuleErrors])
-      .map(x => errorUtil.errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors")))
+      .map(x => {
+        println("\n\n\n\n\nGOT THE ERRORS")
+        val f = errorUtil.errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors"))
+        println("\n\n\n\n\nGOT the fake file")
+        f
+      })
       .fold(
         NoContent
       )((file: File) => Ok.sendFile(content = file, inline = false, onClose = () => file.delete()))

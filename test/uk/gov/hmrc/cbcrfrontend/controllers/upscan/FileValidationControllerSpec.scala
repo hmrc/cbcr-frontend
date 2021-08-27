@@ -27,17 +27,21 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, route, status, _}
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
-import uk.gov.hmrc.cbcrfrontend.model.{CBC701, CBCErrors, FatalSchemaErrors, InvalidFileType, InvalidSession, ValidationErrors, XMLErrors}
+import uk.gov.hmrc.cbcrfrontend.model.{AllBusinessRuleErrors, CBC701, CBCErrors, FatalSchemaErrors, InvalidFileType, InvalidSession, TestDataError, ValidationErrors, XMLErrors}
 import uk.gov.hmrc.cbcrfrontend.model.upscan.FileValidationResult
 import uk.gov.hmrc.cbcrfrontend.services.FileValidationService
 import uk.gov.hmrc.cbcrfrontend.controllers.{routes => mainRoutes}
+import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
 
+import java.io.File
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class FileValidationControllerSpec extends SpecBase with CSRFTest {
 
   val mockFileValidationService: FileValidationService = mock[FileValidationService]
+  val mockErrorUtil: ErrorUtil = mock[ErrorUtil]
 
   override def beforeEach: Unit = {
     reset(mockFileValidationService)
@@ -48,7 +52,8 @@ class FileValidationControllerSpec extends SpecBase with CSRFTest {
     super
       .guiceApplicationBuilder()
       .overrides(
-        bind[FileValidationService].toInstance(mockFileValidationService)
+        bind[FileValidationService].toInstance(mockFileValidationService),
+        bind[ErrorUtil].toInstance(mockErrorUtil)
       )
 
   lazy val UploadFormRoutes: String = routes.FileValidationController.fileValidate().url
@@ -133,6 +138,24 @@ class FileValidationControllerSpec extends SpecBase with CSRFTest {
 
       status(result) shouldBe SEE_OTHER
       redirectLocation(result) shouldBe Some(mainRoutes.SharedController.technicalDifficulties.url)
+    }
+
+    "getBusiness errors must return 200 if error details found in cache" in {
+      val testFile: File = new File("test/resources/cbcr-valid.xml")
+      val tempFile: File = File.createTempFile("test", ".xml")
+      val validFile: File = java.nio.file.Files.copy(testFile.toPath, tempFile.toPath, REPLACE_EXISTING).toFile
+      when(mockErrorUtil.errorsToFile(any(), any())(any())).thenReturn(validFile)
+      when(mockCache.readOption[AllBusinessRuleErrors](any(), any(), any())) thenReturn Future
+        .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
+
+      val getBusinessErrorsUrl = routes.FileValidationController.getBusinessRuleErrors.url
+
+      val request = addToken(FakeRequest(GET, getBusinessErrorsUrl))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe OK
+
     }
   }
 }
