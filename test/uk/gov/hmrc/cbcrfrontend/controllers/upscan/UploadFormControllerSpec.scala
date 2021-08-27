@@ -25,15 +25,14 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, route, status, _}
-import uk.gov.hmrc.audit.HandlerResult.Rejected
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
-import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, ExpiredSession}
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{ErrorDetails, Failed, Quarantined, Reference, UploadId, UploadRejected, UploadedSuccessfully, UpscanInitiateResponse}
+import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
+import uk.gov.hmrc.cbcrfrontend.model.upscan._
 import uk.gov.hmrc.cbcrfrontend.util.FakeUpscanConnector
 import uk.gov.hmrc.cbcrfrontend.views.html.upscan.uploadForm
 import uk.gov.hmrc.http.cache.client.CacheMap
-
+import uk.gov.hmrc.cbcrfrontend.controllers.{routes => fileRoutes}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -140,6 +139,39 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
       status(result) shouldBe OK
       contentAsString(result).contains(messages("fileUploadProgress.mainHeading")) shouldBe true
+    }
+
+    "handleError must redirect to FileToLarge when EntityTooLarge error occurs" in {
+      val url = routes.UploadFormController.handleError("EntityTooLarge", "too large").url
+
+      val request = addToken(FakeRequest(GET, url))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe SEE_OTHER
+      redirectLocation(result) shouldBe Some(routes.FileValidationController.fileTooLarge.url)
+    }
+
+    "handleError must redirect to invalid controller when InvalidArgument error occurs" in {
+      val url = routes.UploadFormController.handleError("InvalidArgument", "invalid").url
+
+      val request = addToken(FakeRequest(GET, url))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe SEE_OTHER
+      redirectLocation(result) shouldBe Some(routes.FileValidationController.fileInvalid.url)
+    }
+
+    "handleError must redirect to technical difficulties when an unknown error occurs" in {
+      val url = routes.UploadFormController.handleError("AnError", "unspecified error").url
+
+      val request = addToken(FakeRequest(GET, url))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe SEE_OTHER
+      redirectLocation(result) shouldBe Some(fileRoutes.SharedController.technicalDifficulties.url)
     }
   }
 
