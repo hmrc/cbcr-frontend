@@ -87,7 +87,7 @@ class UploadFormController @Inject()(
   def fileUploadProgress(uploadId: UploadId): Action[AnyContent] = noEnrolmentIdentify.async { implicit request =>
     cache
       .read[UploadId]
-      .subflatMap { e =>
+      .subflatMap { e: UploadId =>
         if (e != uploadId) {
           logger.error("BAD_UPLOAD_ID")
           cache.remove()

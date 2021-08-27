@@ -17,6 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.controllers.upscan
 
 import base.SpecBase
+import cats.data.EitherT
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import play.api.inject.bind
@@ -26,11 +27,12 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, route, status, _}
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
+import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, ExpiredSession}
 import uk.gov.hmrc.cbcrfrontend.model.upscan.{Reference, UploadId, UploadedSuccessfully, UpscanInitiateResponse}
 import uk.gov.hmrc.cbcrfrontend.util.FakeUpscanConnector
 import uk.gov.hmrc.cbcrfrontend.views.html.upscan.uploadForm
 import uk.gov.hmrc.http.cache.client.CacheMap
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class UploadFormControllerSpec extends SpecBase with CSRFTest {
@@ -69,9 +71,10 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
       contentAsString(result).contains(messages("uploadReport.mainHeading")) shouldBe true
 
     }
+
     "must return ACCEPTED from fileUploadResponse for successfully uploaded file" in {
       val uploadedSuccessfully = UploadedSuccessfully("x", "x", "http://", Some(1))
-      mockUpscanConnector.statusBuffer = Some(uploadedSuccessfully)
+      mockUpscanConnector.setStatus(uploadedSuccessfully)
 
       val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
 
@@ -80,6 +83,22 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
       val result = route(app, request).value
 
       status(result) shouldBe ACCEPTED
+    }
+    
+    "must return Ok with uploadProgress page when fileUploadProgress called with correct UploadId" in {
+
+      import cats.instances.future._
+      when(mockCache.read[UploadId](any(), any(), any()))
+        .thenReturn(EitherT.right[Future, ExpiredSession, UploadId](Future.successful(uploadId)))
+
+      val url = routes.UploadFormController.fileUploadProgress(uploadId).url
+
+      val request = addToken(FakeRequest(GET, url))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe OK
+      contentAsString(result).contains(messages("fileUploadProgress.mainHeading")) shouldBe true
     }
   }
 
