@@ -21,22 +21,19 @@ import cats.syntax.all._
 import org.slf4j.LoggerFactory
 import play.api.data.Form
 import play.api.data.Forms.{single, text}
-import play.api.http.Writeable.wByteArray
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthorisedFunctions, User}
 import uk.gov.hmrc.cbcrfrontend._
-import uk.gov.hmrc.cbcrfrontend.controllers.{routes => fileRoutes}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.actions.{IdentifierAction, NoEnrolmentIdentifierAction}
+import uk.gov.hmrc.cbcrfrontend.controllers.{routes => fileRoutes}
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.model.requests.IdentifierRequest
 import uk.gov.hmrc.cbcrfrontend.model.upscan._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
