@@ -65,6 +65,10 @@ class FileValidationControllerSpec extends SpecBase with CSRFTest {
 
   private val schmemaFatalError = FatalSchemaErrors(Some(1))
 
+  val testFile: File = new File("test/resources/cbcr-valid.xml")
+  val tempFile: File = File.createTempFile("test", ".xml")
+  val validFile: File = java.nio.file.Files.copy(testFile.toPath, tempFile.toPath, REPLACE_EXISTING).toFile
+
   "File validation controller" - {
     "must validate the uploaded file and return OK" in {
       val test: EitherT[Future, CBCErrors, FileValidationResult] = EitherT.right(Future.successful(validationResult))
@@ -141,9 +145,7 @@ class FileValidationControllerSpec extends SpecBase with CSRFTest {
     }
 
     "getBusiness errors must return 200 if error details found in cache" in {
-      val testFile: File = new File("test/resources/cbcr-valid.xml")
-      val tempFile: File = File.createTempFile("test", ".xml")
-      val validFile: File = java.nio.file.Files.copy(testFile.toPath, tempFile.toPath, REPLACE_EXISTING).toFile
+
       when(mockErrorUtil.errorsToFile(any(), any())(any())).thenReturn(validFile)
       when(mockCache.readOption[AllBusinessRuleErrors](any(), any(), any())) thenReturn Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
@@ -155,6 +157,51 @@ class FileValidationControllerSpec extends SpecBase with CSRFTest {
       val result = route(app, request).value
 
       status(result) shouldBe OK
+
+    }
+
+    "getBusiness errors must return No content if no error details found in cache" in {
+
+      when(mockCache.readOption[AllBusinessRuleErrors](any(), any(), any())) thenReturn Future
+        .successful(None)
+
+      val getBusinessErrorsUrl = routes.FileValidationController.getBusinessRuleErrors.url
+
+      val request = addToken(FakeRequest(GET, getBusinessErrorsUrl))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe NO_CONTENT
+
+    }
+
+    "getXML errors must return 200 if error details found in cache" in {
+
+      when(mockErrorUtil.errorsToFile(any(), any())(any())).thenReturn(validFile)
+      when(mockCache.readOption[XMLErrors](any(), any(), any())) thenReturn Future.successful(
+        Some(XMLErrors(List("Big xml error"))))
+
+      val getXmlErrors = routes.FileValidationController.getXmlSchemaErrors.url
+
+      val request = addToken(FakeRequest(GET, getXmlErrors))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe OK
+
+    }
+
+    "getXml errors must return No content if no error details found in cache" in {
+
+      when(mockCache.readOption[XMLErrors](any(), any(), any())) thenReturn Future.successful(None)
+
+      val getXmlErrors = routes.FileValidationController.getXmlSchemaErrors.url
+
+      val request = addToken(FakeRequest(GET, getXmlErrors))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe NO_CONTENT
 
     }
   }
