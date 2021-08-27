@@ -71,6 +71,9 @@ trait SpecBase
 
   protected def guiceApplicationBuilder(): GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
+      .configure(
+        "auditing.enabled" -> false
+      )
       .overrides(
         bind[IdentifierAction].to[FakeIdentifierAction],
         bind[NoEnrolmentIdentifierAction].to[FakeNoEnrolmentIdentifierAction],
