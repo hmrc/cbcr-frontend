@@ -70,7 +70,8 @@ class UpscanConnector @Inject()(configuration: FrontendAppConfig, httpClient: Ht
         case OK =>
           response.json.validate[UploadSessionDetails] match {
             case JsSuccess(details, _) => Some(details)
-            case JsError(_)            => None
+            case JsError(e) =>
+              None
           }
         case _ => None
       }
@@ -80,7 +81,7 @@ class UpscanConnector @Inject()(configuration: FrontendAppConfig, httpClient: Ht
   def getUploadStatus(uploadId: UploadId)(implicit hc: HeaderCarrier): Future[Option[UploadStatus]] = {
     val statusUrl = s"$backendUrl/upscan/status/${uploadId.value}"
     httpClient.GET[HttpResponse](statusUrl).map { response =>
-      logger.debug(s"Status uploaded: $response")
+      logger.debug(s"Status uploaded: ${response.body}")
       response.status match {
         case OK =>
           response.json.validate[UploadStatus] match {
