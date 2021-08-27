@@ -25,13 +25,15 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, route, status, _}
+import uk.gov.hmrc.audit.HandlerResult.Rejected
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, ExpiredSession}
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{Reference, UploadId, UploadedSuccessfully, UpscanInitiateResponse}
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{ErrorDetails, Failed, Quarantined, Reference, UploadId, UploadRejected, UploadedSuccessfully, UpscanInitiateResponse}
 import uk.gov.hmrc.cbcrfrontend.util.FakeUpscanConnector
 import uk.gov.hmrc.cbcrfrontend.views.html.upscan.uploadForm
 import uk.gov.hmrc.http.cache.client.CacheMap
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -84,7 +86,46 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
       status(result) shouldBe ACCEPTED
     }
-    
+
+    "must return CONFLICT from fileUploadResponse if the file contains a virus" in {
+
+      mockUpscanConnector.setStatus(Quarantined)
+
+      val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
+
+      val request = addToken(FakeRequest(GET, url))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe CONFLICT
+    }
+
+    "must return BAD_REQUEST from fileUploadResponse if the file is rejected" in {
+
+      mockUpscanConnector.setStatus(UploadRejected(ErrorDetails("failed", "failed")))
+
+      val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
+
+      val request = addToken(FakeRequest(GET, url))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe BAD_REQUEST
+    }
+
+    "must return internal server error when upload fails" in {
+
+      mockUpscanConnector.setStatus(Failed)
+
+      val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
+
+      val request = addToken(FakeRequest(GET, url))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe INTERNAL_SERVER_ERROR
+    }
+
     "must return Ok with uploadProgress page when fileUploadProgress called with correct UploadId" in {
 
       import cats.instances.future._
