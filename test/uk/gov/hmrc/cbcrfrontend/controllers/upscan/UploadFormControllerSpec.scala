@@ -26,7 +26,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, route, status, _}
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{Reference, UpscanInitiateResponse}
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{Reference, UploadId, UploadedSuccessfully, UpscanInitiateResponse}
 import uk.gov.hmrc.cbcrfrontend.util.FakeUpscanConnector
 import uk.gov.hmrc.cbcrfrontend.views.html.upscan.uploadForm
 import uk.gov.hmrc.http.cache.client.CacheMap
@@ -41,7 +41,7 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
     super
       .guiceApplicationBuilder()
       .overrides(
-        bind[UpscanConnector].to[FakeUpscanConnector]
+        bind[UpscanConnector].to(mockUpscanConnector)
       )
 
   val upscanInitiateResponse: UpscanInitiateResponse = UpscanInitiateResponse(
@@ -68,6 +68,18 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
       contentAsString(result).contains(messages("uploadReport.mainHeading")) shouldBe true
 
+    }
+    "must return ACCEPTED from fileUploadResponse for successfully uploaded file" in {
+      val uploadedSuccessfully = UploadedSuccessfully("x", "x", "http://", Some(1))
+      mockUpscanConnector.statusBuffer = Some(uploadedSuccessfully)
+
+      val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
+
+      val request = addToken(FakeRequest(GET, url))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe ACCEPTED
     }
   }
 
