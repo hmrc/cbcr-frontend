@@ -82,6 +82,21 @@ class UpscanConnectorSpec
       result.futureValue shouldBe Some(body)
 
     }
+    "should return None when a response other than OK is received" in {
+      val uploadId = UploadId("123")
+      val body = UploadSessionDetails(uploadId, Reference("xxx"), InProgress)
+
+      server.stubFor(
+        get(urlEqualTo(s"/cbcr/upscan/details/${uploadId.value}"))
+          .willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+          )
+      )
+      val result: Future[Option[UploadSessionDetails]] = connector.getUploadDetails(uploadId)
+      result.futureValue shouldBe None
+
+    }
   }
 
   "getUploadStatus" - {
@@ -99,6 +114,20 @@ class UpscanConnectorSpec
       )
       val result = connector.getUploadStatus(uploadId)
       result.futureValue shouldBe Some(InProgress)
+    }
+    "should return None when a response other than OK is received" in {
+
+      val uploadId = UploadId("123")
+      val json = """{"_type": "InProgress"}"""
+      server.stubFor(
+        get(urlEqualTo(s"/cbcr/upscan/status/${uploadId.value}"))
+          .willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+          )
+      )
+      val result = connector.getUploadStatus(uploadId)
+      result.futureValue shouldBe None
     }
   }
 
