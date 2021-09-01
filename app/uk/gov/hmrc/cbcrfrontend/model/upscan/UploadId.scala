@@ -28,12 +28,6 @@ object UploadId {
 
   implicit val uploadIdFormat: OFormat[UploadId] = Json.format[UploadId]
 
-  implicit def readsUploadId: Reads[UploadId] = Reads.StringReads.map(UploadId(_))
-
-  implicit def writesUploadId: Writes[UploadId] = Writes[UploadId](
-    x => JsString(x.value)
-  )
-
   implicit lazy val pathBindable: PathBindable[UploadId] = new PathBindable[UploadId] {
     override def bind(key: String, value: String): Either[String, UploadId] =
       implicitly[PathBindable[String]].bind(key, value).right.map(UploadId(_))

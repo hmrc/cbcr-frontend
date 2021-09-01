@@ -23,15 +23,17 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.Results.InternalServerError
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, route, status, _}
 import uk.gov.hmrc.auth.core.AffinityGroup
-import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
-import uk.gov.hmrc.cbcrfrontend.model.{AllBusinessRuleErrors, CBC701, CBCErrors, FatalSchemaErrors, InvalidFileType, InvalidSession, TestDataError, ValidationErrors, XMLErrors}
+import uk.gov.hmrc.cbcrfrontend.controllers.{CSRFTest, left, right, routes => mainRoutes}
+import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
+import uk.gov.hmrc.cbcrfrontend.model.{AllBusinessRuleErrors, CBC701, CBCErrors, FatalSchemaErrors, InvalidFileType, InvalidSession, TestDataError, UnexpectedState, ValidationErrors, XMLErrors}
 import uk.gov.hmrc.cbcrfrontend.model.upscan.FileValidationResult
-import uk.gov.hmrc.cbcrfrontend.services.FileValidationService
-import uk.gov.hmrc.cbcrfrontend.controllers.{routes => mainRoutes}
+import uk.gov.hmrc.cbcrfrontend.services.{AuditService, FileValidationService}
 import uk.gov.hmrc.cbcrfrontend.util.ErrorUtil
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
 import java.io.File
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
@@ -42,9 +44,10 @@ class FileValidationControllerSpec extends SpecBase with CSRFTest {
 
   val mockFileValidationService: FileValidationService = mock[FileValidationService]
   val mockErrorUtil: ErrorUtil = mock[ErrorUtil]
+  val mockAuditService: AuditService = mock[AuditService]
 
   override def beforeEach: Unit = {
-    reset(mockFileValidationService)
+    reset(mockFileValidationService, mockAuditService)
     super.beforeEach
   }
 
@@ -53,7 +56,8 @@ class FileValidationControllerSpec extends SpecBase with CSRFTest {
       .guiceApplicationBuilder()
       .overrides(
         bind[FileValidationService].toInstance(mockFileValidationService),
-        bind[ErrorUtil].toInstance(mockErrorUtil)
+        bind[ErrorUtil].toInstance(mockErrorUtil),
+        bind[AuditService].toInstance(mockAuditService)
       )
 
   lazy val UploadFormRoutes: String = routes.FileValidationController.fileValidate().url
@@ -203,6 +207,62 @@ class FileValidationControllerSpec extends SpecBase with CSRFTest {
 
       status(result) shouldBe NO_CONTENT
 
+    }
+
+    "fileInvalid must return OK when the file is Invalid" in {
+      when(mockAuditService.auditFailedSubmission(any())(any(), any(), any())) thenReturn right(
+        Future.successful(AuditResult.Success))
+
+      val fileInvalid = routes.FileValidationController.fileInvalid.url
+
+      val request = addToken(FakeRequest(GET, fileInvalid))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe OK
+    }
+
+    "fileTooLarge must return OK when the file is too large" in {
+      when(mockAuditService.auditFailedSubmission(any())(any(), any(), any())) thenReturn right(
+        Future.successful(AuditResult.Success))
+
+      val fileInvalid = routes.FileValidationController.fileTooLarge.url
+
+      val request = addToken(FakeRequest(GET, fileInvalid))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe OK
+    }
+
+    "fileContainsVirus must return OK when the file contains virus" in {
+      when(mockAuditService.auditFailedSubmission(any())(any(), any(), any())) thenReturn right(
+        Future.successful(AuditResult.Success))
+
+      val fileInvalid = routes.FileValidationController.fileContainsVirus.url
+
+      val request = addToken(FakeRequest(GET, fileInvalid))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe OK
+    }
+
+    "fileInvalid must handle CBCErrors when auditService fails" in {
+
+      def left[A](s: String): ServiceResponse[A] =
+        EitherT.left[Future, CBCErrors, A](Future.successful(UnexpectedState(s)))
+
+      when(mockAuditService.auditFailedSubmission(any())(any(), any(), any()))
+        .thenReturn(left[AuditResult.Success.type]("Unable to audit a failed submission: boo hoo"))
+
+      val fileInvalid = routes.FileValidationController.fileInvalid.url
+
+      val request = addToken(FakeRequest(GET, fileInvalid))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe INTERNAL_SERVER_ERROR
     }
   }
 }

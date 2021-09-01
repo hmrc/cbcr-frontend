@@ -25,6 +25,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, route, status, _}
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
@@ -33,6 +34,7 @@ import uk.gov.hmrc.cbcrfrontend.util.FakeUpscanConnector
 import uk.gov.hmrc.cbcrfrontend.views.html.upscan.uploadForm
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.cbcrfrontend.controllers.{routes => fileRoutes}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -65,8 +67,6 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
       val result = route(app, request).value
 
-      val view = app.injector.instanceOf[uploadForm]
-
       status(result) shouldBe OK
 
       contentAsString(result).contains(messages("uploadReport.mainHeading")) shouldBe true
@@ -75,7 +75,7 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
     "must return ACCEPTED from fileUploadResponse for successfully uploaded file" in {
       val uploadedSuccessfully = UploadedSuccessfully("x", "x", "http://", Some(1))
-      mockUpscanConnector.setStatus(uploadedSuccessfully)
+      mockUpscanConnector.setStatus(Some(uploadedSuccessfully))
 
       val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
 
@@ -88,7 +88,7 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
     "must return CONFLICT from fileUploadResponse if the file contains a virus" in {
 
-      mockUpscanConnector.setStatus(Quarantined)
+      mockUpscanConnector.setStatus(Some(Quarantined))
 
       val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
 
@@ -101,7 +101,7 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
     "must return BAD_REQUEST from fileUploadResponse if the file is rejected" in {
 
-      mockUpscanConnector.setStatus(UploadRejected(ErrorDetails("failed", "failed")))
+      mockUpscanConnector.setStatus(Some(UploadRejected(ErrorDetails("failed", "failed"))))
 
       val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
 
@@ -114,7 +114,7 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
 
     "must return internal server error when upload fails" in {
 
-      mockUpscanConnector.setStatus(Failed)
+      mockUpscanConnector.setStatus(Some(Failed))
 
       val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
 
@@ -123,6 +123,19 @@ class UploadFormControllerSpec extends SpecBase with CSRFTest {
       val result = route(app, request).value
 
       status(result) shouldBe INTERNAL_SERVER_ERROR
+    }
+
+    "must return NoContent by default when UploadStatus is other then Success, Rejection and Quarantined" in {
+
+      mockUpscanConnector.setStatus(None)
+
+      val url = routes.UploadFormController.fileUploadResponse(UploadId("123")).url
+
+      val request = addToken(FakeRequest(GET, url))
+
+      val result = route(app, request).value
+
+      status(result) shouldBe NO_CONTENT
     }
 
     "must return Ok with uploadProgress page when fileUploadProgress called with correct UploadId" in {

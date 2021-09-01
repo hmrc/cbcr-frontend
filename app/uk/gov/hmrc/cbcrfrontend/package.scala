@@ -129,10 +129,8 @@ package object cbcrfrontend {
       UpscanFileInfo(uploadId, metadata.name, metadata.mimeType, metadata.size.map(BigDecimal(_)))
     }
 
-  private def fileInfo(cache: CBCSessionCache)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext,
-    feConfig: FrontendAppConfig): FutureCacheResult[FileInfo] =
+  private def fileInfo(
+    cache: CBCSessionCache)(implicit hc: HeaderCarrier, ec: ExecutionContext): FutureCacheResult[FileInfo] =
     ((cache.read[FileId].toValidatedNel: FutureCacheResult[FileId]) |@|
       cache.read[EnvelopeId].toValidatedNel |@|
       cache.read[FileMetadata].toValidatedNel).map { (fileId, envelopeId, metadata) =>

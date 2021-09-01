@@ -31,8 +31,8 @@ class FakeUpscanConnector @Inject()(configuration: FrontendAppConfig, httpClient
   var statusBuffer: Option[UploadStatus] = None
   var detailsBuffer: Option[UploadSessionDetails] = None
 
-  def setStatus(uploadStatus: UploadStatus): Unit =
-    statusBuffer = Some(uploadStatus)
+  def setStatus(uploadStatus: Option[UploadStatus]): Unit =
+    statusBuffer = uploadStatus
 
   def setDetails(uploadDetails: UploadSessionDetails): Unit =
     detailsBuffer = Some(uploadDetails)
