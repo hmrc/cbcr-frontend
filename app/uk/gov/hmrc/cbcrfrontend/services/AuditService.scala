@@ -36,7 +36,7 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class AuditService @Inject()(cache: CBCSessionCache, val audit: AuditConnector) {
+class AuditService @Inject()(cache: CBCSessionCache, val audit: AuditConnector, errorUtil: ErrorUtil) {
 
   implicit val credentialsFormat: OFormat[Credentials] = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
@@ -99,12 +99,12 @@ class AuditService @Inject()(cache: CBCSessionCache, val audit: AuditConnector) 
       all_errors._2.exists(xml => if (xml.errors.isEmpty) false else true)) match {
       case (true, true) =>
         Json.obj(
-          "businessRuleErrors" -> Json.toJson(ErrorUtil.errorsToMap(all_errors._1.get.errors)),
-          "xmlErrors"          -> Json.toJson(ErrorUtil.errorsToMap(List(all_errors._2.get)))
+          "businessRuleErrors" -> Json.toJson(errorUtil.errorsToMap(all_errors._1.get.errors)),
+          "xmlErrors"          -> Json.toJson(errorUtil.errorsToMap(List(all_errors._2.get)))
         )
       case (true, false) =>
-        Json.obj("businessRuleErrors" -> Json.toJson(ErrorUtil.errorsToMap(all_errors._1.get.errors)))
-      case (false, true) => Json.obj("xmlErrors" -> Json.toJson(ErrorUtil.errorsToMap(List(all_errors._2.get))))
+        Json.obj("businessRuleErrors" -> Json.toJson(errorUtil.errorsToMap(all_errors._1.get.errors)))
+      case (false, true) => Json.obj("xmlErrors" -> Json.toJson(errorUtil.errorsToMap(List(all_errors._2.get))))
       case _             => Json.obj("none"      -> "no business rule or schema errors")
 
     }

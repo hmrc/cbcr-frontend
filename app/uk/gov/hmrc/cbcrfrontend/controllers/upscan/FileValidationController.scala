@@ -49,7 +49,8 @@ class FileValidationController @Inject()(
   implicit ec: ExecutionContext,
   cache: CBCSessionCache,
   val config: Configuration,
-  feConfig: FrontendAppConfig)
+  feConfig: FrontendAppConfig,
+  errorUtil: ErrorUtil)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   private val logger = LoggerFactory.getLogger(getClass)
@@ -87,7 +88,9 @@ class FileValidationController @Inject()(
 
   def getBusinessRuleErrors: Action[AnyContent] = identify.async { implicit request =>
     OptionT(cache.readOption[AllBusinessRuleErrors])
-      .map(x => ErrorUtil.errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors")))
+      .map(x => {
+        errorUtil.errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors"))
+      })
       .fold(
         NoContent
       )((file: File) => Ok.sendFile(content = file, inline = false, onClose = () => file.delete()))
@@ -95,7 +98,7 @@ class FileValidationController @Inject()(
 
   def getXmlSchemaErrors: Action[AnyContent] = Action.async { implicit request =>
     OptionT(cache.readOption[XMLErrors])
-      .map(x => ErrorUtil.errorsToFile(List(x), fileUploadName("fileUpload.XMLSchemaErrors")))
+      .map(x => errorUtil.errorsToFile(List(x), fileUploadName("fileUpload.XMLSchemaErrors")))
       .fold(
         NoContent
       )((file: File) => Ok.sendFile(content = file, inline = false, onClose = () => file.delete()))

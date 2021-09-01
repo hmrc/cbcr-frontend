@@ -44,7 +44,8 @@ class FileValidationService @Inject()(
   val env: Environment,
   val upscanConnector: UpscanConnector,
   fileService: FileService,
-  val auditService: AuditService)(implicit ec: ExecutionContext, cache: CBCSessionCache, val config: Configuration) {
+  val auditService: AuditService,
+  errorUtil: ErrorUtil)(implicit ec: ExecutionContext, cache: CBCSessionCache, val config: Configuration) {
 
   lazy val logger: Logger = Logger(this.getClass)
 
@@ -134,7 +135,7 @@ class FileValidationService @Inject()(
   }
 
   private def getErrorFileSize(e: List[ValidationErrors])(implicit messages: Messages): Int = {
-    val f = ErrorUtil.errorsToFile(e, "")
+    val f = errorUtil.errorsToFile(e, "")
     val kb = f.length() * 0.001
     f.delete()
     Math.incrementExact(kb.toInt)

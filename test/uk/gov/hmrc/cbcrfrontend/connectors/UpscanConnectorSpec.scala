@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, post, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, post, urlEqualTo}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.{FreeSpec, Matchers}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -26,8 +26,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.model.upscan._
 import uk.gov.hmrc.cbcrfrontend.util.WireMockHelper
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
+import UploadStatus._
 import scala.concurrent.Future
 
 class UpscanConnectorSpec
@@ -37,7 +37,9 @@ class UpscanConnectorSpec
   override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .configure(
-        "microservice.services.upscan.port" -> server.port()
+        "microservice.services.upscan.port" -> server.port(),
+        "microservice.services.cbcr.port"   -> server.port(),
+        "auditing.enabled"                  -> false
       )
       .build()
 
@@ -45,6 +47,89 @@ class UpscanConnectorSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
   val request: UpscanInitiateRequest = UpscanInitiateRequest("callbackUrl", "successRedirectUrl", "errorRedirectUrl")
   val uploadId: UploadId = UploadId("123")
+
+  "requestUpload" - {
+    "should return a UploadID" in {
+      val body = UploadId("123")
+      server.stubFor(
+        post(urlEqualTo(s"/cbcr/upscan/upload"))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.toJson(body).toString())
+          )
+      )
+
+      val result: Future[UploadId] = connector.requestUpload(uploadId, Reference("123"))
+      result.futureValue shouldBe uploadId
+    }
+  }
+
+  "getUploadDetails" - {
+    "should return a valid UploadSessionsDetails" in {
+      val uploadId = UploadId("123")
+      val body = UploadSessionDetails(uploadId, Reference("xxx"), InProgress)
+
+      server.stubFor(
+        get(urlEqualTo(s"/cbcr/upscan/details/${uploadId.value}"))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.toJson(body).toString())
+          )
+      )
+      val result: Future[Option[UploadSessionDetails]] = connector.getUploadDetails(uploadId)
+      result.futureValue shouldBe Some(body)
+
+    }
+    "should return None when a response other than OK is received" in {
+      val uploadId = UploadId("123")
+      val body = UploadSessionDetails(uploadId, Reference("xxx"), InProgress)
+
+      server.stubFor(
+        get(urlEqualTo(s"/cbcr/upscan/details/${uploadId.value}"))
+          .willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+          )
+      )
+      val result: Future[Option[UploadSessionDetails]] = connector.getUploadDetails(uploadId)
+      result.futureValue shouldBe None
+
+    }
+  }
+
+  "getUploadStatus" - {
+    "should return a valid UploadStatus" in {
+
+      val uploadId = UploadId("123")
+      val json = """{"_type": "InProgress"}"""
+      server.stubFor(
+        get(urlEqualTo(s"/cbcr/upscan/status/${uploadId.value}"))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(json)
+          )
+      )
+      val result = connector.getUploadStatus(uploadId)
+      result.futureValue shouldBe Some(InProgress)
+    }
+    "should return None when a response other than OK is received" in {
+
+      val uploadId = UploadId("123")
+      val json = """{"_type": "InProgress"}"""
+      server.stubFor(
+        get(urlEqualTo(s"/cbcr/upscan/status/${uploadId.value}"))
+          .willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+          )
+      )
+      val result = connector.getUploadStatus(uploadId)
+      result.futureValue shouldBe None
+    }
+  }
 
   "getUpscanFormData" - {
     "should return an UpscanInitiateResponse" - {
@@ -102,4 +187,5 @@ class UpscanConnectorSpec
       }
     }
   }
+
 }

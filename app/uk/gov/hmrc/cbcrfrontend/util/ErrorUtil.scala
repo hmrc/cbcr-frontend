@@ -22,8 +22,10 @@ import play.api.libs.Files.SingletonTemporaryFileCreator
 import uk.gov.hmrc.cbcrfrontend.model.ValidationErrors
 
 import java.io.{File, PrintWriter}
+import javax.inject.{Inject, Singleton}
 
-object ErrorUtil {
+@Singleton
+class ErrorUtil @Inject()() {
 
   def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =
     e.map(x => x.show.split(" ").map(x => messages(x)).map(_.toString).mkString(" "))
