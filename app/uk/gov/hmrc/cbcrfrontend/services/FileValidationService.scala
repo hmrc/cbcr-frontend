@@ -30,6 +30,7 @@ import uk.gov.hmrc.cbcrfrontend.model.upscan.{FileValidationResult, UploadId, Up
 import uk.gov.hmrc.cbcrfrontend.util.{ErrorUtil, ModifySize}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
 import java.io.File
 import java.time.{Duration, LocalDateTime}
@@ -77,11 +78,7 @@ class FileValidationService @Inject()(
               .flatMap(_ => EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize))))
       result <- validateBusinessRules(file, file_meta._1.name, request.enrolment, request.affinityGroup)
       businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
-      _ <- if (schemaErrors.hasErrors)
-            auditService.auditFailedSubmission("schema validation errors")
-          else if (result.isLeft)
-            auditService.auditFailedSubmission("business rules errors")
-          else EitherT.pure[Future, CBCErrors, Unit](())
+      _ <- auditValidationErrors(schemaErrors, result)
       _ = fileService.deleteFile(file)
     } yield {
       FileValidationResult(
@@ -94,6 +91,18 @@ class FileValidationService @Inject()(
       )
     }
   }
+
+  private def auditValidationErrors(
+    schemaErrors: XmlErrorHandler,
+    result: Either[NonEmptyList[BusinessRuleErrors], CompleteXMLInfo])(
+    implicit hc: HeaderCarrier,
+    messages: Messages,
+    request: IdentifierRequest[AnyContent]): EitherT[Future, CBCErrors, _ >: AuditResult.Success.type with Unit] =
+    if (schemaErrors.hasErrors)
+      auditService.auditFailedSubmission("schema validation errors")
+    else if (result.isLeft)
+      auditService.auditFailedSubmission("business rules errors")
+    else EitherT.pure[Future, CBCErrors, Unit](())
 
   def validateBusinessRules(
     xmlFile: File,
