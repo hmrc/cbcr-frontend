@@ -23,7 +23,7 @@ import org.scalatest.EitherValues
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -60,7 +60,7 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
   val auditService: AuditService = app.injector.instanceOf[AuditService]
 
   "a call to auditFailedSubmission" - {
-    "return success if audit enabled and sendExtendedEvent succeeds" in {
+    "return success if audit enabled and sendExtendedEvent succeeds with affinityGroup Organisation" in {
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
@@ -80,10 +80,65 @@ class AuditServiceSpec extends SpecBase with CSRFTest with EitherValues {
       result.value.futureValue.right.value shouldBe AuditResult.Success
     }
 
+    "return success if audit enabled and sendExtendedEvent succeeds with affinityGroup Agent" in {
+      when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
+      when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
+        .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
+      when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
+        Some(XMLErrors(List("Big xml error"))))
+      when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
+        Some(XMLErrors(List("Big xml error"))))
+      when(mockCache.readOption[UploadedSuccessfully](EQ(UploadStatus.uploadedSuccessfullyFormat), any(), any())) thenReturn Future
+        .successful(Some(uploadedSuccessfully))
+      when(mockCache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
+      when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
+        Some(Utr("1234567890")))
+      val request =
+        IdentifierRequest(addToken(FakeRequest()), Some(Credentials("totally", "legit")), Some(Agent), None)
+
+      val result: ServiceResponse[AuditResult.Success.type] = auditService
+        .auditFailedSubmission("just because")(hc, request, messages)
+
+      result.value.futureValue.right.value shouldBe AuditResult.Success
+    }
+
     "return success if audit disabled and sendExtendedEvent succeeds" in {
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Disabled)
       when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
+      when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
+        Some(XMLErrors(List("Big xml error"))))
+      when(mockCache.readOption[UploadedSuccessfully](EQ(UploadStatus.uploadedSuccessfullyFormat), any(), any())) thenReturn Future
+        .successful(Some(uploadedSuccessfully))
+      when(mockCache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
+      when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
+        Some(Utr("1234567890")))
+      val result = auditService
+        .auditFailedSubmission("just because")(hc, request, messages)
+
+      result.value.futureValue.right.value shouldBe AuditResult.Success
+    }
+
+    "return success if audit disabled and sendExtendedEvent succeeds with only AllBusinessRuleErrors" in {
+      when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Disabled)
+      when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
+        .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
+      when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(None)
+      when(mockCache.readOption[UploadedSuccessfully](EQ(UploadStatus.uploadedSuccessfullyFormat), any(), any())) thenReturn Future
+        .successful(Some(uploadedSuccessfully))
+      when(mockCache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(Some(cbcId))
+      when(mockCache.readOption[Utr](EQ(Utr.utrRead), any(), any())) thenReturn Future.successful(
+        Some(Utr("1234567890")))
+      val result = auditService
+        .auditFailedSubmission("just because")(hc, request, messages)
+
+      result.value.futureValue.right.value shouldBe AuditResult.Success
+    }
+
+    "return success if audit disabled and sendExtendedEvent succeeds with only XMLErrors" in {
+      when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Disabled)
+      when(mockCache.readOption[AllBusinessRuleErrors](EQ(AllBusinessRuleErrors.format), any(), any())) thenReturn Future
+        .successful(None)
       when(mockCache.readOption[XMLErrors](EQ(XMLErrors.format), any(), any())) thenReturn Future.successful(
         Some(XMLErrors(List("Big xml error"))))
       when(mockCache.readOption[UploadedSuccessfully](EQ(UploadStatus.uploadedSuccessfullyFormat), any(), any())) thenReturn Future
