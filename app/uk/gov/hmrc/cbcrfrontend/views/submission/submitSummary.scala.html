@@ -21,7 +21,7 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.auth.core.AffinityGroup
 @import uk.gov.hmrc.auth.core.AffinityGroup._
-@import uk.gov.hmrc.cbcrfrontend.util.ModifySize
+@import uk.gov.hmrc.cbcrfrontend.util._
 
 @this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
@@ -97,11 +97,11 @@
                 <tbody class="govuk-table__body">
                     <tr class="govuk-table__row">
                         <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.filename")</td>
-                        <td class="govuk-table__cell" tabindex="0">@summaryData.submissionMetaData.fileInfo.name</td>
+                        <td class="govuk-table__cell" tabindex="0">@{UIHelper.fileNameAndLength(summaryData.submissionMetaData.fileInfo)._1}</td>
                     </tr>
                     <tr class="govuk-table__row">
                         <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.fileSize")</td>
-                        <td class="govuk-table__cell" tabindex="0">@ModifySize.calculateFileSize(summaryData.submissionMetaData.fileInfo.length) KB</td>
+                        <td class="govuk-table__cell" tabindex="0">@ModifySize.calculateFileSize({UIHelper.fileNameAndLength(summaryData.submissionMetaData.fileInfo)_2}) KB</td>
                     </tr>
                     <tr class="govuk-table__row">
                         <td class="govuk-table__cell" tabindex="0">@Messages("submitSummary.reportDetails.period")</td>

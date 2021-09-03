@@ -24,7 +24,7 @@
 
 @this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
-@(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
+@(form:Form[_],field: Option[FieldName], backLinkURL: String)(implicit request: Request[_], messages: Messages)
 
 @fullNameErrors = @{form.error("fullName").isDefined}
 
@@ -40,10 +40,7 @@
 
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("submitterInfo.title")}else{Messages("submitterInfo.title")}) {
 
-  @{userType match {
-      case Some(Organisation) => back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
-      case _                  => back_link(routes.SubmissionController.enterCompanyName.url)
-  }}
+    @back_link(backLinkURL)
 
     @if(form.hasErrors) {
             <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" data-module="govuk-error-summary">
