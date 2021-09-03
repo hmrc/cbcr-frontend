@@ -1,0 +1,110 @@
+@*
+* Copyright 2021 HM Revenue & Customs
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*@
+
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+@import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.cbcrfrontend.controllers
+@import uk.gov.hmrc.auth.core.AffinityGroup._
+@import uk.gov.hmrc.auth.core.AffinityGroup
+@import uk.gov.hmrc.cbcrfrontend.model.upscan._
+
+@this(mainTemplate: Layout)
+
+@(upscanInitiateResponse:UpscanInitiateResponse, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@mainTemplate(Messages("uploadReport.title")) {
+
+@{
+    if(request.uri.contains("/unregistered-gg-account")) {
+        back_link(controllers.upscan.routes.UploadFormController.onPageLoad.url)
+    } else {
+    userType match {
+        case Some(Organisation) => back_link(routes.StartController.start.url)
+        case _ =>
+    }
+}}
+
+
+<div class="govuk-grid-row">
+    <form id ="fileUploadForm"  name = "fpForm" action = "@upscanInitiateResponse.postTarget" method="post" enctype="multipart/form-data" class="js-form">
+        <div class="govuk-grid-column-full">
+            <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display"  class="js-hidden">
+                <h2 id="error-summary-heading">@Messages("start.error.heading")</h2>
+                <div class="govuk-error-summary__body">
+                    <ul class="govuk-list govuk-error-summary__list">
+                        <li id="file-input-error-summary" class="form-label-bold"><a id="file-input-error-link" href="#file-input">@Messages("uploadReport.error")</a></li>
+                    </ul>
+                </div>
+            </div>
+            <h1 class="govuk-heading-l">
+                @Messages("uploadReport.mainHeading")
+            </h1>
+            @upscanInitiateResponse.formFields.map {case (key, value) =>
+                <input type="hidden" name="@key" value="@value"/>
+            }
+
+            <p class="govuk-body">@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
+            <br aria-hidden="true"/>
+
+            <div id="formGroup" class="govuk-form-group">
+
+                <label class="govuk-label" for="file-input">@Messages("uploadReport.label")</label>
+                <span id="error-message" class="js-hidden" role="alert" data-input-name="file">
+                        @Messages("uploadReport.error")
+                        </span>
+                <input
+                        type="file"
+                        id="file-input"
+                        class="govuk-file-upload"
+                        name="file" accept=".xml, .XML"
+                        required
+                        oninvalid="InvalidMsg(this);"
+                        oninput="InvalidMsg(this);">
+                @csrf_token()
+            </div>
+            <p><button class="govuk-button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
+            </p>
+        </div>
+    </form>
+</div>
+
+<script>
+            var form = document.getElementsByTagName('form')[0];
+            var error_summary = document.getElementById('error-summary-display');
+            var formgroup = document.getElementById('formGroup');
+            var errorMessage = document.getElementById('error-message');
+            var title = document.title;
+
+            function InvalidMsg(textbox) {
+                if (textbox.value === '') {
+                    document.title = "Error: " + title
+                    error_summary.className = "govuk-error-summary";
+                    formgroup.className = "govuk-form-group--error";
+                    errorMessage.className = "govuk-error-message"
+                    error_summary.focus();
+                    textbox.setCustomValidity('');
+                } else {
+                    textbox.setCustomValidity('');
+                }
+
+                return true;
+            }
+
+    </script>
+
+}

@@ -84,3 +84,16 @@ POST          /admin/editReportingEntity                            @uk.gov.hmrc
 POST          /admin/saveDocRefId                                   @uk.gov.hmrc.cbcrfrontend.controllers.AdminController.adminAddDocRefId
 
 GET           /enhancement-unauthorised                             @uk.gov.hmrc.cbcrfrontend.controllers.CBCEnhancementsController.enhancementUnavailable
+
+GET           /unregistered-gg-account-view                         @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.unregisteredGGAccount
+GET           /upscan/choose-file                                   @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.onPageLoad
+GET           /upscan/failed-callback                               @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.handleError(errorCode: String, errorMessage: String)
+GET           /upscan/file-upload-progress/:uploadId                @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.fileUploadProgress(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId)
+GET           /upscan/file-upload-response/:uploadId                @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.fileUploadResponse(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId)
+GET           /upscan/file-validate                                 @uk.gov.hmrc.cbcrfrontend.controllers.upscan.FileValidationController.fileValidate()
+GET           /upscan/invalid-file-type                             @uk.gov.hmrc.cbcrfrontend.controllers.upscan.FileValidationController.fileInvalid
+GET           /upscan/virus-check-failed                            @uk.gov.hmrc.cbcrfrontend.controllers.upscan.FileValidationController.fileContainsVirus
+GET           /upscan/file-too-large                                @uk.gov.hmrc.cbcrfrontend.controllers.upscan.FileValidationController.fileTooLarge
+GET           /upscan/business-rule-errors                          @uk.gov.hmrc.cbcrfrontend.controllers.upscan.FileValidationController.getBusinessRuleErrors
+GET           /upscan/xml-schema-errors                             @uk.gov.hmrc.cbcrfrontend.controllers.upscan.FileValidationController.getXmlSchemaErrors
+GET           /upscan/unregistered-gg-account                       @uk.gov.hmrc.cbcrfrontend.controllers.upscan.UploadFormController.unregisteredGGAccount

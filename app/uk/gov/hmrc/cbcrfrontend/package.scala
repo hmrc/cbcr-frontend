@@ -33,6 +33,7 @@ import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, SimpleRetrieval}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadId, UploadedSuccessfully}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.views.html.{error_template, not_authorised_individual}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -110,20 +111,53 @@ package object cbcrfrontend {
           ))
     )
 
+  private def getFileInformation(cache: CBCSessionCache)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext,
+    feConfig: FrontendAppConfig): FutureCacheResult[FileInformation] =
+    if (feConfig.cbcEnhancementFeature) {
+      upscanFileInfo(cache)
+    } else {
+      fileInfo(cache)
+    }
+
+  private def upscanFileInfo(cache: CBCSessionCache)(
+    implicit hc: HeaderCarrier,
+    ec: ExecutionContext,
+    feConfig: FrontendAppConfig): FutureCacheResult[UpscanFileInfo] =
+    ((cache.read[UploadId].toValidatedNel: FutureCacheResult[UploadId]) |@|
+      cache.read[UploadedSuccessfully].toValidatedNel).map { (uploadId, metadata) =>
+      UpscanFileInfo(uploadId, metadata.name, metadata.mimeType, metadata.size.map(BigDecimal(_)))
+    }
+
+  private def fileInfo(
+    cache: CBCSessionCache)(implicit hc: HeaderCarrier, ec: ExecutionContext): FutureCacheResult[FileInfo] =
+    ((cache.read[FileId].toValidatedNel: FutureCacheResult[FileId]) |@|
+      cache.read[EnvelopeId].toValidatedNel |@|
+      cache.read[FileMetadata].toValidatedNel).map { (fileId, envelopeId, metadata) =>
+      FileInfo(
+        fileId,
+        envelopeId,
+        metadata.status,
+        metadata.name,
+        metadata.contentType,
+        metadata.length,
+        metadata.created)
+    }
+
   def generateMetadataFile(cache: CBCSessionCache, creds: Credentials)(
     implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[ValidatedNel[ExpiredSession, SubmissionMetaData]] =
-    ((cache.read[BusinessPartnerRecord].toValidatedNel: FutureCacheResult[BusinessPartnerRecord]) |@|
+    ec: ExecutionContext,
+    feConfig: FrontendAppConfig): Future[ValidatedNel[ExpiredSession, SubmissionMetaData]] =
+    ((getFileInformation(cache): FutureCacheResult[FileInformation]) |@|
+      cache.read[BusinessPartnerRecord].toValidatedNel |@|
       cache.read[TIN].toValidatedNel |@|
       cache.read[Hash].toValidatedNel |@|
       cache.read[CBCId].toValidatedNel |@|
-      cache.read[FileId].toValidatedNel |@|
-      cache.read[EnvelopeId].toValidatedNel |@|
       cache.read[SubmitterInfo].toValidatedNel |@|
       cache.read[FilingType].toValidatedNel |@|
-      cache.read[UltimateParentEntity].toValidatedNel |@|
-      cache.read[FileMetadata].toValidatedNel)
-      .map { (record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
+      cache.read[UltimateParentEntity].toValidatedNel)
+      .map { (fileInfo, record, tin, hash, id, info, filingType, upe) =>
         SubmissionMetaData(
           SubmissionInfo(
             gwCredId = creds.toString,
@@ -136,14 +170,7 @@ package object cbcrfrontend {
             ultimateParentEntity = upe
           ),
           info,
-          FileInfo(
-            fileId,
-            envelopeId,
-            metadata.status,
-            metadata.name,
-            metadata.contentType,
-            metadata.length,
-            metadata.created)
+          fileInfo
         )
       }
 }

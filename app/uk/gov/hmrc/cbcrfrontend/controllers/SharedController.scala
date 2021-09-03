@@ -320,4 +320,13 @@ class SharedController @Inject()(
     }
   }
 
+  def unregisteredGGAccount: Action[AnyContent] = Action.async { implicit request =>
+    val reportFileURL = if (feConfig.cbcEnhancementFeature) {
+      controllers.upscan.routes.UploadFormController.unregisteredGGAccount.url
+    } else {
+      routes.FileUploadController.unregisteredGGAccount.url
+    }
+    Ok(views.unregisteredGGAccount(reportFileURL))
+  }
+
 }

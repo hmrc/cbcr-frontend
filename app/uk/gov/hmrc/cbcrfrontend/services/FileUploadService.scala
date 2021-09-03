@@ -39,6 +39,7 @@ import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
 import uk.gov.hmrc.cbcrfrontend.typesclasses._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -178,7 +179,10 @@ class FileUploadService @Inject()(
     metaData: SubmissionMetaData)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
 
     val metadataFileId = UUID.randomUUID.toString
-    val envelopeId = metaData.fileInfo.envelopeId
+    val envelopeId = metaData.fileInfo match {
+      case f: FileInfo => f.envelopeId
+      case _           => throw new RuntimeException("Cannot find envelopeId")
+    }
 
     for {
       _ <- EitherT.right(
