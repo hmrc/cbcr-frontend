@@ -13,7 +13,7 @@ function poll(pollPath, readyPath, virusFailPath, badRequestPath, errorPath) {
                 var errMsg = xhr.responseText;
                 if(xhr.status == 409) {
                     window.location.href=virusFailPath;
-                } if(xhr.status == 400) {
+                } else if(xhr.status == 400) {
                     window.location.href=badRequestPath;
                 } else {
                     window.location.href=errorPath;
