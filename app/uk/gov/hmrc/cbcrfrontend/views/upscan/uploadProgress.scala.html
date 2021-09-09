@@ -35,7 +35,7 @@ implicit request: Request[_], messages: Messages)
    @Messages("fileUploadProgress.mainHeading")
   </h1>
 
-  <body onload="poll('@uk.gov.hmrc.cbcrfrontend.controllers.upscan.routes.UploadFormController.fileUploadResponse(uploadId)', '@uk.gov.hmrc.cbcrfrontend.controllers.upscan.routes.FileValidationController.fileValidate()', '@uk.gov.hmrc.cbcrfrontend.controllers.upscan.routes.FileValidationController.fileContainsVirus', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.technicalDifficulties')" >
+  <body onload="poll('@uk.gov.hmrc.cbcrfrontend.controllers.upscan.routes.UploadFormController.fileUploadResponse(uploadId)', '@uk.gov.hmrc.cbcrfrontend.controllers.upscan.routes.FileValidationController.fileValidate()', '@uk.gov.hmrc.cbcrfrontend.controllers.upscan.routes.FileValidationController.fileContainsVirus', '@uk.gov.hmrc.cbcrfrontend.controllers.upscan.routes.FileValidationController.fileInvalid','@uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.technicalDifficulties')" >
 
   <img alt="loading..." src="@assetsLocationPrefix/images/loading.gif" />
   </body>
