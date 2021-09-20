@@ -23,7 +23,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
-import play.api.mvc.{AnyContent, MessagesControllerComponents, Request, Result}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request, Result}
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
@@ -61,6 +61,7 @@ class SubmissionController @Inject()(
   val env: Environment,
   val authConnector: AuthConnector,
   val emailService: EmailService,
+  val submissionService: SubmissionService,
   messagesControllerComponents: MessagesControllerComponents,
   views: Views)(
   implicit ec: ExecutionContext,
@@ -127,14 +128,14 @@ class SubmissionController @Inject()(
         reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
     }
 
-  private def submitSummaryData(summaryData: SummaryData)(implicit hc: HeaderCarrier): ServiceResponse[String] =
+  private def submitSummaryData(summaryData: SummaryData)(implicit hc: HeaderCarrier): ServiceResponse[_] =
     if (feConfig.cbcEnhancementFeature) {
-      EitherT.pure("url") // TODO new end point to submit to backend DAC6-1015
+      submissionService.submit(summaryData.submissionMetaData.submissionInfo.cbcId)
     } else {
       fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
     }
 
-  def confirm = Action.async { implicit request =>
+  def confirm: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrieval =>
       (for {
         summaryData <- cache.read[SummaryData]
