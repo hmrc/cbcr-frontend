@@ -22,6 +22,7 @@ import cats.syntax.show._
 import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
+import play.api.http.HeaderNames
 import play.api.libs.json.{JsNull, JsString, JsValue, Json}
 import uk.gov.hmrc.cbcrfrontend.controllers.{AdminDocRefId, AdminReportingEntityData, ListDocRefIdRecord}
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -30,6 +31,8 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+
+import scala.xml.NodeSeq
 
 @Singleton
 class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
@@ -131,5 +134,13 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
 
   def adminSaveDocRefId(id: AdminDocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.POST[JsValue, HttpResponse](url + s"/admin/saveDocRefId/${id.id}", JsNull)
+
+  def submitDocument(xmlDocument: NodeSeq)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+
+    val submitUrl = s"$url/submit"
+    val headers = Seq(HeaderNames.CONTENT_TYPE -> "application/xml")
+
+    http.POSTString[HttpResponse](submitUrl, xmlDocument.toString(), headers)
+  }
 
 }
