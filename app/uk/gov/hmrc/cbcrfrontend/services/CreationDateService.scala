@@ -23,9 +23,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.time.{LocalDate, Period}
-
 import cats.instances.all._
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 
 @Singleton
 class CreationDateService @Inject()(
@@ -54,6 +53,10 @@ class CreationDateService @Inject()(
       throw new Exception(s"Missing configuration key: $env.default-creation-date.year")
     )
 
+  lazy val logger: Logger = Logger(this.getClass)
+
+  logger.info(s"CreationDateService creationYear $creationYear")
+
   def isDateValid(in: XMLInfo)(implicit hc: HeaderCarrier): Future[Boolean] = {
     val id = in.cbcReport
       .find(_.docSpec.corrDocRefId.isDefined)
@@ -73,6 +76,9 @@ class CreationDateService @Inject()(
             case Some(red) => {
               val cd: LocalDate = red.creationDate.getOrElse(LocalDate.of(creationYear, creationMonth, creationDay))
               val lcd: LocalDate = in.creationDate.getOrElse(LocalDate.now())
+              val anyId = hc.requestId.getOrElse("None")
+              val anyDate = red.creationDate.map(_.toString).getOrElse("None")
+              logger.info(s"CreationDateService isDateValid $anyId $anyDate $cd $lcd")
               val result: Boolean = Period.between(cd, lcd).getYears < 3
               Right(result)
             }
