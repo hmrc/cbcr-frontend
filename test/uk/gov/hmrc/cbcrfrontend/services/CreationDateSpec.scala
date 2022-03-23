@@ -51,7 +51,7 @@ class CreationDateSpec
   when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(
     Some(12))
   when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
-    Some(2018))
+    Some(2019))
 
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   implicit val hc: HeaderCarrier = HeaderCarrier()
