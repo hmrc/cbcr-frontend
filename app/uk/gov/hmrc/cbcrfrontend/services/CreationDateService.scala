@@ -82,7 +82,10 @@ class CreationDateService @Inject()(
               val result: Boolean = Period.between(cd, lcd).getYears < 3
               Right(result)
             }
-            case None => Left(false)
+            case None => {
+              logger.info(s"CreationDateService reporting entity data not found ${hc.requestId}")
+              Right(true)
+            }
           }
           .merge
       }
