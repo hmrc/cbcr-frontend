@@ -1398,22 +1398,6 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
       }
 
-      "the reporting period of a correction does not match the reporting period of original submission" in {
-        val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
-        when(docRefIdService.queryDocRefId(EQ(corrDocRefId3))(any())) thenReturn Future.successful(Valid)
-        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
-          .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(redReportPeriod))
-
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
-
-        result.fold(
-          errors => errors.toList should contain(ReportingPeriodInvalid),
-          _ => fail("No ReportingPeriodInvalid generated")
-        )
-
-      }
-
       "the reporting period of a correction matches the reporting period of original submission" in {
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
         when(docRefIdService.queryDocRefId(EQ(corrDocRefId1))(any())) thenReturn Future.successful(Valid)

@@ -667,7 +667,10 @@ class CBCBusinessRuleValidator @Inject()(
                   else Left(ReportingPeriodInvalid)
                 case Some(red) =>
                   Right(xmlInfo) //reportingPeriod not persisted prior to this rules implementation so can't check
-                case _ => Left(ReportingPeriodInvalid)
+                case _ => {
+                  logger.info(s"CBCBusinessRuleValidator reporting entity data not found ${hc.requestId}")
+                  Right(xmlInfo)
+                }
               }
               .toValidatedNel
           }
