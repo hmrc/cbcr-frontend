@@ -14,7 +14,7 @@ start.choice.two=cy-Change registration contact details
 start.button=cy-Start
 start.required=cy-Select an option
 start.error.heading=cy-There is a problem
-
+error.prefix=Gwall:
 
 sessionExpired.mainHeading=cy-Your session has ended
 sessionExpired.continue=cy-As you''ve been inactive for 20 minutes, you''ll need to start again.
@@ -200,7 +200,7 @@ submitSuccessReceipt.sendAnotherReport.link=cy-Send another report
 fileUploadProgress.mainHeading=cy-We''re checking the report...
 fileUploadProgress.message=cy-This screen will change when the report has been checked.
 
-fileUploadResult.notYetSubmitted=cy-The report has been checked and is ready to send. If you do not want to send it yet, you can 
+fileUploadResult.notYetSubmitted=cy-The report has been checked and is ready to send. If you do not want to send it yet, you can
 fileUploadResult.notYetSubmitted.link=cy-sign out.
 fileUploadResult.notYetSubmitted2=cy-HMRC will not be able to access the report if you sign out now, and you will have to upload it again when you want to send it.
 fileUploadResult.mainHeading.ok=cy-The report meets the HMRC and OECD guidlines
@@ -263,7 +263,7 @@ submitSummary.submit=cy-Confirm and send report
 submitSummary.submitReport=cy-Submit report
 
 uploadReport.mainHeading=cy-Check a report
-uploadReport.moreInfo=cy-This will check the report against 
+uploadReport.moreInfo=cy-This will check the report against
 uploadReport.linkInfo=cy-HMRC and OECD guidelines.
 uploadReport.andMoreInfo=cy-Until you send the report, HMRC will not be able to access it.
 uploadReport.inputField.label=cy-Choose the file you want to check:

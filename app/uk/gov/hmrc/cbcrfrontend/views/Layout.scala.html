@@ -7,12 +7,20 @@
       hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
       hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper)
 
-@(pageTitle: String)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
+@(
+  pageTitle: String,
+  additionalScriptsBlock: Option[Html] = None,
+)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
 @content = {
 @contentBlock
 @hmrcReportTechnicalIssueHelper()
 }
+
+@scripts = {
+  @additionalScriptsBlock.getOrElse(None)
+ }
+
 @hmrcLayout(
   pageTitle = Some(pageTitle),
   isWelshTranslationAvailable = false,
@@ -20,5 +28,6 @@
   signOutUrl = Some(routes.SharedController.signOutSurvey.url),
   phaseBanner = None,
   additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)),
+  additionalScriptsBlock = Some(scripts),
   nonce = CSPNonce.get,
 )(content)

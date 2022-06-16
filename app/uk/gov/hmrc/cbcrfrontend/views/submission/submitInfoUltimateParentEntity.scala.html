@@ -29,7 +29,7 @@
 @mainTemplate(if(form.hasErrors){"Error: " + Messages("submitInfoUltimateParentEntity.title")}else{Messages("submitInfoUltimateParentEntity.title")}) {
 
             @if(form.hasErrors) {
-                <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
                     <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("submitInfoUltimateParentEntity.upe.error.header")</h2>
                     <div class="govuk-error-summary__body">
                         <ul class="govuk-list govuk-error-summary__list">
@@ -37,7 +37,6 @@
                         </ul>
                     </div>
                 </div>
-                @errorFocus()
             }
             @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUltimateParentEntity){
                 <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
@@ -51,7 +50,7 @@
                       @govukFormFieldDisplay(ultimateParentEntityErrors,"ultimateParentEntity", Some(Messages("submitInfoUltimateParentEntity.upe.error")),Messages("submitInfoUltimateParentEntity.upe.label"), form)
                 </fieldset>
                 </div>
-                <button role="button" class="govuk-button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>
+                <button class="govuk-button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>
             }
 }
 

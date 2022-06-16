@@ -37,7 +37,7 @@
 
             @if(form.hasErrors) {
                 @if(numberOfErrors == 1) {
-                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
                     @form.errors.map{  error =>
                         <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
                         <div class="govuk-error-summary__body">
@@ -54,7 +54,7 @@
                         }
                     </div>
                 } else {
-                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
                         <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
                         <div class="govuk-error-summary__body">
                             <ul class="govuk-list govuk-error-summary__list">
@@ -65,7 +65,7 @@
                         </div>
                     </div>
                 }
-                <script>document.getElementById("error-summary-display").focus();</script>
+
             }
             <h1 class="govuk-heading-l">
                 @Messages("contactInfoSubscriber.updateHeading")
@@ -86,6 +86,6 @@
                 </fieldset>
                 </div>
 
-                <button role="button" class="govuk-button" type="submit" id="continue">@Messages("form.controls.save")</button>
+                <button class="govuk-button" type="submit" id="continue">@Messages("form.controls.save")</button>
             }
 }

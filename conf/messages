@@ -16,6 +16,7 @@ start.choice.two=Change registration contact details
 start.button=Start
 start.required=Select what you want to do
 start.error.heading=There is a problem
+error.prefix=Error:
 
 sessionExpired.title=Your session has ended - Send a country-by-country report - GOV.UK
 sessionExpired.mainHeading=Your session has ended
@@ -216,7 +217,7 @@ fileUploadProgress.title=We are checking the report - Send a country-by-country 
 fileUploadProgress.mainHeading=We are checking the report...
 fileUploadProgress.message=This screen will change when the report has been checked.
 
-fileUploadResult.notYetSubmitted=The report has been checked and is ready to send. If you do not want to send it yet, you can 
+fileUploadResult.notYetSubmitted=The report has been checked and is ready to send. If you do not want to send it yet, you can
 fileUploadResult.notYetSubmitted.link=sign out.
 fileUploadResult.notYetSubmitted2=HMRC will not be able to access the report if you sign out now, and you will have to upload it again when you want to send it.
 fileUploadResult.title.ok=The report meets the HMRC and OECD guidelines - Send a country-by-country report - GOV.UK
@@ -283,7 +284,7 @@ submitSummary.submitReport=Submit report
 
 uploadReport.title=Check a report - Send a country-by-country report - GOV.UK
 uploadReport.mainHeading=Check a report
-uploadReport.moreInfo=This will check the report against 
+uploadReport.moreInfo=This will check the report against
 uploadReport.linkInfo=HMRC and OECD guidelines.
 uploadReport.andMoreInfo=Until you send the report, HMRC will not be able to access it.
 uploadReport.inputField.label=Choose the file you want to check:

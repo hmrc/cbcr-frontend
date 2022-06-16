@@ -43,8 +43,8 @@
     @back_link(backLinkURL)
 
     @if(form.hasErrors) {
-            <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" data-module="govuk-error-summary">
-                <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
+            <div class="govuk-error-summary" role="alert" tabindex="-1" aria-labelledby="error-summary-heading" data-module="govuk-error-summary">
+                <h2 id="error-summary-heading" class="govuk-heading-m">@Messages("start.error.heading")</h2>
                 <div class="govuk-error-summary__body">
                     <ul class="govuk-list govuk-error-summary__list">
                         @if(fullNameErrors) {<li id="fullName-error-summary"><strong><a href="#fullName">@Messages("submitterInfo.fullName.error")</a></strong></li>}
@@ -53,7 +53,6 @@
                     </ul>
                 </div>
             </div>
-    @errorFocus()
 }
     <h1 class="govuk-heading-l">@Messages("submitterInfo.mainHeading")</h1>
     @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo) {
@@ -62,15 +61,12 @@
                 @govukFormFieldDisplay(fullNameErrors, "fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
                 @govukFormFieldDisplay(contactPhoneErrors, "contactPhone", Some(Messages(maybePhoneError)), Messages("submitterInfo.phoneNumber"), form, Some(Messages("submitterInfo.phoneNumber.hint")))
                 @govukFormFieldDisplay(emailErrors, "email", Some(Messages(maybeEmailError)), Messages("submitterInfo.emailAddress"), form)
-                <div class="form-field">
-                    <button class="govuk-button" role="button" class="button" type="submit" id="btn-continue">Continue</button>
-                </div>
-                @if(!form.hasErrors) {
-                    <script>document.getElementById("@field.getOrElse("fullName")").focus();</script>
-                }
             </fieldset>
+        </div>
+            <button class="govuk-button" class="button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>
+
             }
-</div>
+
 
 }
 
