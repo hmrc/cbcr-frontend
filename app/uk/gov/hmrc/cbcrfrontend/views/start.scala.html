@@ -23,7 +23,7 @@
 @mainTemplate(if(isError){"Error: " + Messages("start.title")} else {Messages("start.title")}) {
 
     @if(form.hasErrors) {
-        <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1" data-module="govuk-error-summary">
+        <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
             <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
             <div class="govuk-error-summary__body">
                 <ul class="govuk-list govuk-error-summary__list">

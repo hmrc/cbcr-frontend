@@ -47,7 +47,6 @@
                         </ul>
                     </div>
                 </div>
-                @errorFocus()
             }
 
             <h1 class="govuk-heading-l">@Messages("subscribeFirst.mainHeading")</h1>
@@ -71,8 +70,5 @@
                 <p>
                     <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@Messages("form.controls.continue")</button>
                 </p>
-                @if(!hasErrors) {
-                    <script>document.getElementById("utr").focus();</script>
-                }
             }
 }
