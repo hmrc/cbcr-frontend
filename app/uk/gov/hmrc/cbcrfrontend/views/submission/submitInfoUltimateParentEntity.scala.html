@@ -40,15 +40,14 @@
             }
             @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUltimateParentEntity){
                 <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
-                <fieldset class="govuk-fieldset">
-                    <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+
                         <h1 class="govuk-fieldset__heading">
                         @Messages("submitInfoUltimateParentEntity.mainHeading")
                         </h1>
-                    </legend>
+
 
                       @govukFormFieldDisplay(ultimateParentEntityErrors,"ultimateParentEntity", Some(Messages("submitInfoUltimateParentEntity.upe.error")),Messages("submitInfoUltimateParentEntity.upe.label"), form)
-                </fieldset>
+
                 </div>
                 <button class="govuk-button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>
             }

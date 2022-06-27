@@ -57,13 +57,11 @@
     <h1 class="govuk-heading-l">@Messages("submitterInfo.mainHeading")</h1>
     @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo) {
         <div class="govuk-form-group @if(hasErrors) {govuk-form-group--error}">
-            <fieldset class="govuk-fieldset">
                 @govukFormFieldDisplay(fullNameErrors, "fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
                 @govukFormFieldDisplay(contactPhoneErrors, "contactPhone", Some(Messages(maybePhoneError)), Messages("submitterInfo.phoneNumber"), form, Some(Messages("submitterInfo.phoneNumber.hint")))
                 @govukFormFieldDisplay(emailErrors, "email", Some(Messages(maybeEmailError)), Messages("submitterInfo.emailAddress"), form)
-            </fieldset>
         </div>
-            <button class="govuk-button" class="button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>
+            <button class="govuk-button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>
 
             }
 
