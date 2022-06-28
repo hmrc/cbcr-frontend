@@ -21,13 +21,23 @@
   @additionalScriptsBlock.getOrElse(None)
  }
 
+@head = {
+  @hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)
+  <style>
+    .govuk-file-upload {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+}
+
 @hmrcLayout(
   pageTitle = Some(pageTitle),
   isWelshTranslationAvailable = false,
   serviceUrl = None,
   signOutUrl = Some(routes.SharedController.signOutSurvey.url),
   phaseBanner = None,
-  additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)),
+  additionalHeadBlock = Some(head),
   additionalScriptsBlock = Some(scripts),
   nonce = CSPNonce.get,
 )(content)
