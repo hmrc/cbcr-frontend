@@ -1,4 +1,13 @@
-@(isError:Boolean, name:String, errorMessage:Option[String], label:String, form:Form[_], formHint:Option[String]=None, inputType:Option[String]=Some("text"))
+@(
+  isError:Boolean,
+  name:String,
+  errorMessage:Option[String],
+  label:String,
+  form:Form[_],
+  formHint:Option[String]=None,
+  inputType:Option[String]=Some("text"),
+  inputAutocomplete:Option[String]=None
+)
 
 <div class="govuk-form-group @if(isError){govuk-error-message}">
   <label class="govuk-label" for="@name">@label</label>
@@ -9,5 +18,5 @@
   @if(isError && errorMessage.isDefined) {
     @errorMessage.map(error => <span id={s"$name-error-notification"} class="govuk-error-message">{error}</span>)
   }
-  <input type="@inputType" name="@name" class="@{if(isError){ "govuk-input govuk-!-width-one-half govuk-input--error" } else {"govuk-input govuk-!-width-one-half"} }" id="@name" value="@form.data.get(name)">
+  <input type="@inputType" name="@name" class="@{if(isError){ "govuk-input govuk-!-width-one-half govuk-input--error" } else {"govuk-input govuk-!-width-one-half"} }" id="@name" value="@form.data.get(name)" @if(inputAutocomplete.isDefined){autocomplete="@inputAutocomplete"}>
 </div>
