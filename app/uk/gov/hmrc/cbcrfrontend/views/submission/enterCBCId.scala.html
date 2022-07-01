@@ -19,7 +19,10 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: Layout, formHelper: FormWithCSRF)
+@this(
+    mainTemplate: Layout,
+    formHelper: FormWithCSRF,
+    govukDetails : GovukDetails)
 
 @(form :Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(implicit request: Request[_], messages: Messages)
 
@@ -43,25 +46,25 @@
     }
 
     <h1 class="govuk-heading-l">@Messages("enterCBCId.mainHeading")</h1>
+    @govukDetails(Details(
+        summary = Text(Messages("enterCBCId.dontHaveAnID.heading")),
+        content = Text(Messages("enterCBCId.error.message") + " " + Messages("enterCBCId.error.message.link"))
+    ))
 
-            @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId) {
+    @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId) {
 
-                <div class="govuk-form-group @if(errors) {govuk-form-group--error}">
-                            @govukFormFieldDisplay(errors,"cbcId",
-                            Some(if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){Messages("enterCBCId.error.message.empty.id")} else {Messages("enterCBCId.error.message.invalid.id")}),
-                            Messages("enterCBCId.formHintWhereYouGotIt"),
-                            form,
-                            Some(Messages("enterCBCId.formHint")))
 
-                        @if(errors) {
-                            <br>
-                            <p class="govuk-body">@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" class="govuk-link">@Messages("enterCBCId.error.message.link")</a></p>
-                        }
-                </div>
-                <p>
-                    <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@Messages("form.controls.continue")</button>
-                </p>
-            }
+            @govukFormFieldDisplay(errors,"cbcId",
+            Some(if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){Messages("enterCBCId.error.message.empty.id")} else {Messages("enterCBCId.error.message.invalid.id")}),
+            Messages("enterCBCId.label"),
+            form,
+            Some(Messages("enterCBCId.formHint")),
+            labelClasses=Some("govuk-visually-hidden"))
+
+        <p>
+            <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@Messages("form.controls.continue")</button>
+        </p>
+    }
 }
 
 
