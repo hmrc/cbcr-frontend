@@ -8,9 +8,8 @@ contactDetailsUpdate.next=What happens next?
 contactDetailsUpdate.email=We will send you a confirmation email to the updated address.
 contactDetailsUpdate.next2=Return to start page
 
-start.title=Welcome to the country-by-country reporting service - Send a country-by-country report - GOV.UK
-start.mainHeading=Welcome to the country-by-country reporting service
-start.intro=Choose what you want to do from the following options. Sign out at any time to exit the service.
+start.title=What do you want to do? - Send a country-by-country report - GOV.UK
+start.mainHeading=What do you want to do?
 start.choice.one=Check and send a country-by-country report
 start.choice.two=Change registration contact details
 start.button=Start

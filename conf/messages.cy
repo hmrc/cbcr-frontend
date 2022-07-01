@@ -7,7 +7,8 @@ contactDetailsUpdate.next=cy-What happens next?
 contactDetailsUpdate.email=cy-We''ll send you a confirmation email to the updated address.
 contactDetailsUpdate.next2=cy-Return to start page
 
-start.mainHeading=cy-Welcome to the country-by-country reporting service
+start.title = Beth ydych chi eisiau ei wneud? - Anfonwch adroddiad country-by-country - GOV.UK
+start.mainHeading=Beth ydych chi eisiau ei wneud?
 start.intro=cy-Choose what you want to do from the following options. Sign out at any time to exit the service.
 start.choice.one=cy-Check and send a country-by-country report
 start.choice.two=cy-Change registration contact details
