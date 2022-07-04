@@ -77,12 +77,10 @@
 
             @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.saveUpdatedInfoSubscriber){
 
-                <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
                 @govukFormFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None, inputAutocomplete = Some("given-name"))
                 @govukFormFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None, inputAutocomplete = Some("family-name"))
                 @govukFormFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"), form, None, inputAutocomplete = Some("work tel"))
                 @govukFormFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None, inputAutocomplete = Some("work email"))
-                </div>
 
                 <button class="govuk-button" type="submit" id="continue">@Messages("form.controls.save")</button>
             }

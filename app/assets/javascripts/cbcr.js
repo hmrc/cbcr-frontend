@@ -20,6 +20,7 @@ if(document.getElementById('file-input')){
         if (fileInput.value === '') {
             ev.preventDefault();
             document.title = fileInput.getAttribute('data-page-title-prefix') + " " + title
+            fileInput.setAttribute('aria-describedby', 'error-message');
             error_summary.classList.remove("js-hidden");
             formgroup.classList.add("govuk-form-group--error");
             errorMessage.classList.remove("js-hidden");
