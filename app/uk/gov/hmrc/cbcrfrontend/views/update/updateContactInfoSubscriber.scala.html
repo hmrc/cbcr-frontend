@@ -36,24 +36,6 @@
   @back_link(routes.StartController.start.url)
 
             @if(form.hasErrors) {
-                @if(numberOfErrors == 1) {
-                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
-                    @form.errors.map{  error =>
-                        <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
-                        <div class="govuk-error-summary__body">
-                            <ul class="govuk-list govuk-error-summary__list">
-                            @if(maybeEmailError.contains("contactInfoSubscriber.emailAddress.error.invalid")) {
-                                <li>@Messages("contactInfoSubscriber.emailAddress.error.invalid.header.l1")</li>
-                            }
-                            @if(maybePhoneError.contains("contactInfoSubscriber.phoneNumber.error.invalid")) {
-                                <li>@Messages("contactInfoSubscriber.phoneNumber.error.invalid.header.l1")</li>
-                            }
-                            <li><a href="#@error.key" id="@{error.key}-error-summary"> @error.messages.map(x => Messages(x))</a></li>
-                            </ul>
-                        </div>
-                        }
-                    </div>
-                } else {
                     <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
                         <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
                         <div class="govuk-error-summary__body">
@@ -64,8 +46,6 @@
                             </ul>
                         </div>
                     </div>
-                }
-
             }
             <h1 class="govuk-heading-l">
                 @Messages("contactInfoSubscriber.updateHeading")
