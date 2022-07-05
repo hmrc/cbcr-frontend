@@ -221,7 +221,7 @@ fileUploadResult.error.data.message=cy-and get the errors corrected before you c
 fileUploadResult.error.xml.link=cy-XML error summary
 fileUploadResult.error.xml.message=cy-Give it to your XML creator to correct the errors
 fileUploadResult.error.guidance=cy-Check formatting guidance
-fileUploadResult.error.oecdUrl=cy-Read the XML user guide
+fileUploadResult.error.oecdUrl=cy-Read the XML user guide (PDF, 1.6MB)
 fileUploadResult.error.oecdInfo=cy-for the rules you must follow.
 
 fileUploadResult.error.FileTooLarge=cy-The report is larger than 50MB. You''ll need to fix this issue before uploading it again.
@@ -265,11 +265,12 @@ submitSummary.submitReport=cy-Submit report
 
 uploadReport.mainHeading=cy-Check a report
 uploadReport.moreInfo=cy-This will check the report against
-uploadReport.linkInfo=cy-HMRC and OECD guidelines.
+uploadReport.linkInfo=cy-HMRC and OECD guidelines (PDF, 1.6MB, opens in a new tab).
+uploadReport.hint = cy-This must be XML and must be smaller than 50MB.
 uploadReport.andMoreInfo=cy-Until you send the report, HMRC will not be able to access it.
 uploadReport.inputField.label=cy-Choose the file you want to check:
 uploadReport.uploadButton=cy-Check report
-uploadReport.error=cy-You must select a file
+uploadReport.error=cy-You must select a file.
 uploadReport.label=cy-Select a file
 
 submitterInfo.mainHeading=cy-Enter your contact details, as the sender of the report

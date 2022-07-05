@@ -20,10 +20,13 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.auth.core.AffinityGroup
+@import uk.gov.hmrc.govukfrontend.views.html.components._
 
 
-
-@this(mainTemplate: Layout)
+@this(
+    mainTemplate: Layout,
+    govukFileUpload : GovukFileUpload
+)
 
 @(fileUploadUrl: String, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -58,14 +61,17 @@
                 @Messages("uploadReport.mainHeading")
                 </h1>
 
-                <p class="govuk-body">@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
+                <p class="govuk-body">@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl" rel="noreferrer noopener" target="_blank" class="govuk-link">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
 
                 <div id="formGroup" class="govuk-form-group govuk-!-margin-top-5">
 
-                        <label class="govuk-label" for="file-input">@Messages("uploadReport.label")</label>
-                        <p id="error-message" class="govuk-error-message js-hidden" data-input-name="@fileName">
+                        <label class="govuk-label govuk-!-font-weight-bold" for="file-input">@Messages("uploadReport.label")</label>
+                        <div id="file-hint" class="govuk-hint">
+                            @Messages("uploadReport.hint")
+                        </div>
+                        <div id="error-message" class="govuk-error-message js-hidden" data-input-name="@fileName">
                             <span class="govuk-visually-hidden">@Messages("error.prefix") </span>@Messages("uploadReport.error")
-                        </p>
+                        </div>
                         <input
                         data-page-title-prefix="@Messages("error.prefix")"
                         type="file"
@@ -73,6 +79,7 @@
                         class="govuk-file-upload"
                         name="@fileName"
                         accept=".xml, .XML"
+                        aria-describedby="file-hint"
                         required>
                         @csrf_token()
                 </div>
