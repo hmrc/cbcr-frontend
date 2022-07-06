@@ -67,7 +67,6 @@ form.controls.confirmAndContinue=Confirm and continue
 form.controls.save=Save
 
 enterCBCId.title=What is your country-by-country ID? - Send a country-by-country report - GOV.UK
-enterCBCId.mainHeading=What is your country-by-country ID?
 enterCBCId.formHint=This is the 15-character ID you received when you registered, for example: XACBC0000999999.
 enterCBCId.label=What is your country-by-country ID?
 enterCBCId.dontHaveAnID.heading=Having trouble finding your country-by-country ID?

@@ -22,7 +22,8 @@
 @this(
     mainTemplate: Layout,
     formHelper: FormWithCSRF,
-    govukDetails : GovukDetails)
+    govukDetails : GovukDetails
+)
 
 @(form :Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(implicit request: Request[_], messages: Messages)
 
@@ -45,25 +46,26 @@
         </div>
     }
 
-    <h1 class="govuk-heading-l">@Messages("enterCBCId.mainHeading")</h1>
-    @govukDetails(Details(
-        summary = Text(Messages("enterCBCId.dontHaveAnID.heading")),
-        content = Text(Messages("enterCBCId.error.message") + " " + Messages("enterCBCId.error.message.link"))
-    ))
-
     @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId) {
 
-
-            @govukFormFieldDisplay(errors,"cbcId",
+        @govukFormFieldDisplay(
+            errors,
+            "cbcId",
             Some(if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){Messages("enterCBCId.error.message.empty.id")} else {Messages("enterCBCId.error.message.invalid.id")}),
             Messages("enterCBCId.label"),
             form,
             Some(Messages("enterCBCId.formHint")),
-            labelClasses=Some("govuk-visually-hidden"))
+            isPageHeading = true
+        )
 
         <p>
             <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@Messages("form.controls.continue")</button>
         </p>
+
+        @govukDetails(Details(
+            summary = Text(Messages("enterCBCId.dontHaveAnID.heading")),
+            content = Text(Messages("enterCBCId.error.message") + " " + Messages("enterCBCId.error.message.link"))
+        ))
     }
 }
 

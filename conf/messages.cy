@@ -63,16 +63,16 @@ form.controls.returnToStart=cy-Return to start page
 form.controls.confirmAndContinue=cy-Confirm and continue
 form.controls.save=cy-Save
 
-enterCBCId.mainHeading=cy-Enter the country-by-country ID
-enterCBCId.formHint=cy-This must contain the 15-character ID you received when you registered, for example: XACBC0000999999.
-enterCBCId.formHintWhereYouGotIt=cy-Country-by-country ID
-enterCBCId.dontHaveAnID.heading=cy-Don''t have a Country by Country ID?
-enterCBCId.dontHaveAnID.link.url=cy-/country-by-country-reporting/subscribeFirst
+enterCBCId.title=cy-What is your country-by-country ID? - Send a country-by-country report - GOV.UK
+enterCBCId.formHint=cy-This is the 15-character ID you received when you registered, for example: XACBC0000999999.
+enterCBCId.label=cy-What is your country-by-country ID?
+enterCBCId.dontHaveAnID.heading=cy-Having trouble finding your country-by-country ID?
+enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
 enterCBCId.dontHaveAnID.link.text=cy-Register online
-enterCBCId.error.header=cy-The country-by-country ID doesn''t match the one created for this company or partnership
-enterCBCId.error.message=cy-Try again, or email
-enterCBCId.error.message.link=cy-digitalservice.cbc@hmrc.gsi.gov.uk
+enterCBCId.error.message=cy-For help with your country-by-country ID, email
+enterCBCId.error.message.link=digitalservice.cbc@hmrc.gsi.gov.uk
 enterCBCId.error.message.invalid.id=cy-Enter a valid country-by-country ID
+enterCBCId.error.message.empty.id=cy-Enter the country-by-country ID
 
 subscribeFirst.mainHeading=cy-Enter details of the UK-registered company or partnership sending the report
 subscribeFirst.noMatchingBusiness.suggestion=cy-Check the details and try again, or
