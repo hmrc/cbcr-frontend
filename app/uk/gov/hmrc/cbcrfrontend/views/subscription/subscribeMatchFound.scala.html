@@ -28,13 +28,18 @@
 
 @(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("subscribeMatchFound.title")) {
+@backlink = @{
+    if(userType == AffinityGroup.Organisation) {
+      Some(routes.SharedController.verifyKnownFactsOrganisation.url)
+    } else {
+      Some(routes.SharedController.verifyKnownFactsAgent.url)
+    }
+}
 
-  @{if(userType == AffinityGroup.Organisation)
-      back_link(routes.SharedController.verifyKnownFactsOrganisation.url)
-    else
-      back_link(routes.SharedController.verifyKnownFactsAgent.url)
-  }
+@mainTemplate(
+    Messages("subscribeMatchFound.title"),
+    backLinkUrl = backlink
+){
 
             <h1 class="govuk-heading-l">@Messages("subscribeMatchFound.mainHeading")</h1>
             @govukSummaryList(SummaryList(

@@ -29,19 +29,24 @@
 
 @script = {
     <script src='@controllers.routes.Assets.versioned("javascripts/cbcr.js")'></script>
-  }
+}
 
-@mainTemplate(pageTitle = Messages("uploadReport.title"), additionalScriptsBlock = Some(script)) {
+@backlink = @{
+    if(request.uri.contains("/unregistered-gg-account")) {
+        Some(routes.FileUploadController.chooseXMLFile.url)
+    } else {
+        userType match {
+            case Some(Organisation) => Some(routes.StartController.start.url)
+            case _ => {None}
+        }
+    }
+}
 
-    @{
-        if(request.uri.contains("/unregistered-gg-account")) {
-            back_link(routes.FileUploadController.chooseXMLFile.url)
-        } else {
-            userType match {
-                case Some(Organisation) => back_link(routes.StartController.start.url)
-                case _ =>
-            }
-        }}
+@mainTemplate(
+    pageTitle = Messages("uploadReport.title"),
+    additionalScriptsBlock = Some(script),
+    backLinkUrl = backlink
+) {
 
     <div class="govuk-grid-row">
         <form id="fileUploadForm" name="fpForm" action="@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">

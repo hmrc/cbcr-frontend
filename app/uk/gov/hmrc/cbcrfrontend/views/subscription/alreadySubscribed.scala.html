@@ -23,9 +23,10 @@
 
 @()(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(messages("subscribeFirst.alreadyRegistered.title")) {
-    @back_link(routes.SharedController.verifyKnownFactsOrganisation.url)
-
+@mainTemplate(
+    messages("subscribeFirst.alreadyRegistered.title"),
+    backLinkUrl = Some(routes.SharedController.verifyKnownFactsOrganisation.url)
+) {
         <h1 class="govuk-heading-l">@messages("subscribeFirst.alreadyRegistered.heading")</h1>
         <div>
             <p class="govuk-body">@messages("subscribeFirst.alreadyRegistered")</p>

@@ -32,23 +32,18 @@
 
 @(summaryData: SummaryData, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
 
-
-
-
 @fileTimeStamp = {
     @summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern(if (summaryData.doesCreationTimeStampHaveMillis) "yyyy-MM-dd HH:mm:ss.SSS" else "yyyy-MM-dd HH:mm:ss"))
 }
 
-@mainTemplate(Messages("submitSummary.title")) {
-    @{
-        userType match {
-            case Some(Organisation) => back_link(routes.SharedController.enterCBCId.url)
-            case _ => back_link(routes.SharedController.knownFactsMatch.url)
-        }
+@mainTemplate(
+    Messages("submitSummary.title"),
+    backLinkUrl= userType match {
+        case Some(Organisation) => Some(routes.SharedController.enterCBCId.url)
+        case _ => Some(routes.SharedController.knownFactsMatch.url)
     }
+) {
 
-
-                @* Company or partnership details *@
                 <h1 class="govuk-heading-l">@Messages("submitSummary.mainHeading")</h1>
 
                 <h2 class="govuk-heading-m" data-spec="company-details-heading">@Messages("submitSummary.companyDetails.heading")</h2>

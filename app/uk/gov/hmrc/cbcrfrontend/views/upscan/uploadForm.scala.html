@@ -30,19 +30,24 @@
 
 @script = {
     <script src="/assets/javascripts/cbcr.js"></script>
-  }
+}
 
-@mainTemplate(pageTitle = Messages("uploadReport.title"), additionalScriptsBlock = Some(script)) {
-
-@{
+@backlink = @{
     if(request.uri.contains("/unregistered-gg-account")) {
-        back_link(controllers.upscan.routes.UploadFormController.onPageLoad.url)
+        Some(controllers.upscan.routes.UploadFormController.onPageLoad.url)
     } else {
-    userType match {
-        case Some(Organisation) => back_link(routes.StartController.start.url)
-        case _ =>
+        userType match {
+            case Some(Organisation) => Some(routes.StartController.start.url)
+            case _ => None
+        }
     }
-}}
+}
+
+@mainTemplate(
+    pageTitle = Messages("uploadReport.title"),
+    additionalScriptsBlock = Some(script),
+    backLinkUrl = backlink
+) {
 
 <div class="govuk-grid-row">
     <form id="fileUploadForm"  name="fpForm" action="@upscanInitiateResponse.postTarget" method="post" enctype="multipart/form-data" class="js-form">

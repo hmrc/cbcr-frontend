@@ -25,9 +25,19 @@
 
 @errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCBCId.title")}else {Messages("enterCBCId.title")}) {
+@title = @{
+    if(form.hasErrors){
+        Messages("error.prefix") + " " + Messages("enterCBCId.title")
+    } else {
+        Messages("enterCBCId.title")
+    }
+}
 
-    @back_link(routes.SubmissionController.submitterInfo().url)
+
+@mainTemplate(
+    title,
+    backLinkUrl= Some(routes.SubmissionController.submitterInfo().url)
+) {
 
     @if(errors) {
         <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" data-module="govuk-error-summary">

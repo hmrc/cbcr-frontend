@@ -10,24 +10,26 @@
 @(
   pageTitle: String,
   additionalScriptsBlock: Option[Html] = None,
+  backLinkUrl: Option[String] = None
 )(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
 @content = {
-@contentBlock
-@hmrcReportTechnicalIssueHelper()
+  @contentBlock
+  @hmrcReportTechnicalIssueHelper()
 }
 
 @scripts = {
   @additionalScriptsBlock.getOrElse(None)
- }
+}
 
 @hmrcLayout(
   pageTitle = Some(pageTitle),
   isWelshTranslationAvailable = false,
   serviceUrl = None,
   signOutUrl = Some(routes.SharedController.signOutSurvey.url),
+  backLinkUrl = backLinkUrl,
   phaseBanner = None,
   additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)),
   additionalScriptsBlock = Some(scripts),
-  nonce = CSPNonce.get,
+  nonce = CSPNonce.get
 )(content)

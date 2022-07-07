@@ -32,9 +32,19 @@
 @maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.update.title")} else {Messages("contactInfoSubscriber.update.title")}) {
-  @back_link(routes.StartController.start.url)
+@title = @{
+    if(form.hasErrors){
+        Messages("error.prefix") + " " + Messages("contactInfoSubscriber.update.title")
+    } else {
+        Messages("contactInfoSubscriber.update.title")
+    }
+}
 
+
+@mainTemplate(
+    title,
+    backLinkUrl= Some(routes.StartController.start.url)
+) {
             @if(form.hasErrors) {
                 @if(numberOfErrors == 1) {
                     <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">

@@ -28,8 +28,18 @@
 
 @error = @{form.error("companyName").isDefined}
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCompanyName.title")}else{Messages("enterCompanyName.title")}) {
-@back_link(backLink)
+@title = @{
+    if(form.hasErrors){
+        Messages("error.prefix") + " " + Messages("enterCompanyName.title")
+    } else {
+        Messages("enterCompanyName.title")
+    }
+}
+
+@mainTemplate(
+    title,
+    backLinkUrl= Some(backLink)
+) {
 
         @if(form.hasErrors) {
             <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">

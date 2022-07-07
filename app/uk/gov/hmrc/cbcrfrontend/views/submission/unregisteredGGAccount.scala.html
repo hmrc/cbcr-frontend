@@ -23,12 +23,22 @@
 
 @(reportURL: String)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("unregisteredGG.title")) {
-  @{ request.headers.get("Referer") match {
-      case Some(referrer)
-      if(referrer.contains("already-subscribed")) => back_link(routes.SubscriptionController.alreadySubscribed.url)
-      case _ => {}
-  }}
+@backlink = @{
+    request.headers.get("Referer") match {
+        case Some(referrer)  =>
+            if(referrer.contains("already-subscribed")){
+                Some(routes.SubscriptionController.alreadySubscribed.url)
+            } else {
+                None
+            }
+        case _ => {None}
+    }
+}
+
+@mainTemplate(
+    Messages("unregisteredGG.title"),
+    backLinkUrl = backlink
+) {
 
         <h1 class="govuk-heading-l">@Messages("unregisteredGG.heading")</h1>
             <div>
@@ -42,5 +52,5 @@
                 <p class="govuk-body">@Messages("unregisteredGG.message4")
                     <a id="signInHref" class="govuk-link" href="@routes.SharedController.signOutGG">@Messages("unregisteredGG.signOut")</a>.
                 </p>
-         </div>
+            </div>
 }

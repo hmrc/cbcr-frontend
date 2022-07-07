@@ -24,9 +24,10 @@
 
 @(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("fileUploadResult.error.title")) {
-
-  @back_link(controllers.upscan.routes.UploadFormController.onPageLoad.url)
+@mainTemplate(
+    Messages("fileUploadResult.error.title"),
+    backLinkUrl = Some(controllers.upscan.routes.UploadFormController.onPageLoad.url)
+) {
 
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
