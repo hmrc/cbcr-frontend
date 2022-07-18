@@ -20,7 +20,15 @@
 
 @isError= @{form.hasErrors}
 
-@mainTemplate(if(isError){"Error: " + Messages("start.title")} else {Messages("start.title")}) {
+@title = @{
+    if(isError){
+        Messages("error.prefix") + " " + Messages("start.title")
+    } else {
+        Messages("start.title")
+    }
+}
+
+@mainTemplate(title) {
 
     @if(form.hasErrors) {
         <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">

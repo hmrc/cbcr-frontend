@@ -36,15 +36,22 @@
     schemaErrors.isDefined || busErrors.isDefined
 }
 
-@mainTemplate(if(!errors) {
-    Messages("fileUploadResult.title.ok")
+@title = @{
+    if(!errors) {
+        Messages("fileUploadResult.title.ok")
+    } else {
+        Messages("fileUploadResult.error.title")
+    }
 }
-else {
-    Messages("fileUploadResult.error.title")
-}) {
 
-  @back_link(routes.FileUploadController.chooseXMLFile.url)
+@backlink = @{
+    Some(routes.FileUploadController.chooseXMLFile.url)
+}
 
+@mainTemplate(
+    pageTitle = title,
+    backLinkUrl = backlink
+) {
     <div>
         @if(!errors) {
             <h1 class="govuk-heading-l" >@Messages("fileUploadResult.mainHeading.ok")</h1>

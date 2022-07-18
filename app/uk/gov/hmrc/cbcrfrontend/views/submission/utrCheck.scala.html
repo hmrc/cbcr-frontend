@@ -24,7 +24,16 @@
 @(form:Form[_])(implicit request: Request[_], messages: Messages)
 
 @error = @{form.error("utr").isDefined}
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("utrCheck.title")}else{Messages("utrCheck.title")}) {
+
+@title = @{
+    if(form.hasErrors){
+        Messages("error.prefix") + " " + Messages("utrCheck.title")
+    } else {
+        Messages("utrCheck.title")
+    }
+}
+
+@mainTemplate(title) {
 
         @if(form.hasErrors) {
             <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">

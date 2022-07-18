@@ -30,9 +30,19 @@
 @numberOfErrors = @{form.errors.length}
 @maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.title")}else{Messages("contactInfoSubscriber.title")}) {
 
-    @back_link(routes.SharedController.knownFactsMatch.url)
+@title = @{
+    if(form.hasErrors){
+        Messages("error.prefix") + " " + Messages("contactInfoSubscriber.title")
+    } else {
+        Messages("contactInfoSubscriber.title")
+    }
+}
+
+@mainTemplate(
+    pageTitle = title,
+    backLinkUrl = Some(routes.SharedController.knownFactsMatch.url)
+) {)
 
             @if(form.hasErrors) {
                 @if(numberOfErrors == 1) {

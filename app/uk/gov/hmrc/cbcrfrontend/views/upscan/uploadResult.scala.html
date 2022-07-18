@@ -32,40 +32,40 @@
 schemaErrors.isDefined || busErrors.isDefined
 }
 
-@mainTemplate(if(!errors) {
-    Messages("fileUploadResult.title.ok")
+@title = @{
+    if(!errors) {
+        Messages("fileUploadResult.title.ok")
+    } else {
+        Messages("fileUploadResult.error.title")
+    }
 }
-else {
-    Messages("fileUploadResult.error.title")
-}) {
 
-@back_link(controllers.upscan.routes.UploadFormController.onPageLoad.url)
+@mainTemplate(
+    pageTitle = title,
+    backLinkUrl = Some(controllers.upscan.routes.UploadFormController.onPageLoad.url)
+) {
 
 <div>
     @if(!errors) {
-    <h1 class="govuk-heading-l" >@Messages("fileUploadResult.mainHeading.ok")</h1>
+        <h1 class="govuk-heading-l" >@Messages("fileUploadResult.mainHeading.ok")</h1>
     } else {
-    @if(schemaErrors.isDefined && busErrors.isDefined) {
-    <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
-    } else {
-    @if(schemaErrors.isDefined) {
-    <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.xmlError")</h1>
-    } else {
-    <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.dataError")</h1>
-    }
-    }
+        @if(schemaErrors.isDefined && busErrors.isDefined) {
+            <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
+        } else {
+            @if(schemaErrors.isDefined) {
+                <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.xmlError")</h1>
+            } else {
+                <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.dataError")</h1>
+            }
+        }
     <h2 class="govuk-heading-m">@messages("fileUploadResult.whatToDo")</h2>
     @schemaErrors.map { size =>
     <p class="govuk-body">@Messages("fileUploadResult.error.report") <a href="@controllers.upscan.routes.FileValidationController.getXmlSchemaErrors" class="govuk-link">@Messages("fileUploadResult.error.data.link")
-        (Text, @{
-        size
-        }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
+        (Text, @{size}KB)</a> @Messages("fileUploadResult.error.data.message")</p>
     }
     @busErrors.map { size =>
     <p class="govuk-body">@Messages("fileUploadResult.error.report") <a href="@controllers.upscan.routes.FileValidationController.getBusinessRuleErrors" class="govuk-link">@Messages("fileUploadResult.error.data.link")
-        (Text, @{
-        size
-        }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
+        (Text, @{size}KB)</a> @Messages("fileUploadResult.error.data.message")</p>
     }
     <p class="govuk-body"><a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("fileUploadResult.error.oecdUrl")</a>@Messages("fileUploadResult.error.oecdInfo")</p>
     }
