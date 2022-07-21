@@ -45,35 +45,16 @@
 ) {)
 
             @if(form.hasErrors) {
-                @if(numberOfErrors == 1) {
-                    <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" data-module="govuk-error-summary">
-                    @form.errors.map{  error =>
-                        <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
-                        <div class="govuk-error-summary__body">
-                            <ul class="govuk-list govuk-error-summary__list">
-                            @if(maybeEmailError.contains("contactInfoSubscriber.emailAddress.error.invalid")) {
-                                <li>@Messages("contactInfoSubscriber.emailAddress.error.invalid.header.l1")</li>
-                            }
-                            @if(maybePhoneError.contains("contactInfoSubscriber.phoneNumber.error.invalid")) {
-                                <li>@Messages("contactInfoSubscriber.phoneNumber.error.invalid.header.l1")</li>
-                            }
-                            <li><a href="#@error.key" id="@{error.key}-error-summary"> @error.messages.map(x => Messages(x))</a></li>
-                            </ul>
-                        </div>
-                        }
+                <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" data-module="govuk-error-summary">
+                    <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
+                    <div class="govuk-error-summary__body">
+                        <ul class="govuk-list govuk-error-summary__list">
+                    @form.errors.map { error =><li><a href="#@error.key" id="@{error.key}-error-summary">
+                        @error.messages.map(x => Messages(x))</a></li>
+                    }
+                        </ul>
                     </div>
-                } else {
-                    <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" tabindex="-1" data-module="govuk-error-summary">
-                        <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
-                        <div class="govuk-error-summary__body">
-                            <ul class="govuk-list govuk-error-summary__list">
-                        @form.errors.map { error =><li><a href="#@error.key" id="@{error.key}-error-summary">
-                            @error.messages.map(x => Messages(x))</a></li>
-                        }
-                            </ul>
-                        </div>
-                    </div>
-                }
+                </div>
             }
             <h1 class="govuk-heading-l" tabindex="-1">
                 @Messages("contactInfoSubscriber.mainHeading")

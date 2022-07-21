@@ -55,9 +55,7 @@
 
         @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.saveCompanyName){
             <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
-                <fieldset class="govuk-fieldset">
                 @govukFormFieldDisplay(error,"companyName",Some(Messages("enterCompanyName.form.error")),Messages("enterCompanyName.formHintWhereYouGotIt"),form,None)
-                </fieldset>
             </div>
 
             <button class="govuk-button" role="button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>

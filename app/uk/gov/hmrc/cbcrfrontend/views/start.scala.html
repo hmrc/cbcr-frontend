@@ -43,15 +43,17 @@
         </div>
     }
 
-<h1 class="govuk-heading-l">@Messages("start.mainHeading")</h1>
-<legend class="govuk-label">@Messages("start.intro")</legend>
-<br/>
 
 @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.StartController.submit){
 
 <div class="govuk-form-group @if(isError){govuk-form-group--error}">
-    @if(isError){ <span class="govuk-error-message">@Messages("start.required")</span> }
-    <fieldset class="govuk-fieldset">
+    <fieldset class="govuk-fieldset"@if(isError){ aria-describedby="choice-error"}>
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+            <h1 class="govuk-fieldset__heading">
+                @Messages("start.mainHeading")
+            </h1>
+          </legend>
+          @if(isError){ <span class="govuk-error-message" id="choice-error"><span class="govuk-visually-hidden">@Messages("error.prefix") </span>@Messages("start.required")</span> }
         <div class="govuk-radios">
             <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="radio-1" name="choice" type="radio" value="upload">

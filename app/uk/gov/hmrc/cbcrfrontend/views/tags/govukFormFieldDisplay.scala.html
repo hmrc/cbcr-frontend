@@ -1,13 +1,41 @@
-@(isError:Boolean, name:String, errorMessage:Option[String], label:String, form:Form[_], formHint:Option[String]=None, inputType:Option[String]=Some("text"))
+@(
+  isError:Boolean,
+  name:String,
+  errorMessage:Option[String],
+  label:String,
+  form:Form[_],
+  formHint:Option[String]=None,
+  inputType:Option[String]=Some("text"),
+  inputAutocomplete:Option[String]=None,
+  labelClasses:Option[String]=None,
+  isPageHeading:Boolean=false
+)(implicit request: Request[_], messages: Messages)
 
-<div class="govuk-form-group @if(isError){govuk-error-message}">
-  <label class="govuk-label" for="@name">@label</label>
+<div class="govuk-form-group @if(isError){govuk-form-group--error}">
+  @if(isPageHeading){
+    <h1 class="govuk-label-wrapper">
+      <label class="govuk-label govuk-label--l  @{labelClasses}" for="@name">
+        @label
+      </label>
+    </h1>
+  } else {
+    <label class="govuk-label @{labelClasses}" for="@name">@label</label>
+  }
+
   @if(formHint.isDefined){
-    <div id="event-name-hint" class="govuk-hint">@formHint</div>
+    <div id="@name-hint" class="govuk-hint">@formHint</div>
   }
 
   @if(isError && errorMessage.isDefined) {
-    @errorMessage.map(error => <span id={s"$name-error-notification"} class="govuk-error-message">{error}</span>)
+    @errorMessage.map(error => <div id={s"$name-error-notification"} class="govuk-error-message"><span class="govuk-visually-hidden">{Messages("error.prefix")} </span>{error}</div>)
   }
-  <input type="@inputType" name="@name" class="@{if(isError){ "govuk-input govuk-!-width-one-half govuk-input--error" } else {"govuk-input govuk-!-width-one-half"} }" id="@name" value="@form.data.get(name)">
+  <input
+    type="@inputType"
+    name="@name"
+    class="@{if(isError){ "govuk-input govuk-!-width-one-half govuk-input--error" } else {"govuk-input govuk-!-width-one-half"} }"
+    id="@name"
+    value="@form.data.get(name)"
+    @if(inputAutocomplete.isDefined){autocomplete="@inputAutocomplete"}
+    @if(formHint.isDefined || (isError && errorMessage.isDefined)){aria-describedby="@if(formHint.isDefined){@name-hint} @if(isError && errorMessage.isDefined){@name-error-notification}"}
+    >
 </div>

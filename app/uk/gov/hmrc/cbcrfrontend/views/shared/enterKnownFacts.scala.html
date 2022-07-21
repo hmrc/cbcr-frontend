@@ -67,7 +67,6 @@
             @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts) {
 
               <div class="govuk-form-group @if(hasErrors){govuk-form-group--error}">
-                <fieldset class="govuk-fieldset">
                     @govukFormFieldDisplay(hasErrors, "utr",
                         Some(if(knownFactsForm.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){ Messages("subscribeFirst.error.message.utr-empty")} else {Messages("subscribeFirst.error.message.utr-nonEmpty")}),
                         Messages("subscribeFirst.utr.label"),
@@ -78,7 +77,6 @@
                         Messages("subscribeFirst.postcode.label"),
                         knownFactsForm,
                         Some(Messages("subscribeFirst.postcode.hint")))
-                </fieldset>
               </div>
                 <p>
                     <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@Messages("form.controls.continue")</button>

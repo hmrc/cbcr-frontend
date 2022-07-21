@@ -67,7 +67,7 @@ schemaErrors.isDefined || busErrors.isDefined
     <p class="govuk-body">@Messages("fileUploadResult.error.report") <a href="@controllers.upscan.routes.FileValidationController.getBusinessRuleErrors" class="govuk-link">@Messages("fileUploadResult.error.data.link")
         (Text, @{size}KB)</a> @Messages("fileUploadResult.error.data.message")</p>
     }
-    <p class="govuk-body"><a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("fileUploadResult.error.oecdUrl")</a>@Messages("fileUploadResult.error.oecdInfo")</p>
+    <p class="govuk-body"><a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("fileUploadResult.error.oecdUrl")</a> @Messages("fileUploadResult.error.oecdInfo")</p>
     }
     @if(!errors) {
     <table class="govuk-table" id="table-successReport">

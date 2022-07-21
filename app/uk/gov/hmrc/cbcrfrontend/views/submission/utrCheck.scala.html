@@ -48,9 +48,7 @@
         <h1 class="govuk-heading-l">@Messages("utrCheck.mainHeading")</h1>
         @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
             <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
-                <fieldset class="govuk-fieldset">
-            @govukFormFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form, Some(Messages("utrCheck.hint")))
-                </fieldset>
+                @govukFormFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form, Some(Messages("utrCheck.hint")))
             </div>
         <button type="submit" class="govuk-button">@Messages("form.controls.continue")</button>
         }
