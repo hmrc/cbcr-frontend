@@ -22,13 +22,9 @@ import cats.syntax.show._
 import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
 import julienrf.json.derived
 
-/**
-  * Created by max on 11/05/17.
-  */
 sealed trait FileInformation
-
 object FileInformation {
-  implicit val jsonFormat: OFormat[FileInformation] = derived.oformat[FileInformation]()
+  implicit val format: OFormat[FileInformation] = Json.format
 }
 
 case class FileInfo(
@@ -41,13 +37,13 @@ case class FileInfo(
   created: String)
     extends FileInformation
 object FileInfo {
-  implicit val format: OFormat[FileInfo] = Json.format[FileInfo]
+  implicit val format: OFormat[FileInfo] = Json.format
 }
 
 case class UpscanFileInfo(uploadId: UploadId, name: String, contentType: String, length: Option[BigDecimal])
     extends FileInformation
 object UpscanFileInfo {
-  implicit val format: OFormat[UpscanFileInfo] = Json.format[UpscanFileInfo]
+  implicit val format: OFormat[UpscanFileInfo] = Json.format
 }
 
 case class SubmissionInfo(
@@ -59,6 +55,7 @@ case class SubmissionInfo(
   tin: TIN,
   filingType: FilingType,
   ultimateParentEntity: UltimateParentEntity)
+
 object SubmissionInfo {
   implicit val format = new Format[SubmissionInfo] {
     override def reads(json: JsValue) = json match {
@@ -96,6 +93,5 @@ object SubmissionInfo {
 
 case class SubmissionMetaData(submissionInfo: SubmissionInfo, submitterInfo: SubmitterInfo, fileInfo: FileInformation)
 object SubmissionMetaData {
-
-  implicit val format = Json.format[SubmissionMetaData]
+  implicit val format: OFormat[SubmissionMetaData] = derived.oformat[SubmissionMetaData]()
 }
