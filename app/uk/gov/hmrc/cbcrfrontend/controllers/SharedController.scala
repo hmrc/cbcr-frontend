@@ -136,10 +136,9 @@ class SharedController @Inject()(
                         * not used to register the organisation
                         * ************************************************ */
                       case None => {
-                        ogger.warn(s"########## SubscriptionController::submitCBCId::case None")
+                        logger.warn(s"########## SubscriptionController::submitCBCId::case None")
                         cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                           Redirect(routes.SubmissionController.submitSummary))
-
                       }
                   }})
               ))
