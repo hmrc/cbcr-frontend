@@ -123,12 +123,20 @@ class SharedController @Inject()(
                           .ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId))
                           .fold[Future[Result]](
                             {
-                              case InvalidSession => BadRequest(views.enterCBCId(cbcIdForm, false, true))
-                              case error => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
+                              case InvalidSession => {
+                                logger.warn(s"########## SubscriptionController::submitCBCId::case Some(enrolment)::InvalidSession")
+                                BadRequest(views.enterCBCId(cbcIdForm, false, true))
+                              }
+                              case error => {
+                                logger.warn(s"########## SubscriptionController::submitCBCId::case Some(enrolment)::error")
+                                errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
+                              }
                             },
-                            _ =>
+                            _ => {
+                              logger.warn(s"########## SubscriptionController::submitCBCId::case Some(enrolment)::success path")
                               cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                                 Redirect(routes.SubmissionController.submitSummary))
+                            }
                           )
                       }
                       /** ************************************************
