@@ -112,8 +112,10 @@ class SharedController @Inject()(
                 details =>
                   details.fold[Future[Result]] {
                     BadRequest(views.enterCBCId(cbcIdForm, true))
-                  }(subscriptionDetails =>
-                    cbcEnrolment match {
+                  }(subscriptionDetails => {
+                    logger.warn(s"########## SubscriptionController::submitCBCId::subscriptionDetails == ${subscriptionDetails}")
+
+                      cbcEnrolment match {
                       case Some(enrolment) =>
                         cbcEnrolment
                           .toRight(UnexpectedState("Could not find valid enrolment"))
@@ -135,7 +137,7 @@ class SharedController @Inject()(
                       case None =>
                         cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                           Redirect(routes.SubmissionController.submitSummary))
-                  })
+                  }})
               ))
           }
         )
