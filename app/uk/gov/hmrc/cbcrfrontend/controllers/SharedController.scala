@@ -116,27 +116,31 @@ class SharedController @Inject()(
                     logger.warn(s"########## SubscriptionController::submitCBCId::subscriptionDetails == ${subscriptionDetails}")
 
                       cbcEnrolment match {
-                      case Some(enrolment) =>
+                      case Some(enrolment) => {
+                        logger.warn(s"########## SubscriptionController::submitCBCId::case Some(enrolment)")
                         cbcEnrolment
                           .toRight(UnexpectedState("Could not find valid enrolment"))
                           .ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId))
                           .fold[Future[Result]](
                             {
                               case InvalidSession => BadRequest(views.enterCBCId(cbcIdForm, false, true))
-                              case error          => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
+                              case error => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
                             },
                             _ =>
                               cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                                 Redirect(routes.SubmissionController.submitSummary))
                           )
-
+                      }
                       /** ************************************************
                         * user logged in with GG account
                         * not used to register the organisation
                         * ************************************************ */
-                      case None =>
+                      case None => {
+                        ogger.warn(s"########## SubscriptionController::submitCBCId::case None")
                         cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                           Redirect(routes.SubmissionController.submitSummary))
+
+                      }
                   }})
               ))
           }
