@@ -78,6 +78,10 @@ class SubscriptionDataService @Inject()(
               case Status.NOT_FOUND => {
                 Right(None)
               }
+              case _ => {
+                logger.warn(s"$$$$$$$$$$$$ SubscriptionDataService::retrieveSubscriptionData:: case _ not matching anything........")
+                Right(None)
+              }
             }
           }
         }
