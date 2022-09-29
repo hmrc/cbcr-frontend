@@ -112,43 +112,30 @@ class SharedController @Inject()(
                 details =>
                   details.fold[Future[Result]] {
                     BadRequest(views.enterCBCId(cbcIdForm, true))
-                  }(subscriptionDetails => {
-                    logger.warn(s"########## SubscriptionController::submitCBCId::subscriptionDetails == ${subscriptionDetails}")
-
-                      cbcEnrolment match {
-                      case Some(enrolment) => {
-                        logger.warn(s"########## SubscriptionController::submitCBCId::case Some(enrolment)")
+                  }(subscriptionDetails =>
+                    cbcEnrolment match {
+                      case Some(enrolment) =>
                         cbcEnrolment
                           .toRight(UnexpectedState("Could not find valid enrolment"))
                           .ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId))
                           .fold[Future[Result]](
                             {
-                              case InvalidSession => {
-                                logger.warn(s"########## SubscriptionController::submitCBCId::case Some(enrolment)::InvalidSession")
-                                BadRequest(views.enterCBCId(cbcIdForm, false, true))
-                              }
-                              case error => {
-                                logger.warn(s"########## SubscriptionController::submitCBCId::case Some(enrolment)::error")
-                                errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
-                              }
+                              case InvalidSession => BadRequest(views.enterCBCId(cbcIdForm, false, true))
+                              case error          => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
                             },
-                            _ => {
-                              logger.warn(s"########## SubscriptionController::submitCBCId::case Some(enrolment)::success path")
+                            _ =>
                               cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                                 Redirect(routes.SubmissionController.submitSummary))
-                            }
                           )
-                      }
+
                       /** ************************************************
                         * user logged in with GG account
                         * not used to register the organisation
                         * ************************************************ */
-                      case None => {
-                        logger.warn(s"########## SubscriptionController::submitCBCId::case None")
+                      case None =>
                         cacheSubscriptionDetails(subscriptionDetails, id).map(_ =>
                           Redirect(routes.SubmissionController.submitSummary))
-                      }
-                  }})
+                  })
               ))
           }
         )

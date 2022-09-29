@@ -59,29 +59,17 @@ class SubscriptionDataService @Inject()(
     eitherT[Option[SubscriptionDetails]](
       http
         .GET[HttpResponse](fullUrl)
-        .map { response => {
-          logger.warn(s"########## SubscriptionDataService::retrieveSubscriptionData::response.json == ${response.json}")
-            response.status match {
-              case Status.OK =>
-                response.json
-                  .validate[SubscriptionDetails]
-                  .fold(
-                    errors => {
-                      logger.warn(s"########## SubscriptionDataService::retrieveSubscriptionData:: fold errors")
-                      Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString))
-                    },
-                    details => {
-                      logger.warn(s"########## SubscriptionDataService::retrieveSubscriptionData:: details = $details")
-                      Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
-                    }
-                  )
-              case Status.NOT_FOUND => {
-                Right(None)
-              }
-              case _ => {
-                logger.warn(s"$$$$$$$$$$$$ SubscriptionDataService::retrieveSubscriptionData:: case _ not matching anything........")
-                Right(None)
-              }
+        .map { response =>
+          response.status match {
+            case Status.OK =>
+              response.json
+                .validate[SubscriptionDetails]
+                .fold(
+                  errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
+                  details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
+                )
+            case Status.NOT_FOUND => {
+              Right(None)
             }
           }
         }
