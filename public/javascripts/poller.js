@@ -1,4 +1,4 @@
-function poll(pollPath, readyPath, virusFailPath, badRequestPath, errorPath) {
+function poll(pollPath, readyPath, virusFailPath, errorPath) {
     setTimeout(function() {
         $.ajax({ url: pollPath,
             success: function(data, statusText, xhr){
@@ -13,8 +13,6 @@ function poll(pollPath, readyPath, virusFailPath, badRequestPath, errorPath) {
                 var errMsg = xhr.responseText;
                 if(xhr.status == 409) {
                     window.location.href=virusFailPath;
-                } else if(xhr.status == 400) {
-                    window.location.href=badRequestPath;
                 } else {
                     window.location.href=errorPath;
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class CreationDateSpec
   when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(
     Some(12))
   when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
-    Some(2019))
+    Some(2018))
 
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -126,7 +126,7 @@ class CreationDateSpec
 
   "The CreationDateService" should {
     "return true" when {
-      "repotingEntity creationDate is Null and default date of 2019/12/23 is less than 3 years ago" in {
+      "repotingEntity creationDate is Null and default date of 2017/12/23 is less than 3 years ago" in {
         when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
           .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(redNoCreationDate))
         val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)

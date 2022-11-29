@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.util
 
-import uk.gov.hmrc.cbcrfrontend.model.{FileInfo, FileInformation, UpscanFileInfo}
-
 object ModifySize {
   def calculateFileSize(length: BigDecimal): BigDecimal =
     (length / 1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-}
-
-object UIHelper {
-  def fileNameAndLength(fileInfo: FileInformation): (String, BigDecimal) =
-    fileInfo match {
-      case f: FileInfo       => (f.name, f.length)
-      case u: UpscanFileInfo => (u.name, u.length.getOrElse(BigDecimal(0)))
-    }
-
 }

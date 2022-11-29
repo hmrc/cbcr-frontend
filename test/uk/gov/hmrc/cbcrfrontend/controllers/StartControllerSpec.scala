@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,18 +35,13 @@ import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import play.api.http.Status
-import play.api.inject.bind
-import play.api.inject.guice.GuiceApplicationBuilder
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import play.api.libs.json.Json
-import play.api.test.Helpers.{GET, redirectLocation, route, running}
 import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import play.api.mvc.Result
-import play.api.test.FakeRequest
 
 class StartControllerSpec
     extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
@@ -69,15 +64,12 @@ class StartControllerSpec
 
   "Calling start controller" should {
     val fakeRequest = addToken(FakeRequest("GET", "/"))
-    when(feConf.cbcEnhancementFeature).thenReturn(false)
 
     "return 303 if authorised and Agent" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(
           new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Agent), Some(newCBCEnrolment))))
-      val result = controller.start(fakeRequest)
-      status(result) shouldBe Status.SEE_OTHER
-      redirectLocation(result) shouldBe Some(routes.FileUploadController.chooseXMLFile.url)
+      status(controller.start(fakeRequest)) shouldBe Status.SEE_OTHER
     }
 
     "return 200 if authorized and registered Organisation for CBCR" in {
@@ -105,19 +97,7 @@ class StartControllerSpec
       val data = Json.obj("choice" -> "upload")
       val fakeRequest = addToken(FakeRequest("GET", "/")).withJsonBody(data)
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      val result = controller.submit(fakeRequest)
-      status(result) shouldBe Status.SEE_OTHER
-      redirectLocation(result) shouldBe Some(routes.FileUploadController.chooseXMLFile.url)
-    }
-
-    "return 303 if submit returns upload when cbcEnhancementFeature is true" in {
-      when(feConf.cbcEnhancementFeature).thenReturn(true)
-      val data = Json.obj("choice" -> "upload")
-      val fakeRequest = addToken(FakeRequest("GET", "/")).withJsonBody(data)
-      when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      val result = controller.submit(fakeRequest)
-      status(result) shouldBe Status.SEE_OTHER
-      redirectLocation(result) shouldBe Some(upscan.routes.UploadFormController.onPageLoad.url)
+      status(controller.submit(fakeRequest)) shouldBe Status.SEE_OTHER
     }
 
     "return 303 if submit returns editSubscriberInfo" in {

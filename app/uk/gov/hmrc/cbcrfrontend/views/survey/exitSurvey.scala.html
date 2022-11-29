@@ -30,10 +30,10 @@
 
         <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
             <fieldset class="govuk-fieldset">
-                <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
-                    @Messages("survey.question1")
+                <legend class="govuk-fieldset__legend">
+                    <label class="govuk-label govuk-label--m">@Messages("survey.question1")</label>
+                    @if(isError){ <span class="govuk-error-message">@Messages("survey.required")</span> }
                 </legend>
-                @if(isError){ <div class="govuk-error-message">@Messages("survey.required")</div> }
                 <div class="govuk-radios">
                 <div class="govuk-radios__item">
                     <input class="govuk-radios__input" id="radio-1" type="radio" name="satisfied" value="@Messages("survey.one")">
@@ -68,7 +68,9 @@
             <textarea class="govuk-textarea" name="suggestions" id="suggestions" rows="5">@form.data.get("suggestions")</textarea>
         </div>
 
-            <button class="govuk-button" type="submit" id="continue">@Messages("survey.send")</button>
+            <button role="button" class="govuk-button" type="submit" id="continue">@Messages("survey.send")</button>
+
+        <script>document.getElementById("radio-1").focus();</script>
     }
 
 

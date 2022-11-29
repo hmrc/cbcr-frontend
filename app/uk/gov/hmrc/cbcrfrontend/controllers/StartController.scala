@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,13 +71,7 @@ class StartController @Inject()(
         .bindFromRequest()
         .fold(
           errors => BadRequest(views.start(errors)), {
-            case "upload" =>
-              if (feConfig.cbcEnhancementFeature) {
-                Redirect(controllers.upscan.routes.UploadFormController.onPageLoad)
-              } else {
-                Redirect(routes.FileUploadController.chooseXMLFile)
-              }
-
+            case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile)
             case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber)
             case _                    => BadRequest(views.start(startForm))
           }

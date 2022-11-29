@@ -24,25 +24,15 @@
     formHelper: FormWithCSRF
 )
 
-@(form:Form[_], backLink: String)(implicit request: Request[_], messages: Messages)
+@(form:Form[_], envelopeId: String, fileId: String)(implicit request: Request[_], messages: Messages)
 
 @error = @{form.error("companyName").isDefined}
 
-@title = @{
-    if(form.hasErrors){
-        Messages("error.prefix") + " " + Messages("enterCompanyName.title")
-    } else {
-        Messages("enterCompanyName.title")
-    }
-}
-
-@mainTemplate(
-    title,
-    backLinkUrl= Some(backLink)
-) {
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCompanyName.title")}else{Messages("enterCompanyName.title")}) {
+@back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
 
         @if(form.hasErrors) {
-            <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
+            <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                 <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
                 <div class="govuk-error-summary__body">
                     <ul class="govuk-list govuk-error-summary__list">
@@ -50,12 +40,15 @@
                     </ul>
                 </div>
             </div>
+            @errorFocus()
         }
         <h1 class="govuk-heading-l">@Messages("enterCompanyName.mainHeading")</h1>
 
         @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.saveCompanyName){
             <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
+                <fieldset class="govuk-fieldset">
                 @govukFormFieldDisplay(error,"companyName",Some(Messages("enterCompanyName.form.error")),Messages("enterCompanyName.formHintWhereYouGotIt"),form,None)
+                </fieldset>
             </div>
 
             <button class="govuk-button" role="button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>

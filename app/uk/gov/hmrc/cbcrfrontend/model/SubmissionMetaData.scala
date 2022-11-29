@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
+import play.api.libs.json._ // JSON library
+import play.api.libs.json.Reads._ // Custom validation helpers
 import cats.syntax.show._
-import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
-import julienrf.json.derived
 
-sealed trait FileInformation
-object FileInformation {
-  implicit val format: OFormat[FileInformation] = Json.format
-}
-
+/**
+  * Created by max on 11/05/17.
+  */
 case class FileInfo(
   id: FileId,
   envelopeId: EnvelopeId,
@@ -35,15 +31,8 @@ case class FileInfo(
   contentType: String,
   length: BigDecimal,
   created: String)
-    extends FileInformation
 object FileInfo {
-  implicit val format: OFormat[FileInfo] = Json.format
-}
-
-case class UpscanFileInfo(uploadId: UploadId, name: String, contentType: String, length: Option[BigDecimal])
-    extends FileInformation
-object UpscanFileInfo {
-  implicit val format: OFormat[UpscanFileInfo] = Json.format
+  implicit val format = Json.format[FileInfo]
 }
 
 case class SubmissionInfo(
@@ -55,7 +44,6 @@ case class SubmissionInfo(
   tin: TIN,
   filingType: FilingType,
   ultimateParentEntity: UltimateParentEntity)
-
 object SubmissionInfo {
   implicit val format = new Format[SubmissionInfo] {
     override def reads(json: JsValue) = json match {
@@ -91,7 +79,8 @@ object SubmissionInfo {
   }
 }
 
-case class SubmissionMetaData(submissionInfo: SubmissionInfo, submitterInfo: SubmitterInfo, fileInfo: FileInformation)
+case class SubmissionMetaData(submissionInfo: SubmissionInfo, submitterInfo: SubmitterInfo, fileInfo: FileInfo)
 object SubmissionMetaData {
-  implicit val format: OFormat[SubmissionMetaData] = derived.oformat[SubmissionMetaData]()
+
+  implicit val format = Json.format[SubmissionMetaData]
 }

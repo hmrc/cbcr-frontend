@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +16,36 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import org.mockito.ArgumentMatchers.any
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
-import org.jsoup.Jsoup
-import org.mockito.ArgumentMatchers.{any, eq => EQ}
+import org.mockito.ArgumentMatchers.{eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.{Configuration, Environment, Logger}
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
-import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.controllers
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
-import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
+import uk.gov.hmrc.http.HeaderCarrier
 
 class SharedControllerSpec
     extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
@@ -443,32 +442,6 @@ class SharedControllerSpec
       when(cache.read[Utr](EQ(Utr.utrRead), any(), any())) thenReturn rightE(Utr("700000002"))
       val result = controller.knownFactsMatch(request)
       status(result) shouldBe Status.OK
-    }
-  }
-
-  "unregisteredGGAccount" should {
-    "return to unauthorizedGG view with upscan url when cbcEnhancementFeature is true" in {
-      val request = addToken(FakeRequest())
-      when(feConfig.cbcEnhancementFeature).thenReturn(true)
-
-      val result = controller.unregisteredGGAccount(request)
-      status(result) shouldBe Status.OK
-      val page = Jsoup.parse(contentAsString(result))
-      page.getElementById("checkAndSendHref").attr("href") shouldBe
-        controllers.upscan.routes.UploadFormController.unregisteredGGAccount.url
-    }
-
-    "return to unauthorizedGG view with fileUpload url when cbcEnhancementFeature is false" in {
-      val request = addToken(FakeRequest())
-      when(feConfig.cbcEnhancementFeature).thenReturn(false)
-      val result = controller.unregisteredGGAccount(request)
-
-      status(result) shouldBe Status.OK
-      val page = Jsoup.parse(contentAsString(result))
-      page
-        .getElementById("checkAndSendHref")
-        .attr("href") shouldBe routes.FileUploadController.unregisteredGGAccount.url
-
     }
   }
 

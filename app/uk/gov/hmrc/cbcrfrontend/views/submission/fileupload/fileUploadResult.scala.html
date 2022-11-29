@@ -22,13 +22,8 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
-@import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@this(
-    mainTemplate: Layout,
-    govukSummaryList : GovukSummaryList,
-    formHelper: FormWithCSRF
-)
+@this(mainTemplate: Layout, formHelper: FormWithCSRF)
 
 @(userType: Option[AffinityGroup], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], reportingRole: Option[ReportingRole])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
@@ -36,22 +31,15 @@
     schemaErrors.isDefined || busErrors.isDefined
 }
 
-@title = @{
-    if(!errors) {
-        Messages("fileUploadResult.title.ok")
-    } else {
-        Messages("fileUploadResult.error.title")
-    }
+@mainTemplate(if(!errors) {
+    Messages("fileUploadResult.title.ok")
 }
+else {
+    Messages("fileUploadResult.error.title")
+}) {
 
-@backlink = @{
-    Some(routes.FileUploadController.chooseXMLFile.url)
-}
+  @back_link(routes.FileUploadController.chooseXMLFile.url)
 
-@mainTemplate(
-    pageTitle = title,
-    backLinkUrl = backlink
-) {
     <div>
         @if(!errors) {
             <h1 class="govuk-heading-l" >@Messages("fileUploadResult.mainHeading.ok")</h1>
@@ -78,48 +66,41 @@
                     size
                 }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
             }
-            <p class="govuk-body"><a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("fileUploadResult.error.oecdUrl")</a> @Messages("fileUploadResult.error.oecdInfo")</p>
+            <p class="govuk-body"><a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("fileUploadResult.error.oecdUrl")</a>@Messages("fileUploadResult.error.oecdInfo")</p>
         }
         @if(!errors) {
-            <h2 class="govuk-heading-m">@Messages("fileUploadResult.caption")</h2>
-            @govukSummaryList(SummaryList(
-                attributes = Map("data-spec"->"file-upload-result"),
-                rows = Seq(
-                    SummaryListRow(
-                        key = Key(
-                            content = Text(Messages("fileUploadResult.fileName"))
-                        ),
-                        value = Value(
-                            content = Text(fileName.get)
-                        ),
-                        actions = None
-                    ),
-                    SummaryListRow(
-                        key = Key(
-                            content = Text(Messages("fileUploadResult.fileSize"))
-                        ),
-                        value = Value(
-                            content = Text(fileSize.get + " KB")
-                        ),
-                        actions = None
-                    )
-                )
-            ))
-
-
-            <p class="govuk-body">@Messages("fileUploadResult.notYetSubmitted") <a class="govuk-link" href="@routes.SharedController.signOutSurvey">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
+                <table class="govuk-table" id="table-successReport">
+                    <caption class="govuk-table__caption govuk-table__caption--m" tabindex="0">@Messages("fileUploadResult.caption")</caption>
+                    <thead class="=govuk-table__head">
+                        <tr class="govuk-table__row">
+                            <th class="govuk-table__header" tabindex="0"></th>
+                            <th class="govuk-table__header" tabindex="0"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="govuk-table__body">
+                        <tr class="govuk-table__row">
+                            <td class=govuk-table__cell tabindex="0">@Messages("fileUploadResult.fileName")</td>
+                            <td class=govuk-table__cell tabindex="0">@fileName</td>
+                        <tr>
+                            <td class=govuk-table__cell tabindex="0">@Messages("fileUploadResult.fileSize")</td>
+                            <td class=govuk-table__cell tabindex="0">@fileSize KB</td>
+                        </tr>
+                    </tbody>
+                </table>
+            <p class="govuk-body">@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
 
             @if(reportingRole == Some(CBC701)){
                 @if(userType == Some(Organisation)){
-                    <p><a class="govuk-button" role="button" href="@routes.SubmissionController.submitterInfo()" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.submitterInfo()" id="btn-continue">@Messages("form.controls.continue")</a></p>
                 } else {
-                    <p><a class="govuk-button" role="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
                 }
             } else {
-                <p><a class="govuk-button" role="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
             }
         } else {
-            <a class="govuk-button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@Messages("form.controls.finished")</a>
+            @errorFocus()
+            <a type="submit" class="govuk-button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@Messages("form.controls.finished")</a>
         }
     </div>
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
+
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
-import org.jsoup.Jsoup
 import org.mockito.ArgumentMatchers.{any, eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
@@ -48,15 +48,12 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.cbcrfrontend.model.upscan.{UploadId, UploadStatus, UploadedSuccessfully}
 
-class SubmissionControllerSpec
-    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
+class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]
@@ -78,7 +75,6 @@ class SubmissionControllerSpec
   val mockCBCIdService = mock[CBCIdService]
   val mockEmailService = mock[EmailService]
   val reportingEntity = mock[ReportingEntityDataService]
-  val mockSubmissionService = mock[SubmissionService]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
   val views: Views = app.injector.instanceOf[Views]
   val fileDetails = FileDetails("env1", "file1")
@@ -103,22 +99,11 @@ class SubmissionControllerSpec
     env,
     auth,
     mockEmailService,
-    mockSubmissionService,
     mcc,
-    views
-  )(ec, cache, config, feConfig)
+    views)(ec, cache, config, feConfig)
 
   override protected def afterEach(): Unit = {
-    reset(
-      cache,
-      fus,
-      docRefService,
-      reportingEntity,
-      mockEmailService,
-      auth,
-      messageRefIdService,
-      mockSubmissionService,
-      feConfig)
+    reset(cache, fus, docRefService, reportingEntity, mockEmailService, auth, messageRefIdService)
     super.afterEach()
   }
 
@@ -210,10 +195,8 @@ class SubmissionControllerSpec
         env,
         auth,
         mockEmailService,
-        mockSubmissionService,
         mcc,
-        views
-      )(ec, cache, config, feConfig)
+        views)(ec, cache, config, feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
@@ -242,10 +225,8 @@ class SubmissionControllerSpec
         env,
         auth,
         mockEmailService,
-        mockSubmissionService,
         mcc,
-        views
-      )(ec, cache, config, feConfig)
+        views)(ec, cache, config, feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
@@ -272,10 +253,8 @@ class SubmissionControllerSpec
         env,
         auth,
         mockEmailService,
-        mockSubmissionService,
         mcc,
-        views
-      )(ec, cache, config, feConfig)
+        views)(ec, cache, config, feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
@@ -294,37 +273,13 @@ class SubmissionControllerSpec
   "POST /submitSubmitterInfo" should {
     "return 400 when the there is no data at all" in {
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo"))
-      val expectedBackLink = routes.FileUploadController.fileValidate(fileDetails.envelopeId, fileDetails.fileId).url
-
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-
-      val returnVal = controller.submitSubmitterInfo(fakeRequestSubmit)
-
-      status(returnVal) shouldBe Status.BAD_REQUEST
-      val html = Jsoup.parse(contentAsString(returnVal))
-      html.getElementsByClass("govuk-back-link").attr("href") shouldBe expectedBackLink
+      val returnVal = status(controller.submitSubmitterInfo(fakeRequestSubmit))
+      returnVal shouldBe Status.BAD_REQUEST
     }
-
-    "return 400 when the there is no data at all with cbcEnhancementFeature as true" in {
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo"))
-
-      when(feConfig.cbcEnhancementFeature).thenReturn(true)
-      val expectedBackLink = controllers.upscan.routes.FileValidationController.fileValidate().url
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
-        Some(AffinityGroup.Organisation))
-      when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
-      when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-
-      val returnVal = controller.submitSubmitterInfo(fakeRequestSubmit)
-
-      status(returnVal) shouldBe Status.BAD_REQUEST
-      val html = Jsoup.parse(contentAsString(returnVal))
-      html.getElementsByClass("govuk-back-link").attr("href") shouldBe expectedBackLink
-    }
-
     "return 400 when the all data exists but Fullname" in {
       val submitterInfo = SubmitterInfo("", None, "07923456708", EmailAddress("abc@xyz.com"), None)
       val fakeRequestSubmit =
@@ -585,7 +540,6 @@ class SubmissionControllerSpec
         when(cache.save[SummaryData](any())(any(), any(), any())) thenReturn Future.successful(
           CacheMap("cache", Map.empty[String, JsValue]))
         when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-
         val result = controller.submitSummary(fakeRequestSubmitSummary)
         status(result) shouldBe Status.SEE_OTHER
         result.header.headers("Location") should endWith("/session-expired")
@@ -621,44 +575,6 @@ class SubmissionControllerSpec
         when(cache.save[SummaryData](any())(any(), any(), any())) thenReturn Future.successful(
           CacheMap("cache", Map.empty[String, JsValue]))
         when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-
-        status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.OK
-
-        file.deleteOnExit()
-
-      }
-
-      "return 200 if everything succeeds when cbcEnhancement flag is true" in {
-
-        val file = File.createTempFile("test", "test")
-
-        when(auth.authorise(any(), any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]]())(any(), any()))
-          .thenReturn(Future.successful(
-            new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation))))
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
-          Some(GGId("ggid", "type")))
-        when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn rightE(keyXMLInfo)
-        when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn rightE(bpr)
-        when(cache.read[TIN](EQ(TIN.format), any(), any())) thenReturn rightE(TIN("utr", ""))
-        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn rightE(
-          CBCId.create(1).getOrElse(fail("argh")))
-        when(cache.read[Hash](EQ(Hash.format), any(), any())) thenReturn rightE(Hash("hash"))
-        when(cache.read[UploadedSuccessfully](EQ(UploadStatus.uploadedSuccessfullyFormat), any(), any())) thenReturn rightE(
-          UploadedSuccessfully("test.xml", "application/xml", "url", None))
-        when(cache.read[UploadId](EQ(UploadId.uploadIdFormat), any(), any())) thenReturn rightE(UploadId("id"))
-        when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn rightE(
-          SubmitterInfo("name", None, "0123123123", EmailAddress("max@max.com"), None))
-        when(cache.read[FilingType](EQ(FilingType.format), any(), any())) thenReturn rightE(FilingType(CBC701))
-        when(cache.read[UltimateParentEntity](EQ(UltimateParentEntity.format), any(), any())) thenReturn rightE(
-          UltimateParentEntity("upe"))
-
-        when(fus.getFile(anyString, anyString)(any(), any())) thenReturn EitherT[Future, CBCErrors, File](
-          Future.successful(Right(file)))
-        when(cache.save[SummaryData](any())(any(), any(), any())) thenReturn Future.successful(
-          CacheMap("cache", Map.empty[String, JsValue]))
-        when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-        when(feConfig.cbcEnhancementFeature).thenReturn(true)
-
         status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.OK
 
         file.deleteOnExit()
@@ -680,9 +596,7 @@ class SubmissionControllerSpec
         status(result) shouldBe Status.SEE_OTHER
         result.header.headers("Location") should endWith("/session-expired")
       }
-
       "returns a 500 when the call to file-upload fails" in {
-
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
@@ -692,28 +606,10 @@ class SubmissionControllerSpec
         when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn rightE(keyXMLInfo)
         when(fus.uploadMetadataAndRoute(any())(any(), any())) thenReturn EitherT.left[Future, CBCErrors, String](
           UnexpectedState("fail"))
-
         val result = Await.result(controller.confirm(fakeRequestSubmitSummary), 50.seconds)
         status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+
       }
-
-      "returns a 500 when the call to upscan file submission fails" in {
-
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
-        val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-        when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
-          .thenReturn(
-            Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
-        when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
-        when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn rightE(keyXMLInfo)
-        when(mockSubmissionService.submit(any())(any())) thenReturn EitherT.left[Future, CBCErrors, Unit](
-          UnexpectedState("fail"))
-        when(feConfig.cbcEnhancementFeature).thenReturn(true)
-
-        val result = Await.result(controller.confirm(fakeRequestSubmitSummary), 50.seconds)
-        status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      }
-
       "returns a 500 when the call to save the docRefIds fail" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
@@ -755,31 +651,6 @@ class SubmissionControllerSpec
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
           verify(reportingEntity).saveReportingEntityData(any())(any())
           verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
-        }
-        "call saveReportingEntityData when the submissionType is OECD1 when cbcEnhacement flag is true" in {
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
-          val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-          when(auth.authorise(any(), any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]]())(any(), any()))
-            .thenReturn(Future.successful(
-              new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation))))
-          when(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn rightE(summaryData)
-          when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn rightE(keyXMLInfo)
-          when(cache.save[SubmissionDate](any())(EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(
-            CacheMap("cache", Map.empty[String, JsValue]))
-          when(mockSubmissionService.submit(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Unit](())
-          when(reportingEntity.saveReportingEntityData(any())(any())) thenReturn EitherT.pure[Future, CBCErrors, Unit](
-            ())
-          when(docRefService.saveCorrDocRefID(any(), any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(messageRefIdService.saveMessageRefId(any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
-            Some(GGId("ggid", "type")))
-          when(auditMock.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
-          when(feConfig.cbcEnhancementFeature).thenReturn(true)
-          status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
-          verify(reportingEntity).saveReportingEntityData(any())(any())
-          verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
-          verify(mockSubmissionService, times(1)).submit(any())(any())
         }
         "call updateReportingEntityData when the submissionType is OECD[023]" in {
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)

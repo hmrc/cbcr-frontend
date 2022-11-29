@@ -29,12 +29,12 @@
     <div class="govuk-panel govuk-panel--confirmation">
         <h1 class="govuk-panel__title">@Messages("contactDetailsUpdate.mainHeading")</h1>
     </div>
-    <p class="govuk-body"><a href="#" onclick="window.print()" class="govuk-link js-only">@Messages("contactDetailsUpdate.printThisButton")</a></p>
+    <p><a href="#" onclick="window.print()" class="govuk-link">@Messages("contactDetailsUpdate.printThisButton")</a></p>
 
     <h2 class="govuk-heading-m">@Messages("contactDetailsUpdate.next")</h2>
     <p class="govuk-body">@Messages("contactDetailsUpdate.email")</p>
 
             <p>
-                <a role="button" data-module="govuk-button" class="govuk-button" href="@routes.StartController.start">@Messages("contactDetailsUpdate.next2")</a>
+                <a class="govuk-button" href="@routes.StartController.start">@Messages("contactDetailsUpdate.next2")</a>
             </p>
 }
