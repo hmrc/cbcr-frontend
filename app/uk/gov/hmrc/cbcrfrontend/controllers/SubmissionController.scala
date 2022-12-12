@@ -122,10 +122,27 @@ class SubmissionController @Inject()(
                     .mkString("\n")}")
               ))
             },
-            (data: ReportingEntityData) => reportingEntityDataService.saveReportingEntityData(data)
+            (data: ReportingEntityData) =>
+              EitherT(
+                reportingEntityDataService
+                  .saveReportingEntityData(data)
+                  .value
+                  .recover {
+                    case e =>
+                      logger.error("CBCR_UNVERIFIED_UPLOAD Failed to save reporting entity data")
+                      Left(UnexpectedState("Failed to save reporting entity data"))
+                  })
           )
       case OECD0 | OECD2 | OECD3 =>
-        reportingEntityDataService.updateReportingEntityData(PartialReportingEntityData.extract(xml))
+        EitherT(
+          reportingEntityDataService
+            .updateReportingEntityData(PartialReportingEntityData.extract(xml))
+            .value
+            .recover {
+              case e =>
+                logger.error("CBCR_UNVERIFIED_UPLOAD Failed to update reporting entity data")
+                Left(UnexpectedState("Failed to update reporting entity data"))
+            })
     }
 
   private def submitSummaryData(summaryData: SummaryData)(implicit hc: HeaderCarrier): ServiceResponse[_] =
