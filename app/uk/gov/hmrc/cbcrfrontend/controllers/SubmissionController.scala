@@ -128,7 +128,7 @@ class SubmissionController @Inject()(
                   .value
                   .recover {
                     case e =>
-                      logger.error("CBCR_UNVERIFIED_UPLOAD Failed to save reporting entity data")
+                      logger.error("CBCR_UNVERIFIED_UPLOAD Failed to save reporting entity data. UTR: " + data.tin)
                       Left(UnexpectedState("Failed to save reporting entity data"))
                   })
           )
