@@ -150,21 +150,26 @@ class SubmissionController @Inject()(
         summaryData <- cache.read[SummaryData]
         xml         <- cache.read[CompleteXMLInfo]
         _           <- fus.uploadMetadataAndRoute(summaryData.submissionMetaData)
-        _ <- saveDocRefIds(xml).leftMap[CBCErrors] { es =>
-              logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
-              UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
-            }
-        _ <- messageRefIdService.saveMessageRefId(xml.messageSpec.messageRefID).toLeft {
-              logger.error(s"Errors saving MessageRefId")
-              UnexpectedState("Errors in saving MessageRefId aborting submission")
-            }
-        _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
-        _ <- storeOrUpdateReportingEntityData(xml)
-        _ <- createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData)
-        userType = retrieval.b match {
+        userType    <- (for {
+          _ <- saveDocRefIds(xml).leftMap[CBCErrors] { es =>
+                logger.error(s"Errors saving Corr/DocRefIds : ${es.map(_.errorMsg).toList.mkString("\n")}")
+                UnexpectedState("Errors in saving Corr/DocRefIds aborting submission")
+              }
+          _ <- messageRefIdService.saveMessageRefId(xml.messageSpec.messageRefID).toLeft {
+                logger.error(s"Errors saving MessageRefId")
+                UnexpectedState("Errors in saving MessageRefId aborting submission")
+              }
+          _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
+          _ <- storeOrUpdateReportingEntityData(xml)
+          _ <- createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData)
+        } yield retrieval.b match {
           case Some(Agent) => "Agent"
           case _           => "Other"
-        }
+        })
+        .leftMap(error => {
+          logger.error("CBCR_UNVERIFIED_UPLOAD Error occurred after uploading a file. State may be inconsistent. UTR: " + summaryData.submissionMetaData.submissionInfo.tin)
+          error
+        })
       } yield Redirect(routes.SubmissionController.submitSuccessReceipt(userType)))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
