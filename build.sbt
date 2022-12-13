@@ -19,7 +19,7 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 val compile = Seq(
   ws,
   "uk.gov.hmrc"              %% "bootstrap-frontend-play-28"      % "5.7.0",
-  "uk.gov.hmrc"              %% "play-frontend-hmrc"  % "3.21.0-play-28",
+  "uk.gov.hmrc"              %% "play-frontend-hmrc"  % "0.85.0-play-28",
   "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
   "uk.gov.hmrc"              %% "domain"              % "6.1.0-play-28",
   "uk.gov.hmrc"              %% "http-caching-client" % "9.5.0-play-28",
@@ -31,16 +31,13 @@ val compile = Seq(
   "com.sun.xml"              % "relaxngDatatype"      % "1.0",
   "com.sun.msv.datatype.xsd" % "xsdlib"               % "2013.2",
   "commons-io"               % "commons-io"           % "2.6",
-  "org.mindrot"              % "jbcrypt"              % "0.4",
-  "org.julienrf"             %% "play-json-derived-codecs"   % "7.0.0",
+  "org.mindrot"              % "jbcrypt"              % "0.4"
 )
 
 def test(scope: String = "test") = Seq(
   "org.pegdown"            % "pegdown"             % "1.6.0"  % scope,
   "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0"  % scope,
-  "org.mockito"            % "mockito-core"        % "3.11.0" % scope,
-  "com.github.tomakehurst" %  "wiremock-jre8"      % "2.26.0",
-  "org.jsoup"              % "jsoup"               % "1.14.2" % scope,
+  "org.mockito"            % "mockito-core"        % "3.11.0" % scope
 )
 
 lazy val plugins: Seq[Plugins] = Seq.empty
@@ -137,6 +134,7 @@ def oneForkedJvmPerTest(tests: Seq[TestDefinition]) =
 
 TwirlKeys.templateImports ++= Seq(
   "uk.gov.hmrc.govukfrontend.views.html.components._",
+  "uk.gov.hmrc.govukfrontend.views.html.helpers._",
   "uk.gov.hmrc.hmrcfrontend.views.html.components._",
   "uk.gov.hmrc.hmrcfrontend.views.html.helpers._"
 )

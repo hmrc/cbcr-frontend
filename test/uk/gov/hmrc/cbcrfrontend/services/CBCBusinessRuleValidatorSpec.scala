@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
+
 import cats.data.Validated._
 import org.mockito.ArgumentMatchers.any
 import cats.data.{EitherT, NonEmptyList}
@@ -35,7 +36,6 @@ import org.mockito.ArgumentMatchers.{eq => EQ, _}
 import uk.gov.hmrc.emailaddress.EmailAddress
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
-import uk.gov.hmrc.cbcrfrontend.ValidBusinessResult
 import uk.gov.hmrc.http.HeaderCarrier
 
 /**
@@ -1059,7 +1059,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
       "when the DocRefId refers to the wrong parent group element" in {
         val validFile = new File("test/resources/cbcr-invalid-docrefid-PGE.xml")
-        val result: ValidBusinessResult[XMLInfo] =
+        val result =
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(

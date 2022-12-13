@@ -1,5 +1,5 @@
 @*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,9 @@
 
 @(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(
-    Messages("fileUploadResult.error.title"),
-    backLinkUrl = Some(routes.FileUploadController.chooseXMLFile.url)
-) {
+@mainTemplate(Messages("fileUploadResult.error.title")) {
+
+  @back_link(routes.FileUploadController.chooseXMLFile.url)
 
 <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">

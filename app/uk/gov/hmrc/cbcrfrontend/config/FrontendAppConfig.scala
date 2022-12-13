@@ -80,12 +80,4 @@ class FrontendAppConfig @Inject()(
 
   lazy val username = servicesConfig.getString("credentials.username")
   lazy val password = servicesConfig.getString("credentials.password")
-
-  val cbcrBackendUrl: String = servicesConfig.baseUrl("cbcr")
-
-  val upscanInitiateHost: String = servicesConfig.baseUrl("upscan")
-  val upscanBucketHost: String = servicesConfig.baseUrl("upscan")
-  val upscanProtocol: String = servicesConfig.getConfString("upscan.protocol", "https")
-  val upscanRedirectBase: String = runModeConfiguration.get[String]("microservice.services.upscan.redirect-base")
-  val upscanMaxFileSize: Int = runModeConfiguration.get[Int]("microservice.services.upscan.max-file-size-in-mb")
 }

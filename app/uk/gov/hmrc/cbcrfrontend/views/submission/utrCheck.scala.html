@@ -1,5 +1,5 @@
 @*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,10 @@
 @(form:Form[_])(implicit request: Request[_], messages: Messages)
 
 @error = @{form.error("utr").isDefined}
-
-@title = @{
-    if(form.hasErrors){
-        Messages("error.prefix") + " " + Messages("utrCheck.title")
-    } else {
-        Messages("utrCheck.title")
-    }
-}
-
-@mainTemplate(title) {
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("utrCheck.title")}else{Messages("utrCheck.title")}) {
 
         @if(form.hasErrors) {
-            <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
+            <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                 <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("utrCheck.error.header")</h2>
                 <div class="govuk-error-summary__body">
                     <ul class="govuk-list govuk-error-summary__list">
@@ -44,13 +35,16 @@
                     </ul>
                 </div>
             </div>
+            @errorFocus()
         }
         <h1 class="govuk-heading-l">@Messages("utrCheck.mainHeading")</h1>
         @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
             <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
-                @govukFormFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form, Some(Messages("utrCheck.hint")))
+                <fieldset class="govuk-fieldset">
+            @govukFormFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form, Some(Messages("utrCheck.hint")))
+                </fieldset>
             </div>
-        <button type="submit" class="govuk-button">@Messages("form.controls.continue")</button>
+        <button type="submit" class="govuk-button" role="button">@Messages("form.controls.continue")</button>
         }
 
 }

@@ -71,13 +71,7 @@ class StartController @Inject()(
         .bindFromRequest()
         .fold(
           errors => BadRequest(views.start(errors)), {
-            case "upload" =>
-              if (feConfig.cbcEnhancementFeature) {
-                Redirect(controllers.upscan.routes.UploadFormController.onPageLoad)
-              } else {
-                Redirect(routes.FileUploadController.chooseXMLFile)
-              }
-
+            case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile)
             case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber)
             case _                    => BadRequest(views.start(startForm))
           }
