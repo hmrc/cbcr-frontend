@@ -200,26 +200,34 @@ class SubmissionController @Inject()(
 
   def createSuccessfulSubmissionAuditEvent(creds: Credentials, summaryData: SummaryData)(
     implicit hc: HeaderCarrier,
-    request: Request[_]): ServiceResponse[AuditResult.Success.type] =
+    request: Request[_]): ServiceResponse[AuditResult.Success.type] = {
+    val auditEvent = ExtendedDataEvent(
+      "Country-By-Country-Frontend",
+      "CBCRFilingSuccessful",
+      detail = Json.obj(
+        "path"        -> JsString(request.uri),
+        "summaryData" -> Json.toJson(summaryData),
+        "creds"       -> Json.toJson(creds)
+      )
+    )
+    implicit val format = Json.format[ExtendedDataEvent]
+    println(s"""\n\n\n\n\n\n\n\n\n\n\n\n\n ----------------------------------------- \n\n\n\n length = ${Json
+      .stringify(Json.toJson(auditEvent))
+      .getBytes("UTF-8")
+      .length} \n\n\n\n -----------------------------------------  \n\n\n\n""")
     for {
       result <- eitherT[AuditResult.Success.type](
                  audit
-                   .sendExtendedEvent(ExtendedDataEvent(
-                     "Country-By-Country-Frontend",
-                     "CBCRFilingSuccessful",
-                     detail = Json.obj(
-                       "path"        -> JsString(request.uri),
-                       "summaryData" -> Json.toJson(summaryData),
-                       "creds"       -> Json.toJson(creds)
-                     )
-                   ))
+                   .sendExtendedEvent(auditEvent)
                    .map {
                      case AuditResult.Success => Right(AuditResult.Success)
                      case AuditResult.Failure(msg, _) =>
+                       logger.error("AuditResult.Failure: Unable to audit a successful submission")
                        Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
                      case AuditResult.Disabled => Right(AuditResult.Success)
                    })
     } yield result
+  }
 
   val utrForm: Form[Utr] = Form(
     mapping(

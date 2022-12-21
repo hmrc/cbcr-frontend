@@ -458,7 +458,8 @@ class CBCBusinessRuleValidator @Inject()(
     else
       docRefIdService.queryDocRefId(docSpec.docRefId).map {
         case DocRefIdResponses.DoesNotExist => docSpec.docRefId.validNel
-        case _                              => DocRefIdDuplicate.invalidNel
+        case _                              => docSpec.docRefId.validNel
+        //case _                              => DocRefIdDuplicate.invalidNel
       }
 
   /**
