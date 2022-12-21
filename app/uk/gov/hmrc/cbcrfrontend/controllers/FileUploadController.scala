@@ -97,7 +97,7 @@ class FileUploadController @Inject()(
           views.notAuthorisedIndividual,
           views.errorTemplate)
       case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
-        Future.successful(Redirect(routes.SharedController.unregisteredGGAccount))
+        Ok(views.unregisteredGGAccount())
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals)
       case affinityGroup ~ _ =>
         fileUploadUrl()
@@ -198,7 +198,7 @@ class FileUploadController @Inject()(
   def calculateFileSize(md: FileMetadata): BigDecimal =
     (md.length / 1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
 
-  def fileValidate(envelopeId: String, fileId: String): Action[AnyContent] = Action.async { implicit request =>
+  def fileValidate(envelopeId: String, fileId: String) = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
       case Some(creds) ~ affinity ~ enrolment =>
         val result = for {
@@ -315,7 +315,7 @@ class FileUploadController @Inject()(
     * @param envelopeId
     * @return
     */
-  def fileUploadResponse(envelopeId: String): Action[AnyContent] = Action.async { implicit request =>
+  def fileUploadResponse(envelopeId: String) = Action.async { implicit request =>
     authorised() {
       logger.info(s"Received a file-upload-response query for $envelopeId")
       fileUploadService

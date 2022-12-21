@@ -1,5 +1,5 @@
 @*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,26 +30,13 @@
     knownFactsForm.hasErrors || noMatchingBusiness
 }
 
-@title = @{
-    if(hasErrors){
-        Messages("error.prefix") + " " + Messages("subscribeFirst.title")
-    } else {
-        Messages("subscribeFirst.title")
+@mainTemplate(if(hasErrors){"Error: " + Messages("subscribeFirst.title")} else{ Messages("subscribeFirst.title")}){
+    @{
+        if(userType == Agent) {
+            back_link(routes.SubmissionController.submitterInfo().url)
+        } else {}
     }
-}
 
-@backlink = @{
-    if(userType == Agent) {
-        Some(routes.StartController.start.url)
-    } else {
-        None
-    }
-}
-
-@mainTemplate(
-    title,
-    backLinkUrl = backlink
-){
             @if(hasErrors) {
                 <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
                     <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
@@ -60,6 +47,7 @@
                         </ul>
                     </div>
                 </div>
+                @errorFocus()
             }
 
             <h1 class="govuk-heading-l">@Messages("subscribeFirst.mainHeading")</h1>
@@ -67,6 +55,7 @@
             @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts) {
 
               <div class="govuk-form-group @if(hasErrors){govuk-form-group--error}">
+                <fieldset class="govuk-fieldset">
                     @govukFormFieldDisplay(hasErrors, "utr",
                         Some(if(knownFactsForm.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){ Messages("subscribeFirst.error.message.utr-empty")} else {Messages("subscribeFirst.error.message.utr-nonEmpty")}),
                         Messages("subscribeFirst.utr.label"),
@@ -77,9 +66,13 @@
                         Messages("subscribeFirst.postcode.label"),
                         knownFactsForm,
                         Some(Messages("subscribeFirst.postcode.hint")))
+                </fieldset>
               </div>
                 <p>
                     <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@Messages("form.controls.continue")</button>
                 </p>
+                @if(!hasErrors) {
+                    <script>document.getElementById("utr").focus();</script>
+                }
             }
 }

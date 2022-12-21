@@ -7,40 +7,18 @@
       hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
       hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper)
 
-@(
-  pageTitle: String,
-  additionalScriptsBlock: Option[Html] = None,
-  backLinkUrl: Option[String] = None
-)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
+@(pageTitle: String)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
 
 @content = {
-  @contentBlock
-  @hmrcReportTechnicalIssueHelper()
+@contentBlock
+@hmrcReportTechnicalIssueHelper()
 }
-
-@scripts = {
-  @additionalScriptsBlock.getOrElse(None)
-}
-
-@head = {
-  @hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)
-  <style>
-    .govuk-file-upload {
-      max-width: 100%;
-      box-sizing: border-box;
-    }
-    body:not(.js-enabled) .js-only {display: none;}
-  </style>
-}
-
 @hmrcLayout(
   pageTitle = Some(pageTitle),
   isWelshTranslationAvailable = false,
   serviceUrl = None,
   signOutUrl = Some(routes.SharedController.signOutSurvey.url),
-  backLinkUrl = backLinkUrl,
   phaseBanner = None,
-  additionalHeadBlock = Some(head),
-  additionalScriptsBlock = Some(scripts),
-  nonce = CSPNonce.get
+  additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)),
+  nonce = CSPNonce.get,
 )(content)

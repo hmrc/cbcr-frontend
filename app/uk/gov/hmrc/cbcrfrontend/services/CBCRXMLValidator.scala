@@ -19,12 +19,12 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.File
 import javax.inject.Inject
 import javax.xml.stream.XMLInputFactory
+
 import com.ctc.wstx.exc.WstxException
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
 import org.codehaus.stax2.validation._
 import play.api.{Environment, Logger}
 
-import java.net.URL
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Exception.nonFatalCatch
 

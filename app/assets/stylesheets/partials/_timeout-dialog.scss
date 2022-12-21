@@ -1,0 +1,58 @@
+@media (max-width: 640px){
+  .timeout-dialog {
+    width: 280px !important;
+  }
+}
+
+.timeout-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: #000;
+  filter: alpha(opacity=40);
+  -khtml-opacity: 0.4;
+  -moz-opacity: 0.4;
+  opacity: 0.4;
+}
+
+html.noScroll {
+  overflow: hidden;
+}
+
+.timeout-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  max-width: 30em;
+  -webkit-transform: translate(-50%,-50%);
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  padding: 40px 30px 40px 30px;
+  border: 1px solid #0b0c0c;
+
+  background-color: #fff;
+  -webkit-box-shadow: 0 0px 5px rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 0 0px 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0px 5px rgba(0, 0, 0, 0.5);
+
+  z-index: 2;
+
+  p {
+    font-size: 19px;
+    line-height: 1.31579;
+  }
+
+  .countdown {
+    display: inline-block;
+    white-space: nowrap;
+    font-weight: 700;
+    margin-top: 0.5em;
+  }
+
+  .button{
+    margin-bottom: 1em;
+  }
+
+}

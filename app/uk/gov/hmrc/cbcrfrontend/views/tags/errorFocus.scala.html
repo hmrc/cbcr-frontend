@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,23 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package uk.gov.hmrc.cbcrfrontend.model.upscan
+@()
 
-import play.api.libs.json._
+<script>document.getElementById("error-summary-display").focus();</script>
 
-case class UploadSessionDetails(uploadId: UploadId, reference: Reference, status: UploadStatus)
-
-object UploadSessionDetails {
-  val status = "status"
-
-  val uploadedSuccessfullyFormat: OFormat[UploadedSuccessfully] = Json.format[UploadedSuccessfully]
-
-  implicit val idFormat: OFormat[UploadId] = Json.format[UploadId]
-
-  implicit val referenceFormat: OFormat[Reference] = Json.format[Reference]
-
-  implicit val format: OFormat[UploadSessionDetails] = Json.format[UploadSessionDetails]
-
-}

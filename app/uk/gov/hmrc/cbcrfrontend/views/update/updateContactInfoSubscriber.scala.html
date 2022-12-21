@@ -1,5 +1,5 @@
 @*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,21 +32,29 @@
 @maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
 
-@title = @{
-    if(form.hasErrors){
-        Messages("error.prefix") + " " + Messages("contactInfoSubscriber.update.title")
-    } else {
-        Messages("contactInfoSubscriber.update.title")
-    }
-}
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.update.title")} else {Messages("contactInfoSubscriber.update.title")}) {
+  @back_link(routes.StartController.start.url)
 
-
-@mainTemplate(
-    title,
-    backLinkUrl= Some(routes.StartController.start.url)
-) {
             @if(form.hasErrors) {
-                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
+                @if(numberOfErrors == 1) {
+                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
+                    @form.errors.map{  error =>
+                        <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
+                        <div class="govuk-error-summary__body">
+                            <ul class="govuk-list govuk-error-summary__list">
+                            @if(maybeEmailError.contains("contactInfoSubscriber.emailAddress.error.invalid")) {
+                                <li>@Messages("contactInfoSubscriber.emailAddress.error.invalid.header.l1")</li>
+                            }
+                            @if(maybePhoneError.contains("contactInfoSubscriber.phoneNumber.error.invalid")) {
+                                <li>@Messages("contactInfoSubscriber.phoneNumber.error.invalid.header.l1")</li>
+                            }
+                            <li><a href="#@error.key" id="@{error.key}-error-summary"> @error.messages.map(x => Messages(x))</a></li>
+                            </ul>
+                        </div>
+                        }
+                    </div>
+                } else {
+                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
                         <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
                         <div class="govuk-error-summary__body">
                             <ul class="govuk-list govuk-error-summary__list">
@@ -56,6 +64,8 @@
                             </ul>
                         </div>
                     </div>
+                }
+                <script>document.getElementById("error-summary-display").focus();</script>
             }
             <h1 class="govuk-heading-l">
                 @Messages("contactInfoSubscriber.updateHeading")
@@ -67,11 +77,15 @@
 
             @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.saveUpdatedInfoSubscriber){
 
-                @govukFormFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None, inputAutocomplete = Some("given-name"))
-                @govukFormFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None, inputAutocomplete = Some("family-name"))
-                @govukFormFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"), form, None, inputAutocomplete = Some("work tel"))
-                @govukFormFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None, inputAutocomplete = Some("work email"))
+                <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
+                <fieldset class="govuk-fieldset">
+                @govukFormFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)
+                @govukFormFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None)
+                @govukFormFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"), form, None)
+                @govukFormFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None)
+                </fieldset>
+                </div>
 
-                <button class="govuk-button" type="submit" id="continue">@Messages("form.controls.save")</button>
+                <button role="button" class="govuk-button" type="submit" id="continue">@Messages("form.controls.save")</button>
             }
 }

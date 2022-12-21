@@ -1,5 +1,5 @@
 @*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,9 @@
 @numberOfErrors = @{form.errors.length}
 @maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
 @maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
+@mainTemplate(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.title")}else{Messages("contactInfoSubscriber.title")}) {
 
-@title = @{
-    if(form.hasErrors){
-        Messages("error.prefix") + " " + Messages("contactInfoSubscriber.title")
-    } else {
-        Messages("contactInfoSubscriber.title")
-    }
-}
-
-@mainTemplate(
-    pageTitle = title,
-    backLinkUrl = Some(routes.SharedController.knownFactsMatch.url)
-) {)
+    @back_link(routes.SharedController.knownFactsMatch.url)
 
             @if(form.hasErrors) {
                 <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
@@ -54,7 +44,8 @@
                     }
                         </ul>
                     </div>
-                </div>
+                }
+                @errorFocus()
             }
             <h1 class="govuk-heading-l" tabindex="-1">
                 @Messages("contactInfoSubscriber.mainHeading")
@@ -68,7 +59,7 @@
                 @govukFormFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"),form, Some(Messages("contactInfoSubscriber.phoneNumber.hint")),Some("tel"))
                 @govukFormFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None, Some("email"))
             </div>
-                <button class="govuk-button" type="submit" id="continue">Continue</button>
+                <button role="button" class="govuk-button" type="submit" id="continue">Continue</button>
             }
 
 }

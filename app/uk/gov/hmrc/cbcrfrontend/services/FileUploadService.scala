@@ -19,13 +19,13 @@ package uk.gov.hmrc.cbcrfrontend.services
 import java.io.{File, FileInputStream, PrintWriter}
 import java.time.LocalDateTime
 import java.util.UUID
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
-
 import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -39,7 +39,6 @@ import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId
 import uk.gov.hmrc.cbcrfrontend.typesclasses._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -179,10 +178,7 @@ class FileUploadService @Inject()(
     metaData: SubmissionMetaData)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
 
     val metadataFileId = UUID.randomUUID.toString
-    val envelopeId = metaData.fileInfo match {
-      case f: FileInfo => f.envelopeId
-      case _           => throw new RuntimeException("Cannot find envelopeId")
-    }
+    val envelopeId = metaData.fileInfo.envelopeId
 
     for {
       _ <- EitherT.right(

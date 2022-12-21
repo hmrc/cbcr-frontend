@@ -1,5 +1,5 @@
 @*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,10 @@
 
 @isError= @{form.hasErrors}
 
-@title = @{
-    if(isError){
-        Messages("error.prefix") + " " + Messages("start.title")
-    } else {
-        Messages("start.title")
-    }
-}
-
-@mainTemplate(title) {
+@mainTemplate(if(isError){"Error: " + Messages("start.title")} else {Messages("start.title")}) {
 
     @if(form.hasErrors) {
-        <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
+        <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1" data-module="govuk-error-summary">
             <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
             <div class="govuk-error-summary__body">
                 <ul class="govuk-list govuk-error-summary__list">
@@ -43,17 +35,15 @@
         </div>
     }
 
+<h1 class="govuk-heading-l">@Messages("start.mainHeading")</h1>
+<legend class="govuk-label">@Messages("start.intro")</legend>
+<br/>
 
 @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.StartController.submit){
 
 <div class="govuk-form-group @if(isError){govuk-form-group--error}">
-    <fieldset class="govuk-fieldset"@if(isError){ aria-describedby="choice-error"}>
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
-            <h1 class="govuk-fieldset__heading">
-                @Messages("start.mainHeading")
-            </h1>
-          </legend>
-          @if(isError){ <span class="govuk-error-message" id="choice-error"><span class="govuk-visually-hidden">@Messages("error.prefix") </span>@Messages("start.required")</span> }
+    @if(isError){ <span class="govuk-error-message">@Messages("start.required")</span> }
+    <fieldset class="govuk-fieldset">
         <div class="govuk-radios">
             <div class="govuk-radios__item">
                 <input class="govuk-radios__input" id="radio-1" name="choice" type="radio" value="upload">

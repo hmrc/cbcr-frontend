@@ -16,15 +16,19 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import java.io.File
+import java.nio.file.StandardCopyOption._
+import java.time.{LocalDate, LocalDateTime}
+import org.mockito.ArgumentMatchers.any
 import akka.actor.ActorSystem
-import akka.util.Timeout
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.instances.future._
 import com.ctc.wstx.exc.WstxException
 import com.typesafe.config.ConfigFactory
+import org.mockito.ArgumentMatchers.{eq => EQ, _}
+
 import org.codehaus.stax2.validation.{XMLValidationProblem, XMLValidationSchema, XMLValidationSchemaFactory}
-import org.mockito.ArgumentMatchers.{any, eq => EQ}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
@@ -35,24 +39,21 @@ import play.api.i18n.MessagesApi
 import play.api.libs.json.{Format, JsNull, Reads}
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
-import play.api.test.Helpers.redirectLocation
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
+import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
-import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.views.Views
 
-import java.io.File
-import java.nio.file.StandardCopyOption._
-import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.runtime.universe
@@ -65,7 +66,6 @@ class FileUploadControllerSpec
   implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   implicit val env = app.injector.instanceOf[Environment]
   implicit val as = app.injector.instanceOf[ActorSystem]
-  implicit val timeout: Timeout = Duration.apply(20, "s")
 
   val fuService: FileUploadService = mock[FileUploadService]
   val schemaValidator: CBCRXMLValidator = mock[CBCRXMLValidator]
@@ -219,7 +219,7 @@ class FileUploadControllerSpec
 
   val testFile: File = new File("test/resources/cbcr-valid.xml")
   val tempFile: File = File.createTempFile("test", ".xml")
-  val validFile: File = java.nio.file.Files.copy(testFile.toPath, tempFile.toPath, REPLACE_EXISTING).toFile
+  val validFile = java.nio.file.Files.copy(testFile.toPath, tempFile.toPath, REPLACE_EXISTING).toFile
   val newEnrolments = Set(
     Enrolment(
       "HMRC-CBC-ORG",
@@ -246,8 +246,7 @@ class FileUploadControllerSpec
         .thenReturn(
           Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None)))
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
-      status(result) shouldBe Status.SEE_OTHER
-      redirectLocation(result) shouldBe Some(routes.SharedController.unregisteredGGAccount.url)
+      status(result) shouldBe Status.OK
     }
     "allow agent to submit even when no enrolment" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
@@ -406,7 +405,7 @@ class FileUploadControllerSpec
       val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
       when(fuService.getFile(any(), any())(any(), any())) thenReturn right(evenMoreValidFile)
       when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
-      when(schemaValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()
+      when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(new CacheMap("", Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
         Option(AffinityGroup.Organisation))
@@ -428,7 +427,7 @@ class FileUploadControllerSpec
       verify(fuService).getFileMetaData(any(), any())(any(), any())
       verify(cache, atLeastOnce()).save(any())(any(), any(), any())
       verify(businessRulesValidator).validateBusinessRules(any(), any(), any(), any())(any())
-      verify(schemaValidator).validateSchema(any[File]())
+      verify(schemaValidator).validateSchema(any())
     }
 
     "return a 303 when the fileValidate call is successful and schemaValidator returns errors" in {
@@ -442,7 +441,7 @@ class FileUploadControllerSpec
 
       when(fuService.getFile(any(), any())(any(), any())) thenReturn right(evenMoreValidFile)
       when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
-      when(schemaValidator.validateSchema(any[File]())) thenReturn xmlErrorHandler
+      when(schemaValidator.validateSchema(any())) thenReturn xmlErrorHandler
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(new CacheMap("", Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
         Option(AffinityGroup.Organisation))
@@ -463,7 +462,7 @@ class FileUploadControllerSpec
       verify(fuService).getFile(any(), any())(any(), any())
       verify(fuService).getFileMetaData(any(), any())(any(), any())
       verify(cache, atLeastOnce()).save(any())(any(), any(), any())
-      verify(schemaValidator).validateSchema(any[File]())
+      verify(schemaValidator).validateSchema(any())
     }
 
     "return a 303 when the fileValidate call is successful but validateBusinessRules returns errors" in {
@@ -474,7 +473,7 @@ class FileUploadControllerSpec
       val businessRuleErrors = NonEmptyList.of(TestDataError)
       when(fuService.getFile(any(), any())(any(), any())) thenReturn right(evenMoreValidFile)
       when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
-      when(schemaValidator.validateSchema(any[File]())) thenReturn new XmlErrorHandler()
+      when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(new CacheMap("", Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
         Option(AffinityGroup.Organisation))
@@ -496,7 +495,7 @@ class FileUploadControllerSpec
       verify(fuService).getFileMetaData(any(), any())(any(), any())
       verify(cache, atLeastOnce()).save(any())(any(), any(), any())
       verify(businessRulesValidator).validateBusinessRules(any(), any(), any(), any())(any())
-      verify(schemaValidator).validateSchema(any[File]())
+      verify(schemaValidator).validateSchema(any())
     }
 
     "be redirected to an error page" when {

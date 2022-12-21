@@ -7,15 +7,14 @@ contactDetailsUpdate.next=cy-What happens next?
 contactDetailsUpdate.email=cy-We''ll send you a confirmation email to the updated address.
 contactDetailsUpdate.next2=cy-Return to start page
 
-start.title = Beth ydych chi eisiau ei wneud? - Anfonwch adroddiad country-by-country - GOV.UK
-start.mainHeading=Beth ydych chi eisiau ei wneud?
+start.mainHeading=cy-Welcome to the country-by-country reporting service
 start.intro=cy-Choose what you want to do from the following options. Sign out at any time to exit the service.
 start.choice.one=cy-Check and send a country-by-country report
 start.choice.two=cy-Change registration contact details
 start.button=cy-Start
 start.required=cy-Select an option
 start.error.heading=cy-There is a problem
-error.prefix=Gwall:
+
 
 sessionExpired.mainHeading=cy-Your session has ended
 sessionExpired.continue=cy-As you''ve been inactive for 20 minutes, you''ll need to start again.
@@ -63,16 +62,16 @@ form.controls.returnToStart=cy-Return to start page
 form.controls.confirmAndContinue=cy-Confirm and continue
 form.controls.save=cy-Save
 
-enterCBCId.title=cy-What is your country-by-country ID? - Send a country-by-country report - GOV.UK
-enterCBCId.formHint=cy-This is the 15-character ID you received when you registered, for example: XACBC0000999999.
-enterCBCId.label=cy-What is your country-by-country ID?
-enterCBCId.dontHaveAnID.heading=cy-Having trouble finding your country-by-country ID?
-enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
+enterCBCId.mainHeading=cy-Enter the country-by-country ID
+enterCBCId.formHint=cy-This must contain the 15-character ID you received when you registered, for example: XACBC0000999999.
+enterCBCId.formHintWhereYouGotIt=cy-Country-by-country ID
+enterCBCId.dontHaveAnID.heading=cy-Don''t have a Country by Country ID?
+enterCBCId.dontHaveAnID.link.url=cy-/country-by-country-reporting/subscribeFirst
 enterCBCId.dontHaveAnID.link.text=cy-Register online
-enterCBCId.error.message=cy-For help with your country-by-country ID, email
-enterCBCId.error.message.link=digitalservice.cbc@hmrc.gsi.gov.uk
+enterCBCId.error.header=cy-The country-by-country ID doesn''t match the one created for this company or partnership
+enterCBCId.error.message=cy-Try again, or email
+enterCBCId.error.message.link=cy-digitalservice.cbc@hmrc.gsi.gov.uk
 enterCBCId.error.message.invalid.id=cy-Enter a valid country-by-country ID
-enterCBCId.error.message.empty.id=cy-Enter the country-by-country ID
 
 subscribeFirst.mainHeading=cy-Enter details of the UK-registered company or partnership sending the report
 subscribeFirst.noMatchingBusiness.suggestion=cy-Check the details and try again, or
@@ -201,7 +200,7 @@ submitSuccessReceipt.sendAnotherReport.link=cy-Send another report
 fileUploadProgress.mainHeading=cy-We''re checking the report...
 fileUploadProgress.message=cy-This screen will change when the report has been checked.
 
-fileUploadResult.notYetSubmitted=cy-The report has been checked and is ready to send. If you do not want to send it yet, you can
+fileUploadResult.notYetSubmitted=cy-The report has been checked and is ready to send. If you do not want to send it yet, you can 
 fileUploadResult.notYetSubmitted.link=cy-sign out.
 fileUploadResult.notYetSubmitted2=cy-HMRC will not be able to access the report if you sign out now, and you will have to upload it again when you want to send it.
 fileUploadResult.mainHeading.ok=cy-The report meets the HMRC and OECD guidlines
@@ -221,7 +220,7 @@ fileUploadResult.error.data.message=cy-and get the errors corrected before you c
 fileUploadResult.error.xml.link=cy-XML error summary
 fileUploadResult.error.xml.message=cy-Give it to your XML creator to correct the errors
 fileUploadResult.error.guidance=cy-Check formatting guidance
-fileUploadResult.error.oecdUrl=cy-Read the XML user guide (PDF, 1.6MB)
+fileUploadResult.error.oecdUrl=cy-Read the XML user guide
 fileUploadResult.error.oecdInfo=cy-for the rules you must follow.
 
 fileUploadResult.error.FileTooLarge=cy-The report is larger than 50MB. You''ll need to fix this issue before uploading it again.
@@ -264,13 +263,12 @@ submitSummary.submit=cy-Confirm and send report
 submitSummary.submitReport=cy-Submit report
 
 uploadReport.mainHeading=cy-Check a report
-uploadReport.moreInfo=cy-This will check the report against
-uploadReport.linkInfo=cy-HMRC and OECD guidelines (PDF, 1.6MB, opens in a new tab).
-uploadReport.hint = cy-This must be XML and must be smaller than 50MB.
+uploadReport.moreInfo=cy-This will check the report against 
+uploadReport.linkInfo=cy-HMRC and OECD guidelines.
 uploadReport.andMoreInfo=cy-Until you send the report, HMRC will not be able to access it.
 uploadReport.inputField.label=cy-Choose the file you want to check:
 uploadReport.uploadButton=cy-Check report
-uploadReport.error=cy-You must select a file.
+uploadReport.error=cy-You must select a file
 uploadReport.label=cy-Select a file
 
 submitterInfo.mainHeading=cy-Enter your contact details, as the sender of the report

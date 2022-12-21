@@ -1,5 +1,5 @@
 @*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,78 +19,51 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
-@import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@this(
-    mainTemplate: Layout,
-    govukSummaryList : GovukSummaryList
-)
+@this(mainTemplate: Layout)
 
 @(name: String, postCode: String, utr: String, userType: AffinityGroup)(implicit request: Request[_], messages: Messages)
 
-@backlink = @{
-    if(userType == AffinityGroup.Organisation) {
-      Some(routes.SharedController.verifyKnownFactsOrganisation.url)
-    } else {
-      Some(routes.SharedController.verifyKnownFactsAgent.url)
-    }
-}
+@mainTemplate(Messages("subscribeMatchFound.title")) {
 
-@mainTemplate(
-    Messages("subscribeMatchFound.title"),
-    backLinkUrl = backlink
-){
+  @{if(userType == AffinityGroup.Organisation)
+      back_link(routes.SharedController.verifyKnownFactsOrganisation.url)
+    else
+      back_link(routes.SharedController.verifyKnownFactsAgent.url)
+  }
+         <div>
+            <table class="govuk-table">
+                <caption class="govuk-table__caption govuk-table__caption--m" tabindex="0"><h1 class="govuk-heading-l">@Messages("subscribeMatchFound.mainHeading")</h1></caption>
+                <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                        <th class="govuk-table__header" tabindex="0">@Messages("subscribeMatchFound.tableHeading1")</th>
+                        <th class="govuk-table__header" tabindex="0">@Messages("subscribeMatchFound.tableHeading2")</th>
+                    </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("subscribeMatchFound.businessDetails.name")</td>
+                        <td class="govuk-table__cell" tabindex="0">@name</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("subscribeMatchFound.businessDetails.utr")</td>
+                        <td class="govuk-table__cell" tabindex="0">@utr</td>
+                    </tr>
+                    <tr class="govuk-table__row">
+                        <td class="govuk-table__cell" tabindex="0">@Messages("subscribeMatchFound.businessDetails.postcode")</td>
+                        <td class="govuk-table__cell" tabindex="0">@postCode</td>
+                    </tr>
+                </tbody>
+            </table>
+         </div>
 
-            <h1 class="govuk-heading-l">@Messages("subscribeMatchFound.mainHeading")</h1>
-            @govukSummaryList(SummaryList(
-                attributes = Map("data-spec"->"company-match"),
-                rows = Seq(
-                    SummaryListRow(
-                        key = Key(
-                            classes = "govuk-!-width-two-thirds",
-                            content = Text(Messages("subscribeMatchFound.businessDetails.name"))
-                        ),
-                        value = Value(
-                            classes = "govuk-!-width-one-third",
-                            content = Text(name)
-                        ),
-                        actions = None
-                    ),
-                    SummaryListRow(
-                        key = Key(
-                            classes = "govuk-!-width-two-thirds",
-                            content = Text(Messages("subscribeMatchFound.businessDetails.utr"))
-                        ),
-                        value = Value(
-                            classes = "govuk-!-width-one-third",
-                            content = Text(utr)
-                        ),
-                        actions = None
-                    ),
-                    SummaryListRow(
-                        key = Key(
-                            classes = "govuk-!-width-two-thirds",
-                            content = Text(Messages("subscribeMatchFound.businessDetails.postcode"))
-                        ),
-                        value = Value(
-                            classes = "govuk-!-width-one-third",
-                            content = Text(postCode)
-                        ),
-                        actions = None
-                    )
-                )
-            ))
-
-
-
-
-
+            <br>
             @userType match {
                 case Organisation => {
-                    <p><a class="govuk-button" role="button" data-module="govuk-button" href="@routes.SubscriptionController.contactInfoSubscriber">@Messages("form.controls.confirmAndContinue")</a></p>
+                    <p><a class="govuk-button" role="button" href="@routes.SubscriptionController.contactInfoSubscriber">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
                 case Agent => {
-                    <p><a class="govuk-button" role="button" data-module="govuk-button" href="@routes.SubmissionController.submitSummary">@Messages("form.controls.confirmAndContinue")</a></p>
+                    <p><a class="govuk-button" role="button" href="@routes.SubmissionController.submitSummary">@Messages("form.controls.confirmAndContinue")</a></p>
                 }
             }
 

@@ -1,5 +1,5 @@
 @*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,9 @@
 
 @()(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(
-    messages("subscribeFirst.alreadyRegistered.title"),
-    backLinkUrl = Some(routes.SharedController.verifyKnownFactsOrganisation.url)
-) {
+@mainTemplate(messages("subscribeFirst.alreadyRegistered.title")) {
+    @back_link(routes.SharedController.verifyKnownFactsOrganisation.url)
+
         <h1 class="govuk-heading-l">@messages("subscribeFirst.alreadyRegistered.heading")</h1>
         <div>
             <p class="govuk-body">@messages("subscribeFirst.alreadyRegistered")</p>
