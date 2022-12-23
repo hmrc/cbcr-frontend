@@ -161,7 +161,10 @@ class SubmissionController @Inject()(
                          }
                      _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
                      _ <- storeOrUpdateReportingEntityData(xml)
-                     _ <- createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData)
+                     _ = createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData).value.map {
+                           case Left(_) =>
+                              logger.error("create SuccessfulSubmissionAuditEvent failed.")
+                         }
                    } yield
                      retrieval.b match {
                        case Some(Agent) => "Agent"
