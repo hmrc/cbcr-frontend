@@ -49,6 +49,7 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
+
 @Singleton
 class SubmissionController @Inject()(
   override val messagesApi: MessagesApi,
@@ -162,9 +163,9 @@ class SubmissionController @Inject()(
                      _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
                      _ <- storeOrUpdateReportingEntityData(xml)
                      _ = createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData).value.map {
-                           case Left(_) =>
-                              logger.error("create SuccessfulSubmissionAuditEvent failed.")
-                         }
+                       case Left(_) =>
+                         logger.error("create SuccessfulSubmissionAuditEvent failed.")
+                     }
                    } yield
                      retrieval.b match {
                        case Some(Agent) => "Agent"
@@ -200,19 +201,48 @@ class SubmissionController @Inject()(
 
   def createSuccessfulSubmissionAuditEvent(creds: Credentials, summaryData: SummaryData)(
     implicit hc: HeaderCarrier,
-    request: Request[_]): ServiceResponse[AuditResult.Success.type] =
+    request: Request[_]): ServiceResponse[AuditResult.Success.type] = {
+
+    implicit val format = Json.format[ExtendedDataEvent]
+
+    val auditEvent = ExtendedDataEvent(
+      "Country-By-Country-Frontend",
+      "CBCRFilingSuccessful",
+      detail = Json.obj(
+        "path"        -> JsString(request.uri),
+        "summaryData" -> Json.toJson(summaryData),
+        "creds"       -> Json.toJson(creds)
+      )
+    )
+
+    val auditEventLength: Int = Json.stringify(Json.toJson(auditEvent)).getBytes("UTF-8").length
+    // Datastream allows maximum 500kb
+    val dataStreamLimit: Int = 500000
+
+    val validAuditEvent =
+      if (auditEventLength > dataStreamLimit) {
+        val trimmmedSummaryData = summaryData.copy(
+          xmlInfo = summaryData.xmlInfo.copy(
+            additionalInfo = List.empty
+          )
+        )
+        ExtendedDataEvent(
+          "Country-By-Country-Frontend",
+          "CBCRFilingSuccessful",
+          detail = Json.obj(
+            "path"        -> JsString(request.uri),
+            "summaryData" -> Json.toJson(trimmmedSummaryData),
+            "creds"       -> Json.toJson(creds)
+          )
+        )
+      } else {
+        auditEvent
+      }
+
     for {
       result <- eitherT[AuditResult.Success.type](
                  audit
-                   .sendExtendedEvent(ExtendedDataEvent(
-                     "Country-By-Country-Frontend",
-                     "CBCRFilingSuccessful",
-                     detail = Json.obj(
-                       "path"        -> JsString(request.uri),
-                       "summaryData" -> Json.toJson(summaryData),
-                       "creds"       -> Json.toJson(creds)
-                     )
-                   ))
+                   .sendExtendedEvent(validAuditEvent)
                    .map {
                      case AuditResult.Success => Right(AuditResult.Success)
                      case AuditResult.Failure(msg, _) =>
@@ -220,6 +250,7 @@ class SubmissionController @Inject()(
                      case AuditResult.Disabled => Right(AuditResult.Success)
                    })
     } yield result
+  }
 
   val utrForm: Form[Utr] = Form(
     mapping(
