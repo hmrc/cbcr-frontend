@@ -55,15 +55,18 @@ class ExitSurveyController @Inject()(
     SurveyForm.surveyForm
       .bindFromRequest()
       .fold(
-        errors => Future.successful(BadRequest(views.exitSurvey(errors))),
-        answers =>
+        errors => {
+          Future.successful(BadRequest(views.exitSurvey(errors)))
+        },
+        answers => {
           auditSurveyAnswers(answers).fold(
             errors => {
               logger.error(errors.toString)
               Redirect(routes.ExitSurveyController.surveyAcknowledge)
             },
             _ => Redirect(routes.ExitSurveyController.surveyAcknowledge)
-        )
+          )
+        }
       )
   }
 
