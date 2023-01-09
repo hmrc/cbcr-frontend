@@ -33,11 +33,11 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
-import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.duration.{Duration, _}
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -111,7 +111,11 @@ class ExitSurveyControllerSpec
     "return a 303 to the guidance page if satisfied selection is provided and should audit" in {
       when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       val result = Await.result(
-        controller.submit(fakeSubmit.withJsonBody(Json.toJson(SurveyAnswers("splendid", "")))),
+        controller
+          .submit(
+            fakeSubmit
+              .withMethod("POST")
+              .withFormUrlEncodedBody("satisfied" -> "splendid", "suggestions" -> "")),
         5.seconds
       )
       status(result) shouldBe 303

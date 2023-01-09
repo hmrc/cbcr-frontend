@@ -175,39 +175,41 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val saveUpdatedInfoSubscriber = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
-      val ci: ServiceResponse[CBCId] = for {
-        cbcId <- fromEither(cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
-      } yield cbcId
+  val saveUpdatedInfoSubscriber = Action.async(parse.formUrlEncoded) { implicit request =>
+    {
+      authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
+        val ci: ServiceResponse[CBCId] = for {
+          cbcId <- fromEither(cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
+        } yield cbcId
 
-      subscriptionDataForm.bindFromRequest.fold(
-        errors => {
-          ci.fold(
-            (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
-            cbcId => {
-              BadRequest(views.updateContactInfoSubscriber(errors, cbcId))
-            }
-          )
-        },
-        data => {
-          (for {
-            bpr   <- cache.read[BusinessPartnerRecord]
-            cbcId <- cache.read[CBCId]
-            details = CorrespondenceDetails(
-              bpr.address,
-              ContactDetails(data.email, data.phoneNumber),
-              ContactName(data.firstName, data.lastName))
-            _ <- cbcIdService.updateETMPSubscriptionData(bpr.safeId, details)
-            _ <- subscriptionDataService.updateSubscriptionData(
-                  cbcId,
-                  SubscriberContact(data.firstName, data.lastName, data.phoneNumber, data.email))
-          } yield Redirect(routes.SubscriptionController.savedUpdatedInfoSubscriber)).fold(
-            errors => errorRedirect(errors, views.notAuthorisedIndividual, views.errorTemplate),
-            result => result
-          )
-        }
-      )
+        subscriptionDataForm.bindFromRequest.fold(
+          errors => {
+            ci.fold(
+              (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
+              cbcId => {
+                BadRequest(views.updateContactInfoSubscriber(errors, cbcId))
+              }
+            )
+          },
+          data => {
+            (for {
+              bpr   <- cache.read[BusinessPartnerRecord]
+              cbcId <- cache.read[CBCId]
+              details = CorrespondenceDetails(
+                bpr.address,
+                ContactDetails(data.email, data.phoneNumber),
+                ContactName(data.firstName, data.lastName))
+              _ <- cbcIdService.updateETMPSubscriptionData(bpr.safeId, details)
+              _ <- subscriptionDataService.updateSubscriptionData(
+                    cbcId,
+                    SubscriberContact(data.firstName, data.lastName, data.phoneNumber, data.email))
+            } yield Redirect(routes.SubscriptionController.savedUpdatedInfoSubscriber)).fold(
+              errors => errorRedirect(errors, views.notAuthorisedIndividual, views.errorTemplate),
+              result => result
+            )
+          }
+        )
+      }
     }
   }
 

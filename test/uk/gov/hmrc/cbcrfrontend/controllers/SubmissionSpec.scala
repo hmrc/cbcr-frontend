@@ -18,7 +18,6 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
-
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
@@ -33,7 +32,7 @@ import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsNull, JsValue, Json}
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
-import play.api.test.Helpers.contentAsString
+import play.api.test.Helpers.{call, contentAsString, writeableOf_AnyContentAsFormUrlEncoded, writeableOf_AnyContentAsJson}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
@@ -48,10 +47,12 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
+import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm
 
 class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
 
@@ -110,8 +111,8 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
   "POST /submitUltimateParentEntity " should {
     val ultimateParentEntity = UltimateParentEntity("UlitmateParentEntity")
     val fakeRequestSubmit = addToken(
-      FakeRequest("POST", "/submitUltimateParentEntity ").withJsonBody(
-        Json.obj("ultimateParentEntity" -> ultimateParentEntity.ultimateParentEntity)))
+      FakeRequest("POST", "/submitUltimateParentEntity ")
+        .withFormUrlEncodedBody("ultimateParentEntity" -> ultimateParentEntity.ultimateParentEntity))
     "return 303 and point to the correct page" when {
       "the reporting role is CBC702" in {
         when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
@@ -120,7 +121,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702)))
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format), any(), any())) thenReturn Future
           .successful(CacheMap("cache", Map.empty[String, JsValue]))
-        val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
+        val result = call(controller.submitUltimateParentEntity, fakeRequestSubmit)
         result.header.headers("Location") should endWith("/utr/entry-form")
         status(result) shouldBe Status.SEE_OTHER
       }
@@ -135,7 +136,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
           keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703)))
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format), any(), any())) thenReturn Future
           .successful(CacheMap("cache", Map.empty[String, JsValue]))
-        val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
+        val result = call(controller.submitUltimateParentEntity, fakeRequestSubmit)
         result.header.headers("Location") should endWith("/submitter-info/entry-form")
         status(result) shouldBe Status.SEE_OTHER
       }
@@ -147,7 +148,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         .successful(CacheMap("cache", Map.empty[String, JsValue]))
       when(cache.read(EQ(CompleteXMLInfo.format), any(), any())) thenReturn rightE(
         keyXMLInfo.copy(reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC701)))
-      val result = Await.result(controller.submitUltimateParentEntity(fakeRequestSubmit), 2.second)
+      val result = call(controller.submitUltimateParentEntity, fakeRequestSubmit)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
   }
@@ -272,59 +273,79 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
 
   "POST /submitSubmitterInfo" should {
     "return 400 when the there is no data at all" in {
-      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo"))
+      val dataSeq = Seq(
+        "fullName"           -> "",
+        "agencyBusinessName" -> "",
+        "email"              -> "",
+        "affinityGroup"      -> "",
+      )
+      val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-      val returnVal = status(controller.submitSubmitterInfo(fakeRequestSubmit))
-      returnVal shouldBe Status.BAD_REQUEST
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the all data exists but Fullname" in {
       val submitterInfo = SubmitterInfo("", None, "07923456708", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = Seq(
+        "fullName"           -> submitterInfo.fullName,
+        "agencyBusinessName" -> submitterInfo.agencyBusinessName.toString,
+        "email"              -> submitterInfo.email.toString,
+        "affinityGroup"      -> submitterInfo.affinityGroup.toString,
+      )
       val fakeRequestSubmit =
-        addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-      val returnVal = status(controller.submitSubmitterInfo(fakeRequestSubmit))
-      returnVal shouldBe Status.BAD_REQUEST
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the all data exists but Contact Phone" in {
       val submitterInfo = SubmitterInfo("Fullname", None, "", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = Seq(
+        "fullName"           -> submitterInfo.fullName,
+        "agencyBusinessName" -> submitterInfo.agencyBusinessName.toString,
+        "email"              -> submitterInfo.email.toString,
+        "affinityGroup"      -> submitterInfo.affinityGroup.toString,
+      )
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       val fakeRequestSubmit =
-        addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
       when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the all data exists but Email Address" in {
 
-      val submitterInfo = Json.obj(
+      val submitterInfo = Seq(
         "fullName"     -> "Fullname",
         "contactPhone" -> "07923456708",
         "email"        -> ""
       )
       val fakeRequestSubmit =
-        addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(submitterInfo: _*))
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the all data exists but Email Address is in Invalid format" in {
-      val submitterInfo = Json.obj(
+      val submitterInfo = Seq(
         "fullName"     -> "Fullname",
         "contactPhone" -> "07923456708",
         "email"        -> "abc.xyz"
       )
 
       val fakeRequestSubmit =
-        addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(submitterInfo: _*))
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
@@ -333,28 +354,31 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the empty fields of data exists" in {
-      val submitterInfo = Json.obj(
+      val submitterInfo = Seq(
         "fullName"     -> "",
         "contactPhone" -> "",
         "email"        -> ""
       )
       val fakeRequestSubmit =
-        addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(submitterInfo: _*))
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn leftE[CBCId](ExpiredSession(""))
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
       when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-      status(controller.submitSubmitterInfo(fakeRequestSubmit)) shouldBe Status.BAD_REQUEST
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
     }
     "return 303 when all of the data exists & valid" in {
       val submitterInfo = SubmitterInfo("Fullname", None, "07923456708", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
       val fakeRequestSubmit =
-        addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
 
       when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(AffinityGroup.Organisation))
@@ -367,7 +391,8 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
         .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
       when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn rightE(submitterInfo)
-      val returnVal = status(controller.submitSubmitterInfo(fakeRequestSubmit))
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      val returnVal = status(result)
       returnVal shouldBe Status.SEE_OTHER
 
       verify(cache, times(1)).read(EQ(CompleteXMLInfo.format), any(), any())
@@ -381,8 +406,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
         "redirect to submit-summary if a cbcId exists" in {
 
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
+          val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
           val fakeRequestSubmit =
-            addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+            addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
           when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
             Some(AffinityGroup.Organisation))
           when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn rightE(
@@ -396,15 +422,16 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
             CacheMap("cache", Map.empty[String, JsValue]))
           when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
             .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
-          val result = Await.result(controller.submitSubmitterInfo(fakeRequestSubmit), 2.seconds)
+          val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
 
           result.header.headers("Location") should endWith("/submission/summary")
           status(result) shouldBe Status.SEE_OTHER
         }
         "redirect to enter-cbcId if a cbcid does not exist" in {
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
+          val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
           val fakeRequestSubmit =
-            addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+            addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
           when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
             Some(AffinityGroup.Organisation))
           when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn rightE(
@@ -417,7 +444,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
             CacheMap("cache", Map.empty[String, JsValue]))
           when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
             .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
-          val result = Await.result(controller.submitSubmitterInfo(fakeRequestSubmit), 2.seconds)
+          val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
 
           result.header.headers("Location") should endWith("/cbc-id/entry-form")
           status(result) shouldBe Status.SEE_OTHER
@@ -426,8 +453,9 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       "the AffinityGroup is Agent it" should {
         "redirect to enter-known-facts if a cbcid does not exist" in {
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
+          val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
           val fakeRequestSubmit =
-            addToken(FakeRequest("POST", "/submitSubmitterInfo").withJsonBody(Json.toJson(submitterInfo)))
+            addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
           when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
             Some(AffinityGroup.Agent))
           when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn rightE(
@@ -440,7 +468,7 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
             CacheMap("cache", Map.empty[String, JsValue]))
           when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
             .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
-          val result = Await.result(controller.submitSubmitterInfo(fakeRequestSubmit), 2.seconds)
+          val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
 
           result.header.headers("Location") should endWith("/agent/verify-form")
           status(result) shouldBe Status.SEE_OTHER
@@ -1112,23 +1140,23 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
   }
   "calling saveCompanyName" should {
     "return 303 if valid company details passed in request" in {
-      val data = Json.obj("companyName" -> "Any Old Co")
-      val request = addToken(FakeRequest()).withJsonBody(data)
+      val data = ("companyName" -> "Any Old Co")
+      val request = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody(data)
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(
         CacheMap("", Map.empty[String, JsValue]))
-      val result = controller.saveCompanyName(request)
+      val result = call(controller.saveCompanyName, request)
       status(result) shouldBe Status.SEE_OTHER
     }
 
     "return 400 if company details in request are invalid" in {
-      val data = Json.obj("sas" -> "Any Old Iron")
-      val request = addToken(FakeRequest()).withJsonBody(data)
+      val data = ("sas" -> "Any Old Iron")
+      val request = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody(data)
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(
         CacheMap("", Map.empty[String, JsValue]))
       when(cache.read(EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn rightE(fileDetails)
-      val result = controller.saveCompanyName(request)
+      val result = call(controller.saveCompanyName, request)
       status(result) shouldBe Status.BAD_REQUEST
     }
   }
