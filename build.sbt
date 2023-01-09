@@ -19,7 +19,7 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 val compile = Seq(
   ws,
   "uk.gov.hmrc"              %% "bootstrap-frontend-play-28"      % "5.7.0",
-  "uk.gov.hmrc"              %% "play-frontend-hmrc"  % "0.85.0-play-28",
+  "uk.gov.hmrc"              %% "play-frontend-hmrc"  % "5.5.0-play-28",
   "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
   "uk.gov.hmrc"              %% "domain"              % "6.1.0-play-28",
   "uk.gov.hmrc"              %% "http-caching-client" % "9.5.0-play-28",
