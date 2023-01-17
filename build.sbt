@@ -121,7 +121,6 @@ lazy val microservice =
       "-P:silencer:pathFilters=routes"
 ))
     .settings(resolvers ++= Seq(
-      "hmrc-releases" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases/",
       Resolver.jcenterRepo
     ))
     .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427

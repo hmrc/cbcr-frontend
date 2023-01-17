@@ -5,8 +5,6 @@
         <encoder class="uk.gov.hmrc.play.logging.JsonEncoder"/>
     </appender>
 
-    <logger name="uk.gov" level="${logger.uk.gov:-WARN}"/>
-
     <logger name="org.asynchttpclient" level="ERROR" />
 
     <logger name="com.ning.http.client.providers.netty" additivity="false" level="ERROR" />
