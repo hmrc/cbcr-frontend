@@ -9,7 +9,7 @@
 
     <logger name="com.ning.http.client.providers.netty" additivity="false" level="ERROR" />
 
-    <root level="${logger.application:-WARN}">
+    <root>
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
