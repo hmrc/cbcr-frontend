@@ -1,8 +1,2 @@
-leakDetectionExemptions:
-   filePaths:
-   - '/conf/application.conf'
-   filePath: '/app/uk/gov/hmrc/cbcrfrontend/views/guidance/register.scala.html'
- - ruleId: 'report.scala.html'
-   filePath: '/app/uk/gov/hmrc/cbcrfrontend/views/guidance/report.scala.html'
 digital-service: CBCR
 repoVisibility: public_0C3F0CE3E6E6448FAD341E7BFA50FCD333E06A20CFF05FCACE61154DDBBADF71
