@@ -16,43 +16,41 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.time.LocalDateTime
-
-import org.mockito.ArgumentMatchers.any
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
-import org.mockito.ArgumentMatchers.{eq => EQ, _}
+import org.mockito.ArgumentMatchers.{any, eq => EQ, _}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.{Configuration, Environment}
+import play.api.Play.materializer
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.JsValue
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
-import play.api.test.Helpers.contentAsString
+import play.api.test.Helpers.{call, contentAsString, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
-import uk.gov.hmrc.cbcrfrontend.model.{SubscriptionEmailSent, _}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
-import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
+import uk.gov.hmrc.cbcrfrontend.util.{CbcrSwitches, UnitSpec}
+import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
-import uk.gov.hmrc.cbcrfrontend.views.Views
 
+import java.time.LocalDateTime
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
-import uk.gov.hmrc.http.HeaderCarrier
 class SubscriptionControllerSpec
     extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
     with BeforeAndAfterEach {
@@ -149,6 +147,7 @@ class SubscriptionControllerSpec
       status(controller.contactInfoSubscriber(fakeRequestSubscribe)) shouldBe Status.OK
     }
   }
+  //=========================================================================================================
 
   "POST /submitSubscriptionData" should {
     "return 400 when the there is no data" in {
@@ -188,27 +187,30 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "12345678",
         "email"       -> "blagh@blagh.com"
       )
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
 
-      val data2 = Json.obj(
+      val data2 = Seq(
         "phoneNumber" -> "12345678",
         "email"       -> "blagh@blagh.com",
         "firstName"   -> "Bob"
       )
-      val fakeRequestSubscribe2 = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data2))
+      val fakeRequestSubscribe2 =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data2: _*))
       status(controller.submitSubscriptionData(fakeRequestSubscribe2)) shouldBe Status.BAD_REQUEST
 
-      val data3 = Json.obj(
+      val data3 = Seq(
         "phoneNumber" -> "12345678",
         "email"       -> "blagh@blagh.com",
         "lastName"    -> "Jones"
       )
-      val fakeRequestSubscribe3 = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data3))
+      val fakeRequestSubscribe3 =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data3: _*))
       status(controller.submitSubscriptionData(fakeRequestSubscribe3)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the email is missing" in {
@@ -228,12 +230,13 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "12345678",
         "firstName"   -> "Dave",
         "lastName"    -> "Jones"
       )
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the email is invalid" in {
@@ -253,13 +256,14 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "12345678",
         "firstName"   -> "Dave",
         "lastName"    -> "Jones",
         "email"       -> "THISISNOTANEMAIL"
       )
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return 400 when the phone number is missing" in {
@@ -279,12 +283,13 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "firstName" -> "Dave",
         "lastName"  -> "Jones",
         "email"     -> "blagh@blagh.com"
       )
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
 
@@ -305,13 +310,14 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "I'm not a phone number",
         "firstName"   -> "Dave",
         "lastName"    -> "Jones",
         "email"       -> "blagh@blagh.com"
       )
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       status(controller.submitSubscriptionData(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
     "return a custom error message when the phone number is invalid" in {
@@ -331,14 +337,15 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "I'm not a phone number",
         "firstName"   -> "Dave",
         "lastName"    -> "Jones",
         "email"       -> "blagh@blagh.com"
       )
-      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*)
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
@@ -364,14 +371,15 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "",
         "firstName"   -> "Dave",
         "lastName"    -> "Jones",
         "email"       -> "blagh@blagh.com"
       )
-      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*)
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
@@ -397,14 +405,15 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "07706641666",
         "firstName"   -> "Dave",
         "lastName"    -> "Jones",
         "email"       -> "I am not a email"
       )
-      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*)
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
@@ -430,14 +439,15 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "07706641666",
         "firstName"   -> "",
         "lastName"    -> "Jones",
         "email"       -> "colm.m.cavanagh@gmail.com"
       )
-      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*)
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
@@ -461,14 +471,15 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "07706641666",
         "firstName"   -> "Dave",
         "lastName"    -> "",
         "email"       -> "colm.m.cavanagh@gmail.com"
       )
-      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*)
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
@@ -492,14 +503,15 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "07706641666",
         "firstName"   -> "Dave",
         "lastName"    -> "Jones",
         "email"       -> ""
       )
-      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data)
-      val fakeRequestSubscribe = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(data))
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*)
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
       val result: Future[Result] = controller.submitSubscriptionData(fakeRequestSubscribe)
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
@@ -524,8 +536,18 @@ class SubscriptionControllerSpec
         auth,
         mcc,
         views)
-      val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
-      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      val sData = SubscriberContact(
+        firstName = "Dave",
+        lastName = "Smith",
+        phoneNumber = "0207456789",
+        email = EmailAddress("Bob@bob.com"))
+      val dataSeq = Seq(
+        "firstName"   -> sData.firstName,
+        "lastName"    -> sData.lastName,
+        "phoneNumber" -> sData.phoneNumber,
+        "email"       -> sData.email.toString,
+      )
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       when(cbcId.subscribe(any())(any())) thenReturn OptionT[Future, CBCId](Future.successful(cbcid))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(any(), any())) thenReturn EitherT
         .left[Future, CBCErrors, String](
@@ -561,7 +583,13 @@ class SubscriptionControllerSpec
         mcc,
         views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
-      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      val dataSeq = Seq(
+        "firstName"   -> sData.firstName,
+        "lastName"    -> sData.lastName,
+        "phoneNumber" -> sData.phoneNumber,
+        "email"       -> sData.email.toString,
+      )
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       when(cache.read[SubscriptionDetails](EQ(SubscriptionDetails.subscriptionDetailsFormat), any(), any())) thenReturn rightE(
         subscriptionDetails)
       when(cbcId.subscribe(any())(any())) thenReturn OptionT[Future, CBCId](Future.successful(None))
@@ -590,7 +618,13 @@ class SubscriptionControllerSpec
         mcc,
         views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
-      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      val dataSeq = Seq(
+        "firstName"   -> sData.firstName,
+        "lastName"    -> sData.lastName,
+        "phoneNumber" -> sData.phoneNumber,
+        "email"       -> sData.email.toString,
+      )
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(any(), any())) thenReturn EitherT
         .left[Future, CBCErrors, String](Future.successful(UnexpectedState("oops")))
       when(cbcId.subscribe(any())(any())) thenReturn OptionT(Future.successful(CBCId("XGCBC0000000001")))
@@ -626,7 +660,13 @@ class SubscriptionControllerSpec
         mcc,
         views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
-      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      val dataSeq = Seq(
+        "firstName"   -> sData.firstName,
+        "lastName"    -> sData.lastName,
+        "phoneNumber" -> sData.phoneNumber,
+        "email"       -> sData.email.toString,
+      )
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(any(), any())) thenReturn EitherT
         .pure[Future, CBCErrors, String]("done")
       when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -668,7 +708,13 @@ class SubscriptionControllerSpec
         mcc,
         views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
-      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      val dataSeq = Seq(
+        "firstName"   -> sData.firstName,
+        "lastName"    -> sData.lastName,
+        "phoneNumber" -> sData.phoneNumber,
+        "email"       -> sData.email.toString,
+      )
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
         Some(GGId("ggid", "type")))
       when(subService.saveSubscriptionData(any(classOf[SubscriptionDetails]))(any(), any())) thenReturn right("done")
@@ -709,7 +755,13 @@ class SubscriptionControllerSpec
         mcc,
         views)
       val sData = SubscriberContact("Dave", "Smith", "0207456789", EmailAddress("Bob@bob.com"))
-      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withJsonBody(Json.toJson(sData)))
+      val dataSeq = Seq(
+        "firstName"   -> sData.firstName,
+        "lastName"    -> sData.lastName,
+        "phoneNumber" -> sData.phoneNumber,
+        "email"       -> sData.email.toString,
+      )
+      val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       when(cache.readOption[Subscribed.type](EQ(Implicits.format), any(), any())) thenReturn Future.successful(
         Some(Subscribed))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -803,45 +855,45 @@ class SubscriptionControllerSpec
   "POST contact-info-subscriber" should {
     "validate the form fields and return BadRequest" when {
       "the first name is not provided" in {
-        val data = Json.obj(
+        val data = Seq(
           "phoneNumber" -> "0891505050",
           "email"       -> "blagh@blagh.com",
           "lastName"    -> "Jones"
         )
         when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
           Some(CBCEnrolment(id, utr)))
-        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withJsonBody(data))
-        val result = controller.saveUpdatedInfoSubscriber(fakeRequest)
+        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+        val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
       }
       "the surname is not provided" in {
-        val data = Json.obj(
+        val data = Seq(
           "phoneNumber" -> "0891505050",
           "email"       -> "blagh@blagh.com",
           "firstName"   -> "Dave"
         )
         when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
           Some(CBCEnrolment(id, utr)))
-        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withJsonBody(data))
-        val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
+        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+        val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
 
       }
       "the phone number is not provided" in {
-        val data = Json.obj(
+        val data = Seq(
           "email"     -> "blagh@blagh.com",
           "firstName" -> "Dave",
           "lastName"  -> "Jones"
         )
         when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
           Some(CBCEnrolment(id, utr)))
-        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withJsonBody(data))
-        val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
+        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+        val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
 
       }
       "the phone number is invalid" in {
-        val data = Json.obj(
+        val data = Seq(
           "phoneNumber" -> "I'm not a phone number",
           "email"       -> "blagh@blagh.com",
           "firstName"   -> "Dave",
@@ -849,25 +901,25 @@ class SubscriptionControllerSpec
         )
         when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
           Some(CBCEnrolment(id, utr)))
-        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withJsonBody(data))
-        val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
+        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+        val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
       }
       "the email is not provided" in {
-        val data = Json.obj(
+        val data = Seq(
           "phoneNumber" -> "0891505050",
           "firstName"   -> "Dave",
           "lastName"    -> "Jones"
         )
         when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
           Some(CBCEnrolment(id, utr)))
-        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withJsonBody(data))
-        val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
+        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+        val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
 
       }
       "the email is invalid" in {
-        val data = Json.obj(
+        val data = Seq(
           "phoneNumber" -> "0891505050",
           "email"       -> "blagh.com",
           "firstName"   -> "Dave",
@@ -875,20 +927,20 @@ class SubscriptionControllerSpec
         )
         when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
           Some(CBCEnrolment(id, utr)))
-        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withJsonBody(data))
-        val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
+        val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+        val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
         status(result) shouldEqual Status.BAD_REQUEST
       }
     }
     "call update on the ETMPSubscription data api and the internal subscription data api on the backend" in {
-      val data = Json.obj(
+      val data = Seq(
         "phoneNumber" -> "0891505050",
         "email"       -> "blagh@blagh.com",
         "firstName"   -> "Dave",
         "lastName"    -> "Jones"
       )
 
-      val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withJsonBody(data))
+      val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
       when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
         Some(CBCEnrolment(id, utr)))
       when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), EQ(bprTag), any())) thenReturn rightE(
@@ -899,7 +951,7 @@ class SubscriptionControllerSpec
         .right[Future, CBCErrors, UpdateResponse](UpdateResponse(LocalDateTime.now()))
       when(subService.updateSubscriptionData(any(), any())(any(), any())) thenReturn EitherT
         .right[Future, CBCErrors, String]("Ok")
-      val result = controller.saveUpdatedInfoSubscriber()(fakeRequest)
+      val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
       status(result) shouldEqual Status.SEE_OTHER
 
     }

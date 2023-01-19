@@ -18,11 +18,11 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
 val compile = Seq(
   ws,
-  "uk.gov.hmrc"              %% "bootstrap-frontend-play-28"      % "5.7.0",
-  "uk.gov.hmrc"              %% "play-frontend-hmrc"  % "0.85.0-play-28",
-  "uk.gov.hmrc"              %% "emailaddress"        % "3.5.0",
-  "uk.gov.hmrc"              %% "domain"              % "6.1.0-play-28",
-  "uk.gov.hmrc"              %% "http-caching-client" % "9.5.0-play-28",
+  "uk.gov.hmrc"              %% "bootstrap-frontend-play-28"      % "5.25.0",
+  "uk.gov.hmrc"              %% "play-frontend-hmrc"  % "0.94.0-play-28",
+  "uk.gov.hmrc"              %% "emailaddress"        % "3.7.0",
+  "uk.gov.hmrc"              %% "domain"              % "8.1.0-play-28",
+  "uk.gov.hmrc"              %% "http-caching-client" % "9.6.0-play-28",
   "org.typelevel"            %% "cats"                % "0.9.0",
   "com.github.kxbmap"        %% "configs"             % "0.6.0",
   "com.scalawilliam"         %% "xs4s"                % "0.5",
@@ -121,7 +121,6 @@ lazy val microservice =
       "-P:silencer:pathFilters=routes"
 ))
     .settings(resolvers ++= Seq(
-      "hmrc-releases" at "https://artefacts.tax.service.gov.uk/artifactory/hmrc-releases/",
       Resolver.jcenterRepo
     ))
     .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427

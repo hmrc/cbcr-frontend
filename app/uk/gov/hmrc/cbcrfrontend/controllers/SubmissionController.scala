@@ -283,7 +283,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  val submitUltimateParentEntity = Action.async { implicit request =>
+  val submitUltimateParentEntity = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       (for {
         reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
@@ -377,7 +377,7 @@ class SubmissionController @Inject()(
 
   }
 
-  val submitSubmitterInfo = Action.async { implicit request =>
+  val submitSubmitterInfo = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       submitterInfoForm.bindFromRequest.fold(
         formWithErrors => {
@@ -487,7 +487,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  def saveCompanyName = Action.async { implicit request =>
+  def saveCompanyName = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised() {
       enterCompanyNameForm
         .bindFromRequest()

@@ -31,6 +31,7 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.views.Views
+import uk.gov.hmrc.play.bootstrap.data.UrlEncodedAndMultipartFormBinding
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,17 +66,24 @@ class StartController @Inject()(
     }
   }
 
-  def submit = Action.async { implicit request =>
-    authorised() {
-      startForm
-        .bindFromRequest()
-        .fold(
-          errors => BadRequest(views.start(errors)), {
-            case "upload"             => Redirect(routes.FileUploadController.chooseXMLFile)
-            case "editSubscriberInfo" => Redirect(routes.SubscriptionController.updateInfoSubscriber)
-            case _                    => BadRequest(views.start(startForm))
-          }
-        )
+  def submit = Action.async(parse.formUrlEncoded) { implicit request =>
+    {
+      authorised() {
+        startForm
+          .bindFromRequest()
+          .fold(
+            errors => BadRequest(views.start(errors)), {
+              case "upload" =>
+                Redirect(routes.FileUploadController.chooseXMLFile)
+              case "editSubscriberInfo" => {
+                Redirect(routes.SubscriptionController.updateInfoSubscriber)
+              }
+              case _ => {
+                BadRequest(views.start(startForm))
+              }
+            }
+          )
+      }
     }
   }
 

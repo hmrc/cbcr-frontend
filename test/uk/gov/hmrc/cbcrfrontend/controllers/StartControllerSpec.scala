@@ -25,23 +25,23 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
+import play.api.Play.materializer
+import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
+import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
-import play.api.http.Status
+import uk.gov.hmrc.cbcrfrontend.util.{FeatureSwitch, UnitSpec}
+import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import play.api.libs.json.Json
-import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
-import uk.gov.hmrc.cbcrfrontend.views.Views
 
 class StartControllerSpec
     extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
@@ -92,26 +92,25 @@ class StartControllerSpec
           Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None)))
       status(controller.start(fakeRequest)) shouldBe Status.FORBIDDEN
     }
-
     "return 303 if submit returns upload" in {
-      val data = Json.obj("choice" -> "upload")
-      val fakeRequest = addToken(FakeRequest("GET", "/")).withJsonBody(data)
+      val fakeRequest = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody("choice" -> "upload")
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      status(controller.submit(fakeRequest)) shouldBe Status.SEE_OTHER
+      val result = call(controller.submit, fakeRequest)
+      status(result) shouldBe Status.SEE_OTHER
     }
 
     "return 303 if submit returns editSubscriberInfo" in {
-      val data = Json.obj("choice" -> "editSubscriberInfo")
-      val fakeRequest = addToken(FakeRequest("GET", "/")).withJsonBody(data)
+      val fakeRequest = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody("choice" -> "editSubscriberInfo")
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      status(controller.submit(fakeRequest)) shouldBe Status.SEE_OTHER
+      val result = call(controller.submit, fakeRequest)
+      status(result) shouldBe Status.SEE_OTHER
     }
 
     "return 303 if submit returns no choice" in {
-      val data = Json.obj("choice" -> "")
-      val fakeRequest = addToken(FakeRequest("GET", "/")).withJsonBody(data)
+      val fakeRequest = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody("choice" -> "")
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      status(controller.submit(fakeRequest)) shouldBe Status.BAD_REQUEST
+      val result = call(controller.submit, fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
     }
   }
 }
