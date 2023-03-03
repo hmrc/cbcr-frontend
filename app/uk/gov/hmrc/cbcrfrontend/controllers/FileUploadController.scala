@@ -224,7 +224,8 @@ class FileUploadController @Inject()(
               else if (result.isLeft) auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
               else EitherT.pure[Future, CBCErrors, Unit](())
           _ = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
-        } yield
+        } yield {
+          logger.info(s"FileUpload succeeded - envelopeId: ${envelopeId}")
           Ok(
             views.fileUploadResult(
               affinity,
@@ -233,6 +234,7 @@ class FileUploadController @Inject()(
               schemaSize,
               businessSize,
               result.map(_.reportingEntity.reportingRole).toOption))
+        }
 
         result
           .leftMap {

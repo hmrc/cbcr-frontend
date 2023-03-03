@@ -163,8 +163,11 @@ class SubmissionController @Inject()(
                      _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
                      _ <- storeOrUpdateReportingEntityData(xml)
                      _ = createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData).value.map {
-                       case Left(_) =>
-                         logger.error("create SuccessfulSubmissionAuditEvent failed.")
+                       case Left(_) => logger.error("create SuccessfulSubmissionAuditEvent failed.")
+                     }
+                     _ = {
+                       import summaryData.submissionMetaData.fileInfo.{envelopeId, name}
+                       logger.info(s"Successfully uploaded file: $name, envelopeId: $envelopeId")
                      }
                    } yield
                      retrieval.b match {
