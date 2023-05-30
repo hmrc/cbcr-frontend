@@ -18,20 +18,21 @@ lazy val appDependencies: Seq[ModuleID] = compile ++ test()
 
 val compile = Seq(
   ws,
-  "uk.gov.hmrc"              %% "bootstrap-frontend-play-28"      % "5.25.0",
-  "uk.gov.hmrc"              %% "play-frontend-hmrc"  % "0.94.0-play-28",
-  "uk.gov.hmrc"              %% "emailaddress"        % "3.7.0",
-  "uk.gov.hmrc"              %% "domain"              % "8.1.0-play-28",
-  "uk.gov.hmrc"              %% "http-caching-client" % "9.6.0-play-28",
-  "org.typelevel"            %% "cats"                % "0.9.0",
-  "com.github.kxbmap"        %% "configs"             % "0.6.0",
-  "com.scalawilliam"         %% "xs4s"                % "0.5",
-  "org.codehaus.woodstox"    % "woodstox-core-asl"    % "4.4.1",
-  "msv"                      % "msv"                  % "20050913",
-  "com.sun.xml"              % "relaxngDatatype"      % "1.0",
-  "com.sun.msv.datatype.xsd" % "xsdlib"               % "2013.2",
-  "commons-io"               % "commons-io"           % "2.6",
-  "org.mindrot"              % "jbcrypt"              % "0.4"
+  "uk.gov.hmrc"                   %% "bootstrap-frontend-play-28" % "5.25.0",
+  "uk.gov.hmrc"                   %% "play-frontend-hmrc"         % "0.94.0-play-28",
+  "uk.gov.hmrc"                   %% "emailaddress"               % "3.7.0",
+  "uk.gov.hmrc"                   %% "domain"                     % "8.1.0-play-28",
+  "uk.gov.hmrc"                   %% "http-caching-client"        % "9.6.0-play-28",
+  "org.typelevel"                 %% "cats"                       % "0.9.0",
+  "com.github.kxbmap"             %% "configs"                    % "0.6.0",
+  "com.scalawilliam"              %% "xs4s"                       % "0.5",
+  "org.codehaus.woodstox"         % "woodstox-core-asl"           % "4.4.1",
+  "msv"                           % "msv"                         % "20050913",
+  "com.googlecode.libphonenumber" % "libphonenumber"              % "8.13.13",
+  "com.sun.xml"                   % "relaxngDatatype"             % "1.0",
+  "com.sun.msv.datatype.xsd"      % "xsdlib"                      % "2013.2",
+  "commons-io"                    % "commons-io"                  % "2.6",
+  "org.mindrot"                   % "jbcrypt"                     % "0.4"
 )
 
 def test(scope: String = "test") = Seq(
@@ -87,9 +88,7 @@ libraryDependencies ++= Seq(
 )
 lazy val microservice =
   Project(appName, file("."))
-    .enablePlugins(Seq(
-      play.sbt.PlayScala,
-      SbtDistributablesPlugin) ++ plugins: _*)
+    .enablePlugins(Seq(play.sbt.PlayScala, SbtDistributablesPlugin) ++ plugins: _*)
     .settings(playSettings ++ scoverageSettings: _*)
     .settings(scalaSettings: _*)
     .settings(playDefaultPort := 9696)
@@ -119,7 +118,7 @@ lazy val microservice =
       // Warn if an import selector is not referenced.
       "-P:silencer:globalFilters=Unused import",
       "-P:silencer:pathFilters=routes"
-))
+    ))
     .settings(resolvers ++= Seq(
       Resolver.jcenterRepo
     ))
