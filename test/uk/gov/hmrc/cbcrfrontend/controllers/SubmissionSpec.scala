@@ -374,8 +374,60 @@ class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest wit
       val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
       status(result) shouldBe Status.BAD_REQUEST
     }
-    "return 303 when all of the data exists & valid" in {
-      val submitterInfo = SubmitterInfo("Fullname", None, "07923456708", EmailAddress("abc@xyz.com"), None)
+    "return 303 when all of the data exists & valid GB national number, 10-digit NSN" in {
+      val submitterInfo = SubmitterInfo("Fullname", None, "01234567890", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
+      val fakeRequestSubmit =
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
+
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(None)
+      when(cache.save[SubmitterInfo](any())(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn rightE(keyXMLInfo)
+      when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
+        .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
+      when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn rightE(submitterInfo)
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      val returnVal = status(result)
+      returnVal shouldBe Status.SEE_OTHER
+
+      verify(cache, times(1)).read(EQ(CompleteXMLInfo.format), any(), any())
+      verify(cache).save(any())(EQ(SubmitterInfo.format), any(), any())
+
+    }
+
+    "return 303 when all of the data exists & valid GB international number format, '+' prefix" in {
+      val submitterInfo = SubmitterInfo("Fullname", None, "+441234567890", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
+      val fakeRequestSubmit =
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
+
+      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(AffinityGroup.Organisation))
+      when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(None)
+      when(cache.save[SubmitterInfo](any())(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn rightE(keyXMLInfo)
+      when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(
+        CacheMap("cache", Map.empty[String, JsValue]))
+      when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
+        .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
+      when(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn rightE(submitterInfo)
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      val returnVal = status(result)
+      returnVal shouldBe Status.SEE_OTHER
+
+      verify(cache, times(1)).read(EQ(CompleteXMLInfo.format), any(), any())
+      verify(cache).save(any())(EQ(SubmitterInfo.format), any(), any())
+
+    }
+
+    "return 303 when all of the data exists & valid USA international number" in {
+      val submitterInfo = SubmitterInfo("Fullname", None, "+1 123-456-7890", EmailAddress("abc@xyz.com"), None)
       val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
       val fakeRequestSubmit =
         addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
