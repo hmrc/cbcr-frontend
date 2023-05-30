@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.form
 
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
+import uk.gov.hmrc.cbcrfrontend.form.mappings.CbcrMapping.nonEmptyPhoneNumber
 import uk.gov.hmrc.cbcrfrontend.model.SubscriberContact
 import uk.gov.hmrc.emailaddress.EmailAddress
 
@@ -29,11 +30,9 @@ object SubscriptionDataForm {
     mapping(
       "firstName" -> text.verifying("contactInfoSubscriber.firstName.error", _.trim != ""),
       "lastName"  -> text.verifying("contactInfoSubscriber.lastName.error", _.trim != ""),
-      "phoneNumber" -> text
-        .verifying("contactInfoSubscriber.phoneNumber.error.empty", _.trim != "")
-        .verifying(
-          "contactInfoSubscriber.phoneNumber.error.invalid",
-          x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))),
+      "phoneNumber" -> nonEmptyPhoneNumber(
+        errorEmpty = "contactInfoSubscriber.phoneNumber.error.empty",
+        errorInvalid = "contactInfoSubscriber.phoneNumber.error.invalid"),
       "email" -> text
         .verifying("contactInfoSubscriber.emailAddress.error.empty", _.trim != "")
         .verifying(

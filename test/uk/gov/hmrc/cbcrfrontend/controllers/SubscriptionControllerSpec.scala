@@ -932,9 +932,10 @@ class SubscriptionControllerSpec
         status(result) shouldEqual Status.BAD_REQUEST
       }
     }
-    "call update on the ETMPSubscription data api and the internal subscription data api on the backend" in {
+
+    "call update on the ETMPSubscription data api and the internal subscription data api on the backend (GB national number, 10-digit NSN)" in {
       val data = Seq(
-        "phoneNumber" -> "0891505050",
+        "phoneNumber" -> "01234567890",
         "email"       -> "blagh@blagh.com",
         "firstName"   -> "Dave",
         "lastName"    -> "Jones"
@@ -954,6 +955,99 @@ class SubscriptionControllerSpec
       val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
       status(result) shouldEqual Status.SEE_OTHER
 
+    }
+
+    "call update on the ETMPSubscription data api and the internal subscription data api on the backend (GB national number, 10-digit NSN, formatted)" in {
+      val data = Seq(
+        "phoneNumber" -> "(0123 45) 67 890",
+        "email"       -> "blagh@blagh.com",
+        "firstName"   -> "Dave",
+        "lastName"    -> "Jones"
+      )
+
+      val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+      when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(CBCEnrolment(id, utr)))
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), EQ(bprTag), any())) thenReturn rightE(
+        BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB")))
+      when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn rightE(
+        CBCId("XGCBC0000000001").getOrElse(fail("lsadkjf")))
+      when(cbcId.updateETMPSubscriptionData(any(), any())(any())) thenReturn EitherT
+        .right[Future, CBCErrors, UpdateResponse](UpdateResponse(LocalDateTime.now()))
+      when(subService.updateSubscriptionData(any(), any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, String]("Ok")
+      val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
+      status(result) shouldEqual Status.SEE_OTHER
+
+    }
+
+    "call update on the ETMPSubscription data api and the internal subscription data api on the backend (GB international number format, '+' prefix)" in {
+      val data = Seq(
+        "phoneNumber" -> "+441234567890",
+        "email"       -> "blagh@blagh.com",
+        "firstName"   -> "Dave",
+        "lastName"    -> "Jones"
+      )
+
+      val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+      when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(CBCEnrolment(id, utr)))
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), EQ(bprTag), any())) thenReturn rightE(
+        BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB")))
+      when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn rightE(
+        CBCId("XGCBC0000000001").getOrElse(fail("lsadkjf")))
+      when(cbcId.updateETMPSubscriptionData(any(), any())(any())) thenReturn EitherT
+        .right[Future, CBCErrors, UpdateResponse](UpdateResponse(LocalDateTime.now()))
+      when(subService.updateSubscriptionData(any(), any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, String]("Ok")
+      val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
+      status(result) shouldEqual Status.SEE_OTHER
+    }
+
+    "call update on the ETMPSubscription data api and the internal subscription data api on the backend (GB international number format, '00' prefix)" in {
+      val data = Seq(
+        "phoneNumber" -> "00441234567890",
+        "email"       -> "blagh@blagh.com",
+        "firstName"   -> "Dave",
+        "lastName"    -> "Jones"
+      )
+
+      val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+      when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(CBCEnrolment(id, utr)))
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), EQ(bprTag), any())) thenReturn rightE(
+        BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB")))
+      when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn rightE(
+        CBCId("XGCBC0000000001").getOrElse(fail("lsadkjf")))
+      when(cbcId.updateETMPSubscriptionData(any(), any())(any())) thenReturn EitherT
+        .right[Future, CBCErrors, UpdateResponse](UpdateResponse(LocalDateTime.now()))
+      when(subService.updateSubscriptionData(any(), any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, String]("Ok")
+      val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
+      status(result) shouldEqual Status.SEE_OTHER
+    }
+
+    "call update on the ETMPSubscription data api and the internal subscription data api on the backend (USA international number)" in {
+      val data = Seq(
+        "phoneNumber" -> "+1 123-456-7890",
+        "email"       -> "blagh@blagh.com",
+        "firstName"   -> "Dave",
+        "lastName"    -> "Jones"
+      )
+
+      val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
+      when(auth.authorise[Option[CBCEnrolment]](any(), any())(any(), any())) thenReturn Future.successful(
+        Some(CBCEnrolment(id, utr)))
+      when(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), EQ(bprTag), any())) thenReturn rightE(
+        BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB")))
+      when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn rightE(
+        CBCId("XGCBC0000000001").getOrElse(fail("lsadkjf")))
+      when(cbcId.updateETMPSubscriptionData(any(), any())(any())) thenReturn EitherT
+        .right[Future, CBCErrors, UpdateResponse](UpdateResponse(LocalDateTime.now()))
+      when(subService.updateSubscriptionData(any(), any())(any(), any())) thenReturn EitherT
+        .right[Future, CBCErrors, String]("Ok")
+      val result = call(controller.saveUpdatedInfoSubscriber, fakeRequest)
+      status(result) shouldEqual Status.SEE_OTHER
     }
 
   }
