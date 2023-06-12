@@ -14,10 +14,6 @@ object AppDependencies {
     "org.typelevel"            %% "cats"                       % "0.9.0",
     "com.github.kxbmap"        %% "configs"                    % "0.6.0",
     "com.scalawilliam"         %% "xs4s"                       % "0.5",
-    "org.codehaus.woodstox"    % "woodstox-core-asl"           % "4.4.1",
-    "msv"                      % "msv"                         % "20050913",
-    "com.sun.xml"              % "relaxngDatatype"             % "1.0",
-    "com.sun.msv.datatype.xsd" % "xsdlib"                      % "2013.2",
     "commons-io"               % "commons-io"                  % "2.6",
     "org.mindrot"              % "jbcrypt"                     % "0.4"
   )
@@ -25,6 +21,8 @@ object AppDependencies {
   def test(scope: String = "test") = Seq(
     "org.pegdown"            % "pegdown"             % "1.6.0"  % scope,
     "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0"  % scope,
-    "org.mockito"            % "mockito-core"        % "3.11.0" % scope
+    "org.mockito"            % "mockito-core"        % "3.11.0" % scope,
+        "com.sun.msv.datatype.xsd" % "xsdlib"                      % "2013.2",
+        "msv"                      % "msv"                         % "20050913",
   )
 }
