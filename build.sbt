@@ -1,6 +1,5 @@
 import sbt.Keys.*
 import sbt.*
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.*
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 import play.sbt.PlayImport.*
@@ -27,7 +26,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     PlayKeys.playDefaultPort := 9696
   )
-  .settings(publishingSettings *)
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings *)
 
