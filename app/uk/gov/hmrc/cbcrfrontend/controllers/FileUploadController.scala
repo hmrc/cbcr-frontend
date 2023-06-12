@@ -225,7 +225,7 @@ class FileUploadController @Inject()(
               else EitherT.pure[Future, CBCErrors, Unit](())
           _ = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
         } yield {
-          logger.info(s"FileUpload succeeded - envelopeId: ${envelopeId}")
+          logger.info(s"FileUpload succeeded - envelopeId: $envelopeId")
           Ok(
             views.fileUploadResult(
               affinity,
