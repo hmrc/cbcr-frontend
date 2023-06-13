@@ -69,7 +69,6 @@ class FileUploadController @Inject()(
 
   implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
-  val assetsLocation = (config.get[String](s"assets.url") |+| config.get[String](s"assets.version"))
   lazy val hostName = config.get[String]("cbcr-frontend.host")
   lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
   lazy val fileUploadHost = config.get[String](s"file-upload-public-frontend.host")
@@ -126,7 +125,7 @@ class FileUploadController @Inject()(
             Left(UnexpectedState(
               s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
           } else {
-            Right(Ok(views.fileUploadProgress(envelopeId, fileId, hostName, assetsLocation)))
+            Right(Ok(views.fileUploadProgress(envelopeId, fileId, hostName)))
           }
         }
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
@@ -225,7 +224,7 @@ class FileUploadController @Inject()(
               else EitherT.pure[Future, CBCErrors, Unit](())
           _ = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
         } yield {
-          logger.info(s"FileUpload succeeded - envelopeId: ${envelopeId}")
+          logger.info(s"FileUpload succeeded - envelopeId: $envelopeId")
           Ok(
             views.fileUploadResult(
               affinity,

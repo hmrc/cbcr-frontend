@@ -38,9 +38,6 @@ import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 import uk.gov.hmrc.http.HeaderCarrier
 
-/**
-  * Created by max on 24/05/17.
-  */
 class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
   val messageRefIdService = mock[MessageRefIdService]
