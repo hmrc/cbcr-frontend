@@ -34,16 +34,13 @@
         </encoder>
     </appender>
 
-
     <logger name="accesslog" level="INFO" additivity="false">
         <appender-ref ref="ACCESS_LOG_FILE" />
     </logger>
 
-    <logger name="com.ning.http.client.providers.netty" additivity="false" level="ERROR" >
+    <logger name="com.ning.http.client.providers.netty" additivity="false">
         <appender-ref ref="STDOUT_IGNORE_NETTY" />
     </logger>
-
-    <logger name="org.asynchttpclient" level="INFO" />
 
     <logger name="com.google.inject" level="INFO"/>
 
@@ -55,10 +52,7 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="play.core.netty" level="INFO"/>
-
-
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="FILE"/>
         <appender-ref ref="STDOUT"/>
     </root>
