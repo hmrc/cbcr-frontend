@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import java.time._
-import java.time.format.DateTimeFormatter
-
 import cats.Show
 import cats.data.ValidatedNel
-import cats.syntax.validated._
 import cats.syntax.either._
 import cats.syntax.show._
+import cats.syntax.validated._
 import play.api.libs.json._
 
+import java.time._
+import java.time.format.DateTimeFormatter
 import scala.util.control.Exception._
 
 class MessageRefID private (

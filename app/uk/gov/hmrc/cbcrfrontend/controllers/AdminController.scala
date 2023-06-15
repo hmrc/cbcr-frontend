@@ -16,13 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.time.LocalDate
-
-import javax.inject.Inject
 import play.api.Configuration
-import play.api.data.{Form, FormError}
-import play.api.data.Forms.{localDate, mapping, nonEmptyText, of, optional}
+import play.api.data.Forms._
 import play.api.data.format.{Formats, Formatter}
+import play.api.data.{Form, FormError}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -34,6 +31,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
+import java.time.LocalDate
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 /** This case class is used to show all the DocRefIds stored in our mongo DB. The one we had in models had too many parameters and we only retrieve id and valid fields from DB which isn't enough to make the original

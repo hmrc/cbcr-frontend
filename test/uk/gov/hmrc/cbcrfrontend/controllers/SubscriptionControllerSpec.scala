@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
-import org.mockito.ArgumentMatchers.{any, eq => EQ, _}
+import org.mockito.ArgumentMatchers.{any, eq => EQ}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures

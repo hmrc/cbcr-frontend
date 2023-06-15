@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors.test
 
-import javax.inject.{Inject, Singleton}
 import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
 import play.api.libs.json.{JsNull, JsValue}
-
-import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {

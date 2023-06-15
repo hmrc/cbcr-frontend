@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import java.time.LocalDateTime
-
 import play.api.libs.json.Json
+
+import java.time.LocalDateTime
 
 /**
   * Created by max on 18/07/17.

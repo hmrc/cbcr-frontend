@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.File
-
 import akka.actor.ActorSystem
-import org.scalatest.{FlatSpec, Matchers}
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
+import org.scalatest.{FlatSpec, Matchers}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Environment
+
+import java.io.File
 
 class GuiceConfigSpec extends FlatSpec with WithConfigFakeApplication with Matchers with GuiceOneAppPerSuite {
 

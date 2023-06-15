@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.cbcrfrontend
 
-import java.io.File
 import com.google.inject.AbstractModule
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
 import play.api.{Configuration, Environment, Mode}
 import uk.gov.hmrc.cbcrfrontend.services.RunMode
+
+import java.io.File
 
 class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule {
 

@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import java.net.URL
-
-import javax.inject.{Inject, Singleton}
 import play.api.{Configuration, Environment}
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
+import java.net.URL
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 @Singleton
 class BPRKnownFactsConnector @Inject()(http: HttpClient)(

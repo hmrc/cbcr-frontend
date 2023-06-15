@@ -18,7 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.util
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.json.{Json, _}
+import play.api.libs.json._
 
 import scala.util.Try
 

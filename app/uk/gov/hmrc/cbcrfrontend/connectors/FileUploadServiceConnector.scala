@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import javax.inject.Singleton
 import play.api.Logger
-import play.api.http.Status
 import play.api.http.HeaderNames.LOCATION
+import play.api.http.Status
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.core.CBCErrorOr
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HttpResponse
+
+import javax.inject.Singleton
 
 @Singleton
 class FileUploadServiceConnector() {

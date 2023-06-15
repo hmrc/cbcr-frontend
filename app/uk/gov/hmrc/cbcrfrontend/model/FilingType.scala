@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json._
 import cats.syntax.show._
+import play.api.libs.json._
 
 case class FilingType(value: ReportingRole)
 object FilingType {

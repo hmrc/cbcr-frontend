@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.util
 
-import java.nio.charset.Charset
-
 import akka.stream.Materializer
 import akka.util.ByteString
 import org.scalatest.{Matchers, OptionValues, WordSpecLike}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Result
 
+import java.nio.charset.Charset
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.implicitConversions
 

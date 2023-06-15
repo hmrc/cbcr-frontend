@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.util.Base64
-
 import org.mindrot.jbcrypt.BCrypt
 import play.api.mvc.Security.AuthenticatedBuilder
 import play.api.mvc._
 
+import java.util.Base64
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 

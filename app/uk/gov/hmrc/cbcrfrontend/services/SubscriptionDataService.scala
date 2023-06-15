@@ -18,20 +18,19 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.EitherT
 import cats.instances.future._
-
-import javax.inject.{Inject, Singleton}
 import play.api.http.Status
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 
 @Singleton
 class SubscriptionDataService @Inject()(

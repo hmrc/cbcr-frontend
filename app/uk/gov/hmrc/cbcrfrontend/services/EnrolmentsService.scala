@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import javax.inject.{Inject, Singleton}
-
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
+import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.{CBCKnownFacts, UnexpectedState}
+import uk.gov.hmrc.http.HeaderCarrier
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
-import uk.gov.hmrc.cbcrfrontend.controllers._
-import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
 class EnrolmentsService @Inject()(tec: TaxEnrolmentsConnector)(implicit ec: ExecutionContext) {

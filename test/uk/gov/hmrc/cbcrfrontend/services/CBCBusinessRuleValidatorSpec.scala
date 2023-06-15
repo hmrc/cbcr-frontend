@@ -16,27 +16,24 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.File
-import java.time.{LocalDate, LocalDateTime}
-
-import cats.data.Validated._
-import org.mockito.ArgumentMatchers.any
 import cats.data.{EitherT, NonEmptyList}
+import cats.instances.future._
+import org.mockito.ArgumentMatchers.{any, eq => EQ}
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.cbcrfrontend.model.{EndDateSameAsReportingPeriod, MessageRefID, ReportingEntityDataModel, _}
+import play.api.Configuration
+import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
+import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.HeaderCarrier
 
+import java.io.File
+import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import cats.instances.future._
-import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
-import org.mockito.ArgumentMatchers.{eq => EQ, _}
-import uk.gov.hmrc.emailaddress.EmailAddress
-import play.api.Configuration
-import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
-import uk.gov.hmrc.http.HeaderCarrier
 
 class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar {
 
