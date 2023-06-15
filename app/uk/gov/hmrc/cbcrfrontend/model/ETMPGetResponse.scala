@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
+import play.api.libs.json.Reads._
+import play.api.libs.json._
+import uk.gov.hmrc.emailaddress.{EmailAddress, PlayJsonFormats}
+
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
-import play.api.libs.json._
-import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.emailaddress.PlayJsonFormats._
-import play.api.libs.json.Reads._ // Custom validation helpers
 
 class PhoneNumber private (val number: String)
 
@@ -40,10 +39,10 @@ object PhoneNumber {
       None
     }
 
-  implicit val format = new Format[PhoneNumber] {
-    override def writes(o: PhoneNumber) = JsString(o.number)
+  implicit val format: Format[PhoneNumber] = new Format[PhoneNumber] {
+    override def writes(o: PhoneNumber): JsString = JsString(o.number)
 
-    override def reads(json: JsValue) = json match {
+    override def reads(json: JsValue): JsResult[PhoneNumber] = json match {
       case JsString(v) =>
         PhoneNumber(v).fold[JsResult[PhoneNumber]](
           JsError(s"Unable to serialise $json as a PhoneNumber")
@@ -56,43 +55,31 @@ object PhoneNumber {
 case class ContactDetails(email: EmailAddress, phoneNumber: String)
 
 object ContactDetails {
-  val emailFormat = new Format[EmailAddress] {
-    override def writes(o: EmailAddress) = Json.obj("emailAddress" -> o.value)
-
-    override def reads(json: JsValue) = json match {
-      case JsObject(m) =>
-        m.get("emailAddress")
-          .flatMap(_.asOpt[String].map(EmailAddress(_)))
-          .fold[JsResult[EmailAddress]](
-            JsError("Unable to serialise emailAddress")
-          )(emailAddress => JsSuccess(emailAddress))
-      case other => JsError(s"Unable to serialise emailAddress: $other")
-    }
-  }
-  implicit val format = Json.format[ContactDetails]
+  implicit val emailFormat: Format[EmailAddress] = Format(PlayJsonFormats.emailAddressReads, PlayJsonFormats.emailAddressWrites)
+  implicit val format: OFormat[ContactDetails] = Json.format[ContactDetails]
 }
 
 case class ContactName(name1: String, name2: String)
 
 object ContactName {
-  implicit val format = Json.format[ContactName]
+  implicit val format: OFormat[ContactName] = Json.format[ContactName]
 }
 case class ETMPSubscription(safeId: String, names: ContactName, contact: ContactDetails, address: EtmpAddress)
 object ETMPSubscription {
-  implicit val addressFormat = EtmpAddress.subscriptionFormat
-  implicit val format = Json.format[ETMPSubscription]
+  implicit val addressFormat: Format[EtmpAddress] = EtmpAddress.subscriptionFormat
+  implicit val format: OFormat[ETMPSubscription] = Json.format[ETMPSubscription]
 }
 
 case class CorrespondenceDetails(contactAddress: EtmpAddress, contactDetails: ContactDetails, contactName: ContactName)
 
 object CorrespondenceDetails {
-  implicit val format = Json.format[CorrespondenceDetails]
+  implicit val format: OFormat[CorrespondenceDetails] = Json.format[CorrespondenceDetails]
 }
 case class UpdateResponse(processingDate: LocalDateTime)
 object UpdateResponse {
-  val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-  implicit val format = new Writes[UpdateResponse] {
-    override def writes(o: UpdateResponse) = Json.obj(
+  private val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+  implicit val format: Writes[UpdateResponse] = new Writes[UpdateResponse] {
+    override def writes(o: UpdateResponse): JsObject = Json.obj(
       "processingDate" -> o.processingDate.format(formatter)
     )
   }

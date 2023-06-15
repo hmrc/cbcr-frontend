@@ -18,15 +18,14 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}
-import cats.syntax.all._
 import cats.instances.all._
 import cats.kernel.Eq
+import cats.syntax.all._
 import play.api.data.FormError
 import play.api.data.format.{Formats, Formatter}
 import play.api.libs.json._
 import uk.gov.hmrc.domain.Modulus23Check
 import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.emailaddress.PlayJsonFormats._
 
 /**
   * A CBCId defined as at 15 digit reference using a modulus 23 check digit
@@ -51,9 +50,9 @@ class CBCId private (val value: String) {
 
 object CBCId extends Modulus23Check {
 
-  implicit val cbcIdEq = Eq.instance[CBCId]((a, b) => a.value.equalsIgnoreCase(b.value))
+  implicit val cbcIdEq: Eq[CBCId] = Eq.instance[CBCId]((a, b) => a.value.equalsIgnoreCase(b.value))
 
-  implicit val cbcFormatter = new Formatter[CBCId] {
+  implicit val cbcFormatter: Formatter[CBCId] = new Formatter[CBCId] {
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], CBCId] =
       Formats.stringFormat.bind(key, data).right.flatMap { s =>
         CBCId(s).toRight(Seq(FormError(key, "error.cbcid", Nil)))
@@ -63,7 +62,7 @@ object CBCId extends Modulus23Check {
 
   }
 
-  implicit val cbcIdFormat = new Format[CBCId] {
+  implicit val cbcIdFormat: Format[CBCId] = new Format[CBCId] {
     override def writes(o: CBCId): JsValue = JsString(o.value)
 
     override def reads(json: JsValue): JsResult[CBCId] = json match {
@@ -99,12 +98,12 @@ object CBCId extends Modulus23Check {
         cbcId => Valid(cbcId)
       )
     }
-
 }
 
 case class SubscriberContact(firstName: String, lastName: String, phoneNumber: String, email: EmailAddress)
 
 object SubscriberContact {
+  implicit val emailFormat: Format[EmailAddress] = ContactDetails.emailFormat
   implicit val subscriptionFormat: Format[SubscriberContact] = Json.format[SubscriberContact]
 }
 
