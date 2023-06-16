@@ -48,7 +48,6 @@ case class ReportingEntityData(
   currencyCode: Option[String],
   entityReportingPeriod: Option[EntityReportingPeriod])
 
-
 object ReportingEntityData {
   implicit def formatNEL[A: Format]: Format[NonEmptyList[A]] = new Format[NonEmptyList[A]] {
     override def writes(o: NonEmptyList[A]): JsArray = JsArray(o.map(Json.toJson(_)).toList)
@@ -58,9 +57,9 @@ object ReportingEntityData {
         .validate[List[A]]
         .flatMap(l =>
           NonEmptyList.fromList(l) match {
-            case None => JsError(s"Unable to serialise $json as NonEmptyList")
+            case None    => JsError(s"Unable to serialise $json as NonEmptyList")
             case Some(a) => JsSuccess(a)
-          })
+        })
         .orElse {
           json.validate[A].map(a => NonEmptyList(a, Nil))
         }

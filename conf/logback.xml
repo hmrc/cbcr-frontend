@@ -4,19 +4,25 @@
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>logs/cbcr-frontend.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%date{ISO8601} level=[%level] logger=[%logger] thread=[%thread] message=[%message] %replace(exception=[%xException]){'^exception=\[\]$',''}%n</pattern>
+            <pattern>%date{ISO8601} level=[%level] logger=[%logger] thread=[%thread] message=[%message]
+                %replace(exception=[%xException]){'^exception=\[\]$',''}%n
+            </pattern>
         </encoder>
     </appender>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%date{ISO8601} level=[%level] logger=[%logger] thread=[%thread] rid=[%X{X-Request-ID}] user=[%X{Authorization}] message=[%message] %replace(exception=[%xException]){'^exception=\[\]$',''}%n</pattern>
+            <pattern>%date{ISO8601} level=[%level] logger=[%logger] thread=[%thread] rid=[%X{X-Request-ID}]
+                user=[%X{Authorization}] message=[%message] %replace(exception=[%xException]){'^exception=\[\]$',''}%n
+            </pattern>
         </encoder>
     </appender>
 
     <appender name="STDOUT_IGNORE_NETTY" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%date{ISO8601} level=[%level] logger=[%logger] thread=[%thread] rid=[not-available] user=[not-available] message=[%message] %replace(exception=[%xException]){'^exception=\[\]$',''}%n</pattern>
+            <pattern>%date{ISO8601} level=[%level] logger=[%logger] thread=[%thread] rid=[not-available]
+                user=[not-available] message=[%message] %replace(exception=[%xException]){'^exception=\[\]$',''}%n
+            </pattern>
         </encoder>
     </appender>
 
@@ -35,11 +41,11 @@
     </appender>
 
     <logger name="accesslog" level="INFO" additivity="false">
-        <appender-ref ref="ACCESS_LOG_FILE" />
+        <appender-ref ref="ACCESS_LOG_FILE"/>
     </logger>
 
     <logger name="com.ning.http.client.providers.netty" additivity="false">
-        <appender-ref ref="STDOUT_IGNORE_NETTY" />
+        <appender-ref ref="STDOUT_IGNORE_NETTY"/>
     </logger>
 
     <logger name="com.google.inject" level="INFO"/>
