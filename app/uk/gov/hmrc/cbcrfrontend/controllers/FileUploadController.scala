@@ -16,16 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.io._
-import java.time.{Duration, LocalDateTime}
-import java.util.UUID
-import cats.data.{EitherT, _}
+import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
-
-import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.libs.json.{Json, _}
+import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
@@ -44,6 +39,10 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
+import java.io._
+import java.time.{Duration, LocalDateTime}
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.{Duration => SDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal

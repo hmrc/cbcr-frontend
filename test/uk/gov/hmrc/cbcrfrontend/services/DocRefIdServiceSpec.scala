@@ -26,7 +26,7 @@ import play.api.libs.json.JsNull
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, CorrDocRefId, DocRefId, DocRefIdPair, TIN}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
 

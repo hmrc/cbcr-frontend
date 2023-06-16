@@ -37,8 +37,6 @@ case class EnvelopeRequest(
   metadata: MetaData,
   constraints: Constraints)
 object EnvelopeRequest {
-  import MetaData._
-  import Constraints._
 
   implicit val envelopeREquestFormat = Json.format[EnvelopeRequest]
 }

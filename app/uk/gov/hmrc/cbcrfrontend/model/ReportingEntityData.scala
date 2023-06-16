@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import java.time.LocalDate
-
 import cats.data.{NonEmptyList, ValidatedNel}
 import cats.syntax.all._
 import play.api.libs.json._
+
+import java.time.LocalDate
 
 /**
   * This Data is stored in our mongo store on initial submission of an XML
@@ -48,56 +48,24 @@ case class ReportingEntityData(
   currencyCode: Option[String],
   entityReportingPeriod: Option[EntityReportingPeriod])
 
-case class DocRefIdPair(docRefId: DocRefId, corrDocRefId: Option[CorrDocRefId])
-object DocRefIdPair { implicit val format = Json.format[DocRefIdPair] }
 
-case class PartialReportingEntityData(
-  cbcReportsDRI: List[DocRefIdPair],
-  additionalInfoDRI: List[DocRefIdPair],
-  reportingEntityDRI: DocRefIdPair,
-  tin: TIN,
-  ultimateParentEntity: UltimateParentEntity,
-  reportingRole: ReportingRole,
-  creationDate: Option[LocalDate],
-  reportingPeriod: Option[LocalDate],
-  currencyCode: Option[String],
-  entityReportingPeriod: Option[EntityReportingPeriod])
+object ReportingEntityData {
+  implicit def formatNEL[A: Format]: Format[NonEmptyList[A]] = new Format[NonEmptyList[A]] {
+    override def writes(o: NonEmptyList[A]): JsArray = JsArray(o.map(Json.toJson(_)).toList)
 
-object PartialReportingEntityData {
-  implicit def formatNEL[A: Format] = new Format[NonEmptyList[A]] {
-    override def writes(o: NonEmptyList[A]) = JsArray(o.map(Json.toJson(_)).toList)
-
-    override def reads(json: JsValue) =
+    override def reads(json: JsValue): JsResult[NonEmptyList[A]] =
       json
         .validate[List[A]]
         .flatMap(l =>
           NonEmptyList.fromList(l) match {
-            case None    => JsError(s"Unable to serialise $json as NonEmptyList")
+            case None => JsError(s"Unable to serialise $json as NonEmptyList")
             case Some(a) => JsSuccess(a)
-        })
-        .orElse { json.validate[A].map(a => NonEmptyList(a, Nil)) }
+          })
+        .orElse {
+          json.validate[A].map(a => NonEmptyList(a, Nil))
+        }
   }
-
-  implicit val format = Json.format[PartialReportingEntityData]
-  def extract(x: CompleteXMLInfo): PartialReportingEntityData =
-    PartialReportingEntityData(
-      x.cbcReport.map(cr => DocRefIdPair(cr.docSpec.docRefId, cr.docSpec.corrDocRefId)),
-      x.additionalInfo.map(ai => DocRefIdPair(ai.docSpec.docRefId, ai.docSpec.corrDocRefId)),
-      DocRefIdPair(x.reportingEntity.docSpec.docRefId, x.reportingEntity.docSpec.corrDocRefId),
-      x.reportingEntity.tin,
-      UltimateParentEntity(x.reportingEntity.name),
-      x.reportingEntity.reportingRole,
-      x.creationDate,
-      Some(x.messageSpec.reportingPeriod),
-      x.currencyCodes.headOption,
-      Some(x.reportingEntity.entityReportingPeriod)
-    )
-}
-
-object ReportingEntityData {
-
-  import PartialReportingEntityData.formatNEL
-  implicit val format = Json.format[ReportingEntityData]
+  implicit val format: OFormat[ReportingEntityData] = Json.format[ReportingEntityData]
 
   def extract(x: CompleteXMLInfo): ValidatedNel[CBCErrors, ReportingEntityData] =
     x.cbcReport.toNel.toValidNel(UnexpectedState("CBCReport DocRefId not found")).map { c =>
@@ -113,27 +81,5 @@ object ReportingEntityData {
         x.currencyCodes.headOption,
         Some(x.reportingEntity.entityReportingPeriod)
       )
-
     }
-
-}
-
-case class ReportingEntityDataModel(
-  cbcReportsDRI: NonEmptyList[DocRefId],
-  additionalInfoDRI: List[DocRefId],
-  reportingEntityDRI: DocRefId,
-  tin: TIN,
-  ultimateParentEntity: UltimateParentEntity,
-  reportingRole: ReportingRole,
-  creationDate: Option[LocalDate],
-  reportingPeriod: Option[LocalDate],
-  oldModel: Boolean,
-  currencyCode: Option[String],
-  entityReportingPeriod: Option[EntityReportingPeriod])
-
-object ReportingEntityDataModel {
-
-  import PartialReportingEntityData.formatNEL
-
-  implicit val format = Json.format[ReportingEntityDataModel]
 }

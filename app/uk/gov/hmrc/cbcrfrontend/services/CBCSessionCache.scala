@@ -16,22 +16,21 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import javax.inject.{Inject, Singleton}
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
 import com.typesafe.config.Config
 import configs.syntax._
-import play.api.{Configuration, Logger}
+import play.api.http.Status
 import play.api.libs.json.{Format, Reads, Writes}
+import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.{HttpClient, _}
 import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
-import uk.gov.hmrc.http.HttpClient
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
 import scala.util.control.NonFatal
-import play.api.http.Status
 
 @Singleton
 class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)

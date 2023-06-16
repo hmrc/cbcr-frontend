@@ -17,8 +17,9 @@
 package uk.gov.hmrc.cbcrfrontend.config
 
 import akka.actor.ActorSystem
-import javax.inject.Inject
 import play.api.Configuration
+
+import javax.inject.Inject
 
 class GenericAppConfig @Inject()(configuration: Configuration, actor: ActorSystem) {
 

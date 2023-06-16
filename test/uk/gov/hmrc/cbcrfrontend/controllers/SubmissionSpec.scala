@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import java.io.File
-import java.time.{LocalDate, LocalDateTime}
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
@@ -32,14 +30,15 @@ import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsNull, JsValue, Json}
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{call, contentAsString, writeableOf_AnyContentAsFormUrlEncoded, writeableOf_AnyContentAsJson}
+import play.api.test.Helpers.{call, contentAsString, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.model.{CompleteXMLInfo, FileId, _}
-import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, DocRefIdService, FileUploadService, ReportingEntityDataService, _}
+import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm
+import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
@@ -48,11 +47,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
+import java.io.File
+import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm
 
 class SubmissionSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with BeforeAndAfterEach {
 

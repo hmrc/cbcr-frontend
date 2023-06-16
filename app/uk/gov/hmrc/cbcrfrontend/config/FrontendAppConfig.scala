@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.config
 
-import java.util.Base64
-
-import javax.inject.{Inject, Singleton}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
+import java.util.Base64
+import javax.inject.{Inject, Singleton}
 
 @Singleton
 class FrontendAppConfig @Inject()(

@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
-import play.api.libs.functional.syntax._ // Combinator syntax
+import play.api.libs.json._ // Combinator syntax
 
 case class EtmpAddress(
   addressLine1: String,

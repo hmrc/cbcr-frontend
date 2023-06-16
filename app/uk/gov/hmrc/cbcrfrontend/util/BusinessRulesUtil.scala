@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.util
 import uk.gov.hmrc.cbcrfrontend.model.XMLInfo
-import uk.gov.hmrc.cbcrfrontend.model._
 
 object BusinessRulesUtil {
 

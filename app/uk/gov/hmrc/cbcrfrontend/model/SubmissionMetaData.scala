@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json._ // JSON library
-import play.api.libs.json.Reads._ // Custom validation helpers
 import cats.syntax.show._
+import play.api.libs.json.Reads._
+import play.api.libs.json._
 
 /**
   * Created by max on 11/05/17.

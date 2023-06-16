@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import javax.inject.{Inject, Singleton}
 import cats.data.OptionT
-import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
-import uk.gov.hmrc.cbcrfrontend.model.{MessageRefID, UnexpectedState}
-
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
 import cats.syntax.show._
 import play.api.http.Status
+import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
+import uk.gov.hmrc.cbcrfrontend.model.{MessageRefID, UnexpectedState}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException}
+
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 @Singleton
 class MessageRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {

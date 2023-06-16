@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import play.api.data.Forms._
 import play.api.data._
@@ -31,9 +30,9 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.play.bootstrap.data.UrlEncodedAndMultipartFormBinding
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton

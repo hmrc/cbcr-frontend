@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.form
 
-import uk.gov.hmrc.cbcrfrontend.model.SurveyAnswers
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
+import uk.gov.hmrc.cbcrfrontend.model.SurveyAnswers
 
 object SurveyForm {
 

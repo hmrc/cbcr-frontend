@@ -16,21 +16,21 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.time.LocalDate
-import javax.inject.Inject
 import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
 import play.api.{Configuration, Logger}
-import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult, applicativeInstance, functorInstance}
-import uk.gov.hmrc.cbcrfrontend.model.{CorrectedFileToOld, DocRefIdDuplicate, ReportingEntityDataModel, _}
-
-import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.util.BusinessRulesUtil
+import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult, applicativeInstance, functorInstance}
+import uk.gov.hmrc.http.HeaderCarrier
+
+import java.time.LocalDate
+import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * This class exposes two methods:

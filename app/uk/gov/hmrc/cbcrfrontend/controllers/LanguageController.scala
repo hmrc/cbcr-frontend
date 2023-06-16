@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import javax.inject.Inject
+import play.api.Logger
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc.{Action, AnyContent, Flash, MessagesControllerComponents}
-import play.api.Logger
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class LanguageController @Inject()(

@@ -18,10 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers.test
 
 import cats.data.OptionT
 import cats.instances.all._
-
-import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.{Json, _}
+import play.api.libs.json._
 import play.api.mvc.MessagesControllerComponents
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
@@ -31,6 +29,7 @@ import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton

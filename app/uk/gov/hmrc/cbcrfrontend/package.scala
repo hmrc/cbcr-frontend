@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc
 
-import java.io.{File, FileInputStream}
-
 import _root_.play.api.Logger
 import _root_.play.api.i18n.Messages
 import _root_.play.api.libs.json.Reads
@@ -37,6 +35,7 @@ import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.views.html.{error_template, not_authorised_individual}
 import uk.gov.hmrc.http.HeaderCarrier
 
+import java.io.{File, FileInputStream}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 

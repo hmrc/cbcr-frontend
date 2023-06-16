@@ -16,17 +16,12 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import java.io.{File, FileInputStream, PrintWriter}
-import java.time.LocalDateTime
-import java.util.UUID
-
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
-import javax.inject.{Inject, Singleton}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.http.Status
@@ -37,14 +32,17 @@ import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
-import uk.gov.hmrc.cbcrfrontend.core.{ServiceResponse, _}
+import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses._
-import uk.gov.hmrc.http._
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.{HttpClient, _}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import java.io.{File, FileInputStream, PrintWriter}
+import java.time.LocalDateTime
+import java.util.UUID
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton

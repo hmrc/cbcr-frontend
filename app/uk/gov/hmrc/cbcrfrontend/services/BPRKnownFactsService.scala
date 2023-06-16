@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import javax.inject.{Inject, Singleton}
 import cats.data.OptionT
 import cats.instances.future._
 import play.api.Logger
@@ -24,13 +23,13 @@ import play.api.http.Status
 import play.api.libs.json.{JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
-
 import scala.util.control.NonFatal
 
 /**

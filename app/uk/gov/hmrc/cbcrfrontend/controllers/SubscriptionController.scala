@@ -19,7 +19,6 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import cats.data.EitherT
 import cats.instances.all._
 import cats.syntax.all._
-import javax.inject.{Inject, Singleton}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc._
@@ -33,7 +32,7 @@ import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm._
 import uk.gov.hmrc.cbcrfrontend.model.Implicits.format
-import uk.gov.hmrc.cbcrfrontend.model.{SubscriptionEmailSent, _}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.cbcrfrontend.views.Views
@@ -41,6 +40,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
+
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton

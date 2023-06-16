@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
 import configs.syntax._
+import play.api.Configuration
+
+import javax.inject.{Inject, Singleton}
 
 @Singleton
 class RunMode @Inject()(configuration: Configuration) {

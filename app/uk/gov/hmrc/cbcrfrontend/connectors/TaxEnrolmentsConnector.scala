@@ -16,16 +16,16 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import javax.inject.{Inject, Singleton}
 import com.typesafe.config.Config
-import play.api.Configuration
-
-import scala.concurrent.{ExecutionContext, Future}
 import configs.syntax._
+import play.api.Configuration
 import play.api.libs.json.{JsArray, JsObject, Json}
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
-import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+import uk.gov.hmrc.http._
+
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class TaxEnrolmentsConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {

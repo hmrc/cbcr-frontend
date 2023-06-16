@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import javax.inject.{Inject, Singleton}
-
 import cats.data.OptionT
 import cats.instances.future._
 import play.api.Logger
@@ -25,10 +23,11 @@ import play.api.http.Status
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.http.HeaderCarrier
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-import uk.gov.hmrc.http.HeaderCarrier
 
 @Singleton
 class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {

@@ -15,9 +15,9 @@
  */
 
 package uk.gov.hmrc.cbcrfrontend.util
-import java.time.{LocalDate, LocalDateTime}
-
 import uk.gov.hmrc.cbcrfrontend.model._
+
+import java.time.{LocalDate, LocalDateTime}
 
 class BusinessRulesUtilSpec extends UnitSpec {
 

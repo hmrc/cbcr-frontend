@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import java.time.{LocalDate, LocalDateTime, Year}
-
 import cats.Show
 import cats.syntax.show._
-
-import scala.util.control.Exception._
 import play.api.libs.json._
+
+import java.time.{LocalDate, LocalDateTime, Year}
+import scala.util.control.Exception._
 
 /** These models represent the raw data extracted from the XML file*/
 sealed trait RawXmlFields extends Product with Serializable
