@@ -55,7 +55,8 @@ object PhoneNumber {
 case class ContactDetails(email: EmailAddress, phoneNumber: String)
 
 object ContactDetails {
-  implicit val emailFormat: Format[EmailAddress] = Format(PlayJsonFormats.emailAddressReads, PlayJsonFormats.emailAddressWrites)
+  implicit val emailFormat: Format[EmailAddress] =
+    Format(PlayJsonFormats.emailAddressReads, PlayJsonFormats.emailAddressWrites)
   implicit val format: OFormat[ContactDetails] = Json.format[ContactDetails]
 }
 

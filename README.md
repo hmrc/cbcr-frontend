@@ -4,12 +4,13 @@
 
 ## Summary
 
-This Webapp is the frontend to Country-by-Country-Reporting. It provides authenticated journeys to facilitate the 
+This Webapp is the frontend to Country-by-Country-Reporting. It provides authenticated journeys to facilitate the
 uploading of financial reports for multinational companies with a gross turnover in excess of £750M.
 
 ## Dependencies
 
-This cbcr-frontend service relies on the [CBCR](https://github.com/hmrc/cbcr) protected service for access to its domain and forms part of its bounded context. 
+This cbcr-frontend service relies on the [CBCR](https://github.com/hmrc/cbcr) protected service for access to its domain
+and forms part of its bounded context.
 
 ## Running
 
@@ -25,4 +26,5 @@ A sample submission metadata json can be found [here](conf/docs/metadata.json)
 
 ### License
 
-This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
+This code is open source software licensed under
+the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
