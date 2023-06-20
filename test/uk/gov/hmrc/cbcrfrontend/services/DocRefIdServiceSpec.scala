@@ -17,9 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.libs.json.JsNull
@@ -34,7 +32,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class DocRefIdServiceSpec extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
+class DocRefIdServiceSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   val connector = mock[CBCRBackendConnector]
   val docRefIdService = new DocRefIdService(connector)

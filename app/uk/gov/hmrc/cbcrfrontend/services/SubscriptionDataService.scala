@@ -19,8 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import cats.data.EitherT
 import cats.instances.future._
 import play.api.http.Status
-import play.api.{Configuration, Environment, Logger}
-import uk.gov.hmrc.cbcrfrontend.controllers._
+import play.api.{Configuration, Environment, Logger, Mode}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
@@ -55,7 +54,7 @@ class SubscriptionDataService @Inject()(
       utr => url.url + s"/cbcr/subscription-data/utr/${utr.utr}",
       id => url.url + s"/cbcr/subscription-data/cbc-id/$id"
     )
-    eitherT[Option[SubscriptionDetails]](
+    EitherT(
       http
         .GET[HttpResponse](fullUrl)
         .map { response =>
@@ -76,16 +75,15 @@ class SubscriptionDataService @Inject()(
           case NonFatal(t) =>
             logger.error("GET future failed", t)
             Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
-
         }
     )
-
   }
+
   def updateSubscriptionData(cbcId: CBCId, data: SubscriberContact)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data/$cbcId"
-    eitherT(
+    EitherT(
       http
         .PUT[SubscriberContact, HttpResponse](fullUrl, data)
         .map { response =>
@@ -103,7 +101,7 @@ class SubscriptionDataService @Inject()(
   def saveSubscriptionData(
     data: SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data"
-    eitherT(
+    EitherT(
       http
         .POST[SubscriptionDetails, HttpResponse](fullUrl, data)
         .map { response =>
@@ -126,22 +124,22 @@ class SubscriptionDataService @Inject()(
     for {
       cbc <- id.fold(
               utr => retrieveSubscriptionData(Left(utr)).map(_.flatMap(_.cbcId)),
-              id => EitherT.pure[Future, CBCErrors, Option[CBCId]](Some(id))
+              id => EitherT.rightT(Some(id))
             )
-      result <- cbc.fold(EitherT.pure[Future, CBCErrors, Option[String]](None))(
-                 id =>
-                   eitherT(
+      result <- cbc.fold(EitherT.rightT[Future, CBCErrors](Option.empty[String]))(
+                 id => {
+                   EitherT(
                      http
                        .DELETE[HttpResponse](fullUrl(id))
                        .map { response =>
-                         Right[CBCErrors, Option[String]](Some(response.body))
+                         Right(Some(response.body))
                        }
                        .recover {
-                         case UpstreamErrorResponse.Upstream4xxResponse(x) => Right[CBCErrors, Option[String]](None)
-                         case NonFatal(t)                                  => Left[CBCErrors, Option[String]](UnexpectedState(t.getMessage))
-                       }
-                 ))
+                         case UpstreamErrorResponse.Upstream4xxResponse(_) => Right(None)
+                         case NonFatal(t)                                  => Left(UnexpectedState(t.getMessage))
+                       })
+                 }
+               )
     } yield result
-
   }
 }

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import cats.data.EitherT
 import cats.instances.future._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Json
@@ -69,7 +70,7 @@ class ExitSurveyController @Inject()(
 
   def auditSurveyAnswers(answers: SurveyAnswers)(
     implicit request: Request[_]): ServiceResponse[AuditResult.Success.type] =
-    eitherT[AuditResult.Success.type](
+    EitherT(
       audit
         .sendExtendedEvent(
           ExtendedDataEvent("Country-By-Country-Frontend", "CBCRExitSurvey", detail = Json.toJson(answers)))
@@ -78,5 +79,4 @@ class ExitSurveyController @Inject()(
           case AuditResult.Success         => Right(AuditResult.Success)
           case AuditResult.Failure(msg, _) => Left(UnexpectedState(s"Unable to audit an exit survey: $msg"))
         })
-
 }

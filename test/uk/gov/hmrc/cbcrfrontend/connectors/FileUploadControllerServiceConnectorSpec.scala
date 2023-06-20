@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import org.scalatest.{EitherValues, Matchers}
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json.{JsNull, Json}

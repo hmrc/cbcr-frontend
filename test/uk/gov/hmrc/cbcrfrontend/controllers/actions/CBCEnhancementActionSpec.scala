@@ -17,10 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.controllers.actions
 
 import com.google.inject.Inject
-import org.mockito.Mockito.when
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.Status.{OK, SEE_OTHER}
@@ -40,8 +37,7 @@ class Harness @Inject()(cbcEnhancementAction: CBCEnhancementAction) extends Inje
 }
 
 class CBCEnhancementActionSpec
-    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
-    with BeforeAndAfterEach {
+    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   val mockFrontendAppConfig = mock[FrontendAppConfig]
 

@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import org.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
@@ -31,8 +31,8 @@ import uk.gov.hmrc.cbcrfrontend.views.Views
 import scala.concurrent.ExecutionContext
 
 class CBCEnhancementsControllerSpec
-    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
-    with BeforeAndAfterEach {
+    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest
+    with BeforeAndAfterEach with MockitoSugar {
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi = app.injector.instanceOf[MessagesApi]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]
