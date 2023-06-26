@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.data.{EitherT, NonEmptyList}
-import cats.instances.future._
+import cats.data.NonEmptyList
+import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.MockitoSugar
+import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
@@ -35,7 +34,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class CreationDateSpec
-    extends UnitSpec with ScalaFutures with MockitoSugar with BeforeAndAfterEach with GuiceOneAppPerSuite {
+    extends UnitSpec with BeforeAndAfterEach with GuiceOneAppPerSuite with MockitoSugar with MockitoCats {
 
   val connector = mock[CBCRBackendConnector]
   val reportingEntity = mock[ReportingEntityDataService]
@@ -124,22 +123,19 @@ class CreationDateSpec
   "The CreationDateService" should {
     "return true" when {
       "repotingEntity creationDate is Null and default date of 2020/12/23 is less than 3 years ago" in {
-        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
-          .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(redNoCreationDate))
+        whenF(reportingEntity.queryReportingEntityData(any())(any())) thenReturn Some(redNoCreationDate)
         val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
         result shouldBe true
       }
       "repotingEntity creationDate is less than 3 years ago" in {
-        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
-          .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(red))
+        whenF(reportingEntity.queryReportingEntityData(any())(any())) thenReturn Some(red)
         val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
         result shouldBe true
       }
     }
     "return false" when {
       "reportingEntity creationDate is older than 3 years ago" in {
-        when(reportingEntity.queryReportingEntityData(any())(any())) thenReturn EitherT
-          .pure[Future, CBCErrors, Option[ReportingEntityData]](Some(redOldCreationDate))
+        whenF(reportingEntity.queryReportingEntityData(any())(any())) thenReturn Some(redOldCreationDate)
         val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
         result shouldBe false
       }

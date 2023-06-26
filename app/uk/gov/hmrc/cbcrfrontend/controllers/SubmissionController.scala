@@ -17,13 +17,12 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
-import cats.instances.all._
-import cats.syntax.all._
+import cats.implicits._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
-import play.api.mvc.{AnyContent, MessagesControllerComponents, Request, Result}
+import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
@@ -38,7 +37,6 @@ import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
@@ -81,16 +79,18 @@ class SubmissionController @Inject()(
     val cbcReportIds = x.cbcReport.map(reports => reports.docSpec.docRefId           -> reports.docSpec.corrDocRefId)
     val additionalInfoIds = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
 
-    val allIds = cbcReportIds ++ List(additionalInfoIds).flatten
+    val allIds = cbcReportIds ++ additionalInfoIds
 
     // The result of saving these DocRefIds/CorrDocRefIds from the cbcReports
-    val result = NonEmptyList
-      .fromList(allIds)
-      .map(_.map {
-        case (doc, corr) =>
-          corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc))
-      }.sequence[({ type λ[α] = OptionT[Future, α] })#λ, UnexpectedState])
-      .getOrElse(OptionT.none[Future, NonEmptyList[UnexpectedState]])
+    val result: OptionT[Future, NonEmptyList[UnexpectedState]] = OptionT(
+      Future
+        .sequence(allIds.map {
+          case (doc, corr) =>
+            corr.map(docRefIdService.saveCorrDocRefID(_, doc)).getOrElse(docRefIdService.saveDocRefId(doc)).value
+        })
+        .map(f => {
+          NonEmptyList.fromList(f.flatten)
+        }))
 
     x.reportingEntity.docSpec.docType match {
       case OECD0 => result.toLeft(())
@@ -160,14 +160,14 @@ class SubmissionController @Inject()(
                            logger.error(s"Errors saving MessageRefId")
                            UnexpectedState("Errors in saving MessageRefId aborting submission")
                          }
-                     _ <- right(cache.save(SubmissionDate(LocalDateTime.now)))
+                     _ <- EitherT.right[CBCErrors](cache.save(SubmissionDate(LocalDateTime.now)))
                      _ <- storeOrUpdateReportingEntityData(xml)
                      _ = createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData).value.map {
                        case Left(_) => logger.error("create SuccessfulSubmissionAuditEvent failed.")
                      }
                      _ = {
-                       import summaryData.submissionMetaData.fileInfo.{envelopeId, name}
-                       logger.info(s"Successfully uploaded file: $name, envelopeId: $envelopeId")
+                       val file = summaryData.submissionMetaData.fileInfo
+                       logger.info(s"Successfully uploaded file: ${file.name}, envelopeId: ${file.envelopeId}")
                      }
                    } yield
                      retrieval.b match {
@@ -243,13 +243,13 @@ class SubmissionController @Inject()(
       }
 
     for {
-      result <- eitherT[AuditResult.Success.type](
+      result <- EitherT(
                  audit
                    .sendExtendedEvent(validAuditEvent)
                    .map {
                      case AuditResult.Success => Right(AuditResult.Success)
                      case AuditResult.Failure(msg, _) =>
-                       Left(UnexpectedState(s"Unable to audit a successful submission: $msg"))
+                       Left(UnexpectedState(s"Unable to audit a successful submission: $msg").asInstanceOf[CBCErrors])
                      case AuditResult.Disabled => Right(AuditResult.Success)
                    })
     } yield result
@@ -290,26 +290,25 @@ class SubmissionController @Inject()(
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       (for {
         reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
-        redirect <- right(
-                     ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
-                       formWithErrors => BadRequest(views.submitInfoUltimateParentEntity(formWithErrors)),
-                       success =>
-                         cache.save(success).map { _ =>
-                           (userType, reportingRole) match {
-                             case (_, CBC702) => Redirect(routes.SubmissionController.utr)
-                             case (Some(Agent), CBC703 | CBC704) =>
-                               Redirect(routes.SubmissionController.enterCompanyName)
-                             case (Some(Organisation), CBC703 | CBC704) =>
-                               Redirect(routes.SubmissionController.submitterInfo(None))
-                             case _ =>
-                               errorRedirect(
-                                 UnexpectedState(
-                                   s"Unexpected userType/ReportingRole combination: $userType $reportingRole"),
-                                 views.notAuthorisedIndividual,
-                                 views.errorTemplate)
-                           }
-                       }
-                     ))
+        redirect <- EitherT.right[CBCErrors](ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
+                     formWithErrors => BadRequest(views.submitInfoUltimateParentEntity(formWithErrors)),
+                     success =>
+                       cache.save(success).map { _ =>
+                         (userType, reportingRole) match {
+                           case (_, CBC702) => Redirect(routes.SubmissionController.utr)
+                           case (Some(Agent), CBC703 | CBC704) =>
+                             Redirect(routes.SubmissionController.enterCompanyName)
+                           case (Some(Organisation), CBC703 | CBC704) =>
+                             Redirect(routes.SubmissionController.submitterInfo(None))
+                           case _ =>
+                             errorRedirect(
+                               UnexpectedState(
+                                 s"Unexpected userType/ReportingRole combination: $userType $reportingRole"),
+                               views.notAuthorisedIndividual,
+                               views.errorTemplate)
+                         }
+                     }
+                   ))
       } yield redirect)
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
@@ -400,21 +399,22 @@ class SubmissionController @Inject()(
         },
         success => {
           val result = for {
-            straightThrough <- right[Boolean](cache.readOption[CBCId].map(_.isDefined))
+            straightThrough <- EitherT.right[CBCErrors](cache.readOption[CBCId].map(_.isDefined))
             xml             <- cache.read[CompleteXMLInfo]
-            name <- right(
+            name <- EitherT.right[CBCErrors](
                      OptionT(cache.readOption[AgencyBusinessName])
                        .getOrElse(AgencyBusinessName(xml.reportingEntity.name)))
-            _ <- right[CacheMap](cache.save(success.copy(affinityGroup = userType, agencyBusinessName = Some(name))))
-            result <- userType match {
+            _ <- EitherT.right[CBCErrors](
+                  cache.save(success.copy(affinityGroup = userType, agencyBusinessName = Some(name))))
+            result <- EitherT.fromEither[Future](userType match {
                        case Some(Organisation) if straightThrough =>
-                         pure(Redirect(routes.SubmissionController.submitSummary))
-                       case Some(Organisation) => pure(Redirect(routes.SharedController.enterCBCId))
+                         Right(Redirect(routes.SubmissionController.submitSummary))
+                       case Some(Organisation) => Right(Redirect(routes.SharedController.enterCBCId))
                        case Some(Agent) =>
-                         right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ =>
+                         Right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ =>
                            Redirect(routes.SharedController.verifyKnownFactsAgent))
-                       case _ => left[Result](UnexpectedState(s"Invalid affinityGroup: $userType"))
-                     }
+                       case _ => Left(UnexpectedState(s"Invalid affinityGroup: $userType").asInstanceOf[CBCErrors])
+                     })
           } yield result
 
           result
@@ -429,10 +429,11 @@ class SubmissionController @Inject()(
   val submitSummary = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrievedInformation =>
       val result = for {
-        smd <- retrievedInformation.a match {
-                case Some(cred) => EitherT(generateMetadataFile(cache, cred).map(_.toEither)).leftMap(_.head)
-                case None       => left(UnexpectedState("Errors in saving MessageRefId aborting submission"))
-              }
+        smd <- EitherT(retrievedInformation.a match {
+                case Some(cred) => generateMetadataFile(cache, cred).map(_.toEither.leftMap(_.head))
+                case None =>
+                  Future.successful(Left(UnexpectedState("Errors in saving MessageRefId aborting submission")))
+              })
         sd <- createSummaryData(smd)
       } yield Ok(views.submitSummary(sd, retrievedInformation.b))
 
@@ -458,7 +459,7 @@ class SubmissionController @Inject()(
         submissionMetaData,
         updateCreationTimeStamp(keyXMLFileInfo),
         doesCreationTimeStampHaveMillis(keyXMLFileInfo))
-      _ <- right(cache.save[SummaryData](summaryData))
+      _ <- EitherT.right(cache.save[SummaryData](summaryData))
     } yield summaryData
 
   def updateCreationTimeStamp(keyXMLFileInfo: CompleteXMLInfo) =
@@ -509,24 +510,26 @@ class SubmissionController @Inject()(
 
   def submitSuccessReceipt(userType: String) = Action.async { implicit request =>
     authorised() {
-
       val data: EitherT[Future, CBCErrors, (Hash, String, String, String, Boolean)] =
         for {
           dataTuple <- (cache.read[SummaryData] |@| cache.read[SubmissionDate] |@| cache.read[CBCId]).tupled
           data = dataTuple._1
           date = dataTuple._2
           cbcId = dataTuple._3
-          formattedDate <- fromEither(
+          formattedDate <- EitherT.fromEither[Future](
                             (nonFatalCatch opt date.date.format(dateFormat).replace("AM", "am").replace("PM", "pm"))
-                              .toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")))
-          emailSentAlready <- right(cache.readOption[ConfirmationEmailSent].map(_.isDefined))
+                              .toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")
+                                .asInstanceOf[CBCErrors]))
+          emailSentAlready <- EitherT.right[CBCErrors](cache.readOption[ConfirmationEmailSent].map(_.isDefined))
           sentEmail <- if (!emailSentAlready)
-                        right(emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
-                      else pure(None)
-          _ <- if (sentEmail.getOrElse(false)) right(cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
-              else pure(())
+                        EitherT.right[CBCErrors](
+                          emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
+                      else EitherT.fromEither[Future](None.asRight[CBCErrors])
+          _ <- if (sentEmail.getOrElse(false))
+                EitherT.right[CBCErrors](cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
+              else EitherT.fromEither[Future](().asRight[CBCErrors])
           hash = data.submissionMetaData.submissionInfo.hash
-          cacheCleared <- right(cache.clear)
+          cacheCleared <- EitherT.right[CBCErrors](cache.clear)
         } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)
 
       data.fold[Result](

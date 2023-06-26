@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import cats.Applicative.catsApplicativeForArrow
 import cats.data.EitherT
-import cats.instances.all._
-import cats.syntax.all._
+import cats.implicits.{catsStdInstancesForEither, catsStdInstancesForFuture, catsSyntaxApply, catsSyntaxEitherId, catsSyntaxSemigroupal, toShow}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc._
@@ -79,7 +79,7 @@ class SubscriptionController @Inject()(
         errors => BadRequest(views.contactInfoSubscriber(errors)),
         data => {
           val id_bpr_utr: ServiceResponse[(CBCId, BusinessPartnerRecord, Utr)] = for {
-            subscribed <- right[Boolean](cache.readOption[Subscribed.type].map(_.isDefined))
+            subscribed <- EitherT.right[CBCErrors](cache.readOption[Subscribed.type].map(_.isDefined))
             _          <- EitherT.cond[Future](!subscribed, (), UnexpectedState("Already subscribed"))
             bpr_utr    <- (cache.read[BusinessPartnerRecord] |@| cache.read[Utr]).tupled
             subDetails = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
@@ -92,17 +92,17 @@ class SubscriptionController @Inject()(
                 val result = for {
                   _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, Some(id), utr))
                   _ <- enrolService.enrol(CBCKnownFacts(utr, id))
-                  _ <- right(
+                  _ <- EitherT.right[CBCErrors](
                         (cache.save(id) |@|
                           cache.save(data) |@|
                           cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@|
                           cache.save(Subscribed)).tupled
                       )
-                  subscriptionEmailSent <- right(cache.readOption[SubscriptionEmailSent].map(_.isDefined))
-                  emailSent <- if (!subscriptionEmailSent) right(emailService.sendEmail(makeSubEmail(data, id)).value)
-                              else pure[Option[Boolean]](None)
-                  _ <- if (emailSent.getOrElse(false)) right(cache.save(SubscriptionEmailSent()))
-                      else pure(())
+                  subscriptionEmailSent <- EitherT.right[CBCErrors](cache.readOption[SubscriptionEmailSent].map(_.isDefined))
+                  emailSent <- if (!subscriptionEmailSent) EitherT.right[CBCErrors](emailService.sendEmail(makeSubEmail(data, id)).value)
+                              else EitherT.fromEither[Future](None.asRight[CBCErrors])
+                  _ <- if (emailSent.getOrElse(false)) EitherT.right(cache.save(SubscriptionEmailSent()))
+                      else EitherT.fromEither[Future](().asRight[CBCErrors])
                   _ <- createSuccessfulSubscriptionAuditEvent(creds, SubscriptionDetails(bpr, data, Some(id), utr))
                 } yield id
 
@@ -123,7 +123,6 @@ class SubscriptionController @Inject()(
                     _ => Redirect(routes.SubscriptionController.subscribeSuccessCbcId(id.value))
                   )
                   .flatten
-
             }
             .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
             .merge
@@ -148,11 +147,12 @@ class SubscriptionController @Inject()(
   val updateInfoSubscriber = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
-        cbcId           <- fromEither(cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
+        cbcId <- EitherT.fromEither[Future](
+                  cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
         optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
         details         <- EitherT.fromOption[Future](optionalDetails, UnexpectedState("No SubscriptionDetails"))
         bpr = details.businessPartnerRecord
-        _ <- right(cache.save(bpr) *> cache.save(cbcId))
+        _ <- EitherT.right(cache.save(bpr) *> cache.save(cbcId))
         subData <- cbcIdService
                     .getETMPSubscriptionData(bpr.safeId)
                     .toRight(UnexpectedState("No ETMP Subscription Data"): CBCErrors)
@@ -180,7 +180,7 @@ class SubscriptionController @Inject()(
     {
       authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
         val ci: ServiceResponse[CBCId] = for {
-          cbcId <- fromEither(cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
+          cbcId <- EitherT.fromEither[Future](cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
         } yield cbcId
 
         subscriptionDataForm.bindFromRequest.fold(
@@ -249,7 +249,7 @@ class SubscriptionController @Inject()(
     bpr: BusinessPartnerRecord,
     utr: Utr)(implicit hc: HeaderCarrier): ServiceResponse[AuditResult.Success.type] =
     for {
-      result <- eitherT[AuditResult.Success.type](
+      result <- EitherT[Future, CBCErrors, AuditResult.Success.type](
                  audit
                    .sendExtendedEvent(
                      ExtendedDataEvent(
@@ -265,17 +265,19 @@ class SubscriptionController @Inject()(
                    })
     } yield result
 
-  def createSuccessfulSubscriptionAuditEvent(credentials: Option[Credentials], subscriptionData: SubscriptionDetails)(
+  private def createSuccessfulSubscriptionAuditEvent(
+    credentials: Option[Credentials],
+    subscriptionData: SubscriptionDetails)(
     implicit hc: HeaderCarrier,
     request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
-      result <- eitherT[AuditResult.Success.type](
+      result <- EitherT[Future, CBCErrors, AuditResult.Success.type](
                  audit
                    .sendExtendedEvent(
                      ExtendedDataEvent(
                        "Country-By-Country-Frontend",
                        "CBCRSubscription",
-                       detail = getDetailsSuccesfulSubscription(request, credentials, subscriptionData)
+                       detail = getDetailsSuccessfulSubscription(request, credentials, subscriptionData)
                      ))
                    .map {
                      case AuditResult.Disabled => Right(AuditResult.Success)
@@ -285,7 +287,7 @@ class SubscriptionController @Inject()(
                    })
     } yield result
 
-  private def getDetailsSuccesfulSubscription(
+  private def getDetailsSuccessfulSubscription(
     request: Request[_],
     creds: Option[Credentials],
     subscrDetails: SubscriptionDetails) =
@@ -316,5 +318,4 @@ class SubscriptionController @Inject()(
           "businessPartnerRecord" -> Json.toJson(bpr),
           "utr"                   -> JsString(utr.value))
     }
-
 }

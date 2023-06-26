@@ -19,10 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.mvc.MessagesControllerComponents
@@ -38,8 +35,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 class EnrolControllerSpec
-    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
-    with BeforeAndAfterEach {
+    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   implicit val ec = app.injector.instanceOf[ExecutionContext]
   implicit val timeout = Timeout(5 seconds)
@@ -56,7 +52,6 @@ class EnrolControllerSpec
   val utr = Utr("9000000001")
 
   "Calling enrol controller" should {
-
     "return 200 when calling deEnrol if authorised Organisation and User or Admin" in {
       val fakeRequest = addToken(FakeRequest("GET", "/de-enrol"))
       val response: HttpResponse = mock[HttpResponse]
@@ -73,5 +68,4 @@ class EnrolControllerSpec
       status(controller.getEnrolments(fakeRequest)) shouldBe Status.OK
     }
   }
-
 }

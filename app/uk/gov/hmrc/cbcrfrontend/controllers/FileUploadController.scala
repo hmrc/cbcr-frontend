@@ -16,9 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import cats.data._
-import cats.instances.all._
-import cats.syntax.all._
+import cats.data.{EitherT, NonEmptyList, OptionT}
+import cats.implicits.{catsStdInstancesForFuture, catsSyntaxEitherId, catsSyntaxSemigroupal}
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc._
@@ -34,7 +33,6 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
@@ -152,7 +150,7 @@ class FileUploadController @Inject()(
                    .getFileMetaData(envelopeId, fileId)
                    .subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
       _ <- EitherT.cond[Future](metadata.name.toLowerCase.endsWith(".xml"), (), InvalidFileType(metadata.name))
-      _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(metadata))
+      _ <- EitherT.right(cache.save(metadata))
     } yield metadata
 
   def validateBusinessRules(
@@ -181,10 +179,9 @@ class FileUploadController @Inject()(
         val endValidation = LocalDateTime.now()
         logger.info(
           s"File validation succeeded for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
-
     }
 
-    EitherT.right[Future, CBCErrors, Either[NonEmptyList[BusinessRuleErrors], CompleteXMLInfo]](
+    EitherT.right(
       result
         .fold(
           errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => Left(errors)),
@@ -201,8 +198,8 @@ class FileUploadController @Inject()(
       case Some(creds) ~ affinity ~ enrolment =>
         val result = for {
           file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
-          _             <- right(cache.save(file_metadata._2))
-          _             <- right(cache.save(FileDetails(envelopeId, fileId)))
+          _             <- EitherT.right[CBCErrors](cache.save(file_metadata._2))
+          _             <- EitherT.right[CBCErrors](cache.save(FileDetails(envelopeId, fileId)))
           _ <- EitherT.cond[Future](
                 file_metadata._2.name.toLowerCase endsWith ".xml",
                 (),
@@ -210,17 +207,17 @@ class FileUploadController @Inject()(
           schemaErrors = schemaValidator.validateSchema(file_metadata._1)
           xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
           schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
-          _ <- EitherT.right[Future, CBCErrors, CacheMap](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
-          _ <- if (!schemaErrors.hasFatalErrors) EitherT.pure[Future, CBCErrors, Unit](())
+          _ <- EitherT.right[CBCErrors](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
+          _ <- if (!schemaErrors.hasFatalErrors) EitherT.fromEither[Future](().asRight[CBCErrors])
               else
                 auditFailedSubmission(creds, affinity, enrolment, "schema validation errors").flatMap(_ =>
-                  EitherT.left[Future, CBCErrors, Unit](Future.successful(FatalSchemaErrors(schemaSize))))
+                  EitherT.left[Result](Future.successful(FatalSchemaErrors(schemaSize).asInstanceOf[CBCErrors])))
           result <- validateBusinessRules(file_metadata, enrolment, affinity)
           businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
           length = calculateFileSize(file_metadata._2)
           _ <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
               else if (result.isLeft) auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
-              else EitherT.pure[Future, CBCErrors, Unit](())
+              else EitherT.fromEither[Future](().asRight[CBCErrors])
           _ = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
         } yield {
           logger.info(s"FileUpload succeeded - envelopeId: $envelopeId")
@@ -367,7 +364,6 @@ class FileUploadController @Inject()(
         Json.obj("businessRuleErrors" -> Json.toJson(fileUploadService.errorsToMap(all_errors._1.get.errors)))
       case (false, true) => Json.obj("xmlErrors" -> Json.toJson(fileUploadService.errorsToMap(List(all_errors._2.get))))
       case _             => Json.obj("none"      -> "no business rule or schema errors")
-
     }
 
   def auditFailedSubmission(
@@ -376,13 +372,13 @@ class FileUploadController @Inject()(
     enrolment: Option[CBCEnrolment],
     reason: String)(implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
-      md        <- right(cache.readOption[FileMetadata])
-      all_error <- (right(cache.readOption[AllBusinessRuleErrors]) |@| right(cache.readOption[XMLErrors])).tupled
-      c         <- right(cache.readOption[CBCId])
+      md        <- EitherT.right[CBCErrors](cache.readOption[FileMetadata])
+      all_error <- (EitherT.right[CBCErrors](cache.readOption[AllBusinessRuleErrors]) |@| EitherT.right[CBCErrors](cache.readOption[XMLErrors])).tupled
+      c         <- EitherT.right[CBCErrors](cache.readOption[CBCId])
       cbcId = if (enrolment.isEmpty) c else Option(enrolment.get.cbcId)
-      u <- right(cache.readOption[Utr])
+      u <- EitherT.right[CBCErrors](cache.readOption[Utr])
       utr = if (enrolment.isEmpty) u else Option(enrolment.get.utr)
-      result <- eitherT[AuditResult.Success.type](
+      result <- EitherT(
                  audit
                    .sendExtendedEvent(ExtendedDataEvent(
                      "Country-By-Country-Frontend",
@@ -399,7 +395,7 @@ class FileUploadController @Inject()(
                    .map {
                      case AuditResult.Success => Right(AuditResult.Success)
                      case AuditResult.Failure(msg, _) =>
-                       Left(UnexpectedState(s"Unable to audit a failed submission: $msg"))
+                       Left(UnexpectedState(s"Unable to audit a failed submission: $msg").asInstanceOf[CBCErrors])
                      case AuditResult.Disabled => Right(AuditResult.Success)
                    })
     } yield result

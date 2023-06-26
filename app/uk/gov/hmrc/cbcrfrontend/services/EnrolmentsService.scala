@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
+import cats.data.EitherT
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
-import uk.gov.hmrc.cbcrfrontend.controllers._
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model.{CBCKnownFacts, UnexpectedState}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -30,8 +30,7 @@ import scala.util.control.NonFatal
 class EnrolmentsService @Inject()(tec: TaxEnrolmentsConnector)(implicit ec: ExecutionContext) {
 
   def enrol(cbcKnownFacts: CBCKnownFacts)(implicit hc: HeaderCarrier): ServiceResponse[Unit] =
-    eitherT[Unit](tec.enrol(cbcKnownFacts.cBCId, cbcKnownFacts.utr).map(_ => Right(())).recover {
+    EitherT(tec.enrol(cbcKnownFacts.cBCId, cbcKnownFacts.utr).map(_ => Right(())).recover {
       case NonFatal(t) => Left(UnexpectedState(s"Failed to call enrol: ${t.getMessage}"))
     })
-
 }

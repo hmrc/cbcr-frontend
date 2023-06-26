@@ -244,7 +244,7 @@ class SharedController @Inject()(
                       logger.warn("The BPR was not found when looking it up with the knownFactsService")
                       NotFoundView(knownFacts, userType)
                     }
-              cbcIdFromXml <- EitherT.right[Future, Result, Option[CBCId]](
+              cbcIdFromXml <- EitherT.right(
                                OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
               subscriptionDetails <- subDataService
                                       .retrieveSubscriptionData(knownFacts.utr)
@@ -272,7 +272,7 @@ class SharedController @Inject()(
                     case _ =>
                       Right(())
                   })
-              _ <- EitherT.right[Future, Result, Unit](
+              _ <- EitherT.right(
                     (cache.save(bpr) *>
                       cache.save(knownFacts.utr) *>
                       cache.save(TIN(knownFacts.utr.value, ""))).map(_ => ()))

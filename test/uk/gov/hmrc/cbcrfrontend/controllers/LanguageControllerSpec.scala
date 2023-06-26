@@ -16,10 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import org.mockito.Mockito._
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames._
 import play.api.mvc.{MessagesControllerComponents, Result}
@@ -32,8 +29,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class LanguageControllerSpec
-    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
-    with BeforeAndAfterEach {
+    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   implicit val conf = mock[FrontendAppConfig]
   val mcc = app.injector.instanceOf[MessagesControllerComponents]

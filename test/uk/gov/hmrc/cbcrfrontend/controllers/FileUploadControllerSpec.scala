@@ -19,15 +19,15 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import akka.actor.ActorSystem
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.{EitherT, NonEmptyList, OptionT}
-import cats.instances.future._
+import cats.implicits.catsStdInstancesForFuture
 import com.ctc.wstx.exc.WstxException
 import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationProblem, XMLValidationSchema, XMLValidationSchemaFactory}
 import org.mockito.ArgumentMatchers.{any, eq => EQ}
-import org.mockito.Mockito._
+import org.mockito.MockitoSugar
+import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
@@ -38,14 +38,13 @@ import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import java.io.File
@@ -56,8 +55,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.reflect.runtime.universe
 
 class FileUploadControllerSpec
-    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with MockitoSugar
-    with BeforeAndAfterEach {
+    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach with MockitoSugar
+    with MockitoCats {
 
   implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
@@ -100,8 +99,8 @@ class FileUploadControllerSpec
       override def read[T: Reads: universe.TypeTag](implicit hc: HeaderCarrier): EitherT[Future, ExpiredSession, T] =
         universe.typeOf[T] match {
           case t if t =:= universe.typeOf[EnvelopeId] =>
-            EitherT.pure[Future, ExpiredSession, T](EnvelopeId("test").asInstanceOf[T])
-          case t if t =:= universe.typeOf[CBCId] => leftE[T](ExpiredSession("meh"))
+            EitherT.right(EnvelopeId("test").asInstanceOf[T])
+          case t if t =:= universe.typeOf[CBCId] => EitherT.left(ExpiredSession("meh"))
         }
 
       override def readOption[T: Reads: universe.TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] =
@@ -112,10 +111,10 @@ class FileUploadControllerSpec
       override def readOrCreate[T: Format: universe.TypeTag](f: => OptionT[Future, T])(
         implicit hc: HeaderCarrier): OptionT[Future, T] = universe.typeOf[T] match {
         case t if t =:= universe.typeOf[FileId] =>
-          OptionT.some[Future, FileId](FileId("fileId")).asInstanceOf[OptionT[Future, T]]
+          OptionT.some(FileId("fileId")).asInstanceOf[OptionT[Future, T]]
         case t if t =:= universe.typeOf[EnvelopeId] =>
           succeed match {
-            case true  => OptionT.some[Future, EnvelopeId](EnvelopeId("test")).asInstanceOf[OptionT[Future, T]]
+            case true  => OptionT.some(EnvelopeId("test")).asInstanceOf[OptionT[Future, T]]
             case false => OptionT.none
           }
       }
@@ -123,10 +122,10 @@ class FileUploadControllerSpec
       override def create[T: Format: universe.TypeTag](f: => OptionT[Future, T])(
         implicit hc: HeaderCarrier): OptionT[Future, T] = universe.typeOf[T] match {
         case t if t =:= universe.typeOf[FileId] =>
-          OptionT.some[Future, FileId](FileId("fileId")).asInstanceOf[OptionT[Future, T]]
+          OptionT.some(FileId("fileId")).asInstanceOf[OptionT[Future, T]]
         case t if t =:= universe.typeOf[EnvelopeId] =>
           succeed match {
-            case true  => OptionT.some[Future, EnvelopeId](EnvelopeId("test")).asInstanceOf[OptionT[Future, T]]
+            case true  => OptionT.some(EnvelopeId("test")).asInstanceOf[OptionT[Future, T]]
             case false => OptionT.none
           }
       }
@@ -176,10 +175,6 @@ class FileUploadControllerSpec
       EntityReportingPeriod(LocalDate.parse("2016-03-31"), LocalDate.parse("2017-03-30"))
     )
   )
-
-  def right[A](a: Future[A]): ServiceResponse[A] = EitherT.right[Future, CBCErrors, A](a)
-  def left[A](s: String): ServiceResponse[A] = EitherT.left[Future, CBCErrors, A](UnexpectedState(s))
-  def pure[A](a: A): ServiceResponse[A] = EitherT.pure[Future, CBCErrors, A](a)
 
   val md = FileMetadata("", "", "something.xml", "", 1.0, "", JsNull, "")
 
@@ -235,9 +230,13 @@ class FileUploadControllerSpec
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(
           new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))))
-      val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
+      whenF(fuService.createEnvelope(any(), any())) thenReturn EnvelopeId("1234")
+      whenF(cache.create[EnvelopeId](any())(EQ(EnvelopeId.format), any(), any())) thenReturn EnvelopeId("1234")
+      whenF(cache.create[FileId](any())(EQ(FileId.fileIdFormat), any(), any())) thenReturn FileId("abcd")
+      val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
+
     "displays gateway account not registered page if Organisation user has is not enrolled" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(
@@ -245,14 +244,16 @@ class FileUploadControllerSpec
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
+
     "allow agent to submit even when no enrolment" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(
-          new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))))
-      val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
+          new~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None)))
+      when(cache.readOption[CBCId](any(), any(), any())) thenReturn Future.successful(None)
+      val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
-
     }
+
     "redirect  when user is an individual" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(
@@ -261,12 +262,12 @@ class FileUploadControllerSpec
       status(result) shouldBe Status.SEE_OTHER
 
     }
-    "return 500 when the is an error creating the envelope" in {
-      TestSessionCache.succeed = false
+    TestSessionCache.succeed = false
+    "return 500 when there is an error creating the envelope" in {
       when(authConnector.authorise(any(), any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]]())(any(), any()))
         .thenReturn(Future.successful(
           new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))))
-      when(fuService.createEnvelope(any(), any())) thenReturn left[EnvelopeId]("server error")
+      whenF(fuService.createEnvelope(any(), any())) thenFailWith UnexpectedState("server error")
       val result = partiallyMockedController.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       TestSessionCache.succeed = true
@@ -274,21 +275,21 @@ class FileUploadControllerSpec
   }
 
   "GET /unregistered-gg-account" should {
-    val fakeRequestUnregisteredGGId = addToken((FakeRequest("GET", "/unregistered-gg-account")))
+    val fakeRequestUnregisteredGGId = addToken(FakeRequest("GET", "/unregistered-gg-account"))
 
     "return 200 when the envelope is created successfully" in {
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
-      when(cache.readOrCreate[EnvelopeId](any())) thenReturn OptionT.some[Future, EnvelopeId](EnvelopeId("12345678"))
+      whenF(cache.readOrCreate[EnvelopeId](any())(any(), any(), any())) thenReturn EnvelopeId("12345678")
       val result = partiallyMockedController.unregisteredGGAccount(fakeRequestUnregisteredGGId)
       status(result) shouldBe Status.OK
     }
+
     "return 500 when the is an error creating the envelope\"" in {
       TestSessionCache.succeed = false
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
-      when(fuService.createEnvelope(any(), any())) thenReturn left[EnvelopeId]("server error")
+      whenF(fuService.createEnvelope(any(), any())) thenFailWith UnexpectedState("server error")
       val result = partiallyMockedController.unregisteredGGAccount(fakeRequestUnregisteredGGId)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-
       TestSessionCache.succeed = true
     }
   }
@@ -297,49 +298,52 @@ class FileUploadControllerSpec
     val fakeRequestGetFileUploadResponse = addToken(FakeRequest("GET", "/fileUploadResponse/envelopeId/fileId"))
     "return 202 when the file is available" in {
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
-      when(fuService.getFileUploadResponse(any())(any(), any())) thenReturn right(
-        Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE", None)): Option[FileUploadCallbackResponse])
+      whenF(fuService.getFileUploadResponse(any())(any(), any())) thenReturn
+        Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE", None))
       val result = partiallyMockedController.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse)
       status(result) shouldBe Status.ACCEPTED
     }
+
     "return 204" when {
       "the FUS hasn't updated the backend yet" in {
         when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
-        when(fuService.getFileUploadResponse(any())(any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](
-          None)
+        whenF(fuService.getFileUploadResponse(any())(any(), any())) thenReturn None
         val result =
           partiallyMockedController.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse).futureValue
         status(result) shouldBe Status.NO_CONTENT
       }
+
       "file is not yet available" in {
         when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
-        when(fuService.getFileUploadResponse(any())(any(), any())) thenReturn right[Option[FileUploadCallbackResponse]](
-          Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED", None)): Option[
-            FileUploadCallbackResponse])
+        whenF(fuService.getFileUploadResponse(any())(any(), any())) thenReturn
+          Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED", None))
         val result =
           partiallyMockedController.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse).futureValue
         status(result) shouldBe Status.NO_CONTENT
       }
     }
+
     "return a 200" in {
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       val request = addToken(FakeRequest("GET", "fileUploadProgress/envelopeId/fileId"))
       val result = partiallyMockedController.fileUploadProgress("test", "test")(request)
       status(result) shouldBe Status.OK
     }
+
     "return a 500 if the envelopeId doesn't match with the cache" in {
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       val request = addToken(FakeRequest("GET", "fileUploadProgress/envelopeId/fileId"))
       val result = partiallyMockedController.fileUploadProgress("test2", "test")(request)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
+
     "direct to technical-difficulties" when {
       "the call to get the file metadata fails" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        when(fuService.getFile(any(), any())(any(), any())) thenReturn right(validFile)
-        when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](None)
+        whenF(fuService.getFile(any(), any())(any(), any())) thenReturn validFile
+        whenF(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn None
         when(
           authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any(), any())(
             any(),
@@ -353,12 +357,13 @@ class FileUploadControllerSpec
         verify(fuService).getFile(any(), any())(any(), any())
         verify(fuService).getFileMetaData(any(), any())(any(), any())
       }
+
       "the call to get the file fails" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        when(fuService.getFile(any(), any())(any(), any())) thenReturn left[File]("oops")
-        when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
+        whenF(fuService.getFile(any(), any())(any(), any())) thenFailWith UnexpectedState("oops")
+        whenF(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn Some(md)
         when(
           authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any(), any())(
             any(),
@@ -372,12 +377,13 @@ class FileUploadControllerSpec
         verify(fuService).getFile(any(), any())(any(), any())
         verify(fuService).getFileMetaData(any(), any())(any(), any())
       }
+
       "the call to cache.save fails" in {
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        when(fuService.getFile(any(), any())(any(), any())) thenReturn right(validFile)
-        when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
+        whenF(fuService.getFile(any(), any())(any(), any())) thenReturn validFile
+        whenF(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn Some(md)
         when(
           authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any(), any())(
             any(),
@@ -391,7 +397,7 @@ class FileUploadControllerSpec
         status(result) shouldBe Status.SEE_OTHER
         verify(fuService).getFile(any(), any())(any(), any())
         verify(fuService).getFileMetaData(any(), any())(any(), any())
-        verify(cache, atLeastOnce()).save(any())(any(), any(), any())
+        verify(cache, atLeastOnce).save(any())(any(), any(), any())
       }
     }
 
@@ -400,8 +406,8 @@ class FileUploadControllerSpec
       val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      when(fuService.getFile(any(), any())(any(), any())) thenReturn right(evenMoreValidFile)
-      when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
+      whenF(fuService.getFile(any(), any())(any(), any())) thenReturn evenMoreValidFile
+      whenF(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn Some(md)
       when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(new CacheMap("", Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
@@ -422,7 +428,7 @@ class FileUploadControllerSpec
       returnVal shouldBe Status.OK
       verify(fuService).getFile(any(), any())(any(), any())
       verify(fuService).getFileMetaData(any(), any())(any(), any())
-      verify(cache, atLeastOnce()).save(any())(any(), any(), any())
+      verify(cache, atLeastOnce).save(any())(any(), any(), any())
       verify(businessRulesValidator).validateBusinessRules(any(), any(), any(), any())(any())
       verify(schemaValidator).validateSchema(any())
     }
@@ -436,8 +442,8 @@ class FileUploadControllerSpec
       val e = new WstxException("error")
       xmlErrorHandler.reportProblem(new XMLValidationProblem(e.getLocation, "", XMLValidationProblem.SEVERITY_FATAL))
 
-      when(fuService.getFile(any(), any())(any(), any())) thenReturn right(evenMoreValidFile)
-      when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
+      whenF(fuService.getFile(any(), any())(any(), any())) thenReturn evenMoreValidFile
+      whenF(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn Some(md)
       when(schemaValidator.validateSchema(any())) thenReturn xmlErrorHandler
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(new CacheMap("", Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
@@ -458,7 +464,7 @@ class FileUploadControllerSpec
       returnVal shouldBe Status.SEE_OTHER
       verify(fuService).getFile(any(), any())(any(), any())
       verify(fuService).getFileMetaData(any(), any())(any(), any())
-      verify(cache, atLeastOnce()).save(any())(any(), any(), any())
+      verify(cache, atLeastOnce).save(any())(any(), any(), any())
       verify(schemaValidator).validateSchema(any())
     }
 
@@ -468,8 +474,8 @@ class FileUploadControllerSpec
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
       val businessRuleErrors = NonEmptyList.of(TestDataError)
-      when(fuService.getFile(any(), any())(any(), any())) thenReturn right(evenMoreValidFile)
-      when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](Some(md))
+      whenF(fuService.getFile(any(), any())(any(), any())) thenReturn evenMoreValidFile
+      whenF(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn Some(md)
       when(schemaValidator.validateSchema(any())) thenReturn new XmlErrorHandler()
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(new CacheMap("", Map.empty))
       when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
@@ -490,7 +496,7 @@ class FileUploadControllerSpec
       returnVal shouldBe Status.SEE_OTHER
       verify(fuService).getFile(any(), any())(any(), any())
       verify(fuService).getFileMetaData(any(), any())(any(), any())
-      verify(cache, atLeastOnce()).save(any())(any(), any(), any())
+      verify(cache, atLeastOnce).save(any())(any(), any(), any())
       verify(businessRulesValidator).validateBusinessRules(any(), any(), any(), any())(any())
       verify(schemaValidator).validateSchema(any())
     }
@@ -500,11 +506,9 @@ class FileUploadControllerSpec
         val request = addToken(FakeRequest("GET", "fileUploadReady/envelopeId/fileId"))
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrole: CBCEnrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        when(fuService.getFile(any(), any())(any(), any())) thenReturn right(validFile)
-        when(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn right[Option[FileMetadata]](
-          Some(md.copy(name = "bad.zip")))
-        when(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn rightE(
-          CBCId.create(1).getOrElse(fail("baaa")))
+        whenF(fuService.getFile(any(), any())(any(), any())) thenReturn validFile
+        whenF(fuService.getFileMetaData(any(), any())(any(), any())) thenReturn Some(md.copy(name = "bad.zip"))
+        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("baaa"))
         when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(CacheMap("cache", Map.empty))
         when(
           authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any(), any())(

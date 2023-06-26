@@ -19,8 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
-import org.mockito.Mockito.when
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.MockitoSugar
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.{Configuration, Environment}
