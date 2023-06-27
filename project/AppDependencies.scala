@@ -8,7 +8,7 @@ object AppDependencies {
   val compile: Seq[ModuleID] = Seq(
     ws,
     "uk.gov.hmrc"       %% "bootstrap-frontend-play-28" % "5.25.0",
-    "uk.gov.hmrc"       %% "play-frontend-hmrc"         % "3.7.0-play-28",
+    "uk.gov.hmrc"       %% "play-frontend-hmrc"         % "5.0.0-play-28",
     "uk.gov.hmrc"       %% "emailaddress"               % "3.7.0",
     "uk.gov.hmrc"       %% "domain"                     % "8.1.0-play-28",
     "uk.gov.hmrc"       %% "http-caching-client"        % "9.6.0-play-28",
