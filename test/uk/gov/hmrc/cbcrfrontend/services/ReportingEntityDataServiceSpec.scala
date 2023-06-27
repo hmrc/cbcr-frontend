@@ -36,17 +36,17 @@ import scala.concurrent.{Await, Future}
 class ReportingEntityDataServiceSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
-  val connector = mock[CBCRBackendConnector]
-  val reds = new ReportingEntityDataService(connector)
-  val docRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").get
-  val crnDocRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000A_7000000002OECD1REP").get
-  val corrDocRefId = CorrDocRefId(crnDocRefId)
-  val cbcid = CBCId.create(1).toOption
-  val tin = TIN("90000000001", "")
-  val reportingPeriod = "2016-03-31"
-  val docRefIdpair = DocRefIdPair(docRefId: DocRefId, Some(corrDocRefId))
+  private val connector = mock[CBCRBackendConnector]
+  private val reds = new ReportingEntityDataService(connector)
+  private val docRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").get
+  private val crnDocRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000A_7000000002OECD1REP").get
+  private val corrDocRefId = CorrDocRefId(crnDocRefId)
+  private val cbcid = CBCId.create(1).toOption
+  private val tin = TIN("90000000001", "")
+  private val reportingPeriod = "2016-03-31"
+  private val docRefIdpair = DocRefIdPair(docRefId: DocRefId, Some(corrDocRefId))
 
-  val red = ReportingEntityData(
+  private val red = ReportingEntityData(
     NonEmptyList(docRefId, Nil),
     List(docRefId),
     docRefId,
@@ -59,7 +59,7 @@ class ReportingEntityDataServiceSpec
     Some(EntityReportingPeriod(LocalDate.parse("2016-01-01"), LocalDate.parse("2016-03-31")))
   )
 
-  val redModel = ReportingEntityDataModel(
+  private val redModel = ReportingEntityDataModel(
     NonEmptyList(docRefId, Nil),
     List(docRefId),
     docRefId,
@@ -68,14 +68,14 @@ class ReportingEntityDataServiceSpec
     CBC701,
     Some(LocalDate.now()),
     None,
-    true,
+    oldModel = true,
     Some("USD"),
     None
   )
 
   DocRefIdPair(docRefId: DocRefId, Some(corrDocRefId))
 
-  val partialRed = PartialReportingEntityData(
+  private val partialRed = PartialReportingEntityData(
     List(docRefIdpair),
     List(docRefIdpair),
     docRefIdpair,

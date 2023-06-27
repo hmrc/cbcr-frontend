@@ -33,11 +33,11 @@ import scala.concurrent.ExecutionContext
 class CBCEnhancementsControllerSpec
     extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest
     with BeforeAndAfterEach with MockitoSugar {
-  implicit val ec = app.injector.instanceOf[ExecutionContext]
-  implicit val messagesApi = app.injector.instanceOf[MessagesApi]
-  val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  val views: Views = app.injector.instanceOf[Views]
-  implicit val feConfig = mock[FrontendAppConfig]
+  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+  private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
+  private val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  private val views = app.injector.instanceOf[Views]
+  private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
 
   val controller = new CBCEnhancementsController(messagesApi, mcc, views)(ec, feConfig)
 

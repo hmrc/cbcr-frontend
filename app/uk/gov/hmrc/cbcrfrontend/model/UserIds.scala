@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class UserIds(internalId: String, externalId: String)
 object UserIds {
-  implicit val format = Json.format[UserIds]
+  implicit val format: OFormat[UserIds] = Json.format[UserIds]
 }

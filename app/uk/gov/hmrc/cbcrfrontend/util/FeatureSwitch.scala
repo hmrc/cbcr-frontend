@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.util
 
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads._
 import play.api.libs.json._
 
 import scala.util.Try
@@ -43,32 +41,24 @@ object FeatureSwitch {
 
   def disable(switch: FeatureSwitch): FeatureSwitch = setProp(switch.name, "false")
 
-  def setProp(name: String, value: String): FeatureSwitch = {
+  private def setProp(name: String, value: String) = {
     sys.props += ((systemPropertyName(name), value))
     forName(name)
   }
 
-  def systemPropertyName(name: String) = name
+  private def systemPropertyName(name: String) = name
 
-  implicit val featureSwitchWrites = new Writes[FeatureSwitch] {
-    def writes(fs: FeatureSwitch): JsValue =
-      Json.obj("name" -> fs.name, "enabled" -> fs.enabled)
-  }
-
-  implicit val featureSwitchReads: Reads[FeatureSwitch] = (
-    (JsPath \ "name").read[String] and
-      (JsPath \ "enabled").read[Boolean]
-  )(FeatureSwitch.apply _)
+  implicit val format: OFormat[BooleanFeatureSwitch] = Json.format[BooleanFeatureSwitch]
 }
 
 object CbcrSwitches {
   private val ALLOWLIST_DISABLED = "allowListDisabled"
   private val CLEAR_SUBSCRIPTION_DATA_ROUTE = "clearSubscriptionData"
   private val LANGUAGE_TOGGLE_SWITCH = "enableLanguageSwitching"
-  def allowlistDisabled =
+  def allowlistDisabled: FeatureSwitch =
     FeatureSwitch.forName(ALLOWLIST_DISABLED)
-  def clearSubscriptionDataRoute =
+  def clearSubscriptionDataRoute: FeatureSwitch =
     FeatureSwitch.forName(CLEAR_SUBSCRIPTION_DATA_ROUTE)
-  def enableLanguageSwitching =
+  def enableLanguageSwitching: FeatureSwitch =
     FeatureSwitch.forName(LANGUAGE_TOGGLE_SWITCH)
 }

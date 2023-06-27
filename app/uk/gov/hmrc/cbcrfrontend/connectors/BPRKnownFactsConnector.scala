@@ -32,7 +32,7 @@ class BPRKnownFactsConnector @Inject()(http: HttpClient)(
   val environment: Environment,
   servicesConfig: ServicesConfig) {
 
-  implicit lazy val url = servicesConfig.baseUrl("cbcr")
+  private lazy val url = servicesConfig.baseUrl("cbcr")
 
   def lookup(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http

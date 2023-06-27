@@ -45,10 +45,9 @@ class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
           }
         }
         .recover {
-          case NonFatal(t) => {
+          case NonFatal(t) =>
             logger.error("Failed to call subscribe", t)
             None
-          }
         })
 
   def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): OptionT[Future, ETMPSubscription] =

@@ -19,13 +19,11 @@ package uk.gov.hmrc.cbcrfrontend.services
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.{JsNull, Json}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http._
@@ -37,21 +35,17 @@ import scala.concurrent.{Await, Future}
 
 class SubscriptionDataServiceSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
-  implicit val hc: HeaderCarrier = HeaderCarrier()
-  implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr" }
-  val connector = mock[CBCRBackendConnector]
-  val environment = mock[Environment]
-  val runModeConfiguration = mock[Configuration]
-  val mockHttp = mock[HttpClient]
-  val servicesConfig = mock[ServicesConfig]
-  val mockUrl = mock[ServiceUrl[CbcrsUrl]]
-  val sds = new SubscriptionDataService(environment, runModeConfiguration, mockHttp, servicesConfig)
-  val cbcId = CBCId.create(56).toOption
-  val utr = Utr("7000000001")
-  val idUtr: Either[Utr, CBCId] = Left(utr)
-  val idCbcId: Either[Utr, CBCId] = Right(cbcId.get)
-  val subscriberContact = SubscriberContact("Brian", "Lastname", "phonenum", EmailAddress("test@test.com"))
-  val subscriptionDetails = SubscriptionDetails(
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
+  private val runModeConfiguration = mock[Configuration]
+  private val mockHttp = mock[HttpClient]
+  private val servicesConfig = mock[ServicesConfig]
+  private val sds = new SubscriptionDataService(runModeConfiguration, mockHttp, servicesConfig)
+  private val cbcId = CBCId.create(56).toOption
+  private val utr = Utr("7000000001")
+  private val idUtr: Either[Utr, CBCId] = Left(utr)
+  private val idCbcId: Either[Utr, CBCId] = Right(cbcId.get)
+  private val subscriberContact = SubscriberContact("Brian", "Lastname", "phonenum", EmailAddress("test@test.com"))
+  private val subscriptionDetails = SubscriptionDetails(
     BusinessPartnerRecord(
       "SAFEID",
       Some(OrganisationResponse("blagh")),

@@ -89,7 +89,7 @@ class CBCBusinessRuleValidator @Inject()(
             _,
             Some(LocalDate.now()),
             in.constEntityNames,
-            in.currencyCodes.map(elem => elem.currCodes).flatten))
+            in.currencyCodes.flatMap(elem => elem.currCodes)))
     }
 
   private def extractMessageSpec(in: RawMessageSpec): ValidBusinessResult[MessageSpec] =
@@ -259,7 +259,7 @@ class CBCBusinessRuleValidator @Inject()(
     }
 
   private def validateOtherInfo(xmlInfo: XMLInfo): ValidBusinessResult[XMLInfo] =
-    if (xmlInfo.additionalInfo.forall(!_.otherInfo.trim.isEmpty)) xmlInfo.validNel
+    if (xmlInfo.additionalInfo.forall(_.otherInfo.trim.nonEmpty)) xmlInfo.validNel
     else OtherInfoEmpty.invalidNel
 
   private def validateStartDateBeforeEndDate(entity: ReportingEntity): ValidBusinessResult[ReportingEntity] =
@@ -351,7 +351,7 @@ class CBCBusinessRuleValidator @Inject()(
   /** Ensure that if the messageType is [[CBC401]] there are no [[DocTypeIndic]] other than [[OECD1]] */
   private def validateMessageTypes(r: XMLInfo): ValidBusinessResult[XMLInfo] =
     r.messageSpec.messageType.contains(CBC401) match {
-      case true if (determineMessageTypeIndic(r) == Some(CBC401)) => r.validNel
+      case true if determineMessageTypeIndic(r).contains(CBC401) => r.validNel
       case true                                                   => MessageTypeIndicDocTypeIncompatible.invalidNel
       case false                                                  => r.validNel
     }
@@ -376,7 +376,7 @@ class CBCBusinessRuleValidator @Inject()(
         validateDocTypes(entDocSpecs, repDocSpec) *>
         validateDistinctDocRefIds(allDocSpecs.map(_.docRefId)) *>
         allDocSpecs.map(docRefIdMatchDocTypeIndicCheck).sequence[ValidBusinessResult, DocRefId] *>
-        validateDistinctCorrDocRefIds(allDocSpecs.map(_.corrDocRefId).flatten) *>
+        validateDistinctCorrDocRefIds(allDocSpecs.flatMap(_.corrDocRefId)) *>
         addCorrCheck.map(validateAddInfoCorrDRI).sequence[FutureValidBusinessResult, CorrDocRefId]
     )(_ => in)
 
@@ -519,7 +519,7 @@ class CBCBusinessRuleValidator @Inject()(
       case Some(CBCInvalidMessageTypeIndic)                                     => MessageTypeIndicInvalid.invalidNel
       case Some(_) if CBCReportsAreNeverResent && AdditionalInfoIsNeverResent   => xmlInfo.validNel
       case Some(_) if !CBCReportsAreNeverResent || !AdditionalInfoIsNeverResent => ResendOutsideRepEntError.invalidNel
-      case Some(CBC401) if (determinedMessageTypeIndic == None)                 => MessageTypeIndicError.invalidNel
+      case Some(CBC401) if determinedMessageTypeIndic.isEmpty                   => MessageTypeIndicError.invalidNel
       case _                                                                    => MessageTypeIndicBlank.invalidNel
     }
 
@@ -648,7 +648,7 @@ class CBCBusinessRuleValidator @Inject()(
     implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     determineMessageTypeIndic(xmlInfo) match {
       case Some(CBC401) => xmlInfo.validNel
-      case Some(CBC402) => {
+      case Some(CBC402) =>
         val crid = extractCorrDRI(xmlInfo)
 
         crid
@@ -665,7 +665,7 @@ class CBCBusinessRuleValidator @Inject()(
                 case Some(red) if red.reportingPeriod.isDefined =>
                   if (red.reportingPeriod.get == xmlInfo.messageSpec.reportingPeriod) Right(xmlInfo)
                   else Left(ReportingPeriodInvalid)
-                case Some(red) =>
+                case Some(_) =>
                   Right(xmlInfo) //reportingPeriod not persisted prior to this rules implementation so can't check
                 case _ => Left(ReportingPeriodInvalid)
               }
@@ -674,7 +674,6 @@ class CBCBusinessRuleValidator @Inject()(
           .getOrElse {
             Future.successful(xmlInfo.validNel)
           }
-      }
       case _ =>
         Future.successful(xmlInfo.validNel) //No extra checks needed here as message type indic is mandatory so it will be validated against another business rule
     }
@@ -696,7 +695,7 @@ class CBCBusinessRuleValidator @Inject()(
             }
           }
           .subflatMap {
-            case Some(reportEntityData) => {
+            case Some(reportEntityData) =>
 
               val reportEntityDocRefId = reportEntityData.reportingEntityDRI.show
 
@@ -705,8 +704,6 @@ class CBCBusinessRuleValidator @Inject()(
               } else {
                 Left(MultipleFileUploadForSameReportingPeriod)
               }
-
-            }
             case _ => Right(x)
           }
           .toValidatedNel
@@ -755,12 +752,11 @@ class CBCBusinessRuleValidator @Inject()(
       .orElse(xmlInfo.additionalInfo.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
       .orElse(xmlInfo.reportingEntity.find(_.docSpec.corrDocRefId.isDefined).flatMap(_.docSpec.corrDocRefId))
 
-  private def validateCorrMessageRefIdD(x: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
+  private def validateCorrMessageRefIdD(x: XMLInfo): FutureValidBusinessResult[XMLInfo] =
     validateCorrMsgRefIdNotInMessageSpec(x) *>
       validateCorrMsgRefIdNotInDocSpec(x)
 
-  private def validateCorrMsgRefIdNotInMessageSpec(x: XMLInfo)(
-    implicit hc: HeaderCarrier): ValidBusinessResult[XMLInfo] =
+  private def validateCorrMsgRefIdNotInMessageSpec(x: XMLInfo): ValidBusinessResult[XMLInfo] =
     if (x.messageSpec.corrMessageRefId.isDefined) CorrMessageRefIdNotAllowedInMessageSpec.invalidNel
     else x.validNel
 
@@ -852,14 +848,14 @@ class CBCBusinessRuleValidator @Inject()(
               val allDocTypes = BusinessRulesUtil.extractAllDocTypes(in)
 
               if (allDocTypes.forall(_ == allDocTypes.head)) {
-                allDocs.nonEmpty match {
-                  case true =>
-                    if (BusinessRulesUtil.isFullyCorrected(allDocs, allCorrDocSpecs)) {
-                      Right(in)
-                    } else {
-                      Left(PartialDeletion)
-                    }
-                  case false => Right(in)
+                if (allDocs.nonEmpty) {
+                  if (BusinessRulesUtil.isFullyCorrected(allDocs, allCorrDocSpecs)) {
+                    Right(in)
+                  } else {
+                    Left(PartialDeletion)
+                  }
+                } else {
+                  Right(in)
                 }
               } else {
                 Left(PartialDeletion)
@@ -885,7 +881,7 @@ class CBCBusinessRuleValidator @Inject()(
           }
           .subflatMap {
             case Some(datesOverlap) =>
-              if (datesOverlap.isOverlapping == true)
+              if (datesOverlap.isOverlapping)
                 Left(DatesOverlapInvalid)
               else {
                 Right(in)
@@ -908,7 +904,7 @@ class CBCBusinessRuleValidator @Inject()(
     }
 
   //Because ReportingEntity is mandatory in version 2.0 we will not treat None as valid but instead throw and error
-  def recoverReportingEntity(in: XMLInfo)(implicit hc: HeaderCarrier): FutureValidBusinessResult[CompleteXMLInfo] =
+  def recoverReportingEntity(in: XMLInfo): FutureValidBusinessResult[CompleteXMLInfo] =
     in.reportingEntity match {
       case Some(re) =>
         Future.successful(

@@ -18,25 +18,25 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
-import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, BusinessPartnerRecord, Utr}
+import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, Utr}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
+class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
 
-  val mockConnector = mock[BPRKnownFactsConnector]
-  val mockAudit = mock[AuditConnector]
-  val bprKnownFactsService = new BPRKnownFactsService(mockConnector, mockAudit)
-  implicit val hc = HeaderCarrier()
+  private val mockConnector = mock[BPRKnownFactsConnector]
+  private val mockAudit = mock[AuditConnector]
+  private val bprKnownFactsService = new BPRKnownFactsService(mockConnector, mockAudit)
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  val bodyKnownFact1: String =
+  private val bodyKnownFact1: String =
     """{
       |    "safeId": "XX0000114342888",
       |    "organisation": {
@@ -50,9 +50,7 @@ class BPRKnownFactsServiceSpec extends WordSpec with Matchers with GuiceOneAppPe
       |      "countryCode": "GB"
       |    }}""".stripMargin
 
-  val businessPartnerRecord1: BusinessPartnerRecord =
-    Json.parse(bodyKnownFact1).validate[BusinessPartnerRecord].asOpt.get
-  val kf1 = BPRKnownFacts(Utr("7000000002"), "BN5 4ZZ")
+  private val kf1 = BPRKnownFacts(Utr("7000000002"), "BN5 4ZZ")
 
   "The BPRKnowFactsService" should {
     "return a match for a check with an exact matching post code " in {

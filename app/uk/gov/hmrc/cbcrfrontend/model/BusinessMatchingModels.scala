@@ -29,10 +29,10 @@ case class EtmpAddress(
   countryCode: String)
 
 object EtmpAddress {
-  implicit val bprFormat = Json.format[EtmpAddress]
+  implicit val bprFormat: OFormat[EtmpAddress] = Json.format[EtmpAddress]
 
-  val subscriptionFormat = new Format[EtmpAddress] {
-    override def writes(o: EtmpAddress) = Json.obj(
+  val subscriptionFormat: Format[EtmpAddress] = new Format[EtmpAddress] {
+    override def writes(o: EtmpAddress): JsObject = Json.obj(
       "line1"       -> o.addressLine1,
       "line2"       -> o.addressLine1,
       "line3"       -> o.addressLine1,
@@ -49,7 +49,7 @@ object EtmpAddress {
         (JsPath \ "postalCode").readNullable[String] and
         (JsPath \ "countryCode").read[String])(EtmpAddress.apply _)
 
-    override def reads(json: JsValue) = etmpAddressReads.reads(json)
+    override def reads(json: JsValue): JsResult[EtmpAddress] = etmpAddressReads.reads(json)
   }
 
 }
@@ -57,11 +57,11 @@ object EtmpAddress {
 case class OrganisationResponse(organisationName: String)
 
 object OrganisationResponse {
-  implicit val formats = Json.format[OrganisationResponse]
+  implicit val formats: OFormat[OrganisationResponse] = Json.format[OrganisationResponse]
 }
 
 case class BusinessPartnerRecord(safeId: String, organisation: Option[OrganisationResponse], address: EtmpAddress)
 
 object BusinessPartnerRecord {
-  implicit val format = Json.format[BusinessPartnerRecord]
+  implicit val format: OFormat[BusinessPartnerRecord] = Json.format[BusinessPartnerRecord]
 }

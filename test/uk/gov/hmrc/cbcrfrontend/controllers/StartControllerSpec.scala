@@ -16,17 +16,14 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
 import play.api.Play.materializer
 import play.api.http.Status
-import play.api.i18n.{Messages, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -35,30 +32,25 @@ import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model.{CBCEnrolment, CBCId, Utr}
 import uk.gov.hmrc.cbcrfrontend.services.CBCSessionCache
-import uk.gov.hmrc.cbcrfrontend.util.{FeatureSwitch, UnitSpec}
+import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 class StartControllerSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
-  implicit val feConf = mock[FrontendAppConfig]
-  implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
-  implicit val configuration = new Configuration(ConfigFactory.load("application.conf"))
-  implicit val cache: CBCSessionCache = mock[CBCSessionCache]
-  implicit val timeout = Timeout(5 seconds)
+  private implicit val feConf: FrontendAppConfig = mock[FrontendAppConfig]
+  private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
+  private implicit val configuration: Configuration = new Configuration(ConfigFactory.load("application.conf"))
+  private implicit val cache: CBCSessionCache = mock[CBCSessionCache]
 
-  val authConnector = mock[AuthConnector]
-  val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  val views: Views = app.injector.instanceOf[Views]
-  val controller = new StartController(messagesApi, authConnector, mcc, views)
-  val newCBCEnrolment = CBCEnrolment(CBCId.create(99).getOrElse(fail("booo")), Utr("1234567890"))
-  val langSwitch = mock[FeatureSwitch]
-
-  def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
+  private val authConnector = mock[AuthConnector]
+  private val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  private val views: Views = app.injector.instanceOf[Views]
+  private val controller = new StartController(messagesApi, authConnector, mcc, views)
+  private val newCBCEnrolment = CBCEnrolment(CBCId.create(99).getOrElse(fail("booo")), Utr("1234567890"))
 
   "Calling start controller" should {
     val fakeRequest = addToken(FakeRequest("GET", "/"))

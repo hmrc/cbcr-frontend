@@ -34,16 +34,12 @@ import scala.concurrent.{Await, Future}
 
 class DocRefIdServiceSpec extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
-  val connector = mock[CBCRBackendConnector]
-  val docRefIdService = new DocRefIdService(connector)
-  val docRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").get
-  val crnDocRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000A_7000000002OECD1REP").get
-  val corrDocRefId = CorrDocRefId(crnDocRefId)
-  val cbcid = CBCId.create(1).toOption
-  val tin = TIN("90000000001", "")
-  val reportingPeriod = "31-03-2016"
-  val docRefIdpair = DocRefIdPair(docRefId: DocRefId, Some(corrDocRefId))
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  private val connector = mock[CBCRBackendConnector]
+  private val docRefIdService = new DocRefIdService(connector)
+  private val docRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1REP").get
+  private val crnDocRefId = DocRefId("GB2016RGXVCBC0000000056CBC40120170311T090000A_7000000002OECD1REP").get
+  private val corrDocRefId = CorrDocRefId(crnDocRefId)
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   "DocRefIdService" should {
     "save a DocRefId in backend CBCR" in {

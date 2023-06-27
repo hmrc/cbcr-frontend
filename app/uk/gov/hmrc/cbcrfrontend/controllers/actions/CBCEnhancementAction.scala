@@ -19,18 +19,15 @@ package uk.gov.hmrc.cbcrfrontend.controllers.actions
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{ActionBuilderImpl, BodyParsers, Request, Result}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.views._
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class CBCEnhancementAction @Inject()(
   appConfig: FrontendAppConfig,
-  parser: BodyParsers.Default,
-  views: Views
-)(implicit ec: ExecutionContext)
+  parser: BodyParsers.Default)(implicit ec: ExecutionContext)
     extends ActionBuilderImpl(parser) {
-  override def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] =
+  override def invokeBlock[A](request: Request[A], block: Request[A] => Future[Result]): Future[Result] =
     if (appConfig.cbcEnhancementFeature) {
       block(request)
     } else {

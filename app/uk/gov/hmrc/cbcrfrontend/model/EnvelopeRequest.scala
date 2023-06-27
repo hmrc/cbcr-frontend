@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class MetaData(application: String = "Country By Country Reporting Service")
 object MetaData {
-  implicit val metaDataFormat = Json.format[MetaData]
+  implicit val metaDataFormat: OFormat[MetaData] = Json.format[MetaData]
 }
 
 case class Constraints(
@@ -28,7 +28,7 @@ case class Constraints(
   maxSizePerItem: String = "50MB",
   contentTypes: List[String] = List("application/xml", "text/xml"))
 object Constraints {
-  implicit val constraintFormat = Json.format[Constraints]
+  implicit val constraintFormat: OFormat[Constraints] = Json.format[Constraints]
 }
 
 case class EnvelopeRequest(
@@ -38,5 +38,5 @@ case class EnvelopeRequest(
   constraints: Constraints)
 object EnvelopeRequest {
 
-  implicit val envelopeREquestFormat = Json.format[EnvelopeRequest]
+  implicit val envelopeRequestFormat: OFormat[EnvelopeRequest] = Json.format[EnvelopeRequest]
 }

@@ -16,9 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import cats.Applicative.catsApplicativeForArrow
 import cats.data.EitherT
-import cats.implicits.{catsStdInstancesForEither, catsStdInstancesForFuture, catsSyntaxApply, catsSyntaxEitherId, catsSyntaxSemigroupal, toShow}
+import cats.implicits.{catsStdInstancesForFuture, catsSyntaxApply, catsSyntaxEitherId, catsSyntaxSemigroupal, toShow}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc._
@@ -66,7 +65,7 @@ class SubscriptionController @Inject()(
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  val alreadySubscribed = Action.async { implicit request =>
+  val alreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Future.successful(Ok(views.alreadySubscribed()))
     }
@@ -138,13 +137,13 @@ class SubscriptionController @Inject()(
       Map("f_name" → subscriberContact.firstName, "s_name" → subscriberContact.lastName, "cbcrId" → cbcId.value)
     )
 
-  val contactInfoSubscriber = Action.async { implicit request =>
+  val contactInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactInfoSubscriber(subscriptionDataForm))
     }
   }
 
-  val updateInfoSubscriber = Action.async { implicit request =>
+  val updateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
         cbcId <- EitherT.fromEither[Future](
@@ -176,7 +175,7 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val saveUpdatedInfoSubscriber = Action.async(parse.formUrlEncoded) { implicit request =>
+  val saveUpdatedInfoSubscriber: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     {
       authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
         val ci: ServiceResponse[CBCId] = for {
@@ -214,13 +213,13 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val savedUpdatedInfoSubscriber = Action.async { implicit request =>
+  val savedUpdatedInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactDetailsUpdated())
     }
   }
 
-  def subscribeSuccessCbcId(id: String) = Action.async { implicit request =>
+  def subscribeSuccessCbcId(id: String): Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       CBCId(id).fold[Future[Result]](
         errorRedirect(UnexpectedState(s"CBCId: $id is not valid"), views.notAuthorisedIndividual, views.errorTemplate)
@@ -228,7 +227,7 @@ class SubscriptionController @Inject()(
     }
   }
 
-  def clearSubscriptionData(u: Utr) = Action.async { implicit request =>
+  def clearSubscriptionData(u: Utr): Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       if (CbcrSwitches.clearSubscriptionDataRoute.enabled) {
         subscriptionDataService
@@ -243,7 +242,7 @@ class SubscriptionController @Inject()(
     }
   }
 
-  def createFailedSubscriptionAuditEvent(
+  private def createFailedSubscriptionAuditEvent(
     credentials: Option[Credentials],
     cbcId: CBCId,
     bpr: BusinessPartnerRecord,

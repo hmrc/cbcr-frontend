@@ -28,7 +28,7 @@ case class Utr(utr: String) extends TaxIdentifier {
 
   def isValid: Boolean = CheckUTR.isValid(utr)
 
-  object CheckUTR extends Modulus11Check {
+  private object CheckUTR extends Modulus11Check {
     def isValid(utr: String): Boolean = utr match {
       case Utr.utrRegex(_*) =>
         val suffix: String = utr.substring(1)
@@ -47,7 +47,7 @@ object Utr {
     else None
   }
 
-  implicit val pathFormat = new PathBindable[Utr] {
+  implicit val pathFormat: PathBindable[Utr] = new PathBindable[Utr] {
     override def bind(key: String, value: String): Either[String, Utr] =
       if (Utr(value).isValid) {
         Right(Utr(value))
@@ -57,7 +57,7 @@ object Utr {
     override def unbind(key: String, value: Utr): String = value.value
   }
 
-  val utrRegex = "^[0-9]{10}$".r
+  private val utrRegex = "^[0-9]{10}$".r
 
   implicit val utrFormat: Writes[Utr] = new SimpleObjectWrites[Utr](_.value)
   implicit val utrRead: Reads[Utr] = new SimpleObjectReads[Utr]("utr", Utr.apply)

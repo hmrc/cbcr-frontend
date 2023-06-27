@@ -16,10 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import com.typesafe.config.Config
-import configs.syntax._
-import play.api.libs.json.Json
-import play.api.mvc.MessagesControllerComponents
+import play.api.libs.json.{Json, OFormat}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
@@ -38,23 +36,15 @@ class EnrolController @Inject()(
   messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions {
 
-  implicit val format = uk.gov.hmrc.cbcrfrontend.controllers.enrolmentsFormat
-  val conf = config.underlying.get[Config]("microservice.services.gg-proxy").value
+  implicit val format: OFormat[Enrolments] = uk.gov.hmrc.cbcrfrontend.controllers.enrolmentsFormat
 
-  val url: String = (for {
-    host     <- conf.get[String]("host")
-    port     <- conf.get[Int]("port")
-    service  <- conf.get[String]("url")
-    protocol <- conf.get[String]("protocol")
-  } yield s"$protocol://$host:$port/$service").value
-
-  def deEnrol() = Action.async { implicit request =>
+  def deEnrol(): Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       enrolConnector.deEnrol.map(r => Ok(r.body))
     }
   }
 
-  def getEnrolments = Action.async { implicit request =>
+  def getEnrolments: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.allEnrolments) { e =>
       Future.successful(Ok(Json.toJson(e)))
     }

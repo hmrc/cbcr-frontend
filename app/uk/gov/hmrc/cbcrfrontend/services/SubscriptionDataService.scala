@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import cats.data.EitherT
 import cats.instances.future._
 import play.api.http.Status
-import play.api.{Configuration, Environment, Logger, Mode}
+import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
@@ -33,19 +33,13 @@ import scala.util.control.NonFatal
 
 @Singleton
 class SubscriptionDataService @Inject()(
-  environment: Environment,
   val runModeConfiguration: Configuration,
   http: HttpClient,
   servicesConfig: ServicesConfig) {
 
-  val mode = environment.mode
+  private lazy val logger = Logger(this.getClass)
 
-  lazy val logger: Logger = Logger(this.getClass)
-
-  implicit lazy val url = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
-
-  def alreadySubscribed(utr: Utr)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Boolean] =
-    retrieveSubscriptionData(Left(utr)).map(_.isDefined)
+  private implicit lazy val url: ServiceUrl[CbcrsUrl] = new ServiceUrl[CbcrsUrl] { val url: String = servicesConfig.baseUrl("cbcr") }
 
   def retrieveSubscriptionData(id: Either[Utr, CBCId])(
     implicit hc: HeaderCarrier,
@@ -66,9 +60,8 @@ class SubscriptionDataService @Inject()(
                   errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
                   details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
                 )
-            case Status.NOT_FOUND => {
+            case Status.NOT_FOUND =>
               Right(None)
-            }
           }
         }
         .recover {

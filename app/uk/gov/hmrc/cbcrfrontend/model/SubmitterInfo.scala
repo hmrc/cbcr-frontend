@@ -29,8 +29,8 @@ case class SubmitterInfo(
   affinityGroup: Option[AffinityGroup])
 
 object SubmitterInfo {
-  implicit val format = new Format[SubmitterInfo] {
-    override def reads(json: JsValue) = json match {
+  implicit val format: Format[SubmitterInfo] = new Format[SubmitterInfo] {
+    override def reads(json: JsValue): JsResult[SubmitterInfo] = json match {
       case JsObject(m) =>
         val result = for {
           fullName <- m.get("fullName").flatMap(_.asOpt[String])
@@ -44,7 +44,7 @@ object SubmitterInfo {
 
     }
 
-    override def writes(s: SubmitterInfo) = Json.obj(
+    override def writes(s: SubmitterInfo): JsObject = Json.obj(
       "fullName"           -> s.fullName,
       "agencyBusinessName" -> s.agencyBusinessName.map(_.name),
       "contactPhone"       -> s.contactPhone,

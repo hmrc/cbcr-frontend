@@ -29,7 +29,7 @@ import javax.inject.Singleton
 @Singleton
 class FileUploadServiceConnector() {
 
-  val EnvelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
+  private val envelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
 
   lazy val logger: Logger = Logger(this.getClass)
 
@@ -47,7 +47,7 @@ class FileUploadServiceConnector() {
     resp.header(LOCATION) match {
       case Some(location) =>
         location match {
-          case EnvelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
+          case envelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
           case _                               => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
         }
       case None => Left(UnexpectedState(s"Header $LOCATION not found"))
@@ -67,10 +67,9 @@ class FileUploadServiceConnector() {
 
   def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
     resp.status match {
-      case Status.OK => {
+      case Status.OK =>
         logger.debug("FileMetaData: " + resp.json)
         Right(resp.json.asOpt[FileMetadata])
-      }
       case _ => Left(UnexpectedState("Problems getting File Metadata"))
     }
 }

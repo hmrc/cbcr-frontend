@@ -39,20 +39,20 @@ case class AuthenticationController(credentials: Creds)(
       AuthenticationController.onUnauthorised)
 
 object AuthenticationController {
-  def extractCredentials(storedCredentials: Creds): RequestHeader => Option[String] = { header =>
+  private def extractCredentials(storedCredentials: Creds): RequestHeader => Option[String] = { header =>
     for {
       authHeader <- header.headers.get("Authorization")
       encoded    <- authHeader.split(" ").drop(1).headOption
       (username, password) <- Try {
                                val authInfo = new String(Base64.getDecoder.decode(encoded)).split(":").toList
-                               (authInfo(0), authInfo(1))
+                               (authInfo.head, authInfo(1))
                              }.toOption
       authenticatedUsername <- if (storedCredentials.check(username, password)) Some(username) else None
     } yield authenticatedUsername
 
   }
 
-  def onUnauthorised: RequestHeader => Result = { header =>
+  private def onUnauthorised: RequestHeader => Result = { _ =>
     Results.Unauthorized("Authentication failed").withHeaders("WWW-Authenticate" -> """Basic realm="Secured"""")
   }
 }

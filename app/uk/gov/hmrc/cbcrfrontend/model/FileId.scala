@@ -19,10 +19,10 @@ package uk.gov.hmrc.cbcrfrontend.model
 import play.api.libs.json._
 
 case class FileId(value: String) extends AnyVal {
-  override def toString = value
+  override def toString: String = value
 }
 object FileId {
-  implicit val fileIdFormat = new Format[FileId] {
+  implicit val fileIdFormat: Format[FileId] = new Format[FileId] {
     override def reads(json: JsValue): JsResult[FileId] = json.asOpt[String] match {
       case Some(s) => JsSuccess(FileId(s))
       case None    => JsError(s"Could not parse fileId: $json")

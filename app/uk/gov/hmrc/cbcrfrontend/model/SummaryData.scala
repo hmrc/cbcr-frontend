@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class SummaryData(
   businessPartnerRecord: BusinessPartnerRecord,
@@ -25,5 +25,5 @@ case class SummaryData(
   doesCreationTimeStampHaveMillis: Boolean)
 
 object SummaryData {
-  implicit val format = Json.format[SummaryData]
+  implicit val format: OFormat[SummaryData] = Json.format[SummaryData]
 }

@@ -31,7 +31,7 @@ import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 class Harness @Inject()(cbcEnhancementAction: CBCEnhancementAction) extends InjectedController {
 
-  def onPageLoad(): Action[AnyContent] = cbcEnhancementAction { request: Request[AnyContent] =>
+  def onPageLoad(): Action[AnyContent] = cbcEnhancementAction { _: Request[AnyContent] =>
     Ok
   }
 }
@@ -39,7 +39,7 @@ class Harness @Inject()(cbcEnhancementAction: CBCEnhancementAction) extends Inje
 class CBCEnhancementActionSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
-  val mockFrontendAppConfig = mock[FrontendAppConfig]
+  private val mockFrontendAppConfig = mock[FrontendAppConfig]
 
   implicit override lazy val app: Application = GuiceApplicationBuilder()
     .overrides(bind[FrontendAppConfig].toInstance(mockFrontendAppConfig))

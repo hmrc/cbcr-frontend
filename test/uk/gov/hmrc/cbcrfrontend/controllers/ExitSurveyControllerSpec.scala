@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import akka.util.Timeout
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -26,67 +25,37 @@ import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
-import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class ExitSurveyControllerSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
-  implicit val ec = app.injector.instanceOf[ExecutionContext]
-  implicit val messagesApi = app.injector.instanceOf[MessagesApi]
-  implicit val authCon = mock[AuthConnector]
-  implicit val conf = mock[FrontendAppConfig]
+  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+  private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
+  private implicit val conf: FrontendAppConfig = mock[FrontendAppConfig]
 
-  implicit val cache = app.injector.instanceOf[CBCSessionCache]
-  val subService = mock[SubscriptionDataService]
-  val bprKF = mock[BPRKnownFactsService]
-  val configuration = mock[Configuration]
-  val auditC: AuditConnector = mock[AuditConnector]
-  val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  val runMode = mock[RunMode]
-  val views: Views = app.injector.instanceOf[Views]
-
-  val id: CBCId = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
-  val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
-
-  val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
+  private val configuration = mock[Configuration]
+  private val auditC = mock[AuditConnector]
+  private val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  private val runMode = mock[RunMode]
+  private val views = app.injector.instanceOf[Views]
 
   when(runMode.env) thenReturn "Dev"
 
-  val schemaVer: String = "1.0"
+  private val controller = new ExitSurveyController(configuration, auditC, mcc, views)
 
-  val controller = new ExitSurveyController(configuration, auditC, mcc, views)
+  private val fakeSubmit = addToken(FakeRequest("POST", "/exit-survey/submit"))
 
-  val utr = Utr("7000000001")
-  val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))
-  val subDetails = SubscriptionDetails(
-    bpr,
-    SubscriberContact("firstName", "lastName", "lkasjdf", EmailAddress("max@max.com")),
-    Some(id),
-    utr
-  )
+  private val fakeRequest = addToken(FakeRequest("GET", "/exit-survey"))
 
-  implicit val hc = HeaderCarrier()
-
-  implicit val timeout: Timeout = Duration.apply(20, "s")
-
-  val sa = SurveyAnswers("", "")
-
-  val fakeSubmit = addToken(FakeRequest("POST", "/exit-survey/submit"))
-
-  val fakeRequest = addToken(FakeRequest("GET", "/exit-survey"))
-
-  val fakeAcknowledge = addToken(FakeRequest("GET", "/exit-survey/acknowledge"))
+  private val fakeAcknowledge = addToken(FakeRequest("GET", "/exit-survey/acknowledge"))
 
   "GET /exit-survey" should {
     "return 200" in {

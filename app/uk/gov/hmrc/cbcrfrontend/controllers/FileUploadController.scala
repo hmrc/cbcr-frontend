@@ -64,11 +64,11 @@ class FileUploadController @Inject()(
   feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
-  implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
+  implicit val credentialsFormat: OFormat[Credentials] = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
-  lazy val hostName = config.get[String]("cbcr-frontend.host")
-  lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
-  lazy val fileUploadHost = config.get[String](s"file-upload-public-frontend.host")
+  private lazy val hostName = config.get[String]("cbcr-frontend.host")
+  private lazy val fileUploadErrorRedirectUrl = s"$hostName${routes.FileUploadController.handleError().url}"
+  private lazy val fileUploadHost = config.get[String](s"file-upload-public-frontend.host")
   lazy val logger: Logger = Logger(this.getClass)
 
   private def fileUploadUrl()(implicit hc: HeaderCarrier): EitherT[Future, CBCErrors, String] =
@@ -85,7 +85,7 @@ class FileUploadController @Inject()(
         s"redirect-error-url=$fileUploadErrorRedirectUrl"
     } yield fileUploadUrl
 
-  val chooseXMLFile = Action.async { implicit request =>
+  val chooseXMLFile: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation or AffinityGroup.Agent).retrieve(Retrievals.affinityGroup and cbcEnrolment) {
       case None ~ _ =>
         errorRedirect(
@@ -111,7 +111,7 @@ class FileUploadController @Inject()(
     * @param fileId the Id of the Xml File just uploaded.
     * @return the view to display the poller.
     */
-  def fileUploadProgress(envelopeId: String, fileId: String) = Action.async { implicit request =>
+  def fileUploadProgress(envelopeId: String, fileId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       cache
         .read[EnvelopeId]
@@ -130,7 +130,7 @@ class FileUploadController @Inject()(
     }
   }
 
-  def fileUploadResponseToResult(optResponse: Option[FileUploadCallbackResponse]): Result =
+  private def fileUploadResponseToResult(optResponse: Option[FileUploadCallbackResponse]): Result =
     optResponse
       .map(response =>
         response.status match {
@@ -144,7 +144,7 @@ class FileUploadController @Inject()(
       })
       .getOrElse(NoContent)
 
-  def getMetaData(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): ServiceResponse[FileMetadata] =
+  private def getMetaData(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): ServiceResponse[FileMetadata] =
     for {
       metadata <- fileUploadService
                    .getFileMetaData(envelopeId, fileId)
@@ -190,10 +190,10 @@ class FileUploadController @Inject()(
         .flatten)
   }
 
-  def calculateFileSize(md: FileMetadata): BigDecimal =
+  private def calculateFileSize(md: FileMetadata) =
     (md.length / 1000).setScale(2, BigDecimal.RoundingMode.HALF_UP)
 
-  def fileValidate(envelopeId: String, fileId: String) = Action.async { implicit request =>
+  def fileValidate(envelopeId: String, fileId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
       case Some(creds) ~ affinity ~ enrolment =>
         val result = for {
@@ -251,17 +251,17 @@ class FileUploadController @Inject()(
     }
   }
 
-  private def getErrorFileSize(e: List[ValidationErrors])(implicit messages: Messages): Int = {
+  private def getErrorFileSize(e: List[ValidationErrors])(implicit messages: Messages) = {
     val f = fileUploadService.errorsToFile(e, "")
     val kb = f.length() * 0.001
     f.delete()
     Math.incrementExact(kb.toInt)
   }
 
-  private def fileUploadName(fname: String)(implicit messages: Messages): String =
+  private def fileUploadName(fname: String)(implicit messages: Messages) =
     messages(fname)
 
-  def getBusinessRuleErrors = Action.async { implicit request =>
+  def getBusinessRuleErrors: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       OptionT(cache.readOption[AllBusinessRuleErrors])
         .map(x => fileUploadService.errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors")))
@@ -271,7 +271,7 @@ class FileUploadController @Inject()(
     }
   }
 
-  def getXmlSchemaErrors = Action.async { implicit request =>
+  def getXmlSchemaErrors: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       OptionT(cache.readOption[XMLErrors])
         .map(x => fileUploadService.errorsToFile(List(x), fileUploadName("fileUpload.XMLSchemaErrors")))
@@ -281,9 +281,9 @@ class FileUploadController @Inject()(
     }
   }
 
-  def fileInvalid = fileUploadError(FileNotXml)
-  def fileTooLarge = fileUploadError(FileTooLarge)
-  def fileContainsVirus = fileUploadError(FileContainsVirus)
+  def fileInvalid: Action[AnyContent] = fileUploadError(FileNotXml)
+  def fileTooLarge: Action[AnyContent] = fileUploadError(FileTooLarge)
+  def fileContainsVirus: Action[AnyContent] = fileUploadError(FileContainsVirus)
 
   private def fileUploadError(errorType: FileUploadErrorType) = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
@@ -295,7 +295,7 @@ class FileUploadController @Inject()(
     }
   }
 
-  def handleError(errorCode: Int, reason: String) = Action.async { implicit request =>
+  def handleError(errorCode: Int, reason: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       logger.error(s"Error response received from FileUpload callback - ErrorCode: $errorCode - Reason $reason")
       errorCode match {
@@ -312,7 +312,7 @@ class FileUploadController @Inject()(
     * @param envelopeId
     * @return
     */
-  def fileUploadResponse(envelopeId: String) = Action.async { implicit request =>
+  def fileUploadResponse(envelopeId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       logger.info(s"Received a file-upload-response query for $envelopeId")
       fileUploadService
@@ -400,7 +400,7 @@ class FileUploadController @Inject()(
                    })
     } yield result
 
-  val unregisteredGGAccount = Action.async { implicit request =>
+  val unregisteredGGAccount: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       fileUploadUrl()
         .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation))))

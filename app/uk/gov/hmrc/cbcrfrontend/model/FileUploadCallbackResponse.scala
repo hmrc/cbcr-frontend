@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class FileUploadCallbackResponse(envelopeId: String, fileId: String, status: String, reason: Option[String])
 
 object FileUploadCallbackResponse {
-  implicit val fileUploadCallbackFormat = Json.format[FileUploadCallbackResponse]
+  implicit val fileUploadCallbackFormat: OFormat[FileUploadCallbackResponse] = Json.format[FileUploadCallbackResponse]
 }

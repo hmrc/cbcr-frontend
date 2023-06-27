@@ -23,7 +23,7 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 
 object SubscriptionDataForm {
 
-  def condTrue(condition: Boolean, statement: Boolean) = if (condition) statement else true
+  def condTrue(condition: Boolean, statement: Boolean): Boolean = if (condition) statement else true
 
   val subscriptionDataForm: Form[SubscriberContact] = Form(
     mapping(

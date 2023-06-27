@@ -86,7 +86,7 @@ class DocRefId private[model] (
 }
 object DocRefId {
 
-  val docRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,41})""".r
+  private val docRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,41})""".r
   def apply(s: String): Option[DocRefId] = s match {
     case docRefIdRegex(msgRef, _, _, _, _, _, _, tin, docType, pGroup, uniq) =>
       for {
@@ -97,7 +97,7 @@ object DocRefId {
     case _ => None
   }
 
-  val newDocRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,25})""".r
+  private val newDocRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,25})""".r
   def applyNewDocRefIdRegex(s: String): Option[DocRefId] = s match {
     case newDocRefIdRegex(msgRef, _, _, _, _, _, _, tin, docType, pGroup, uniq) =>
       for {
@@ -111,7 +111,7 @@ object DocRefId {
   implicit val showDocRefId: Show[DocRefId] =
     Show.show[DocRefId](d => s"${d.msgRefID.show}_${d.tin}${d.docTypeIndic}${d.parentGroupElement}${d.uniq}")
 
-  implicit val format = new Format[DocRefId] {
+  implicit val format: Format[DocRefId] = new Format[DocRefId] {
 
     override def reads(json: JsValue): JsResult[DocRefId] = json match {
       case JsString(s) if apply(s).isDefined =>
@@ -127,7 +127,7 @@ object DocRefId {
 
 case class CorrDocRefId(cid: DocRefId)
 object CorrDocRefId {
-  implicit val format = new Format[CorrDocRefId] {
+  implicit val format: Format[CorrDocRefId] = new Format[CorrDocRefId] {
     override def writes(o: CorrDocRefId): JsValue = JsString(o.cid.show)
     override def reads(json: JsValue): JsResult[CorrDocRefId] = DocRefId.format.reads(json).map(CorrDocRefId(_))
   }
@@ -138,13 +138,13 @@ case class DocSpec(
   docRefId: DocRefId,
   corrDocRefId: Option[CorrDocRefId],
   corrMessageRefId: Option[String])
-object DocSpec { implicit val format = Json.format[DocSpec] }
+object DocSpec { implicit val format: OFormat[DocSpec] = Json.format[DocSpec] }
 
 case class AdditionalInfo(docSpec: DocSpec, otherInfo: String)
-object AdditionalInfo { implicit val format = Json.format[AdditionalInfo] }
+object AdditionalInfo { implicit val format: OFormat[AdditionalInfo] = Json.format[AdditionalInfo] }
 
 case class CbcReports(docSpec: DocSpec)
-object CbcReports { implicit val format = Json.format[CbcReports] }
+object CbcReports { implicit val format: OFormat[CbcReports] = Json.format[CbcReports] }
 
 case class MessageSpec(
   messageRefID: MessageRefID,
@@ -155,7 +155,7 @@ case class MessageSpec(
   messageType: Option[MessageTypeIndic],
   corrMessageRefId: Option[String])
 object MessageSpec {
-  implicit val yearFormat = new Format[Year] {
+  implicit val yearFormat: Format[Year] = new Format[Year] {
     override def reads(json: JsValue): JsResult[Year] = json match {
       case JsString(year) =>
         (nonFatalCatch either Year.parse(year)).fold(
@@ -166,11 +166,11 @@ object MessageSpec {
     }
     override def writes(o: Year): JsValue = JsString(o.toString)
   }
-  implicit val format = Json.format[MessageSpec]
+  implicit val format: OFormat[MessageSpec] = Json.format[MessageSpec]
 }
 
 case class EntityReportingPeriod(startDate: LocalDate, endDate: LocalDate)
-object EntityReportingPeriod { implicit val format = Json.format[EntityReportingPeriod] }
+object EntityReportingPeriod { implicit val format: OFormat[EntityReportingPeriod] = Json.format[EntityReportingPeriod] }
 
 case class ReportingEntity(
   reportingRole: ReportingRole,
@@ -180,10 +180,10 @@ case class ReportingEntity(
   city: Option[String],
   entityReportingPeriod: EntityReportingPeriod)
 
-object ReportingEntity { implicit val format = Json.format[ReportingEntity] }
+object ReportingEntity { implicit val format: OFormat[ReportingEntity] = Json.format[ReportingEntity] }
 
 case class CbcOecdInfo(cbcVer: String)
-object CbcOecdInfo { implicit val format = Json.format[CbcOecdInfo] }
+object CbcOecdInfo { implicit val format: OFormat[CbcOecdInfo] = Json.format[CbcOecdInfo] }
 
 case class XMLInfo(
   messageSpec: MessageSpec,
@@ -193,7 +193,7 @@ case class XMLInfo(
   creationDate: Option[LocalDate],
   constEntityNames: List[String],
   currencyCodes: List[String])
-object XMLInfo { implicit val format = Json.format[XMLInfo] }
+object XMLInfo { implicit val format: OFormat[XMLInfo] = Json.format[XMLInfo] }
 
 case class CompleteXMLInfo(
   messageSpec: MessageSpec,
@@ -213,5 +213,5 @@ object CompleteXMLInfo {
       x.creationDate,
       x.constEntityNames,
       x.currencyCodes)
-  implicit val format = Json.format[CompleteXMLInfo]
+  implicit val format: OFormat[CompleteXMLInfo] = Json.format[CompleteXMLInfo]
 }

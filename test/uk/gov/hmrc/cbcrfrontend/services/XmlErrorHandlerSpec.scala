@@ -18,11 +18,12 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import org.apache.xerces.stax.ImmutableLocation
 import org.codehaus.stax2.validation.XMLValidationProblem
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class XmlErrorHandlerSpec extends FlatSpec with Matchers {
+class XmlErrorHandlerSpec extends AnyFlatSpec with Matchers {
 
-  def addException(errorMessage: String, line: Int, column: Int, severity: Int) =
+  private def addException(errorMessage: String, line: Int, column: Int, severity: Int) =
     new XMLValidationProblem(new ImmutableLocation(0, column, line, "", ""), errorMessage, severity)
 
   val warnings: List[XMLValidationProblem] =

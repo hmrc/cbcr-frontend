@@ -17,7 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.connectors
 
 import org.mockito.MockitoSugar
-import org.scalatest.{EitherValues, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, UnexpectedState}

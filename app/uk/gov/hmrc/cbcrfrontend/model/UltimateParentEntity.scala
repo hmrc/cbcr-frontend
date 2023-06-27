@@ -21,13 +21,13 @@ import play.api.libs.json._
 case class UltimateParentEntity(ultimateParentEntity: String)
 
 object UltimateParentEntity {
-  implicit val format = new Format[UltimateParentEntity] {
-    override def reads(json: JsValue) =
+  implicit val format: Format[UltimateParentEntity] = new Format[UltimateParentEntity] {
+    override def reads(json: JsValue): JsResult[UltimateParentEntity] =
       json
         .asOpt[String]
         .map(s => JsSuccess(UltimateParentEntity(s)))
         .getOrElse(JsError(s"Unable to parse $json as UltimateParentEntity"))
 
-    override def writes(o: UltimateParentEntity) = JsString(o.ultimateParentEntity)
+    override def writes(o: UltimateParentEntity): JsString = JsString(o.ultimateParentEntity)
   }
 }

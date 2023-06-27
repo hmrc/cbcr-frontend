@@ -20,7 +20,7 @@ import play.api.Configuration
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.MessagesControllerComponents
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
@@ -47,14 +47,14 @@ class StartController @Inject()(
   val ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
-  val startForm: Form[String] = Form(
+  private val startForm = Form(
     single("choice" -> nonEmptyText)
   )
 
-  def start = Action.async { implicit request =>
+  def start: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup and cbcEnrolment) {
       case Some(Agent) ~ _                      => Future.successful(Redirect(routes.FileUploadController.chooseXMLFile))
-      case Some(Organisation) ~ Some(enrolment) => Ok(views.start(startForm))
+      case Some(Organisation) ~ Some(_) => Ok(views.start(startForm))
       case Some(Organisation) ~ None            => Redirect(routes.SharedController.verifyKnownFactsOrganisation)
       case Some(Individual) ~ _ =>
         errorRedirect(
@@ -65,7 +65,7 @@ class StartController @Inject()(
     }
   }
 
-  def submit = Action.async(parse.formUrlEncoded) { implicit request =>
+  def submit: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     {
       authorised() {
         startForm
@@ -74,12 +74,10 @@ class StartController @Inject()(
             errors => BadRequest(views.start(errors)), {
               case "upload" =>
                 Redirect(routes.FileUploadController.chooseXMLFile)
-              case "editSubscriberInfo" => {
+              case "editSubscriberInfo" =>
                 Redirect(routes.SubscriptionController.updateInfoSubscriber)
-              }
-              case _ => {
+              case _ =>
                 BadRequest(views.start(startForm))
-              }
             }
           )
       }

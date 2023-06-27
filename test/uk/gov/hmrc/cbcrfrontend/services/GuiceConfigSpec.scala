@@ -16,27 +16,24 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import akka.actor.ActorSystem
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Environment
 
 import java.io.File
 
-class GuiceConfigSpec extends FlatSpec with WithConfigFakeApplication with Matchers with GuiceOneAppPerSuite {
+class GuiceConfigSpec extends AnyFlatSpec with WithConfigFakeApplication with Matchers with GuiceOneAppPerSuite {
 
   override def configFile: String = "fakeConfig.conf"
-  implicit val env = app.injector.instanceOf[Environment]
-  implicit val as = app.injector.instanceOf[ActorSystem]
 
-  val validXmlFile = new File(s"test/resources/cbcr-valid.xml")
-  val propertyName = "fake-oecd-schema-version"
+  private val validXmlFile = new File(s"test/resources/cbcr-valid.xml")
+  private val propertyName = "fake-oecd-schema-version"
 
-  val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
+  private val xmlValidationSchemaFactory =
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-  val schemaFile: File = new File(s"conf/schema/${getString(propertyName)}/CbcXML_v${getString(propertyName)}.xsd")
-  val validator = new CBCRXMLValidator(env, xmlValidationSchemaFactory.createSchema(schemaFile))
+  private val schemaFile = new File(s"conf/schema/${getString(propertyName)}/CbcXML_v${getString(propertyName)}.xsd")
+  private val validator = new CBCRXMLValidator(xmlValidationSchemaFactory.createSchema(schemaFile))
 
   "A WithConfigFakeApplication " should " be able to retrieve a property defined in the fake config file" in {
     val propertyName = "fake-oecd-schema-version"

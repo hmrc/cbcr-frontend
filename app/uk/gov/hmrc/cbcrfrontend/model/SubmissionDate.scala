@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 import java.time.LocalDateTime
 
@@ -25,5 +25,5 @@ import java.time.LocalDateTime
   */
 case class SubmissionDate(date: LocalDateTime)
 object SubmissionDate {
-  implicit val format = Json.format[SubmissionDate]
+  implicit val format: OFormat[SubmissionDate] = Json.format[SubmissionDate]
 }

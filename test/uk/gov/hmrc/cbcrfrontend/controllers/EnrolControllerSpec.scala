@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
@@ -27,29 +26,26 @@ import play.api.test.FakeRequest
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
-import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
+import uk.gov.hmrc.cbcrfrontend.model.CBCId
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.http.HttpResponse
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 class EnrolControllerSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
-  implicit val ec = app.injector.instanceOf[ExecutionContext]
-  implicit val timeout = Timeout(5 seconds)
+  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
-  val config = new Configuration(ConfigFactory.load("application.conf"))
+  private val config = new Configuration(ConfigFactory.load("application.conf"))
 
-  val authConnector = mock[AuthConnector]
-  val enrolConnector = mock[TaxEnrolmentsConnector]
-  val env = mock[Environment]
-  val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  val controller = new EnrolController(config, enrolConnector, authConnector, env, mcc)
+  private val authConnector = mock[AuthConnector]
+  private val enrolConnector = mock[TaxEnrolmentsConnector]
+  private val env = mock[Environment]
+  private val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  private val controller = new EnrolController(config, enrolConnector, authConnector, env, mcc)
 
-  val id = CBCId.create(5678).getOrElse(fail("bad cbcid"))
-  val utr = Utr("9000000001")
+  private val id = CBCId.create(5678).getOrElse(fail("bad cbcid"))
 
   "Calling enrol controller" should {
     "return 200 when calling deEnrol if authorised Organisation and User or Admin" in {
@@ -57,7 +53,7 @@ class EnrolControllerSpec
       val response: HttpResponse = mock[HttpResponse]
       when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       when(enrolConnector.deEnrol(any())) thenReturn Future.successful(response)
-      when(response.body) thenReturn ("deEnrol")
+      when(response.body) thenReturn "deEnrol"
       status(controller.deEnrol()(fakeRequest)) shouldBe Status.OK
     }
 

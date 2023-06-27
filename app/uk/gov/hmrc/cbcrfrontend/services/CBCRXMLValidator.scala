@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import com.ctc.wstx.exc.WstxException
 import org.codehaus.stax2.validation._
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
-import play.api.{Environment, Logger}
+import play.api.Logger
 
 import java.io.File
 import javax.inject.Inject
@@ -27,11 +27,11 @@ import javax.xml.stream.XMLInputFactory
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Exception.nonFatalCatch
 
-class CBCRXMLValidator @Inject()(env: Environment, xmlValidationSchema: XMLValidationSchema) {
+class CBCRXMLValidator @Inject()(xmlValidationSchema: XMLValidationSchema) {
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  val xmlInputFactory2: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
+  private val xmlInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
   xmlInputFactory2.setProperty(XMLInputFactory.SUPPORT_DTD, false)
   xmlInputFactory2.setProperty("javax.xml.stream.isSupportingExternalEntities", false)
 
@@ -77,10 +77,10 @@ class XmlErrorHandler() extends ValidationProblemHandler {
 
   private def captureError(problem: XMLValidationProblem) = {
 
-    var listBuffer: ListBuffer[String] = problem.getSeverity match {
+    val listBuffer: ListBuffer[String] = problem.getSeverity match {
       case XMLValidationProblem.SEVERITY_WARNING => warningsListBuffer
-      case XMLValidationProblem.SEVERITY_ERROR   => errorsListBuffer
-      case XMLValidationProblem.SEVERITY_FATAL   => fatalErrorsListBuffer
+      case XMLValidationProblem.SEVERITY_ERROR => errorsListBuffer
+      case XMLValidationProblem.SEVERITY_FATAL => fatalErrorsListBuffer
     }
 
     if (listBuffer.size < errorMessageLimit) {
