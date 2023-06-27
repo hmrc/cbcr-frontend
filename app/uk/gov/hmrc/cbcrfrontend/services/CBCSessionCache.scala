@@ -77,7 +77,7 @@ class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)
       save(t).map(_ => t)
     }.value)
 
-  def stripPackage(s: String): String = s.split('.').last
+  private def stripPackage(s: String): String = s.split('.').last
 
   def clear(implicit hc: HeaderCarrier): Future[Boolean] =
     super

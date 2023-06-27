@@ -18,7 +18,6 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.instances.all._
 import play.api.Configuration
-import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -28,7 +27,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class CreationDateService @Inject()(
-  connector: CBCRBackendConnector,
   configuration: Configuration,
   runMode: RunMode,
   reportingEntityDataService: ReportingEntityDataService)(implicit ec: ExecutionContext) {
@@ -69,12 +67,11 @@ class CreationDateService @Inject()(
             }
           }
           .subflatMap {
-            case Some(red) => {
+            case Some(red) =>
               val cd: LocalDate = red.creationDate.getOrElse(LocalDate.of(creationYear, creationMonth, creationDay))
               val lcd: LocalDate = in.creationDate.getOrElse(LocalDate.now())
               val result: Boolean = Period.between(cd, lcd).getYears < 3
               Right(result)
-            }
             case None => Left(false)
           }
           .merge

@@ -18,18 +18,18 @@ package uk.gov.hmrc.cbcrfrontend.util
 
 import akka.stream.Materializer
 import akka.util.ByteString
-import org.scalatest.{Matchers, OptionValues, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Result
 
 import java.nio.charset.Charset
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.language.implicitConversions
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
+import scala.language.{implicitConversions, postfixOps}
 
-trait UnitSpec extends WordSpecLike with Matchers with OptionValues {
-
-  import scala.concurrent.duration._
-  import scala.concurrent.{Await, Future}
+trait UnitSpec extends AnyWordSpecLike with Matchers {
 
   implicit val defaultTimeout: FiniteDuration = 5 seconds
 

@@ -39,7 +39,6 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, FusFeUrl, FusUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
@@ -51,44 +50,40 @@ import java.io.File
 import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.postfixOps
 
 class SubmissionSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach with MockitoSugar with MockitoCats {
 
-  implicit val ec = app.injector.instanceOf[ExecutionContext]
-  implicit val messagesApi = app.injector.instanceOf[MessagesApi]
-  implicit val as = app.injector.instanceOf[ActorSystem]
-  implicit val env = app.injector.instanceOf[Environment]
-  implicit val config = app.injector.instanceOf[Configuration]
-  implicit val feConfig = mock[FrontendAppConfig]
-  implicit val timeout = Timeout(5 seconds)
-  def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
+  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+  private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
+  private implicit val as: ActorSystem = app.injector.instanceOf[ActorSystem]
+  private implicit val env: Environment = app.injector.instanceOf[Environment]
+  private implicit val config: Configuration = app.injector.instanceOf[Configuration]
+  private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
+  private implicit val timeout: Timeout = Timeout(5 seconds)
 
-  val creds: Credentials = Credentials("totally", "legit")
+  private def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
-  val cache = mock[CBCSessionCache]
-  val fus = mock[FileUploadService]
-  val docRefService = mock[DocRefIdService]
-  val messageRefIdService = mock[MessageRefIdService]
-  val auth = mock[AuthConnector]
-  val auditMock = mock[AuditConnector]
-  val mockCBCIdService = mock[CBCIdService]
-  val mockEmailService = mock[EmailService]
-  val reportingEntity = mock[ReportingEntityDataService]
-  val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  val views: Views = app.injector.instanceOf[Views]
-  val fileDetails = FileDetails("env1", "file1")
+  private val creds: Credentials = Credentials("totally", "legit")
 
-  implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = "file-upload" }
-  implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = "file-upload-frontend" }
-  implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr" }
+  private val cache = mock[CBCSessionCache]
+  private val fus = mock[FileUploadService]
+  private val docRefService = mock[DocRefIdService]
+  private val messageRefIdService = mock[MessageRefIdService]
+  private val auth = mock[AuthConnector]
+  private val auditMock = mock[AuditConnector]
+  private val mockCBCIdService = mock[CBCIdService]
+  private val mockEmailService = mock[EmailService]
+  private val reportingEntity = mock[ReportingEntityDataService]
+  private val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  private val views: Views = app.injector.instanceOf[Views]
+  private val fileDetails = FileDetails("env1", "file1")
 
-  val bpr = BusinessPartnerRecord("safeId", None, EtmpAddress("Line1", None, None, None, None, "GB"))
+  private val bpr = BusinessPartnerRecord("safeId", None, EtmpAddress("Line1", None, None, None, None, "GB"))
 
-  val cbcId = CBCId.create(99).getOrElse(fail("failed to gen cbcid"))
-
-  implicit val hc = HeaderCarrier()
-  val controller = new SubmissionController(
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
+  private val controller = new SubmissionController(
     messagesApi,
     fus,
     docRefService,
@@ -646,7 +641,7 @@ class SubmissionSpec
           "lkjasdf",
           JsNull,
           "")
-        when(fus.getFile(anyString, anyString)(any(), any())) thenReturn EitherT[Future, CBCErrors, File](
+        when(fus.getFile(anyString, anyString)(any())) thenReturn EitherT[Future, CBCErrors, File](
           Future.successful(Right(file)))
         when(cache.save[SummaryData](any())(any(), any(), any())) thenReturn Future.successful(
           CacheMap("cache", Map.empty[String, JsValue]))
@@ -685,7 +680,7 @@ class SubmissionSpec
       }
 
       "returns a 500 when the call to save the docRefIds fail" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
           .thenReturn(
@@ -700,7 +695,7 @@ class SubmissionSpec
 
       "returns 303 when the there is data and " should {
         "call saveReportingEntityData when the submissionType is OECD1" in {
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
           when(auth.authorise(any(), any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]]())(any(), any()))
             .thenReturn(Future.successful(
@@ -724,7 +719,7 @@ class SubmissionSpec
           verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
         }
         "call updateReportingEntityData when the submissionType is OECD[023]" in {
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
           lazy val updateXml = keyXMLInfo.copy(
             reportingEntity =
@@ -751,7 +746,7 @@ class SubmissionSpec
           verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
         }
         "return 500 if saveMessageRefId fails and does NOT callsaveReportingEntityData " in {
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
           when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
             .thenReturn(
@@ -793,7 +788,7 @@ class SubmissionSpec
 
         "looking for the SubmissionDate" in {
           when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
           whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
@@ -805,7 +800,7 @@ class SubmissionSpec
 
         "looking for the CBCId" in {
           when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+          val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
           whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
@@ -819,7 +814,7 @@ class SubmissionSpec
       }
 
       "sends an email" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
@@ -848,7 +843,7 @@ class SubmissionSpec
       }
 
       "will still return a 200 if the email fails" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -877,7 +872,7 @@ class SubmissionSpec
       }
 
       "will write  a ConfirmationEmailSent to the cache if an email is sent" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -906,7 +901,7 @@ class SubmissionSpec
       }
 
       "not send the email if it has already been sent and not save to the cache" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt:Organisation"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -936,7 +931,7 @@ class SubmissionSpec
       }
 
       "returns a 200 otherwise" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt:Organisation"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -964,7 +959,7 @@ class SubmissionSpec
       }
 
       "show show link to submit another report if AffinityGroup is Agent and cache.clear succeeds" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt:Agent"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -991,7 +986,7 @@ class SubmissionSpec
       }
 
       "show NOT show link to submit another reportf AffinityGroup is Agent but cache.clear fails" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -1018,7 +1013,7 @@ class SubmissionSpec
       }
 
       "show NOT show link to submit another report if AffinityGroup is NOT Agent and cache.clear succeeds" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
         when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
@@ -1054,7 +1049,7 @@ class SubmissionSpec
     }
 
     "display the audit information correctly" in {
-      val sd = SummaryData(bpr, submissionData, keyXMLInfo, false)
+      val sd = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
       val sdj = Json.toJson(sd)
       (sdj \ "submissionMetaData" \ "submissionInfo" \ "ultimateParentEntity")
         .as[String] shouldEqual "ultimateParentEntity"
@@ -1085,7 +1080,7 @@ class SubmissionSpec
     SubmissionMetaData(submissionInfo, submitterInfo, fileInfo)
   }
 
-  val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
+  private val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
 
   private lazy val keyXMLInfo = {
     CompleteXMLInfo(
@@ -1177,7 +1172,7 @@ class SubmissionSpec
 
   "calling saveCompanyName" should {
     "return 303 if valid company details passed in request" in {
-      val data = ("companyName" -> "Any Old Co")
+      val data = "companyName" -> "Any Old Co"
       val request = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody(data)
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(
@@ -1187,7 +1182,7 @@ class SubmissionSpec
     }
 
     "return 400 if company details in request are invalid" in {
-      val data = ("sas" -> "Any Old Iron")
+      val data = "sas" -> "Any Old Iron"
       val request = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody(data)
       when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
       when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(

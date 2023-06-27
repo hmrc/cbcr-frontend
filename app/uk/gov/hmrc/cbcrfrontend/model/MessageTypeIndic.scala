@@ -25,7 +25,7 @@ case object CBC402 extends MessageTypeIndic
 case object CBCInvalidMessageTypeIndic extends MessageTypeIndic
 
 object MessageTypeIndic {
-  implicit val format = new Format[MessageTypeIndic] {
+  implicit val format: Format[MessageTypeIndic] = new Format[MessageTypeIndic] {
     override def writes(o: MessageTypeIndic): JsValue = JsString(o.toString)
 
     override def reads(json: JsValue): JsResult[MessageTypeIndic] = json match {
@@ -38,7 +38,7 @@ object MessageTypeIndic {
   def parseFrom(s: String): Option[MessageTypeIndic] = s.toLowerCase.trim match {
     case "cbc401"                            => Some(CBC401)
     case "cbc402"                            => Some(CBC402)
-    case otherValue if (!otherValue.isEmpty) => Some(CBCInvalidMessageTypeIndic)
+    case otherValue if otherValue.nonEmpty => Some(CBCInvalidMessageTypeIndic)
     case _                                   => None
   }
 }

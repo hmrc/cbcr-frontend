@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class SurveyAnswers(satisfied: String, suggestions: String)
-object SurveyAnswers { implicit val format = Json.format[SurveyAnswers] }
+object SurveyAnswers { implicit val format: OFormat[SurveyAnswers] = Json.format[SurveyAnswers] }

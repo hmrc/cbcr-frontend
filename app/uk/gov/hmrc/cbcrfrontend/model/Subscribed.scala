@@ -22,7 +22,7 @@ import play.api.libs.json._
 case object Subscribed
 
 object Implicits {
-  implicit val format = new Format[Subscribed.type] {
+  implicit val format: Format[Subscribed.type] = new Format[Subscribed.type] {
     override def writes(o: Subscribed.type): JsValue = JsString(o.toString)
 
     override def reads(json: JsValue): JsResult[Subscribed.type] = json match {

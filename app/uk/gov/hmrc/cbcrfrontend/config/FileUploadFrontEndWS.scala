@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend
+package uk.gov.hmrc.cbcrfrontend.config
 
+import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.typesafe.config.Config
@@ -55,6 +56,6 @@ class FileUploadFrontEndWS @Inject()(override val wsClient: WSClient, appConfig:
   }
 
   override val hooks: Seq[HttpHook] = Seq.empty[HttpHook]
-  override lazy val actorSystem = appConfig.actorSystem
+  override lazy val actorSystem: ActorSystem = appConfig.actorSystem
   override protected def configuration: Config = appConfig.runModeConfiguration.underlying
 }

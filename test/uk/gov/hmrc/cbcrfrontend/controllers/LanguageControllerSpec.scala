@@ -31,14 +31,14 @@ import scala.concurrent.duration._
 class LanguageControllerSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
-  implicit val conf = mock[FrontendAppConfig]
-  val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  private implicit val conf: FrontendAppConfig = mock[FrontendAppConfig]
+  private val mcc = app.injector.instanceOf[MessagesControllerComponents]
 
   when(conf.fallbackURLForLanguageSwitcher) thenReturn "#"
 
-  val controller = new LanguageController(conf, mcc)
-  val requestWithReferer = addToken(FakeRequest("GET", "/report/upload-form").withHeaders(REFERER -> "/somewhere"))
-  val requestNoReferer = addToken(FakeRequest("GET", "/report/upload-form"))
+  private val controller = new LanguageController(conf, mcc)
+  private val requestWithReferer = addToken(FakeRequest("GET", "/report/upload-form").withHeaders(REFERER -> "/somewhere"))
+  private val requestNoReferer = addToken(FakeRequest("GET", "/report/upload-form"))
 
   "Switching Language" should {
     "return 303 and set lang=en " when {
@@ -56,7 +56,7 @@ class LanguageControllerSpec
     }
     "return 303 and set lang=cy " when {
       "switching to welsh enableLanguageSwitching = true and referer set in request header" in {
-        FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", true))
+        FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", enabled = true))
         val result: Result = Await.result(controller.switchToWelsh()(requestWithReferer), 5.second)
         status(result) shouldBe 303
 
@@ -70,7 +70,7 @@ class LanguageControllerSpec
     }
     "return 303 and set lang=en" when {
       "switching to english enableLanguageSwitching = true and referer set in request header" in {
-        FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", true))
+        FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", enabled = true))
         val result: Result = Await.result(controller.switchToEnglish()(requestWithReferer), 5.second)
         status(result) shouldBe 303
 

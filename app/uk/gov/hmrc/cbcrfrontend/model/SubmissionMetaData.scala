@@ -32,7 +32,7 @@ case class FileInfo(
   length: BigDecimal,
   created: String)
 object FileInfo {
-  implicit val format = Json.format[FileInfo]
+  implicit val format: OFormat[FileInfo] = Json.format[FileInfo]
 }
 
 case class SubmissionInfo(
@@ -45,8 +45,8 @@ case class SubmissionInfo(
   filingType: FilingType,
   ultimateParentEntity: UltimateParentEntity)
 object SubmissionInfo {
-  implicit val format = new Format[SubmissionInfo] {
-    override def reads(json: JsValue) = json match {
+  implicit val format: Format[SubmissionInfo] = new Format[SubmissionInfo] {
+    override def reads(json: JsValue): JsResult[SubmissionInfo] = json match {
       case JsObject(m) =>
         for {
           gwCredId   <- m.get("gwCredId").fold[JsResult[String]](JsError("gwCredId not found"))(_.validate[String])
@@ -66,7 +66,7 @@ object SubmissionInfo {
       case _ => JsError(s"Unable to parse $json as SubmissionInfo")
     }
 
-    override def writes(o: SubmissionInfo) = Json.obj(
+    override def writes(o: SubmissionInfo): JsObject = Json.obj(
       "gwCredId"             -> o.gwCredId,
       "cbcId"                -> o.cbcId,
       "bpSafeId"             -> o.bpSafeId,
@@ -82,5 +82,5 @@ object SubmissionInfo {
 case class SubmissionMetaData(submissionInfo: SubmissionInfo, submitterInfo: SubmitterInfo, fileInfo: FileInfo)
 object SubmissionMetaData {
 
-  implicit val format = Json.format[SubmissionMetaData]
+  implicit val format: OFormat[SubmissionMetaData] = Json.format[SubmissionMetaData]
 }

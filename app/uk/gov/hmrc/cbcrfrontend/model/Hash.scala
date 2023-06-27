@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class Hash(value: String)
 object Hash {
-  implicit val format = Json.format[Hash]
+  implicit val format: OFormat[Hash] = Json.format[Hash]
 }

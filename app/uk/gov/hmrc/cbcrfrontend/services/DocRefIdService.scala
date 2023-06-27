@@ -54,6 +54,6 @@ class DocRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Ex
         }
       }
       .recover {
-        case NonFatal(e) => Invalid
+        case NonFatal(_) => Invalid
       }
 }

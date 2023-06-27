@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 
 package object controllers {
 
-  val enrolmentsFormat = Json.format[Enrolments]
-  val credentialsFormat = Json.format[Credentials]
+  val enrolmentsFormat: OFormat[Enrolments] = Json.format[Enrolments]
+  val credentialsFormat: OFormat[Credentials] = Json.format[Credentials]
 
 }

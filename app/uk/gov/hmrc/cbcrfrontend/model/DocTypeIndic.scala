@@ -35,7 +35,7 @@ object DocTypeIndic {
         d => Some(d)
       )
 
-  implicit val format = new Format[DocTypeIndic] {
+  implicit val format: Format[DocTypeIndic] = new Format[DocTypeIndic] {
     override def writes(o: DocTypeIndic): JsValue = JsString(o.toString)
 
     override def reads(json: JsValue): JsResult[DocTypeIndic] = json match {

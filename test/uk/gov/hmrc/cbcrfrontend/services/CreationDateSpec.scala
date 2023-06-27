@@ -24,7 +24,6 @@ import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
-import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.http.HeaderCarrier
@@ -36,10 +35,9 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 class CreationDateSpec
     extends UnitSpec with BeforeAndAfterEach with GuiceOneAppPerSuite with MockitoSugar with MockitoCats {
 
-  val connector = mock[CBCRBackendConnector]
-  val reportingEntity = mock[ReportingEntityDataService]
-  val configuration = mock[Configuration]
-  val runMode: RunMode = mock[RunMode]
+  private val reportingEntity = mock[ReportingEntityDataService]
+  private val configuration = mock[Configuration]
+  private val runMode: RunMode = mock[RunMode]
 
   when(runMode.env) thenReturn "Dev"
   when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(
@@ -49,16 +47,16 @@ class CreationDateSpec
   when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
     Some(2020))
 
-  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  val cds = new CreationDateService(connector, configuration, runMode, reportingEntity)
+  private val cds = new CreationDateService(configuration, runMode, reportingEntity)
 
-  val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
-  val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
-  val actualDocRefId2 = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD63").get
+  private val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
+  private val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
+  private val actualDocRefId2 = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD63").get
 
-  val redNoCreationDate = ReportingEntityData(
+  private val redNoCreationDate = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
     List(actualDocRefId2),
     actualDocRefId,
@@ -70,7 +68,7 @@ class CreationDateSpec
     Some("USD"),
     None
   )
-  val redOldCreationDate = ReportingEntityData(
+  private val redOldCreationDate = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
     List(actualDocRefId2),
     actualDocRefId,
@@ -82,7 +80,7 @@ class CreationDateSpec
     Some("USD"),
     None
   )
-  val red = ReportingEntityData(
+  private val red = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
     List(actualDocRefId2),
     actualDocRefId,
@@ -95,7 +93,7 @@ class CreationDateSpec
     Some(EntityReportingPeriod(LocalDate.parse("2017-05-05"), LocalDate.parse("2018-01-01")))
   )
 
-  val messageSpec = MessageSpec(
+  private val messageSpec = MessageSpec(
     MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
     "GB",
     CBCId.create(99).getOrElse(fail("booo")),
@@ -105,7 +103,7 @@ class CreationDateSpec
     None
   )
 
-  val xmlinfo = XMLInfo(
+  private val xmlInfo = XMLInfo(
     messageSpec,
     None,
     List(CbcReports(DocSpec(OECD2, DocRefId(docRefId + "ENT").get, Some(CorrDocRefId(actualDocRefId)), None))),
@@ -124,19 +122,19 @@ class CreationDateSpec
     "return true" when {
       "repotingEntity creationDate is Null and default date of 2020/12/23 is less than 3 years ago" in {
         whenF(reportingEntity.queryReportingEntityData(any())(any())) thenReturn Some(redNoCreationDate)
-        val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
+        val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
         result shouldBe true
       }
       "repotingEntity creationDate is less than 3 years ago" in {
         whenF(reportingEntity.queryReportingEntityData(any())(any())) thenReturn Some(red)
-        val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
+        val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
         result shouldBe true
       }
     }
     "return false" when {
       "reportingEntity creationDate is older than 3 years ago" in {
         whenF(reportingEntity.queryReportingEntityData(any())(any())) thenReturn Some(redOldCreationDate)
-        val result = Await.result(cds.isDateValid(xmlinfo), 5.seconds)
+        val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
         result shouldBe false
       }
       "repotingEntity creationDate is Null and default date is more than 3 years ago" in {
@@ -149,8 +147,8 @@ class CreationDateSpec
           Some(23))
         when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Future
           .successful(Some(12))
-        val cds2 = new CreationDateService(connector, configuration, runMode, reportingEntity)
-        val result = Await.result(cds2.isDateValid(xmlinfo), 5.seconds)
+        val cds2 = new CreationDateService(configuration, runMode, reportingEntity)
+        val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
         result shouldBe false
       }
     }

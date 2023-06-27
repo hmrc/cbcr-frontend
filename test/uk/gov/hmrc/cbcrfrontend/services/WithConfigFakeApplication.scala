@@ -27,28 +27,28 @@ trait WithConfigFakeApplication extends BeforeAndAfterAll {
 
   def configFile: String
 
-  lazy val Application = new GuiceApplicationBuilder()
+  private lazy val application = new GuiceApplicationBuilder()
     .loadConfig(new Configuration(ConfigFactory.load(configFile)))
     .bindings(bindModules: _*)
     .build()
 
   def bindModules: Seq[GuiceableModule] = Seq()
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     super.beforeAll()
-    Play.start(Application)
+    Play.start(application)
   }
 
-  override def afterAll() {
+  override def afterAll(): Unit = {
     super.afterAll()
-    Play.stop(Application)
+    Play.stop(application)
   }
 
   def getString(tag: String): String =
-    Application.configuration.getOptional[String](tag).getOrElse(tag + " does not exist")
+    application.configuration.getOptional[String](tag).getOrElse(tag + " does not exist")
 
   def evaluateUsingPlay[T](block: => T): T =
-    running(Application) {
+    running(application) {
       block
     }
 

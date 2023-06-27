@@ -26,6 +26,7 @@ import play.api.libs.json._
 import java.time._
 import java.time.format.DateTimeFormatter
 import scala.util.control.Exception._
+import scala.util.matching.Regex
 
 class MessageRefID private (
   val sendingRJ: String,
@@ -36,16 +37,16 @@ class MessageRefID private (
   val creationTimestamp: LocalDateTime,
   val uniqueElement: String)
 object MessageRefID {
-  val dateFmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
-  val cbcRegex: String = CBCId.cbcRegex.init.tail // strip the ^ and $ characters from the cbcRegex
-  val dateRegex = """\d{8}T\d{6}"""
-  val messageRefIDRegex = ("""GB(\d{4})(\w{2})(""" + cbcRegex + """)(CBC40[1,2])(""" + dateRegex + """)(\w{1,56})""").r
+  private val dateFmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
+  private val cbcRegex: String = CBCId.cbcRegex.init.tail // strip the ^ and $ characters from the cbcRegex
+  private val dateRegex = """\d{8}T\d{6}"""
+  val messageRefIDRegex: Regex = ("""GB(\d{4})(\w{2})(""" + cbcRegex + """)(CBC40[1,2])(""" + dateRegex + """)(\w{1,56})""").r
 
-  implicit val show = Show.show[MessageRefID](m =>
+  implicit val show: Show[MessageRefID] = Show.show[MessageRefID](m =>
     s"${m.sendingRJ}${m.reportingPeriod}${m.receivingRJ}${m.cBCId}${m.messageType}${m.creationTimestamp
       .format(dateFmt)}${m.uniqueElement}")
 
-  implicit val format = new Format[MessageRefID] {
+  implicit val format: Format[MessageRefID] = new Format[MessageRefID] {
     override def writes(o: MessageRefID): JsValue = JsString(o.show)
 
     override def reads(json: JsValue): JsResult[MessageRefID] = json match {

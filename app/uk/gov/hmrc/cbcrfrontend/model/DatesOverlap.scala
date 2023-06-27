@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class DatesOverlap(isOverlapping: Boolean)
 
 object DatesOverlap {
-  implicit val format = Json.format[DatesOverlap]
+  implicit val format: OFormat[DatesOverlap] = Json.format[DatesOverlap]
 }

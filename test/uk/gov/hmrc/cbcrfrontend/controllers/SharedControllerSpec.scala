@@ -38,7 +38,6 @@ import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
@@ -48,53 +47,45 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 class SharedControllerSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with MockitoCats {
 
-  implicit val ec = app.injector.instanceOf[ExecutionContext]
-  implicit val messagesApi = app.injector.instanceOf[MessagesApi]
-  implicit val cache = mock[CBCSessionCache]
-  implicit val config = app.injector.instanceOf[Configuration]
-  implicit val feConfig = mock[FrontendAppConfig]
-  val subService = mock[SubscriptionDataService]
-  val bprKF = mock[BPRKnownFactsService]
-  val configuration = mock[Configuration]
-  val auditC: AuditConnector = mock[AuditConnector]
-  val runMode = mock[RunMode]
-  val env = mock[Environment]
-  val authC = mock[AuthConnector]
-  val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  val views: Views = app.injector.instanceOf[Views]
+  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+  private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
+  private implicit val cache: CBCSessionCache = mock[CBCSessionCache]
+  private implicit val config: Configuration = app.injector.instanceOf[Configuration]
+  private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
+  private val subService = mock[SubscriptionDataService]
+  private val bprKF = mock[BPRKnownFactsService]
+  private val auditC: AuditConnector = mock[AuditConnector]
+  private val runMode = mock[RunMode]
+  private val env = mock[Environment]
+  private val authC = mock[AuthConnector]
+  private val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  private val views: Views = app.injector.instanceOf[Views]
 
-  val id: CBCId = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
-  val id2: CBCId = CBCId.create(99).getOrElse(fail("unable to create cbcid"))
+  private val id = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
 
-  val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1ENTZ"
+  private val logger: Logger = Logger(this.getClass)
 
-  val logger: Logger = Logger(this.getClass)
-
-  def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
+  private def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
   when(cache.save[Utr](any())(any(), any(), any())) thenReturn Future.successful(
     CacheMap("id", Map.empty[String, JsValue]))
   when(runMode.env) thenReturn "Dev"
 
-  val schemaVer: String = "2.0"
-
-  val controller =
+  private val controller =
     new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc, views)(cache, config, feConfig, ec)
 
-  val utr = Utr("7000000001")
-  val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))
-  val subDetails = SubscriptionDetails(
+  private val utr = Utr("7000000001")
+  private val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))
+  private val subDetails = SubscriptionDetails(
     bpr,
     SubscriberContact("firstName", "lastName", "lkasjdf", EmailAddress("max@max.com")),
     Some(id),
     utr
   )
 
-  implicit val hc = HeaderCarrier()
+  private implicit val timeout: Timeout = Duration.apply(20, "s")
 
-  implicit val timeout: Timeout = Duration.apply(20, "s")
-
-  val fakeRequestEnterCBCId = addToken(FakeRequest("GET", "/enter-CBCId"))
+  private val fakeRequestEnterCBCId = addToken(FakeRequest("GET", "/enter-CBCId"))
 
   "GET /enter-CBCId" should {
     "return 200" in {
@@ -105,7 +96,7 @@ class SharedControllerSpec
     }
   }
 
-  val fakeRequestSubmitCBCId = addToken(FakeRequest("POST", "/enter-CBCId"))
+  private val fakeRequestSubmitCBCId = addToken(FakeRequest("POST", "/enter-CBCId"))
 
   "GET /submitCBCId" should {
     "return 400 if it was not a valid CBCId" in {
@@ -142,7 +133,7 @@ class SharedControllerSpec
     }
   }
 
-  val fakeRequestSignOut = addToken(FakeRequest("GET", "/signOut"))
+  private val fakeRequestSignOut = addToken(FakeRequest("GET", "/signOut"))
 
   "GET /signOut" should {
     "return 303 to Company Auth" in {

@@ -20,7 +20,7 @@ import cats.data.OptionT
 import cats.instances.all._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
-import play.api.mvc.MessagesControllerComponents
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
@@ -45,13 +45,13 @@ class TestCBCRController @Inject()(
   val config: Configuration)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
-  def insertSubscriptionData(cbcId: String, utr: String) = Action.async { implicit request =>
+  def insertSubscriptionData(cbcId: String, utr: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.insertSubscriptionData(defaultSubscriptionData(cbcId, utr)).map(_ => Ok("Data inserted"))
     }
   }
 
-  def defaultSubscriptionData(cbcId: String, utr: String): JsValue =
+  private def defaultSubscriptionData(cbcId: String, utr: String): JsValue =
     Json.parse(
       s"""
          |{
@@ -81,43 +81,43 @@ class TestCBCRController @Inject()(
        """.stripMargin
     )
 
-  def deleteSubscription(utr: String) = Action.async { implicit request =>
+  def deleteSubscription(utr: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.deleteSubscription(utr).map(_ => Ok("Record with the specific UTR deleted"))
     }
   }
 
-  def deleteSingleDocRefId(docRefId: String) = Action.async { implicit request =>
+  def deleteSingleDocRefId(docRefId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.deleteSingleDocRefId(docRefId).map(_ => Ok("DocRefId has been deleted"))
     }
   }
 
-  def deleteReportingEntityData(docRefId: String) = Action.async { implicit request =>
+  def deleteReportingEntityData(docRefId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.deleteReportingEntityData(docRefId).map(_ => Ok("Reporting entity data deleted")).recover {
-        case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity data deleted")
+        case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity data deleted")
       }
     }
   }
 
-  def dropReportingEntityDataCollection() = Action.async { implicit request =>
+  def dropReportingEntityDataCollection(): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.dropReportingEntityDataCollection
         .map(_ => Ok("Reporting entity data collection dropped"))
         .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity data collection dropped")
+          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity data collection dropped")
         }
     }
   }
 
-  def deleteSingleMessageRefId(messageRefId: String) = Action.async { implicit request =>
+  def deleteSingleMessageRefId(messageRefId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.deleteSingleMessageRefId(messageRefId).map(_ => Ok("MessageRefId has been deleted"))
     }
   }
 
-  def updateReportingEntityReportingPeriod(docRefId: String) = Action.async { implicit request =>
+  def updateReportingEntityReportingPeriod(docRefId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector
         .updateReportingEntityReportingPeriod(docRefId)
@@ -129,12 +129,12 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
         }
     }
   }
 
-  def updateReportingEntityCreationDate(createDate: String, docRefId: String) = Action.async { implicit request =>
+  def updateReportingEntityCreationDate(createDate: String, docRefId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector
         .updateReportingEntityCreationDate(createDate, docRefId)
@@ -146,12 +146,12 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
         }
     }
   }
 
-  def deleteReportingEntityCreationDate(docRefId: String) = Action.async { implicit request =>
+  def deleteReportingEntityCreationDate(docRefId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector
         .deleteReportingEntityCreationDate(docRefId)
@@ -163,12 +163,12 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
         }
     }
   }
 
-  def confirmReportingEntityCreationDate(createDate: String, docRefId: String) = Action.async { implicit request =>
+  def confirmReportingEntityCreationDate(createDate: String, docRefId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector
         .confirmReportingEntityCreationDate(createDate, docRefId)
@@ -180,12 +180,12 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
         }
     }
   }
 
-  def deleteReportingEntityReportingPeriod(docRefId: String) = Action.async { implicit request =>
+  def deleteReportingEntityReportingPeriod(docRefId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector
         .deleteReportingEntityReportingPeriod(docRefId)
@@ -197,12 +197,12 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
         }
     }
   }
 
-  def retrieveBusinessRuleValidationErrors() = Action.async { implicit request =>
+  def retrieveBusinessRuleValidationErrors(): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       OptionT(cache.readOption[AllBusinessRuleErrors])
         .map(x => fileUploadService.errorsToString(x.errors))
@@ -214,7 +214,7 @@ class TestCBCRController @Inject()(
     }
   }
 
-  def updateReportingEntityAdditionalInfoDRI(docRefId: String) = Action.async { implicit request =>
+  def updateReportingEntityAdditionalInfoDRI(docRefId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector
         .updateReportingEntityAdditionalInfoDRI(docRefId)
@@ -226,12 +226,12 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Reporting entity not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
         }
     }
   }
 
-  def retrieveSchemaValidationErrors() = Action.async { implicit request =>
+  def retrieveSchemaValidationErrors(): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       OptionT(cache.readOption[XMLErrors])
         .map(x => fileUploadService.errorsToString(List(x)))
@@ -243,7 +243,7 @@ class TestCBCRController @Inject()(
     }
   }
 
-  def validateNumberOfCbcIdForUtr(utr: String) = Action.async { implicit request =>
+  def validateNumberOfCbcIdForUtr(utr: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector
         .checkNumberOfCbcIdForUtr(utr)
@@ -255,15 +255,15 @@ class TestCBCRController @Inject()(
           }
         }
         .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Subscription data not found")
+          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Subscription data not found")
         }
     }
   }
 
-  def dropSubscription() = Action.async { implicit request =>
+  def dropSubscription(): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       testCBCRConnector.dropSubscriptionData.map(_ => Ok("Subscription data collection dropped")).recover {
-        case UpstreamErrorResponse.Upstream4xxResponse(x) => Ok("Subscription data collection dropped")
+        case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Subscription data collection dropped")
       }
     }
   }

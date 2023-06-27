@@ -17,7 +17,6 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import cats.data.EitherT
@@ -30,7 +29,7 @@ import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
-import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
+import uk.gov.hmrc.cbcrfrontend.config.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -57,13 +56,11 @@ class FileUploadService @Inject()(
   fileUploadFrontEndWS: FileUploadFrontEndWS)
     extends I18nSupport {
 
-  implicit val materializer = ActorMaterializer()
-
   lazy val logger: Logger = Logger(this.getClass)
 
-  implicit lazy val fusUrl = new ServiceUrl[FusUrl] { val url = servicesConfig.baseUrl("file-upload") }
-  implicit lazy val fusFeUrl = new ServiceUrl[FusFeUrl] { val url = servicesConfig.baseUrl("file-upload-frontend") }
-  implicit lazy val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = servicesConfig.baseUrl("cbcr") }
+  private implicit lazy val fusUrl: ServiceUrl[FusUrl] = new ServiceUrl[FusUrl] { val url: String = servicesConfig.baseUrl("file-upload") }
+  private implicit lazy val fusFeUrl: ServiceUrl[FusFeUrl] = new ServiceUrl[FusFeUrl] { val url: String = servicesConfig.baseUrl("file-upload-frontend") }
+  private implicit lazy val cbcrsUrl: ServiceUrl[CbcrsUrl] = new ServiceUrl[CbcrsUrl] { val url: String = servicesConfig.baseUrl("cbcr") }
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[EnvelopeId] = {
 
@@ -123,9 +120,7 @@ class FileUploadService @Inject()(
         })
     )
 
-  def getFile(envelopeId: String, fileId: String)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): ServiceResponse[File] =
+  def getFile(envelopeId: String, fileId: String)(implicit ec: ExecutionContext): ServiceResponse[File] =
     EitherT(
       ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content")
         .withMethod("GET")
@@ -193,7 +188,7 @@ class FileUploadService @Inject()(
     } yield resourceUrl.body
   }
 
-  def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =
+  private def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =
     e.map(x => x.show.split(" ").map(x => messages(x)).map(_.toString).mkString(" "))
 
   def errorsToMap(e: List[ValidationErrors])(implicit messages: Messages): Map[String, String] =

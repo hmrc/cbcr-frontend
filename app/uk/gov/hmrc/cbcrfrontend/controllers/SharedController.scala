@@ -60,31 +60,31 @@ class SharedController @Inject()(
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  val utrConstraint: Constraint[String] = Constraint("constraints.utrcheck") {
+  private val utrConstraint = Constraint[String]("constraints.utrcheck") {
     case utr if Utr(utr).isValid => Valid
     case _                       => Invalid(ValidationError("UTR is not valid"))
   }
 
-  val knownFactsForm = Form(
+  private val knownFactsForm = Form(
     mapping(
       "utr"                                                                              -> nonEmptyText.verifying(utrConstraint),
       "postCode"                                                                         -> text
     )((u, p) => BPRKnownFacts(Utr(u), p))((facts: BPRKnownFacts) => Some(facts.utr.value -> facts.postCode))
   )
 
-  val cbcIdForm: Form[CBCId] = Form(
+  private val cbcIdForm = Form(
     single("cbcId" -> of[CBCId])
   )
 
-  val technicalDifficulties = Action { implicit request =>
+  val technicalDifficulties: Action[AnyContent] = Action { implicit request =>
     InternalServerError(views.errorTemplate("Internal Server Error", "Internal Server Error", "Something went wrong"))
   }
 
-  val sessionExpired = Action { implicit request =>
+  val sessionExpired: Action[AnyContent] = Action { implicit request =>
     Ok(views.sessionExpired())
   }
 
-  val enterCBCId = Action.async { implicit request =>
+  val enterCBCId: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
 
       for {
@@ -98,7 +98,7 @@ class SharedController @Inject()(
   private def cacheSubscriptionDetails(s: SubscriptionDetails, id: CBCId)(implicit hc: HeaderCarrier): Future[Unit] =
     (cache.save(TIN(s.utr.value, "")) *> cache.save(s.businessPartnerRecord) *> cache.save(id)).map(_ => ())
 
-  val submitCBCId = Action.async { implicit request =>
+  val submitCBCId: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation).retrieve(cbcEnrolment) { cbcEnrolment =>
       cbcIdForm
         .bindFromRequest()
@@ -112,16 +112,16 @@ class SharedController @Inject()(
                 error => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
                 details =>
                   details.fold[Future[Result]] {
-                    BadRequest(views.enterCBCId(cbcIdForm, true))
+                    BadRequest(views.enterCBCId(cbcIdForm, noMatch = true))
                   }(subscriptionDetails =>
                     cbcEnrolment match {
-                      case Some(enrolment) =>
+                      case Some(_) =>
                         cbcEnrolment
                           .toRight(UnexpectedState("Could not find valid enrolment"))
                           .ensure(InvalidSession)(e => subscriptionDetails.cbcId.contains(e.cbcId))
                           .fold[Future[Result]](
                             {
-                              case InvalidSession => BadRequest(views.enterCBCId(cbcIdForm, false, true))
+                              case InvalidSession => BadRequest(views.enterCBCId(cbcIdForm, noMatch = false, missMatch = true))
                               case error          => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
                             },
                             _ =>
@@ -143,21 +143,21 @@ class SharedController @Inject()(
     }
   }
 
-  val signOut = Action.async { implicit request =>
+  val signOut: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       Future.successful(Redirect(
         s"${feConfig.governmentGatewaySignOutUrl}/bas-gateway/sign-out-without-state?continue=${feConfig.cbcrGuidanceUrl}"))
     }
   }
 
-  val signOutGG = Action.async { _ =>
+  val signOutGG: Action[AnyContent] = Action.async { _ =>
     {
       Future.successful(Redirect(
         s"${feConfig.governmentGatewaySignInUrl}?continue_url=${feConfig.cbcrFrontendBaseUrl}/country-by-country-reporting/"))
     }
   }
 
-  val signOutSurvey = Action.async { implicit request =>
+  val signOutSurvey: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       val continue = s"?continue=${feConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey.url}"
       Future.successful(
@@ -165,25 +165,25 @@ class SharedController @Inject()(
     }
   }
 
-  val keepSessionAlive = Action.async { implicit request =>
+  val keepSessionAlive: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       Future.successful(Ok("OK"))
     }
   }
 
-  val pred = AffinityGroup.Organisation and User
+  private val pred = AffinityGroup.Organisation and User
 
-  val verifyKnownFactsOrganisation = Action.async { implicit request =>
+  val verifyKnownFactsOrganisation: Action[AnyContent] = Action.async { implicit request =>
     authorised(pred).retrieve(cbcEnrolment) { enrolment =>
       enterKnownFacts(enrolment, AffinityGroup.Organisation)
     }
   }
 
-  val verifyKnownFactsAgent = Action.async { implicit request =>
+  val verifyKnownFactsAgent: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Agent)(enterKnownFacts(None, AffinityGroup.Agent))
   }
 
-  def auditBPRKnowFactsFailure(cbcIdFromXml: Option[CBCId], bpr: BusinessPartnerRecord, bPRKnownFacts: BPRKnownFacts)(
+  private def auditBPRKnowFactsFailure(cbcIdFromXml: Option[CBCId], bpr: BusinessPartnerRecord, bPRKnownFacts: BPRKnownFacts)(
     implicit request: Request[AnyContent]): Unit = {
 
     val cbcrKnownFactsFailure = "CBCRKnownFactsFailure"
@@ -203,7 +203,7 @@ class SharedController @Inject()(
         ))
       .map {
         case AuditResult.Success         => ()
-        case AuditResult.Failure(msg, _) => logger.error(s"Failed to audit $cbcrKnownFactsFailure")
+        case AuditResult.Failure(_, _) => logger.error(s"Failed to audit $cbcrKnownFactsFailure")
         case AuditResult.Disabled        => ()
       }
   }
@@ -220,11 +220,11 @@ class SharedController @Inject()(
                      .map((utr: String, postCode: String) =>
                        knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode)))
                      .getOrElse(knownFactsForm)
-                   Ok(views.enterKnownFacts(form, false, userType))
+                   Ok(views.enterKnownFacts(form, noMatchingBusiness = false, userType))
                  })((result: Future[Result]) => result)
     } yield result
 
-  def NotFoundView(knownFacts: BPRKnownFacts, userType: AffinityGroup)(implicit request: Request[_]): Result =
+  private def notFoundView(knownFacts: BPRKnownFacts, userType: AffinityGroup)(implicit request: Request[_]) =
     NotFound(views.enterKnownFacts(knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType))
 
   val checkKnownFacts: Action[AnyContent] = Action.async { implicit request =>
@@ -237,12 +237,12 @@ class SharedController @Inject()(
       case Some(userType) => {
 
         knownFactsForm.bindFromRequest.fold[EitherT[Future, Result, Result]](
-          formWithErrors => EitherT.left(BadRequest(views.enterKnownFacts(formWithErrors, false, userType))),
+          formWithErrors => EitherT.left(BadRequest(views.enterKnownFacts(formWithErrors, noMatchingBusiness = false, userType))),
           knownFacts =>
             for {
               bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight {
                       logger.warn("The BPR was not found when looking it up with the knownFactsService")
-                      NotFoundView(knownFacts, userType)
+                      notFoundView(knownFacts, userType)
                     }
               cbcIdFromXml <- EitherT.right(
                                OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
@@ -254,19 +254,17 @@ class SharedController @Inject()(
                     case AffinityGroup.Agent if subscriptionDetails.isEmpty =>
                       logger.error(
                         s"Agent supplying known facts for a UTR that is not registered. Check for an internal error!")
-                      Left(NotFoundView(knownFacts, AffinityGroup.Agent))
+                      Left(notFoundView(knownFacts, AffinityGroup.Agent))
                     case AffinityGroup.Agent
-                        if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined => {
+                        if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined =>
                       logger.warn(
                         s"Agent submitting Xml where the CBCId associated with the UTR does not match that in the Xml File. Request the original Xml File and Known Facts from the Agent")
                       auditBPRKnowFactsFailure(cbcIdFromXml, bpr, knownFacts)
-                      Left(NotFoundView(knownFacts, AffinityGroup.Agent))
-                    }
-                    case AffinityGroup.Agent if cbcIdFromXml.isEmpty => {
+                      Left(notFoundView(knownFacts, AffinityGroup.Agent))
+                    case AffinityGroup.Agent if cbcIdFromXml.isEmpty =>
                       logger.error(
                         s"Agent submitting Xml where the CBCId is not in the Xml. Check for an internal error!")
-                      Left(NotFoundView(knownFacts, AffinityGroup.Agent))
-                    }
+                      Left(notFoundView(knownFacts, AffinityGroup.Agent))
                     case AffinityGroup.Organisation if subscriptionDetails.isDefined =>
                       Left(Redirect(routes.SubscriptionController.alreadySubscribed))
                     case _ =>
@@ -282,7 +280,7 @@ class SharedController @Inject()(
     }
   }
 
-  def knownFactsMatch = Action.async { implicit request =>
+  def knownFactsMatch: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) {
       case None =>
         errorRedirect(
@@ -307,7 +305,7 @@ class SharedController @Inject()(
     }
   }
 
-  def unsupportedAffinityGroup = Action.async { implicit request =>
+  def unsupportedAffinityGroup: Action[AnyContent] = Action.async { implicit request =>
     {
       authorised().retrieve(Retrievals.affinityGroup) {
         case None =>

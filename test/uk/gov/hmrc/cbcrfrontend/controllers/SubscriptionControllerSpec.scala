@@ -39,11 +39,9 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.cbcrfrontend.util.{CbcrSwitches, UnitSpec}
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
@@ -55,29 +53,30 @@ import scala.reflect.runtime.universe._
 class SubscriptionControllerSpec
     extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
     with MockitoSugar with MockitoCats {
-  val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
-  def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
+  private val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
 
-  implicit val ec = app.injector.instanceOf[ExecutionContext]
-  implicit val env = app.injector.instanceOf[Environment]
-  val subService = mock[SubscriptionDataService]
-  val auditMock = mock[AuditConnector]
-  implicit val config = app.injector.instanceOf[Configuration]
-  implicit val feConfig = app.injector.instanceOf[FrontendAppConfig]
+  private def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
-  val dc = mock[BPRKnownFactsConnector]
-  val cbcId = mock[CBCIdService]
-  val cbcKF = mock[EnrolmentsService]
-  val bprKF = mock[BPRKnownFactsService]
-  val emailMock = mock[EmailService]
-  implicit val cache = mock[CBCSessionCache]
-  val auth = mock[AuthConnector]
-  val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  val views = app.injector.instanceOf[Views]
+  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+  private implicit val env: Environment = app.injector.instanceOf[Environment]
+  private val subService = mock[SubscriptionDataService]
+  private val auditMock = mock[AuditConnector]
+  private implicit val config: Configuration = app.injector.instanceOf[Configuration]
+  private implicit val feConfig: FrontendAppConfig = app.injector.instanceOf[FrontendAppConfig]
 
-  val id = CBCId.create(5678).getOrElse(fail("bad cbcid"))
-  val utr = Utr("9000000001")
-  implicit val timeout = Timeout(5 seconds)
+  private val dc = mock[BPRKnownFactsConnector]
+  private val cbcId = mock[CBCIdService]
+  private val cbcKF = mock[EnrolmentsService]
+  private val bprKF = mock[BPRKnownFactsService]
+  private val emailMock = mock[EmailService]
+  private implicit val cache: CBCSessionCache = mock[CBCSessionCache]
+  private val auth = mock[AuthConnector]
+  private val mcc = app.injector.instanceOf[MessagesControllerComponents]
+  private val views = app.injector.instanceOf[Views]
+
+  private val id = CBCId.create(5678).getOrElse(fail("bad cbcid"))
+  private val utr = Utr("9000000001")
+  private implicit val timeout: Timeout = Timeout(5 seconds)
 
   override protected def afterEach(): Unit = {
     reset(cache, subService, auditMock, dc, cbcId, bprKF, cache, emailMock, auth)
@@ -86,7 +85,7 @@ class SubscriptionControllerSpec
 
   whenF(cache.read[AffinityGroup](EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn AffinityGroup.Organisation
 
-  val controller =
+  private val controller =
     new SubscriptionController(
       messagesApi,
       subService,
@@ -101,15 +100,12 @@ class SubscriptionControllerSpec
       mcc,
       views)
 
-  implicit val hc = HeaderCarrier()
-  implicit val cbcrsUrl = new ServiceUrl[CbcrsUrl] { val url = "cbcr" }
+  private implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
+  private implicit val utrTag = implicitly[TypeTag[Utr]]
 
-  implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
-  implicit val utrTag = implicitly[TypeTag[Utr]]
+  private val cbcid = CBCId.create(1).toOption
 
-  val cbcid = CBCId.create(1).toOption
-
-  val subscriptionDetails = SubscriptionDetails(
+  private val subscriptionDetails = SubscriptionDetails(
     BusinessPartnerRecord(
       "SAFEID",
       Some(OrganisationResponse("blagh")),
@@ -119,7 +115,7 @@ class SubscriptionControllerSpec
     Utr("7000000002")
   )
 
-  val etmpSubscription = ETMPSubscription(
+  private val etmpSubscription = ETMPSubscription(
     "safeid",
     ContactName("Firstname", "SecondName"),
     ContactDetails(EmailAddress("test@test.com"), "123456789"),
@@ -356,8 +352,8 @@ class SubscriptionControllerSpec
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
       webPageAsString should include("There is a problem")
-      webPageAsString should not include ("found some errors")
-      webPageAsString should not include (getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty"))
+      webPageAsString should not include "found some errors"
+      webPageAsString should not include getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty")
     }
 
     "return a custom error message when the phone number is empty" in {
@@ -391,8 +387,8 @@ class SubscriptionControllerSpec
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty"))
       webPageAsString should include("Enter the phone number")
-      webPageAsString should not include ("found some errors")
-      webPageAsString should not include (getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
+      webPageAsString should not include "found some errors"
+      webPageAsString should not include getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid")
     }
 
     "return a custom error message when the email  is invalid" in {
@@ -426,8 +422,8 @@ class SubscriptionControllerSpec
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.emailAddress.error.invalid"))
       webPageAsString should include("There is a problem")
-      webPageAsString should not include ("found some errors")
-      webPageAsString should not include ("entered your email address")
+      webPageAsString should not include "found some errors"
+      webPageAsString should not include "entered your email address"
     }
 
     "return a custom error message when the first name is empty" in {
@@ -460,7 +456,7 @@ class SubscriptionControllerSpec
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.firstName.error"))
-      webPageAsString should not include ("found some errors")
+      webPageAsString should not include "found some errors"
     }
 
     "return a custom error message when the last name is empty" in {
@@ -493,7 +489,7 @@ class SubscriptionControllerSpec
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.lastName.error"))
-      webPageAsString should not include ("found some errors")
+      webPageAsString should not include "found some errors"
     }
 
     "return a custom error message when the email is empty" in {
@@ -526,8 +522,8 @@ class SubscriptionControllerSpec
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include("Enter the email address")
-      webPageAsString should not include ("found some errors")
-      webPageAsString should not include (getMessages(fakeRequest)("contactInfoSubscriber.emailAddress.error.invalid"))
+      webPageAsString should not include "found some errors"
+      webPageAsString should not include getMessages(fakeRequest)("contactInfoSubscriber.emailAddress.error.invalid")
     }
 
     "return 500 when the SubscriptionDataService errors" in {

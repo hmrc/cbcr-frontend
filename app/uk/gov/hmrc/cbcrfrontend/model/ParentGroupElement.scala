@@ -33,7 +33,7 @@ object ParentGroupElement {
         p => Some(p)
       )
 
-  implicit val format = new Format[ParentGroupElement] {
+  implicit val format: Format[ParentGroupElement] = new Format[ParentGroupElement] {
     override def reads(json: JsValue): JsResult[ParentGroupElement] = json match {
       case JsString("ENT") => JsSuccess(ENT)
       case JsString("REP") => JsSuccess(REP)

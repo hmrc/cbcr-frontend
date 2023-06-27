@@ -30,9 +30,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class TaxEnrolmentsConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
 
-  val conf = config.underlying.get[Config]("microservice.services.tax-enrolments").value
+  private val conf = config.underlying.get[Config]("microservice.services.tax-enrolments").value
 
-  val url: String = (for {
+  private val url = (for {
     host     <- conf.get[String]("host")
     port     <- conf.get[Int]("port")
     service  <- conf.get[String]("url")

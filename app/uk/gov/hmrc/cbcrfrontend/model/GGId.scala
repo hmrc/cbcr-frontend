@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class GGId(authProviderType: String, authProviderId: String)
-object GGId { implicit val format = Json.format[GGId] }
+object GGId { implicit val format: OFormat[GGId] = Json.format[GGId] }

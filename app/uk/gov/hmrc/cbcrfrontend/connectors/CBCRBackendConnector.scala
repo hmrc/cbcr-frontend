@@ -33,9 +33,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
 
-  val conf = config.underlying.get[Config]("microservice.services.cbcr").value
+  private val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
-  val url: String = (for {
+  private val url = (for {
     proto <- conf.get[String]("protocol")
     host  <- conf.get[String]("host")
     port  <- conf.get[Int]("port")
@@ -52,7 +52,6 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
 
   def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(
     implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    implicit val emailFormat = ContactDetails.emailFormat
     http.PUT[CorrespondenceDetails, HttpResponse](url + s"/subscription/$safeId", correspondenceDetails)
   }
 
@@ -102,7 +101,7 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.GET[HttpResponse](
       url + s"/reporting-entity/query-dates/$tin/start-date/${entityReportingPeriod.startDate.toString}/end-date/${entityReportingPeriod.endDate.toString}")
 
-  def getDocRefIdOver200(implicit hc: HeaderCarrier) = {
+  def getDocRefIdOver200(implicit hc: HeaderCarrier): Future[ListDocRefIdRecord] = {
     import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
     http.GET[ListDocRefIdRecord](url + s"/getDocsRefId")
   }
@@ -123,7 +122,7 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.PUT[JsValue, HttpResponse](url + s"/admin/updateDocRefId/$docRefId", JsNull)
 
   def editAdminReportingEntity(selector: AdminDocRefId, adminReportingEntityData: AdminReportingEntityData)(
-    implicit hc: HeaderCarrier) =
+    implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.POST[JsValue, HttpResponse](
       url + s"/admin/updateReportingEntityDRI/${selector.id}",
       Json.toJson(adminReportingEntityData))

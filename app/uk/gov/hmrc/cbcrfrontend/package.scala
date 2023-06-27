@@ -22,8 +22,8 @@ import _root_.play.api.libs.json.Reads
 import _root_.play.api.mvc.Results._
 import _root_.play.api.mvc._
 import cats.data.ValidatedNel
+import cats.implicits.catsSyntaxSemigroupal
 import cats.instances.future._
-import cats.syntax.cartesian._
 import cats.syntax.show._
 import cats.{Applicative, Functor}
 import uk.gov.hmrc.auth.core.Enrolment

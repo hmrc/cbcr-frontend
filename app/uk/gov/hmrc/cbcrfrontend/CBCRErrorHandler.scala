@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend
 import play.api.i18n.MessagesApi
 import play.api.mvc._
 import play.api.{Configuration, Environment}
+import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.routes
@@ -37,7 +38,7 @@ class CBCRErrorHandler @Inject()(
   views: Views)(implicit val feConfig: FrontendAppConfig)
     extends FrontendErrorHandler with Results with AuthRedirects {
 
-  override def resolveError(rh: RequestHeader, ex: Throwable) = ex match {
+  override def resolveError(rh: RequestHeader, ex: Throwable): Result = ex match {
     case _: NoActiveSession =>
       toGGLogin(rh.uri)
     case _: UnsupportedCredentialRole =>
@@ -53,6 +54,6 @@ class CBCRErrorHandler @Inject()(
     resolveError(request, exception)
 
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(
-    implicit request: Request[_]) =
+    implicit request: Request[_]): HtmlFormat.Appendable =
     views.errorTemplate(pageTitle, heading, message)
 }

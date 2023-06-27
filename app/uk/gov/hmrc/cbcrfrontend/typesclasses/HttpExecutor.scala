@@ -17,10 +17,9 @@
 package uk.gov.hmrc.cbcrfrontend.typesclasses
 
 import akka.util.ByteString
-import play.api.libs.json.{JsObject, Json, Writes}
-import uk.gov.hmrc.cbcrfrontend.FileUploadFrontEndWS
+import play.api.libs.json.{JsObject, Json, OFormat, Writes}
+import uk.gov.hmrc.cbcrfrontend.config.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.{HeaderCarrier, HttpPut, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,19 +30,19 @@ trait GetBody[O, T] {
 
 object GetBody {
   implicit object createEnvelopBody extends GetBody[CreateEnvelope, JsObject] {
-    def apply(obj: CreateEnvelope) = obj.body
+    def apply(obj: CreateEnvelope): JsObject = obj.body
   }
 
   implicit object uploadFileBody extends GetBody[UploadFile, Array[Byte]] {
-    def apply(obj: UploadFile) = obj.body
+    def apply(obj: UploadFile): Array[Byte] = obj.body
   }
 
   implicit object FileUploadCallbackResponseBody extends GetBody[FUCallbackResponse, JsObject] {
-    def apply(obj: FUCallbackResponse) = obj.body
+    def apply(obj: FUCallbackResponse): JsObject = obj.body
   }
 
   implicit object routeEnvelopeBody extends GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest] {
-    def apply(obj: RouteEnvelopeRequest) = obj
+    def apply(obj: RouteEnvelopeRequest): RouteEnvelopeRequest = obj
   }
 
 }
@@ -55,7 +54,7 @@ case class GetFile(envelopeId: String, fileId: String)
 case class RouteEnvelopeRequest(envelopeId: EnvelopeId, application: String, destination: String)
 
 object RouteEnvelopeRequest {
-  implicit val format = Json.format[RouteEnvelopeRequest]
+  implicit val format: OFormat[RouteEnvelopeRequest] = Json.format[RouteEnvelopeRequest]
 }
 
 trait HttpExecutor[U, P, I] {

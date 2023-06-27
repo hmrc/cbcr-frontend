@@ -36,14 +36,14 @@ object ReportingRole {
       case _                             => None
     }
 
-  implicit val shows = Show.show[ReportingRole] {
+  implicit val shows: Show[ReportingRole] = Show.show[ReportingRole] {
     case CBC701 => "PRIMARY"
     case CBC702 => "VOLUNTARY"
     case CBC703 => "LOCAL"
     case CBC704 => "LOCAL INCOMPLETE"
   }
 
-  implicit val format = new Format[ReportingRole] {
+  implicit val format: Format[ReportingRole] = new Format[ReportingRole] {
 
     override def writes(o: ReportingRole): JsValue = JsString(o.toString)
 

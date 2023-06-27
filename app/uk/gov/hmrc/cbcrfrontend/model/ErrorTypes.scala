@@ -20,11 +20,13 @@ import cats.syntax.show._
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
 
+import scala.util.matching.Regex
+
 sealed trait CBCErrors extends Product with Serializable
 
 object CBCErrors {
 
-  implicit val show = Show.show[CBCErrors] {
+  implicit val show: Show[CBCErrors] = Show.show[CBCErrors] {
     case UnexpectedState(errorMsg, _) => errorMsg
     case v: ValidationErrors          => v.show
     case InvalidSession               => InvalidSession.toString
@@ -50,12 +52,12 @@ case object OriginalSubmissionNotFound extends BusinessRuleErrors
 
 case class FileNameError(foundName: String, expectedName: String) extends BusinessRuleErrors
 object FileNameError {
-  implicit val format = Json.format[FileNameError]
+  implicit val format: OFormat[FileNameError] = Json.format[FileNameError]
 }
 
 case class AdditionalInfoDRINotFound(firstCdri: String, missingCdri: String) extends BusinessRuleErrors
 object AdditionalInfoDRINotFound {
-  implicit val format = Json.format[AdditionalInfoDRINotFound]
+  implicit val format: OFormat[AdditionalInfoDRINotFound] = Json.format[AdditionalInfoDRINotFound]
 }
 
 case object TestDataError extends BusinessRuleErrors
@@ -125,7 +127,7 @@ object ValidationErrors {
   }
 }
 object BusinessRuleErrors {
-  implicit val format = new Format[BusinessRuleErrors] {
+  implicit val format: Format[BusinessRuleErrors] = new Format[BusinessRuleErrors] {
     override def writes(o: BusinessRuleErrors): JsValue = o match {
       case m: MessageRefIDError                     => Json.toJson[MessageRefIDError](m)(MessageRefIDError.format)
       case TestDataError                            => JsString(TestDataError.toString)
@@ -180,7 +182,7 @@ object BusinessRuleErrors {
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
-      def ci = ("(?i)" + sc.parts.mkString).r
+      def ci: Regex = ("(?i)" + sc.parts.mkString).r
     }
 
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
@@ -300,7 +302,7 @@ object BusinessRuleErrors {
 }
 
 object MessageRefIDError {
-  implicit val format = new Format[MessageRefIDError] {
+  implicit val format: Format[MessageRefIDError] = new Format[MessageRefIDError] {
     override def writes(o: MessageRefIDError): JsValue = JsString(o.toString)
 
     override def reads(json: JsValue): JsResult[MessageRefIDError] = json.asOpt[String].map(_.toLowerCase.trim) match {
@@ -325,7 +327,7 @@ object MessageRefIDError {
 }
 
 object XMLErrors {
-  implicit val format = Json.format[XMLErrors]
+  implicit val format: OFormat[XMLErrors] = Json.format[XMLErrors]
   def errorHandlerToXmlErrors(x: XmlErrorHandler): XMLErrors = XMLErrors(x.fatalErrorsCollection ++ x.errorsCollection)
   implicit val xmlShows: Show[XMLErrors] =
     Show.show[XMLErrors](e => "xmlError.header " + "\n\n " + e.errors.mkString("\n"))
@@ -333,7 +335,7 @@ object XMLErrors {
 
 case class AllBusinessRuleErrors(errors: List[BusinessRuleErrors]) extends ValidationErrors
 object AllBusinessRuleErrors {
-  implicit val format = new Format[AllBusinessRuleErrors] {
+  implicit val format: Format[AllBusinessRuleErrors] = new Format[AllBusinessRuleErrors] {
     override def writes(o: AllBusinessRuleErrors): JsValue = Json.obj("AllBusinessRuleErrors" -> o.errors)
 
     override def reads(json: JsValue): JsResult[AllBusinessRuleErrors] =

@@ -30,8 +30,8 @@ class LanguageController @Inject()(
   configuration: FrontendAppConfig,
   messagesControllerComponents: MessagesControllerComponents)(implicit val ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
-  val english = Lang("en")
-  val welsh = Lang("cy")
+  private val english = Lang("en")
+  private val welsh = Lang("cy")
 
   lazy val logger: Logger = Logger(this.getClass)
 

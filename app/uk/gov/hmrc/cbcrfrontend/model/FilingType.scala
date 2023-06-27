@@ -21,7 +21,7 @@ import play.api.libs.json._
 
 case class FilingType(value: ReportingRole)
 object FilingType {
-  implicit val format = new Format[FilingType] {
+  implicit val format: Format[FilingType] = new Format[FilingType] {
     override def writes(o: FilingType): JsValue = Json.obj("filingType" -> o.value.show)
 
     override def reads(json: JsValue): JsResult[FilingType] = {

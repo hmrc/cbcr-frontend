@@ -20,7 +20,7 @@ import cats.data.EitherT
 import cats.instances.future._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Json
-import play.api.mvc.{MessagesControllerComponents, Request}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request}
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
@@ -44,15 +44,15 @@ class ExitSurveyController @Inject()(
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  val doSurvey = Action { implicit request =>
+  val doSurvey: Action[AnyContent] = Action { implicit request =>
     Ok(views.exitSurvey(SurveyForm.surveyForm))
   }
 
-  val surveyAcknowledge = Action { implicit request =>
+  val surveyAcknowledge: Action[AnyContent] = Action { implicit request =>
     Ok(views.exitSurveyComplete())
   }
 
-  val submit = Action.async { implicit request =>
+  val submit: Action[AnyContent] = Action.async { implicit request =>
     SurveyForm.surveyForm
       .bindFromRequest()
       .fold(
@@ -68,7 +68,7 @@ class ExitSurveyController @Inject()(
       )
   }
 
-  def auditSurveyAnswers(answers: SurveyAnswers)(
+  private def auditSurveyAnswers(answers: SurveyAnswers)(
     implicit request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     EitherT(
       audit

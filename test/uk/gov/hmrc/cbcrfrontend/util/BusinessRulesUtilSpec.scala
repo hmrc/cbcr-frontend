@@ -21,9 +21,9 @@ import java.time.{LocalDate, LocalDateTime}
 
 class BusinessRulesUtilSpec extends UnitSpec {
 
-  val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
-  val corrDocRefId = "GB2016RGXVCBC0000000056CBC40220170311T090000X_7000000002OECD2"
-  val reportingEntity =
+  private val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
+  private val corrDocRefId = "GB2016RGXVCBC0000000056CBC40220170311T090000X_7000000002OECD2"
+  private val reportingEntity =
     ReportingEntity(
       CBC701,
       DocSpec(OECD1, DocRefId(docRefId + "ENT").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "ENT").get)), None),
@@ -33,7 +33,7 @@ class BusinessRulesUtilSpec extends UnitSpec {
       EntityReportingPeriod(LocalDate.parse("2016-01-31"), LocalDate.parse("2017-01-30"))
     )
 
-  def xmlinfo(reportingEntity: Option[ReportingEntity]) = XMLInfo(
+  private def xmlInfo(reportingEntity: Option[ReportingEntity]) = XMLInfo(
     MessageSpec(
       MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
       "GB",
@@ -51,7 +51,7 @@ class BusinessRulesUtilSpec extends UnitSpec {
     List.empty[String]
   )
 
-  val xmlInfo2 = XMLInfo(
+  private val xmlInfo2 = XMLInfo(
     MessageSpec(
       MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
       "GB",
@@ -73,10 +73,10 @@ class BusinessRulesUtilSpec extends UnitSpec {
     List.empty[String],
     List.empty[String]
   )
-  val list1 = List("docref1", "docref2", "docref3")
-  val list2 = List("docref2", "docref1", "docref3")
-  val list3 = List("docref1")
-  val expectedList = List(
+  private val list1 = List("docref1", "docref2", "docref3")
+  private val list2 = List("docref2", "docref1", "docref3")
+  private val list3 = List("docref1")
+  private val expectedList = List(
     "GB2016RGXVCBC0000000056CBC40220170311T090000X_7000000002OECD2ENT",
     "GB2016RGXVCBC0000000056CBC40220170311T090000X_7000000002OECD2REP",
     "GB2016RGXVCBC0000000056CBC40220170311T090000X_7000000002OECD2ADD"
@@ -93,14 +93,14 @@ class BusinessRulesUtilSpec extends UnitSpec {
     }
 
     "Extract all doc types should work as expected" in {
-      BusinessRulesUtil.extractAllDocTypes(xmlinfo(None)) shouldBe List("OECD1", "OECD1")
-      BusinessRulesUtil.extractAllDocTypes(xmlinfo(Some(reportingEntity))) shouldBe List("OECD1", "OECD1", "OECD1")
+      BusinessRulesUtil.extractAllDocTypes(xmlInfo(None)) shouldBe List("OECD1", "OECD1")
+      BusinessRulesUtil.extractAllDocTypes(xmlInfo(Some(reportingEntity))) shouldBe List("OECD1", "OECD1", "OECD1")
     }
 
     "Extract all corr doc ref ids should extract every occurrence of corr doc ref id" in {
-      BusinessRulesUtil.extractAllCorrDocRefIds(xmlinfo(Some(reportingEntity))) shouldBe List(
+      BusinessRulesUtil.extractAllCorrDocRefIds(xmlInfo(Some(reportingEntity))) shouldBe List(
         "GB2016RGXVCBC0000000056CBC40220170311T090000X_7000000002OECD2ENT")
-      BusinessRulesUtil.extractAllCorrDocRefIds(xmlinfo(None)) shouldBe List()
+      BusinessRulesUtil.extractAllCorrDocRefIds(xmlInfo(None)) shouldBe List()
       BusinessRulesUtil.extractAllCorrDocRefIds(xmlInfo2) shouldBe expectedList
     }
   }

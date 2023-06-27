@@ -34,49 +34,50 @@ import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.language.implicitConversions
 
 class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with MockitoCats {
 
-  val messageRefIdService = mock[MessageRefIdService]
-  val docRefIdService = mock[DocRefIdService]
-  val subscriptionDataService = mock[SubscriptionDataService]
-  val reportingEntity = mock[ReportingEntityDataService]
-  val configuration = mock[Configuration]
-  val runMode = mock[RunMode]
-  val creationDateService = mock[CreationDateService]
-  implicit val cache: CBCSessionCache = mock[CBCSessionCache]
+  private val messageRefIdService = mock[MessageRefIdService]
+  private val docRefIdService = mock[DocRefIdService]
+  private val subscriptionDataService = mock[SubscriptionDataService]
+  private val reportingEntity = mock[ReportingEntityDataService]
+  private val configuration = mock[Configuration]
+  private val runMode = mock[RunMode]
+  private val creationDateService = mock[CreationDateService]
+  implicit private val cache: CBCSessionCache = mock[CBCSessionCache]
 
-  val docRefId1 =
+  private val docRefId1 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENT").getOrElse(fail("bad docrefid"))
-  val docRefId2 =
+  private val docRefId2 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP").getOrElse(fail("bad docrefid"))
-  val docRefId3 =
+  private val docRefId3 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADD").getOrElse(fail("bad docrefid"))
-  val docRefId4 =
+  private val docRefId4 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP2").getOrElse(fail("bad docrefid"))
 
-  val corrDocRefId1 =
+  private val corrDocRefId1 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ENTC").getOrElse(fail("bad docrefid"))
-  val corrDocRefId2 =
+  private val corrDocRefId2 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC").getOrElse(fail("bad docrefid"))
-  val corrDocRefId3 =
+  private val corrDocRefId3 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1ADDC").getOrElse(fail("bad docrefid"))
-  val corrDocRefId4 =
+  private val corrDocRefId4 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REP2C").getOrElse(fail("bad docrefid"))
-  val corrDocRefId5 =
+  private val corrDocRefId5 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD1REPC2").getOrElse(fail("bad docrefid"))
 
-  val docRefId6 =
+  private val docRefId6 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2ENT").getOrElse(fail("bad docrefid"))
-  val docRefId7 =
+  private val docRefId7 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP").getOrElse(fail("bad docrefid"))
-  val docRefId8 =
+  private val docRefId8 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2ADD").getOrElse(fail("bad docrefid"))
-  val docRefId9 =
+  private val docRefId9 =
     DocRefId("GB2016RGXLCBC0100000056CBC40120170311T090000X_7000000002OECD2REP2").getOrElse(fail("bad docrefid"))
 
-  val cbcId = CBCId.create(56).toOption
-  val submissionData = SubscriptionDetails(
+  private val cbcId = CBCId.create(56).toOption
+  private val submissionData = SubscriptionDetails(
     BusinessPartnerRecord(
       "SAFEID",
       Some(OrganisationResponse("blagh")),
@@ -86,7 +87,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
     Utr("7000000002")
   )
 
-  val schemaVer: String = "2.0"
+  private val schemaVer: String = "2.0"
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   whenF(subscriptionDataService.retrieveSubscriptionData(any())(any(), any())) thenReturn Some(submissionData)
   when(runMode.env) thenReturn "Dev"
@@ -95,34 +96,33 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
 
   whenF(reportingEntity.queryReportingEntityDatesOverlaping(any(), any())(any())) thenReturn Some(DatesOverlap(false))
 
-  def makeTheUserAnAgent =
+  private def makeTheUserAnAgent =
     when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())).thenReturn(Future.successful(None))
 
   makeTheUserAnAgent
 
-  def makeTheUserAnOrganisation(cbcid: String) =
+  private def makeTheUserAnOrganisation(cbcid: String) =
     when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())).thenReturn(Future.successful(CBCId(cbcid)))
 
   when(creationDateService.isDateValid(any())(any())) thenReturn Future.successful(true)
 
-  implicit val hc = HeaderCarrier()
-  val extract = new XmlInfoExtract()
-  implicit def fileToXml(f: File): RawXMLInfo = extract.extract(f)
+  implicit private val hc: HeaderCarrier = HeaderCarrier()
+  private val extract = new XmlInfoExtract()
+  implicit private def fileToXml(f: File): RawXMLInfo = extract.extract(f)
 
-  val filename = "GB2016RGXLCBC0100000056CBC40120170311T090000X.xml"
-  val filenameTemp = "GB2017RGXLCBC0100000056CBC40120170311T090000X.xml"
-  val filenamePB = "GB2016RGXVCBC0000000056CBC40120170311T090000X.xml"
+  private val filename = "GB2016RGXLCBC0100000056CBC40120170311T090000X.xml"
+  private val filenameTemp = "GB2017RGXLCBC0100000056CBC40120170311T090000X.xml"
 
-  val cbcId2 = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
-  val enrol = CBCEnrolment(cbcId2, Utr("7000000002"))
+  private val cbcId2 = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
+  private val enrol = CBCEnrolment(cbcId2, Utr("7000000002"))
 
-  val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
+  private val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
 
-  val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
+  private val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
 
-  val actualDocRefId2 = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD63").get
+  private val actualDocRefId2 = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD63").get
 
-  val red = ReportingEntityData(
+  private val red = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
     List(actualDocRefId2),
     actualDocRefId,
@@ -134,7 +134,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
     None,
     None
   )
-  val redReportPeriod = ReportingEntityData(
+  private val redReportPeriod = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
     List(actualDocRefId2),
     actualDocRefId,
@@ -146,7 +146,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
     None,
     Some(EntityReportingPeriod(LocalDate.parse("2017-01-02"), LocalDate.parse("2018-01-01")))
   )
-  val redmTrue = ReportingEntityDataModel(
+  private val redmTrue = ReportingEntityDataModel(
     NonEmptyList.of(actualDocRefId),
     List(actualDocRefId2),
     actualDocRefId,
@@ -155,11 +155,11 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
     CBC701,
     Some(LocalDate.now()),
     None,
-    true,
+    oldModel = true,
     None,
     None
   )
-  val redmFalse = ReportingEntityDataModel(
+  private val redmFalse = ReportingEntityDataModel(
     NonEmptyList.of(actualDocRefId),
     List(actualDocRefId2),
     actualDocRefId,
@@ -168,12 +168,12 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
     CBC701,
     Some(LocalDate.now()),
     None,
-    false,
+    oldModel = false,
     None,
     None
   )
 
-  val xmlinfo = XMLInfo(
+  private val xmlinfo = XMLInfo(
     MessageSpec(
       MessageRefID("GB2016RGXVCBC0000000056CBC40120170311T090000X").getOrElse(fail("waaaaa")),
       "GB",
@@ -191,7 +191,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
     List.empty[String]
   )
 
-  val validator = new CBCBusinessRuleValidator(
+  private val validator = new CBCBusinessRuleValidator(
     messageRefIdService,
     docRefIdService,
     subscriptionDataService,
@@ -592,7 +592,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should not contain (MessageTypeIndicError),
+          errors => errors.toList should not contain MessageTypeIndicError,
           _ => fail("No InvalidXMLError generated")
         )
 
@@ -603,7 +603,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should not contain (MessageTypeIndicError),
+          errors => errors.toList should not contain MessageTypeIndicError,
           _ => fail("No InvalidXMLError generated")
         )
 
@@ -651,7 +651,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should not contain (MessageTypeIndicError),
+          errors => errors.toList should not contain MessageTypeIndicError,
           _ => fail("No InvalidXMLError generated")
         )
 
@@ -1557,7 +1557,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
         CBC703,
         Some(LocalDate.now()),
         Some(LocalDate.of(2016, 3, 31)),
-        false,
+        oldModel = false,
         Some("GBP"),
         Some(EntityReportingPeriod(LocalDate.parse("2016-01-02"), LocalDate.parse("2016-03-31")))
       )
@@ -1625,7 +1625,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
         CBC703,
         Some(LocalDate.now()),
         Some(LocalDate.of(2017, 3, 31)),
-        false,
+        oldModel = false,
         Some("USD"),
         Some(EntityReportingPeriod(LocalDate.parse("2017-01-02"), LocalDate.parse("2017-03-31")))
       )
@@ -1721,7 +1721,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
         5.seconds
       )
       result.fold(
-        errors => errors.toList should not contain (DatesOverlapInvalid),
+        errors => errors.toList should not contain DatesOverlapInvalid,
         _ => fail("Dates Overlap")
       )
     }

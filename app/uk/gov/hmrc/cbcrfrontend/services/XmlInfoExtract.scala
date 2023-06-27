@@ -65,7 +65,7 @@ class XmlInfoExtract {
     try {
       while (xmlStreamReader.hasNext) {
         val event = xmlStreamReader.next()
-        if (event == XMLStreamConstants.START_ELEMENT && xmlStreamReader.getLocalName().equalsIgnoreCase("CbcBody"))
+        if (event == XMLStreamConstants.START_ELEMENT && xmlStreamReader.getLocalName.equalsIgnoreCase("CbcBody"))
           count = count + 1
       }
     } catch {

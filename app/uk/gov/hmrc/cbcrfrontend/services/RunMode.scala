@@ -23,7 +23,7 @@ import javax.inject.{Inject, Singleton}
 
 @Singleton
 class RunMode @Inject()(configuration: Configuration) {
-  private val APP_RUNNING_LOCALY: String = "Dev"
+  private val APP_RUNNING_LOCALLY: String = "Dev"
 
-  val env: String = configuration.underlying.get[String]("run.mode").valueOr(_ => APP_RUNNING_LOCALY)
+  val env: String = configuration.underlying.get[String]("run.mode").valueOr(_ => APP_RUNNING_LOCALLY)
 }

@@ -21,7 +21,7 @@ import cats.implicits._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.libs.json.{JsString, Json}
+import play.api.libs.json.{JsString, Json, OFormat}
 import play.api.mvc._
 import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
@@ -35,7 +35,6 @@ import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
@@ -68,13 +67,13 @@ class SubmissionController @Inject()(
   feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
-  implicit val credentialsFormat = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
+  implicit val credentialsFormat: OFormat[Credentials] = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
-  val dateFormat = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' h:mma")
+  val dateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy 'at' h:mma")
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  def saveDocRefIds(x: CompleteXMLInfo)(
+  private def saveDocRefIds(x: CompleteXMLInfo)(
     implicit hc: HeaderCarrier): EitherT[Future, NonEmptyList[UnexpectedState], Unit] = {
     val cbcReportIds = x.cbcReport.map(reports => reports.docSpec.docRefId           -> reports.docSpec.corrDocRefId)
     val additionalInfoIds = x.additionalInfo.map(addInfo => addInfo.docSpec.docRefId -> addInfo.docSpec.corrDocRefId)
@@ -108,7 +107,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  def storeOrUpdateReportingEntityData(xml: CompleteXMLInfo)(implicit hc: HeaderCarrier): ServiceResponse[Unit] =
+  private def storeOrUpdateReportingEntityData(xml: CompleteXMLInfo)(implicit hc: HeaderCarrier): ServiceResponse[Unit] =
     xml.reportingEntity.docSpec.docType match {
       // RESENT| NEW
       case OECD1 =>
@@ -128,7 +127,7 @@ class SubmissionController @Inject()(
                   .saveReportingEntityData(data)
                   .value
                   .recover {
-                    case e =>
+                    case _ =>
                       logger.error("CBCR_UNVERIFIED_UPLOAD Failed to save reporting entity data. UTR: " + data.tin)
                       Left(UnexpectedState("Failed to save reporting entity data"))
                   })
@@ -139,13 +138,13 @@ class SubmissionController @Inject()(
             .updateReportingEntityData(PartialReportingEntityData.extract(xml))
             .value
             .recover {
-              case e =>
+              case _ =>
                 logger.error("CBCR_UNVERIFIED_UPLOAD Failed to update reporting entity data")
                 Left(UnexpectedState("Failed to update reporting entity data"))
             })
     }
 
-  def confirm = Action.async { implicit request =>
+  def confirm: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrieval =>
       (for {
         summaryData <- cache.read[SummaryData]
@@ -185,28 +184,28 @@ class SubmissionController @Inject()(
     }
   }
 
-  def notRegistered = Action.async { implicit request =>
+  def notRegistered: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Ok(views.notRegistered())
     }
   }
 
-  def noIndividuals = Action.async { implicit request =>
+  def noIndividuals: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Individual) {
       Ok(views.notAuthorisedIndividual())
     }
   }
-  def noAssistants = Action.async { implicit request =>
+  def noAssistants: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and Assistant) {
       Ok(views.notAuthorisedAssistant())
     }
   }
 
-  def createSuccessfulSubmissionAuditEvent(creds: Credentials, summaryData: SummaryData)(
+  private def createSuccessfulSubmissionAuditEvent(creds: Credentials, summaryData: SummaryData)(
     implicit hc: HeaderCarrier,
     request: Request[_]): ServiceResponse[AuditResult.Success.type] = {
 
-    implicit val format = Json.format[ExtendedDataEvent]
+    implicit val format: OFormat[ExtendedDataEvent] = Json.format[ExtendedDataEvent]
 
     val auditEvent = ExtendedDataEvent(
       "Country-By-Country-Frontend",
@@ -255,29 +254,23 @@ class SubmissionController @Inject()(
     } yield result
   }
 
-  val utrForm: Form[Utr] = Form(
+  private val utrForm = Form(
     mapping(
       "utr" -> nonEmptyText.verifying(s => Utr(s).isValid)
     )(Utr.apply)(Utr.unapply)
   )
 
-  val ultimateParentEntityForm: Form[UltimateParentEntity] = Form(
+  private val ultimateParentEntityForm = Form(
     mapping("ultimateParentEntity" -> nonEmptyText)(UltimateParentEntity.apply)(UltimateParentEntity.unapply)
   )
 
-  val reconfirmEmailForm: Form[EmailAddress] = Form(
-    mapping(
-      "reconfirmEmail" -> email.verifying(EmailAddress.isValid(_))
-    )(EmailAddress.apply)(EmailAddress.unapply)
-  )
-
-  val enterCompanyNameForm: Form[AgencyBusinessName] = Form(
+  private val enterCompanyNameForm = Form(
     single(
       "companyName" -> nonEmptyText
     ).transform[AgencyBusinessName](AgencyBusinessName(_), _.name)
   )
 
-  val upe = Action.async { implicit request =>
+  val upe: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       Ok(
         views.submitInfoUltimateParentEntity(
@@ -286,7 +279,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  val submitUltimateParentEntity = Action.async(parse.formUrlEncoded) { implicit request =>
+  val submitUltimateParentEntity: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       (for {
         reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
@@ -315,13 +308,13 @@ class SubmissionController @Inject()(
     }
   }
 
-  val utr = Action.async { implicit request =>
+  val utr: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       Ok(views.utrCheck(utrForm))
     }
   }
 
-  val submitUtr = Action.async { implicit request =>
+  val submitUtr: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       utrForm.bindFromRequest.fold[Future[Result]](
         errors => BadRequest(views.utrCheck(errors)),
@@ -341,7 +334,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  def enterSubmitterInfo(fn: Option[FieldName], userType: Option[AffinityGroup])(
+  private def enterSubmitterInfo(fn: Option[FieldName], userType: Option[AffinityGroup])(
     implicit request: Request[AnyContent]): Future[Result] =
     for {
       form <- cache.readOption[SubmitterInfo].map { osi =>
@@ -357,7 +350,7 @@ class SubmissionController @Inject()(
       Ok(views.submitterInfo(form, fn, fileDetails.envelopeId, fileDetails.fileId, userType))
     }
 
-  def submitterInfo(field: Option[String] = None) = Action.async { implicit request =>
+  def submitterInfo(field: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       cache
         .read[CompleteXMLInfo]
@@ -379,7 +372,7 @@ class SubmissionController @Inject()(
 
   }
 
-  val submitSubmitterInfo = Action.async(parse.formUrlEncoded) { implicit request =>
+  val submitSubmitterInfo: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       submitterInfoForm.bindFromRequest.fold(
         formWithErrors => {
@@ -426,7 +419,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  val submitSummary = Action.async { implicit request =>
+  val submitSummary: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup) { retrievedInformation =>
       val result = for {
         smd <- EitherT(retrievedInformation.a match {
@@ -449,7 +442,7 @@ class SubmissionController @Inject()(
 
   }
 
-  def createSummaryData(submissionMetaData: SubmissionMetaData)(
+  private def createSummaryData(submissionMetaData: SubmissionMetaData)(
     implicit hc: HeaderCarrier): ServiceResponse[SummaryData] =
     for {
       keyXMLFileInfo <- cache.read[CompleteXMLInfo]
@@ -462,7 +455,7 @@ class SubmissionController @Inject()(
       _ <- EitherT.right(cache.save[SummaryData](summaryData))
     } yield summaryData
 
-  def updateCreationTimeStamp(keyXMLFileInfo: CompleteXMLInfo) =
+  private def updateCreationTimeStamp(keyXMLFileInfo: CompleteXMLInfo) =
     if (keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).forall(_.isDigit)) {
       val millisInfo = keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).toLong
       val toModify = keyXMLFileInfo.messageSpec.timestamp.plus(Duration.ofMillis(millisInfo))
@@ -471,13 +464,13 @@ class SubmissionController @Inject()(
       keyXMLFileInfo
     }
 
-  def doesCreationTimeStampHaveMillis(keyXMLFileInfo: CompleteXMLInfo) =
+  private def doesCreationTimeStampHaveMillis(keyXMLFileInfo: CompleteXMLInfo) =
     if (keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).forall(_.isDigit))
       true
     else
       false
 
-  def enterCompanyName = Action.async { implicit request =>
+  def enterCompanyName: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       for {
         fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
@@ -491,7 +484,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  def saveCompanyName = Action.async(parse.formUrlEncoded) { implicit request =>
+  def saveCompanyName: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised() {
       enterCompanyNameForm
         .bindFromRequest()
@@ -508,7 +501,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  def submitSuccessReceipt(userType: String) = Action.async { implicit request =>
+  def submitSuccessReceipt(userType: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       val data: EitherT[Future, CBCErrors, (Hash, String, String, String, Boolean)] =
         for {
@@ -541,7 +534,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  private def makeSubmissionSuccessEmail(data: SummaryData, formattedDate: String, cbcId: CBCId): Email = {
+  private def makeSubmissionSuccessEmail(data: SummaryData, formattedDate: String, cbcId: CBCId) = {
     val submittedInfo = data.submissionMetaData.submitterInfo
     Email(
       List(submittedInfo.email.toString()),
