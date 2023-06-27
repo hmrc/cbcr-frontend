@@ -21,11 +21,12 @@ import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchers.{any, eq => EQ}
 import org.mockito.MockitoSugar
 import org.mockito.cats.MockitoCats
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -36,7 +37,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.implicitConversions
 
-class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with MockitoCats {
+class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with MockitoSugar with MockitoCats {
 
   private val messageRefIdService = mock[MessageRefIdService]
   private val docRefIdService = mock[DocRefIdService]
@@ -91,8 +92,7 @@ class CBCBusinessRuleValidatorSpec extends UnitSpec with MockitoSugar with Mocki
   when(docRefIdService.queryDocRefId(any())(any())) thenReturn Future.successful(DoesNotExist)
   whenF(subscriptionDataService.retrieveSubscriptionData(any())(any(), any())) thenReturn Some(submissionData)
   when(runMode.env) thenReturn "Dev"
-  when(configuration.getOptional[String](s"${runMode.env}.oecd-schema-version")) thenReturn Future.successful(
-    Some(schemaVer))
+  when(configuration.getOptional[String](s"${runMode.env}.oecd-schema-version")) thenReturn Some(schemaVer)
 
   whenF(reportingEntity.queryReportingEntityDatesOverlaping(any(), any())(any())) thenReturn Some(DatesOverlap(false))
 

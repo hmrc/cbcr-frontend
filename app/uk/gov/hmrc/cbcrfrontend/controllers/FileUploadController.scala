@@ -18,10 +18,10 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.implicits.{catsStdInstancesForFuture, catsSyntaxEitherId, catsSyntaxSemigroupal}
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json._
 import play.api.mvc._
-import play.api.{Configuration, Environment, Logger}
+import play.api.{Configuration, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
@@ -48,20 +48,16 @@ import scala.util.{Failure, Success}
 
 @Singleton
 class FileUploadController @Inject()(
-  override val messagesApi: MessagesApi,
   val authConnector: AuthConnector,
-  val schemaValidator: CBCRXMLValidator,
-  val businessRuleValidator: CBCBusinessRuleValidator,
-  val fileUploadService: FileUploadService,
-  val xmlExtractor: XmlInfoExtract,
-  val audit: AuditConnector,
-  val env: Environment,
+  schemaValidator: CBCRXMLValidator,
+  businessRuleValidator: CBCBusinessRuleValidator,
+  fileUploadService: FileUploadService,
+  xmlExtractor: XmlInfoExtract,
+  audit: AuditConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  views: Views)(
-  implicit ec: ExecutionContext,
+  views: Views,
   cache: CBCSessionCache,
-  val config: Configuration,
-  feConfig: FrontendAppConfig)
+  config: Configuration)(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   implicit val credentialsFormat: OFormat[Credentials] = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
@@ -73,8 +69,9 @@ class FileUploadController @Inject()(
 
   private def fileUploadUrl()(implicit hc: HeaderCarrier): EitherT[Future, CBCErrors, String] =
     for {
+      envelope <- fileUploadService.createEnvelope
       envelopeId <- cache
-                     .create[EnvelopeId](fileUploadService.createEnvelope.toOption)
+                     .create[EnvelopeId](OptionT.some(envelope))
                      .toRight(UnexpectedState("Unable to get envelopeId"))
       fileId <- cache
                  .create[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString))))

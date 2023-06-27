@@ -15,11 +15,13 @@
  */
 
 package uk.gov.hmrc.cbcrfrontend.util
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.hmrc.cbcrfrontend.model._
 
 import java.time.{LocalDate, LocalDateTime}
 
-class BusinessRulesUtilSpec extends UnitSpec {
+class BusinessRulesUtilSpec extends AnyWordSpec with Matchers {
 
   private val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
   private val corrDocRefId = "GB2016RGXVCBC0000000056CBC40220170311T090000X_7000000002OECD2"

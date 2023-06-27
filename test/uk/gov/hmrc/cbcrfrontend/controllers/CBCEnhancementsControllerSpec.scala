@@ -19,19 +19,21 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import org.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.MessagesApi
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
+import play.api.test.Helpers.{defaultAwaitTimeout, status}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.ExecutionContext
 
 class CBCEnhancementsControllerSpec
-    extends UnitSpec with ScalaFutures with GuiceOneAppPerSuite with CSRFTest
+    extends AnyWordSpec with Matchers with ScalaFutures with GuiceOneAppPerSuite with CSRFTest
     with BeforeAndAfterEach with MockitoSugar {
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]

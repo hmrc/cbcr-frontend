@@ -17,19 +17,20 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import org.mockito.MockitoSugar
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames._
-import play.api.mvc.{MessagesControllerComponents, Result}
+import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
+import play.api.test.Helpers.{cookies, defaultAwaitTimeout, flash, header, status}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.util.{FeatureSwitch, UnitSpec}
+import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 
 class LanguageControllerSpec
-    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   private implicit val conf: FrontendAppConfig = mock[FrontendAppConfig]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
@@ -43,51 +44,40 @@ class LanguageControllerSpec
   "Switching Language" should {
     "return 303 and set lang=en " when {
       "switching to welsh enableLanguageSwitching = false and referer set in request header" in {
-        val result: Result = Await.result(controller.switchToWelsh()(requestWithReferer), 5.second)
+        val result = controller.switchToWelsh()(requestWithReferer)
         status(result) shouldBe 303
 
-        val switchingFlashValue = result.newFlash.head.data("switching-language")
-        val cookieName = result.newCookies.head.name
-        val cookieValue = result.newCookies.head.value
-        switchingFlashValue shouldBe "true"
-        cookieName shouldBe "PLAY_LANG"
-        cookieValue shouldBe "en"
+        flash(result).get("switching-language") shouldBe Some("true")
+        cookies(result).get("PLAY_LANG").get.value shouldBe "en"
       }
     }
+
     "return 303 and set lang=cy " when {
       "switching to welsh enableLanguageSwitching = true and referer set in request header" in {
         FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", enabled = true))
-        val result: Result = Await.result(controller.switchToWelsh()(requestWithReferer), 5.second)
+        val result = controller.switchToWelsh()(requestWithReferer)
         status(result) shouldBe 303
 
-        val switchingFlashValue = result.newFlash.head.data("switching-language")
-        val cookieName = result.newCookies.head.name
-        val cookieValue = result.newCookies.head.value
-        switchingFlashValue shouldBe "true"
-        cookieName shouldBe "PLAY_LANG"
-        cookieValue shouldBe "cy"
+        flash(result).get("switching-language") shouldBe Some("true")
+        cookies(result).get("PLAY_LANG").get.value shouldBe "cy"
       }
     }
+
     "return 303 and set lang=en" when {
       "switching to english enableLanguageSwitching = true and referer set in request header" in {
         FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", enabled = true))
-        val result: Result = Await.result(controller.switchToEnglish()(requestWithReferer), 5.second)
+        val result = controller.switchToEnglish()(requestWithReferer)
         status(result) shouldBe 303
 
-        val switchingFlashValue = result.newFlash.head.data("switching-language")
-        val cookieName = result.newCookies.head.name
-        val cookieValue = result.newCookies.head.value
-        switchingFlashValue shouldBe "true"
-        cookieName shouldBe "PLAY_LANG"
-        cookieValue shouldBe "en"
+        flash(result).get("switching-language") shouldBe Some("true")
+        cookies(result).get("PLAY_LANG").get.value shouldBe "en"
       }
     }
+
     "redirect to the fallbackURLForLanguageSwitcher" in {
-      val result: Result = Await.result(controller.switchToWelsh()(requestNoReferer), 5.second)
+      val result = controller.switchToWelsh()(requestNoReferer)
       status(result) shouldBe 303
-      val headers = result.header.headers.getOrElse("location", "")
-      headers should equal("#")
+      header("Location", result) shouldBe Some("#")
     }
   }
-
 }

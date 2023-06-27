@@ -20,17 +20,19 @@ import akka.actor.ActorSystem
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.implicits.catsStdInstancesForFuture
-import org.mockito.ArgumentMatchers.{any, eq => EQ, _}
+import org.mockito.ArgumentMatchers.{eq => EQ, _}
 import org.mockito.MockitoSugar
 import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsNull, JsValue, Json}
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{call, contentAsString, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.test.Helpers.{call, contentAsString, header, status, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
@@ -39,7 +41,6 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.HeaderCarrier
@@ -53,7 +54,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
 class SubmissionSpec
-    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach with MockitoSugar with MockitoCats {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach with MockitoSugar with MockitoCats {
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
@@ -103,7 +104,7 @@ class SubmissionSpec
   }
 
   "POST /submitUltimateParentEntity " should {
-    val ultimateParentEntity = UltimateParentEntity("UlitmateParentEntity")
+    val ultimateParentEntity = UltimateParentEntity("UltimateParentEntity")
     val fakeRequestSubmit = addToken(
       FakeRequest("POST", "/submitUltimateParentEntity ")
         .withFormUrlEncodedBody("ultimateParentEntity" -> ultimateParentEntity.ultimateParentEntity))
@@ -116,7 +117,7 @@ class SubmissionSpec
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format), any(), any())) thenReturn Future
           .successful(CacheMap("cache", Map.empty[String, JsValue]))
         val result = call(controller.submitUltimateParentEntity, fakeRequestSubmit)
-        result.header.headers("Location") should endWith("/utr/entry-form")
+        header("Location", result).get should endWith("/utr/entry-form")
         status(result) shouldBe Status.SEE_OTHER
       }
 
@@ -132,7 +133,7 @@ class SubmissionSpec
         when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format), any(), any())) thenReturn Future
           .successful(CacheMap("cache", Map.empty[String, JsValue]))
         val result = call(controller.submitUltimateParentEntity, fakeRequestSubmit)
-        result.header.headers("Location") should endWith("/submitter-info/entry-form")
+        header("Location", result).get should endWith("/submitter-info/entry-form")
         status(result) shouldBe Status.SEE_OTHER
       }
     }
@@ -360,6 +361,7 @@ class SubmissionSpec
       val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
       status(result) shouldBe Status.BAD_REQUEST
     }
+
     "return 400 when the empty fields of data exists" in {
       val submitterInfo = Seq(
         "fullName"     -> "",
@@ -429,7 +431,7 @@ class SubmissionSpec
             .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
           val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
 
-          result.header.headers("Location") should endWith("/submission/summary")
+          header("Location", result).get should endWith("/submission/summary")
           status(result) shouldBe Status.SEE_OTHER
         }
 
@@ -456,7 +458,7 @@ class SubmissionSpec
             .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
           val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
 
-          result.header.headers("Location") should endWith("/cbc-id/entry-form")
+          header("Location", result).get should endWith("/cbc-id/entry-form")
           status(result) shouldBe Status.SEE_OTHER
         }
       }
@@ -485,7 +487,7 @@ class SubmissionSpec
             .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
           val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
 
-          result.header.headers("Location") should endWith("/agent/verify-form")
+          header("Location", result).get should endWith("/agent/verify-form")
           status(result) shouldBe Status.SEE_OTHER
         }
       }
@@ -605,7 +607,7 @@ class SubmissionSpec
         whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
         val result = controller.submitSummary(fakeRequestSubmitSummary)
         status(result) shouldBe Status.SEE_OTHER
-        result.header.headers("Location") should endWith("/session-expired")
+        header("Location", result).get should endWith("/session-expired")
       }
 
       "return 200 if everything succeeds" in {
@@ -654,7 +656,7 @@ class SubmissionSpec
 
     "provide an action '/confirm'" which {
       "returns a 303 when the call to the cache fails and redirect to session expired" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
           .thenReturn(
@@ -663,11 +665,11 @@ class SubmissionSpec
         whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenFailWith ExpiredSession("")
         val result = controller.confirm(fakeRequestSubmitSummary)
         status(result) shouldBe Status.SEE_OTHER
-        result.header.headers("Location") should endWith("/session-expired")
+        header("Location", result).get should endWith("/session-expired")
       }
 
       "returns a 500 when the call to file-upload fails" in {
-        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, false)
+        val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
         when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
           .thenReturn(
@@ -718,6 +720,7 @@ class SubmissionSpec
           verify(reportingEntity).saveReportingEntityData(any())(any())
           verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
         }
+
         "call updateReportingEntityData when the submissionType is OECD[023]" in {
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
@@ -745,6 +748,7 @@ class SubmissionSpec
           verify(reportingEntity).updateReportingEntityData(any())(any())
           verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
         }
+
         "return 500 if saveMessageRefId fails and does NOT callsaveReportingEntityData " in {
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
@@ -783,7 +787,7 @@ class SubmissionSpec
             LocalDateTime.now())
           val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
           status(result) shouldBe Status.SEE_OTHER
-          result.header.headers("Location") should endWith("/session-expired")
+          header("Location", result).get should endWith("/session-expired")
         }
 
         "looking for the SubmissionDate" in {
@@ -795,7 +799,7 @@ class SubmissionSpec
           whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenFailWith ExpiredSession("")
           val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
           status(result) shouldBe Status.SEE_OTHER
-          result.header.headers("Location") should endWith("/session-expired")
+          header("Location", result).get should endWith("/session-expired")
         }
 
         "looking for the CBCId" in {
@@ -809,7 +813,7 @@ class SubmissionSpec
           whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenFailWith ExpiredSession("")
           val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
           status(result) shouldBe Status.SEE_OTHER
-          result.header.headers("Location") should endWith("/session-expired")
+          header("Location", result).get should endWith("/session-expired")
         }
       }
 
@@ -838,8 +842,8 @@ class SubmissionSpec
         verify(mockEmailService, times(1)).sendEmail(any())(any())
         verify(cache, times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
         val webPageAsString = contentAsString(result)
-        webPageAsString should not include (getMessages(fakeRequestSubmitSummary)(
-          "submitSuccessReceipt.sendAnotherReport.link"))
+        webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
+          "submitSuccessReceipt.sendAnotherReport.link")
       }
 
       "will still return a 200 if the email fails" in {
@@ -867,11 +871,11 @@ class SubmissionSpec
         verify(mockEmailService, times(1)).sendEmail(any())(any())
         verify(cache, times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
         val webPageAsString = contentAsString(result)
-        webPageAsString should not include (getMessages(fakeRequestSubmitSummary)(
-          "submitSuccessReceipt.sendAnotherReport.link"))
+        webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
+          "submitSuccessReceipt.sendAnotherReport.link")
       }
 
-      "will write  a ConfirmationEmailSent to the cache if an email is sent" in {
+      "will write a ConfirmationEmailSent to the cache if an email is sent" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
@@ -896,8 +900,8 @@ class SubmissionSpec
         verify(mockEmailService, times(1)).sendEmail(any())(any())
         verify(cache, times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
         val webPageAsString = contentAsString(result)
-        webPageAsString should not include (getMessages(fakeRequestSubmitSummary)(
-          "submitSuccessReceipt.sendAnotherReport.link"))
+        webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
+          "submitSuccessReceipt.sendAnotherReport.link")
       }
 
       "not send the email if it has already been sent and not save to the cache" in {
@@ -926,8 +930,8 @@ class SubmissionSpec
         verify(mockEmailService, times(0)).sendEmail(any())(any())
         verify(cache, times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
         val webPageAsString = contentAsString(result)
-        webPageAsString should not include (getMessages(fakeRequestSubmitSummary)(
-          "submitSuccessReceipt.sendAnotherReport.link"))
+        webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
+          "submitSuccessReceipt.sendAnotherReport.link")
       }
 
       "returns a 200 otherwise" in {
@@ -954,8 +958,8 @@ class SubmissionSpec
         status(result) shouldBe Status.OK
         verify(cache, times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
         val webPageAsString = contentAsString(result)
-        webPageAsString should not include (getMessages(fakeRequestSubmitSummary)(
-          "submitSuccessReceipt.sendAnotherReport.link"))
+        webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
+          "submitSuccessReceipt.sendAnotherReport.link")
       }
 
       "show show link to submit another report if AffinityGroup is Agent and cache.clear succeeds" in {
@@ -985,7 +989,7 @@ class SubmissionSpec
           getMessages(fakeRequestSubmitSummary)("submitSuccessReceipt.sendAnotherReport.link"))
       }
 
-      "show NOT show link to submit another reportf AffinityGroup is Agent but cache.clear fails" in {
+      "show NOT show link to submit another report if AffinityGroup is Agent but cache.clear fails" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
         when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
@@ -1008,8 +1012,8 @@ class SubmissionSpec
         val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
-        webPageAsString should not include (getMessages(fakeRequestSubmitSummary)(
-          "submitSuccessReceipt.sendAnotherReport.link"))
+        webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
+          "submitSuccessReceipt.sendAnotherReport.link")
       }
 
       "show NOT show link to submit another report if AffinityGroup is NOT Agent and cache.clear succeeds" in {
@@ -1035,8 +1039,8 @@ class SubmissionSpec
         val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
-        webPageAsString should not include (getMessages(fakeRequestSubmitSummary)(
-          "submitSuccessReceipt.sendAnotherReport.link"))
+        webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
+          "submitSuccessReceipt.sendAnotherReport.link")
       }
     }
 

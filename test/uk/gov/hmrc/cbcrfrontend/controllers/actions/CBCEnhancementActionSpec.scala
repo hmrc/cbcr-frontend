@@ -18,6 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers.actions
 
 import com.google.inject.Inject
 import org.mockito.MockitoSugar
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Application
 import play.api.http.Status.{OK, SEE_OTHER}
@@ -25,9 +27,9 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Action, AnyContent, InjectedController, Request}
 import play.api.test.FakeRequest
+import play.api.test.Helpers.{defaultAwaitTimeout, status}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 class Harness @Inject()(cbcEnhancementAction: CBCEnhancementAction) extends InjectedController {
 
@@ -37,7 +39,7 @@ class Harness @Inject()(cbcEnhancementAction: CBCEnhancementAction) extends Inje
 }
 
 class CBCEnhancementActionSpec
-    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   private val mockFrontendAppConfig = mock[FrontendAppConfig]
 

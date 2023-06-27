@@ -20,12 +20,10 @@ object AppDependencies {
   )
 
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
-    "org.pegdown"              % "pegdown"             % "1.6.0" % scope,
-    "org.scalatestplus.play"   %% "scalatestplus-play" % "5.1.0" % scope,
-    "org.mockito"              %% "mockito-scala"      % mockitoScalaVersion % scope,
-    "org.mockito"              %% "mockito-scala-cats" % mockitoScalaVersion % scope,
-    "com.sun.msv.datatype.xsd" % "xsdlib"              % "2013.2" % scope,
-    "msv"                      % "msv"                 % "20050913" % scope,
-    "com.vladsch.flexmark"     % "flexmark-all"        % "0.35.10" % scope
+    "uk.gov.hmrc"              %% "bootstrap-test-play-28" % hmrcBootstrapVersion % scope,
+    "org.mockito"              %% "mockito-scala"          % mockitoScalaVersion % scope,
+    "org.mockito"              %% "mockito-scala-cats"     % mockitoScalaVersion % scope,
+    "com.sun.msv.datatype.xsd" % "xsdlib"                  % "2013.2" % scope,
+    "msv"                      % "msv"                     % "20050913" % scope,
   )
 }

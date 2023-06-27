@@ -22,30 +22,31 @@ import cats.implicits._
 import org.mockito.ArgumentMatchers.{any, eq => EQ}
 import org.mockito.MockitoSugar
 import org.mockito.cats.MockitoCats
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.JsValue
-import play.api.mvc.{MessagesControllerComponents, Result}
+import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
-import play.api.test.Helpers.contentAsString
-import play.api.{Configuration, Environment, Logger}
+import play.api.test.Helpers.{contentAsString, header, status}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
-import scala.concurrent.duration.{Duration, _}
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 class SharedControllerSpec
-    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with MockitoCats {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with MockitoCats {
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
@@ -62,8 +63,6 @@ class SharedControllerSpec
   private val views: Views = app.injector.instanceOf[Views]
 
   private val id = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
-
-  private val logger: Logger = Logger(this.getClass)
 
   private def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
@@ -91,7 +90,7 @@ class SharedControllerSpec
     "return 200" in {
       when(authC.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
       whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn id
-      val result = Await.result(controller.enterCBCId(fakeRequestEnterCBCId), 5.second)
+      val result = controller.enterCBCId(fakeRequestEnterCBCId)
       status(result) shouldBe Status.OK
     }
   }
@@ -142,11 +141,9 @@ class SharedControllerSpec
       when(feConfig.governmentGatewaySignOutUrl) thenReturn "http://localhost:9553"
       when(feConfig.cbcrGuidanceUrl) thenReturn guidanceUrl
       when(authC.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      val result: Result = Await.result(controller.signOut(fakeRequestSignOut), 5.second)
+      val result = controller.signOut(fakeRequestSignOut)
       status(result) shouldBe Status.SEE_OTHER
-      val maybeUri = result.header.headers.getOrElse("location", "")
-      logger.debug(s"location: $maybeUri")
-      maybeUri shouldBe s"http://localhost:9553/bas-gateway/sign-out-without-state?continue=$guidanceUrl"
+      header("Location", result) shouldBe Some(s"http://localhost:9553/bas-gateway/sign-out-without-state?continue=$guidanceUrl")
     }
   }
 
@@ -251,7 +248,7 @@ class SharedControllerSpec
       whenF(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn Some(subDetails)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
-      result.header.headers("Location") should endWith("/already-subscribed")
+      header("Location", result).get should endWith("/already-subscribed")
     }
 
     "return 303 when that utr has not been registered and we are an Agent" in {
@@ -296,7 +293,7 @@ class SharedControllerSpec
       whenF(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn None
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
-      result.header.headers("Location") should endWith("/known-facts/match")
+      header("Location", result).get should endWith("/known-facts/match")
     }
 
     "return 303 when the utr and postcode are valid and the postcode is blank" in {
@@ -318,7 +315,7 @@ class SharedControllerSpec
       whenF(subService.retrieveSubscriptionData(any())(any(), any())) thenReturn None
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
-      result.header.headers("Location") should endWith("/known-facts/match")
+      header("Location", result).get should endWith("/known-facts/match")
     }
 
     "return 404 when CBCId in KF does not match CBCId in submitted XML" in {
