@@ -22,10 +22,11 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
 import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.{LocalDate, LocalDateTime}
@@ -33,19 +34,16 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class CreationDateSpec
-    extends UnitSpec with BeforeAndAfterEach with GuiceOneAppPerSuite with MockitoSugar with MockitoCats {
+    extends AnyWordSpec with Matchers with BeforeAndAfterEach with GuiceOneAppPerSuite with MockitoSugar with MockitoCats {
 
   private val reportingEntity = mock[ReportingEntityDataService]
   private val configuration = mock[Configuration]
   private val runMode: RunMode = mock[RunMode]
 
   when(runMode.env) thenReturn "Dev"
-  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(
-    Some(23))
-  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Future.successful(
-    Some(12))
-  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
-    Some(2020))
+  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day")) thenReturn Some(23)
+  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Some(12)
+  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Some(2020)
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -137,16 +135,12 @@ class CreationDateSpec
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
         result shouldBe false
       }
-      "repotingEntity creationDate is Null and default date is more than 3 years ago" in {
-        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
-          Some(2017))
+      "reportingEntity creationDate is Null and default date is more than 3 years ago" in {
+        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Some(2017)
         when(runMode.env) thenReturn "Dev"
-        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Future.successful(
-          Some(2010))
-        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day")) thenReturn Future.successful(
-          Some(23))
-        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Future
-          .successful(Some(12))
+        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Some(2010)
+        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day")) thenReturn Some(23)
+        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Some(12)
         val cds2 = new CreationDateService(configuration, runMode, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
         result shouldBe false

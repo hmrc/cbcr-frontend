@@ -8,7 +8,7 @@ object AppDependencies {
   val compile: Seq[ModuleID] = Seq(
     ws,
     "uk.gov.hmrc"       %% "bootstrap-frontend-play-28" % "5.25.0",
-    "uk.gov.hmrc"       %% "play-frontend-hmrc"         % "3.7.0-play-28",
+    "uk.gov.hmrc"       %% "play-frontend-hmrc"         % "5.0.0-play-28",
     "uk.gov.hmrc"       %% "emailaddress"               % "3.7.0",
     "uk.gov.hmrc"       %% "domain"                     % "8.1.0-play-28",
     "uk.gov.hmrc"       %% "http-caching-client"        % "9.6.0-play-28",
@@ -20,12 +20,10 @@ object AppDependencies {
   )
 
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
-    "org.pegdown"              % "pegdown"             % "1.6.0" % scope,
-    "org.scalatestplus.play"   %% "scalatestplus-play" % "5.1.0" % scope,
-    "org.mockito"              %% "mockito-scala"      % mockitoScalaVersion % scope,
-    "org.mockito"              %% "mockito-scala-cats" % mockitoScalaVersion % scope,
-    "com.sun.msv.datatype.xsd" % "xsdlib"              % "2013.2",
-    "msv"                      % "msv"                 % "20050913",
-    "com.vladsch.flexmark"     % "flexmark-all"        % "0.35.10" % scope
+    "uk.gov.hmrc"              %% "bootstrap-test-play-28" % hmrcBootstrapVersion % scope,
+    "org.mockito"              %% "mockito-scala"          % mockitoScalaVersion % scope,
+    "org.mockito"              %% "mockito-scala-cats"     % mockitoScalaVersion % scope,
+    "com.sun.msv.datatype.xsd" % "xsdlib"                  % "2013.2" % scope,
+    "msv"                      % "msv"                     % "20050913" % scope,
   )
 }

@@ -18,13 +18,14 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -34,7 +35,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class SubscriptionDataServiceSpec
-    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val runModeConfiguration = mock[Configuration]
   private val mockHttp = mock[HttpClient]

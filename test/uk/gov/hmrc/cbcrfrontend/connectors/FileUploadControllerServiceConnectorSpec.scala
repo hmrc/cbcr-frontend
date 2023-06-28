@@ -19,16 +19,16 @@ package uk.gov.hmrc.cbcrfrontend.connectors
 import org.mockito.MockitoSugar
 import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import play.api.http.HeaderNames.LOCATION
 import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileMetadata, UnexpectedState}
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.http.HttpResponse
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class FileUploadControllerServiceConnectorSpec extends UnitSpec with Matchers with EitherValues with MockitoSugar {
+class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers with EitherValues with MockitoSugar {
 
   "A FileUploadControllerServiceConnectorSpec " should {
     "create the expected Json Object when the expiry Date is specified" in {

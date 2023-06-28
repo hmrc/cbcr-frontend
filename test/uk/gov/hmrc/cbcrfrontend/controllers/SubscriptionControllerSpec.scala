@@ -24,6 +24,8 @@ import org.mockito.ArgumentMatchers.{any, eq => EQ}
 import org.mockito.MockitoSugar
 import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Play.materializer
 import play.api.http.Status
@@ -31,7 +33,7 @@ import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.JsValue
 import play.api.mvc.{MessagesControllerComponents, Result}
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{call, contentAsString, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.test.Helpers.{call, contentAsString, status, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
@@ -39,7 +41,7 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.util.{CbcrSwitches, UnitSpec}
+import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
@@ -51,7 +53,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.reflect.runtime.universe._
 class SubscriptionControllerSpec
-    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
     with MockitoSugar with MockitoCats {
   private val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
 

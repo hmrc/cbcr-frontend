@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.hmrc.cbcrfrontend.model.RawCbcReports
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 
 import java.io.File
 
-class XmlInfoExtractSpec extends UnitSpec {
+class XmlInfoExtractSpec extends AnyWordSpec with Matchers {
 
   private def loadFile(filename: String) = new File(s"test/resources/$filename")
 

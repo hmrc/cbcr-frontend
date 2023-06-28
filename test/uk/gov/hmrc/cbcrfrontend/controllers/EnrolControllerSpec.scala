@@ -19,21 +19,23 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import com.typesafe.config.ConfigFactory
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
+import play.api.test.Helpers.{defaultAwaitTimeout, status}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.model.CBCId
-import uk.gov.hmrc.cbcrfrontend.util.UnitSpec
 import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class EnrolControllerSpec
-    extends UnitSpec with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
