@@ -18,24 +18,18 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.instances.all._
 import cats.syntax.all._
-import com.scalawilliam.xs4s.Implicits._
-import com.scalawilliam.xs4s.XmlElementExtractor
 import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
-import play.api.Logger
+import play.api.Logging
 import uk.gov.hmrc.cbcrfrontend.model._
 
 import java.io.File
 import javax.xml.stream.{XMLInputFactory, XMLStreamConstants}
-import scala.io.Source
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
 import scala.xml.{Node, NodeSeq}
 
-class XmlInfoExtract {
-
-  lazy val logger: Logger = Logger(this.getClass)
-
-  private val xmlInputFactory: XMLInputFactory2 = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
+class XmlInfoExtract extends Logging {
+  private val xmlInputFactory = XMLInputFactory.newInstance.asInstanceOf[XMLInputFactory2]
   xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false)
   xmlInputFactory.setProperty("javax.xml.stream.isSupportingExternalEntities", false)
 
@@ -44,7 +38,7 @@ class XmlInfoExtract {
     def text: String = textOption.orEmpty
   }
 
-  private def getDocSpec(e: Node): RawDocSpec = {
+  private def getDocSpec(e: Node) = {
     val docType = (e \ "DocTypeIndic").text
     val docRefId = (e \ "DocRefId").text
     val corrDocRefId = (e \ "CorrDocRefId").textOption
@@ -52,69 +46,18 @@ class XmlInfoExtract {
     RawDocSpec(docType, docRefId, corrDocRefId, corrMessageRefId)
   }
 
-  private def getAddressCity(e: Option[Node]): Option[String] =
-    e match {
-      case Some(node) => (node \ "AddressFix" \ "City").textOption
-      case None       => None
-    }
+  def extract(file: File): RawXMLInfo = {
+    val nodes = scala.xml.XML.loadFile(file)
 
-  // sorry but speed
-  private def countBodys(input: File): Int = {
-    val xmlStreamReader: XMLStreamReader2 = xmlInputFactory.createXMLStreamReader(input)
-    var count = 0
-    try {
-      while (xmlStreamReader.hasNext) {
-        val event = xmlStreamReader.next()
-        if (event == XMLStreamConstants.START_ELEMENT && xmlStreamReader.getLocalName.equalsIgnoreCase("CbcBody"))
-          count = count + 1
-      }
-    } catch {
-      case NonFatal(e) => logger.warn(s"Error counting CBCBody elements: ${e.getMessage}")
-    }
-    count
-  }
+    val cbc = nodes \\ "CBC_OECD"
 
-  private def extractEncoding(input: File): Option[RawXmlEncodingVal] = {
-    val xmlStreamReader: XMLStreamReader2 = xmlInputFactory.createXMLStreamReader(input)
+    val cbcBody = cbc \\ "CbcBody"
 
-    val encodingVal: String = xmlStreamReader.getCharacterEncodingScheme
-    xmlStreamReader.closeCompletely()
+    val cbcReports = cbc \\ "CbcReports"
 
-    encodingVal match {
-      case null => None
-      case _    => Some(RawXmlEncodingVal(encodingVal))
-    }
-  }
-
-  private def extractCbcVal(input: File): RawCbcVal = {
-    val xmlStreamReader: XMLStreamReader2 = xmlInputFactory.createXMLStreamReader(input)
-
-    val value = nonFatalCatch either {
-      RawCbcVal(
-        if (xmlStreamReader.hasNext) {
-          xmlStreamReader.nextTag()
-          xmlStreamReader.getAttributeValue("", "version")
-        } else ""
-      )
-    }
-
-    xmlStreamReader.closeCompletely()
-
-    value.fold(
-      e => {
-        logger.warn(s"extractCbcVal encountered the following error: ${e.getMessage}")
-        RawCbcVal("")
-      },
-      cbcVal => cbcVal
-    )
-
-  }
-
-  private val splitter: XmlElementExtractor[RawXmlFields] = XmlElementExtractor {
-
-    case List("CBC_OECD", "MessageSpec") =>
-      ms =>
-        {
+    def extractMessageSpec = {
+      val ms = (cbc \ "MessageSpec").toIterator
+        .map(ms => {
           val msgRefId = (ms \ "MessageRefId").text
           val receivingCountry = (ms \ "ReceivingCountry").text
           val sendingEntityIn = (ms \ "SendingEntityIN").text
@@ -123,11 +66,22 @@ class XmlInfoExtract {
           val reportingPeriod = (ms \ "ReportingPeriod").text
           val corrMsgRefId = (ms \ "CorrMessageRefId").textOption
           RawMessageSpec(msgRefId, receivingCountry, sendingEntityIn, timestamp, reportingPeriod, msgType, corrMsgRefId)
+        })
+        .toList
+        .headOption
+        .getOrElse(RawMessageSpec("", "", "", "", "", None, None))
+      ms
+    }
+
+    def extractReportingEntity = {
+      def getAddressCity(e: Option[Node]) =
+        e match {
+          case Some(node) => (node \ "AddressFix" \ "City").textOption
+          case None => None
         }
 
-    case List("CBC_OECD", "CbcBody", "ReportingEntity") =>
-      re =>
-        {
+      val re = (cbcBody \ "ReportingEntity").toIterator
+        .map(re => {
           val tin = (re \ "Entity" \ "TIN").text
           val tinIB = (re \ "Entity" \ "TIN") \@ "issuedBy"
           val name = (re \ "Entity" \ "Name").text
@@ -137,19 +91,92 @@ class XmlInfoExtract {
           val startDate = (re \ "ReportingPeriod" \ "StartDate").text
           val endDate = (re \ "ReportingPeriod" \ "EndDate").text
           RawReportingEntity(rr, ds, tin, tinIB, name, city, startDate, endDate)
+        })
+        .toList
+        .headOption
+      re
+    }
+
+    def extractCbcReports = {
+      val cr = (cbcReports \ "DocSpec").toIterator
+        .map(
+          ds => RawCbcReports(getDocSpec(ds))
+        )
+        .toList
+      cr
+    }
+
+    def extractAdditionalInfo = {
+      val ai = (cbcBody \ "AdditionalInfo").toIterator
+        .map(ds => {
+          val otherInfo = (ds \ "OtherInfo").text
+          RawAdditionalInfo(getDocSpec((ds \ "DocSpec").head), otherInfo)
+        })
+        .toList
+      ai
+    }
+
+    def extractCbcVal(input: File) = {
+      val xmlStreamReader = xmlInputFactory.createXMLStreamReader(input)
+
+      val value = nonFatalCatch either {
+        RawCbcVal(
+          if (xmlStreamReader.hasNext) {
+            xmlStreamReader.nextTag()
+            xmlStreamReader.getAttributeValue("", "version")
+          } else ""
+        )
+      }
+
+      xmlStreamReader.closeCompletely()
+
+      value.fold(
+        e => {
+          logger.warn(s"extractCbcVal encountered the following error: ${e.getMessage}")
+          RawCbcVal("")
+        },
+        cbcVal => cbcVal
+      )
+    }
+
+    def extractEncoding(input: File) = {
+      val xmlStreamReader = xmlInputFactory.createXMLStreamReader(input)
+
+      val encodingVal = xmlStreamReader.getCharacterEncodingScheme
+      xmlStreamReader.closeCompletely()
+
+      encodingVal match {
+        case null => None
+        case _ => Some(RawXmlEncodingVal(encodingVal))
+      }
+    }
+
+    // sorry but speed
+    def countBodies(input: File) = {
+      val xmlStreamReader: XMLStreamReader2 = xmlInputFactory.createXMLStreamReader(input)
+      var count = 0
+      try {
+        while (xmlStreamReader.hasNext) {
+          val event = xmlStreamReader.next()
+          if (event == XMLStreamConstants.START_ELEMENT && xmlStreamReader.getLocalName.equalsIgnoreCase("CbcBody"))
+            count = count + 1
         }
+      } catch {
+        case NonFatal(e) => logger.warn(s"Error counting CBCBody elements: ${e.getMessage}")
+      }
+      count
+    }
 
-    case List("CBC_OECD", "CbcBody", "CbcReports", "DocSpec") =>
-      ds =>
-        RawCbcReports(getDocSpec(ds))
+    def extractEntityNames = {
+      val cen = (cbcReports \ "ConstEntities" \ "ConstEntity" \ "Name").toIterator
+        .map(ds => RawConstEntityName(ds.text).name)
+        .toList
+      cen
+    }
 
-    case List("CBC_OECD", "CbcBody", "CbcReports", "ConstEntities", "ConstEntity", "Name") =>
-      ds =>
-        RawConstEntityName(ds.text)
-
-    case List("CBC_OECD", "CbcBody", "CbcReports", "Summary") =>
-      su =>
-        {
+    def extractCurrencyCodes = {
+      val currencyCodes = (cbcReports \ "Summary").toIterator
+        .map(su => {
           val unrelated = (su \ "Revenues" \ "Unrelated") \@ "currCode"
           val related = (su \ "Revenues" \ "Related") \@ "currCode"
           val total = (su \ "Revenues" \ "Total") \@ "currCode"
@@ -160,47 +187,30 @@ class XmlInfoExtract {
           val earnings = (su \ "Earnings") \@ "currCode"
           val assets = (su \ "Assets") \@ "currCode"
 
-          RawCurrencyCodes(
-            List(unrelated, related, total, profitOrLoss, taxPaid, taxAccrued, capital, earnings, assets))
-        }
-
-    case List("CBC_OECD", "CbcBody", "AdditionalInfo") =>
-      ds =>
-        {
-          val otherInfo = (ds \ "OtherInfo").text
-          RawAdditionalInfo(getDocSpec((ds \ "DocSpec").head), otherInfo)
-        }
-
-  }
-
-  def extract(file: File): RawXMLInfo = {
-
-    val collectedData: (List[RawXmlFields], Int) = {
-
-      val xmlEventReader = nonFatalCatch opt xmlInputFactory.createXMLEventReader(
-        Source.fromFile(file).bufferedReader())
-      try {
-        val fields = xmlEventReader.map(_.toIterator.scanCollect(splitter.Scan).toList).toList.flatten
-        val numBodies = countBodys(file)
-        (fields, numBodies)
-      } finally {
-        xmlEventReader.foreach(_.close())
-      }
+          RawCurrencyCodes(List(unrelated, related, total, profitOrLoss, taxPaid, taxAccrued, capital, earnings, assets))
+        })
+        .toList
+      currencyCodes
     }
 
-    val xe = extractEncoding(file)
+    val ms = extractMessageSpec
+
+    val re = extractReportingEntity
+
+    val cr = extractCbcReports
+
+    val ai = extractAdditionalInfo
+
     val cv = extractCbcVal(file)
-    val ms = collectedData._1
-      .collectFirst { case ms: RawMessageSpec => ms }
-      .getOrElse(RawMessageSpec("", "", "", "", "", None, None))
-    val re = collectedData._1.collectFirst { case re: RawReportingEntity                             => re }
-    val ai = collectedData._1.collect { case ai: RawAdditionalInfo                                   => ai }
-    val cr = collectedData._1.collect { case cr: RawCbcReports                                       => cr }
-    val cen = collectedData._1.collect { case cen: RawConstEntityName                                => cen.name }
-    val currencyCodes: List[RawCurrencyCodes] = collectedData._1.collect { case cc: RawCurrencyCodes => cc }
 
-    RawXMLInfo(ms, re, cr, ai, cv, xe, collectedData._2, cen, currencyCodes)
+    val xe = extractEncoding(file)
 
+    val numBodies = countBodies(file)
+
+    val cen = extractEntityNames
+
+    val currencyCodes = extractCurrencyCodes
+
+    RawXMLInfo(ms, re, cr, ai, cv, xe, numBodies, cen, currencyCodes)
   }
-
 }

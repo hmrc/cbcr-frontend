@@ -37,8 +37,7 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
         logger.error(s"Failed to find $path in config")
         throw new Exception(s"Missing configuration $path")
       }
-      val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
-        XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
+      val xmlValidationSchemaFactory = XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
       val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }

@@ -21,6 +21,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.hmrc.cbcrfrontend.model.RawCbcReports
 
 import java.io.File
+import scala.xml.SAXParseException
 
 class XmlInfoExtractSpec extends AnyWordSpec with Matchers {
 
@@ -89,8 +90,14 @@ class XmlInfoExtractSpec extends AnyWordSpec with Matchers {
       e.constEntityNames should contain("name2")
       e.constEntityNames should contain("name3")
       e.constEntityNames should contain("name4")
+    }
 
+    "File is not a valid xml file" in {
+      val f = loadFile("actually_a_jpg.xml")
+
+      val xmlInfoExtract = new XmlInfoExtract()
+
+      assertThrows[SAXParseException](xmlInfoExtract.extract(f))
     }
   }
-
 }
