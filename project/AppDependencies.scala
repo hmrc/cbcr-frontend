@@ -12,7 +12,7 @@ object AppDependencies {
     "uk.gov.hmrc"              %% "emailaddress"               % "3.7.0",
     "uk.gov.hmrc"              %% "domain"                     % "8.1.0-play-28",
     "uk.gov.hmrc"              %% "http-caching-client"        % "9.6.0-play-28",
-    "org.typelevel"            %% "cats-core"                  % "1.0.0",
+    "org.typelevel"            %% "cats-core"                  % "2.0.0",
     "com.github.kxbmap"        %% "configs"                    % "0.6.0",
     "org.codehaus.woodstox"    % "stax2-api"                   % "3.1.4",
     "org.codehaus.woodstox"    % "woodstox-core-asl"           % "4.4.1",
