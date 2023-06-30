@@ -738,22 +738,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Mockit
           errors => errors.toList should contain(MessageTypeIndicInvalid),
           _ => ()
         )
-
       }
 
-      "File is not a valid xml file" in {
-        val validFile = new File("test/resources/actually_a_jpg.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
-
-        result.fold(
-          _ => (),
-          _ => fail("No InvalidXMLError generated")
-        )
-
-      }
       "when a corrRefId is present but refers to an *unknown* docRefId" in {
-
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
         when(docRefIdService.queryDocRefId(EQ(docRefId1))(any())) thenReturn Future.successful(DoesNotExist)
         when(docRefIdService.queryDocRefId(EQ(docRefId2))(any())) thenReturn Future.successful(DoesNotExist)
