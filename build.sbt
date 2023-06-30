@@ -6,7 +6,7 @@ import play.sbt.PlayImport.*
 
 val appName = "cbcr-frontend"
 
-val silencerVersion = "1.7.7"
+val silencerVersion = "1.7.13"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
