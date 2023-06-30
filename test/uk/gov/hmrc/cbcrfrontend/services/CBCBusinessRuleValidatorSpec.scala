@@ -1323,7 +1323,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Mockit
 
       }
 
-      "the CorrMessageRefID included in both MesageSpec and DocSpec" in {
+      "the CorrMessageRefID included in both MessageSpec and DocSpec" in {
         val validFile = new File(
           "test/resources/cbcr-invalidCorrMessageRefIdInMsgSpecDocSpec" +
             ".xml")

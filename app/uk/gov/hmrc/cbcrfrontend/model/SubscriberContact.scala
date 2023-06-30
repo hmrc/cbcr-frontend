@@ -54,7 +54,7 @@ object CBCId extends Modulus23Check {
 
   implicit val cbcFormatter: Formatter[CBCId] = new Formatter[CBCId] {
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], CBCId] =
-      Formats.stringFormat.bind(key, data).right.flatMap { s =>
+      Formats.stringFormat.bind(key, data).flatMap { s =>
         CBCId(s).toRight(Seq(FormError(key, "error.cbcid", Nil)))
       }
 
@@ -89,7 +89,7 @@ object CBCId extends Modulus23Check {
     if (i > 999999 || i < 0) {
       Invalid(new IllegalArgumentException("CBCId ranges from 0-999999"))
     } else {
-      val sequenceNumber = i.formatted("%06d")
+      val sequenceNumber = "%06d".format(i)
       val id = s"CBC0100$sequenceNumber"
       val checkChar = calculateCheckCharacter(id)
       CBCId(s"X$checkChar" + id).fold[Validated[Throwable, CBCId]](

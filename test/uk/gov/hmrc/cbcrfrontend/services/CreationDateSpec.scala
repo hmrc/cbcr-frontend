@@ -31,7 +31,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext}
 
 class CreationDateSpec
     extends AnyWordSpec with Matchers with BeforeAndAfterEach with GuiceOneAppPerSuite with MockitoSugar with MockitoCats {
