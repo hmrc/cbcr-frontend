@@ -18,7 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
-import org.mockito.MockitoSugar
+import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -26,7 +26,7 @@ import play.api.Configuration
 
 import java.io.File
 
-class CBCXMLValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
+class CBCXMLValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
 
   private def loadFile(filename: String) = new File(s"test/resources/$filename")
 
@@ -38,13 +38,13 @@ class CBCXMLValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
   private val configuration = new Configuration(ConfigFactory.load("application.conf"))
   private val runMode: RunMode = mock[RunMode]
 
-  when(runMode.env) thenReturn "Dev"
-  private val schemaVer: String = configuration
+  runMode.env returns "Dev"
+  private val schemaVer = configuration
     .getOptional[String](s"${runMode.env}.oecd-schema-version")
-    .getOrElse(s"${runMode.env}.oecd-schema-version deos not exist")
+    .getOrElse(s"${runMode.env}.oecd-schema-version does not exist")
   private val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
-  private val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
+  private val schemaFile = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
   private val validator = new CBCRXMLValidator(xmlValidationSchemaFactory.createSchema(schemaFile))
 
   "An Xml Validator" should {
@@ -76,8 +76,6 @@ class CBCXMLValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       validate.hasFatalErrors shouldBe true
       validate.hasErrors shouldBe true
       validate.errorsCollection.size shouldBe 100
-
     }
-
   }
 }

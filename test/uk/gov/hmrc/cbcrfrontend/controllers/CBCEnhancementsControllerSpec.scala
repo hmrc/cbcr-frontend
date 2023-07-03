@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import org.mockito.MockitoSugar
+import org.mockito.IdiomaticMockito
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
@@ -34,7 +34,7 @@ import scala.concurrent.ExecutionContext
 
 class CBCEnhancementsControllerSpec
     extends AnyWordSpec with Matchers with ScalaFutures with GuiceOneAppPerSuite with CSRFTest
-    with BeforeAndAfterEach with MockitoSugar {
+    with BeforeAndAfterEach with IdiomaticMockito {
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
@@ -50,5 +50,4 @@ class CBCEnhancementsControllerSpec
       status(result) shouldBe Status.UNAUTHORIZED
     }
   }
-
 }

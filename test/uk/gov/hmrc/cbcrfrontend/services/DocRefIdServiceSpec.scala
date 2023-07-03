@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar
+import org.mockito.ArgumentMatchersSugar.*
+import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -33,7 +33,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class DocRefIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
+class DocRefIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
 
   private val connector = mock[CBCRBackendConnector]
   private val docRefIdService = new DocRefIdService(connector)
@@ -44,20 +44,21 @@ class DocRefIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
   "DocRefIdService" should {
     "save a DocRefId in backend CBCR" in {
-      when(connector.docRefIdSave(any())(any())) thenReturn Future.successful(
+      connector.docRefIdSave(*)(*) returns Future.successful(
         HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.saveDocRefId(docRefId).value, 2.seconds)
       result shouldBe None
     }
+
     "return Unexpected error state with message if the connector returns a HttpException" in {
-      when(connector.docRefIdSave(any())(any())) thenReturn Future.failed(
+      connector.docRefIdSave(*)(*) returns Future.failed(
         new HttpException("HttpException occurred", 400))
       val result = Await.result(docRefIdService.saveDocRefId(docRefId).value, 2.seconds)
       result.get.getClass.getName shouldBe "uk.gov.hmrc.cbcrfrontend.model.UnexpectedState"
     }
 
     "return an error if anything else goes wrong and if the connector returns any other Exception" in {
-      when(connector.docRefIdSave(any())(any())) thenReturn Future.failed(new Exception("The sky is falling"))
+      connector.docRefIdSave(*)(*) returns Future.failed(new Exception("The sky is falling"))
       val result = Await.result(docRefIdService.saveDocRefId(docRefId).value, 2.seconds)
       result.get.errorMsg shouldBe "The sky is falling"
     }
@@ -65,20 +66,21 @@ class DocRefIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
   "DocRefIdService" should {
     "save a CorrDocRefId in backend CBCR" in {
-      when(connector.corrDocRefIdSave(any(), any())(any())) thenReturn Future.successful(
+      connector.corrDocRefIdSave(*, *)(*) returns Future.successful(
         HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.saveCorrDocRefID(corrDocRefId, docRefId).value, 2.seconds)
       result shouldBe None
     }
+
     "return Unexpected error state with message if the connector returns a HttpException if it fails to save CorrDocRefId" in {
-      when(connector.corrDocRefIdSave(any(), any())(any())) thenReturn Future.failed(
+      connector.corrDocRefIdSave(*, *)(*) returns Future.failed(
         new HttpException("HttpException occurred", 400))
       val result = Await.result(docRefIdService.saveCorrDocRefID(corrDocRefId, docRefId).value, 2.seconds)
       result.get.getClass.getName shouldBe "uk.gov.hmrc.cbcrfrontend.model.UnexpectedState"
     }
 
     "return an error if anything else goes wrong and if the connector returns any other Exception if it fails to save CorrDocRefId" in {
-      when(connector.corrDocRefIdSave(any(), any())(any())) thenReturn Future.failed(
+      connector.corrDocRefIdSave(*, *)(*) returns Future.failed(
         new Exception("The sky is falling"))
       val result = Await.result(docRefIdService.saveCorrDocRefID(corrDocRefId, docRefId).value, 2.seconds)
       result.get.errorMsg shouldBe "The sky is falling"
@@ -87,20 +89,21 @@ class DocRefIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
   "DocRefIdService" should {
     "return a docRefId valid state from backend CBCR if it exists in the DB" in {
-      when(connector.docRefIdQuery(any())(any())) thenReturn Future.successful(
+      connector.docRefIdQuery(*)(*) returns Future.successful(
         HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.queryDocRefId(docRefId), 2.seconds)
       result shouldBe Valid
     }
+
     "return DoesNotExist error state with message if the docRefId is not found in the DB" in {
-      when(connector.docRefIdQuery(any())(any())) thenReturn Future.successful(
+      connector.docRefIdQuery(*)(*) returns Future.successful(
         HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.queryDocRefId(docRefId), 2.seconds)
       result shouldBe DoesNotExist
     }
 
-    "return an Invalid state of DocerefId if an exception occurs while retrieving " in {
-      when(connector.docRefIdQuery(any())(any())) thenReturn Future.successful(
+    "return an Invalid state of DocRefId if an exception occurs while retrieving " in {
+      connector.docRefIdQuery(*)(*) returns Future.successful(
         HttpResponse(Status.CONFLICT, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(docRefIdService.queryDocRefId(docRefId), 2.seconds)
       result shouldBe Invalid
