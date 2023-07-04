@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import org.mockito.MockitoSugar
+import org.mockito.IdiomaticMockito
 import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.HttpResponse
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers with EitherValues with MockitoSugar {
+class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers with EitherValues with IdiomaticMockito {
 
   "A FileUploadControllerServiceConnectorSpec " should {
     "create the expected Json Object when the expiry Date is specified" in {
@@ -55,7 +55,6 @@ class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers
     }
 
     "return the expected Json Object when the expiry Date is Not specified" in {
-
       val expectedEnvelopeRequest = Json.obj(
         "callbackUrl" -> "http://localhost:9797/cbcr/file-upload-response",
         "metadata" -> Json.obj(
@@ -74,17 +73,16 @@ class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers
     }
 
     "return the envelopeId if call to extractEnvelopId with valid location header" in {
-      val response: HttpResponse = mock[HttpResponse]
-      when(response.header(LOCATION))
-        .thenReturn(Option("localhost:8898/file-upload/envelopes/0f23a63e-d448-41af-a159-6ba23d88943e"))
+      val response = mock[HttpResponse]
+      response.header(LOCATION) returns Option("localhost:8898/file-upload/envelopes/0f23a63e-d448-41af-a159-6ba23d88943e")
 
       val result = new FileUploadServiceConnector().extractEnvelopId(response)
       result should equal(Right(EnvelopeId("0f23a63e-d448-41af-a159-6ba23d88943e")))
     }
 
     "return an error if call to extractEnvelopId with location header but no envelopeId" in {
-      val response: HttpResponse = mock[HttpResponse]
-      when(response.header(LOCATION)).thenReturn(Option("localhost:8898/file-upload/envelopes"))
+      val response = mock[HttpResponse]
+      response.header(LOCATION) returns Option("localhost:8898/file-upload/envelopes")
 
       val result = new FileUploadServiceConnector().extractEnvelopId(response)
 
@@ -97,8 +95,8 @@ class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers
     }
 
     "return an error if call to extractEnvelopId with no location header" in {
-      val response: HttpResponse = mock[HttpResponse]
-      when(response.header(LOCATION)).thenReturn(None)
+      val response = mock[HttpResponse]
+      response.header(LOCATION) returns None
 
       val result = new FileUploadServiceConnector().extractEnvelopId(response)
 
@@ -109,18 +107,18 @@ class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers
     }
 
     "return the response body if call to extractFileUploadMessage with status = 200" in {
-      val response: HttpResponse = mock[HttpResponse]
-      when(response.body).thenReturn("Test Body")
-      when(response.status).thenReturn(200)
+      val response = mock[HttpResponse]
+      response.body returns "Test Body"
+      response.status returns 200
 
       val result = new FileUploadServiceConnector().extractFileUploadMessage(response)
       result should equal(Right("Test Body"))
     }
 
     "return an error if call to extractFileUploadMessage with status not 200" in {
-      val response: HttpResponse = mock[HttpResponse]
-      when(response.body).thenReturn("Test Body")
-      when(response.status).thenReturn(400)
+      val response = mock[HttpResponse]
+      response.body returns "Test Body"
+      response.status returns 400
 
       val result = new FileUploadServiceConnector().extractFileUploadMessage(response)
 
@@ -131,18 +129,18 @@ class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers
     }
 
     "return the response body if call to extractEnvelopeDeleteMessage with status = 200" in {
-      val response: HttpResponse = mock[HttpResponse]
-      when(response.body).thenReturn("Test Body")
-      when(response.status).thenReturn(200)
+      val response = mock[HttpResponse]
+      response.body returns "Test Body"
+      response.status returns 200
 
       val result = new FileUploadServiceConnector().extractEnvelopeDeleteMessage(response)
       result should equal(Right("Test Body"))
     }
 
     "return an error if call to extractEnvelopeDeleteMessage with status not 200" in {
-      val response: HttpResponse = mock[HttpResponse]
-      when(response.body).thenReturn("Test Body")
-      when(response.status).thenReturn(400)
+      val response = mock[HttpResponse]
+      response.body returns "Test Body"
+      response.status returns 400
 
       val result = new FileUploadServiceConnector().extractEnvelopeDeleteMessage(response)
 
@@ -153,18 +151,18 @@ class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers
     }
 
     "return the file meta data if call to extractFileMetadata with status = 200" in {
-      val response: HttpResponse = mock[HttpResponse]
+      val response = mock[HttpResponse]
       val md = FileMetadata("", "", "something.xml", "", 1.0, "", JsNull, "")
-      when(response.json).thenReturn(Json.toJson(md))
-      when(response.status).thenReturn(200)
+      response.json returns Json.toJson(md)
+      response.status returns 200
 
       val result = new FileUploadServiceConnector().extractFileMetadata(response)
       result should equal(Right(Option(md)))
     }
 
     "return an error if call to extractFileMetadata with status not 200" in {
-      val response: HttpResponse = mock[HttpResponse]
-      when(response.status).thenReturn(400)
+      val response = mock[HttpResponse]
+      response.status returns 400
 
       val result = new FileUploadServiceConnector().extractFileMetadata(response)
 
