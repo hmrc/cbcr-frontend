@@ -77,11 +77,11 @@ class CBCBusinessRuleValidator @Inject()(
     else {
       (extractCbcOecdVersion(in.cbcVal) *>
         in.xmlEncoding.map(extractXmlEncodingVal).sequence[ValidBusinessResult, Unit] *>
-        extractMessageSpec(in.messageSpec) |@|
-        in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult, ReportingEntity] |@|
-        in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult, CbcReports] |@|
+        extractMessageSpec(in.messageSpec),
+        in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult, ReportingEntity],
+        in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult, CbcReports],
         in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult, AdditionalInfo])
-        .map(
+        .mapN(
           XMLInfo(
             _,
             _,
@@ -94,12 +94,12 @@ class CBCBusinessRuleValidator @Inject()(
 
   private def extractMessageSpec(in: RawMessageSpec): ValidBusinessResult[MessageSpec] =
     (
-      extractMessageRefID(in) |@|
-        extractReceivingCountry(in) |@|
-        extractSendingEntityIn(in) |@|
-        extractReportingPeriod(in) |@|
+      extractMessageRefID(in),
+        extractReceivingCountry(in),
+        extractSendingEntityIn(in),
+        extractReportingPeriod(in),
         extractMessageTypeIndic(in)
-    ).map(
+    ).mapN(
       (messageRefID, receivingCountry, sendingEntityIn, reportingPeriod, messageTypeInic) =>
         MessageSpec(
           messageRefID,
@@ -113,10 +113,10 @@ class CBCBusinessRuleValidator @Inject()(
     )
 
   private def extractReportingEntity(in: RawReportingEntity): ValidBusinessResult[ReportingEntity] =
-    (extractReportingRole(in) |@|
-      extractDocSpec(in.docSpec, ENT) |@|
-      extractTIN(in) |@|
-      extractEntityReportingPeriod(in)).map(ReportingEntity(_, _, _, in.name, in.city, _))
+    (extractReportingRole(in),
+      extractDocSpec(in.docSpec, ENT),
+      extractTIN(in),
+      extractEntityReportingPeriod(in)).mapN(ReportingEntity(_, _, _, in.name, in.city, _))
 
   private def extractCBCReports(in: RawCbcReports): ValidBusinessResult[CbcReports] =
     extractDocSpec(in.docSpec, REP).map(CbcReports(_))
@@ -125,9 +125,9 @@ class CBCBusinessRuleValidator @Inject()(
     extractDocSpec(in.docSpec, ADD).map(AdditionalInfo(_, in.otherInfo))
 
   private def extractDocSpec(d: RawDocSpec, parentGroupElement: ParentGroupElement): ValidBusinessResult[DocSpec] =
-    (extractDocTypeInidc(d.docType) |@|
-      extractDocRefId(d.docRefId, parentGroupElement) |@|
-      extractCorrDocRefId(d.corrDocRefId, parentGroupElement)).map(DocSpec(_, _, _, d.corrMessageRefId))
+    (extractDocTypeInidc(d.docType),
+      extractDocRefId(d.docRefId, parentGroupElement),
+      extractCorrDocRefId(d.corrDocRefId, parentGroupElement)).mapN(DocSpec(_, _, _, d.corrMessageRefId))
 
   private def extractDocTypeInidc(docType: String): ValidBusinessResult[DocTypeIndic] =
     DocTypeIndic
@@ -404,7 +404,7 @@ class CBCBusinessRuleValidator @Inject()(
   private def validateDocSpec(d: DocSpec)(implicit hc: HeaderCarrier): FutureValidBusinessResult[DocSpec] =
     (validateDocRefId(d) zip d.corrDocRefId.map(validateCorrDocRefId).sequence[FutureValidBusinessResult, CorrDocRefId])
       .map {
-        case (doc, corrDoc) => (doc |@| corrDoc |@| validateCorrDocRefIdRequired(d)).map((_, _, _) => d)
+        case (doc, corrDoc) => (doc, corrDoc, validateCorrDocRefIdRequired(d)).mapN((_, _, _) => d)
       }
 
   /** Check if only 1st AddInfoCorrDocRefId was saved (before issue corrected) and if so And AddInfo coorDocRefId not found then show appropriate error */

@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar
+import org.mockito.ArgumentMatchersSugar.*
+import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -29,14 +29,14 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
+class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
 
   private val mockConnector = mock[BPRKnownFactsConnector]
   private val mockAudit = mock[AuditConnector]
   private val bprKnownFactsService = new BPRKnownFactsService(mockConnector, mockAudit)
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  private val bodyKnownFact1: String =
+  private val bodyKnownFact1 =
     """{
       |    "safeId": "XX0000114342888",
       |    "organisation": {
@@ -54,46 +54,38 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
 
   "The BPRKnowFactsService" should {
     "return a match for a check with an exact matching post code " in {
-
-      val result: HttpResponse = mock[HttpResponse]
-      when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
-      when(mockAudit.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
-      when(result.body).thenReturn(bodyKnownFact1)
+      val result = mock[HttpResponse]
+      mockConnector.lookup(kf1.utr.utr) returns Future.successful(result)
+      mockAudit.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
+      result.body returns bodyKnownFact1
 
       val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(kf1).value, 2.second)
 
       maybeKnownFact.isDefined shouldBe false
-
     }
 
     "return a non match for a check with an non matching post code " in {
-
-      val result: HttpResponse = mock[HttpResponse]
-      when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
-      when(mockAudit.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
-      when(result.body).thenReturn(bodyKnownFact1)
+      val result = mock[HttpResponse]
+      mockConnector.lookup(kf1.utr.utr) returns Future.successful(result)
+      mockAudit.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
+      result.body returns bodyKnownFact1
 
       val maybeKnownFact = Await
         .result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN3 5XB")).value, 2.second)
 
       maybeKnownFact.isDefined shouldBe false
-
     }
 
-    "return a  match for a check with no space in the post code when the DES version has a space" in {
-
-      val result: HttpResponse = mock[HttpResponse]
-      when(mockConnector.lookup(kf1.utr.utr)).thenReturn(Future.successful(result))
-      when(mockAudit.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
-      when(result.body).thenReturn(bodyKnownFact1)
+    "return a match for a check with no space in the post code when the DES version has a space" in {
+      val result = mock[HttpResponse]
+      mockConnector.lookup(kf1.utr.utr) returns Future.successful(result)
+      mockAudit.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
+      result.body returns bodyKnownFact1
 
       val maybeKnownFact = Await
         .result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value, 2.second)
 
       maybeKnownFact.isDefined shouldBe false
-
     }
-
   }
-
 }

@@ -20,8 +20,9 @@ import akka.actor.ActorSystem
 import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.implicits.catsStdInstancesForFuture
-import org.mockito.ArgumentMatchers.{eq => EQ, _}
-import org.mockito.MockitoSugar
+import org.mockito.ArgumentMatchersSugar.{*, any}
+import org.mockito.IdiomaticMockito
+import org.mockito.cats.IdiomaticMockitoCats.StubbingOpsCats
 import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -30,7 +31,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsNull, JsValue, Json}
-import play.api.mvc.{MessagesControllerComponents, Result}
+import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{call, contentAsString, header, status, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.{Configuration, Environment}
@@ -54,7 +55,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
 class SubmissionSpec
-    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach with MockitoSugar with MockitoCats {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach with IdiomaticMockito with MockitoCats {
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
@@ -66,7 +67,7 @@ class SubmissionSpec
 
   private def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
-  private val creds: Credentials = Credentials("totally", "legit")
+  private val creds = Credentials("totally", "legit")
 
   private val cache = mock[CBCSessionCache]
   private val fus = mock[FileUploadService]
@@ -78,7 +79,7 @@ class SubmissionSpec
   private val mockEmailService = mock[EmailService]
   private val reportingEntity = mock[ReportingEntityDataService]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  private val views: Views = app.injector.instanceOf[Views]
+  private val views = app.injector.instanceOf[Views]
   private val fileDetails = FileDetails("env1", "file1")
 
   private val bpr = BusinessPartnerRecord("safeId", None, EtmpAddress("Line1", None, None, None, None, "GB"))
@@ -110,11 +111,11 @@ class SubmissionSpec
         .withFormUrlEncodedBody("ultimateParentEntity" -> ultimateParentEntity.ultimateParentEntity))
     "return 303 and point to the correct page" when {
       "the reporting role is CBC702" in {
-        when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
           Some(AffinityGroup.Organisation))
-        whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo.copy(
+        cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo.copy(
           reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))
-        when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format), any(), any())) thenReturn Future
+        cache.save[UltimateParentEntity](*)(UltimateParentEntity.format, *, *) returns Future
           .successful(CacheMap("cache", Map.empty[String, JsValue]))
         val result = call(controller.submitUltimateParentEntity, fakeRequestSubmit)
         header("Location", result).get should endWith("/utr/entry-form")
@@ -122,15 +123,15 @@ class SubmissionSpec
       }
 
       "the reporting role is CBC703" in {
-        when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+        auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
           Some(AffinityGroup.Organisation))
-        when(cache.readOption(EQ(AffinityGroup.jsonFormat), any(), any())) thenReturn Future.successful(
+        cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(
           Some(AffinityGroup.Organisation))
-        when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format), any(), any())) thenReturn Future
+        cache.save[UltimateParentEntity](*)(UltimateParentEntity.format, *, *) returns Future
           .successful(CacheMap("cache", Map.empty[String, JsValue]))
-        whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo.copy(
+        cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo.copy(
           reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703))
-        when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format), any(), any())) thenReturn Future
+        cache.save[UltimateParentEntity](*)(UltimateParentEntity.format, *, *) returns Future
           .successful(CacheMap("cache", Map.empty[String, JsValue]))
         val result = call(controller.submitUltimateParentEntity, fakeRequestSubmit)
         header("Location", result).get should endWith("/submitter-info/entry-form")
@@ -139,11 +140,11 @@ class SubmissionSpec
     }
 
     "return 500 when the reportingrole is CBC701 as this should never happen" in {
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format), any(), any())) thenReturn Future
+      cache.save[UltimateParentEntity](*)(UltimateParentEntity.format, *, *) returns Future
         .successful(CacheMap("cache", Map.empty[String, JsValue]))
-      whenF(cache.read(EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo.copy(
+      cache.read(CompleteXMLInfo.format, *, *) returnsF keyXMLInfo.copy(
         reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC701))
       val result = call(controller.submitUltimateParentEntity, fakeRequestSubmit)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -153,32 +154,32 @@ class SubmissionSpec
   "GET /submitter-info" should {
     "return a 200 when SubmitterInfo is populated in cache" in {
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
-      when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(
+      cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(
         Some(SubmitterInfo("A Name", None, "0123456", EmailAddress("email@org.com"), None)))
-      when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-      when(cache.save[FilingType](any())(EQ(FilingType.format), any(), any())) thenReturn Future.successful(
+      auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+      cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+      cache.save[FilingType](*)(FilingType.format, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(cache.save[TIN](any())(EQ(TIN.format), any(), any())) thenReturn Future.successful(
+      cache.save[TIN](*)(TIN.format, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       status(controller.submitterInfo(None)(fakeRequestSubmit)) shouldBe Status.OK
     }
 
     "return a 200 when SubmitterInfo is NOT in cache" in {
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
-      when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
-      when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-      when(cache.save[FilingType](any())(EQ(FilingType.format), any(), any())) thenReturn Future.successful(
+      cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)
+      auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+      cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+      cache.save[FilingType](*)(FilingType.format, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(cache.save[TIN](any())(EQ(TIN.format), any(), any())) thenReturn Future.successful(
+      cache.save[TIN](*)(TIN.format, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
     }
 
@@ -198,19 +199,19 @@ class SubmissionSpec
         mcc,
         views)(ec, cache, config, feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
-      when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
-      when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-      when(cache.save[UltimateParentEntity](any())(EQ(UltimateParentEntity.format), any(), any())) thenReturn Future
+      cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)
+      auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+      cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+      cache.save[UltimateParentEntity](*)(UltimateParentEntity.format, *, *) returns Future
         .successful(CacheMap("cache", Map.empty[String, JsValue]))
-      when(cache.save[FilingType](any())(EQ(FilingType.format), any(), any())) thenReturn Future.successful(
+      cache.save[FilingType](*)(FilingType.format, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
-      verify(cache).save(any())(EQ(FilingType.format), any(), any())
-      verify(cache).save(any())(EQ(UltimateParentEntity.format), any(), any())
+      cache.save(*)(FilingType.format, *, *) was called
+      cache.save(*)(UltimateParentEntity.format, *, *) was called
     }
 
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
@@ -229,17 +230,17 @@ class SubmissionSpec
         mcc,
         views)(ec, cache, config, feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
-      when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
-      whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo.copy(
+      auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+      cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)
+      cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo.copy(
         reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC702))
-      when(cache.save[FilingType](any())(EQ(FilingType.format), any(), any())) thenReturn Future.successful(
+      cache.save[FilingType](*)(FilingType.format, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
-      verify(cache).save(any())(EQ(FilingType.format), any(), any())
+      cache.save(*)(FilingType.format, *, *) was called
     }
 
     "use the Filing type form the xml when the ReportingRole is CBC703" in {
@@ -258,17 +259,17 @@ class SubmissionSpec
         mcc,
         views)(ec, cache, config, feConfig)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
-      when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      when(cache.readOption(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(None)
-      whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo.copy(
+      auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+      cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)
+      cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo.copy(
         reportingEntity = keyXMLInfo.reportingEntity.copy(reportingRole = CBC703))
-      when(cache.save[FilingType](any())(EQ(FilingType.format), any(), any())) thenReturn Future.successful(
+      cache.save[FilingType](*)(FilingType.format, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
-      verify(cache).save(any())(EQ(FilingType.format), any(), any())
+      cache.save(*)(FilingType.format, *, *) was called
     }
   }
 
@@ -281,10 +282,10 @@ class SubmissionSpec
         "affinityGroup"      -> "",
       )
       val fakeRequestSubmit = addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenFailWith ExpiredSession("")
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
       status(result) shouldBe Status.BAD_REQUEST
     }
@@ -299,10 +300,10 @@ class SubmissionSpec
       )
       val fakeRequestSubmit =
         addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenFailWith ExpiredSession("")
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
       status(result) shouldBe Status.BAD_REQUEST
     }
@@ -315,12 +316,12 @@ class SubmissionSpec
         "email"              -> submitterInfo.email.toString,
         "affinityGroup"      -> submitterInfo.affinityGroup.toString,
       )
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenFailWith ExpiredSession("")
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
       val fakeRequestSubmit =
         addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
       status(result) shouldBe Status.BAD_REQUEST
     }
@@ -333,10 +334,10 @@ class SubmissionSpec
       )
       val fakeRequestSubmit =
         addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(submitterInfo: _*))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenFailWith ExpiredSession("")
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
       status(result) shouldBe Status.BAD_REQUEST
     }
@@ -350,14 +351,14 @@ class SubmissionSpec
 
       val fakeRequestSubmit =
         addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(submitterInfo: _*))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenFailWith ExpiredSession("")
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
       status(result) shouldBe Status.BAD_REQUEST
     }
@@ -370,12 +371,12 @@ class SubmissionSpec
       )
       val fakeRequestSubmit =
         addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(submitterInfo: _*))
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenFailWith ExpiredSession("")
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
       status(result) shouldBe Status.BAD_REQUEST
     }
@@ -386,23 +387,23 @@ class SubmissionSpec
       val fakeRequestSubmit =
         addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
 
-      when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
-      when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(None)
-      when(cache.save[SubmitterInfo](any())(EQ(SubmitterInfo.format), any(), any())) thenReturn Future.successful(
+      cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
+      cache.save[SubmitterInfo](*)(SubmitterInfo.format, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-      when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(
+      cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+      cache.save[CBCId](*)(CBCId.cbcIdFormat, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
-      when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
+      cache.readOption[AgencyBusinessName](AgencyBusinessName.format, *, *) returns Future
         .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
-      whenF(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn submitterInfo
+      cache.read[SubmitterInfo](SubmitterInfo.format, *, *) returnsF submitterInfo
       val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
       val returnVal = status(result)
       returnVal shouldBe Status.SEE_OTHER
 
-      verify(cache, times(1)).read(EQ(CompleteXMLInfo.format), any(), any())
-      verify(cache).save(any())(EQ(SubmitterInfo.format), any(), any())
+      cache.read(CompleteXMLInfo.format, *, *) was called
+      cache.save(*)(SubmitterInfo.format, *, *) was called
     }
 
     "return 303 when Email Address is valid" when {
@@ -412,22 +413,22 @@ class SubmissionSpec
           val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
           val fakeRequestSubmit =
             addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
-          when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+          auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
             Some(AffinityGroup.Organisation))
-          whenF(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn SubmitterInfo(
+          cache.read[SubmitterInfo](SubmitterInfo.format, *, *) returnsF SubmitterInfo(
             "name",
             None,
             "0123123123",
             EmailAddress("max@max.com"),
             Some(AffinityGroup.Organisation))
-          when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(
+          cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(
             CBCId.create(100).toOption)
-          when(cache.save[SubmitterInfo](any())(any(), any(), any())) thenReturn Future.successful(
+          cache.save[SubmitterInfo](*)(*, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-          when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(
+          cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+          cache.save[CBCId](*)(CBCId.cbcIdFormat, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
+          cache.readOption[AgencyBusinessName](AgencyBusinessName.format, *, *) returns Future
             .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
           val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
 
@@ -440,21 +441,21 @@ class SubmissionSpec
           val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
           val fakeRequestSubmit =
             addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
-          when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+          auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
             Some(AffinityGroup.Organisation))
-          whenF(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn SubmitterInfo(
+          cache.read[SubmitterInfo](SubmitterInfo.format, *, *) returnsF SubmitterInfo(
             "name",
             None,
             "0123123123",
             EmailAddress("max@max.com"),
             Some(AffinityGroup.Organisation))
-          when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(None)
-          when(cache.save[SubmitterInfo](any())(any(), any(), any())) thenReturn Future.successful(
+          cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
+          cache.save[SubmitterInfo](*)(*, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-          when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(
+          cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+          cache.save[CBCId](*)(CBCId.cbcIdFormat, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
+          cache.readOption[AgencyBusinessName](AgencyBusinessName.format, *, *) returns Future
             .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
           val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
 
@@ -469,21 +470,21 @@ class SubmissionSpec
           val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
           val fakeRequestSubmit =
             addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
-          when(auth.authorise[Option[AffinityGroup]](any(), any())(any(), any())) thenReturn Future.successful(
+          auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
             Some(AffinityGroup.Agent))
-          whenF(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn SubmitterInfo(
+          cache.read[SubmitterInfo](SubmitterInfo.format, *, *) returnsF SubmitterInfo(
             "name",
             None,
             "0123123123",
             EmailAddress("max@max.com"),
             Some(AffinityGroup.Organisation))
-          when(cache.readOption[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(None)
-          when(cache.save[SubmitterInfo](any())(any(), any(), any())) thenReturn Future.successful(
+          cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
+          cache.save[SubmitterInfo](*)(*, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-          when(cache.save[CBCId](any())(EQ(CBCId.cbcIdFormat), any(), any())) thenReturn Future.successful(
+          cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+          cache.save[CBCId](*)(CBCId.cbcIdFormat, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          when(cache.readOption[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn Future
+          cache.readOption[AgencyBusinessName](AgencyBusinessName.format, *, *) returns Future
             .successful(Some(AgencyBusinessName("Colm Cavanagh ltd")))
           val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
 
@@ -497,18 +498,18 @@ class SubmissionSpec
   "The submission controller" should {
     "provide a method to generate the metadata that" should {
       "return a list of errors for each of the missing cache values" in {
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(cache.read[BusinessPartnerRecord]) thenFailWith ExpiredSession("")
-        whenF(cache.read[TIN]) thenFailWith ExpiredSession("")
-        whenF(cache.read[CBCId]) thenFailWith ExpiredSession("@")
-        whenF(cache.read[Hash]) thenFailWith ExpiredSession("")
-        whenF(cache.read[FileId]) thenFailWith ExpiredSession("")
-        whenF(cache.read[EnvelopeId]) thenFailWith ExpiredSession("")
-        whenF(cache.read[SubmitterInfo]) thenFailWith ExpiredSession("")
-        whenF(cache.read[FilingType]) thenFailWith ExpiredSession("")
-        whenF(cache.read[UltimateParentEntity]) thenFailWith ExpiredSession("")
-        whenF(cache.read[FileMetadata]) thenFailWith ExpiredSession("")
+        cache.read[BusinessPartnerRecord] raises ExpiredSession("")
+        cache.read[TIN] raises ExpiredSession("")
+        cache.read[CBCId] raises ExpiredSession("@")
+        cache.read[Hash] raises ExpiredSession("")
+        cache.read[FileId] raises ExpiredSession("")
+        cache.read[EnvelopeId] raises ExpiredSession("")
+        cache.read[SubmitterInfo] raises ExpiredSession("")
+        cache.read[FilingType] raises ExpiredSession("")
+        cache.read[UltimateParentEntity] raises ExpiredSession("")
+        cache.read[FileMetadata] raises ExpiredSession("")
 
         Await
           .result(generateMetadataFile(cache, creds), 10.second)
@@ -517,7 +518,7 @@ class SubmissionSpec
             _ => fail("this should have failed")
           )
 
-        whenF(cache.read[FileId]) thenReturn FileId("fileId")
+        cache.read[FileId] returnsF FileId("fileId")
         Await
           .result(generateMetadataFile(cache, creds), 10.second)
           .fold(
@@ -525,7 +526,7 @@ class SubmissionSpec
             _ => fail("this should have failed")
           )
 
-        whenF(cache.read[EnvelopeId]) thenReturn EnvelopeId("yeah")
+        cache.read[EnvelopeId] returnsF EnvelopeId("yeah")
         Await
           .result(generateMetadataFile(cache, creds), 10.second)
           .fold(
@@ -535,23 +536,23 @@ class SubmissionSpec
       }
 
       "return a Metadata object if all succeeds" in {
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(cache.read[BusinessPartnerRecord]) thenReturn bpr
-        whenF(cache.read[TIN]) thenReturn TIN("utr", "")
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        whenF(cache.read[Hash]) thenReturn Hash("hash")
-        whenF(cache.read[FileId]) thenReturn FileId("yeah")
-        whenF(cache.read[EnvelopeId]) thenReturn EnvelopeId("id")
-        whenF(cache.read[SubmitterInfo]) thenReturn SubmitterInfo(
+        cache.read[BusinessPartnerRecord] returnsF bpr
+        cache.read[TIN] returnsF TIN("utr", "")
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.read[Hash] returnsF Hash("hash")
+        cache.read[FileId] returnsF FileId("yeah")
+        cache.read[EnvelopeId] returnsF EnvelopeId("id")
+        cache.read[SubmitterInfo] returnsF SubmitterInfo(
           "name",
           None,
           "0123123123",
           EmailAddress("max@max.com"),
           Some(AffinityGroup.Organisation))
-        whenF(cache.read[FilingType]) thenReturn FilingType(CBC701)
-        whenF(cache.read[UltimateParentEntity]) thenReturn UltimateParentEntity("yeah")
-        whenF(cache.read[FileMetadata]) thenReturn FileMetadata(
+        cache.read[FilingType] returnsF FilingType(CBC701)
+        cache.read[UltimateParentEntity] returnsF UltimateParentEntity("yeah")
+        cache.read[FileMetadata] returnsF FileMetadata(
           "asdf",
           "lkjasdf",
           "lkj",
@@ -572,28 +573,27 @@ class SubmissionSpec
     "provide a 'submitSummary' Action that" should {
       val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSummary"))
       "return 303 if generating the metadata fails redirecting to session expired page" in {
-        when(auth.authorise(any(), any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]]())(any(), any()))
-          .thenReturn(Future.successful(
-            new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation))))
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        auth.authorise(*, any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]])(*, *) returns Future.successful(
+            new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation)))
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-        whenF(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn bpr
-        whenF(cache.read[TIN](EQ(TIN.format), any(), any())) thenReturn TIN("utr", "")
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        whenF(cache.read[Hash](EQ(Hash.format), any(), any())) thenReturn Hash("hash")
-        whenF(cache.read[FileId](EQ(FileId.fileIdFormat), any(), any())) thenReturn FileId("yeah")
-        whenF(cache.read[EnvelopeId](EQ(EnvelopeId.format), any(), any())) thenReturn EnvelopeId("id")
-        whenF(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn SubmitterInfo(
+        cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+        cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF bpr
+        cache.read[TIN](TIN.format, *, *) returnsF TIN("utr", "")
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.read[Hash](Hash.format, *, *) returnsF Hash("hash")
+        cache.read[FileId](FileId.fileIdFormat, *, *) returnsF FileId("yeah")
+        cache.read[EnvelopeId](EnvelopeId.format, *, *) returnsF EnvelopeId("id")
+        cache.read[SubmitterInfo](SubmitterInfo.format, *, *) returnsF SubmitterInfo(
           "name",
           None,
           "0123123123",
           EmailAddress("max@max.com"),
           None)
-        whenF(cache.read[FilingType](EQ(FilingType.format), any(), any())) thenReturn FilingType(CBC701)
-        whenF(cache.read[UltimateParentEntity](EQ(UltimateParentEntity.format), any(), any())) thenFailWith ExpiredSession(
+        cache.read[FilingType](FilingType.format, *, *) returnsF FilingType(CBC701)
+        cache.read[UltimateParentEntity](UltimateParentEntity.format, *, *) raises ExpiredSession(
           "nope")
-        whenF(cache.read[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn FileMetadata(
+        cache.read[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returnsF FileMetadata(
           "asdf",
           "lkjasdf",
           "lkj",
@@ -602,9 +602,9 @@ class SubmissionSpec
           "lkjasdf",
           JsNull,
           "")
-        when(cache.save[SummaryData](any())(any(), any(), any())) thenReturn Future.successful(
+        cache.save[SummaryData](*)(*, *, *) returns Future.successful(
           CacheMap("cache", Map.empty[String, JsValue]))
-        whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+        cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
         val result = controller.submitSummary(fakeRequestSubmitSummary)
         status(result) shouldBe Status.SEE_OTHER
         header("Location", result).get should endWith("/session-expired")
@@ -613,28 +613,27 @@ class SubmissionSpec
       "return 200 if everything succeeds" in {
         val file = File.createTempFile("test", "test")
 
-        when(auth.authorise(any(), any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]]())(any(), any()))
-          .thenReturn(Future.successful(
-            new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation))))
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        auth.authorise(*, any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]])(*, *) returns Future.successful(
+            new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation)))
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-        whenF(cache.read[BusinessPartnerRecord](EQ(BusinessPartnerRecord.format), any(), any())) thenReturn bpr
-        whenF(cache.read[TIN](EQ(TIN.format), any(), any())) thenReturn TIN("utr", "")
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        whenF(cache.read[Hash](EQ(Hash.format), any(), any())) thenReturn Hash("hash")
-        whenF(cache.read[FileId](EQ(FileId.fileIdFormat), any(), any())) thenReturn FileId("yeah")
-        whenF(cache.read[EnvelopeId](EQ(EnvelopeId.format), any(), any())) thenReturn EnvelopeId("id")
-        whenF(cache.read[SubmitterInfo](EQ(SubmitterInfo.format), any(), any())) thenReturn SubmitterInfo(
+        cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+        cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF bpr
+        cache.read[TIN](TIN.format, *, *) returnsF TIN("utr", "")
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.read[Hash](Hash.format, *, *) returnsF Hash("hash")
+        cache.read[FileId](FileId.fileIdFormat, *, *) returnsF FileId("yeah")
+        cache.read[EnvelopeId](EnvelopeId.format, *, *) returnsF EnvelopeId("id")
+        cache.read[SubmitterInfo](SubmitterInfo.format, *, *) returnsF SubmitterInfo(
           "name",
           None,
           "0123123123",
           EmailAddress("max@max.com"),
           None)
-        whenF(cache.read[FilingType](EQ(FilingType.format), any(), any())) thenReturn FilingType(CBC701)
-        whenF(cache.read[UltimateParentEntity](EQ(UltimateParentEntity.format), any(), any())) thenReturn UltimateParentEntity(
+        cache.read[FilingType](FilingType.format, *, *) returnsF FilingType(CBC701)
+        cache.read[UltimateParentEntity](UltimateParentEntity.format, *, *) returnsF UltimateParentEntity(
           "upe")
-        whenF(cache.read[FileMetadata](EQ(FileMetadata.fileMetadataFormat), any(), any())) thenReturn FileMetadata(
+        cache.read[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returnsF FileMetadata(
           "asdf",
           "lkjasdf",
           "lkj",
@@ -643,11 +642,11 @@ class SubmissionSpec
           "lkjasdf",
           JsNull,
           "")
-        when(fus.getFile(anyString, anyString)(any())) thenReturn EitherT[Future, CBCErrors, File](
+        fus.getFile(any[String], any[String])(*) returns EitherT[Future, CBCErrors, File](
           Future.successful(Right(file)))
-        when(cache.save[SummaryData](any())(any(), any(), any())) thenReturn Future.successful(
+        cache.save[SummaryData](*)(*, *, *) returns Future.successful(
           CacheMap("cache", Map.empty[String, JsValue]))
-        whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+        cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
         status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.OK
 
         file.deleteOnExit()
@@ -658,11 +657,9 @@ class SubmissionSpec
       "returns a 303 when the call to the cache fails and redirect to session expired" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-        when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
-          .thenReturn(
-            Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenFailWith ExpiredSession("")
+        auth.authorise(*, any[Retrieval[Credentials ~ Option[AffinityGroup]]])(*, *) returns Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) raises ExpiredSession("")
         val result = controller.confirm(fakeRequestSubmitSummary)
         status(result) shouldBe Status.SEE_OTHER
         header("Location", result).get should endWith("/session-expired")
@@ -671,12 +668,10 @@ class SubmissionSpec
       "returns a 500 when the call to file-upload fails" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-        when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
-          .thenReturn(
-            Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-        whenF(fus.uploadMetadataAndRoute(any())(any(), any())) thenFailWith UnexpectedState("fail")
+        auth.authorise(*, any[Retrieval[Credentials ~ Option[AffinityGroup]]])(*, *) returns Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+        fus.uploadMetadataAndRoute(*)(*, *) raises UnexpectedState("fail")
         val result = Await.result(controller.confirm(fakeRequestSubmitSummary), 50.seconds)
         status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       }
@@ -684,14 +679,12 @@ class SubmissionSpec
       "returns a 500 when the call to save the docRefIds fail" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-        when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
-          .thenReturn(
-            Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-        whenF(fus.uploadMetadataAndRoute(any())(any(), any())) thenReturn "ok"
-        whenF(docRefService.saveDocRefId(any())(any())) thenReturn UnexpectedState("fails!")
-        whenF(docRefService.saveCorrDocRefID(any(), any())(any())) thenReturn UnexpectedState("fails!")
+        auth.authorise(*, any[Retrieval[Credentials ~ Option[AffinityGroup]]])(*, *) returns Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+        fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+        docRefService.saveDocRefId(*)(*) returnsF UnexpectedState("fails!")
+        docRefService.saveCorrDocRefID(*, *)(*) returnsF UnexpectedState("fails!")
         status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
       }
 
@@ -699,26 +692,25 @@ class SubmissionSpec
         "call saveReportingEntityData when the submissionType is OECD1" in {
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-          when(auth.authorise(any(), any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]]())(any(), any()))
-            .thenReturn(Future.successful(
-              new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation))))
-          whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-          when(fus.uploadMetadataAndRoute(any())(any(), any())) thenReturn EitherT[Future, CBCErrors, String](
+          auth.authorise(*, any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]])(*, *) returns Future.successful(
+              new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation)))
+          cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+          fus.uploadMetadataAndRoute(*)(*, *) returns EitherT[Future, CBCErrors, String](
             Future.successful(Right("routed")))
-          whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-          when(cache.save[SubmissionDate](any())(EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(
+          cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+          cache.save[SubmissionDate](*)(SubmissionDate.format, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          whenF(fus.uploadMetadataAndRoute(any())(any(), any())) thenReturn "ok"
-          whenF(reportingEntity.saveReportingEntityData(any())(any())) thenReturn ()
-          when(docRefService.saveCorrDocRefID(any(), any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(messageRefIdService.saveMessageRefId(any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+          fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+          reportingEntity.saveReportingEntityData(*)(*) returnsF ()
+          docRefService.saveCorrDocRefID(*, *)(*) returns OptionT.none[Future, UnexpectedState]
+          docRefService.saveDocRefId(*)(*) returns OptionT.none[Future, UnexpectedState]
+          messageRefIdService.saveMessageRefId(*)(*) returns OptionT.none[Future, UnexpectedState]
+          cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
             Some(GGId("ggid", "type")))
-          when(auditMock.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
+          auditMock.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
-          verify(reportingEntity).saveReportingEntityData(any())(any())
-          verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
+          reportingEntity.saveReportingEntityData(*)(*) was called
+          messageRefIdService.saveMessageRefId(*)(*) was called
         }
 
         "call updateReportingEntityData when the submissionType is OECD[023]" in {
@@ -727,51 +719,48 @@ class SubmissionSpec
           lazy val updateXml = keyXMLInfo.copy(
             reportingEntity =
               keyXMLInfo.reportingEntity.copy(docSpec = keyXMLInfo.reportingEntity.docSpec.copy(docType = OECD2)))
-          when(auth.authorise(any(), any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]]())(any(), any()))
-            .thenReturn(Future.successful(
-              new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation))))
-          whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-          when(fus.uploadMetadataAndRoute(any())(any(), any())) thenReturn EitherT[Future, CBCErrors, String](
+          auth.authorise(*, any[Retrieval[Option[Credentials] ~ Option[AffinityGroup]]])(*, *) returns Future.successful(
+              new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation)))
+          cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+          fus.uploadMetadataAndRoute(*)(*, *) returns EitherT[Future, CBCErrors, String](
             Future.successful(Right("routed")))
-          whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn updateXml
-          when(cache.save[SubmissionDate](any())(EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(
+          cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF updateXml
+          cache.save[SubmissionDate](*)(SubmissionDate.format, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          whenF(fus.uploadMetadataAndRoute(any())(any(), any())) thenReturn "ok"
-          whenF(reportingEntity.updateReportingEntityData(any())(any())) thenReturn ()
-          when(docRefService.saveCorrDocRefID(any(), any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(messageRefIdService.saveMessageRefId(any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+          fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+          reportingEntity.updateReportingEntityData(*)(*) returnsF ()
+          docRefService.saveCorrDocRefID(*, *)(*) returns OptionT.none[Future, UnexpectedState]
+          docRefService.saveDocRefId(*)(*) returns OptionT.none[Future, UnexpectedState]
+          messageRefIdService.saveMessageRefId(*)(*) returns OptionT.none[Future, UnexpectedState]
+          cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
             Some(GGId("ggid", "type")))
-          when(auditMock.sendEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
+          auditMock.sendEvent(*)(*, *) returns Future.successful(AuditResult.Success)
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.SEE_OTHER
-          verify(reportingEntity).updateReportingEntityData(any())(any())
-          verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
+          reportingEntity.updateReportingEntityData(*)(*) was called
+          messageRefIdService.saveMessageRefId(*)(*) was called
         }
 
-        "return 500 if saveMessageRefId fails and does NOT callsaveReportingEntityData " in {
+        "return 500 if saveMessageRefId fails and does NOT call saveReportingEntityData " in {
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("POST", "/confirm ").withJsonBody(Json.toJson("{}")))
-          when(auth.authorise(any(), any[Retrieval[Credentials ~ Option[AffinityGroup]]]())(any(), any()))
-            .thenReturn(
-              Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation))))
-          whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-          when(fus.uploadMetadataAndRoute(any())(any(), any())) thenReturn EitherT[Future, CBCErrors, String](
+          auth.authorise(*, any[Retrieval[Credentials ~ Option[AffinityGroup]]])(*, *) returns Future.successful(new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
+          cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+          fus.uploadMetadataAndRoute(*)(*, *) returns EitherT[Future, CBCErrors, String](
             Future.successful(Right("routed")))
-          whenF(cache.read[CompleteXMLInfo](EQ(CompleteXMLInfo.format), any(), any())) thenReturn keyXMLInfo
-          when(cache.save[SubmissionDate](any())(EQ(SubmissionDate.format), any(), any())) thenReturn Future.successful(
+          cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
+          cache.save[SubmissionDate](*)(SubmissionDate.format, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          whenF(fus.uploadMetadataAndRoute(any())(any(), any())) thenReturn "ok"
-          whenF(reportingEntity.saveReportingEntityData(any())(any())) thenReturn ()
-          when(docRefService.saveCorrDocRefID(any(), any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          when(docRefService.saveDocRefId(any())(any())) thenReturn OptionT.none[Future, UnexpectedState]
-          whenF(messageRefIdService.saveMessageRefId(any())(any())) thenReturn UnexpectedState("fails!")
-          when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+          fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+          reportingEntity.saveReportingEntityData(*)(*) returnsF ()
+          docRefService.saveCorrDocRefID(*, *)(*) returns OptionT.none[Future, UnexpectedState]
+          docRefService.saveDocRefId(*)(*) returns OptionT.none[Future, UnexpectedState]
+          messageRefIdService.saveMessageRefId(*)(*) returnsF UnexpectedState("fails!")
+          cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
             Some(GGId("ggid", "type")))
-          when(auditMock.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
+          auditMock.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
           status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
-          verify(reportingEntity, times(0)).saveReportingEntityData(any())(any())
-          verify(messageRefIdService, times(1)).saveMessageRefId(any())(any())
+          reportingEntity.saveReportingEntityData(*)(*) wasNever called
+          messageRefIdService.saveMessageRefId(*)(*) was called
         }
       }
     }
@@ -779,11 +768,11 @@ class SubmissionSpec
     "provide an action 'submitSuccessReceipt'" which {
       "returns a 303 Redirect if it fails to read from the cache" when {
         "looking for the SummaryData" in {
-          when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
+          auth.authorise[Any](*, *)(*, *) returns Future.successful(())
           val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
-          whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenFailWith ExpiredSession("")
-          whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+          cache.read[SummaryData](SummaryData.format, *, *) raises ExpiredSession("")
+          cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
             LocalDateTime.now())
           val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
           status(result) shouldBe Status.SEE_OTHER
@@ -791,26 +780,26 @@ class SubmissionSpec
         }
 
         "looking for the SubmissionDate" in {
-          when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
+          auth.authorise[Any](*, *)(*, *) returns Future.successful(())
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
-          whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-          whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenFailWith ExpiredSession("")
+          cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+          cache.read[SubmissionDate](SubmissionDate.format, *, *) raises ExpiredSession("")
           val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
           status(result) shouldBe Status.SEE_OTHER
           header("Location", result).get should endWith("/session-expired")
         }
 
         "looking for the CBCId" in {
-          when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
+          auth.authorise[Any](*, *)(*, *) returns Future.successful(())
           val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
           val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
 
-          whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-          whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+          cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+          cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
             LocalDateTime.now())
-          whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenFailWith ExpiredSession("")
+          cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
           val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
           status(result) shouldBe Status.SEE_OTHER
           header("Location", result).get should endWith("/session-expired")
@@ -820,27 +809,27 @@ class SubmissionSpec
       "sends an email" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
           LocalDateTime.now())
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(mockEmailService.sendEmail(any())(any())) thenReturn true
-        when(cache.save[ConfirmationEmailSent](any())(
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-        when(cache.readOption[ConfirmationEmailSent](
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(None)
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        when(cache.clear(any())) thenReturn Future.successful(true)
-        val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
+        mockEmailService.sendEmail(*)(*) returnsF true
+        cache.save[ConfirmationEmailSent](*)(
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+        cache.readOption[ConfirmationEmailSent](
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(None)
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.clear(*) returns Future.successful(true)
+        val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
-        verify(mockEmailService, times(1)).sendEmail(any())(any())
-        verify(cache, times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
+        mockEmailService.sendEmail(*)(*) was called
+        cache.save(*)(ConfirmationEmailSent.ConfirmationEmailSentFormat, *, *) was called
         val webPageAsString = contentAsString(result)
         webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
           "submitSuccessReceipt.sendAnotherReport.link")
@@ -849,27 +838,27 @@ class SubmissionSpec
       "will still return a 200 if the email fails" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        when(cache.save[ConfirmationEmailSent](any())(
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-        whenF(mockEmailService.sendEmail(any())(any())) thenReturn false
-        when(cache.readOption[ConfirmationEmailSent](
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(None)
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+        cache.save[ConfirmationEmailSent](*)(
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+        mockEmailService.sendEmail(*)(*) returnsF false
+        cache.readOption[ConfirmationEmailSent](
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(None)
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
           LocalDateTime.now())
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        when(cache.clear(any())) thenReturn Future.successful(true)
-        val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.clear(*) returns Future.successful(true)
+        val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
-        verify(mockEmailService, times(1)).sendEmail(any())(any())
-        verify(cache, times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
+        mockEmailService.sendEmail(*)(*) was called
+        cache.save(*)(ConfirmationEmailSent.ConfirmationEmailSentFormat, *, *) wasNever called
         val webPageAsString = contentAsString(result)
         webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
           "submitSuccessReceipt.sendAnotherReport.link")
@@ -878,27 +867,27 @@ class SubmissionSpec
       "will write a ConfirmationEmailSent to the cache if an email is sent" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(mockEmailService.sendEmail(any())(any())) thenReturn true
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        when(cache.save[ConfirmationEmailSent](any())(
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-        when(cache.readOption[ConfirmationEmailSent](
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(None)
-        whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+        mockEmailService.sendEmail(*)(*) returnsF true
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.save[ConfirmationEmailSent](*)(
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+        cache.readOption[ConfirmationEmailSent](
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(None)
+        cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
           LocalDateTime.now())
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        when(cache.clear(any())) thenReturn Future.successful(true)
-        val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.clear(*) returns Future.successful(true)
+        val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
-        verify(mockEmailService, times(1)).sendEmail(any())(any())
-        verify(cache, times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
+        mockEmailService.sendEmail(*)(*) was called
+        cache.save(*)(ConfirmationEmailSent.ConfirmationEmailSentFormat, *, *) was called
         val webPageAsString = contentAsString(result)
         webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
           "submitSuccessReceipt.sendAnotherReport.link")
@@ -907,28 +896,28 @@ class SubmissionSpec
       "not send the email if it has already been sent and not save to the cache" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt:Organisation"))
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(mockEmailService.sendEmail(any())(any())) thenReturn true
-        when(cache.save[ConfirmationEmailSent](any())(
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        when(cache.readOption[ConfirmationEmailSent](
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(Some(ConfirmationEmailSent("yep")))
-        whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+        mockEmailService.sendEmail(*)(*) returnsF true
+        cache.save[ConfirmationEmailSent](*)(
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.readOption[ConfirmationEmailSent](
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(Some(ConfirmationEmailSent("yep")))
+        cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
           LocalDateTime.now())
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        when(cache.clear(any())) thenReturn Future.successful(true)
-        val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.clear(*) returns Future.successful(true)
+        val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
         status(controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)) shouldBe Status.OK
-        verify(mockEmailService, times(0)).sendEmail(any())(any())
-        verify(cache, times(0)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
+        mockEmailService.sendEmail(*)(*) wasNever called
+        cache.save(*)(ConfirmationEmailSent.ConfirmationEmailSentFormat, *, *) wasNever called
         val webPageAsString = contentAsString(result)
         webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
           "submitSuccessReceipt.sendAnotherReport.link")
@@ -937,26 +926,26 @@ class SubmissionSpec
       "returns a 200 otherwise" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt:Organisation"))
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(mockEmailService.sendEmail(any())(any())) thenReturn true
-        when(cache.save[ConfirmationEmailSent](any())(
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        when(cache.readOption[ConfirmationEmailSent](
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(None)
-        whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+        mockEmailService.sendEmail(*)(*) returnsF true
+        cache.save[ConfirmationEmailSent](*)(
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.readOption[ConfirmationEmailSent](
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(None)
+        cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
           LocalDateTime.now())
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        when(cache.clear(any())) thenReturn Future.successful(true)
-        val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.clear(*) returns Future.successful(true)
+        val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
-        verify(cache, times(1)).save(any())(EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat), any(), any())
+        cache.save(*)(ConfirmationEmailSent.ConfirmationEmailSentFormat, *, *) was called
         val webPageAsString = contentAsString(result)
         webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
           "submitSuccessReceipt.sendAnotherReport.link")
@@ -965,24 +954,24 @@ class SubmissionSpec
       "show show link to submit another report if AffinityGroup is Agent and cache.clear succeeds" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt:Agent"))
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(mockEmailService.sendEmail(any())(any())) thenReturn true
-        when(cache.save[ConfirmationEmailSent](any())(
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        when(cache.readOption[ConfirmationEmailSent](
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(None)
-        whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+        mockEmailService.sendEmail(*)(*) returnsF true
+        cache.save[ConfirmationEmailSent](*)(
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.readOption[ConfirmationEmailSent](
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(None)
+        cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
           LocalDateTime.now())
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        when(cache.clear(any())) thenReturn Future.successful(true)
-        val result: Future[Result] = controller.submitSuccessReceipt("Agent")(fakeRequestSubmitSummary)
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.clear(*) returns Future.successful(true)
+        val result = controller.submitSuccessReceipt("Agent")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
         webPageAsString should include(
@@ -992,24 +981,24 @@ class SubmissionSpec
       "show NOT show link to submit another report if AffinityGroup is Agent but cache.clear fails" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(mockEmailService.sendEmail(any())(any())) thenReturn true
-        when(cache.save[ConfirmationEmailSent](any())(
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        when(cache.readOption[ConfirmationEmailSent](
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(None)
-        whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+        mockEmailService.sendEmail(*)(*) returnsF true
+        cache.save[ConfirmationEmailSent](*)(
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.readOption[ConfirmationEmailSent](
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(None)
+        cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
           LocalDateTime.now())
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        when(cache.clear(any())) thenReturn Future.successful(false)
-        val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.clear(*) returns Future.successful(false)
+        val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
         webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
@@ -1019,24 +1008,24 @@ class SubmissionSpec
       "show NOT show link to submit another report if AffinityGroup is NOT Agent and cache.clear succeeds" in {
         val summaryData = SummaryData(bpr, submissionData, keyXMLInfo, doesCreationTimeStampHaveMillis = false)
         val fakeRequestSubmitSummary = addToken(FakeRequest("GET", "/submitSuccessReceipt"))
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-        when(cache.readOption[GGId](EQ(GGId.format), any(), any())) thenReturn Future.successful(
+        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
+        cache.readOption[GGId](GGId.format, *, *) returns Future.successful(
           Some(GGId("ggid", "type")))
-        whenF(mockEmailService.sendEmail(any())(any())) thenReturn true
-        when(cache.save[ConfirmationEmailSent](any())(
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-        whenF(cache.read[SummaryData](EQ(SummaryData.format), any(), any())) thenReturn summaryData
-        when(cache.readOption[ConfirmationEmailSent](
-          EQ(ConfirmationEmailSent.ConfirmationEmailSentFormat),
-          any(),
-          any())) thenReturn Future.successful(None)
-        whenF(cache.read[SubmissionDate](EQ(SubmissionDate.format), any(), any())) thenReturn SubmissionDate(
+        mockEmailService.sendEmail(*)(*) returnsF true
+        cache.save[ConfirmationEmailSent](*)(
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+        cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
+        cache.readOption[ConfirmationEmailSent](
+          ConfirmationEmailSent.ConfirmationEmailSentFormat,
+          *,
+          *) returns Future.successful(None)
+        cache.read[SubmissionDate](SubmissionDate.format, *, *) returnsF SubmissionDate(
           LocalDateTime.now())
-        whenF(cache.read[CBCId](EQ(CBCId.cbcIdFormat), any(), any())) thenReturn CBCId.create(1).getOrElse(fail("argh"))
-        when(cache.clear(any())) thenReturn Future.successful(true)
-        val result: Future[Result] = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
+        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("argh"))
+        cache.clear(*) returns Future.successful(true)
+        val result = controller.submitSuccessReceipt("Organisation")(fakeRequestSubmitSummary)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
         webPageAsString should not include getMessages(fakeRequestSubmitSummary)(
@@ -1117,7 +1106,7 @@ class SubmissionSpec
     "return 200" when {
       "calling notRegistered" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
+        auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
         val result = controller.notRegistered(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -1126,7 +1115,7 @@ class SubmissionSpec
 
       "calling noIndividuals" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
+        auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
         val result = controller.noIndividuals(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -1135,7 +1124,7 @@ class SubmissionSpec
 
       "calling noAssistants" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
+        auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
         val result = controller.noAssistants(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -1144,7 +1133,7 @@ class SubmissionSpec
 
       "calling upe" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
+        auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
         val result = controller.upe(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -1153,7 +1142,7 @@ class SubmissionSpec
 
       "calling utr" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
+        auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
         val result = controller.utr(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
@@ -1162,9 +1151,9 @@ class SubmissionSpec
 
       "calling enterCompanyName" in {
         val request = addToken(FakeRequest())
-        when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
-        whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
-        whenF(cache.read[AgencyBusinessName](EQ(AgencyBusinessName.format), any(), any())) thenReturn AgencyBusinessName(
+        auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
+        cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
+        cache.read[AgencyBusinessName](AgencyBusinessName.format, *, *) returnsF AgencyBusinessName(
           "Company")
         val result = controller.enterCompanyName(request)
         status(result) shouldBe Status.OK
@@ -1178,8 +1167,8 @@ class SubmissionSpec
     "return 303 if valid company details passed in request" in {
       val data = "companyName" -> "Any Old Co"
       val request = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody(data)
-      when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
-      when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(
+      auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
+      cache.save(*)(*, *, *) returns Future.successful(
         CacheMap("", Map.empty[String, JsValue]))
       val result = call(controller.saveCompanyName, request)
       status(result) shouldBe Status.SEE_OTHER
@@ -1188,10 +1177,10 @@ class SubmissionSpec
     "return 400 if company details in request are invalid" in {
       val data = "sas" -> "Any Old Iron"
       val request = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody(data)
-      when(auth.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful((): Unit)
-      when(cache.save(any())(any(), any(), any())) thenReturn Future.successful(
+      auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
+      cache.save(*)(*, *, *) returns Future.successful(
         CacheMap("", Map.empty[String, JsValue]))
-      whenF(cache.read[FileDetails](EQ(FileDetails.fileDetailsFormat), any(), any())) thenReturn fileDetails
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       val result = call(controller.saveCompanyName, request)
       status(result) shouldBe Status.BAD_REQUEST
     }
