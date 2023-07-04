@@ -216,8 +216,8 @@ class SharedController @Inject()(
       result <- cbcEnrolment
                  .map(_ => Future.successful(NotAcceptable(views.alreadySubscribed())))
                  .fold[Future[Result]]({
-                   val form = (utr |@| postCode)
-                     .map((utr: String, postCode: String) =>
+                   val form = (utr, postCode)
+                     .mapN((utr: String, postCode: String) =>
                        knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode)))
                      .getOrElse(knownFactsForm)
                    Ok(views.enterKnownFacts(form, noMatchingBusiness = false, userType))
@@ -236,7 +236,7 @@ class SharedController @Inject()(
           views.errorTemplate)
       case Some(userType) => {
 
-        knownFactsForm.bindFromRequest.fold[EitherT[Future, Result, Result]](
+        knownFactsForm.bindFromRequest().fold[EitherT[Future, Result, Result]](
           formWithErrors => EitherT.left(BadRequest(views.enterKnownFacts(formWithErrors, noMatchingBusiness = false, userType))),
           knownFacts =>
             for {

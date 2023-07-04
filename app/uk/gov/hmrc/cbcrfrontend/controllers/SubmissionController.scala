@@ -102,8 +102,8 @@ class SubmissionController @Inject()(
           .map(c => docRefIdService.saveCorrDocRefID(c, reDocRef))
           .getOrElse(docRefIdService.saveDocRefId(reDocRef))
 
-        EitherT((result.toLeft(()).toValidated |@| reResult.toLeft(()).toValidatedNel).map((a, b) =>
-          (a |@| b).map((_, _) => ()).toEither))
+        EitherT((result.toLeft(()).toValidated, reResult.toLeft(()).toValidatedNel).mapN((a, b) =>
+          (a, b).mapN((_, _) => ()).toEither))
     }
   }
 
@@ -283,7 +283,7 @@ class SubmissionController @Inject()(
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       (for {
         reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
-        redirect <- EitherT.right[CBCErrors](ultimateParentEntityForm.bindFromRequest.fold[Future[Result]](
+        redirect <- EitherT.right[CBCErrors](ultimateParentEntityForm.bindFromRequest().fold[Future[Result]](
                      formWithErrors => BadRequest(views.submitInfoUltimateParentEntity(formWithErrors)),
                      success =>
                        cache.save(success).map { _ =>
@@ -316,7 +316,7 @@ class SubmissionController @Inject()(
 
   val submitUtr: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
-      utrForm.bindFromRequest.fold[Future[Result]](
+      utrForm.bindFromRequest().fold[Future[Result]](
         errors => BadRequest(views.utrCheck(errors)),
         utr =>
           cache.save(TIN(utr.utr, "")).map { _ =>
@@ -338,8 +338,8 @@ class SubmissionController @Inject()(
     implicit request: Request[AnyContent]): Future[Result] =
     for {
       form <- cache.readOption[SubmitterInfo].map { osi =>
-               (osi.map(_.fullName) |@| osi.map(_.contactPhone) |@| osi.map(_.email))
-                 .map { (name, phone, email) =>
+               (osi.map(_.fullName), osi.map(_.contactPhone), osi.map(_.email))
+                 .mapN { (name, phone, email) =>
                    submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
                  }
                  .getOrElse(submitterInfoForm)
@@ -374,7 +374,7 @@ class SubmissionController @Inject()(
 
   val submitSubmitterInfo: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
-      submitterInfoForm.bindFromRequest.fold(
+      submitterInfoForm.bindFromRequest().fold(
         formWithErrors => {
           cache
             .read[FileDetails]
@@ -540,12 +540,11 @@ class SubmissionController @Inject()(
       List(submittedInfo.email.toString()),
       "cbcr_report_confirmation",
       Map(
-        "name" → submittedInfo.fullName,
-        "received_at" → formattedDate,
-        "hash" → data.submissionMetaData.submissionInfo.hash.value,
+        "name" -> submittedInfo.fullName,
+        "received_at" -> formattedDate,
+        "hash" -> data.submissionMetaData.submissionInfo.hash.value,
         "cbcrId" -> cbcId.value
       )
     )
   }
-
 }

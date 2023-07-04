@@ -18,8 +18,9 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.NonEmptyList
 import cats.implicits.catsStdInstancesForFuture
-import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar
+import org.mockito.ArgumentMatchersSugar.*
+import org.mockito.IdiomaticMockito
+import org.mockito.cats.IdiomaticMockitoCats.StubbingOpsCats
 import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
@@ -31,19 +32,19 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext}
 
 class CreationDateSpec
-    extends AnyWordSpec with Matchers with BeforeAndAfterEach with GuiceOneAppPerSuite with MockitoSugar with MockitoCats {
+    extends AnyWordSpec with Matchers with BeforeAndAfterEach with GuiceOneAppPerSuite with IdiomaticMockito with MockitoCats {
 
   private val reportingEntity = mock[ReportingEntityDataService]
   private val configuration = mock[Configuration]
   private val runMode: RunMode = mock[RunMode]
 
-  when(runMode.env) thenReturn "Dev"
-  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day")) thenReturn Some(23)
-  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Some(12)
-  when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Some(2020)
+  runMode.env returns  "Dev"
+  configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day") returns  Some(23)
+  configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month") returns  Some(12)
+  configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns  Some(2020)
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -66,6 +67,7 @@ class CreationDateSpec
     Some("USD"),
     None
   )
+
   private val redOldCreationDate = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
     List(actualDocRefId2),
@@ -78,6 +80,7 @@ class CreationDateSpec
     Some("USD"),
     None
   )
+
   private val red = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
     List(actualDocRefId2),
@@ -119,28 +122,31 @@ class CreationDateSpec
   "The CreationDateService" should {
     "return true" when {
       "repotingEntity creationDate is Null and default date of 2020/12/23 is less than 3 years ago" in {
-        whenF(reportingEntity.queryReportingEntityData(any())(any())) thenReturn Some(redNoCreationDate)
+        reportingEntity.queryReportingEntityData(*)(*) returnsF Some(redNoCreationDate)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
         result shouldBe true
       }
+
       "repotingEntity creationDate is less than 3 years ago" in {
-        whenF(reportingEntity.queryReportingEntityData(any())(any())) thenReturn Some(red)
+        reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
         result shouldBe true
       }
     }
+
     "return false" when {
       "reportingEntity creationDate is older than 3 years ago" in {
-        whenF(reportingEntity.queryReportingEntityData(any())(any())) thenReturn Some(redOldCreationDate)
+        reportingEntity.queryReportingEntityData(*)(*) returnsF Some(redOldCreationDate)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
         result shouldBe false
       }
+
       "reportingEntity creationDate is Null and default date is more than 3 years ago" in {
-        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Some(2017)
-        when(runMode.env) thenReturn "Dev"
-        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year")) thenReturn Some(2010)
-        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day")) thenReturn Some(23)
-        when(configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month")) thenReturn Some(12)
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns Some(2017)
+        runMode.env returns  "Dev"
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns Some(2010)
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day") returns Some(23)
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month") returns Some(12)
         val cds2 = new CreationDateService(configuration, runMode, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
         result shouldBe false

@@ -18,16 +18,14 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.EitherT
 import cats.implicits.{catsStdInstancesForFuture, catsSyntaxApply, catsSyntaxEitherId, catsSyntaxSemigroupal, toShow}
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.Logging
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc._
-import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm._
 import uk.gov.hmrc.cbcrfrontend.model.Implicits.format
@@ -45,25 +43,18 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SubscriptionController @Inject()(
-  override val messagesApi: MessagesApi,
-  val subscriptionDataService: SubscriptionDataService,
-  val connector: BPRKnownFactsConnector,
-  val cbcIdService: CBCIdService,
-  val emailService: EmailService,
-  val enrolService: EnrolmentsService,
-  val knownFactsService: BPRKnownFactsService,
-  val env: Environment,
-  val audit: AuditConnector,
+  subscriptionDataService: SubscriptionDataService,
+  cbcIdService: CBCIdService,
+  emailService: EmailService,
+  enrolService: EnrolmentsService,
+  audit: AuditConnector,
   val authConnector: AuthConnector,
   messagesControllerComponents: MessagesControllerComponents,
   views: Views)(
   implicit ec: ExecutionContext,
   val cache: CBCSessionCache,
-  val config: Configuration,
   feConfig: FrontendAppConfig)
-    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
-
-  lazy val logger: Logger = Logger(this.getClass)
+    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with Logging {
 
   val alreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
@@ -74,7 +65,7 @@ class SubscriptionController @Inject()(
   val submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(Retrievals.credentials) { creds =>
       logger.debug("Country by Country: Generate CBCId and Store Data")
-      subscriptionDataForm.bindFromRequest.fold(
+      subscriptionDataForm.bindFromRequest().fold(
         errors => BadRequest(views.contactInfoSubscriber(errors)),
         data => {
           val id_bpr_utr: ServiceResponse[(CBCId, BusinessPartnerRecord, Utr)] = for {
@@ -134,7 +125,7 @@ class SubscriptionController @Inject()(
     Email(
       List(subscriberContact.email.value),
       "cbcr_subscription",
-      Map("f_name" → subscriberContact.firstName, "s_name" → subscriberContact.lastName, "cbcrId" → cbcId.value)
+      Map("f_name" -> subscriberContact.firstName, "s_name" -> subscriberContact.lastName, "cbcrId" -> cbcId.value)
     )
 
   val contactInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
@@ -182,7 +173,7 @@ class SubscriptionController @Inject()(
           cbcId <- EitherT.fromEither[Future](cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId")))
         } yield cbcId
 
-        subscriptionDataForm.bindFromRequest.fold(
+        subscriptionDataForm.bindFromRequest().fold(
           errors => {
             ci.fold(
               (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),

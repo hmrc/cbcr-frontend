@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import org.mockito.MockitoSugar
+import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -30,12 +30,12 @@ import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class LanguageControllerSpec
-    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
 
   private implicit val conf: FrontendAppConfig = mock[FrontendAppConfig]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
 
-  when(conf.fallbackURLForLanguageSwitcher) thenReturn "#"
+  conf.fallbackURLForLanguageSwitcher returns "#"
 
   private val controller = new LanguageController(conf, mcc)
   private val requestWithReferer = addToken(FakeRequest("GET", "/report/upload-form").withHeaders(REFERER -> "/somewhere"))

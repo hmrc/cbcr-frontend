@@ -103,7 +103,7 @@ class TestCBCRController @Inject()(
 
   def dropReportingEntityDataCollection(): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.dropReportingEntityDataCollection
+      testCBCRConnector.dropReportingEntityDataCollection()
         .map(_ => Ok("Reporting entity data collection dropped"))
         .recover {
           case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity data collection dropped")
@@ -262,7 +262,7 @@ class TestCBCRController @Inject()(
 
   def dropSubscription(): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.dropSubscriptionData.map(_ => Ok("Subscription data collection dropped")).recover {
+      testCBCRConnector.dropSubscriptionData().map(_ => Ok("Subscription data collection dropped")).recover {
         case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Subscription data collection dropped")
       }
     }

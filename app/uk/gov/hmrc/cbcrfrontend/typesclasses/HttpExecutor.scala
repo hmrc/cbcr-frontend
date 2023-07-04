@@ -20,6 +20,7 @@ import akka.util.ByteString
 import play.api.libs.json.{JsObject, Json, OFormat, Writes}
 import uk.gov.hmrc.cbcrfrontend.config.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpPut, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}

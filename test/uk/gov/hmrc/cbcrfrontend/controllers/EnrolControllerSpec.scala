@@ -17,8 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import com.typesafe.config.ConfigFactory
-import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar
+import org.mockito.ArgumentMatchersSugar.*
+import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -35,7 +35,7 @@ import uk.gov.hmrc.http.HttpResponse
 import scala.concurrent.{ExecutionContext, Future}
 
 class EnrolControllerSpec
-    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
@@ -52,17 +52,17 @@ class EnrolControllerSpec
   "Calling enrol controller" should {
     "return 200 when calling deEnrol if authorised Organisation and User or Admin" in {
       val fakeRequest = addToken(FakeRequest("GET", "/de-enrol"))
-      val response: HttpResponse = mock[HttpResponse]
-      when(authConnector.authorise[Any](any(), any())(any(), any())) thenReturn Future.successful(())
-      when(enrolConnector.deEnrol(any())) thenReturn Future.successful(response)
-      when(response.body) thenReturn "deEnrol"
+      val response = mock[HttpResponse]
+      authConnector.authorise[Any](*, *)(*, *) returns Future.successful(())
+      enrolConnector.deEnrol(*) returns Future.successful(response)
+      response.body returns "deEnrol"
       status(controller.deEnrol()(fakeRequest)) shouldBe Status.OK
     }
 
     "return 200 when calling getEnrolments if authorised" in {
       val fakeRequest = addToken(FakeRequest("GET", "/enrolments"))
       val enrolments = Enrolments(Set(Enrolment("CBC", Seq(EnrolmentIdentifier("cbcId", id.toString)), "something")))
-      when(authConnector.authorise[Enrolments](any(), any())(any(), any())) thenReturn Future.successful(enrolments)
+      authConnector.authorise[Enrolments](*, *)(*, *) returns Future.successful(enrolments)
       status(controller.getEnrolments(fakeRequest)) shouldBe Status.OK
     }
   }
