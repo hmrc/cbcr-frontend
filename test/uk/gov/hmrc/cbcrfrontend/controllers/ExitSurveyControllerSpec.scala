@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import org.mockito.ArgumentMatchersSugar.*
-import org.mockito.IdiomaticMockito
+import org.mockito.ArgumentMatchers.any
+import org.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -36,7 +36,7 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import scala.concurrent.{ExecutionContext, Future}
 
 class ExitSurveyControllerSpec
-    extends AnyWordSpecLike with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
+    extends AnyWordSpecLike with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
@@ -48,7 +48,7 @@ class ExitSurveyControllerSpec
   private val runMode = mock[RunMode]
   private val views = app.injector.instanceOf[Views]
 
-  runMode.env returns "Dev"
+  when(runMode.env) thenReturn "Dev"
 
   private val controller = new ExitSurveyController(configuration, auditC, mcc, views)
 
@@ -69,16 +69,15 @@ class ExitSurveyControllerSpec
     "return 400 when the satisfied selection is missing and not audit" in {
       val result = controller.submit(fakeSubmit.withJsonBody(Json.obj()))
       status(result) shouldBe 400
-      auditC.sendEvent(*)(*, *) wasNever called
+      verify(auditC, times(0)).sendEvent(any())(any(), any())
     }
-
     "return a 303 to the guidance page if satisfied selection is provided and should audit" in {
-      auditC.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
+      when(auditC.sendExtendedEvent(any())(any(), any())) thenReturn Future.successful(AuditResult.Success)
       val result = controller.submit(fakeSubmit.withMethod("POST")
               .withFormUrlEncodedBody("satisfied" -> "splendid", "suggestions" -> ""))
       status(result) shouldBe 303
       header("Location", result).get endsWith "acknowledge"
-      auditC.sendExtendedEvent(*)(*, *) was called
+      verify(auditC, times(1)).sendExtendedEvent(any())(any(), any())
     }
   }
 
@@ -88,4 +87,5 @@ class ExitSurveyControllerSpec
       status(result) shouldBe Status.OK
     }
   }
+
 }

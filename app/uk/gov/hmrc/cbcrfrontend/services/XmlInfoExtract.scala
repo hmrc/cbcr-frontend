@@ -18,7 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.instances.all._
 import cats.syntax.all._
-import org.codehaus.stax2.XMLInputFactory2
+import org.codehaus.stax2.{XMLInputFactory2, XMLStreamReader2}
 import play.api.Logging
 import uk.gov.hmrc.cbcrfrontend.model._
 
@@ -55,8 +55,8 @@ class XmlInfoExtract extends Logging {
 
     val cbcReports = cbc \\ "CbcReports"
 
-    def extractMessageSpec =
-      (cbc \ "MessageSpec").iterator
+    def extractMessageSpec = {
+      val ms = (cbc \ "MessageSpec").toIterator
         .map(ms => {
           val msgRefId = (ms \ "MessageRefId").text
           val receivingCountry = (ms \ "ReceivingCountry").text
@@ -70,15 +70,17 @@ class XmlInfoExtract extends Logging {
         .toList
         .headOption
         .getOrElse(RawMessageSpec("", "", "", "", "", None, None))
+      ms
+    }
 
     def extractReportingEntity = {
       def getAddressCity(e: Option[Node]) =
         e match {
           case Some(node) => (node \ "AddressFix" \ "City").textOption
-          case None       => None
+          case None => None
         }
 
-      (cbcBody \ "ReportingEntity").iterator
+      val re = (cbcBody \ "ReportingEntity").toIterator
         .map(re => {
           val tin = (re \ "Entity" \ "TIN").text
           val tinIB = (re \ "Entity" \ "TIN") \@ "issuedBy"
@@ -92,22 +94,27 @@ class XmlInfoExtract extends Logging {
         })
         .toList
         .headOption
+      re
     }
 
-    def extractCbcReports =
-      (cbcReports \ "DocSpec").iterator
+    def extractCbcReports = {
+      val cr = (cbcReports \ "DocSpec").toIterator
         .map(
           ds => RawCbcReports(getDocSpec(ds))
         )
         .toList
+      cr
+    }
 
-    def extractAdditionalInfo =
-      (cbcBody \ "AdditionalInfo").iterator
+    def extractAdditionalInfo = {
+      val ai = (cbcBody \ "AdditionalInfo").toIterator
         .map(ds => {
           val otherInfo = (ds \ "OtherInfo").text
           RawAdditionalInfo(getDocSpec((ds \ "DocSpec").head), otherInfo)
         })
         .toList
+      ai
+    }
 
     def extractCbcVal(input: File) = {
       val xmlStreamReader = xmlInputFactory.createXMLStreamReader(input)
@@ -140,13 +147,13 @@ class XmlInfoExtract extends Logging {
 
       encodingVal match {
         case null => None
-        case _    => Some(RawXmlEncodingVal(encodingVal))
+        case _ => Some(RawXmlEncodingVal(encodingVal))
       }
     }
 
     // sorry but speed
     def countBodies(input: File) = {
-      val xmlStreamReader = xmlInputFactory.createXMLStreamReader(input)
+      val xmlStreamReader: XMLStreamReader2 = xmlInputFactory.createXMLStreamReader(input)
       var count = 0
       try {
         while (xmlStreamReader.hasNext) {
@@ -160,13 +167,15 @@ class XmlInfoExtract extends Logging {
       count
     }
 
-    def extractEntityNames =
-      (cbcReports \ "ConstEntities" \ "ConstEntity" \ "Name").iterator
+    def extractEntityNames = {
+      val cen = (cbcReports \ "ConstEntities" \ "ConstEntity" \ "Name").toIterator
         .map(ds => RawConstEntityName(ds.text).name)
         .toList
+      cen
+    }
 
-    def extractCurrencyCodes =
-      (cbcReports \ "Summary").iterator
+    def extractCurrencyCodes = {
+      val currencyCodes = (cbcReports \ "Summary").toIterator
         .map(su => {
           val unrelated = (su \ "Revenues" \ "Unrelated") \@ "currCode"
           val related = (su \ "Revenues" \ "Related") \@ "currCode"
@@ -178,10 +187,11 @@ class XmlInfoExtract extends Logging {
           val earnings = (su \ "Earnings") \@ "currCode"
           val assets = (su \ "Assets") \@ "currCode"
 
-          RawCurrencyCodes(
-            List(unrelated, related, total, profitOrLoss, taxPaid, taxAccrued, capital, earnings, assets))
+          RawCurrencyCodes(List(unrelated, related, total, profitOrLoss, taxPaid, taxAccrued, capital, earnings, assets))
         })
         .toList
+      currencyCodes
+    }
 
     val ms = extractMessageSpec
 
