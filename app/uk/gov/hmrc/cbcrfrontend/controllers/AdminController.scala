@@ -56,7 +56,7 @@ object AdminDocRefId {
 
   implicit val adminDocRefIdFormatter: Formatter[AdminDocRefId] = new Formatter[AdminDocRefId] {
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], AdminDocRefId] =
-      Formats.stringFormat.bind(key, data).map(string => AdminDocRefId(string))
+      Formats.stringFormat.bind(key, data).right.map(string => AdminDocRefId(string))
 
     override def unbind(key: String, value: AdminDocRefId): Map[String, String] = Map(key -> value.id)
   }

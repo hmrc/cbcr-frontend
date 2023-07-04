@@ -6,19 +6,20 @@ import play.sbt.PlayImport.*
 
 val appName = "cbcr-frontend"
 
-val silencerVersion = "1.7.13"
+val silencerVersion = "1.7.7"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
     majorVersion := 1,
-    scalaVersion := "2.13.11",
+    scalaVersion := "2.12.13",
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test(),
     // ***************
     // Use the silencer plugin to suppress warnings
     scalacOptions ++= Seq(
-      "-P:silencer:pathFilters=routes;views"
+      "-P:silencer:pathFilters=routes;views",
+      "-Ypartial-unification"
     ),
     libraryDependencies ++= Seq(
       compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),

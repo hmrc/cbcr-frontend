@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.controllers.actions
 
 import com.google.inject.Inject
-import org.mockito.IdiomaticMockito
+import org.mockito.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -39,7 +39,7 @@ class Harness @Inject()(cbcEnhancementAction: CBCEnhancementAction) extends Inje
 }
 
 class CBCEnhancementActionSpec
-    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   private val mockFrontendAppConfig = mock[FrontendAppConfig]
 
@@ -50,18 +50,18 @@ class CBCEnhancementActionSpec
 
   "when CBCEnhancementFeatures are switched off" should {
     "redirect requests to unauthorised" in {
-      mockFrontendAppConfig.cbcEnhancementFeature returns false
+      when(mockFrontendAppConfig.cbcEnhancementFeature) thenReturn false
 
       val harness = app.injector.instanceOf[Harness]
       val result = harness.onPageLoad()(FakeRequest("GET", "/"))
 
       status(result) shouldBe SEE_OTHER
+
     }
   }
-
   "when CBCEnhancementFeatures are switched on" should {
     "allow requests through" in {
-      mockFrontendAppConfig.cbcEnhancementFeature returns true
+      when(mockFrontendAppConfig.cbcEnhancementFeature) thenReturn true
 
       val harness = app.injector.instanceOf[Harness]
       val result = harness.onPageLoad()(FakeRequest("GET", "/"))
