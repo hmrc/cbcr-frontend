@@ -2,12 +2,12 @@ import play.sbt.PlayImport.ws
 import sbt.*
 
 object AppDependencies {
-  val hmrcBootstrapVersion = "5.25.0"
+  val hmrcBootstrapVersion = "7.11.0"
   val mockitoScalaVersion = "1.17.12"
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc"              %% "bootstrap-frontend-play-28" % "5.25.0",
+    "uk.gov.hmrc"              %% "bootstrap-frontend-play-28" % hmrcBootstrapVersion,
     "uk.gov.hmrc"              %% "play-frontend-hmrc"         % "5.0.0-play-28",
     "uk.gov.hmrc"              %% "emailaddress"               % "3.7.0",
     "uk.gov.hmrc"              %% "domain"                     % "8.1.0-play-28",
