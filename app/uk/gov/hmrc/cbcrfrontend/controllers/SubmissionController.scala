@@ -36,8 +36,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import java.time.format.DateTimeFormatter
@@ -161,9 +160,7 @@ class SubmissionController @Inject()(
                          }
                      _ <- EitherT.right[CBCErrors](cache.save(SubmissionDate(LocalDateTime.now)))
                      _ <- storeOrUpdateReportingEntityData(xml)
-                     _ = createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData).value.map {
-                       case Left(_) => logger.error("create SuccessfulSubmissionAuditEvent failed.")
-                     }
+                     _ = createSuccessfulSubmissionAuditEvent(retrieval.a.get, summaryData)
                      _ = {
                        val file = summaryData.submissionMetaData.fileInfo
                        logger.info(s"Successfully uploaded file: ${file.name}, envelopeId: ${file.envelopeId}")
@@ -203,23 +200,21 @@ class SubmissionController @Inject()(
 
   private def createSuccessfulSubmissionAuditEvent(creds: Credentials, summaryData: SummaryData)(
     implicit hc: HeaderCarrier,
-    request: Request[_]): ServiceResponse[AuditResult.Success.type] = {
+    request: Request[_]): Unit = {
 
-    implicit val format: OFormat[ExtendedDataEvent] = Json.format[ExtendedDataEvent]
-
-    val auditEvent = ExtendedDataEvent(
-      "Country-By-Country-Frontend",
-      "CBCRFilingSuccessful",
-      detail = Json.obj(
-        "path"        -> JsString(request.uri),
+    val auditEvent = Json.obj(
+      "auditSource" -> "Country-By-Country-Frontend",
+      "auditType" -> "CBCRFilingSuccessful",
+      "detail" -> Json.obj(
+        "path" -> JsString(request.uri),
         "summaryData" -> Json.toJson(summaryData),
-        "creds"       -> Json.toJson(creds)
+        "creds" -> Json.toJson(creds)
       )
     )
 
-    val auditEventLength: Int = Json.stringify(Json.toJson(auditEvent)).getBytes("UTF-8").length
+    val auditEventLength = Json.stringify(auditEvent).getBytes("UTF-8").length
     // Datastream allows maximum 500kb
-    val dataStreamLimit: Int = 500000
+    val dataStreamLimit = 500000
 
     val validAuditEvent =
       if (auditEventLength > dataStreamLimit) {
@@ -228,30 +223,20 @@ class SubmissionController @Inject()(
             additionalInfo = List.empty
           )
         )
-        ExtendedDataEvent(
-          "Country-By-Country-Frontend",
-          "CBCRFilingSuccessful",
-          detail = Json.obj(
-            "path"        -> JsString(request.uri),
+        Json.obj(
+          "auditSource" -> "Country-By-Country-Frontend",
+          "auditType" -> "CBCRFilingSuccessful",
+          "detail" -> Json.obj(
+            "path" -> JsString(request.uri),
             "summaryData" -> Json.toJson(trimmmedSummaryData),
-            "creds"       -> Json.toJson(creds)
+            "creds" -> Json.toJson(creds)
           )
         )
       } else {
         auditEvent
       }
 
-    for {
-      result <- EitherT(
-                 audit
-                   .sendExtendedEvent(validAuditEvent)
-                   .map {
-                     case AuditResult.Success => Right(AuditResult.Success)
-                     case AuditResult.Failure(msg, _) =>
-                       Left(UnexpectedState(s"Unable to audit a successful submission: $msg").asInstanceOf[CBCErrors])
-                     case AuditResult.Disabled => Right(AuditResult.Success)
-                   })
-    } yield result
+    audit.sendExplicitAudit("CBCRFilingSuccessful", validAuditEvent)
   }
 
   private val utrForm = Form(
