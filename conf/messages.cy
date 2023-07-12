@@ -1,8 +1,6 @@
 application.title=Anfonwch adroddiad country-by-country
 service.name=Send a country-by-country report
 
-generic.back=Yn ôl
-
 contactDetailsUpdate.mainHeading=cy-The registration contact details have been updated
 contactDetailsUpdate.printThisButton=cy-Print this page
 contactDetailsUpdate.next=cy-What happens next?

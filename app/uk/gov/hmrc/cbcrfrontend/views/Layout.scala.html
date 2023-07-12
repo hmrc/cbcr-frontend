@@ -14,10 +14,15 @@
  * limitations under the License.
  *@
 
+@import play.api.i18n.Messages
+@import play.api.mvc._
+@import play.twirl.api._
+
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @import uk.gov.hmrc.hmrcfrontend.views.html.helpers._
-import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.govukfrontend.views.html.components._
+@import uk.gov.hmrc.hmrcfrontend.views.viewmodels._
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage._
 
 
@@ -25,7 +30,6 @@ import uk.gov.hmrc.govukfrontend.views.html.components._
 @this(
   hmrcStandardPage: HmrcStandardPage,
   hmrcLanguageSelectHelper: HmrcLanguageSelectHelper,
-  govukBackLink: GovukBackLink,
   hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
   hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper
 )
