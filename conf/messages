@@ -1,6 +1,8 @@
 application.title=Send a country-by-country report
 service.name=Send a country-by-country report
 
+generic.back = Back
+
 contactDetailsUpdate.title=The registration contact details have been updated - Send a country-by-country report - GOV.UK
 contactDetailsUpdate.mainHeading=The registration contact details have been updated
 contactDetailsUpdate.printThisButton=Print this page
