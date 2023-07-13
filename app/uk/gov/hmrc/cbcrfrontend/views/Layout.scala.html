@@ -14,27 +14,40 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.hmrcfrontend.views.html.helpers.HmrcLayout
-@import uk.gov.hmrc.hmrcfrontend.views.config.StandardBetaBanner
-@import views.html.helper.CSPNonce
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.hmrcfrontend.views.html.helpers._
+@import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage._
 
-@this(hmrcLayout: HmrcLayout,
-      hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
-      hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper)
+@this(
+  hmrcStandardPage: HmrcStandardPage,
+  hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
+  hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper
+)
 
-@(pageTitle: String)(contentBlock: Html)(implicit request: RequestHeader, messages: Messages)
+@(
+  pageTitle: String
+)(
+  contentBlock: Html
+)(
+  implicit request: RequestHeader,
+  messages: Messages
+)
 
 @content = {
-@contentBlock
-@hmrcReportTechnicalIssueHelper()
+  @contentBlock
+  @hmrcReportTechnicalIssueHelper()
 }
-@hmrcLayout(
-  pageTitle = Some(pageTitle),
-  isWelshTranslationAvailable = false,
-  serviceUrl = None,
-  signOutUrl = Some(routes.SharedController.signOutSurvey.url),
-  phaseBanner = None,
-  additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)),
-  nonce = CSPNonce.get,
+
+@hmrcStandardPage(
+  HmrcStandardPageParams(
+    serviceURLs = ServiceURLs(
+      signOutUrl = Some(routes.SharedController.signOutSurvey.url)
+    ),
+    templateOverrides = TemplateOverrides(
+      additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url))
+    ),
+    serviceName = Some(messages("application.title")),
+    pageTitle = Some(pageTitle),
+    isWelshTranslationAvailable = false
+  )
 )(content)
