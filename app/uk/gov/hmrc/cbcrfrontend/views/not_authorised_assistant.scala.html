@@ -16,17 +16,27 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-    mainTemplate: Layout
+  mainTemplate: Layout,
+  govukButton: GovukButton
 )
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @mainTemplate(Messages("notAuthorised.assistant.title")) {
 
-        <h1 class="govuk-heading-l">@Messages("notAuthorised.assistant.mainHeading")</h1>
-        <p class="govuk-body">@Messages("notAuthorised.assistant.message")</p>
+  <h1 class="govuk-heading-l">
+    @Messages("notAuthorised.assistant.mainHeading")
+  </h1>
 
-    <p><a class="govuk-button" role="button" href="@config.cbcrGuidanceUrl">@Messages("notAuthorised.assistant.button")</a></p>
+  <p class="govuk-body">
+    @Messages("notAuthorised.assistant.message")
+  </p>
+
+  @govukButton(Button(
+    href = Some("@config.cbcrGuidanceUrl"),
+    content = Text(messages("notAuthorised.assistant.button"))
+  ))
 }
