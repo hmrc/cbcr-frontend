@@ -1,6 +1,8 @@
 application.title=Send a country-by-country report
 service.name=Send a country-by-country report
 
+generic.errorPrefix = Error
+
 contactDetailsUpdate.title=The registration contact details have been updated - Send a country-by-country report - GOV.UK
 contactDetailsUpdate.mainHeading=The registration contact details have been updated
 contactDetailsUpdate.printThisButton=Print this page
@@ -78,8 +80,7 @@ enterCBCId.error.message.link=digitalservice.cbc@hmrc.gsi.gov.uk
 enterCBCId.error.message.invalid.id=Enter a valid country-by-country ID
 enterCBCId.error.message.empty.id=Enter the country-by-country ID
 
-subscribeFirst.title=Enter details of the UK-registered company or partnership sending the report - Send a country-by-country report - GOV.UK
-subscribeFirst.mainHeading=Enter details of the UK-registered company or partnership sending the report
+subscribeFirst.title=Enter details of the UK-registered company or partnership sending the report
 subscribeFirst.noMatchingBusiness.suggestion=Check the details and try again, or
 subscribeFirst.noMatchingBusiness.suggestion.link=contact HMRC
 subscribeFirst.alreadyRegistered.title=This business already has a country-by-country ID - Send a country-by-country report - GOV.UK
