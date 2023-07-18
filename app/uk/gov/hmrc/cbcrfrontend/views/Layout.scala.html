@@ -25,29 +25,32 @@
 )
 
 @(
-  pageTitle: String
-)(
-  contentBlock: Html
-)(
-  implicit request: RequestHeader,
-  messages: Messages
-)
+        pageTitle: String,
+        backLinkUrl: Option[String] = None,
+        hasErrors: Boolean = false
+)(contentBlock: Html)(implicit request: RequestHeader,  messages: Messages)
 
 @content = {
   @contentBlock
   @hmrcReportTechnicalIssueHelper()
 }
 
+@errorPrefix = @{s"${messages("generic.errorPrefix")}: "}
+@gdsTitle = @{
+    s"${if(hasErrors && !pageTitle.startsWith(errorPrefix)){ errorPrefix } else ""}$pageTitle${if(!pageTitle.endsWith("GOV.UK")) { s" - ${messages("application.title")} - GOV.UK" } else {""}}"
+}
+
 @hmrcStandardPage(
-  HmrcStandardPageParams(
-    serviceURLs = ServiceURLs(
-      signOutUrl = Some(routes.SharedController.signOutSurvey.url)
-    ),
-    templateOverrides = TemplateOverrides(
-      additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url))
-    ),
-    serviceName = Some(messages("application.title")),
-    pageTitle = Some(pageTitle),
-    isWelshTranslationAvailable = false
+    HmrcStandardPageParams(
+        serviceURLs = ServiceURLs(
+            signOutUrl = Some(routes.SharedController.signOutSurvey.url)
+        ),
+        templateOverrides = TemplateOverrides(
+            additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url))
+        ),
+        serviceName = Some(messages("application.title")),
+        pageTitle = Some(gdsTitle),
+        isWelshTranslationAvailable = false,
+        backLink = backLinkUrl.map(b => BackLink(content = Text(b)))
   )
 )(content)

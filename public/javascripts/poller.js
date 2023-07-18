@@ -2,7 +2,7 @@ function poll(pollPath, readyPath, virusFailPath, errorPath) {
     setTimeout(function() {
         $.ajax({ url: pollPath,
             success: function(data, statusText, xhr){
-                if(xhr.status == 202) {
+                if(xhr.status === 202) {
                     window.location.href=readyPath
                 }else{
                     //Setup the next poll recursively
