@@ -36,8 +36,8 @@
 @hasErrors = @{form.hasErrors || noMatchingBusiness}
 @backLink = @{if(userType.equals(Agent)) { Some(routes.SubmissionController.submitterInfo().url) } else { None }}
 @title = @{messages("subscribeFirst.title")}
-@utrError = @{if(form.data.get("utr").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){ messages("subscribeFirst.error.message.utr-empty") } else { messages("subscribeFirst.error.message.utr-nonEmpty") }}
-@postcodeError = @{if(form.data.get("postCode").map(x=>x).getOrElse("").isEmpty || noMatchingBusiness){ messages("subscribeFirst.error.message.postcode-empty") } else { messages("subscribeFirst.error.message.postcode-nonEmpty") }}
+@utrError = @{if(form.data.get("utr").getOrElse("").isEmpty || noMatchingBusiness){ messages("subscribeFirst.error.message.utr-empty") } else { messages("subscribeFirst.error.message.utr-nonEmpty") }}
+@postcodeError = @{if(form.data.get("postCode").getOrElse("").isEmpty || noMatchingBusiness){ messages("subscribeFirst.error.message.postcode-empty") } else { messages("subscribeFirst.error.message.postcode-nonEmpty") }}
 @fieldsetHtml = {
     @govukInput(Input(
         id = utrKey,
@@ -77,14 +77,15 @@
             title = Text(messages("start.error.heading")),
             errorList = Seq(
                 ErrorLink(
-                    href = Some("#utr"),
+                    href = Some(s"#$utrKey"),
                     content = Text(utrError)
                 ),
                 ErrorLink(
-                    href = Some("#postCode"),
+                    href = Some(s"#$postcodeKey"),
                     content = Text(postcodeError)
                 )
-            )
+            ),
+            attributes = Map("id" -> "error-summary-display")
         ))
     }
 
