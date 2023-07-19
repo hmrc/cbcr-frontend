@@ -427,5 +427,4 @@ unregisteredGG.signOut=sign in using the Government Gateway account you register
 
 back = Back
 
-notAuthorised.enhancement.title=You cannot access this URL - Send a country-by-country report - GOV.UK
-notAuthorised.enhancement.heading=You cannot access this URL
+notAuthorised.enhancement.title=You cannot access this URL
