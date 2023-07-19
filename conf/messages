@@ -317,8 +317,7 @@ notAuthorised.message.start=The company or partnership will need to register.
 notAuthorised.message.link=register with the Government Gateway as an Organisation
 notAuthorised.message.end=to use this service.
 
-notAuthorised.individual.title=You are not authorised to use this service - Send a country-by-country report - GOV.UK
-notAuthorised.individual.mainHeading=You are not authorised to use this service
+notAuthorised.individual.title=You are not authorised to use this service
 notAuthorised.Individual.message.start=To use this service, you must
 notAuthorised.Individual.message.link=register as an Organisation with the Government Gateway
 notAuthorised.Individual.message.end=with the Government Gateway.

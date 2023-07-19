@@ -31,8 +31,10 @@
 )(contentBlock: Html)(implicit request: RequestHeader,  messages: Messages)
 
 @content = {
-  @contentBlock
-  @hmrcReportTechnicalIssueHelper()
+@contentBlock
+<div class="govuk-!-margin-top-6 govuk-!-display-none-print">
+    @hmrcReportTechnicalIssueHelper()
+</div>
 }
 
 @errorPrefix = @{s"${messages("generic.errorPrefix")}: "}
