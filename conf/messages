@@ -43,8 +43,7 @@ survey.acknowledge.title=Thank you - Send a country-by-country report - GOV.UK
 survey.acknowledge.header=Thank you
 survey.acknowledge.message=Your replies will help us improve the country-by-country service.
 
-regenerate.title=Your new country-by-country ID has been validated - Send a country-by-country report - GOV.UK
-regenerate.mainHeading=Your new country-by-country ID has been validated
+regenerate.title=Your new country-by-country ID has been validated
 regenerate.message=Your new country-by-country ID is:
 regenerate.message2=Keep this ID safe, as you must use it from now on each time you send a country-by-country report.
 regenerate.next=What happens next?

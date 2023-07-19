@@ -18,22 +18,30 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: Layout)
+@this(layout: Layout)
 
 @(cbcId:CBCId)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("regenerate.title")) {
+@title = @{messages("regenerate.title")}
 
-            <h1 class="govuk-heading-l">@Messages("regenerate.mainHeading")</h1>
-            <p class="govuk-body">
-                @Messages("regenerate.message")
-                <h2 class="govuk-heading-m">@cbcId</h2>
-            </p>
-            <p class="govuk-body">@Messages("regenerate.message2")</p>
+@layout(title) {
 
-            <h2 class="govuk-heading-m">@Messages("regenerate.next")</h2>
-            <p class="govuk-body">
-                @Messages("regenerate.continue") <a class="govuk-link" href="@routes.FileUploadController.chooseXMLFile">@Messages("form.controls.signOut")</a>, @Messages("regenerate.continue2")
-            </p>
+    <h1 class="govuk-heading-l">
+        @title
+    </h1>
+    <p class="govuk-body">
+        @messages("regenerate.message")
+        <span class="govuk-heading-m">@cbcId</span>
+    </p>
+    <p class="govuk-body">
+        @messages("regenerate.message2")
+    </p>
+
+    <h2 class="govuk-heading-m">
+        @messages("regenerate.next")
+    </h2>
+    <p class="govuk-body">
+        @messages("regenerate.continue") <a class="govuk-link" href="@routes.FileUploadController.chooseXMLFile">@messages("form.controls.signOut")</a>, @messages("regenerate.continue2")
+    </p>
 
 }
