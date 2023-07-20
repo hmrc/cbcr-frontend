@@ -1,8 +1,8 @@
 application.title=Anfonwch adroddiad country-by-country
 service.name=Send a country-by-country report
 
-generic.errorPrefix = Error
-generic.back=Back
+generic.errorPrefix = cy-Error
+generic.back = cy-Back
 
 contactDetailsUpdate.mainHeading=cy-The registration contact details have been updated
 contactDetailsUpdate.printThisButton=cy-Print this page

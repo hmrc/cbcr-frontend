@@ -21,6 +21,7 @@
 
 @this(
   layout: Layout,
+  govukErrorSummary: GovukErrorSummary,
   formHelper: FormWithCSRF,
   govukButton: GovukButton
 )
@@ -40,20 +41,41 @@
 
 @backLinkUrl = @{Some(routes.SubmissionController.submitterInfo().url)}
 
+@idError = @{}
+
 @layout(pageTitle = title, backLinkUrl, hasErrors = hasErrors) {
 
   @if(hasErrors) {
-      <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
-          <h2 id="error-summary-heading" class="govuk-error-summary__title">@messages("start.error.heading")</h2>
-          <div class="govuk-error-summary__body">
-              <ul class="govuk-list govuk-error-summary__list">
-                    <li id="cbcId-error-summary"><a href="#cbcId"> @if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty) {@messages("enterCBCId.error.message.empty.id")} else {
-                      @messages("enterCBCId.error.message.invalid.id")
-                  }</a></li>
-              </ul>
-          </div>
-      </div>
-      @errorFocus()
+    <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
+        <h2 id="error-summary-heading" class="govuk-error-summary__title">@messages("start.error.heading")</h2>
+        <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+                  <li id="cbcId-error-summary">
+                    <a href="#cbcId">
+                      @if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty) {
+                        @messages("enterCBCId.error.message.empty.id")
+                      } else {
+                        @messages("enterCBCId.error.message.invalid.id")
+                      }
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    @errorFocus()
+    @govukErrorSummary(ErrorSummary(
+        title = Text(messages("start.error.heading")),
+        errorList = Seq(
+            ErrorLink(
+                href = Some("#utr"),
+                content = Text(utrError)
+            ),
+            ErrorLink(
+                href = Some("#postCode"),
+                content = Text(postcodeError)
+            )
+        )
+    ))
   }
 
   <h1 class="govuk-heading-l">@messages("enterCBCId.mainHeading")</h1>

@@ -36,8 +36,10 @@
 )
 
 @content = {
-  @contentBlock
-  @hmrcReportTechnicalIssueHelper()
+@contentBlock
+<div class="govuk-!-margin-top-6 govuk-!-display-none-print">
+    @hmrcReportTechnicalIssueHelper()
+</div>
 }
 
 @errorPrefix = @{s"${messages("generic.errorPrefix")}: "}
@@ -57,6 +59,6 @@
     serviceName = Some(messages("application.title")),
     pageTitle = Some(gdsTitle),
     isWelshTranslationAvailable = false,
-    backLink = backLinkUrl.map(b => BackLink(content = Text(b)))
+    backLink = backLinkUrl.map(b => BackLink(href = b, content = Text(messages("generic.back"))))
   )
 )(content)

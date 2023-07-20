@@ -15,43 +15,53 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import tags._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(
-    mainTemplate: Layout,
-    formHelper: FormWithCSRF
+        layout: Layout,
+        formHelper: FormWithCSRF,
+        govukErrorSummary: GovukErrorSummary,
+        govukInput: GovukInput,
+        govukButton: GovukButton
 )
 
-@(form:Form[_])(implicit request: Request[_], messages: Messages)
+@(form: Form[_])(implicit request: Request[_], messages: Messages)
 
-@ultimateParentEntityErrors = @{form.error("ultimateParentEntity").isDefined}
+@title = @{messages("submitInfoUltimateParentEntity.title")}
+@hasErrors = @{form.hasErrors || form.hasGlobalErrors}
+@key = @{"ultimateParentEntity"}
+@singleErrorMessage = @{messages("submitInfoUltimateParentEntity.upe.error")}
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("submitInfoUltimateParentEntity.title")}else{Messages("submitInfoUltimateParentEntity.title")}) {
+@layout(title, hasErrors = hasErrors) {
 
-            @if(form.hasErrors) {
-                <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                    <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("submitInfoUltimateParentEntity.upe.error.header")</h2>
-                    <div class="govuk-error-summary__body">
-                        <ul class="govuk-list govuk-error-summary__list">
-                    @if(form.hasErrors){<li id="ultimateParentEntity-error-summary"><a href="#ultimateParentEntity">@Messages("submitInfoUltimateParentEntity.upe.error")</a></li>}
-                        </ul>
-                    </div>
-                </div>
-                @errorFocus()
-            }
-            @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUltimateParentEntity){
-                <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
-                <fieldset class="govuk-fieldset">
-                    <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
-                        <h1 class="govuk-fieldset__heading">
-                        @Messages("submitInfoUltimateParentEntity.mainHeading")
-                        </h1>
-                    </legend>
-
-                      @govukFormFieldDisplay(ultimateParentEntityErrors,"ultimateParentEntity", Some(Messages("submitInfoUltimateParentEntity.upe.error")),Messages("submitInfoUltimateParentEntity.upe.label"), form)
-                </fieldset>
-                </div>
-                <button role="button" class="govuk-button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>
-            }
+    @if(form.hasErrors) {
+        @govukErrorSummary(ErrorSummary(
+            title = Text(messages("generic.errorSummaryHeader")),
+            errorList = Seq(
+                ErrorLink(
+                    href = Some(s"#$key"),
+                    content = Text(singleErrorMessage)
+                )
+            ),
+            attributes = Map("id" -> "error-summary-display")
+        ))
+    }
+    @formHelper(routes.SubmissionController.submitUltimateParentEntity) {
+        @govukInput(Input(
+            id = key,
+            name = key,
+            label = Label(
+                content = Text(title),
+                classes = "govuk-label--l",
+                isPageHeading = true
+            ),
+            value = form.data.get(key),
+            errorMessage = if(hasErrors) Some(ErrorMessage(content = Text(singleErrorMessage))) else None
+        ))
+        @govukButton(Button(
+            content = Text(messages("form.controls.continue")),
+            attributes = Map("id" -> "btn-continue")
+        ))
+    }
 }
 

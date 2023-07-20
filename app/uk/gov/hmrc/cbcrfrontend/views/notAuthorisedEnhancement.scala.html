@@ -16,13 +16,12 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-@this(mainTemplate: uk.gov.hmrc.cbcrfrontend.views.html.Layout)
+@this(layout: uk.gov.hmrc.cbcrfrontend.views.html.Layout)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("notAuthorised.enhancement.title")) {
+@title = @{messages("notAuthorised.enhancement.title")}
 
-    <div class="govuk-grid-row" style="margin-left: 0.5%">
-            <h1 class="govuk-heading-l">@Messages("notAuthorised.enhancement.heading")</h1>
-    </div>
+@layout(title) {
+  <h1 class="govuk-heading-l">@title</h1>
 }
