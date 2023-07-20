@@ -1137,7 +1137,7 @@ class SubmissionSpec
         val result = controller.upe(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
-        webPageAsString should include(getMessages(request)("submitInfoUltimateParentEntity.mainHeading"))
+        webPageAsString should include(getMessages(request)("submitInfoUltimateParentEntity.title"))
       }
 
       "calling utr" in {
