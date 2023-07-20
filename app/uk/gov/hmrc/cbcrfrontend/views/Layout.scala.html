@@ -53,6 +53,6 @@
         serviceName = Some(messages("application.title")),
         pageTitle = Some(gdsTitle),
         isWelshTranslationAvailable = false,
-        backLink = backLinkUrl.map(b => BackLink(content = Text(b)))
+        backLink = backLinkUrl.map(b => BackLink(href = b, content = Text(messages("generic.back"))))
   )
 )(content)
