@@ -15,66 +15,96 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import tags._
 @import uk.gov.hmrc.cbcrfrontend.model.FieldName
-@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.auth.core.AffinityGroup
 
-@this(mainTemplate: Layout, formHelper: FormWithCSRF)
+@this(
+        layout: Layout,
+        formHelper: FormWithCSRF,
+        govukErrorSummary: GovukErrorSummary,
+        govukInput: GovukInput,
+        govukButton: GovukButton,
+        govukFieldset: GovukFieldset
+)
 
 @(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
 
-@fullNameErrors = @{form.error("fullName").isDefined}
-
-@maybePhoneError = @{form.error("contactPhone").map(_.message).getOrElse("")}
-@maybeEmailError = @{form.error("email").map(_.message).getOrElse("")}
-
-@contactPhoneErrors = @{form.error("contactPhone").isDefined}
-@emailErrors = @{form.error("email").isDefined}
-
-@hasErrors = @{
-    form.errors.length > 0
+@fullNameKey = @{"fullName"}
+@contactPhoneKey = @{"contactPhone"}
+@emailKey = @{"email"}
+@fullNameSingleError = @{messages("submitterInfo.fullName.error")}
+@hasErrors = @{form.hasErrors || form.hasGlobalErrors}
+@title = @{messages("submitterInfo.title")}
+@backLink = @{userType match {
+    case Some(Organisation) => routes.FileUploadController.fileValidate(envelopeId, fileId).url
+    case _                  => routes.SubmissionController.enterCompanyName.url
+}}
+@fieldsetHtml = {
+    @govukInput(Input(
+        id = fullNameKey,
+        name = fullNameKey,
+        label = Label(
+            content = Text(messages("submitterInfo.fullName"))
+        ),
+        classes = "govuk-!-width-two-thirds",
+        value = form.data.get(fullNameKey),
+        errorMessage = if(form.error(fullNameKey).isDefined) Some(ErrorMessage(content = Text(fullNameSingleError))) else None
+    ))
+    @govukInput(Input(
+        id = contactPhoneKey,
+        name = contactPhoneKey,
+        label = Label(
+            content = Text(messages("submitterInfo.phoneNumber"))
+        ),
+        hint = Some(Hint(
+            content = Text(messages("submitterInfo.phoneNumber.hint"))
+        )),
+        classes = "govuk-!-width-two-thirds",
+        value = form.data.get(contactPhoneKey),
+        errorMessage = form.error(contactPhoneKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+        autocomplete = Some("telephone")
+    ))
+    @govukInput(Input(
+        id = emailKey,
+        name = emailKey,
+        label = Label(
+            content = Text(messages("submitterInfo.emailAddress"))
+        ),
+        classes = "govuk-!-width-two-thirds",
+        value = form.data.get(emailKey),
+        errorMessage = form.error(emailKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+        autocomplete = Some("email")
+    ))
 }
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("submitterInfo.title")}else{Messages("submitterInfo.title")}) {
-
-  @{userType match {
-      case Some(Organisation) => back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
-      case _                  => back_link(routes.SubmissionController.enterCompanyName.url)
-  }}
+@layout(title, hasErrors = hasErrors, backLinkUrl = Some(backLink)) {
 
     @if(form.hasErrors) {
-            <div class="govuk-error-summary" role="alert" aria-labelledby="error-summary-title" data-module="govuk-error-summary">
-                <h2 id="error-summary-heading" class="h2-heading">@Messages("start.error.heading")</h2>
-                <div class="govuk-error-summary__body">
-                    <ul class="govuk-list govuk-error-summary__list">
-                        @if(fullNameErrors) {<li id="fullName-error-summary"><strong><a href="#fullName">@Messages("submitterInfo.fullName.error")</a></strong></li>}
-                        @if(contactPhoneErrors) {<li id="contactPhone-error-summary"><strong><a href="#contactPhone">@Messages(maybePhoneError)</a></strong></li>}
-                        @if(emailErrors) {<li id="email-error-summary"><strong><a href="#email">@Messages(maybeEmailError)</a></strong></li>}
-                    </ul>
-                </div>
-            </div>
-    @errorFocus()
-}
-    <h1 class="govuk-heading-l">@Messages("submitterInfo.mainHeading")</h1>
-    @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitSubmitterInfo) {
-        <div class="govuk-form-group @if(hasErrors) {govuk-form-group--error}">
-            <fieldset class="govuk-fieldset">
-                @govukFormFieldDisplay(fullNameErrors, "fullName", Some(Messages("submitterInfo.fullName.error")), Messages("submitterInfo.fullName"), form)
-                @govukFormFieldDisplay(contactPhoneErrors, "contactPhone", Some(Messages(maybePhoneError)), Messages("submitterInfo.phoneNumber"), form, Some(Messages("submitterInfo.phoneNumber.hint")))
-                @govukFormFieldDisplay(emailErrors, "email", Some(Messages(maybeEmailError)), Messages("submitterInfo.emailAddress"), form)
-                <div class="form-field">
-                    <button class="govuk-button" role="button" class="button" type="submit" id="btn-continue">Continue</button>
-                </div>
-                @if(!form.hasErrors) {
-                    <script>document.getElementById("@field.getOrElse("fullName")").focus();</script>
-                }
-            </fieldset>
-            }
-</div>
+        @govukErrorSummary(ErrorSummary(
+            title = Text(messages("start.error.heading")),
+            errorList = form.errors.map(e => ErrorLink(
+                content = Text(if(e.key.matches(fullNameKey)) fullNameSingleError else messages(e.message)),
+                href = Some(s"#${e.key}")
+            )),
+            attributes = Map("id" -> "error-summary-display")
+        ))
+    }
+
+    @formHelper(routes.SubmissionController.submitSubmitterInfo) {
+        @govukFieldset(Fieldset(
+            legend = Some(Legend(
+                content = Text(title),
+                classes = "govuk-fieldset__legend--l",
+                isPageHeading = true
+            )),
+            html = fieldsetHtml
+        ))
+        @govukButton(Button(
+            content = Text(messages("form.controls.continue")),
+            attributes = Map("id" -> "btn-continue")
+        ))
+    }
 
 }
-
-
