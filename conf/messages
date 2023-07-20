@@ -3,6 +3,7 @@ service.name=Send a country-by-country report
 
 generic.errorPrefix = Error
 generic.back = Back
+generic.errorSummaryHeader = There is a problem
 
 contactDetailsUpdate.title=The registration contact details have been updated - Send a country-by-country report - GOV.UK
 contactDetailsUpdate.mainHeading=The registration contact details have been updated
@@ -192,8 +193,7 @@ submitInfoFilingType.primaryFiling.label=A global report for a multinational ent
 submitInfoFilingType.voluntaryFiling.label=A global report for a multinational enterprise whose headquarters are not in the UK, via a subsidiary company
 submitInfoFilingType.localFiling.label=A report covering the UK only, for the UK subsidiary of a multinational enterprise whose headquarters are not in the UK
 
-submitInfoUltimateParentEntity.title=What ultimate parent entity are you reporting for? - Send a country-by-country report - GOV.UK
-submitInfoUltimateParentEntity.mainHeading=What ultimate parent entity are you reporting for?
+submitInfoUltimateParentEntity.title=What ultimate parent entity are you reporting for?
 submitInfoUltimateParentEntity.upe.label=Ultimate parent entity name
 submitInfoUltimateParentEntity.upe.error.header=You have not entered the name of the ultimate parent entity
 submitInfoUltimateParentEntity.upe.error=Enter the ultimate parent entity name
