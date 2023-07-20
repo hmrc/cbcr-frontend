@@ -16,25 +16,27 @@
 
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.model._
-@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
-@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 
-@this(mainTemplate: Layout)
+@this(layout: uk.gov.hmrc.cbcrfrontend.views.html.Layout, govukButton: GovukButton)
 
-@(errorType:FileUploadErrorType)(implicit request: Request[_], messages: Messages)
+@(errorType: FileUploadErrorType)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("fileUploadResult.error.title")) {
+@title = @{messages("fileUploadResult.error.title")}
 
-  @back_link(routes.FileUploadController.chooseXMLFile.url)
+@layout(title, backLinkUrl = Some(routes.FileUploadController.chooseXMLFile.url)) {
 
-<div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
-        <h1 class="govuk-heading-l">@Messages("fileUploadResult.error")</h1>
-            @defining("fileUploadResult.error." + errorType.toString) { key =>
-                <p class="govuk-body">@Messages(key)</p>
-            }
+    <h1 class="govuk-heading-l">
+        @title
+    </h1>
 
-        <a class="govuk-button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@messages("form.controls.finished")</a>
-    </div>
-</div>
+    <p class="govuk-body">
+        @messages(s"fileUploadResult.error.${errorType.toString}")
+    </p>
+
+    @govukButton(Button(
+        href = Some(routes.SharedController.signOutSurvey.url),
+        content = Text(messages("form.controls.finished")),
+        attributes = Map("id" -> "btn-continue")
+    ))
+
 }

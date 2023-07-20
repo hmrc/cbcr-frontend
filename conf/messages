@@ -2,6 +2,7 @@ application.title=Send a country-by-country report
 service.name=Send a country-by-country report
 
 generic.errorPrefix = Error
+generic.back = Back
 
 contactDetailsUpdate.title=The registration contact details have been updated - Send a country-by-country report - GOV.UK
 contactDetailsUpdate.mainHeading=The registration contact details have been updated
@@ -230,8 +231,7 @@ fileUploadResult.fileName=Filename
 fileUploadResult.fileSize=Size
 fileUploadResult.caption=Report filename and file size
 
-fileUploadResult.error.title=The report does not meet the HMRC and OECD guidelines - Send a country-by-country report - GOV.UK
-fileUploadResult.error=The report does not meet the HMRC and OECD guidelines
+fileUploadResult.error.title=The report does not meet the HMRC and OECD guidelines
 fileUploadResult.error.report=Download the
 fileUploadResult.error.data.link=error summary
 fileUploadResult.error.data.message=and get the errors corrected before you check the report again.
