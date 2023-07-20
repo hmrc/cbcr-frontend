@@ -35,8 +35,10 @@
     @Messages("notAuthorised.assistant.message")
   </p>
 
-  @govukButton(Button(
-    href = Some("@config.cbcrGuidanceUrl"),
-    content = Text(messages("notAuthorised.assistant.button"))
-  ))
+  <p class="govuk-body">
+    @govukButton(Button(
+      href = Some(config.cbcrGuidanceUrl),
+      content = Text(messages("notAuthorised.assistant.button"))
+    ))
+  </p>
 }
