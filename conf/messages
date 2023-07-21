@@ -291,8 +291,7 @@ uploadReport.uploadButton=Check report
 uploadReport.error=You must select a file
 uploadReport.label=Select a file
 
-submitterInfo.title=Enter your contact details, as the sender of the report - Send a country-by-country report - GOV.UK
-submitterInfo.mainHeading=Enter your contact details, as the sender of the report
+submitterInfo.title=Enter your contact details, as the sender of the report
 submitterInfo.fullName=Your name
 submitterInfo.fullName.error=Enter your name
 submitterInfo.fullName.error.header=You have not entered your full name
