@@ -165,7 +165,7 @@ class SubmissionSpec
       auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
       cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
-      status(controller.submitterInfo(None)(fakeRequestSubmit)) shouldBe Status.OK
+      status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
     }
 
     "return a 200 when SubmitterInfo is NOT in cache" in {

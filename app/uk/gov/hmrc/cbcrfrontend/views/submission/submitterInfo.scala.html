@@ -29,7 +29,7 @@
         govukFieldset: GovukFieldset
 )
 
-@(form:Form[_],field: Option[FieldName], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
+@(form:Form[_], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
 
 @fullNameKey = @{"fullName"}
 @contactPhoneKey = @{"contactPhone"}

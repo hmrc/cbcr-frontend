@@ -91,7 +91,7 @@ else {
 
             @if(reportingRole == Some(CBC701)){
                 @if(userType == Some(Organisation)){
-                    <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.submitterInfo()" id="btn-continue">@Messages("form.controls.continue")</a></p>
+                    <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.submitterInfo" id="btn-continue">@Messages("form.controls.continue")</a></p>
                 } else {
                     <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
                 }

@@ -4,6 +4,7 @@ service.name=Send a country-by-country report
 generic.errorPrefix = Error
 generic.back = Back
 generic.errorSummaryHeader = There is a problem
+generic.change = Change
 
 contactDetailsUpdate.title=The registration contact details have been updated - Send a country-by-country report - GOV.UK
 contactDetailsUpdate.mainHeading=The registration contact details have been updated
@@ -252,8 +253,7 @@ enterCompanyName.formHintWhereYouGotIt=Agent organisation name
 enterCompanyName.form.error=Enter an agent organisation name
 enterCompanyName.formHint=This is not necessarily the one you are sending the report for.
 
-submitSummary.title=Confirm the report details - Send a country-by-country report - GOV.UK
-submitSummary.mainHeading=Confirm the report details
+submitSummary.title=Confirm the report details
 submitSummary.companyDetails.heading=Company or partnership details
 submitSummary.companyDetails.cbcId=Country-by-country ID
 submitSummary.companyDetails.companyName=UK-registered company or partnership

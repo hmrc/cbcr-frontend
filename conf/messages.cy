@@ -3,6 +3,8 @@ service.name=Send a country-by-country report
 
 generic.errorPrefix = cy-Error
 generic.back = cy-Back
+generic.errorSummaryHeader = cy-There is a problem
+generic.change = cy-Change
 
 contactDetailsUpdate.mainHeading=cy-The registration contact details have been updated
 contactDetailsUpdate.printThisButton=cy-Print this page
