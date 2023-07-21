@@ -1110,7 +1110,7 @@ class SubmissionSpec
         val result = controller.notRegistered(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
-        webPageAsString should include(getMessages(request)("notRegistered.heading"))
+        webPageAsString should include(getMessages(request)("notRegistered.title"))
       }
 
       "calling noIndividuals" in {
