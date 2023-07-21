@@ -22,7 +22,7 @@
 
 @isError= @{form.hasErrors}
 
-@mainTemplate(Messages("survey.title")) {
+@mainTemplate(Messages("survey.title"), withSignOutLink = false) {
     <h1 class="govuk-heading-l">@Messages("survey.header")</h1>
     <p class="govuk-body">@Messages("survey.intro")</p>
     <br aria-hidden="true"/>
