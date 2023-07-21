@@ -50,7 +50,8 @@
         ),
         classes = "govuk-!-width-two-thirds",
         value = form.data.get(fullNameKey),
-        errorMessage = if(form.error(fullNameKey).isDefined) Some(ErrorMessage(content = Text(fullNameSingleError))) else None
+        errorMessage = if(form.error(fullNameKey).isDefined) Some(ErrorMessage(content = Text(fullNameSingleError))) else None,
+        autocomplete = Some("name")
     ))
     @govukInput(Input(
         id = contactPhoneKey,
@@ -64,7 +65,7 @@
         classes = "govuk-!-width-two-thirds",
         value = form.data.get(contactPhoneKey),
         errorMessage = form.error(contactPhoneKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
-        autocomplete = Some("telephone")
+        autocomplete = Some("tel")
     ))
     @govukInput(Input(
         id = emailKey,
