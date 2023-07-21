@@ -19,20 +19,21 @@
 @import uk.gov.hmrc.govukfrontend.views.html.components._
 
 @this(
-  mainTemplate: Layout,
+  layout: Layout,
   govukButton: GovukButton
 )
+@title = @{messages("notAuthorised.assistant.title")}
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@mainTemplate(Messages("notAuthorised.assistant.title")) {
+@layout(title) {
 
   <h1 class="govuk-heading-l">
-    @Messages("notAuthorised.assistant.mainHeading")
+    @title
   </h1>
 
   <p class="govuk-body">
-    @Messages("notAuthorised.assistant.message")
+    @messages("notAuthorised.assistant.message")
   </p>
 
   <p class="govuk-body">
