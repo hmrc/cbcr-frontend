@@ -22,9 +22,10 @@
   layout: Layout,
   govukButton: GovukButton
 )
-@title = @{messages("notAuthorised.assistant.title")}
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@title = @{messages("notAuthorised.assistant.title")}
 
 @layout(title) {
 
