@@ -321,8 +321,7 @@ notAuthorised.Individual.message.link=register as an Organisation with the Gover
 notAuthorised.Individual.message.end=with the Government Gateway.
 notAuthorised.individual.button=Finished
 
-notAuthorised.assistant.title=You are not authorised to use this service - Send a country-by-country report - GOV.UK
-notAuthorised.assistant.mainHeading=You are not authorised to use this service
+notAuthorised.assistant.title=You are not authorised to use this service
 notAuthorised.assistant.message=To use this service, you must sign in to the Government Gateway as an Administrator for your Organisation.
 notAuthorised.assistant.button=Finished
 
