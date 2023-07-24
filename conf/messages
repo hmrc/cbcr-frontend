@@ -246,8 +246,7 @@ fileUploadResult.error.FileNotXml=The report is the wrong file type. You must se
 
 oldfileUploadResult.notYetSubmitted=We will now ask you for more information before accepting the report.
 
-enterCompanyName.title=Enter the name of the agent organisation you work for - Send a country-by-country report - GOV.UK
-enterCompanyName.mainHeading=Enter the name of the agent organisation you work for
+enterCompanyName.title=Enter the name of the agent organisation you work for
 enterCompanyName.formHintWhereYouGotIt=Agent organisation name
 enterCompanyName.form.error=Enter an agent organisation name
 enterCompanyName.formHint=This is not necessarily the one you are sending the report for.
