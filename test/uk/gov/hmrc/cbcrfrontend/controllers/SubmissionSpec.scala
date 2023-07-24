@@ -1158,7 +1158,7 @@ class SubmissionSpec
         val result = controller.enterCompanyName(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
-        webPageAsString should include(getMessages(request)("enterCompanyName.mainHeading"))
+        webPageAsString should include(getMessages(request)("enterCompanyName.title"))
       }
     }
   }
