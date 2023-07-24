@@ -22,7 +22,7 @@
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 
-@mainTemplate(Messages("survey.acknowledge.title")) {
+@mainTemplate(Messages("survey.acknowledge.title"), withSignOutLink = false) {
 
 
     <h1 class="govuk-heading-l">@Messages("survey.acknowledge.header")</h1>
