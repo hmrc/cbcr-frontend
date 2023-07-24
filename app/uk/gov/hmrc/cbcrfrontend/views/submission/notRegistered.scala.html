@@ -17,21 +17,19 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
-@this(mainTemplate: Layout, formHelper: FormWithCSRF)
+@this(layout: Layout, formHelper: FormWithCSRF, govukButton: GovukButton)
 
 @()(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("notRegistered.title")) {
+@title = @{messages("notRegistered.title")}
 
-<div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
-        <h1 class="govuk-heading-l">@Messages("notRegistered.heading")</h1>
-
-            <p class="govuk-body">@Messages("notRegistered.message.start") <a href="@routes.SharedController.verifyKnownFactsOrganisation">@messages("notRegistered.message.link")</a>
+@layout(title) {
+        <h1 class="govuk-heading-l">@title</h1>
+        <p class="govuk-body">@Messages("notRegistered.message.start") <a class="govuk-link" href="@routes.SharedController.verifyKnownFactsOrganisation">@messages("notRegistered.message.link")</a>
             @messages("notRegistered.message.end")</p>
-
-        <a class="govuk-button" role="button" href="@routes.SharedController.signOut">@Messages("form.controls.finished")</a>
-    </div>
-</div>
+        @govukButton(Button(
+        href = Some(routes.SharedController.signOut.url),
+        content = Text(messages("form.controls.finished"))
+        ))
 
 }

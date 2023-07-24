@@ -52,8 +52,7 @@ regenerate.next=What happens next?
 regenerate.continue=You will need to
 regenerate.continue2=and then continue whenever you need to submit a report.
 
-notRegistered.title=Registration required - Send a country-by-country report - GOV.UK
-notRegistered.heading=Registration required
+notRegistered.title=Registration required
 notRegistered.message.start=You will need to
 notRegistered.message.link=register
 notRegistered.message.end=to send a report.
