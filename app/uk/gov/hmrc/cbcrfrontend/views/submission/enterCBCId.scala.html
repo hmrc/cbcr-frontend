@@ -39,28 +39,13 @@
 
 @title = @{messages("enterCBCId.title")}
 
+@key = @{"cbcId"}
+
 @backLinkUrl = @{Some(routes.SubmissionController.submitterInfo.url)}
 
 @hasErrors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 
 @idError = @{if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty){ messages("enterCBCId.error.message.empty.id") } else { messages("enterCBCId.error.message.invalid.id") }}
-
-@fieldsetHtml = {
-  @govukInput(Input(
-    id = "cbcId",
-    name = "cbcId",
-    label = Label(
-      content = Text(messages("enterCBCId.formHintWhereYouGotIt")),
-      classes = "govuk-label--m"
-    ),
-    hint = Some(Hint(
-      content = Text(messages("enterCBCId.formHint"))
-    )),
-    classes = "govuk-input--width-10",
-    value = form.data.get("cbcId"),
-    errorMessage = if(hasErrors) Some(ErrorMessage(content = Text(idError))) else None
-  ))
-}
 
 @layout(pageTitle = title, backLinkUrl = backLinkUrl, hasErrors = hasErrors) {
 
@@ -77,13 +62,20 @@
   }
 
   @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId) {
-    @govukFieldset(Fieldset(
-      legend = Some(Legend(
+    @govukInput(Input(
+      id = key,
+      name = key,
+      label = Label(
         content = Text(title),
-        classes = "govuk-fieldset__legend--l",
+        classes = "govuk-label--l",
         isPageHeading = true
+      ),
+      hint = Some(Hint(
+        content = Text(messages("enterCBCId.formHint"))
       )),
-      html = fieldsetHtml
+      classes = "govuk-input--width-10",
+      value = form.data.get(key),
+      errorMessage = if(hasErrors) Some(ErrorMessage(content = Text(idError))) else None
     ))
     @govukButton(Button(
       content = Text(messages("form.controls.continue"))
