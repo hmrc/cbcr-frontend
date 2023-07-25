@@ -50,13 +50,14 @@
 
   @if(hasErrors) {
     @govukErrorSummary(ErrorSummary(
-        title = Text(messages("start.error.heading")),
-        errorList = Seq(
-            ErrorLink(
-                href = Some("#cbcId"),
-                content = Text(idError)
-            ),
-        )
+      title = Text(messages("start.error.heading")),
+      errorList = Seq(
+        ErrorLink(
+          href = Some("#cbcId"),
+          content = Text(idError)
+        ),
+      ),
+      attributes = Map("id" -> "error-summary-display")
     ))
   }
 
