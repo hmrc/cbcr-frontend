@@ -23,6 +23,8 @@
   layout: Layout,
   govukErrorSummary: GovukErrorSummary,
   formHelper: FormWithCSRF,
+  govukInput: GovukInput,
+  govukFieldset: GovukFieldset,
   govukButton: GovukButton
 )
 
@@ -35,73 +37,57 @@
   messages: Messages
 )
 
-@hasErrors = @{form.error("cbcId").isDefined || missMatch || noMatch}
-
 @title = @{messages("enterCBCId.title")}
 
 @backLinkUrl = @{Some(routes.SubmissionController.submitterInfo().url)}
 
-@idError = @{}
+@hasErrors = @{form.error("cbcId").isDefined || missMatch || noMatch}
+
+@idError = @{if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty){ messages("enterCBCId.error.message.empty.id") } else { messages("enterCBCId.error.message.invalid.id") }}
+
+@fieldsetHtml = {
+  @govukInput(Input(
+    id = "cbcId",
+    name = "cbcId",
+    label = Label(
+      content = Text(messages("enterCBCId.formHintWhereYouGotIt")),
+      classes = "govuk-label--m"
+    ),
+    hint = Some(Hint(
+      content = Text(messages("enterCBCId.formHint"))
+    )),
+    classes = "govuk-input--width-10",
+    value = form.data.get("cbcId"),
+    errorMessage = if(hasErrors) Some(ErrorMessage(content = Text(idError))) else None
+  ))
+}
 
 @layout(pageTitle = title, backLinkUrl, hasErrors = hasErrors) {
 
   @if(hasErrors) {
-    <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
-        <h2 id="error-summary-heading" class="govuk-error-summary__title">@messages("start.error.heading")</h2>
-        <div class="govuk-error-summary__body">
-            <ul class="govuk-list govuk-error-summary__list">
-                  <li id="cbcId-error-summary">
-                    <a href="#cbcId">
-                      @if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty) {
-                        @messages("enterCBCId.error.message.empty.id")
-                      } else {
-                        @messages("enterCBCId.error.message.invalid.id")
-                      }
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-    @errorFocus()
     @govukErrorSummary(ErrorSummary(
         title = Text(messages("start.error.heading")),
         errorList = Seq(
             ErrorLink(
-                href = Some("#utr"),
-                content = Text(utrError)
+                href = Some("#cbcId"),
+                content = Text(idError)
             ),
-            ErrorLink(
-                href = Some("#postCode"),
-                content = Text(postcodeError)
-            )
         )
     ))
   }
 
-  <h1 class="govuk-heading-l">@messages("enterCBCId.mainHeading")</h1>
+  <h1 class="govuk-heading-l">@title</h1>
 
   @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId) {
-    <div class="govuk-form-group @if(hasErrors) {govuk-form-group--error}">
-      <fieldset class="govuk-fieldset">
-        @govukFormFieldDisplay(
-          hasErrors,
-          "cbcId",
-          Some(if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){messages("enterCBCId.error.message.empty.id")} else {messages("enterCBCId.error.message.invalid.id")}),
-          messages("enterCBCId.formHintWhereYouGotIt"),
-          form,
-          Some(messages("enterCBCId.formHint"))
-        )
-        @if(hasErrors) {
-          <br>
-          <p class="govuk-body">@messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" class="govuk-link">@messages("enterCBCId.error.message.link")</a></p>
-        }
-      </fieldset>
-    </div>
-    <p>
-      <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@messages("form.controls.continue")</button>
-    </p>
+    @govukFieldset(Fieldset(
+      legend = Some(Legend(
+        content = Text(title),
+        classes = "govuk-fieldset__legend--l",
+        isPageHeading = true
+      )),
+      html = fieldsetHtml
+    ))
     @govukButton(Button(
-      attributes = Map("id" -> "submitButton"),
       content = Text(messages("form.controls.continue"))
     ))
   }
