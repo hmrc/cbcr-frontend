@@ -321,8 +321,7 @@ notAuthorised.assistant.title=You are not authorised to use this service
 notAuthorised.assistant.message=To use this service, you must sign in to the Government Gateway as an Administrator for your Organisation.
 notAuthorised.assistant.button=Finished
 
-utrCheck.title=Enter the Unique Taxpayer Reference of the UK-registered company or partnership sending the report - Send a country-by-country report - GOV.UK
-utrCheck.mainHeading=Enter the Unique Taxpayer Reference of the UK-registered company or partnership sending the report
+utrCheck.title=Enter the Unique Taxpayer Reference of the UK-registered company or partnership sending the report
 utrCheck.label=Unique Taxpayer Reference
 
 utrCheck.hint=This can be for Corporation Tax, or Self-Assessment for a business partnership. Enter the last 10 digits, with no spaces.
