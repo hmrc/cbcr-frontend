@@ -55,6 +55,7 @@
                 classes = "govuk-label--l",
                 isPageHeading = true
             ),
+            classes = "govuk-!-width-two-thirds",
             value = form.data.get(key),
             errorMessage = if(hasErrors) Some(ErrorMessage(content = Text(singleErrorMessage))) else None
         ))

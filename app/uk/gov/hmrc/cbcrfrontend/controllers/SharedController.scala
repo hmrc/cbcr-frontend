@@ -159,9 +159,9 @@ class SharedController @Inject()(
 
   val signOutSurvey: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      val continue = s"?continue=${feConfig.cbcrFrontendHost}${routes.ExitSurveyController.doSurvey.url}"
       Future.successful(
-        Redirect(s"${feConfig.governmentGatewaySignOutUrl}/bas-gateway/sign-out-without-state$continue"))
+        Redirect(routes.ExitSurveyController.doSurvey.url).withNewSession
+      )
     }
   }
 

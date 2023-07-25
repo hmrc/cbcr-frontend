@@ -165,7 +165,7 @@ class SubmissionSpec
       auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(
         Some(AffinityGroup.Organisation))
       cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
-      status(controller.submitterInfo(None)(fakeRequestSubmit)) shouldBe Status.OK
+      status(controller.submitterInfo()(fakeRequestSubmit)) shouldBe Status.OK
     }
 
     "return a 200 when SubmitterInfo is NOT in cache" in {
@@ -1110,7 +1110,7 @@ class SubmissionSpec
         val result = controller.notRegistered(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
-        webPageAsString should include(getMessages(request)("notRegistered.heading"))
+        webPageAsString should include(getMessages(request)("notRegistered.title"))
       }
 
       "calling noIndividuals" in {
@@ -1158,7 +1158,7 @@ class SubmissionSpec
         val result = controller.enterCompanyName(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
-        webPageAsString should include(getMessages(request)("enterCompanyName.mainHeading"))
+        webPageAsString should include(getMessages(request)("enterCompanyName.title"))
       }
     }
   }

@@ -19,29 +19,24 @@
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage._
 
 @this(
-  hmrcStandardPage: HmrcStandardPage,
-  hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
-  hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper
+        hmrcStandardPage: HmrcStandardPage,
+        hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
+        hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper
 )
 
 @(
   pageTitle: String,
   backLinkUrl: Option[String] = None,
-  hasErrors: Boolean = false
-)(
-  contentBlock: Html
-)(
-  implicit request: RequestHeader,
-  messages: Messages
-)
+  hasErrors: Boolean = false,
+  withSignOutLink: Boolean = true
+)(contentBlock: Html)(implicit request: RequestHeader,  messages: Messages)
 
 @content = {
-@contentBlock
-<div class="govuk-!-margin-top-6 govuk-!-display-none-print">
-    @hmrcReportTechnicalIssueHelper()
-</div>
+    @contentBlock
+    <div class="govuk-!-margin-top-6 govuk-!-display-none-print">
+        @hmrcReportTechnicalIssueHelper()
+    </div>
 }
-
 @errorPrefix = @{s"${messages("generic.errorPrefix")}: "}
 
 @gdsTitle = @{
@@ -51,10 +46,10 @@
 @hmrcStandardPage(
   HmrcStandardPageParams(
     serviceURLs = ServiceURLs(
-      signOutUrl = Some(routes.SharedController.signOutSurvey.url)
+      signOutUrl = if(withSignOutLink) Some(routes.SharedController.signOutSurvey.url) else None
     ),
     templateOverrides = TemplateOverrides(
-      additionalHeadBlock = Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url))
+      additionalHeadBlock = if(withSignOutLink) Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)) else None
     ),
     serviceName = Some(messages("application.title")),
     pageTitle = Some(gdsTitle),

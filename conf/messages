@@ -4,6 +4,7 @@ service.name=Send a country-by-country report
 generic.errorPrefix = Error
 generic.back = Back
 generic.errorSummaryHeader = There is a problem
+generic.change = Change
 
 contactDetailsUpdate.title=The registration contact details have been updated - Send a country-by-country report - GOV.UK
 contactDetailsUpdate.mainHeading=The registration contact details have been updated
@@ -52,8 +53,7 @@ regenerate.next=What happens next?
 regenerate.continue=You will need to
 regenerate.continue2=and then continue whenever you need to submit a report.
 
-notRegistered.title=Registration required - Send a country-by-country report - GOV.UK
-notRegistered.heading=Registration required
+notRegistered.title=Registration required
 notRegistered.message.start=You will need to
 notRegistered.message.link=register
 notRegistered.message.end=to send a report.
@@ -247,14 +247,12 @@ fileUploadResult.error.FileNotXml=The report is the wrong file type. You must se
 
 oldfileUploadResult.notYetSubmitted=We will now ask you for more information before accepting the report.
 
-enterCompanyName.title=Enter the name of the agent organisation you work for - Send a country-by-country report - GOV.UK
-enterCompanyName.mainHeading=Enter the name of the agent organisation you work for
+enterCompanyName.title=Enter the name of the agent organisation you work for
 enterCompanyName.formHintWhereYouGotIt=Agent organisation name
 enterCompanyName.form.error=Enter an agent organisation name
 enterCompanyName.formHint=This is not necessarily the one you are sending the report for.
 
-submitSummary.title=Confirm the report details - Send a country-by-country report - GOV.UK
-submitSummary.mainHeading=Confirm the report details
+submitSummary.title=Confirm the report details
 submitSummary.companyDetails.heading=Company or partnership details
 submitSummary.companyDetails.cbcId=Country-by-country ID
 submitSummary.companyDetails.companyName=UK-registered company or partnership
@@ -291,8 +289,7 @@ uploadReport.uploadButton=Check report
 uploadReport.error=You must select a file
 uploadReport.label=Select a file
 
-submitterInfo.title=Enter your contact details, as the sender of the report - Send a country-by-country report - GOV.UK
-submitterInfo.mainHeading=Enter your contact details, as the sender of the report
+submitterInfo.title=Enter your contact details, as the sender of the report
 submitterInfo.fullName=Your name
 submitterInfo.fullName.error=Enter your name
 submitterInfo.fullName.error.header=You have not entered your full name
@@ -322,8 +319,7 @@ notAuthorised.Individual.message.link=register as an Organisation with the Gover
 notAuthorised.Individual.message.end=with the Government Gateway.
 notAuthorised.individual.button=Finished
 
-notAuthorised.assistant.title=You are not authorised to use this service - Send a country-by-country report - GOV.UK
-notAuthorised.assistant.mainHeading=You are not authorised to use this service
+notAuthorised.assistant.title=You are not authorised to use this service
 notAuthorised.assistant.message=To use this service, you must sign in to the Government Gateway as an Administrator for your Organisation.
 notAuthorised.assistant.button=Finished
 

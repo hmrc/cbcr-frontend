@@ -39,7 +39,7 @@
 
 @title = @{messages("enterCBCId.title")}
 
-@backLinkUrl = @{Some(routes.SubmissionController.submitterInfo().url)}
+@backLinkUrl = @{Some(routes.SubmissionController.submitterInfo.url)}
 
 @hasErrors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 
@@ -62,7 +62,7 @@
   ))
 }
 
-@layout(pageTitle = title, backLinkUrl, hasErrors = hasErrors) {
+@layout(pageTitle = title, backLinkUrl = backLinkUrl, hasErrors = hasErrors) {
 
   @if(hasErrors) {
     @govukErrorSummary(ErrorSummary(
@@ -75,8 +75,6 @@
         )
     ))
   }
-
-  <h1 class="govuk-heading-l">@title</h1>
 
   @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId) {
     @govukFieldset(Fieldset(

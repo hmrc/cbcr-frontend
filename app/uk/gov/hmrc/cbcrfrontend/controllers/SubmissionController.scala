@@ -277,7 +277,7 @@ class SubmissionController @Inject()(
                            case (Some(Agent), CBC703 | CBC704) =>
                              Redirect(routes.SubmissionController.enterCompanyName)
                            case (Some(Organisation), CBC703 | CBC704) =>
-                             Redirect(routes.SubmissionController.submitterInfo(None))
+                             Redirect(routes.SubmissionController.submitterInfo)
                            case _ =>
                              errorRedirect(
                                UnexpectedState(
@@ -306,7 +306,7 @@ class SubmissionController @Inject()(
         utr =>
           cache.save(TIN(utr.utr, "")).map { _ =>
             userType match {
-              case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo(None))
+              case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo)
               case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName)
               case _ =>
                 errorRedirect(
@@ -319,7 +319,7 @@ class SubmissionController @Inject()(
     }
   }
 
-  private def enterSubmitterInfo(fn: Option[FieldName], userType: Option[AffinityGroup])(
+  private def enterSubmitterInfo(userType: Option[AffinityGroup])(
     implicit request: Request[AnyContent]): Future[Result] =
     for {
       form <- cache.readOption[SubmitterInfo].map { osi =>
@@ -332,10 +332,10 @@ class SubmissionController @Inject()(
       fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
 
     } yield {
-      Ok(views.submitterInfo(form, fn, fileDetails.envelopeId, fileDetails.fileId, userType))
+      Ok(views.submitterInfo(form, fileDetails.envelopeId, fileDetails.fileId, userType))
     }
 
-  def submitterInfo(field: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+  def submitterInfo(): Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
       cache
         .read[CompleteXMLInfo]
@@ -350,7 +350,7 @@ class SubmissionController @Inject()(
               cache.save(FilingType(kXml.reportingEntity.reportingRole))
 
         })
-        .semiflatMap(_ => enterSubmitterInfo(FieldName.fromString(field.getOrElse("")), userType))
+        .semiflatMap(_ => enterSubmitterInfo(userType))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
@@ -367,7 +367,6 @@ class SubmissionController @Inject()(
               BadRequest(
                 views.submitterInfo(
                   formWithErrors,
-                  None,
                   fd.envelopeId,
                   fd.fileId,
                   userType
@@ -481,7 +480,7 @@ class SubmissionController @Inject()(
                 BadRequest(views.enterCompanyName(errors, fd.envelopeId, fd.fileId))
               }
               .getOrElse(throw new RuntimeException("Missing file upload details")),
-          name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
+          name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo))
         )
     }
   }

@@ -20,38 +20,59 @@
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(
-    mainTemplate: Layout,
-    formHelper: FormWithCSRF
+    layout: Layout,
+    formHelper: FormWithCSRF,
+    govukErrorSummary: GovukErrorSummary,
+    govukButton: GovukButton,
+    govukInput: GovukInput
 )
 
 @(form:Form[_], envelopeId: String, fileId: String)(implicit request: Request[_], messages: Messages)
 
+@companyNameKey = @{"companyName"}
 @error = @{form.error("companyName").isDefined}
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCompanyName.title")}else{Messages("enterCompanyName.title")}) {
-@back_link(routes.FileUploadController.fileValidate(envelopeId, fileId).url)
+@title = @{messages("enterCompanyName.title")}
 
-        @if(form.hasErrors) {
-            <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
-                <div class="govuk-error-summary__body">
-                    <ul class="govuk-list govuk-error-summary__list">
-                @if(form.hasErrors){<li id="companyName-error-summary"><a href="#companyName">@Messages("enterCompanyName.form.error")</a></li>}
-                    </ul>
-                </div>
-            </div>
-            @errorFocus()
-        }
-        <h1 class="govuk-heading-l">@Messages("enterCompanyName.mainHeading")</h1>
+@backLink = @{Some(routes.FileUploadController.fileValidate(envelopeId, fileId).url)}
+
+@hasErrors = @{form.hasErrors}
+
+@layout(title, backLinkUrl = backLink, hasErrors) {
+
+    @if(hasErrors) {
+        @govukErrorSummary(ErrorSummary(
+            title = Text(messages("start.error.heading")),
+                errorList = Seq(
+                    ErrorLink(
+                        href = Some(s"#$companyNameKey"),
+                        content = Text(messages("enterCompanyName.form.error"))
+                )
+            ),
+            attributes = Map("id" -> "error-summary-display")
+        ))
+    }
 
         @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.saveCompanyName){
-            <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
-                <fieldset class="govuk-fieldset">
-                @govukFormFieldDisplay(error,"companyName",Some(Messages("enterCompanyName.form.error")),Messages("enterCompanyName.formHintWhereYouGotIt"),form,None)
-                </fieldset>
-            </div>
+            @govukInput(Input(
+                id = companyNameKey,
+                name = companyNameKey,
+                label = Label(
+                    content = Text(messages(title)),
+                    classes = "govuk-label--l",
+                    isPageHeading = true,
+                ),
+                hint = Some(Hint(
+                content = Text(messages("enterCompanyName.formHintWhereYouGotIt"))
+                )),
+                classes = "govuk-input govuk-!-width-one-half",
+                value = form.data.get(companyNameKey),
+                errorMessage = if(hasErrors) Some(ErrorMessage(content = Text(messages("enterCompanyName.form.error")))) else None
+            ))
 
-            <button class="govuk-button" role="button" type="submit" id="btn-continue">@Messages("form.controls.continue")</button>
-        }
-
+            @govukButton(Button(
+                attributes = Map("id" -> "btn-continue"),
+                content = Text(messages("form.controls.continue"))
+            ))
+    }
 }
