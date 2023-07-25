@@ -16,55 +16,70 @@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import tags._
-@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
+@import uk.gov.hmrc.govukfrontend.views.html.components._
 
-@this(mainTemplate: Layout, formHelper: FormWithCSRF)
+@this(
+  layout: Layout,
+  govukErrorSummary: GovukErrorSummary,
+  formHelper: FormWithCSRF,
+  govukInput: GovukInput,
+  govukButton: GovukButton
+)
 
-@(form :Form[_], noMatch:Boolean = false, missMatch:Boolean = false)(implicit request: Request[_], messages: Messages)
+@(
+  form :Form[_],
+  noMatch:Boolean = false,
+  missMatch:Boolean = false
+)(
+  implicit request: Request[_],
+  messages: Messages
+)
 
-@errors = @{form.error("cbcId").isDefined || missMatch || noMatch}
+@title = @{messages("enterCBCId.title")}
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("enterCBCId.title")}else {Messages("enterCBCId.title")}) {
+@key = @{"cbcId"}
 
-    @back_link(routes.SubmissionController.submitterInfo.url)
+@backLinkUrl = @{Some(routes.SubmissionController.submitterInfo.url)}
 
-    @if(errors) {
-        <div id="error-summary-display" class="govuk-error-summary" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-module="govuk-error-summary">
-            <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
-            <div class="govuk-error-summary__body">
-                <ul class="govuk-list govuk-error-summary__list">
-                      <li id="cbcId-error-summary"><a href="#cbcId"> @if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty) {@Messages("enterCBCId.error.message.empty.id")} else {
-                        @Messages("enterCBCId.error.message.invalid.id")
-                    }</a></li>
-                </ul>
-            </div>
-        </div>
-        @errorFocus()
-    }
+@hasErrors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 
-    <h1 class="govuk-heading-l">@Messages("enterCBCId.mainHeading")</h1>
+@idError = @{if(form.data.get("cbcId").map(x => x).getOrElse("").isEmpty){ messages("enterCBCId.error.message.empty.id") } else { messages("enterCBCId.error.message.invalid.id") }}
 
-            @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId) {
+@layout(pageTitle = title, backLinkUrl = backLinkUrl, hasErrors = hasErrors) {
 
-                <div class="govuk-form-group @if(errors) {govuk-form-group--error}">
-                    <fieldset class="govuk-fieldset">
-                            @govukFormFieldDisplay(errors,"cbcId",
-                            Some(if(form.data.get("cbcId").map(x=>x).getOrElse("").isEmpty){Messages("enterCBCId.error.message.empty.id")} else {Messages("enterCBCId.error.message.invalid.id")}),
-                            Messages("enterCBCId.formHintWhereYouGotIt"),
-                            form,
-                            Some(Messages("enterCBCId.formHint")))
+  @if(hasErrors) {
+    @govukErrorSummary(ErrorSummary(
+        title = Text(messages("start.error.heading")),
+        errorList = Seq(
+            ErrorLink(
+                href = Some("#cbcId"),
+                content = Text(idError)
+            ),
+        )
+    ))
+  }
 
-                        @if(errors) {
-                            <br>
-                            <p class="govuk-body">@Messages("enterCBCId.error.message") <a href="mailto:digitalservice.cbc@@hmrc.gsi.gov.uk" class="govuk-link">@Messages("enterCBCId.error.message.link")</a></p>
-                        }
-                    </fieldset>
-                </div>
-                <p>
-                    <button type="submit" class="govuk-button" data-module="govuk-button" role="button">@Messages("form.controls.continue")</button>
-                </p>
-            }
+  @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.submitCBCId) {
+    @govukInput(Input(
+      id = key,
+      name = key,
+      label = Label(
+        content = Text(title),
+        classes = "govuk-label--l",
+        isPageHeading = true
+      ),
+      hint = Some(Hint(
+        content = Text(messages("enterCBCId.formHint"))
+      )),
+      classes = "govuk-input--width-10",
+      value = form.data.get(key),
+      errorMessage = if(hasErrors) Some(ErrorMessage(content = Text(idError))) else None
+    ))
+    @govukButton(Button(
+      content = Text(messages("form.controls.continue"))
+    ))
+  }
 }
 
 

@@ -25,10 +25,10 @@
 )
 
 @(
-        pageTitle: String,
-        backLinkUrl: Option[String] = None,
-        hasErrors: Boolean = false,
-        withSignOutLink: Boolean = true
+  pageTitle: String,
+  backLinkUrl: Option[String] = None,
+  hasErrors: Boolean = false,
+  withSignOutLink: Boolean = true
 )(contentBlock: Html)(implicit request: RequestHeader,  messages: Messages)
 
 @content = {
@@ -38,21 +38,22 @@
     </div>
 }
 @errorPrefix = @{s"${messages("generic.errorPrefix")}: "}
+
 @gdsTitle = @{
-    s"${if(hasErrors && !pageTitle.startsWith(errorPrefix)){ errorPrefix } else ""}$pageTitle${if(!pageTitle.endsWith("GOV.UK")) { s" - ${messages("application.title")} - GOV.UK" } else {""}}"
+  s"${if(hasErrors && !pageTitle.startsWith(errorPrefix)){ errorPrefix } else ""}$pageTitle${if(!pageTitle.endsWith("GOV.UK")) { s" - ${messages("application.title")} - GOV.UK" } else {""}}"
 }
 
 @hmrcStandardPage(
-    HmrcStandardPageParams(
-        serviceURLs = ServiceURLs(
-            signOutUrl = if(withSignOutLink) Some(routes.SharedController.signOutSurvey.url) else None
-        ),
-        templateOverrides = TemplateOverrides(
-            additionalHeadBlock = if(withSignOutLink) Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)) else None
-        ),
-        serviceName = Some(messages("application.title")),
-        pageTitle = Some(gdsTitle),
-        isWelshTranslationAvailable = false,
-        backLink = backLinkUrl.map(b => BackLink(href = b, content = Text(messages("generic.back"))))
+  HmrcStandardPageParams(
+    serviceURLs = ServiceURLs(
+      signOutUrl = if(withSignOutLink) Some(routes.SharedController.signOutSurvey.url) else None
+    ),
+    templateOverrides = TemplateOverrides(
+      additionalHeadBlock = if(withSignOutLink) Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)) else None
+    ),
+    serviceName = Some(messages("application.title")),
+    pageTitle = Some(gdsTitle),
+    isWelshTranslationAvailable = false,
+    backLink = backLinkUrl.map(b => BackLink(href = b, content = Text(messages("generic.back"))))
   )
 )(content)

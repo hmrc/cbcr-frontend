@@ -69,10 +69,8 @@ form.controls.returnToStart=Return to start page
 form.controls.confirmAndContinue=Confirm and continue
 form.controls.save=Save
 
-enterCBCId.title=Enter the country-by-country ID - Send a country-by-country report - GOV.UK
-enterCBCId.mainHeading=Enter the country-by-country ID
+enterCBCId.title=Enter the country-by-country ID
 enterCBCId.formHint=This must contain the 15-character ID you received when you registered, for example: XACBC0000999999.
-enterCBCId.formHintWhereYouGotIt=Country-by-country ID
 enterCBCId.dontHaveAnID.heading=Do not have a Country by Country ID?
 enterCBCId.dontHaveAnID.link.url=/country-by-country-reporting/subscribeFirst
 enterCBCId.dontHaveAnID.link.text=Register online

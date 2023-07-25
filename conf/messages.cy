@@ -67,9 +67,8 @@ form.controls.returnToStart=cy-Return to start page
 form.controls.confirmAndContinue=cy-Confirm and continue
 form.controls.save=cy-Save
 
-enterCBCId.mainHeading=cy-Enter the country-by-country ID
-enterCBCId.formHint=cy-This must contain the 15-character ID you received when you registered, for example: XACBC0000999999.
-enterCBCId.formHintWhereYouGotIt=cy-Country-by-country ID
+enterCBCId.title=cy-Enter the country-by-country ID
+enterCBCId.formHint=cy-cy-This must contain the 15-character ID you received when you registered, for example: XACBC0000999999.
 enterCBCId.dontHaveAnID.heading=cy-Don''t have a Country by Country ID?
 enterCBCId.dontHaveAnID.link.url=cy-/country-by-country-reporting/subscribeFirst
 enterCBCId.dontHaveAnID.link.text=cy-Register online
