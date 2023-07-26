@@ -1146,7 +1146,7 @@ class SubmissionSpec
         val result = controller.utr(request)
         status(result) shouldBe Status.OK
         val webPageAsString = contentAsString(result)
-        webPageAsString should include(getMessages(request)("utrCheck.mainHeading"))
+        webPageAsString should include(getMessages(request)("utrCheck.title"))
       }
 
       "calling enterCompanyName" in {

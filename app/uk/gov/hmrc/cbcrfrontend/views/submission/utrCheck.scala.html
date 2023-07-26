@@ -14,37 +14,55 @@
  * limitations under the License.
  *@
 
-@import uk.gov.hmrc.cbcrfrontend.views.html._
-@import tags._
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(
-    mainTemplate: Layout,
-    formHelper: FormWithCSRF
+        layout: Layout,
+        formHelper: FormWithCSRF,
+        govukErrorSummary: GovukErrorSummary,
+        govukInput: GovukInput,
+        govukButton: GovukButton
 )
 @(form:Form[_])(implicit request: Request[_], messages: Messages)
 
-@error = @{form.error("utr").isDefined}
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("utrCheck.title")}else{Messages("utrCheck.title")}) {
+@key = @{"utr"}
+@title = @{messages("utrCheck.title")}
+@hasErrors = @{form.hasErrors || form.hasGlobalErrors}
 
-        @if(form.hasErrors) {
-            <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("utrCheck.error.header")</h2>
-                <div class="govuk-error-summary__body">
-                    <ul class="govuk-list govuk-error-summary__list">
-                @if(form.hasErrors){<li id="utr-error-summary"><a href="#utr">@Messages("utrCheck.error")</a></li>}
-                    </ul>
-                </div>
-            </div>
-            @errorFocus()
-        }
-        <h1 class="govuk-heading-l">@Messages("utrCheck.mainHeading")</h1>
-        @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubmissionController.submitUtr) {
-            <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
-                <fieldset class="govuk-fieldset">
-            @govukFormFieldDisplay(error,"utr",Some(Messages("utrCheck.error")),Messages("utrCheck.label"),form, Some(Messages("utrCheck.hint")))
-                </fieldset>
-            </div>
-        <button type="submit" class="govuk-button" role="button">@Messages("form.controls.continue")</button>
-        }
-
+@layout(title, backLinkUrl = Some(routes.SubmissionController.upe.url), hasErrors = hasErrors) {
+   @if(form.hasErrors) {
+       @govukErrorSummary(ErrorSummary(
+           title = Text(messages("generic.errorSummaryHeader")),
+           errorList = Seq(
+               ErrorLink(
+                   content = Text(messages("utrCheck.error")),
+                   href = Some(s"#$key")
+               )
+           ),
+           attributes = Map("id" -> "error-summary-display")
+       ))
+   }
+    @formHelper(routes.SubmissionController.submitUtr) {
+        @govukInput(Input(
+            id = key,
+            name = key,
+            label = Label(
+                content = Text(title),
+                classes = "govuk-label--l",
+                isPageHeading = true
+            ),
+            hint = Some(Hint(
+                content = Text(messages("utrCheck.hint"))
+            )),
+            classes = "govuk-!-width-two-thirds",
+            value = form.data.get(key),
+            errorMessage = if(form.error(key).isDefined) Some(ErrorMessage(content = Text(messages("utrCheck.error")))) else None,
+            autocomplete = Some("on")
+        ))
+        @govukButton(Button(
+            content = Text(messages("form.controls.continue")),
+            attributes = Map("id" -> "btn-continue", "type" -> "submit")
+        ))
+    }
 }
