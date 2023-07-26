@@ -14,93 +14,92 @@
  * limitations under the License.
  *@
 
+@import play.twirl.api.Html
 @import uk.gov.hmrc.auth.core.AffinityGroup
 @import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 @import uk.gov.hmrc.cbcrfrontend.model.{CBC701, ReportingRole}
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import tags._
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 
-@this(mainTemplate: Layout, formHelper: FormWithCSRF)
+@this(
+        layout: Layout,
+        formHelper: FormWithCSRF,
+        govukButton: GovukButton,
+        govukSummaryList: GovukSummaryList
+)
 
 @(userType: Option[AffinityGroup], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], reportingRole: Option[ReportingRole])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-@errors = @{
-    schemaErrors.isDefined || busErrors.isDefined
+@hasErrors = @{schemaErrors.isDefined || busErrors.isDefined}
+@title = @{messages(s"fileUploadResult.${if(hasErrors) "error.title" else "title.ok"}")}
+@continueUrl = @{
+    if(!reportingRole.contains(CBC701)){
+        routes.SubmissionController.upe.url
+    } else if(userType.contains(Organisation)){
+        routes.SubmissionController.submitterInfo.url
+    } else {
+        routes.SubmissionController.enterCompanyName.url
+    }
 }
 
-@mainTemplate(if(!errors) {
-    Messages("fileUploadResult.title.ok")
-}
-else {
-    Messages("fileUploadResult.error.title")
-}) {
-
-  @back_link(routes.FileUploadController.chooseXMLFile.url)
-
-    <div>
-        @if(!errors) {
-            <h1 class="govuk-heading-l" >@Messages("fileUploadResult.mainHeading.ok")</h1>
-        } else {
-            @if(schemaErrors.isDefined && busErrors.isDefined) {
-                <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.xmlDataError")</h1>
-            } else {
-                @if(schemaErrors.isDefined) {
-                    <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.xmlError")</h1>
-                } else {
-                    <h1 class="govuk-heading-l">@messages("fileUploadResult.mainHeading.dataError")</h1>
-                }
-            }
-            <h2 class="govuk-heading-m">@messages("fileUploadResult.whatToDo")</h2>
-            @schemaErrors.map { size =>
-                <p class="govuk-body">@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getXmlSchemaErrors" class="govuk-link">@Messages("fileUploadResult.error.data.link")
-                    (Text, @{
-                    size
-                }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
-            }
-            @busErrors.map { size =>
-                <p class="govuk-body">@Messages("fileUploadResult.error.report") <a href="@routes.FileUploadController.getBusinessRuleErrors" class="govuk-link">@Messages("fileUploadResult.error.data.link")
-                    (Text, @{
-                    size
-                }KB)</a> @Messages("fileUploadResult.error.data.message")</p>
-            }
-            <p class="govuk-body"><a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("fileUploadResult.error.oecdUrl")</a>@Messages("fileUploadResult.error.oecdInfo")</p>
+@layout(title, backLinkUrl = Some(routes.FileUploadController.chooseXMLFile.url)) {
+    <h1 class="govuk-heading-l">@title</h1>
+    @if(hasErrors) {
+        <h2 class="govuk-heading-m">@messages("fileUploadResult.whatToDo")</h2>
+        @schemaErrors.map { size =>
+            <p class="govuk-body">
+                @Html(messages("fileUploadResult.error.report", routes.FileUploadController.getXmlSchemaErrors, size.toString))
+            </p>
         }
-        @if(!errors) {
-                <table class="govuk-table" id="table-successReport">
-                    <caption class="govuk-table__caption govuk-table__caption--m" tabindex="0">@Messages("fileUploadResult.caption")</caption>
-                    <thead class="=govuk-table__head">
-                        <tr class="govuk-table__row">
-                            <th class="govuk-table__header" tabindex="0"></th>
-                            <th class="govuk-table__header" tabindex="0"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="govuk-table__body">
-                        <tr class="govuk-table__row">
-                            <td class=govuk-table__cell tabindex="0">@Messages("fileUploadResult.fileName")</td>
-                            <td class=govuk-table__cell tabindex="0">@fileName</td>
-                        <tr>
-                            <td class=govuk-table__cell tabindex="0">@Messages("fileUploadResult.fileSize")</td>
-                            <td class=govuk-table__cell tabindex="0">@fileSize KB</td>
-                        </tr>
-                    </tbody>
-                </table>
-            <p class="govuk-body">@Messages("fileUploadResult.notYetSubmitted") <a href="@routes.SharedController.signOutSurvey">@Messages("fileUploadResult.notYetSubmitted.link")</a> @Messages("fileUploadResult.notYetSubmitted2")</p>
-
-            @if(reportingRole == Some(CBC701)){
-                @if(userType == Some(Organisation)){
-                    <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.submitterInfo" id="btn-continue">@Messages("form.controls.continue")</a></p>
-                } else {
-                    <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.enterCompanyName" id="btn-continue">@Messages("form.controls.continue")</a></p>
-                }
-            } else {
-                <p><a type="submit" class="govuk-button" role="button" href="@routes.SubmissionController.upe" id="btn-continue">@Messages("form.controls.continue")</a></p>
-            }
-        } else {
-            @errorFocus()
-            <a type="submit" class="govuk-button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-continue">@Messages("form.controls.finished")</a>
+        @busErrors.map { size =>
+            <p class="govuk-body">
+                @Html(messages("fileUploadResult.error.report", routes.FileUploadController.getBusinessRuleErrors, size.toString))
+            </p>
         }
-    </div>
+        <p class="govuk-body">
+            <a href="@config.cbcrOecdGuideUrl" class="govuk-link">@messages("fileUploadResult.error.oecdUrl")</a> @messages("fileUploadResult.error.oecdInfo")
+        </p>
+        @govukButton(Button(
+            href = Some(routes.SharedController.signOutSurvey.url),
+            attributes = Map("id" -> "btn-continue"),
+            content = Text(messages("form.controls.finished"))
+        ))
+    } else {
+        <h2 class="govuk-heading-m">@messages("fileUploadResult.caption")</h2>
+        @govukSummaryList(SummaryList(
+            rows = Seq(
+                SummaryListRow(
+                    key = Key(
+                        content = Text(messages("fileUploadResult.fileName")),
+                        classes = "govuk-!-width-one-quarter"
+                    ),
+                    value = Value(
+                        content = Text(fileName.getOrElse("")),
+                        classes = "govuk-!-width-three-quarters"
+                    )
+                ),
+                SummaryListRow(
+                    key = Key(
+                        content = Text(messages("fileUploadResult.fileSize"))
+                    ),
+                    value = Value(
+                        content = Text(s"${fileSize.getOrElse("").toString}KB")
+                    )
+                )
+            )
+        ))
+
+        <p class="govuk-body">
+            @Html(messages("fileUploadResult.notYetSubmitted", routes.SharedController.signOutSurvey.url))
+            @messages("fileUploadResult.notYetSubmitted2")
+        </p>
+
+        @govukButton(Button(
+            href = Some(continueUrl),
+            attributes = Map("id" -> "btn-continue"),
+            content = Text(messages("form.controls.continue"))
+        ))
+
+    }
 }
