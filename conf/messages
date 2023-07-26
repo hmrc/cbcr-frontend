@@ -215,24 +215,16 @@ fileUploadProgress.title=We are checking the report - Send a country-by-country 
 fileUploadProgress.mainHeading=We are checking the report...
 fileUploadProgress.message=This screen will change when the report has been checked.
 
-fileUploadResult.notYetSubmitted=The report has been checked and is ready to send. If you do not want to send it yet, you can 
-fileUploadResult.notYetSubmitted.link=sign out.
+fileUploadResult.notYetSubmitted=The report has been checked and is ready to send. If you do not want to send it yet, you can <a href="{0}" class="govuk-link">sign out</a>.
 fileUploadResult.notYetSubmitted2=HMRC will not be able to access the report if you sign out now, and you will have to upload it again when you want to send it.
-fileUploadResult.title.ok=The report meets the HMRC and OECD guidelines - Send a country-by-country report - GOV.UK
-fileUploadResult.mainHeading.ok=The report meets the HMRC and OECD guidelines
-fileUploadResult.mainHeading.error=The report does not meet the HMRC and OECD guidelines
-fileUploadResult.mainHeading.xmlError=The report does not meet the HMRC and OECD guidelines
-fileUploadResult.mainHeading.dataError=The report does not meet the HMRC and OECD guidelines
-fileUploadResult.mainHeading.xmlDataError=The report does not meet the HMRC and OECD guidelines
+fileUploadResult.title.ok=The report meets the HMRC and OECD guidelines
 fileUploadResult.whatToDo=The report has not been uploaded
 fileUploadResult.fileName=Filename
 fileUploadResult.fileSize=Size
 fileUploadResult.caption=Report filename and file size
 
 fileUploadResult.error.title=The report does not meet the HMRC and OECD guidelines
-fileUploadResult.error.report=Download the
-fileUploadResult.error.data.link=error summary
-fileUploadResult.error.data.message=and get the errors corrected before you check the report again.
+fileUploadResult.error.report=Download the <a href="{0}" class="govuk-link">error summary (Text, {1}KB)</a> and get the errors corrected before you check the report again.
 fileUploadResult.error.xml.link=XML error summary
 fileUploadResult.error.xml.message=Give it to your XML creator to correct the errors
 fileUploadResult.error.guidance=Check formatting guidance

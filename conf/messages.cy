@@ -204,14 +204,8 @@ submitSuccessReceipt.sendAnotherReport.link=cy-Send another report
 fileUploadProgress.mainHeading=cy-We''re checking the report...
 fileUploadProgress.message=cy-This screen will change when the report has been checked.
 
-fileUploadResult.notYetSubmitted=cy-The report has been checked and is ready to send. If you do not want to send it yet, you can 
-fileUploadResult.notYetSubmitted.link=cy-sign out.
+fileUploadResult.notYetSubmitted=cy-The report has been checked and is ready to send. If you do not want to send it yet, you can <a href="{0}" class="govuk-link">sign out</a>.
 fileUploadResult.notYetSubmitted2=cy-HMRC will not be able to access the report if you sign out now, and you will have to upload it again when you want to send it.
-fileUploadResult.mainHeading.ok=cy-The report meets the HMRC and OECD guidlines
-fileUploadResult.mainHeading.error=cy-The report does not meet the HMRC and OECD guidelines
-fileUploadResult.mainHeading.xmlError=cy-The report does not meet the HMRC and OECD guidelines
-fileUploadResult.mainHeading.dataError=cy-The report does not meet the HMRC and OECD guidelines
-fileUploadResult.mainHeading.xmlDataError=cy-The report does not meet the HMRC and OECD guidelines
 fileUploadResult.whatToDo=cy-The report has not been uploaded
 fileUploadResult.fileName=cy-Filename
 fileUploadResult.fileSize=cy-Size
