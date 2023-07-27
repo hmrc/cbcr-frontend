@@ -197,8 +197,7 @@ submitInfoUltimateParentEntity.upe.error.header=You have not entered the name of
 submitInfoUltimateParentEntity.upe.error=Enter the ultimate parent entity name
 
 submitSuccessReceipt.confirmationNumberLabel=Your confirmation number is:
-submitSuccessReceipt.submissionDateLabel.title=Report sent - Send a country-by-country report - GOV.UK
-submitSuccessReceipt.submissionDateLabel=Report sent
+submitSuccessReceipt.submissionDateLabel.title=Report sent
 submitSuccessReceipt.reportForCBC=We have received the report for country-by-country ID
 submitSuccessReceipt.receivedOn=The report for country-by-country ID
 submitSuccessReceipt.receivedOn2=was received on
