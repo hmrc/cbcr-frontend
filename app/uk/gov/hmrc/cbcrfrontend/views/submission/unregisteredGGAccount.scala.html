@@ -34,30 +34,27 @@
 }
 
 @layout(title, backLinkUrl) {
-
   <h1 class="govuk-heading-l">@title</h1>
 
-  <div>
-    <p class="govuk-body">
-      @messages("unregisteredGG.message1")
-      <a id="checkAndSendHref" class="govuk-link" href="@routes.FileUploadController.unregisteredGGAccount">
-        @messages("unregisteredGG.checkAndSend")
-      </a>.
-    </p>
-    <p class="govuk-body">
-      @messages("unregisteredGG.message2")
-      <a id="registerHref" class="govuk-link" href="@routes.SharedController.verifyKnownFactsOrganisation">
-        @messages("unregisteredGG.register")
-      </a>
-      <span>
-        @messages("unregisteredGG.message3")
-      </span>
-    </p>
-    <p class="govuk-body">
-      @messages("unregisteredGG.message4")
-      <a id="signInHref" class="govuk-link" href="@routes.SharedController.signOutGG">
-        @messages("unregisteredGG.signOut")
-      </a>.
-    </p>
-</div>
+  <p class="govuk-body">
+    @messages("unregisteredGG.message1")
+    <a id="checkAndSendHref" class="govuk-link" href="@routes.FileUploadController.unregisteredGGAccount">
+      @messages("unregisteredGG.checkAndSend")
+    </a>.
+  </p>
+  <p class="govuk-body">
+    @messages("unregisteredGG.message2")
+    <a id="registerHref" class="govuk-link" href="@routes.SharedController.verifyKnownFactsOrganisation">
+      @messages("unregisteredGG.register")
+    </a>
+    <span>
+      @messages("unregisteredGG.message3")
+    </span>
+  </p>
+  <p class="govuk-body">
+    @messages("unregisteredGG.message4")
+    <a id="signInHref" class="govuk-link" href="@routes.SharedController.signOutGG">
+      @messages("unregisteredGG.signOut")
+    </a>.
+  </p>
 }
