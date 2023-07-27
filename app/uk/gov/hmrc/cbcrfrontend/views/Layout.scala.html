@@ -43,13 +43,20 @@
   s"${if(hasErrors && !pageTitle.startsWith(errorPrefix)){ errorPrefix } else ""}$pageTitle${if(!pageTitle.endsWith("GOV.UK")) { s" - ${messages("application.title")} - GOV.UK" } else {""}}"
 }
 
+@additionalHead = {
+    @if(withSignOutLink) {
+    @hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)
+    }
+    <style>body:not(.js-enabled) .js-visible { display: none; }</style>
+}
+
 @hmrcStandardPage(
   HmrcStandardPageParams(
     serviceURLs = ServiceURLs(
       signOutUrl = if(withSignOutLink) Some(routes.SharedController.signOutSurvey.url) else None
     ),
     templateOverrides = TemplateOverrides(
-      additionalHeadBlock = if(withSignOutLink) Some(hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)) else None
+    additionalHeadBlock = Some(additionalHead)
     ),
     serviceName = Some(messages("application.title")),
     pageTitle = Some(gdsTitle),

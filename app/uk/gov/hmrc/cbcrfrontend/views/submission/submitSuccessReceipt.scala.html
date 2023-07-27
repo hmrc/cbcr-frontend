@@ -16,31 +16,38 @@
 
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
+@import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: Layout, formHelper: FormWithCSRF)
+@this(
+        layout: Layout,
+        formHelper: FormWithCSRF,
+        govukPanel : GovukPanel,
+        govukButton: GovukButton
+)
 
 @(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("submitSuccessReceipt.submissionDateLabel.title")) {
-    <div class="govuk-panel govuk-panel--confirmation">
-        <h1 class="govuk-panel__title">@Messages("submitSuccessReceipt.submissionDateLabel")</h1>
-        <div class="govuk-panel__body">
-            @Messages("submitSuccessReceipt.reportForCBC") <br>
-            <strong>@cbcId</strong>
-        </p>
-        </div>
-    </div>
+@title = @{messages("submitSuccessReceipt.submissionDateLabel.title")}
+@layout(title) {
+        @govukPanel(Panel(
+            title = Text(title),
+            content = HtmlContent(s"${messages("submitSuccessReceipt.reportForCBC")}<br><strong>${cbcId}</strong>")
+        ))
 
-    <p><a href="#" onclick="window.print()" class="govuk-link">@Messages("submitSuccessReceipt.print")</a></p>
-    <p class="govuk-body">@Messages("submitSuccessReceipt.receivedOn") @cbcId @Messages("submitSuccessReceipt.receivedOn2") @submissionDateTime</p>
-    <h2 class="govuk-heading-m">@Messages("submitSuccessReceipt.whatNext.heading")</h2>
-    <p class="govuk-body">@Messages("submitSuccessReceipt.email")</p>
-    <p class="govuk-body">@Messages("submitSuccessReceipt.whatNext.info")</p>
+    <p class="govuk-body" class="js-visible govuk-!-display-none-print"><a class="govuk-link" href="#" onclick="window.print()">@messages("submitSuccessReceipt.print")</a></p>
+    <p class="govuk-body">@messages("submitSuccessReceipt.receivedOn") @cbcId @messages("submitSuccessReceipt.receivedOn2") @submissionDateTime</p>
+    <h2 class="govuk-heading-m">@messages("submitSuccessReceipt.whatNext.heading")</h2>
+    <p class="govuk-body">@messages("submitSuccessReceipt.email")</p>
+    <p class="govuk-body">@messages("submitSuccessReceipt.whatNext.info")</p>
     @if(userType == "Agent" && cacheCleared) {
-        <p><a class="govuk-link" href="@routes.FileUploadController.chooseXMLFile">@Messages("submitSuccessReceipt.sendAnotherReport.link")</a></p>
+        <p class="govuk-body"><a class="govuk-link" href="@routes.FileUploadController.chooseXMLFile">@messages("submitSuccessReceipt.sendAnotherReport.link")</a></p>
     }
-    <p>
-        <a class="govuk-button" role="button" href="@routes.SharedController.signOutSurvey" id="btn-close">@Messages("form.controls.finished")</a>
+    <p class="govuk-body">
+        @govukButton(Button(
+            href = Some(routes.SharedController.signOutSurvey.url),
+            content = Text(messages("form.controls.finished")),
+            attributes = Map("id" -> "btn-close")
+        ))
     </p>
 }
+
