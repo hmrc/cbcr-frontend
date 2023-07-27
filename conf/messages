@@ -123,8 +123,7 @@ subscribeSuccessCbcId.next3=or
 subscribeSuccessCbcId.nextLink=sign out
 subscribeSuccessCbcId.nextLink2=check and send a report
 
-contactInfoSubscriber.title=Who should we contact about the content of the report? - Send a country-by-country report - GOV.UK
-contactInfoSubscriber.mainHeading=Who should we contact about the content of the report?
+contactInfoSubscriber.title=Who should we contact about the content of the report?
 contactInfoSubscriber.additionalInfo=This must be someone with a detailed knowledge of the information in the report.
 contactInfoSubscriber.subHeading=Enter the name of the person we should contact if there are any questions about the information contained in the Country by Country report.
 contactInfoSubscriber.firstName.label=First name

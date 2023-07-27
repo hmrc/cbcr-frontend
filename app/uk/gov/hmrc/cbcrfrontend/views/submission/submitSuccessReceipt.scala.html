@@ -34,7 +34,7 @@
             content = HtmlContent(s"${messages("submitSuccessReceipt.reportForCBC")}<br><strong>${cbcId}</strong>")
         ))
 
-    <p class="govuk-body" class="js-visible govuk-!-display-none-print"><a class="govuk-link" href="#" onclick="window.print()">@messages("submitSuccessReceipt.print")</a></p>
+    <p class="govuk-body js-visible govuk-!-display-none-print"><a class="govuk-link" href="#" onclick="window.print()">@messages("submitSuccessReceipt.print")</a></p>
     <p class="govuk-body">@messages("submitSuccessReceipt.receivedOn") @cbcId @messages("submitSuccessReceipt.receivedOn2") @submissionDateTime</p>
     <h2 class="govuk-heading-m">@messages("submitSuccessReceipt.whatNext.heading")</h2>
     <p class="govuk-body">@messages("submitSuccessReceipt.email")</p>
