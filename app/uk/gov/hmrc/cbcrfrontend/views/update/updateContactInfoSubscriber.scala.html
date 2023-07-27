@@ -15,77 +15,109 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import tags._
 @import uk.gov.hmrc.cbcrfrontend.model.CBCId
-@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: Layout, formHelper: FormWithCSRF)
+@this(
+        layout: Layout,
+        formHelper: FormWithCSRF,
+        govukInput: GovukInput,
+        govukErrorSummary: GovukErrorSummary,
+        govukButton: GovukButton,
+        govukFieldset: GovukFieldset
+)
 
-@(form:Form[_], cBCId:CBCId)(implicit request: Request[_], messages: Messages)
+@(form: Form[_], cBCId: CBCId)(implicit request: Request[_], messages: Messages)
 
-@firstNameErrors = @{form.error("firstName").isDefined}
-@lastNameErrors = @{form.error("lastName").isDefined}
-@phoneNumberErrors = @{form.error("phoneNumber").isDefined}
-@emailErrors = @{form.error("email").isDefined}
-@numberOfErrors = @{form.errors.length}
-@maybePhoneError =  @{form.error("phoneNumber").map(_.message).getOrElse("")}
-@maybeEmailError =  @{form.error("email").map(_.message).getOrElse("")}
+@title = @{messages("contactInfoSubscriber.update.title")}
+@hasErrors = @{form.hasErrors}
+@firstNameKey = @{"firstName"}
+@lastNameKey = @{"lastName"}
+@phoneNumberKey = @{"phoneNumber"}
+@emailKey = @{"email"}
+@fieldsetHtml = {
+    <p class="govuk-body" id="contactInfoSubscriber-hint">
+        @messages("contactInfoSubscriber.cbcId") @cBCId.value
+    </p>
+    @govukInput(Input(
+        id = firstNameKey,
+        name = firstNameKey,
+        label = Label(
+            content = Text(messages("contactInfoSubscriber.firstName.label"))
+        ),
+        classes = "govuk-!-width-two-thirds",
+        value = form.data.get(firstNameKey),
+        errorMessage = form.error(firstNameKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+        autocomplete = Some("given-name")
+    ))
+    @govukInput(Input(
+        id = lastNameKey,
+        name = lastNameKey,
+        label = Label(
+            content = Text(messages("contactInfoSubscriber.lastName.label"))
+        ),
+        classes = "govuk-!-width-two-thirds",
+        value = form.data.get(lastNameKey),
+        errorMessage = form.error(lastNameKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+        autocomplete = Some("family-name")
+    ))
+    @govukInput(Input(
+        id = phoneNumberKey,
+        name = phoneNumberKey,
+        inputType = "tel",
+        label = Label(
+            content = Text(messages("contactInfoSubscriber.phoneNumber.label"))
+        ),
+        hint = Some(Hint(
+            content = Text(messages("contactInfoSubscriber.phoneNumber.hint"))
+        )),
+        classes = "govuk-!-width-two-thirds",
+        value = form.data.get(phoneNumberKey),
+        errorMessage = form.error(phoneNumberKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+        autocomplete = Some("tel")
+    ))
+    @govukInput(Input(
+        id = emailKey,
+        name = emailKey,
+        inputType = "email",
+        label = Label(
+            content = Text(messages("contactInfoSubscriber.emailAddress.label"))
+        ),
+        classes = "govuk-!-width-two-thirds",
+        value = form.data.get(emailKey),
+        errorMessage = form.error(emailKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+        autocomplete = Some("email")
+    ))
+}
 
-@mainTemplate(if(form.hasErrors){"Error: " + Messages("contactInfoSubscriber.update.title")} else {Messages("contactInfoSubscriber.update.title")}) {
-  @back_link(routes.StartController.start.url)
+@layout(title, backLinkUrl = Some(routes.StartController.start.url), hasErrors = hasErrors) {
 
-            @if(form.hasErrors) {
-                @if(numberOfErrors == 1) {
-                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                    @form.errors.map{  error =>
-                        <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
-                        <div class="govuk-error-summary__body">
-                            <ul class="govuk-list govuk-error-summary__list">
-                            @if(maybeEmailError.contains("contactInfoSubscriber.emailAddress.error.invalid")) {
-                                <li>@Messages("contactInfoSubscriber.emailAddress.error.invalid.header.l1")</li>
-                            }
-                            @if(maybePhoneError.contains("contactInfoSubscriber.phoneNumber.error.invalid")) {
-                                <li>@Messages("contactInfoSubscriber.phoneNumber.error.invalid.header.l1")</li>
-                            }
-                            <li><a href="#@error.key" id="@{error.key}-error-summary"> @error.messages.map(x => Messages(x))</a></li>
-                            </ul>
-                        </div>
-                        }
-                    </div>
-                } else {
-                    <div class="govuk-error-summary" id="error-summary-display" role="alert" aria-labelledby="error-summary-display" tabindex="-1">
-                        <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
-                        <div class="govuk-error-summary__body">
-                            <ul class="govuk-list govuk-error-summary__list">
-                        @form.errors.map { error =><li><a href="#@error.key" id="@{error.key}-error-summary">
-                            @error.messages.map(x => Messages(x))</a></li>
-                        }
-                            </ul>
-                        </div>
-                    </div>
-                }
-                <script>document.getElementById("error-summary-display").focus();</script>
-            }
-            <h1 class="govuk-heading-l">
-                @Messages("contactInfoSubscriber.updateHeading")
-            </h1>
-            <p class="govuk-body">
-                @Messages("contactInfoSubscriber.cbcId") @cBCId.value
-            </p>
+    @if(form.hasErrors) {
+        @govukErrorSummary(ErrorSummary(
+            title = Text(messages("start.error.heading")),
+            errorList = form.errors.map(e => ErrorLink(
+                content = Text(messages(e.message)),
+                href = Some(s"#${e.key}"),
+                attributes = Map("id" -> s"${e.key}-error-summary")
+            )),
+            attributes = Map("id" -> "error-summary-display")
+        ))
+    }
 
+    @formHelper(routes.SubscriptionController.saveUpdatedInfoSubscriber){
+        @govukFieldset(Fieldset(
+            legend = Some(Legend(
+                content = Text(title),
+                classes = "govuk-fieldset__legend--l",
+                isPageHeading = true
+            )),
+            html = fieldsetHtml,
+            describedBy = Some("contactInfoSubscriber-hint")
+        ))
+        @govukButton(Button(
+            content = Text(messages("form.controls.continue")),
+            attributes = Map("id" -> "continue", "type" -> "submit")
+        ))
+    }
 
-            @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SubscriptionController.saveUpdatedInfoSubscriber){
-
-                <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
-                <fieldset class="govuk-fieldset">
-                @govukFormFieldDisplay(firstNameErrors,"firstName", Some(Messages("contactInfoSubscriber.firstName.error")),Messages("contactInfoSubscriber.firstName.label"), form, None)
-                @govukFormFieldDisplay(lastNameErrors,"lastName", Some(Messages("contactInfoSubscriber.lastName.error")),Messages("contactInfoSubscriber.lastName.label"), form, None)
-                @govukFormFieldDisplay(phoneNumberErrors,"phoneNumber", Some(Messages(maybePhoneError)),Messages("contactInfoSubscriber.phoneNumber.label"), form, None)
-                @govukFormFieldDisplay(emailErrors,"email", Some(Messages(maybeEmailError)),Messages("contactInfoSubscriber.emailAddress.label"), form, None)
-                </fieldset>
-                </div>
-
-                <button role="button" class="govuk-button" type="submit" id="continue">@Messages("form.controls.save")</button>
-            }
 }

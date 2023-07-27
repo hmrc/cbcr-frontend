@@ -15,8 +15,6 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.views.html.includes._
-@import tags._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
 @this(
@@ -47,7 +45,7 @@
         classes = "govuk-!-width-two-thirds",
         value = form.data.get(firstNameKey),
         errorMessage = form.error(firstNameKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
-        autocomplete = Some("name")
+        autocomplete = Some("given-name")
     ))
     @govukInput(Input(
         id = lastNameKey,
@@ -58,7 +56,7 @@
         classes = "govuk-!-width-two-thirds",
         value = form.data.get(lastNameKey),
         errorMessage = form.error(lastNameKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
-        autocomplete = Some("name")
+        autocomplete = Some("family-name")
     ))
     @govukInput(Input(
         id = phoneNumberKey,
