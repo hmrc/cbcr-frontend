@@ -14,65 +14,93 @@
  * limitations under the License.
  *@
 
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
-@this(mainTemplate: Layout, formHelper: FormWithCSRF)
+@this(
+        layout: Layout,
+        formHelper: FormWithCSRF,
+        govukRadios: GovukRadios,
+        govukButton: GovukButton,
+        govukTextarea: GovukTextarea,
+        govukErrorSummary: GovukErrorSummary
+)
 
 @(form:Form[_])(implicit request: Request[_], messages: Messages)
 
-@isError= @{form.hasErrors}
+@hasErrors= @{form.hasErrors}
+@title = @{messages("survey.title")}
+@satisfiedKey = @{"satisfied"}
+@suggestionsKey = @{"suggestions"}
 
-@mainTemplate(Messages("survey.title"), withSignOutLink = false) {
-    <h1 class="govuk-heading-l">@Messages("survey.header")</h1>
-    <p class="govuk-body">@Messages("survey.intro")</p>
-    <br aria-hidden="true"/>
-
-    @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.ExitSurveyController.submit){
-
-        <div class="govuk-form-group @if(form.hasErrors){govuk-form-group--error}">
-            <fieldset class="govuk-fieldset">
-                <legend class="govuk-fieldset__legend">
-                    <label class="govuk-label govuk-label--m">@Messages("survey.question1")</label>
-                    @if(isError){ <span class="govuk-error-message">@Messages("survey.required")</span> }
-                </legend>
-                <div class="govuk-radios">
-                <div class="govuk-radios__item">
-                    <input class="govuk-radios__input" id="radio-1" type="radio" name="satisfied" value="@Messages("survey.one")">
-                    <label class="govuk-label govuk-radios__label" for="radio-1">@Messages("survey.one")</label>
-                </div>
-                <div class="govuk-radios__item">
-                    <input class="govuk-radios__input" id="radio-2" type="radio" name="satisfied" value="@Messages("survey.two")">
-                    <label class="govuk-label govuk-radios__label" for="radio-2">@Messages("survey.two")</label>
-                </div>
-                <div class="govuk-radios__item">
-                    <input class="govuk-radios__input" id="radio-3" type="radio" name="satisfied" value="@Messages("survey.three")">
-                    <label class="govuk-label govuk-radios__label" for="radio-3">@Messages("survey.three")</label>
-                </div>
-                <div class="govuk-radios__item">
-                    <input class="govuk-radios__input" id="radio-4" type="radio" name="satisfied" value="@Messages("survey.four")">
-                    <label class="govuk-label govuk-radios__label" for="radio-4">@Messages("survey.four")</label>
-                </div>
-                <div class="govuk-radios__item">
-                    <input class="govuk-radios__input" id="radio-5" type="radio" name="satisfied" value="@Messages("survey.five")">
-                    <label class="govuk-label govuk-radios__label" for="radio-5">@Messages("survey.five")</label>
-                </div>
-                </div>
-            </fieldset>
-        </div>
-
-        <h2 class="govuk-heading-m">@Messages("survey.question2")</h2>
-
-        <div>
-            <label class="govuk-label" for="suggestions">@Messages("survey.enterFeedback")
-                <span class="govuk-hint">@Messages("survey.question2.hint")</span>
-            </label>
-            <textarea class="govuk-textarea" name="suggestions" id="suggestions" rows="5">@form.data.get("suggestions")</textarea>
-        </div>
-
-            <button role="button" class="govuk-button" type="submit" id="continue">@Messages("survey.send")</button>
-
-        <script>document.getElementById("radio-1").focus();</script>
+@layout(title, hasErrors = hasErrors, withSignOutLink = false) {
+    @if(hasErrors) {
+        @govukErrorSummary(ErrorSummary(
+            title = Text(messages("start.error.heading")),
+            errorList = Seq(ErrorLink(
+                content = Text(messages("survey.required")),
+                href = Some(s"#${satisfiedKey}")
+            )),
+            attributes = Map("id" -> "error-summary-display")
+        ))
     }
+    <h1 class="govuk-heading-l">@title</h1>
+    <p class="govuk-body">@messages("survey.intro")</p>
+    @formHelper(routes.ExitSurveyController.submit){
+        @govukRadios(Radios(
+            fieldset = Some(Fieldset(
+                legend = Some(Legend(
+                    content = Text(messages("survey.question1")),
+                    classes = "govuk-fieldset__legend--m"
+                ))
+            )),
+            name = satisfiedKey,
+            idPrefix = Some(satisfiedKey),
+            errorMessage = if(hasErrors) Some(ErrorMessage(
+                content = Text(messages("survey.required"))
+            )) else None,
+            items = Seq(
+                RadioItem(
+                    content = Text(messages("survey.one")),
+                    value = Some(messages("survey.one"))
+                ),
+                RadioItem(
+                    content = Text(messages("survey.two")),
+                    value = Some(messages("survey.two"))
+                ),
+                RadioItem(
+                    content = Text(messages("survey.three")),
+                    value = Some(messages("survey.three"))
+                ),
+                RadioItem(
+                    content = Text(messages("survey.four")),
+                    value = Some(messages("survey.four"))
+                ),
+                RadioItem(
+                    content = Text(messages("survey.five")),
+                    value = Some(messages("survey.five"))
+                )
+            )
+        ))
 
+        <h2 class="govuk-heading-m">@messages("survey.question2")</h2>
+        @govukTextarea(Textarea(
+            id = suggestionsKey,
+            name = suggestionsKey,
+            rows = 5,
+            label = Label(
+                content = Text(messages("survey.enterFeedback"))
+            ),
+            hint = Some(Hint(
+                content = Text(messages("survey.question2.hint"))
+            )),
+            value = form.data.get(suggestionsKey)
+        ))
+        @govukButton(Button(
+            content = Text(messages("survey.send")),
+            attributes = Map("id" -> "continue", "type" -> "submit")
+        ))
+
+    }
 
 }
