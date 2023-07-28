@@ -28,8 +28,7 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 /**
@@ -38,7 +37,7 @@ import scala.util.control.NonFatal
   * the same postcode as the provided [[BPRKnownFacts]]
   */
 @Singleton
-class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditConnector) {
+class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditConnector)(implicit ec: ExecutionContext) {
 
   private val AUDIT_TAG = "CBCRBPRKnowFacts"
 
@@ -55,7 +54,7 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
               val bpr: Option[BusinessPartnerRecord] = Json.parse(response.body).validate[BusinessPartnerRecord].asOpt
               auditBpr(bpr, kf)
               bpr
-            case Status.NOT_FOUND => None
+            case _ => None
           }
         }
         .recover {
