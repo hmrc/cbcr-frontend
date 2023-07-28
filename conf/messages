@@ -27,8 +27,7 @@ sessionExpired.mainHeading=Your session has ended
 sessionExpired.continue=As you have been inactive for 20 minutes, you will need to start again.
 sessionExpired.link=Return to start page
 
-survey.title=You are now signed out - Send a country-by-country report - GOV.UK
-survey.mainHeading=You are now signed out
+survey.title=You are now signed out
 survey.header=You are now signed out
 survey.intro=By answering the following questions, you will help to improve our service.
 survey.question1=How satisfied are you with this service?
