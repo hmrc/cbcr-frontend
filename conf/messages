@@ -146,8 +146,7 @@ contactInfoSubscriber.emailAddress.error.invalid.header.l1= Check the email addr
 contactInfoSubscriber.emailAddress.error.invalid=Enter an email address in the correct format, like name@example.com
 contactInfoSubscriber.emailAddress.error.empty.header=You have not entered your email address
 contactInfoSubscriber.emailAddress.error.empty=Enter the email address
-contactInfoSubscriber.update.title=Change who we should contact about the content of the report - Send a country-by-country report - GOV.UK
-contactInfoSubscriber.updateHeading=Change who we should contact about the content of the report
+contactInfoSubscriber.update.title=Change who we should contact about the content of the report
 contactInfoSubscriber.cbcId=Country-by-country ID:
 
 contactInfoSubscriber.reconfirm.email.mainHeading=Is this your correct email address?

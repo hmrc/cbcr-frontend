@@ -55,6 +55,7 @@
     @govukInput(Input(
         id = contactPhoneKey,
         name = contactPhoneKey,
+        inputType = "tel",
         label = Label(
             content = Text(messages("submitterInfo.phoneNumber"))
         ),
@@ -69,6 +70,7 @@
     @govukInput(Input(
         id = emailKey,
         name = emailKey,
+        inputType = "email",
         label = Label(
             content = Text(messages("submitterInfo.emailAddress"))
         ),
