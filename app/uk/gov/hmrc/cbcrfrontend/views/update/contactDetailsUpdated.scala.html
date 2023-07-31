@@ -18,23 +18,29 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
 @this(
-        mainTemplate: Layout
+        layout: Layout,
+        govukPanel: GovukPanel,
+        govukButton: GovukButton
 )
 
 
 @()(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("contactDetailsUpdate.title")) {
+@title = @{messages("contactDetailsUpdate.title")}
 
-    <div class="govuk-panel govuk-panel--confirmation">
-        <h1 class="govuk-panel__title">@Messages("contactDetailsUpdate.mainHeading")</h1>
-    </div>
-    <p><a href="#" onclick="window.print()" class="govuk-link">@Messages("contactDetailsUpdate.printThisButton")</a></p>
+@layout(title) {
+    @govukPanel(Panel(
+        title = Text(title)
+    ))
 
-    <h2 class="govuk-heading-m">@Messages("contactDetailsUpdate.next")</h2>
-    <p class="govuk-body">@Messages("contactDetailsUpdate.email")</p>
+    <p class="govuk-body js-visible govuk-!-display-none-print">
+        <a href="#" onclick="window.print()" class="govuk-link">@messages("contactDetailsUpdate.printThisButton")</a>
+    </p>
 
-            <p>
-                <a class="govuk-button" href="@routes.StartController.start">@Messages("contactDetailsUpdate.next2")</a>
-            </p>
+    <h2 class="govuk-heading-m">@messages("contactDetailsUpdate.next")</h2>
+    <p class="govuk-body">@messages("contactDetailsUpdate.email")</p>
+    @govukButton(Button(
+        href = Some(routes.StartController.start.url),
+        content = Text(messages("contactDetailsUpdate.next2"))
+    ))
 }

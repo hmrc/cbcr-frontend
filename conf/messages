@@ -6,8 +6,7 @@ generic.back = Back
 generic.errorSummaryHeader = There is a problem
 generic.change = Change
 
-contactDetailsUpdate.title=The registration contact details have been updated - Send a country-by-country report - GOV.UK
-contactDetailsUpdate.mainHeading=The registration contact details have been updated
+contactDetailsUpdate.title=The registration contact details have been updated
 contactDetailsUpdate.printThisButton=Print this page
 contactDetailsUpdate.next=What happens next?
 contactDetailsUpdate.email=We will send you a confirmation email to the updated address.
