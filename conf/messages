@@ -40,8 +40,7 @@ survey.question2.hint=Do not include any confidential information, for example y
 survey.enterFeedback=Enter feedback
 survey.send=Send feedback
 survey.required=Select an answer
-survey.acknowledge.title=Thank you - Send a country-by-country report - GOV.UK
-survey.acknowledge.header=Thank you
+survey.acknowledge.title=Thank you
 survey.acknowledge.message=Your replies will help us improve the country-by-country service.
 
 regenerate.title=Your new country-by-country ID has been validated
