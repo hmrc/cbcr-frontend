@@ -23,7 +23,7 @@
 
 @title = @{messages("survey.acknowledge.title")}
 @layout(title, withSignOutLink = false) {
-    <h1 class="govuk-heading-l">@Messages("survey.acknowledge.header")</h1>
+    <h1 class="govuk-heading-l">@title</h1>
     <p class="govuk-body">@messages("survey.acknowledge.message")</p>
     <p class="govuk-body">
       @govukButton(Button(
