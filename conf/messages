@@ -107,8 +107,7 @@ subscribeMatchFound.tableHeading1=Company Details
 subscribeMatchFound.tableHeading2=Value
 subscribeMatchFound.tableCaption=Company or partnership details
 
-subscribeSuccessCbcId.title=Registration successful - Send a country-by-country report - GOV.UK
-subscribeSuccessCbcId.mainHeading=Registration successful
+subscribeSuccessCbcId.title=Registration successful
 subscribeSuccessCbcId.subHeading=The country-by-country ID is
 subscribeSuccessCbcId.printThisButton=Print this page
 subscribeSuccessCbcId.printThis1=Keep this ID safe, as it must be included in the report.
