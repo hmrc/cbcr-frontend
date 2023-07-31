@@ -17,16 +17,18 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 
-@this(mainTemplate: Layout)
+@this(layout: Layout, govukButton: GovukButton)
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-
-@mainTemplate(Messages("survey.acknowledge.title"), withSignOutLink = false) {
-
-
+@title = @{messages("survey.acknowledge.title")}
+@layout(title, withSignOutLink = false) {
     <h1 class="govuk-heading-l">@Messages("survey.acknowledge.header")</h1>
     <p class="govuk-body">@messages("survey.acknowledge.message")</p>
-
-    <p><a class="govuk-button" role="button" href="@config.cbcrGuidanceUrl">@Messages("form.controls.finished")</a></p>
+    <p class="govuk-body">
+      @govukButton(Button(
+       href = Some(config.cbcrGuidanceUrl),
+       content = Text(messages("form.controls.finished"))
+      ))
+     </p>
 }
