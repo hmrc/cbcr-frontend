@@ -18,14 +18,23 @@
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
 @this(
-        mainTemplate: Layout
+  layout: Layout,
+  govukButton: GovukButton
 )
 
 @()(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("notAuthorised.agent.title")) {
+@title = @{messages("notAuthorised.agent.title")}
 
-            <h1 class="govuk-heading-l">@Messages("notAuthorised.mainHeading")</h1>
-            <p class="govuk-body">@Messages("notAuthorised.message.start")</p>
-    <p><a class="govuk-button" role="button" href="@routes.SharedController.signOutSurvey">@Messages("notAuthorised.individual.button")</a></p>
+@layout(title) {
+  <h1 class="govuk-heading-l">@title</h1>
+
+  <p class="govuk-body">@messages("notAuthorised.message.start")</p>
+
+  <p class="govuk-body">
+      @govukButton(Button(
+      href = Some(routes.SharedController.signOutSurvey.url),
+      content = Text(messages("notAuthorised.individual.button"))
+      ))
+  </p>
 }

@@ -289,8 +289,7 @@ submitterInfo.emailAddress.error.invalid.header.l1=Check the email address and t
 submitterInfo.emailAddress.error.invalid=Enter an email address in the correct format, like name@example.com
 submitterInfo.emailAddress.error.invalid.header=We did not recognise your email address
 
-notAuthorised.agent.title=Agents are not authorised to register for this service - Send a country-by-country report - GOV.UK
-notAuthorised.mainHeading=Agents are not authorised to register for this service
+notAuthorised.agent.title=Agents are not authorised to register for this service
 notAuthorised.message.start=The company or partnership will need to register.
 notAuthorised.message.link=register with the Government Gateway as an Organisation
 notAuthorised.message.end=to use this service.
