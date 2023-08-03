@@ -102,8 +102,6 @@ subscribeMatchFound.businessDetails.name=UK-registered company or partnership
 subscribeMatchFound.businessDetails.postcode=Postcode
 subscribeMatchFound.businessDetails.utr=Unique Taxpayer Reference
 subscribeMatchFound.businessDetails.advice=If these details are not correct, go back and enter a different Unique Taxpayer Reference and postcode.
-subscribeMatchFound.tableHeading1=Company Details
-subscribeMatchFound.tableHeading2=Value
 subscribeMatchFound.tableCaption=Company or partnership details
 
 subscribeSuccessCbcId.title=Registration successful
