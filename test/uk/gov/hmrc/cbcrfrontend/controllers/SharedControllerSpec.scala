@@ -357,7 +357,7 @@ class SharedControllerSpec
       val result = controller.sessionExpired(request)
       status(result) shouldBe Status.OK
       val webPageAsString = contentAsString(result)
-      webPageAsString should include(getMessages(request)("sessionExpired.mainHeading"))
+      webPageAsString should include(getMessages(request)("sessionExpired.title"))
     }
 
     "redirect to GG page and return 303" in {

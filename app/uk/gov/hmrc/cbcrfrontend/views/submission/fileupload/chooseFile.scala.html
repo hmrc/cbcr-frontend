@@ -14,6 +14,7 @@
  * limitations under the License.
  *@
 
+@import java.net.URI
 @import play.twirl.api.Html
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
@@ -28,9 +29,16 @@
         govukErrorSummary: GovukErrorSummary
 )
 
-@(fileUploadUrl: String, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+
+@(fileUploadUrl: URI, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
 @title = @{messages("uploadReport.title")}
+@uploadParams = @{fileUploadUrl.getRawQuery.split("&").collect { case s"$key=$value" => key -> value }.toMap }
+@uploadWithJSBaseUrl = @{new URI(fileUploadUrl.getScheme, fileUploadUrl.getUserInfo, fileUploadUrl.getHost, fileUploadUrl.getPort, fileUploadUrl.getPath, null, null)}
+@uploadUrlWithJS = @{s"${uploadWithJSBaseUrl.toString}?redirect-success-url=${config.cbcrFrontendBaseUrl}${routes.FileUploadController.fileUploadPolling.url}&redirect-error-url=${uploadParams.getOrElse("redirect-error-url", "")}"}
+@urlParts = @{fileUploadUrl.getPath.split("/")}
+@envelopeId = @{urlParts(4)}
+@fileId = @{urlParts(6)}
 @backLink = @{
     if(request.uri.contains("/unregistered-gg-account")) {
         Some(routes.FileUploadController.chooseXMLFile.url)
@@ -42,28 +50,43 @@
     }
 }
 @templateScripts = {<script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>}
-@layout(title, backLinkUrl = backLink, additionalScripts = Some(templateScripts)) {
+@headContent = {<link rel="stylesheet" href="@{controllers.routes.Assets.versioned("styles/file-upload-styles.css")}">}
 
-    <h1 class="govuk-heading-l">@messages("uploadReport.mainHeading")</h1>
-
+@layout(title, backLinkUrl = backLink, additionalScripts = Some(templateScripts), additionalHeadForTemplate = Some(headContent)) {
+    <h1 class="govuk-heading-l">@title</h1>
     <p class="govuk-body">
         @Html(messages("uploadReport.moreInfo", config.cbcrOecdGuideUrl))
     </p>
-
-    <form id="fileUploadForm" name="fpForm" action="@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
+    <form id="fileUploadForm" action="@fileUploadUrl" data-with-polling="@uploadUrlWithJS" method="post" enctype="multipart/form-data">
         @govukFileUpload(FileUpload(
             name = fileName,
             id = "file-input",
             label = Label(
-                content = Text(messages("uploadReport.label"))
+                content = Text(messages("uploadReport.label")),
+                classes = "govuk-label--m"
             ),
+            hint = Some(Hint(
+                content = Text(messages("uploadReport.hint"))
+            )),
             attributes = Map("accept" -> ".xml, .XML", "required" -> "true")
         ))
 
-        @govukButton(Button(
-            content = Text(messages("uploadReport.uploadButton")),
-            attributes = Map("id" -> "upload-button", "type" -> "submit")
-        ))
+        <div id="upload-handling">
+            <span
+                id="file-upload-progress"
+                data-poll="@routes.FileUploadController.fileUploadResponse(envelopeId)"
+                data-success="@routes.FileUploadController.fileValidate(envelopeId, fileId)"
+                data-error="@routes.SharedController.technicalDifficulties"
+                data-virus="@routes.FileUploadController.fileContainsVirus"
+                data-handle-error="@routes.FileUploadController.handleError().url"
+                aria-live="assertive"
+            >
+            </span>
+            @govukButton(Button(
+                content = Text(messages("uploadReport.uploadButton")),
+                attributes = Map("id" -> "upload-button", "type" -> "submit")
+            ))
+        </div>
 
     </form>
 
@@ -74,7 +97,7 @@
                 href = Some("#file-input"),
                 content = Text(messages("uploadReport.error"))
             )),
-            attributes = Map("tabindex" -> "-1")
+            attributes = Map("id" -> "error-summary-display", "tabindex" -> "-1")
         ))
     </template>
 
@@ -83,5 +106,10 @@
             <span class="govuk-visually-hidden">@messages("generic.errorPrefix"): </span>
             @messages("uploadReport.error")
         </div>
+    </template>
+
+    <template id="live-region-content">
+        <span class="spinner"></span>
+        <span class="govuk-body">@messages("fileUploadProgress.message")</span>
     </template>
 }

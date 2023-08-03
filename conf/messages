@@ -20,8 +20,7 @@ start.button=Start
 start.required=Select what you want to do
 start.error.heading=There is a problem
 
-sessionExpired.title=Your session has ended - Send a country-by-country report - GOV.UK
-sessionExpired.mainHeading=Your session has ended
+sessionExpired.title=Your session has ended
 sessionExpired.continue=As you have been inactive for 20 minutes, you will need to start again.
 sessionExpired.link=Return to start page
 
@@ -95,8 +94,7 @@ subscribeFirst.error.message.utr-nonEmpty=Unique Taxpayer Reference must be 10 d
 subscribeFirst.error.message.postcode-empty=Enter a UK postcode
 subscribeFirst.error.message.postcode-nonEmpty=Enter a real UK postcode
 
-subscribeMatchFound.title=Check the company or partnership details - Send a country-by-country report - GOV.UK
-subscribeMatchFound.mainHeading=Check the company or partnership details
+subscribeMatchFound.title=Check the company or partnership details
 subscribeMatchFound.businessDetails.name=UK-registered company or partnership
 subscribeMatchFound.businessDetails.postcode=Postcode
 subscribeMatchFound.businessDetails.utr=Unique Taxpayer Reference
@@ -201,7 +199,9 @@ submitSuccessReceipt.whatNext.info=We will check the information in the report a
 submitSuccessReceipt.sendAnotherReport.link=Send another report
 
 fileUploadProgress.title=We are checking the report
-fileUploadProgress.message=This screen will change when the report has been checked.
+fileUploadProgress.message=Checking report
+fileUploadProgress.instruction.p1=Wait a few seconds and then select ‘Continue’.
+fileUploadProgress.instruction.p2=You should be taken to the results page but there can be a short delay. You can select ‘Continue’ to try again.
 
 fileUploadResult.notYetSubmitted=The report has been checked and is ready to send. If you do not want to send it yet, you can <a href="{0}" class="govuk-link">sign out</a>.
 fileUploadResult.notYetSubmitted2=HMRC will not be able to access the report if you sign out now, and you will have to upload it again when you want to send it.
@@ -257,10 +257,10 @@ submitSummary.declaration.error.text=Please confirm
 submitSummary.submit=Confirm and send report
 submitSummary.submitReport=Submit report
 
-uploadReport.title=Check a report - Send a country-by-country report - GOV.UK
-uploadReport.mainHeading=Check a report
-uploadReport.moreInfo=This will check the report against <a href="{0}" class="govuk-link">HMRC and OECD guidelines</a>. Until you send the report, HMRC will not be able to access it.
+uploadReport.title=Check a report
+uploadReport.moreInfo=This will check the report against <a href="{0}" class="govuk-link" target="_blank" rel="noopener noreferrer">HMRC and OECD guidelines (PDF, 1.6MB, opens in a new tab)</a>. Until you send the report, HMRC will not be able to access it.
 uploadReport.inputField.label=Choose the file you want to check:
+uploadReport.hint = This file must be XML and must be smaller than 50MB
 uploadReport.uploadButton=Check report
 uploadReport.error=You must select a file
 uploadReport.label=Select a file

@@ -22,27 +22,23 @@
         govukButton: GovukButton
 )
 
-@(envelopeId: String, fileId: String, hostName: String)(implicit request: Request[_], messages: Messages)
+@(envelopeId: String, fileId: String, hostName: String, hasSeen: String)(implicit request: Request[_], messages: Messages)
 
 @title = @{messages("fileUploadProgress.title")}
 @templateScripts = {<script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>}
 @layout(title, backLinkUrl = Some(routes.FileUploadController.chooseXMLFile.url), additionalScripts = Some(templateScripts)) {
     <h1 class="govuk-heading-l">@title</h1>
-    <div
-        class="js-visible"
-        id="file-upload-progress"
-        data-poll="@routes.FileUploadController.fileUploadResponse(envelopeId)"
-        data-success="@routes.FileUploadController.fileValidate(envelopeId, fileId)"
-        data-error="@routes.SharedController.technicalDifficulties"
-        data-virus="@routes.FileUploadController.fileContainsVirus"
-        role="status"
-    >
-        <img alt="loading..." src="@controllers.routes.Assets.versioned("images/loading.gif")" />
-        <p class="govuk-body govuk-!-margin-top-6">@messages("fileUploadProgress.message")</p>
-    </div>
     <div class="no-js">
+        <p class="govuk-body">
+            @messages("fileUploadProgress.instruction.p1")
+        </p>
+        @if(hasSeen.matches("true")) {
+            <p class="govuk-body">
+                @messages("fileUploadProgress.instruction.p2")
+            </p>
+        }
         @govukButton(Button(
-            href = Some(routes.FileUploadController.fileValidate(envelopeId, fileId).url),
+            href = Some(routes.FileUploadController.checkFileUploadStatus(envelopeId, fileId, hasSeen = "true").url),
             content = Text("Continue")
         ))
     </div>

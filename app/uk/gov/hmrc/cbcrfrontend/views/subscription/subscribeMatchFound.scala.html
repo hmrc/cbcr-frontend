@@ -17,7 +17,6 @@
 @import uk.gov.hmrc.auth.core.AffinityGroup
 @import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
-@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
 @this(
@@ -35,7 +34,7 @@
                     Some(routes.SharedController.verifyKnownFactsAgent.url)
                 }
 @layout(title, backLinkUrl = backLink) {
-<h1 class="govuk-heading-l">@Messages("subscribeMatchFound.mainHeading")</h1>
+<h1 class="govuk-heading-l">@title</h1>
 @govukSummaryList(SummaryList(
     rows = Seq(
         SummaryListRow(
