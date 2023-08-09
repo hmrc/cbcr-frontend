@@ -21,7 +21,6 @@ import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
 import play.api.libs.json.{JsNull, JsString, JsValue, Json}
-import uk.gov.hmrc.cbcrfrontend.controllers.{AdminDocRefId, AdminReportingEntityData, ListDocRefIdRecord}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
@@ -101,11 +100,6 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.GET[HttpResponse](
       url + s"/reporting-entity/query-dates/$tin/start-date/${entityReportingPeriod.startDate.toString}/end-date/${entityReportingPeriod.endDate.toString}")
 
-  def getDocRefIdOver200(implicit hc: HeaderCarrier): Future[ListDocRefIdRecord] = {
-    import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
-    http.GET[ListDocRefIdRecord](url + s"/getDocsRefId")
-  }
-
   def adminReportingEntityDataQuery(d: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET[HttpResponse](url + s"/admin/reporting-entity/doc-ref-id/$d")
 
@@ -120,14 +114,4 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
 
   def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT[JsValue, HttpResponse](url + s"/admin/updateDocRefId/$docRefId", JsNull)
-
-  def editAdminReportingEntity(selector: AdminDocRefId, adminReportingEntityData: AdminReportingEntityData)(
-    implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.POST[JsValue, HttpResponse](
-      url + s"/admin/updateReportingEntityDRI/${selector.id}",
-      Json.toJson(adminReportingEntityData))
-
-  def adminSaveDocRefId(id: AdminDocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.POST[JsValue, HttpResponse](url + s"/admin/saveDocRefId/${id.id}", JsNull)
-
 }
