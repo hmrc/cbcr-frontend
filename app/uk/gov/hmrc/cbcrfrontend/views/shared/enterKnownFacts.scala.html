@@ -37,7 +37,7 @@
 @backLink = @{if(userType.equals(Agent)) { Some(routes.SubmissionController.submitterInfo.url) } else { None }}
 @title = @{messages("subscribeFirst.title")}
 @utrError = @{if(form.data.get("utr").getOrElse("").isEmpty || noMatchingBusiness){ messages("subscribeFirst.error.message.utr-empty") } else { messages("subscribeFirst.error.message.utr-nonEmpty") }}
-@postcodeError = @{if(form.data.get("postCode").getOrElse("").isEmpty || noMatchingBusiness){ messages("subscribeFirst.error.message.postcode-empty") } else { messages("subscribeFirst.error.message.postcode-nonEmpty") }}
+@postcodeError = @{if(form.data.get("postCode").getOrElse("").isEmpty || noMatchingBusiness){ messages("subscribeFirst.error.message.postcode-nonEmpty") } else { messages("subscribeFirst.error.message.postcode-nonEmpty") }}
 @fieldsetHtml = {
     @govukInput(Input(
         id = utrKey,
