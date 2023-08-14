@@ -17,15 +17,21 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
-@this(mainTemplate: Layout)
+@this(layout: Layout)
 
 
 @()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@title = @{messages("sessionExpired.title")}
+@layout(title, withSignOutLink = false) {
+ <h1 class="govuk-heading-l">
+  @title
+ </h1>
 
-@mainTemplate(Messages("sessionExpired.title")) {
+ <p class="govuk-body">
+  @messages("sessionExpired.continue")
+ </p>
 
-        <h1 class="govuk-heading-l">@Messages("sessionExpired.mainHeading")</h1>
-        <p class="govuk-body">@Messages("sessionExpired.continue")</p>
-        <p class="govuk-body"><a class="govuk-link" href="@config.cbcrGuidanceUrl">@Messages("sessionExpired.link")</a></p>
-
+ <p class="govuk-body">
+   <a class="govuk-link" href="@config.cbcrGuidanceUrl">@messages("sessionExpired.link")</a>
+ </p>
 }

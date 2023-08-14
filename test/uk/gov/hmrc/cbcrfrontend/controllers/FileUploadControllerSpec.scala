@@ -141,7 +141,7 @@ class FileUploadControllerSpec
   chooseFileView.apply(*, *, *)(*, *, *) returns Html("some html content")
   fileUploadErrorView.apply(*)(*, *) returns Html("some html content")
   errorTemplateView.apply(*, *, *)(*, *) returns Html("some html content")
-  fileUploadProgressView.apply(*, *, *)(*, *) returns Html("some html content")
+  fileUploadProgressView.apply(*, *, *, *)(*, *) returns Html("some html content")
   fileUploadResultView.apply(*, *, *, *, *, *)(*, *, *) returns Html("some html content")
 
   private val controller = new FileUploadController(
@@ -264,7 +264,7 @@ class FileUploadControllerSpec
       authConnector.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
       cache.read[EnvelopeId](*, *, *) returnsF EnvelopeId("test")
       val request = FakeRequest("GET", "fileUploadProgress/envelopeId/fileId")
-      val result = controller.fileUploadProgress("test", "test")(request)
+      val result = controller.fileUploadProgress("test", "test", "true")(request)
 
       status(result) shouldBe Status.OK
     }
@@ -273,7 +273,7 @@ class FileUploadControllerSpec
       authConnector.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
       cache.read[EnvelopeId](*, *, *) returnsF EnvelopeId("test")
       val request = FakeRequest("GET", "fileUploadProgress/envelopeId/fileId")
-      val result = controller.fileUploadProgress("test2", "test")(request)
+      val result = controller.fileUploadProgress("test2", "test", "true")(request)
 
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }

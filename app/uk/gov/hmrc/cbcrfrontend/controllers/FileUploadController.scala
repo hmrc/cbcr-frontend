@@ -38,6 +38,7 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import java.io._
+import java.net.URI
 import java.time.{Duration, LocalDateTime}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -76,7 +77,7 @@ class FileUploadController @Inject()(
       fileId <- cache
                  .create[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString))))
                  .toRight(UnexpectedState("Unable to get FileId"): CBCErrors)
-      successRedirect = s"$hostName${routes.FileUploadController.fileUploadProgress(envelopeId.value, fileId.value).url}"
+      successRedirect = s"$hostName${routes.FileUploadController.checkFileUploadStatus(envelopeId.value, fileId.value, hasSeen = "false").url}"
       fileUploadUrl = s"$fileUploadHost/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
         s"redirect-success-url=$successRedirect&" +
         s"redirect-error-url=$fileUploadErrorRedirectUrl"
@@ -94,7 +95,7 @@ class FileUploadController @Inject()(
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals)
       case affinityGroup ~ _ =>
         fileUploadUrl()
-          .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml", affinityGroup)))
+          .map(fuu => Ok(views.chooseFile(new URI(fuu), s"oecd-${LocalDateTime.now}-cbcr.xml", affinityGroup)))
           .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
           .merge
     }
@@ -108,7 +109,7 @@ class FileUploadController @Inject()(
     * @param fileId the Id of the Xml File just uploaded.
     * @return the view to display the poller.
     */
-  def fileUploadProgress(envelopeId: String, fileId: String): Action[AnyContent] = Action.async { implicit request =>
+  def fileUploadProgress(envelopeId: String, fileId: String, hasSeen: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       cache
         .read[EnvelopeId]
@@ -119,12 +120,17 @@ class FileUploadController @Inject()(
             Left(UnexpectedState(
               s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
           } else {
-            Right(Ok(views.fileUploadProgress(envelopeId, fileId, hostName)))
+            Right(Ok(views.fileUploadProgress(envelopeId, fileId, hostName, hasSeen)))
           }
+
         }
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
+  }
+
+  def fileUploadPolling: Action[AnyContent] = Action.async { implicit request =>
+    Ok("no redirection required for polling")
   }
 
   private def fileUploadResponseToResult(optResponse: Option[FileUploadCallbackResponse]): Result =
@@ -326,6 +332,41 @@ class FileUploadController @Inject()(
         )
     }
   }
+  /**
+    * Provided for the users who do not have JavaScript polling for status to see if FU has called us back and the file is ready for the next
+    * stage (validate)
+    * @param envelopeId
+    * @param fileId
+    * @return
+    */
+  def checkFileUploadStatus(envelopeId: String, fileId: String, hasSeen: String): Action[AnyContent] = Action.async { implicit request =>
+    authorised() {
+      logger.info(s"Received a file-upload-response query for $envelopeId")
+      fileUploadService
+        .getFileUploadResponse(envelopeId)
+        .fold(
+          error => {
+            logger.error(s"File not ready: $error")
+            Redirect(routes.FileUploadController.fileUploadProgress(envelopeId, fileId, hasSeen))
+          },
+          optResponse => {
+            logger.info(s"Response back was: $optResponse")
+            optResponse match {
+              case Some(response) => response.status match {
+                case "AVAILABLE" => Redirect(routes.FileUploadController.fileValidate(envelopeId, fileId))
+                case "ERROR" =>
+                  response.reason match {
+                    case Some("VirusDetected") => Redirect(routes.FileUploadController.fileContainsVirus)
+                    case _                     => Redirect(routes.FileUploadController.handleError())
+                  }
+                case _ => Redirect(routes.FileUploadController.fileValidate(envelopeId, fileId))
+              }
+              case _ => Redirect(routes.FileUploadController.fileUploadProgress(envelopeId, fileId, hasSeen))
+            }
+          }
+        )
+    }
+  }
 
   //Turn a Case class into a map
   private[controllers] def getCCParams(cc: AnyRef): Map[String, String] =
@@ -400,7 +441,7 @@ class FileUploadController @Inject()(
   val unregisteredGGAccount: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       fileUploadUrl()
-        .map(fuu => Ok(views.chooseFile(fuu, s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation))))
+        .map(fuu => Ok(views.chooseFile(new URI(fuu), s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation))))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }

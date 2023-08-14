@@ -14,92 +14,102 @@
  * limitations under the License.
  *@
 
+@import java.net.URI
+@import play.twirl.api.Html
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
-@import uk.gov.hmrc.cbcrfrontend.views.html.includes.back_link
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 @import uk.gov.hmrc.auth.core.AffinityGroup
 
-@this(mainTemplate: Layout)
-
-@(fileUploadUrl: String, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
-
-@mainTemplate(Messages("uploadReport.title")) {
-
-    @{
-        if(request.uri.contains("/unregistered-gg-account")) {
-            back_link(routes.FileUploadController.chooseXMLFile.url)
-        } else {
-            userType match {
-                case Some(Organisation) => back_link(routes.StartController.start.url)
-                case _ =>
-            }
-        }}
+@this(
+        layout: Layout,
+        govukFileUpload: GovukFileUpload,
+        govukButton: GovukButton,
+        govukErrorSummary: GovukErrorSummary
+)
 
 
-    <div class="govuk-grid-row">
-        <form id ="fileUploadForm"  name = "fpForm" action = "@fileUploadUrl" method="post" enctype="multipart/form-data" class="js-form">
-            <div class="govuk-grid-column-full">
-                <div id="error-summary-display" role="alert" aria-labelledby="error-summary-display"  class="js-hidden">
-                    <h2 id="error-summary-heading" class="govuk-error-summary__title">@Messages("start.error.heading")</h2>
-                    <div class="govuk-error-summary__body">
-                        <ul class="govuk-list govuk-error-summary__list">
-                    <li id="file-input-error-summary" class="form-label-bold"><a id="file-input-error-link" href="#file-input">@Messages("uploadReport.error")</a></li>
-                        </ul>
-                    </div>
-                    </div>
-                <h1 class="govuk-heading-l">
-                @Messages("uploadReport.mainHeading")
-                </h1>
+@(fileUploadUrl: URI, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
 
-                <p class="govuk-body">@Messages("uploadReport.moreInfo") <a href="@config.cbcrOecdGuideUrl" class="govuk-link">@Messages("uploadReport.linkInfo")</a> @Messages("uploadReport.andMoreInfo")</p>
-                <br aria-hidden="true"/>
+@title = @{messages("uploadReport.title")}
+@uploadParams = @{fileUploadUrl.getRawQuery.split("&").collect { case s"$key=$value" => key -> value }.toMap }
+@uploadWithJSBaseUrl = @{new URI(fileUploadUrl.getScheme, fileUploadUrl.getUserInfo, fileUploadUrl.getHost, fileUploadUrl.getPort, fileUploadUrl.getPath, null, null)}
+@uploadUrlWithJS = @{s"${uploadWithJSBaseUrl.toString}?redirect-success-url=${config.cbcrFrontendBaseUrl}${routes.FileUploadController.fileUploadPolling.url}&redirect-error-url=${uploadParams.getOrElse("redirect-error-url", "")}"}
+@urlParts = @{fileUploadUrl.getPath.split("/")}
+@envelopeId = @{urlParts(4)}
+@fileId = @{urlParts(6)}
+@backLink = @{
+    if(request.uri.contains("/unregistered-gg-account")) {
+        Some(routes.FileUploadController.chooseXMLFile.url)
+    } else {
+        userType match {
+            case Some(Organisation) => Some(routes.StartController.start.url)
+            case _ => None
+        }
+    }
+}
+@templateScripts = {<script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>}
+@headContent = {<link rel="stylesheet" href="@{controllers.routes.Assets.versioned("styles/file-upload-styles.css")}">}
 
-                <div id="formGroup" class="govuk-form-group">
+@layout(title, backLinkUrl = backLink, additionalScripts = Some(templateScripts), additionalHeadForTemplate = Some(headContent)) {
+    <h1 class="govuk-heading-l">@title</h1>
+    <p class="govuk-body">
+        @Html(messages("uploadReport.moreInfo", config.cbcrOecdGuideUrl))
+    </p>
+    <form id="fileUploadForm" action="@fileUploadUrl" data-with-polling="@uploadUrlWithJS" method="post" enctype="multipart/form-data">
+        @govukFileUpload(FileUpload(
+            name = fileName,
+            id = "file-input",
+            label = Label(
+                content = Text(messages("uploadReport.label")),
+                classes = "govuk-label--m"
+            ),
+            hint = Some(Hint(
+                content = Text(messages("uploadReport.hint"))
+            )),
+            attributes = Map("accept" -> ".xml, .XML", "required" -> "true")
+        ))
 
-                        <label class="govuk-label" for="file-input">@Messages("uploadReport.label")</label>
-                        <span id="error-message" class="js-hidden" role="alert" data-input-name="@fileName">
-                        @Messages("uploadReport.error")
-                        </span>
-                        <input
-                        type="file"
-                        id="file-input"
-                        class="govuk-file-upload"
-                        name="@fileName" accept=".xml, .XML"
-                        required
-                        oninvalid="InvalidMsg(this);"
-                        oninput="InvalidMsg(this);">
-                        @csrf_token()
-                </div>
-                <p><button class="govuk-button" type="submit" id="upload-button">@Messages("uploadReport.uploadButton")</button>
-                </p>
-            </div>
-        </form>
-    </div>
+        <div id="upload-handling">
+            <span
+                id="file-upload-progress"
+                data-poll="@routes.FileUploadController.fileUploadResponse(envelopeId)"
+                data-success="@routes.FileUploadController.fileValidate(envelopeId, fileId)"
+                data-error="@routes.SharedController.technicalDifficulties"
+                data-virus="@routes.FileUploadController.fileContainsVirus"
+                data-handle-error="@routes.FileUploadController.handleError().url"
+                aria-live="assertive"
+            >
+            </span>
+            @govukButton(Button(
+                content = Text(messages("uploadReport.uploadButton")),
+                attributes = Map("id" -> "upload-button", "type" -> "submit")
+            ))
+        </div>
 
-    <script>
-            var form = document.getElementsByTagName('form')[0];
-            var error_summary = document.getElementById('error-summary-display');
-            var formgroup = document.getElementById('formGroup');
-            var errorMessage = document.getElementById('error-message');
-            var title = document.title;
+    </form>
 
-            function InvalidMsg(textbox) {
-                if (textbox.value === '') {
-                    document.title = "Error: " + title
-                    error_summary.className = "govuk-error-summary";
-                    formgroup.className = "govuk-form-group--error";
-                    errorMessage.className = "govuk-error-message"
-                    error_summary.focus();
-                    textbox.setCustomValidity('');
-                } else {
-                    textbox.setCustomValidity('');
-                }
+    <template id="empty-file-error-summary">
+        @govukErrorSummary(ErrorSummary(
+            title = Text(messages("generic.errorSummaryHeader")),
+            errorList = Seq(ErrorLink(
+                href = Some("#file-input"),
+                content = Text(messages("uploadReport.error"))
+            )),
+            attributes = Map("id" -> "error-summary-display", "tabindex" -> "-1")
+        ))
+    </template>
 
-                return true;
-            }
+    <template id="empty-file-error-message">
+        <div class="govuk-error-message" id="file-upload-error">
+            <span class="govuk-visually-hidden">@messages("generic.errorPrefix"): </span>
+            @messages("uploadReport.error")
+        </div>
+    </template>
 
-    </script>
-
+    <template id="live-region-content">
+        <span class="spinner"></span>
+        <span class="govuk-body">@messages("fileUploadProgress.message")</span>
+    </template>
 }

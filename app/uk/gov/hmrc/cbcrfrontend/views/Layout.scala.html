@@ -25,10 +25,12 @@
 )
 
 @(
-  pageTitle: String,
-  backLinkUrl: Option[String] = None,
-  hasErrors: Boolean = false,
-  withSignOutLink: Boolean = true
+        pageTitle: String,
+        backLinkUrl: Option[String] = None,
+        hasErrors: Boolean = false,
+        withSignOutLink: Boolean = true,
+        additionalScripts: Option[Html] = None,
+        additionalHeadForTemplate: Option[Html] = None
 )(contentBlock: Html)(implicit request: RequestHeader,  messages: Messages)
 
 @content = {
@@ -38,25 +40,24 @@
     </div>
 }
 @errorPrefix = @{s"${messages("generic.errorPrefix")}: "}
-
-@gdsTitle = @{
-  s"${if(hasErrors && !pageTitle.startsWith(errorPrefix)){ errorPrefix } else ""}$pageTitle${if(!pageTitle.endsWith("GOV.UK")) { s" - ${messages("application.title")} - GOV.UK" } else {""}}"
-}
+@gdsTitle = @{s"${if(hasErrors){ errorPrefix } else ""}$pageTitle - ${messages("application.title")} - GOV.UK"}
 
 @additionalHead = {
     @if(withSignOutLink) {
-    @hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)
+        @hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)
     }
     <style>body:not(.js-enabled) .js-visible { display: none; }</style>
+    @additionalHeadForTemplate.getOrElse(Html(""))
 }
 
 @hmrcStandardPage(
   HmrcStandardPageParams(
     serviceURLs = ServiceURLs(
-      signOutUrl = if(withSignOutLink) Some(routes.SharedController.signOutSurvey.url) else None
+        signOutUrl = if(withSignOutLink) Some(routes.SharedController.signOutSurvey.url) else None
     ),
     templateOverrides = TemplateOverrides(
-    additionalHeadBlock = Some(additionalHead)
+        additionalHeadBlock = Some(additionalHead),
+        additionalScriptsBlock = additionalScripts
     ),
     serviceName = Some(messages("application.title")),
     pageTitle = Some(gdsTitle),

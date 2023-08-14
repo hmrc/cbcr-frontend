@@ -15,31 +15,31 @@
  *@
 
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import uk.gov.hmrc.cbcrfrontend.controllers.routes
 
-@this(mainTemplate: Layout)
+@this(
+        layout: Layout,
+        govukButton: GovukButton
+)
 
-@(envelopeId: String, fileId: String, hostName: String)(
-implicit request: Request[_], messages: Messages)
+@(envelopeId: String, fileId: String, hostName: String, hasSeen: String)(implicit request: Request[_], messages: Messages)
 
-@mainTemplate(Messages("fileUploadProgress.title")) {
-<script src='@routes.Assets.versioned("javascripts/jquery-3.1.1.min.js")' ></script>
-<script src='@routes.Assets.versioned("javascripts/poller.js")' type="text/javascript"></script>
-
-
- <div class="govuk-grid-row">
-  <div class="govuk-grid-column-full">
-   <h1 class="govuk-heading-l">
-    @Messages("fileUploadProgress.mainHeading")
-   </h1>
-   
-   <body onload="poll('@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileUploadResponse(envelopeId)', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileValidate(envelopeId, fileId)', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.FileUploadController.fileContainsVirus', '@uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.technicalDifficulties')" >
-    <img alt="loading..." src="@controllers.routes.Assets.versioned("images/loading.gif")" />
-   </body>
-
-   <p></p>
-   <p class="govuk-body">@Messages("fileUploadProgress.message")</p>
-  
-
-  </div>
- </div>
+@title = @{messages("fileUploadProgress.title")}
+@templateScripts = {<script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>}
+@layout(title, backLinkUrl = Some(routes.FileUploadController.chooseXMLFile.url), additionalScripts = Some(templateScripts)) {
+    <h1 class="govuk-heading-l">@title</h1>
+    <div class="no-js">
+        <p class="govuk-body">
+            @messages("fileUploadProgress.instruction.p1")
+        </p>
+        @if(hasSeen.matches("true")) {
+            <p class="govuk-body">
+                @messages("fileUploadProgress.instruction.p2")
+            </p>
+        }
+        @govukButton(Button(
+            href = Some(routes.FileUploadController.checkFileUploadStatus(envelopeId, fileId, hasSeen = "true").url),
+            content = Text("Continue")
+        ))
+    </div>
 }
