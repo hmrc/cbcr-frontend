@@ -157,12 +157,10 @@ class SharedController @Inject()(
     }
   }
 
-  val signOutSurvey: Action[AnyContent] = Action.async { implicit request =>
-    authorised() {
+  val signOutSurvey: Action[AnyContent] = Action.async {
       Future.successful(
         Redirect(routes.ExitSurveyController.doSurvey.url).withNewSession
       )
-    }
   }
 
   val keepSessionAlive: Action[AnyContent] = Action.async { implicit request =>
