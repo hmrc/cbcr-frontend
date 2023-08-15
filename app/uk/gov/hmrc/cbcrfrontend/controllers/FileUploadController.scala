@@ -359,7 +359,7 @@ class FileUploadController @Inject()(
                     case Some("VirusDetected") => Redirect(routes.FileUploadController.fileContainsVirus)
                     case _                     => Redirect(routes.FileUploadController.handleError())
                   }
-                case _ => Redirect(routes.FileUploadController.fileValidate(envelopeId, fileId))
+                case _ => Redirect(routes.FileUploadController.fileUploadProgress(envelopeId, fileId, hasSeen))
               }
               case _ => Redirect(routes.FileUploadController.fileUploadProgress(envelopeId, fileId, hasSeen))
             }
