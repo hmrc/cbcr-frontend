@@ -40,7 +40,7 @@
         const errorSummary = document.querySelector('.govuk-error-summary')
         formGroup.classList.add('govuk-form-group--error')
         formGroup.insertBefore(errorTpl.content, uploadInput)
-        uploadInput.setAttribute('aria-describedby', 'file-upload-error')
+        uploadInput.setAttribute('aria-describedby', 'file-input-hint file-upload-error')
         uploadInput.classList.add('govuk-file-upload--error')
         errorSummary.focus()
         submitButton.removeAttribute('disabled')
@@ -52,6 +52,7 @@
         const urls = progressIndicator.dataset
         const uploadInput = document.getElementById('file-input')
         const liveRegionContent = document.getElementById('live-region-content')
+        uploadInput.removeAttribute('required')
         fileUploadForm.setAttribute('novalidate', 'novalidate')
         fileUploadForm.addEventListener('submit', function(event) {
             event.preventDefault()
