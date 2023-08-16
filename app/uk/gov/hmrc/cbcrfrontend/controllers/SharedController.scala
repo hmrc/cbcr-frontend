@@ -60,16 +60,49 @@ class SharedController @Inject()(
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  private val utrConstraint = Constraint[String]("constraints.utrcheck") {
-    case utr if Utr(utr).isValid => Valid
-    case _                       => Invalid(ValidationError("UTR is not valid"))
+  private def stripUtr(utr: String): String = {
+    utr
+      .replaceAll("\\s+", "")
+      .replaceAll("[a-zA-Z]", "")
+      .takeRight(Math.min(utr.length, 10))
   }
+
+  private val utrConstraint: Constraint[String] = Constraint(utr => {
+    val stripped = stripUtr(utr)
+    if (stripped.isEmpty) {
+      Invalid("error.required")
+    } else if (!stripped.matches("^[0-9]{10}$")) {
+      Invalid("error.pattern")
+    } else if (Utr(stripped).isValid) {
+      Valid
+    } else {
+      Invalid("error.invalid")
+    }
+  })
+
+  private def stripPostcode(postcode: String): String = postcode.toUpperCase.replaceAll("\\s+", "")
+
+  private val postcodeConstraint: Constraint[String] =
+    Constraint(postcode => {
+      val stripped = stripPostcode(postcode)
+      if (stripped.isEmpty) {
+        Valid
+      } else if (stripped.length > 8) {
+        Invalid("error.tooLong")
+      } else if (!stripped.forall(_.isLetterOrDigit)) {
+        Invalid("error.invalidCharacters")
+      } else if (stripped.matches("^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$|BFPO\\s?[0-9]{1,3}$")) {
+        Valid
+      } else {
+        Invalid("error.invalid")
+      }
+    })
 
   private val knownFactsForm = Form(
     mapping(
-      "utr"                                                                              -> nonEmptyText.verifying(utrConstraint),
-      "postCode"                                                                         -> text
-    )((u, p) => BPRKnownFacts(Utr(u), p))((facts: BPRKnownFacts) => Some(facts.utr.value -> facts.postCode))
+      "utr"                                                                              -> text.verifying(utrConstraint),
+      "postCode"                                                                         -> text.verifying(postcodeConstraint)
+    )((u, p) => BPRKnownFacts(Utr(stripUtr(u)), stripPostcode(p)))((facts: BPRKnownFacts) => Some(facts.utr.value -> facts.postCode))
   )
 
   private val cbcIdForm = Form(
@@ -218,12 +251,12 @@ class SharedController @Inject()(
                      .mapN((utr: String, postCode: String) =>
                        knownFactsForm.bind(Map("utr" -> utr, "postCode" -> postCode)))
                      .getOrElse(knownFactsForm)
-                   Ok(views.enterKnownFacts(form, noMatchingBusiness = false, userType))
+                   Ok(views.enterKnownFacts(form, userType))
                  })((result: Future[Result]) => result)
     } yield result
 
-  private def notFoundView(knownFacts: BPRKnownFacts, userType: AffinityGroup)(implicit request: Request[_]) =
-    NotFound(views.enterKnownFacts(knownFactsForm.fill(knownFacts), noMatchingBusiness = true, userType))
+  private def notFoundView(userType: AffinityGroup)(implicit request: Request[_]) =
+    NotFound(views.knownFactsNotFound(userType))
 
   val checkKnownFacts: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) {
@@ -235,12 +268,12 @@ class SharedController @Inject()(
       case Some(userType) => {
 
         knownFactsForm.bindFromRequest().fold[EitherT[Future, Result, Result]](
-          formWithErrors => EitherT.left(BadRequest(views.enterKnownFacts(formWithErrors, noMatchingBusiness = false, userType))),
+          formWithErrors => EitherT.left(BadRequest(views.enterKnownFacts(formWithErrors, userType))),
           knownFacts =>
             for {
               bpr <- knownFactsService.checkBPRKnownFacts(knownFacts).toRight {
                       logger.warn("The BPR was not found when looking it up with the knownFactsService")
-                      notFoundView(knownFacts, userType)
+                      notFoundView(userType)
                     }
               cbcIdFromXml <- EitherT.right(
                                OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
@@ -252,17 +285,17 @@ class SharedController @Inject()(
                     case AffinityGroup.Agent if subscriptionDetails.isEmpty =>
                       logger.error(
                         s"Agent supplying known facts for a UTR that is not registered. Check for an internal error!")
-                      Left(notFoundView(knownFacts, AffinityGroup.Agent))
+                      Left(notFoundView(AffinityGroup.Agent))
                     case AffinityGroup.Agent
                         if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined =>
                       logger.warn(
                         s"Agent submitting Xml where the CBCId associated with the UTR does not match that in the Xml File. Request the original Xml File and Known Facts from the Agent")
                       auditBPRKnowFactsFailure(cbcIdFromXml, bpr, knownFacts)
-                      Left(notFoundView(knownFacts, AffinityGroup.Agent))
+                      Left(notFoundView(AffinityGroup.Agent))
                     case AffinityGroup.Agent if cbcIdFromXml.isEmpty =>
                       logger.error(
                         s"Agent submitting Xml where the CBCId is not in the Xml. Check for an internal error!")
-                      Left(notFoundView(knownFacts, AffinityGroup.Agent))
+                      Left(notFoundView(AffinityGroup.Agent))
                     case AffinityGroup.Organisation if subscriptionDetails.isDefined =>
                       Left(Redirect(routes.SubscriptionController.alreadySubscribed))
                     case _ =>
