@@ -300,7 +300,7 @@ notAuthorised.assistant.button=Finished
 utrCheck.title=Enter the Unique Taxpayer Reference of the UK-registered company or partnership sending the report
 utrCheck.label=Unique Taxpayer Reference
 
-utrCheck.hint=This can be for Corporation Tax, or Self-Assessment for a business partnership. Enter the last 10 digits, with no spaces.
+utrCheck.hint=This is 10 numbers, for example 123456789. It will be on tax returns and other letters about Corporation Tax or Self Assessment for a business partnership. It may be called 'reference', 'UTR' or 'official use'.
 utrCheck.error=Enter a Unique Taxpayer Reference of at least 10 characters
 utrCheck.error.header=The Unique Taxpayer Reference must contain at least 10 characters
 
