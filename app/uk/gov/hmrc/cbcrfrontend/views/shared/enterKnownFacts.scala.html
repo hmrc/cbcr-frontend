@@ -29,15 +29,13 @@
         govukFieldset: GovukFieldset
 )
 
-@(form: Form[BPRKnownFacts], noMatchingBusiness: Boolean = false, userType: AffinityGroup)(implicit request: Request[_], messages: Messages)
+@(form: Form[BPRKnownFacts], userType: AffinityGroup)(implicit request: Request[_], messages: Messages)
 
 @utrKey = @{"utr"}
 @postcodeKey = @{"postCode"}
-@hasErrors = @{form.hasErrors || noMatchingBusiness}
+@hasErrors = @{form.hasErrors}
 @backLink = @{if(userType.equals(Agent)) { Some(routes.SubmissionController.submitterInfo.url) } else { None }}
 @title = @{messages("subscribeFirst.title")}
-@utrError = @{if(form.data.get("utr").getOrElse("").isEmpty || noMatchingBusiness){ messages("subscribeFirst.error.message.utr-empty") } else { messages("subscribeFirst.error.message.utr-nonEmpty") }}
-@postcodeError = @{if(form.data.get("postCode").getOrElse("").isEmpty || noMatchingBusiness){ messages("subscribeFirst.error.message.postcode-empty") } else { messages("subscribeFirst.error.message.postcode-nonEmpty") }}
 @fieldsetHtml = {
     @govukInput(Input(
         id = utrKey,
@@ -51,7 +49,7 @@
         )),
         classes = "govuk-input--width-10",
         value = form.data.get(utrKey),
-        errorMessage = if(hasErrors) Some(ErrorMessage(content = Text(utrError))) else None
+        errorMessage = form.error(utrKey).map(e => ErrorMessage(content = Text(messages(s"$utrKey.${e.message}"))))
     ))
     @govukInput(Input(
         id = postcodeKey,
@@ -65,7 +63,7 @@
         )),
         classes = "govuk-input--width-10",
         value = form.data.get(postcodeKey),
-        errorMessage = if(hasErrors) Some(ErrorMessage(content = Text(postcodeError))) else None,
+        errorMessage = form.error(postcodeKey).map(e => ErrorMessage(content = Text(messages(s"$postcodeKey.${e.message}")))),
         autocomplete = Some("postal-code")
     ))
 }
@@ -75,14 +73,10 @@
     @if(hasErrors) {
         @govukErrorSummary(ErrorSummary(
             title = Text(messages("start.error.heading")),
-            errorList = Seq(
-                ErrorLink(
-                    href = Some(s"#$utrKey"),
-                    content = Text(utrError)
-                ),
-                ErrorLink(
-                    href = Some(s"#$postcodeKey"),
-                    content = Text(postcodeError)
+            errorList = form.errors.map(
+                e => ErrorLink(
+                    href = Some(s"#${e.key}"),
+                    content = Text(messages(s"${e.key}.${e.message}"))
                 )
             ),
             attributes = Map("id" -> "error-summary-display")

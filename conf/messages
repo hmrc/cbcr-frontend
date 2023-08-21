@@ -86,13 +86,12 @@ subscribeFirst.alreadyRegistered4=digitalservice.cbc@hmrc.gsi.gov.uk
 subscribeFirst.alreadyRegistered5=If you are registering a different business, you need to
 subscribeFirst.alreadyRegistered5.link=sign in using a different Government Gateway account
 subscribeFirst.utr.label=Unique Taxpayer Reference
-subscribeFirst.utr.hint=This can be for Corporation Tax, or Self-Assessment for a business partnership. Enter the last 10 digits, with no spaces.
+subscribeFirst.utr.hint=This is 10 numbers, for example 123456789. It will be on tax returns and other letters about Corporation Tax or Self Assessment for a business partnership. It may be called ‘reference’, ‘UTR’ or ‘official use’.
 subscribeFirst.postcode.label=UK postcode
 subscribeFirst.postcode.hint=e.g. AA1 1AA
-subscribeFirst.error.message.utr-empty=Enter a Unique Taxpayer Reference
-subscribeFirst.error.message.utr-nonEmpty=Unique Taxpayer Reference must be 10 digits
-subscribeFirst.error.message.postcode-empty=Enter a UK postcode
-subscribeFirst.error.message.postcode-nonEmpty=Enter a real UK postcode
+utr.error.required=Enter a Unique Taxpayer Reference
+utr.error.pattern=Unique Taxpayer Reference must be 10 numbers
+utr.error.invalid=Enter a valid Unique Taxpayer Reference
 
 subscribeMatchFound.title=Check the company or partnership details
 subscribeMatchFound.businessDetails.name=UK-registered company or partnership
@@ -395,3 +394,13 @@ unregisteredGG.signOut=sign in using the Government Gateway account you register
 back = Back
 
 notAuthorised.enhancement.title=You cannot access this URL
+
+
+postCode.error.tooLong=UK postcode must be 8 characters or fewer
+postCode.error.required=Enter a UK postcode
+postCode.error.invalidCharacters=UK postcode must only include letters, numbers and spaces
+postCode.error.invalid=Enter a real UK postcode
+
+knownFactsNotFound.title=The details you entered did not match our records
+knownFactsNotFound.p1=We could not match the details you entered with records held by HMRC.
+knownFactsNotFound.p2=If you used the wrong details, you can <a class="govuk-link" href="{0}">try again using different details</a>.

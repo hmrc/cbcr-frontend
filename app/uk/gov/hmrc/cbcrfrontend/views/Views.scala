@@ -45,6 +45,7 @@ class Views @Inject()(
   val updateContactInfoSubscriber: uk.gov.hmrc.cbcrfrontend.views.html.update.updateContactInfoSubscriber,
   val sessionExpired: uk.gov.hmrc.cbcrfrontend.views.html.shared.sessionExpired,
   val enterKnownFacts: uk.gov.hmrc.cbcrfrontend.views.html.shared.enterKnownFacts,
+  val knownFactsNotFound: uk.gov.hmrc.cbcrfrontend.views.html.shared.knownFactsNotFound,
   val exitSurvey: uk.gov.hmrc.cbcrfrontend.views.html.survey.exitSurvey,
   val exitSurveyComplete: uk.gov.hmrc.cbcrfrontend.views.html.survey.exitSurveyComplete,
   val notAuthorizedEnhancement: uk.gov.hmrc.cbcrfrontend.views.html.notAuthorisedEnhancement
