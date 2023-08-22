@@ -350,6 +350,7 @@ error.ReportingEntityElementMissing=The Reporting Entity is missing in the XML r
 error.CorrMessageRefIdNotAllowedInMessageSpec=The CorrMessageRefID element must not be provided in the MessageSpec
 error.CorrMessageRefIdNotAllowedInDocSpec=Error Code 80006: The CorrMessageRefID element must not be provided in the DocSpec
 error.ReportingPeriodInvalid=The ReportingPeriod cannot be corrected. If you wish to change the Reporting Period, then void (OECD3) the original submission and submit a new file (CBC 401)
+error.CorrectedFileDateMissing=The Corrected File Date is missing in the corrected XML reporting file
 error.MultipleFileUploadForSameReportingPeriod=The report has not been uploaded. A report has already been submitted for this tax year. You need to either delete the original report and send a replacement or send a corrected version of the original report.
 error.AdditionalInfoDRINotFound1=The AdditionalInfo CorrDocRefId
 error.AdditionalInfoDRINotFound2=was not found.

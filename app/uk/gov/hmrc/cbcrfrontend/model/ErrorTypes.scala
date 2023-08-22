@@ -83,6 +83,7 @@ case object InvalidCorrDocRefId extends BusinessRuleErrors
 case object ResentDataIsUnknownError extends BusinessRuleErrors
 case object MultipleCbcBodies extends BusinessRuleErrors
 case object CorrectedFileToOld extends BusinessRuleErrors
+case object CorrectedFileDateMissing extends BusinessRuleErrors
 case object ReportingEntityOrConstituentEntityEmpty extends BusinessRuleErrors
 case object CorrMessageRefIdNotAllowedInMessageSpec extends BusinessRuleErrors
 case object CorrMessageRefIdNotAllowedInDocSpec extends BusinessRuleErrors
@@ -156,6 +157,7 @@ object BusinessRuleErrors {
       case ResentDataIsUnknownError                 => JsString(ResentDataIsUnknownError.toString)
       case MultipleCbcBodies                        => JsString(MultipleCbcBodies.toString)
       case CorrectedFileToOld                       => JsString(CorrectedFileToOld.toString)
+      case CorrectedFileDateMissing                 => JsString(CorrectedFileDateMissing.toString)
       case ReportingEntityOrConstituentEntityEmpty  => JsString(ReportingEntityOrConstituentEntityEmpty.toString)
       case CorrMessageRefIdNotAllowedInMessageSpec  => JsString(CorrMessageRefIdNotAllowedInMessageSpec.toString)
       case CorrMessageRefIdNotAllowedInDocSpec      => JsString(CorrMessageRefIdNotAllowedInDocSpec.toString)
@@ -216,6 +218,7 @@ object BusinessRuleErrors {
             case Some(ci"privatebetacbciderror")                   => JsSuccess(PrivateBetaCBCIdError)
             case Some(ci"resentdataisunknownerror")                => JsSuccess(ResentDataIsUnknownError)
             case Some(ci"correctedfiletoold")                      => JsSuccess(CorrectedFileToOld)
+            case Some(ci"correctedfiledatemissing")                => JsSuccess(CorrectedFileDateMissing)
             case Some(ci"reportingentityorconstituententityempty") => JsSuccess(ReportingEntityOrConstituentEntityEmpty)
             case Some(ci"corrmessagerefidnotallowedinmessagespec") => JsSuccess(CorrMessageRefIdNotAllowedInMessageSpec)
             case Some(ci"corrmessagerefidnotallowedindocspec")     => JsSuccess(CorrMessageRefIdNotAllowedInDocSpec)
@@ -273,6 +276,7 @@ object BusinessRuleErrors {
     case ResentDataIsUnknownError                 => "error.ResentDataIsUnknownError"
     case MultipleCbcBodies                        => "error.MultipleCbcBodies"
     case CorrectedFileToOld                       => "error.CorrectedFileToOld"
+    case CorrectedFileDateMissing                 => "error.CorrectedFileDateMissing"
     case ReportingEntityOrConstituentEntityEmpty  => "error.ReportingEntityOrConstituentEntityEmpty"
     case i: InvalidXMLError                       => i.toString
     case CorrMessageRefIdNotAllowedInMessageSpec  => "error.CorrMessageRefIdNotAllowedInMessageSpec"
