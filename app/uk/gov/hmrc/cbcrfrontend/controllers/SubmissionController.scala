@@ -20,6 +20,7 @@ import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.implicits._
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.{JsString, Json, OFormat}
 import play.api.mvc._
@@ -239,9 +240,22 @@ class SubmissionController @Inject()(
     audit.sendExplicitAudit("CBCRFilingSuccessful", validAuditEvent)
   }
 
+  private val utrConstraint: Constraint[String] = Constraint(utr => {
+    val stripped = Utr(utr).stripUtr
+    if (stripped.isEmpty) {
+      Invalid("error.required")
+    } else if (!stripped.matches("^[0-9]{10}$")) {
+      Invalid("error.pattern")
+    } else if (Utr(stripped).isValid) {
+      Valid
+    } else {
+      Invalid("error.invalid")
+    }
+  })
+
   private val utrForm = Form(
     mapping(
-      "utr" -> nonEmptyText.verifying(s => Utr(s).isValid)
+      "utr" -> text.verifying(utrConstraint)
     )(Utr.apply)(Utr.unapply)
   )
 

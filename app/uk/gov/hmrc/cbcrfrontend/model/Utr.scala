@@ -28,6 +28,8 @@ case class Utr(utr: String) extends TaxIdentifier {
 
   def isValid: Boolean = CheckUTR.isValid(utr)
 
+  def stripUtr: String = CheckUTR.stripUtr(utr)
+
   private object CheckUTR extends Modulus11Check {
     def isValid(utr: String): Boolean = utr match {
       case Utr.utrRegex(_*) =>
@@ -35,6 +37,12 @@ case class Utr(utr: String) extends TaxIdentifier {
         val checkCharacter: Char = calculateCheckCharacter(suffix)
         checkCharacter == utr.charAt(0)
       case _ => false
+    }
+     def stripUtr(utr: String): String = {
+      utr
+        .replaceAll("\\s+", "")
+        .replaceAll("[a-zA-Z]", "")
+        .takeRight(Math.min(utr.length, 10))
     }
   }
 }
