@@ -241,19 +241,21 @@ class SubmissionController @Inject()(
   }
 
   private val utrConstraint: Constraint[String] = Constraint(utr => {
-    val stripped = Utr(utr).stripUtr(utr)
+    val stripped = Utr(utr).stripUtr
     if (stripped.isEmpty) {
-      Invalid("UTR is empty")
+      Invalid("error.required")
+    } else if (!stripped.matches("^[0-9]{10}$")) {
+      Invalid("error.pattern")
     } else if (Utr(stripped).isValid) {
       Valid
     } else {
-      Invalid("UTR is invalid")
+      Invalid("error.invalid")
     }
   })
 
   private val utrForm = Form(
     mapping(
-      "utr" -> nonEmptyText.verifying(utrConstraint)
+      "utr" -> text.verifying(utrConstraint)
     )(Utr.apply)(Utr.unapply)
   )
 

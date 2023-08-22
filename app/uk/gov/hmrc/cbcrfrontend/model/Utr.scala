@@ -28,7 +28,7 @@ case class Utr(utr: String) extends TaxIdentifier {
 
   def isValid: Boolean = CheckUTR.isValid(utr)
 
-  def stripUtr(utr: String): String = CheckUTR.stripUtr(utr)
+  def stripUtr: String = CheckUTR.stripUtr(utr)
 
   private object CheckUTR extends Modulus11Check {
     def isValid(utr: String): Boolean = utr match {

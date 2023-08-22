@@ -86,7 +86,7 @@ subscribeFirst.alreadyRegistered4=digitalservice.cbc@hmrc.gsi.gov.uk
 subscribeFirst.alreadyRegistered5=If you are registering a different business, you need to
 subscribeFirst.alreadyRegistered5.link=sign in using a different Government Gateway account
 subscribeFirst.utr.label=Unique Taxpayer Reference
-subscribeFirst.utr.hint=This is 10 numbers, for example 123456789. It will be on tax returns and other letters about Corporation Tax or Self Assessment for a business partnership. It may be called ‘reference’, ‘UTR’ or ‘official use’.
+subscribeFirst.utr.hint=This is 10 numbers, for example 1234567890. It will be on tax returns and other letters about Corporation Tax. It may be called ‘reference’, ‘UTR’ or ‘official use’.
 subscribeFirst.postcode.label=UK postcode
 subscribeFirst.postcode.hint=e.g. AA1 1AA
 utr.error.required=Enter a Unique Taxpayer Reference
@@ -300,7 +300,7 @@ notAuthorised.assistant.button=Finished
 utrCheck.title=Enter the Unique Taxpayer Reference of the UK-registered company or partnership sending the report
 utrCheck.label=Unique Taxpayer Reference
 
-utrCheck.hint=This is 10 numbers, for example 123456789. It will be on tax returns and other letters about Corporation Tax or Self Assessment for a business partnership. It may be called 'reference', 'UTR' or 'official use'.
+utrCheck.hint=This is 10 numbers, for example 1234567890. It will be on tax returns and other letters about Corporation Tax. It may be called ‘reference’, ‘UTR’ or ‘official use’.
 utrCheck.error=Enter a Unique Taxpayer Reference of at least 10 characters
 utrCheck.error.header=The Unique Taxpayer Reference must contain at least 10 characters
 

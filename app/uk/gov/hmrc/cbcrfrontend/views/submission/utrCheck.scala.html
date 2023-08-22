@@ -28,18 +28,18 @@
 
 @key = @{"utr"}
 @title = @{messages("utrCheck.title")}
-@hasErrors = @{form.hasErrors || form.hasGlobalErrors}
+@hasErrors = @{form.hasErrors}
 
 @layout(title, backLinkUrl = Some(routes.SubmissionController.upe.url), hasErrors = hasErrors) {
    @if(form.hasErrors) {
        @govukErrorSummary(ErrorSummary(
            title = Text(messages("generic.errorSummaryHeader")),
-           errorList = Seq(
-               ErrorLink(
-                   content = Text(messages("utrCheck.error")),
-                   href = Some(s"#$key")
-               )
-           ),
+            errorList = form.errors.map(
+                e => ErrorLink(
+                    href = Some(s"#${e.key}"),
+                    content = Text(messages(s"${e.key}.${e.message}"))
+                )
+            ),
            attributes = Map("id" -> "error-summary-display")
        ))
    }
@@ -57,7 +57,8 @@
             )),
             classes = "govuk-!-width-two-thirds",
             value = form.data.get(key),
-            errorMessage = if(form.error(key).isDefined) Some(ErrorMessage(content = Text(messages("utrCheck.error")))) else None,
+            errorMessage = form.error(key).map(e =>
+                ErrorMessage(content = Text(messages(s"$key.${e.message}")))),
             autocomplete = Some("on")
         ))
         @govukButton(Button(
