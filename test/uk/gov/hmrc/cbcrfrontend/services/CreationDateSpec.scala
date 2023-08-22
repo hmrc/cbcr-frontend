@@ -124,13 +124,13 @@ class CreationDateSpec
       "repotingEntity creationDate is Null and default date of 2020/12/23 is less than 3 years ago" in {
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(redNoCreationDate)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe true
+        result shouldBe xmlStatusEnum.dateCorrect
       }
 
       "repotingEntity creationDate is less than 3 years ago" in {
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe true
+        result shouldBe xmlStatusEnum.dateCorrect
       }
     }
 
@@ -138,7 +138,7 @@ class CreationDateSpec
       "reportingEntity creationDate is older than 3 years ago" in {
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(redOldCreationDate)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe false
+        result shouldBe xmlStatusEnum.dateOld
       }
 
       "reportingEntity creationDate is Null and default date is more than 3 years ago" in {
@@ -149,7 +149,7 @@ class CreationDateSpec
         configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month") returns Some(12)
         val cds2 = new CreationDateService(configuration, runMode, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe false
+        result shouldBe xmlStatusEnum.dateOld
       }
     }
   }

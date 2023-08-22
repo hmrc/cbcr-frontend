@@ -25,6 +25,11 @@ import java.time.{LocalDate, Period}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
+object xmlStatusEnum extends Enumeration {
+  type xmlStatus = Value
+  val dateOld, dateCorrect, dateMissing, dateError = Value
+}
+
 @Singleton
 class CreationDateService @Inject()(
   configuration: Configuration,
@@ -51,7 +56,8 @@ class CreationDateService @Inject()(
       throw new Exception(s"Missing configuration key: $env.default-creation-date.year")
     )
 
-  def isDateValid(in: XMLInfo)(implicit hc: HeaderCarrier): Future[Boolean] = {
+  def isDateValid(in: XMLInfo)(implicit hc: HeaderCarrier): Future[xmlStatusEnum.xmlStatus] = {
+
     val id = in.cbcReport
       .find(_.docSpec.corrDocRefId.isDefined)
       .flatMap(_.docSpec.corrDocRefId)
@@ -60,21 +66,18 @@ class CreationDateService @Inject()(
     id.map { drid =>
         reportingEntityDataService
           .queryReportingEntityData(drid.cid)
-          .leftMap {
-            { cbcErrors =>
+          .value
+          .map {
+            case Left(cbcErrors) =>
               UnexpectedState(s"Error communicating with backend: $cbcErrors")
-              false
-            }
-          }
-          .subflatMap {
-            case Some(red) =>
+              xmlStatusEnum.dateError
+            case Right(Some(red)) =>
               val cd: LocalDate = red.creationDate.getOrElse(LocalDate.of(creationYear, creationMonth, creationDay))
               val lcd: LocalDate = in.creationDate.getOrElse(LocalDate.now())
-              val result: Boolean = Period.between(cd, lcd).getYears < 3
-              Right(result)
-            case None => Left(false)
+              if (Period.between(cd, lcd).getYears < 3) xmlStatusEnum.dateCorrect
+              else xmlStatusEnum.dateOld
+            case Right(None) => xmlStatusEnum.dateMissing
           }
-          .merge
       }
       .getOrElse {
 
@@ -84,7 +87,7 @@ class CreationDateService @Inject()(
           *    is an addition and NOT a correction        *
           *                                               *
       ************************************************/
-        Future.successful(true)
+        Future.successful(xmlStatusEnum.dateMissing)
       }
   }
 }
