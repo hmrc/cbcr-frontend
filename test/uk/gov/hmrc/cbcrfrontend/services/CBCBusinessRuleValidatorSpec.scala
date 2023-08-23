@@ -1341,8 +1341,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should contain(ReportingPeriodInvalid),
-          _ => fail("No ReportingPeriodInvalid generated")
+          errors => errors.toList should contain(CorrectedFileDateMissing),
+          _ => fail("No CorrectedFileDateMissing generated")
         )
       }
 
