@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.data.NonEmptyList
+import cats.data.{EitherT, NonEmptyList}
 import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchersSugar.*
 import org.mockito.IdiomaticMockito
@@ -32,7 +32,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class CreationDateSpec
     extends AnyWordSpec with Matchers with BeforeAndAfterEach with GuiceOneAppPerSuite with IdiomaticMockito with MockitoCats {
@@ -143,13 +143,34 @@ class CreationDateSpec
 
       "reportingEntity creationDate is Null and default date is more than 3 years ago" in {
         configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns Some(2017)
-        runMode.env returns  "Dev"
         configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns Some(2010)
         configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day") returns Some(23)
         configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month") returns Some(12)
         val cds2 = new CreationDateService(configuration, runMode, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
         result shouldBe xmlStatusEnum.dateOld
+      }
+
+      "reportingEntity creationDate is missing" in {
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns Some(2017)
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns Some(2010)
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day") returns Some(23)
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month") returns Some(12)
+        reportingEntity.queryReportingEntityData(*)(*) returnsF None
+        val cds2 = new CreationDateService(configuration, runMode, reportingEntity)
+        val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
+        result shouldBe xmlStatusEnum.dateMissing
+      }
+
+      "There's an error retrieving reportingEntityData" in {
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns Some(2017)
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns Some(2010)
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day") returns Some(23)
+        configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month") returns Some(12)
+        reportingEntity.queryReportingEntityData(*)(*) returns EitherT[Future, CBCErrors, Option[ReportingEntityData]](Future.successful(Left(UnexpectedState(s"Call to QueryReportingEntity failed"))))
+        val cds2 = new CreationDateService(configuration, runMode, reportingEntity)
+        val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
+        result shouldBe xmlStatusEnum.dateError
       }
     }
   }

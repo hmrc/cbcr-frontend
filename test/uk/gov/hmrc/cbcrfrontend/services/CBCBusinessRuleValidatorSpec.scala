@@ -1217,6 +1217,20 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           )
         }
 
+        "the original submission's date is missing" in {
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateMissing)
+          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+          docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
+          val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+          val result = Await
+            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(CorrectedFileDateMissing),
+            _ => fail("No CorrectedFileToOld generated out of date correction")
+          )
+        }
+
         "the original submission was < 3 years ago" in {
           reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
 
