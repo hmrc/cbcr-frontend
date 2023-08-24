@@ -638,11 +638,12 @@ class CBCBusinessRuleValidator @Inject()(
     if (CBCReportsContainCorrectionsOrDeletions || AdditionalInfoContainsCorrectionsOrDeletions || ReportingEntityContainsCorrectionsOrDeletionsOrResent) {
       creationDateService
         .isDateValid(xmlInfo)
-        .map(result =>
-          if (result == xmlStatusEnum.dateCorrect) xmlInfo.validNel
-          else if (result == xmlStatusEnum.dateMissing) CorrectedFileDateMissing.invalidNel
-          else if (result == xmlStatusEnum.dateError) CorrectedFileToOld.invalidNel
-          else CorrectedFileToOld.invalidNel)
+        .map {
+          case xmlStatusEnum.dateCorrect => xmlInfo.validNel
+          case xmlStatusEnum.dateMissing => CorrectedFileDateMissing.invalidNel
+          case xmlStatusEnum.dateError => CorrectedFileDateMissing.invalidNel
+          case xmlStatusEnum.dateOld => CorrectedFileToOld.invalidNel
+        }
     } else {
       xmlInfo.validNel
     }
