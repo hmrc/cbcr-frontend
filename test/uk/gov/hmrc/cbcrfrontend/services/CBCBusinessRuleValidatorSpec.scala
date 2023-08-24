@@ -1212,8 +1212,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
             .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(CorrectedFileToOld),
-            _ => fail("No CorrectedFileToOld generated out of date correction")
+            errors => errors.toList should contain(CorrectedFileTooOld),
+            _ => fail("No CorrectedFileTooOld generated out of date correction")
           )
         }
 
@@ -1227,7 +1227,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
           result.fold(
             errors => errors.toList should contain(CorrectedFileDateMissing),
-            _ => fail("No CorrectedFileToOld generated out of date correction")
+            _ => fail("No CorrectedFileTooOld generated out of date correction")
           )
         }
 

@@ -642,7 +642,7 @@ class CBCBusinessRuleValidator @Inject()(
           case xmlStatusEnum.dateCorrect => xmlInfo.validNel
           case xmlStatusEnum.dateMissing => CorrectedFileDateMissing.invalidNel
           case xmlStatusEnum.dateError => CorrectedFileDateMissing.invalidNel
-          case xmlStatusEnum.dateOld => CorrectedFileToOld.invalidNel
+          case xmlStatusEnum.dateOld => CorrectedFileTooOld.invalidNel
         }
     } else {
       xmlInfo.validNel
