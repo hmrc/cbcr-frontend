@@ -355,6 +355,7 @@ error.ReportingEntityElementMissing=cy-The Reporting Entity is missing in the XM
 error.CorrMessageRefIdNotAllowedInMessageSpec=cy-The CorrMessageRefID element must not be provided in the MessageSpec
 error.CorrMessageRefIdNotAllowedInDocSpec=cy-Error Code 80006: The CorrMessageRefID element must not be provided in the DocSpec
 error.ReportingPeriodInvalid=cy-The ReportingPeriod cannot be corrected. If you wish to change the Reporting Period, then void (OECD3) the original submission and submit a new file (CBC 401)
+error.CorrectedFileDateMissing=cy-Given ReportingPeriod could not be found. Submission cannot be corrected.
 error.AdditionalInfoDRINotFound1=cy-The AdditionalInfo CorrDocRefId
 error.AdditionalInfoDRINotFound2=cy-was not found.
 error.AdditionalInfoDRINotFound3=cy-Please move the information into the AdditionalInfo section with CorrDocRefId
