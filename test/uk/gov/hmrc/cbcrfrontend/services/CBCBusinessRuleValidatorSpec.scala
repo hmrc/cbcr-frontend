@@ -105,7 +105,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
   private def makeTheUserAnOrganisation(cbcid: String) =
     cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(CBCId(cbcid))
 
-  creationDateService.isDateValid(*)(*) returns Future.successful(true)
+  creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateCorrect)
 
   implicit private val hc: HeaderCarrier = HeaderCarrier()
   private val extract = new XmlInfoExtract()
@@ -1204,7 +1204,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the submission contains a correction" when {
         "the original submission was created > 3 years ago" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(false)
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateOld)
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
           docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
@@ -1212,8 +1212,22 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
             .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
           result.fold(
-            errors => errors.toList should contain(CorrectedFileToOld),
-            _ => fail("No CorrectedFileToOld generated out of date correction")
+            errors => errors.toList should contain(CorrectedFileTooOld),
+            _ => fail("No CorrectedFileTooOld generated out of date correction")
+          )
+        }
+
+        "the original submission's date is missing" in {
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateMissing)
+          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+          docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
+          val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
+          val result = Await
+            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+
+          result.fold(
+            errors => errors.toList should contain(CorrectedFileDateMissing),
+            _ => fail("No CorrectedFileTooOld generated out of date correction")
           )
         }
 
@@ -1232,7 +1246,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
 
-          creationDateService.isDateValid(*)(*) returns Future.successful(true)
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateCorrect)
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
           val result = Await
             .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
@@ -1341,8 +1355,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
 
         result.fold(
-          errors => errors.toList should contain(ReportingPeriodInvalid),
-          _ => fail("No ReportingPeriodInvalid generated")
+          errors => errors.toList should contain(CorrectedFileDateMissing),
+          _ => fail("No CorrectedFileDateMissing generated")
         )
       }
 
@@ -1379,7 +1393,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the submission corrects AdditionalIno" when {
         "the original submission only persisted the 1st AdditionalInfo DRI but the submission corrects a subsequant AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(true)
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateError)
           messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmTrue)
           docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
@@ -1397,7 +1411,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the original submission only persisted the 1st AdditionalInfo DRI when no ReportingEntity is present" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(true)
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateCorrect)
           messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmTrue)
           docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
@@ -1414,7 +1428,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the original submission only persisted the 1st AdditionalInfo DRI and the submission corrects that AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(true)
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateCorrect)
           messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmTrue)
           docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
@@ -1433,7 +1447,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the original submission persisted ALL AdditionalInfo DRI and no ReportingEntity is present" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(true)
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateCorrect)
           messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
           docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
@@ -1450,7 +1464,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the original submission persisted ALL AdditionalInfo DRI and the submission correctly corrects one AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(true)
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateCorrect)
           messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
           docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
@@ -1467,7 +1481,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the original submission persisted ALL AdditionalInfo DRI but the submission attempts to corrects a none-existent AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(true)
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateCorrect)
           messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
           docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
@@ -1484,7 +1498,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the original submission persisted ALL AdditionalInfo DRI but the submission attempts to corrects a previously corrected AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(true)
+          creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateCorrect)
           messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
           docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)

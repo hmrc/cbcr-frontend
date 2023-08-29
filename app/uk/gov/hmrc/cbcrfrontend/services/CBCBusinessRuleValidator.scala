@@ -634,10 +634,16 @@ class CBCBusinessRuleValidator @Inject()(
           r.docSpec.docType == OECD3 ||
           r.docSpec.docType == OECD0)
 
+    import uk.gov.hmrc.cbcrfrontend.services.xmlStatusEnum
     if (CBCReportsContainCorrectionsOrDeletions || AdditionalInfoContainsCorrectionsOrDeletions || ReportingEntityContainsCorrectionsOrDeletionsOrResent) {
       creationDateService
         .isDateValid(xmlInfo)
-        .map(result => if (result) xmlInfo.validNel else CorrectedFileToOld.invalidNel)
+        .map {
+          case xmlStatusEnum.dateCorrect => xmlInfo.validNel
+          case xmlStatusEnum.dateMissing => CorrectedFileDateMissing.invalidNel
+          case xmlStatusEnum.dateError => CorrectedFileDateMissing.invalidNel
+          case xmlStatusEnum.dateOld => CorrectedFileTooOld.invalidNel
+        }
     } else {
       xmlInfo.validNel
     }
@@ -664,7 +670,7 @@ class CBCBusinessRuleValidator @Inject()(
               .subflatMap {
                 case Some(red) if red.reportingPeriod.isDefined =>
                   if (red.reportingPeriod.get == xmlInfo.messageSpec.reportingPeriod) Right(xmlInfo)
-                  else Left(ReportingPeriodInvalid)
+                  else Left(CorrectedFileDateMissing)
                 case Some(_) =>
                   Right(xmlInfo) //reportingPeriod not persisted prior to this rules implementation so can't check
                 case _ => Left(ReportingPeriodInvalid)
