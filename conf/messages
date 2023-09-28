@@ -211,7 +211,8 @@ fileUploadResult.fileSize=Size
 fileUploadResult.caption=Report filename and file size
 
 fileUploadResult.error.title=The report does not meet the HMRC and OECD guidelines
-fileUploadResult.error.report=Download the <a href="{0}" class="govuk-link">error summary (Text, {1}KB)</a> and get the errors corrected before you check the report again.
+fileUploadResult.error.report=Download the <a href="{0}" class="govuk-link">business rule error summary (Text, {1}KB)</a> and get the errors corrected before you check the report again.
+fileUploadResult.xml.error.report=Download the <a href="{0}" class="govuk-link">XML schema error summary (Text, {1}KB)</a> and get the errors corrected before you check the report again.
 fileUploadResult.error.xml.link=XML error summary
 fileUploadResult.error.xml.message=Give it to your XML creator to correct the errors
 fileUploadResult.error.guidance=Check formatting guidance
