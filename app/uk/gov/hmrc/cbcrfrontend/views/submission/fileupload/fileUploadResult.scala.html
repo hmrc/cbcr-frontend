@@ -49,7 +49,7 @@
         <h2 class="govuk-heading-m">@messages("fileUploadResult.whatToDo")</h2>
         @schemaErrors.map { size =>
             <p class="govuk-body">
-                @Html(messages("fileUploadResult.error.report", routes.FileUploadController.getXmlSchemaErrors, size.toString))
+                @Html(messages("fileUploadResult.xml.error.report", routes.FileUploadController.getXmlSchemaErrors, size.toString))
             </p>
         }
         @busErrors.map { size =>
