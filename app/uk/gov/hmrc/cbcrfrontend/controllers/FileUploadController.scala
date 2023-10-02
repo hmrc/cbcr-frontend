@@ -287,6 +287,7 @@ class FileUploadController @Inject()(
   def fileInvalid: Action[AnyContent] = fileUploadError(FileNotXml)
   def fileTooLarge: Action[AnyContent] = fileUploadError(FileTooLarge)
   def fileContainsVirus: Action[AnyContent] = fileUploadError(FileContainsVirus)
+  def uploadTimedOut: Action[AnyContent] = fileUploadError(UploadTimedOut)
 
   private def fileUploadError(errorType: FileUploadErrorType) = Action.async { implicit request =>
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
@@ -304,6 +305,7 @@ class FileUploadController @Inject()(
       errorCode match {
         case REQUEST_ENTITY_TOO_LARGE => Redirect(routes.FileUploadController.fileTooLarge)
         case UNSUPPORTED_MEDIA_TYPE   => Redirect(routes.FileUploadController.fileInvalid)
+        case REQUEST_TIMEOUT          => Redirect(routes.FileUploadController.uploadTimedOut)
         case _                        => Redirect(routes.SharedController.technicalDifficulties)
       }
     }
