@@ -1,24 +1,29 @@
 (function(document, window) {
-    function poll(urls) {
-        window.fetch(urls.poll)
-            .then(function(response) {
-                const status = response.status
-                if (status === 202) {
-                    window.location.href = urls.success
-                } else if (status === 409) {
-                    window.location.href = urls.virus
-                } else if (!response.ok) {
-                    window.location.href = urls.error
-                } else {
-                    setTimeout(function () {
-                        poll(urls)
-                    }, 3000)
-                }
-            })
-            .catch(function(e) {
-                console.error('Failed to reach the file upload path for checking status of upload', e.message)
-                window.location.href = `${urls.handleError}?errorCode=${e.status}&reason=${e.message})`
-            })
+    function poll(config, count) {
+        const maxPolls = Number(config['maxPolls'])
+        if(count >= maxPolls) {
+            window.location.href = `${config.handleError}?errorCode=408&reason=timed-out)`
+        } else {
+            window.fetch(config.poll)
+                .then(function(response) {
+                    const status = response.status
+                    if (status === 202) {
+                        window.location.href = config.success
+                    } else if (status === 409) {
+                        window.location.href = config.virus
+                    } else if (!response.ok) {
+                        window.location.href = config.error
+                    } else {
+                        setTimeout(function () {
+                            poll(config, count+1)
+                        }, 3000)
+                    }
+                })
+                .catch(function(e) {
+                    console.error('Failed to reach the file upload path for checking status of upload', e.message)
+                    window.location.href = `${config.handleError}?errorCode=${e.status}&reason=${e.message})`
+                })
+        }
     }
 
     function renderFormError(uploadInput) {
@@ -49,7 +54,7 @@
     const fileUploadForm = document.getElementById('fileUploadForm')
     if(fileUploadForm) {
         const progressIndicator = document.getElementById('file-upload-progress')
-        const urls = progressIndicator.dataset
+        const config = progressIndicator.dataset
         const uploadInput = document.getElementById('file-input')
         const liveRegionContent = document.getElementById('live-region-content')
         uploadInput.removeAttribute('required')
@@ -62,26 +67,28 @@
             if(files.length === 0) {
                 renderFormError(uploadInput)
             } else if(files[0].type !== 'text/xml') {
-                window.location.href = `${urls.handleError}?errorCode=415&reason=file-type`
+                window.location.href = `${config.handleError}?errorCode=415&reason=file-type`
             } else if((files[0].size / (1024 * 1024)) > 50) {
-                window.location.href = `${urls.handleError}?errorCode=413&reason=too-large`
+                window.location.href = `${config.handleError}?errorCode=413&reason=too-large`
             } else {
-                progressIndicator.appendChild(liveRegionContent.content)
-                let formData = new FormData();
-                formData.append('file', files[0]);
-                window
-                    .fetch(fileUploadForm.dataset.withPolling, {
-                        withCredentials: true,
-                        method: 'post',
-                        body: formData,
-                        mode: 'no-cors'
-                    })
-                    .then((r) => {
-                        return poll(urls)
-                    })
-                    .catch( error => {
-                        window.location.href = `${urls.handleError}?errorCode=${error.status}&reason=${error.message}`
-                    })
+                window.setTimeout(function(){ progressIndicator.appendChild(liveRegionContent.content) }, 100)
+                window.setTimeout(function(){
+                    let formData = new FormData();
+                    formData.append('file', files[0]);
+                    window
+                        .fetch(fileUploadForm.dataset.withPolling, {
+                            withCredentials: true,
+                            method: 'post',
+                            body: formData,
+                            mode: 'no-cors'
+                        })
+                        .then((r) => {
+                            return poll(config, 1)
+                        })
+                        .catch( error => {
+                            window.location.href = `${config.handleError}?errorCode=${error.status}&reason=${error.message}`
+                        })
+                }, 3000)
             }
         })
     }

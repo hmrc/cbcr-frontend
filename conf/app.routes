@@ -35,6 +35,7 @@ GET           /xml-schema-errors                                    @uk.gov.hmrc
 GET           /invalid-file-type                                    @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileInvalid
 GET           /virus-check-failed                                   @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileContainsVirus
 GET           /file-too-large                                       @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileTooLarge
+GET           /upload-timed-out                                     @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.uploadTimedOut
 GET           /failed-callback                                      @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.handleError(errorCode:Int ?= 0, reason:String ?= "Unknown")
 GET           /unregistered-gg-account                              @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.unregisteredGGAccount
 

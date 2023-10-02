@@ -21,7 +21,10 @@
 
 @(errorType: FileUploadErrorType)(implicit request: Request[_], messages: Messages)
 
-@title = @{messages("fileUploadResult.error.title")}
+@title = @{errorType match {
+    case UploadTimedOut => messages("fileUploadResult.timedOut.title")
+    case _ => messages("fileUploadResult.error.title")
+}}
 
 @layout(title, backLinkUrl = Some(routes.FileUploadController.chooseXMLFile.url)) {
 
@@ -33,10 +36,19 @@
         @messages(s"fileUploadResult.error.${errorType.toString}")
     </p>
 
-    @govukButton(Button(
-        href = Some(routes.SharedController.signOutSurvey.url),
-        content = Text(messages("form.controls.finished")),
-        attributes = Map("id" -> "btn-continue")
-    ))
+    @{errorType match {
+        case UploadTimedOut => govukButton(Button(
+            href = Some(routes.FileUploadController.chooseXMLFile.url),
+            content = Text(messages("form.controls.try-again")),
+            attributes = Map("id" -> "btn-continue")
+        ))
+        case _ =>  govukButton(Button(
+            href = Some(routes.SharedController.signOutSurvey.url),
+            content = Text(messages("form.controls.finished")),
+            attributes = Map("id" -> "btn-continue")
+        ))
+    }}
+
+
 
 }

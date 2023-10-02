@@ -21,3 +21,4 @@ sealed trait FileUploadErrorType
 case object FileTooLarge extends FileUploadErrorType
 case object FileContainsVirus extends FileUploadErrorType
 case object FileNotXml extends FileUploadErrorType
+case object UploadTimedOut extends FileUploadErrorType
