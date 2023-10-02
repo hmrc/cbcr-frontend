@@ -5,7 +5,7 @@ resolvers += Resolver.url("HMRC-open-artefacts-ivy", url("https://open.artefacts
 
 resolvers += "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/"
 
-addSbtPlugin("uk.gov.hmrc" % "sbt-auto-build" % "3.9.0")
+addSbtPlugin("uk.gov.hmrc" % "sbt-auto-build" % "3.14.0")
 
 addSbtPlugin("uk.gov.hmrc" % "sbt-distributables" % "2.2.0")
 
