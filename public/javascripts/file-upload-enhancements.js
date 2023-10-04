@@ -16,7 +16,7 @@
                     } else {
                         setTimeout(function () {
                             poll(config, count+1)
-                        }, 3000)
+                        }, Number(config.millisecondsBeforePoll))
                     }
                 })
                 .catch(function(e) {
@@ -88,7 +88,7 @@
                         .catch( error => {
                             window.location.href = `${config.handleError}?errorCode=${error.status}&reason=${error.message}`
                         })
-                }, 3000)
+                }, Number(config.millisecondsBeforePoll))
             }
         })
     }
