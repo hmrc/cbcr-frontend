@@ -148,7 +148,7 @@ class SubscriptionController @Inject()(
       } yield Tuple2(subData, cbcId)
 
       subscriptionData.fold[Result](
-        (error: CBCErrors) => BadRequest(error.toString),
+        (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
         tuple2 => {
           val subData: ETMPSubscription = tuple2._1
           val cbcId: CBCId = tuple2._2
