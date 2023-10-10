@@ -43,7 +43,7 @@ class EmailService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
         }
         .recover {
           case NonFatal(e) =>
-            logger.error("The email has failed to send :( " + email + " exception " + e)
+            logger.error(s"The email has failed to send :( - exception is $e")
             Some(false)
         })
 }

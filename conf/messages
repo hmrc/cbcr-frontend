@@ -63,6 +63,7 @@ form.controls.finished=Finished
 form.controls.returnToStart=Return to start page
 form.controls.confirmAndContinue=Confirm and continue
 form.controls.save=Save
+form.controls.try-again=Try again
 
 enterCBCId.title=Enter the country-by-country ID
 enterCBCId.formHint=This must contain the 15-character ID you received when you registered, for example: XACBC0000999999.
@@ -212,7 +213,8 @@ fileUploadResult.fileSize=Size
 fileUploadResult.caption=Report filename and file size
 
 fileUploadResult.error.title=The report does not meet the HMRC and OECD guidelines
-fileUploadResult.error.report=Download the <a href="{0}" class="govuk-link">error summary (Text, {1}KB)</a> and get the errors corrected before you check the report again.
+fileUploadResult.error.report=Download the <a href="{0}" class="govuk-link">business rule error summary (Text, {1}KB)</a> and get the errors corrected before you check the report again.
+fileUploadResult.xml.error.report=Download the <a href="{0}" class="govuk-link">XML schema error summary (Text, {1}KB)</a> and get the errors corrected before you check the report again.
 fileUploadResult.error.xml.link=XML error summary
 fileUploadResult.error.xml.message=Give it to your XML creator to correct the errors
 fileUploadResult.error.guidance=Check formatting guidance
@@ -222,7 +224,8 @@ fileUploadResult.error.oecdInfo=for the rules you must follow.
 fileUploadResult.error.FileTooLarge=The report is larger than 50MB. You will need to fix this issue before uploading it again.
 fileUploadResult.error.FileContainsVirus=The report has failed our anti-virus checks. You will need to fix this issue before uploading it again.
 fileUploadResult.error.FileNotXml=The report is the wrong file type. You must send it as an XML file.
-
+fileUploadResult.error.UploadTimedOut=The report was not uploaded because of a temporary problem.
+fileUploadResult.timedOut.title=The report has not been uploaded
 oldfileUploadResult.notYetSubmitted=We will now ask you for more information before accepting the report.
 
 enterCompanyName.title=Enter the name of the agent organisation you work for

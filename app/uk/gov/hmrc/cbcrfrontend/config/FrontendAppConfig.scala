@@ -37,6 +37,8 @@ class FrontendAppConfig @Inject()(
 
   val cbcrFrontendHost: String = loadConfig(s"cbcr-frontend.host")
   val fileUploadFrontendHost: String = loadConfig(s"file-upload-public-frontend.host")
+  val fileUploadMaxPolls: Int = loadConfig("maximum-js-polls").toInt
+  val millisecondsBeforePoll: Int = loadConfig("milliseconds-before-poll").toInt
 
   val reportAProblemPartialUrl: String =
     s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"

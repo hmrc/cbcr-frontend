@@ -566,6 +566,14 @@ class FileUploadControllerSpec
       header("Location", result).get should endWith("invalid-file-type")
       status(result) shouldBe Status.SEE_OTHER
     }
+
+    "cause a redirect to upload-timed-out if maximum requests have been made" in {
+      val request = FakeRequest()
+      authConnector.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
+      val result = controller.handleError(408, "timed-out")(request)
+      header("Location", result).get should endWith("upload-timed-out")
+      status(result) shouldBe Status.SEE_OTHER
+    }
   }
 
   "getBusinessRuleErrors" should {

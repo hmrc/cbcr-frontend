@@ -74,12 +74,16 @@ object CBCId extends Modulus23Check {
     }
   }
 
-  def apply(s: String): Option[CBCId] =
-    if (isValidCBC(s) && isCheckCorrect(s, 1)) {
-      Some(new CBCId(s))
+  private def stripCBCId(cbcId: String): String = cbcId.replaceAll("\\s+", "")
+
+  def apply(s: String): Option[CBCId] = {
+    val stripped = stripCBCId(s)
+    if (isValidCBC(stripped) && isCheckCorrect(stripped, 1)) {
+      Some(new CBCId(stripped))
     } else {
       None
     }
+  }
 
   val cbcRegex = """^X[A-Z]CBC\d{10}$"""
 
