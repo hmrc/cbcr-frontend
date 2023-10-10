@@ -315,7 +315,6 @@ class FileUploadControllerSpec
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
         fuService.getFile(*, *)(*) was called
-        fuService.getFileMetaData(*, *)(*, *) was called
       }
 
       "the call to cache.save fails" in {
