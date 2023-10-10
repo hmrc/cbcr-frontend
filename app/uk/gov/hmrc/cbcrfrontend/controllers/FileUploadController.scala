@@ -109,24 +109,25 @@ class FileUploadController @Inject()(
     * @param fileId the Id of the Xml File just uploaded.
     * @return the view to display the poller.
     */
-  def fileUploadProgress(envelopeId: String, fileId: String, hasSeen: String): Action[AnyContent] = Action.async { implicit request =>
-    authorised() {
-      cache
-        .read[EnvelopeId]
-        .subflatMap { e =>
-          if (e.value != envelopeId) {
-            logger.error("BAD_ENVELOPE_ID")
-            cache.remove()
-            Left(UnexpectedState(
-              s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
-          } else {
-            Right(Ok(views.fileUploadProgress(envelopeId, fileId, hostName, hasSeen)))
-          }
+  def fileUploadProgress(envelopeId: String, fileId: String, hasSeen: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        cache
+          .read[EnvelopeId]
+          .subflatMap { e =>
+            if (e.value != envelopeId) {
+              logger.error("BAD_ENVELOPE_ID")
+              cache.remove()
+              Left(UnexpectedState(
+                s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
+            } else {
+              Right(Ok(views.fileUploadProgress(envelopeId, fileId, hostName, hasSeen)))
+            }
 
-        }
-        .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
-        .merge
-    }
+          }
+          .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
+          .merge
+      }
   }
 
   def fileUploadPolling: Action[AnyContent] = Action.async { implicit request =>
@@ -310,12 +311,8 @@ class FileUploadController @Inject()(
     }
   }
 
-  /**
-    * Provided for the poller js function see if FileUpload have called us back and the file is ready for the next
-    * stage (validate)
-    * @param envelopeId
-    * @return
-    */
+  // Provided for the poller js function see if FileUpload have called us back and the file is ready for the next stage
+  // (validate)
   def fileUploadResponse(envelopeId: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
       logger.info(s"Received a file-upload-response query for $envelopeId")
@@ -333,40 +330,38 @@ class FileUploadController @Inject()(
         )
     }
   }
-  /**
-    * Provided for the users who do not have JavaScript polling for status to see if FU has called us back and the file is ready for the next
-    * stage (validate)
-    * @param envelopeId
-    * @param fileId
-    * @return
-    */
-  def checkFileUploadStatus(envelopeId: String, fileId: String, hasSeen: String): Action[AnyContent] = Action.async { implicit request =>
-    authorised() {
-      logger.info(s"Received a file-upload-response query for $envelopeId")
-      fileUploadService
-        .getFileUploadResponse(envelopeId)
-        .fold(
-          error => {
-            logger.error(s"File not ready: $error")
-            Redirect(routes.FileUploadController.fileUploadProgress(envelopeId, fileId, hasSeen))
-          },
-          optResponse => {
-            logger.info(s"Response back was: $optResponse")
-            optResponse match {
-              case Some(response) => response.status match {
-                case "AVAILABLE" => Redirect(routes.FileUploadController.fileValidate(envelopeId, fileId))
-                case "ERROR" =>
-                  response.reason match {
-                    case Some("VirusDetected") => Redirect(routes.FileUploadController.fileContainsVirus)
-                    case _                     => Redirect(routes.FileUploadController.handleError())
+
+  // Provided for the users who do not have JavaScript polling for status to see if FU has called us back and the file
+  // is ready for the next stage (validate)
+  def checkFileUploadStatus(envelopeId: String, fileId: String, hasSeen: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        logger.info(s"Received a file-upload-response query for $envelopeId")
+        fileUploadService
+          .getFileUploadResponse(envelopeId)
+          .fold(
+            error => {
+              logger.error(s"File not ready: $error")
+              Redirect(routes.FileUploadController.fileUploadProgress(envelopeId, fileId, hasSeen))
+            },
+            optResponse => {
+              logger.info(s"Response back was: $optResponse")
+              optResponse match {
+                case Some(response) =>
+                  response.status match {
+                    case "AVAILABLE" => Redirect(routes.FileUploadController.fileValidate(envelopeId, fileId))
+                    case "ERROR" =>
+                      response.reason match {
+                        case Some("VirusDetected") => Redirect(routes.FileUploadController.fileContainsVirus)
+                        case _                     => Redirect(routes.FileUploadController.handleError())
+                      }
+                    case _ => Redirect(routes.FileUploadController.fileUploadProgress(envelopeId, fileId, hasSeen))
                   }
                 case _ => Redirect(routes.FileUploadController.fileUploadProgress(envelopeId, fileId, hasSeen))
               }
-              case _ => Redirect(routes.FileUploadController.fileUploadProgress(envelopeId, fileId, hasSeen))
             }
-          }
-        )
-    }
+          )
+      }
   }
 
   //Turn a Case class into a map
