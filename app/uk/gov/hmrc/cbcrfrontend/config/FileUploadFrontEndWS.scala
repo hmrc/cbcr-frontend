@@ -23,7 +23,6 @@ import com.typesafe.config.Config
 import play.api.http.HttpVerbs.{POST => POST_VERB}
 import play.api.libs.ws.WSClient
 import play.api.mvc.MultipartFormData.FilePart
-import uk.gov.hmrc.cbcrfrontend.config.GenericAppConfig
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.play.http.ws._
