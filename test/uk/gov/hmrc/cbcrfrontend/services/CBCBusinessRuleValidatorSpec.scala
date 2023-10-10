@@ -93,7 +93,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
   docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
   subscriptionDataService.retrieveSubscriptionData(*)(*, *) returnsF Some(submissionData)
   runMode.env returns "Dev"
-  configuration.getOptional[String](s"${runMode.env}.oecd-schema-version") returns Some(schemaVer)
+  configuration.get[String](s"${runMode.env}.oecd-schema-version") returns schemaVer
 
   reportingEntity.queryReportingEntityDatesOverlaping(*, *)(*) returnsF Some(DatesOverlap(false))
 
