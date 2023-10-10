@@ -38,6 +38,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import java.io.{File, FileInputStream}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
+import scala.util.Using
 
 package object cbcrfrontend {
 
@@ -97,17 +98,23 @@ package object cbcrfrontend {
   implicit def utrToLeft(u: Utr): Either[Utr, CBCId] = Left[Utr, CBCId](u)
   implicit def cbcToRight(c: CBCId): Either[Utr, CBCId] = Right[Utr, CBCId](c)
 
-  def sha256Hash(file: File): String =
-    String.format(
-      "%064x",
-      new java.math.BigInteger(
-        1,
-        java.security.MessageDigest
-          .getInstance("SHA-256")
-          .digest(
-            org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(file))
-          ))
-    )
+  def sha256Hash(file: File): String = {
+    val stream = new FileInputStream(file)
+    try {
+      String.format(
+        "%064x",
+        new java.math.BigInteger(
+          1,
+          java.security.MessageDigest
+            .getInstance("SHA-256")
+            .digest(
+              org.apache.commons.io.IOUtils.toByteArray(stream)
+            ))
+      )
+    } finally {
+      stream.close()
+    }
+  }
 
   def generateMetadataFile(cache: CBCSessionCache, creds: Credentials)(
     implicit hc: HeaderCarrier,
