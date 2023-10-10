@@ -19,7 +19,7 @@ import uk.gov.hmrc.cbcrfrontend.model.{DocSpec, XMLInfo}
 
 object BusinessRulesUtil {
   def isFullyCorrected(listOne: List[String], listTwo: List[String]): Boolean = listOne.sorted == listTwo.sorted
-  private def allDocSpecs(in: XMLInfo): List[DocSpec] =
+  def allDocSpecs(in: XMLInfo): List[DocSpec] =
     in.reportingEntity.map(_.docSpec).toList ++ in.cbcReport.map(_.docSpec) ++ in.additionalInfo.map(_.docSpec)
   def extractAllCorrDocRefIds(in: XMLInfo): List[String] = allDocSpecs(in).flatMap(_.corrDocRefId).map(_.cid.toString)
   def extractAllDocTypes(in: XMLInfo): List[String] = allDocSpecs(in).map(_.docType.toString)
