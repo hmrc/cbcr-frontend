@@ -130,7 +130,7 @@ class FileUploadController @Inject()(
       }
   }
 
-  def fileUploadPolling: Action[AnyContent] = Action.async { implicit request =>
+  def fileUploadPolling: Action[AnyContent] = Action {
     Ok("no redirection required for polling")
   }
 
@@ -250,7 +250,7 @@ class FileUploadController @Inject()(
               logger.error(e.getMessage, e)
               Redirect(routes.SharedController.technicalDifficulties)
           }
-
+      case None ~ _ ~ _ => Unauthorized
     }
   }
 
@@ -296,6 +296,7 @@ class FileUploadController @Inject()(
           .map(_ => Ok(views.fileUploadError(errorType)))
           .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
           .merge
+      case None ~ _ ~ _ => Unauthorized
     }
   }
 
@@ -376,8 +377,8 @@ class FileUploadController @Inject()(
       case Organisation =>
         Json.obj(
           "affinityGroup" -> Json.toJson(affinity),
-          "utr"           -> JsString(utr.getOrElse("none retrieved").toString),
-          "cbcId"         -> JsString(cbc.getOrElse("none retrieved").toString)
+          "utr"           -> JsString(utr.map(_.toString).getOrElse("none retrieved")),
+          "cbcId"         -> JsString(cbc.map(_.toString).getOrElse("none retrieved"))
         )
       case Agent => Json.obj("affinityGroup" -> Json.toJson(affinity))
       case _     => Json.obj("affinityGroup" -> "none retrieved")
