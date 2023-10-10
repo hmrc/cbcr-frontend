@@ -20,6 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.typesafe.config.Config
+import play.api.Configuration
 import play.api.http.HttpVerbs.{POST => POST_VERB}
 import play.api.libs.ws.WSClient
 import play.api.mvc.MultipartFormData.FilePart
@@ -32,7 +33,11 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @Singleton
-class FileUploadFrontEndWS @Inject()(implicit ec: ExecutionContext, override val wsClient: WSClient, appConfig: GenericAppConfig)
+class FileUploadFrontEndWS @Inject()(
+  implicit ec: ExecutionContext,
+  override val wsClient: WSClient,
+  config: Configuration,
+  actor: ActorSystem)
     extends HttpPost with WSPost {
 
   def doFormPartPost(
@@ -55,6 +60,6 @@ class FileUploadFrontEndWS @Inject()(implicit ec: ExecutionContext, override val
   }
 
   override val hooks: Seq[HttpHook] = Seq.empty[HttpHook]
-  override lazy val actorSystem: ActorSystem = appConfig.actorSystem
-  override protected def configuration: Config = appConfig.runModeConfiguration.underlying
+  override lazy val actorSystem: ActorSystem = actor
+  override protected def configuration: Config = config.underlying
 }
