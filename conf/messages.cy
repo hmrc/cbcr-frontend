@@ -77,7 +77,7 @@ enterCBCId.error.message=cy-Try again, or email
 enterCBCId.error.message.link=cy-digitalservice.cbc@hmrc.gsi.gov.uk
 enterCBCId.error.message.invalid.id=cy-Enter a valid country-by-country ID
 
-subscribeFirst.mainHeading=cy-Enter details of the UK-registered company or partnership sending the report
+subscribeFirst.title=cy-Enter details of the UK-registered company or partnership sending the report
 subscribeFirst.noMatchingBusiness.suggestion=cy-Check the details and try again, or
 subscribeFirst.noMatchingBusiness.suggestion.link=cy-contact HMRC
 subscribeFirst.alreadyRegistered.heading=cy-This business already has a country-by-country ID
@@ -89,10 +89,11 @@ subscribeFirst.alreadyRegistered4=cy-digitalservice.cbc@hmrc.gsi.gov.uk
 subscribeFirst.alreadyRegistered5=cy-If you are registering a different business, you need to
 subscribeFirst.alreadyRegistered5.link=cy-sign in using a different Government Gateway account
 subscribeFirst.utr.label=cy-Unique Taxpayer Reference
-subscribeFirst.utr.hint=cy-This can be for Corporation Tax, or Self-Assessment for a business partnership. Enter the last 10 digits, with no spaces.
+subscribeFirst.utr.hint=cy-This is 10 numbers, for example 123456789. It will be on tax returns and other letters about Corporation Tax or Self Assessment for a business partnership. It may be called 'reference', 'UTR' or 'official use'.
 subscribeFirst.postcode.label=cy-UK postcode
 subscribeFirst.postcode.hint=cy-e.g. AA1 1AA
-subscribeFirst.error.message.utr-empty=cy-Enter a Unique Taxpayer Reference
+subscribeFirssubscribeFirst.utr.link=Find a lost UTR (opens in a new tab).
+t.error.message.utr-empty=cy-Enter a Unique Taxpayer Reference
 subscribeFirst.error.message.postcode-empty=cy-Enter a UK postcode
 
 subscribeMatchFound.mainHeading=cy-Check the company or partnership details
