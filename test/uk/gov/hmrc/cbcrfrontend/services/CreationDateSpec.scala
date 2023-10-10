@@ -42,9 +42,9 @@ class CreationDateSpec
   private val runMode: RunMode = mock[RunMode]
 
   runMode.env returns  "Dev"
-  configuration.getOptional[Int](s"${runMode.env}.default-creation-date.day") returns  Some(23)
-  configuration.getOptional[Int](s"${runMode.env}.default-creation-date.month") returns  Some(12)
-  configuration.getOptional[Int](s"${runMode.env}.default-creation-date.year") returns  Some(2020)
+  configuration.get[Int](s"${runMode.env}.default-creation-date.day") returns 23
+  configuration.get[Int](s"${runMode.env}.default-creation-date.month") returns 12
+  configuration.get[Int](s"${runMode.env}.default-creation-date.year") returns 2020
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val hc: HeaderCarrier = HeaderCarrier()
