@@ -62,7 +62,7 @@ cbc.entercbcid.label=cy-CBC Id
 
 form.controls.continue=cy-Continue
 form.controls.signOut=cy-Sign out
-form.controls.finished=cy-Finished
+form.controls.finished=cy-Sign out
 form.controls.returnToStart=cy-Return to start page
 form.controls.confirmAndContinue=cy-Confirm and continue
 form.controls.save=cy-Save
