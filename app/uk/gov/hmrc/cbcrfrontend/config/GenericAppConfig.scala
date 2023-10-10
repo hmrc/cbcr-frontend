@@ -24,8 +24,5 @@ import javax.inject.Inject
 class GenericAppConfig @Inject()(configuration: Configuration, actor: ActorSystem) {
 
   def runModeConfiguration: Configuration = configuration
-
-  def appNameConfiguration: Configuration = runModeConfiguration
-
   def actorSystem: ActorSystem = actor
 }
