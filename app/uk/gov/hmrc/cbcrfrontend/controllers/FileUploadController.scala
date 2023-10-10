@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
-import cats.implicits.{catsStdInstancesForFuture, catsSyntaxEitherId, catsSyntaxSemigroupal}
+import cats.implicits.{catsStdInstancesForFuture, catsSyntaxEitherId}
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json._
 import play.api.mvc._
@@ -147,7 +147,8 @@ class FileUploadController @Inject()(
       })
       .getOrElse(NoContent)
 
-  private def getMetaData(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): ServiceResponse[FileMetadata] =
+  private def getMetaData(envelopeId: String, fileId: String)(
+    implicit hc: HeaderCarrier): ServiceResponse[FileMetadata] =
     for {
       metadata <- fileUploadService
                    .getFileMetaData(envelopeId, fileId)
@@ -200,14 +201,12 @@ class FileUploadController @Inject()(
     authorised().retrieve(Retrievals.credentials and Retrievals.affinityGroup and cbcEnrolment) {
       case Some(creds) ~ affinity ~ enrolment =>
         val result = for {
-          file_metadata <- (fileUploadService.getFile(envelopeId, fileId) |@| getMetaData(envelopeId, fileId)).tupled
-          _             <- EitherT.right[CBCErrors](cache.save(file_metadata._2))
-          _             <- EitherT.right[CBCErrors](cache.save(FileDetails(envelopeId, fileId)))
-          _ <- EitherT.cond[Future](
-                file_metadata._2.name.toLowerCase endsWith ".xml",
-                (),
-                InvalidFileType(file_metadata._2.name))
-          schemaErrors = schemaValidator.validateSchema(file_metadata._1)
+          file     <- fileUploadService.getFile(envelopeId, fileId)
+          metadata <- getMetaData(envelopeId, fileId)
+          _        <- EitherT.right[CBCErrors](cache.save(metadata))
+          _        <- EitherT.right[CBCErrors](cache.save(FileDetails(envelopeId, fileId)))
+          _        <- EitherT.cond[Future](metadata.name.toLowerCase endsWith ".xml", (), InvalidFileType(metadata.name))
+          schemaErrors = schemaValidator.validateSchema(file)
           xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
           schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
           _ <- EitherT.right[CBCErrors](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
@@ -215,19 +214,19 @@ class FileUploadController @Inject()(
               else
                 auditFailedSubmission(creds, affinity, enrolment, "schema validation errors").flatMap(_ =>
                   EitherT.left[Result](Future.successful(FatalSchemaErrors(schemaSize).asInstanceOf[CBCErrors])))
-          result <- validateBusinessRules(file_metadata, enrolment, affinity)
+          result <- validateBusinessRules((file, metadata), enrolment, affinity)
           businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
-          length = calculateFileSize(file_metadata._2)
+          length = calculateFileSize(metadata)
           _ <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
               else if (result.isLeft) auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
               else EitherT.fromEither[Future](().asRight[CBCErrors])
-          _ = java.nio.file.Files.deleteIfExists(file_metadata._1.toPath)
+          _ = java.nio.file.Files.deleteIfExists(file.toPath)
         } yield {
           logger.info(s"FileUpload succeeded - envelopeId: $envelopeId")
           Ok(
             views.fileUploadResult(
               affinity,
-              Some(file_metadata._2.name),
+              Some(metadata.name),
               Some(length),
               schemaSize,
               businessSize,
@@ -412,9 +411,10 @@ class FileUploadController @Inject()(
     enrolment: Option[CBCEnrolment],
     reason: String)(implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
-      md        <- EitherT.right[CBCErrors](cache.readOption[FileMetadata])
-      all_error <- (EitherT.right[CBCErrors](cache.readOption[AllBusinessRuleErrors]) |@| EitherT.right[CBCErrors](cache.readOption[XMLErrors])).tupled
-      c         <- EitherT.right[CBCErrors](cache.readOption[CBCId])
+      md             <- EitherT.right[CBCErrors](cache.readOption[FileMetadata])
+      businessErrors <- EitherT.right[CBCErrors](cache.readOption[AllBusinessRuleErrors])
+      xmlErrors      <- EitherT.right[CBCErrors](cache.readOption[XMLErrors])
+      c              <- EitherT.right[CBCErrors](cache.readOption[CBCId])
       cbcId = if (enrolment.isEmpty) c else Option(enrolment.get.cbcId)
       u <- EitherT.right[CBCErrors](cache.readOption[Utr])
       utr = if (enrolment.isEmpty) u else Option(enrolment.get.utr)
@@ -429,7 +429,7 @@ class FileUploadController @Inject()(
                        "file metadata" -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String, String])),
                        "creds"         -> Json.toJson(creds),
                        "registration"  -> auditDetailAffinity(affinity.get, cbcId, utr),
-                       "errorTypes"    -> auditDetailErrors(all_error)
+                       "errorTypes"    -> auditDetailErrors((businessErrors, xmlErrors))
                      )
                    ))
                    .map {
@@ -443,7 +443,8 @@ class FileUploadController @Inject()(
   val unregisteredGGAccount: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       fileUploadUrl()
-        .map(fuu => Ok(views.chooseFile(new URI(fuu), s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation))))
+        .map(fuu =>
+          Ok(views.chooseFile(new URI(fuu), s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation))))
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
