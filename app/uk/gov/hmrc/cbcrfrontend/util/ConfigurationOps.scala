@@ -16,11 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.util
 
-import play.api.{ConfigLoader, Configuration}
+import play.api.{ConfigLoader, Configuration, PlayException}
 
 object ConfigurationOps {
   implicit class ConfigurationOps(self: Configuration) {
     def load[A](path: String)(implicit loader: ConfigLoader[A]): A =
-      self.getOptional[A](path).getOrElse(throw new Exception(s"Missing configuration key: $path"))
+      self
+        .getOptional[A](path)
+        .getOrElse(throw new PlayException("Configuration error", s"Missing configuration key: $path", null))
   }
 }
