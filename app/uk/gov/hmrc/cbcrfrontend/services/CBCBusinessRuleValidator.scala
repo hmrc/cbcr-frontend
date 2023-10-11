@@ -56,12 +56,11 @@ class CBCBusinessRuleValidator @Inject()(
   subscriptionDataService: SubscriptionDataService,
   reportingEntityDataService: ReportingEntityDataService,
   configuration: Configuration,
-  runMode: RunMode,
   creationDateService: CreationDateService)(implicit ec: ExecutionContext, cache: CBCSessionCache) {
 
   private val testData = "OECD1[0123]"
 
-  private val cbcVersion: String = configuration.get[String](s"${runMode.env}.oecd-schema-version")
+  private val cbcVersion: String = configuration.get[String]("Prod.oecd-schema-version")
 
   lazy val logger: Logger = Logger(this.getClass)
 

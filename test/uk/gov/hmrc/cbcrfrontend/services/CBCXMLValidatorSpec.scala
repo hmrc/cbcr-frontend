@@ -36,12 +36,10 @@ class CBCXMLValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
   private val invalidMultipleXmlFile2 = loadFile("cbcr-invalid-multiple-errors2.xml")
   private val fatal = loadFile("fatal.xml")
   private val configuration = new Configuration(ConfigFactory.load("application.conf"))
-  private val runMode: RunMode = mock[RunMode]
 
-  runMode.env returns "Dev"
   private val schemaVer = configuration
-    .getOptional[String](s"${runMode.env}.oecd-schema-version")
-    .getOrElse(s"${runMode.env}.oecd-schema-version does not exist")
+    .getOptional[String]("Prod.oecd-schema-version")
+    .getOrElse(s"Prod.oecd-schema-version does not exist")
   private val xmlValidationSchemaFactory: XMLValidationSchemaFactory =
     XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
   private val schemaFile = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")

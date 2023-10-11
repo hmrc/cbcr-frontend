@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import play.api.{Configuration, Environment}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -28,15 +27,12 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class BPRKnownFactsConnector @Inject()(http: HttpClient)(
   implicit ec: ExecutionContext,
-  val runModeConfiguration: Configuration,
-  val environment: Environment,
   servicesConfig: ServicesConfig) {
 
   private lazy val url = servicesConfig.baseUrl("cbcr")
 
   def lookup(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http
-      .GET[HttpResponse](generateUrl(url, utr).toString)
+    http.GET[HttpResponse](generateUrl(url, utr).toString)
 
   private def generateUrl(baseUrl: String, utr: String): URL = new URL(s"$baseUrl/cbcr/business-partner-record/$utr")
 }

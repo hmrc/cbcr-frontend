@@ -18,21 +18,14 @@ package uk.gov.hmrc.cbcrfrontend
 
 import com.google.inject.AbstractModule
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
-import play.api.{Configuration, Environment, Mode}
-import uk.gov.hmrc.cbcrfrontend.services.RunMode
+import play.api.{Configuration, Environment}
 
 import java.io.File
 
 class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule {
-
-  val mode: Mode = environment.mode
-  val runModeConfiguration: Configuration = configuration
-
   override def configure(): Unit =
     bind(classOf[XMLValidationSchema]).toInstance {
-      val runMode: RunMode = new RunMode(configuration)
-      val env = runMode.env
-      val path = s"$env.oecd-schema-version"
+      val path = "Prod.oecd-schema-version"
       val schemaVer: String = configuration.get[String](path)
       val xmlValidationSchemaFactory = XMLValidationSchemaFactory.newInstance(XMLValidationSchema.SCHEMA_ID_W3C_SCHEMA)
       val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")

@@ -33,14 +33,11 @@ object xmlStatusEnum extends Enumeration {
 @Singleton
 class CreationDateService @Inject()(
   configuration: Configuration,
-  runMode: RunMode,
   reportingEntityDataService: ReportingEntityDataService)(implicit ec: ExecutionContext) {
 
-  val env: String = runMode.env
-
-  private val creationDay = configuration.get[Int](s"$env.default-creation-date.day")
-  private val creationMonth = configuration.get[Int](s"$env.default-creation-date.month")
-  private val creationYear = configuration.get[Int](s"$env.default-creation-date.year")
+  private val creationDay = configuration.get[Int]("Prod.default-creation-date.day")
+  private val creationMonth = configuration.get[Int]("Prod.default-creation-date.month")
+  private val creationYear = configuration.get[Int]("Prod.default-creation-date.year")
 
   def isDateValid(in: XMLInfo)(implicit hc: HeaderCarrier): Future[xmlStatusEnum.xmlStatus] = {
 
