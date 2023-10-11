@@ -41,7 +41,7 @@ class SubscriptionDataServiceSpec
   private val runModeConfiguration = mock[Configuration]
   private val mockHttp = mock[HttpClient]
   private val servicesConfig = mock[ServicesConfig]
-  private val sds = new SubscriptionDataService(runModeConfiguration, mockHttp, servicesConfig)
+  private val sds = new SubscriptionDataService(mockHttp, servicesConfig)
   private val cbcId = CBCId.create(56).toOption
   private val utr = Utr("7000000001")
   private val idUtr: Either[Utr, CBCId] = Left(utr)

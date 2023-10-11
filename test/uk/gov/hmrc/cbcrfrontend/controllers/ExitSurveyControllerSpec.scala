@@ -45,10 +45,7 @@ class ExitSurveyControllerSpec
   private val configuration = mock[Configuration]
   private val auditC = mock[AuditConnector]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  private val runMode = mock[RunMode]
   private val views = app.injector.instanceOf[Views]
-
-  runMode.env returns "Dev"
 
   private val controller = new ExitSurveyController(configuration, auditC, mcc, views)
 

@@ -18,8 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.EitherT
 import cats.instances.future._
+import play.api.Logger
 import play.api.http.Status
-import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
@@ -32,14 +32,13 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
-class SubscriptionDataService @Inject()(
-  val runModeConfiguration: Configuration,
-  http: HttpClient,
-  servicesConfig: ServicesConfig) {
+class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: ServicesConfig) {
 
   private lazy val logger = Logger(this.getClass)
 
-  private implicit lazy val url: ServiceUrl[CbcrsUrl] = new ServiceUrl[CbcrsUrl] { val url: String = servicesConfig.baseUrl("cbcr") }
+  private implicit lazy val url: ServiceUrl[CbcrsUrl] = new ServiceUrl[CbcrsUrl] {
+    val url: String = servicesConfig.baseUrl("cbcr")
+  }
 
   def retrieveSubscriptionData(id: Either[Utr, CBCId])(
     implicit hc: HeaderCarrier,

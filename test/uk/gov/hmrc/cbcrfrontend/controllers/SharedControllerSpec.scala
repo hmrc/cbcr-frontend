@@ -56,7 +56,6 @@ class SharedControllerSpec
   private val subService = mock[SubscriptionDataService]
   private val bprKF = mock[BPRKnownFactsService]
   private val auditC: AuditConnector = mock[AuditConnector]
-  private val runMode = mock[RunMode]
   private val env = mock[Environment]
   private val authC = mock[AuthConnector]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
@@ -68,7 +67,6 @@ class SharedControllerSpec
 
   cache.save[Utr](*)(*, *, *) returns Future.successful(
     CacheMap("id", Map.empty[String, JsValue]))
-  runMode.env returns "Dev"
 
   private val controller =
     new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc, views)(cache, config, feConfig, ec)

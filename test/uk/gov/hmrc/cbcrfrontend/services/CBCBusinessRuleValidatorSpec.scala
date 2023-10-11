@@ -45,7 +45,6 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
   private val subscriptionDataService = mock[SubscriptionDataService]
   private val reportingEntity = mock[ReportingEntityDataService]
   private val configuration = mock[Configuration]
-  private val runMode = mock[RunMode]
   private val creationDateService = mock[CreationDateService]
   implicit private val cache: CBCSessionCache = mock[CBCSessionCache]
 
@@ -92,8 +91,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
   private val schemaVer = "2.0"
   docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
   subscriptionDataService.retrieveSubscriptionData(*)(*, *) returnsF Some(submissionData)
-  runMode.env returns "Dev"
-  configuration.get[String](s"${runMode.env}.oecd-schema-version") returns schemaVer
+  configuration.get[String](s"Prod.oecd-schema-version") returns schemaVer
 
   reportingEntity.queryReportingEntityDatesOverlaping(*, *)(*) returnsF Some(DatesOverlap(false))
 
@@ -201,7 +199,6 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     subscriptionDataService,
     reportingEntity,
     configuration,
-    runMode,
     creationDateService)
 
   "The CBCBusinessRuleValidator" should {
