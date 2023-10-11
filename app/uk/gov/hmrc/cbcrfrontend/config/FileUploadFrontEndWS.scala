@@ -29,8 +29,7 @@ import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.play.http.ws._
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class FileUploadFrontEndWS @Inject()(
@@ -54,7 +53,7 @@ class FileUploadFrontEndWS @Inject()(
     val source = Source(FilePart(fileName, fileName, Some(contentType), Source.single(body)) :: Nil)
 
     withTracing(POST_VERB, url) {
-      val httpResponse = buildRequest(url, Seq()).withHttpHeaders(headers: _*).post(source).map(WSHttpResponse(_))
+      val httpResponse = buildRequest(url, headers).post(source).map(WSHttpResponse(_))
       mapErrors(POST_VERB, url, httpResponse).map(rds.read(POST_VERB, url, _))
     }
   }
