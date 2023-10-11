@@ -6,8 +6,6 @@ import play.sbt.PlayImport.*
 
 val appName = "cbcr-frontend"
 
-val silencerVersion = "1.7.13"
-
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
@@ -16,20 +14,11 @@ lazy val microservice = Project(appName, file("."))
     majorVersion := 1,
     scalaVersion := "2.13.11",
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test(),
-    // ***************
-    // Use the silencer plugin to suppress warnings
-    scalacOptions ++= Seq(
-      "-P:silencer:pathFilters=routes;views"
-    ),
-    libraryDependencies ++= Seq(
-      compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-      "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
-    )
-    // ***************
   )
   .settings(
-    PlayKeys.playDefaultPort := 9696
-  )
+    scalacOptions += "-Wconf:src=routes/.*:s",
+    scalacOptions += "-Wconf:cat=unused-imports&src=html/.*:s")
+  .settings(PlayKeys.playDefaultPort := 9696)
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings *)
   // Disable default sbt Test options (might change with new versions of bootstrap)
