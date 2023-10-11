@@ -17,26 +17,24 @@
 package uk.gov.hmrc.cbcrfrontend.config
 
 import play.api.Configuration
+import uk.gov.hmrc.cbcrfrontend.util.ConfigurationOps.ConfigurationOps
 
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class FrontendAppConfig @Inject()(val runModeConfiguration: Configuration) {
-  private def loadConfig(key: String) = runModeConfiguration.get[String](key)
+class FrontendAppConfig @Inject()(val config: Configuration) {
+  val cbcrFrontendHost: String = config.load[String](s"cbcr-frontend.host")
+  val fileUploadMaxPolls: Int = config.load[Int]("maximum-js-polls")
+  val millisecondsBeforePoll: Int = config.load[Int]("milliseconds-before-poll")
 
-  val cbcrFrontendHost: String = loadConfig(s"cbcr-frontend.host")
-  val fileUploadMaxPolls: Int = loadConfig("maximum-js-polls").toInt
-  val millisecondsBeforePoll: Int = loadConfig("milliseconds-before-poll").toInt
+  val governmentGatewaySignInUrl: String = config.load[String]("government-gateway-sign-in-url")
+  val governmentGatewaySignOutUrl: String = config.load[String]("government-gateway-sign-out-url")
 
-  val governmentGatewaySignInUrl: String = loadConfig("government-gateway-sign-in-url")
-  val governmentGatewaySignOutUrl: String = loadConfig("government-gateway-sign-out-url")
-
-  val cbcrFrontendBaseUrl: String = loadConfig("cbcr-frontend-base-url")
-  val cbcrGuidanceUrl: String = loadConfig("cbcr-guidance-url")
-  val cbcrGuidanceRegisterUrl: String = loadConfig("cbcr-guidance-register-url")
-  val cbcrOecdGuideUrl: String = loadConfig("cbcr-OECD-guide-url")
-  val emailDigitalService: String = loadConfig("email.digitalservice")
-  val cbcrGuidanceUtrUrl: String = loadConfig("cbcr-guidance-utr-url")
-
-  def fallbackURLForLanguageSwitcher: String = loadConfig("languageSwitcher.fallback.url")
+  val cbcrFrontendBaseUrl: String = config.load[String]("cbcr-frontend-base-url")
+  val cbcrGuidanceUrl: String = config.load[String]("cbcr-guidance-url")
+  val cbcrGuidanceRegisterUrl: String = config.load[String]("cbcr-guidance-register-url")
+  val cbcrOecdGuideUrl: String = config.load[String]("cbcr-OECD-guide-url")
+  val emailDigitalService: String = config.load[String]("email.digitalservice")
+  val cbcrGuidanceUtrUrl: String = config.load[String]("cbcr-guidance-utr-url")
+  val fallbackURLForLanguageSwitcher: String = config.load[String]("languageSwitcher.fallback.url")
 }
