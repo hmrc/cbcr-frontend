@@ -26,7 +26,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Configuration
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -35,14 +35,13 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class CreationDateSpec
-    extends AnyWordSpec with Matchers with BeforeAndAfterEach with GuiceOneAppPerSuite with IdiomaticMockito with MockitoCats {
+    extends AnyWordSpec with Matchers with BeforeAndAfterEach with GuiceOneAppPerSuite with IdiomaticMockito
+    with MockitoCats {
 
   private val reportingEntity = mock[ReportingEntityDataService]
-  private val configuration = mock[Configuration]
+  private val configuration = mock[FrontendAppConfig]
 
-  configuration.get[Int]("Prod.default-creation-date.day") returns 23
-  configuration.get[Int]("Prod.default-creation-date.month") returns 12
-  configuration.get[Int]("Prod.default-creation-date.year") returns 2020
+  configuration.defaultCreationDate returns LocalDate.of(2020, 12, 23)
 
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -140,20 +139,14 @@ class CreationDateSpec
       }
 
       "reportingEntity creationDate is Null and default date is more than 3 years ago" in {
-        configuration.getOptional[Int]("Prod.default-creation-date.year") returns Some(2017)
-        configuration.getOptional[Int]("Prod.default-creation-date.year") returns Some(2010)
-        configuration.getOptional[Int]("Prod.default-creation-date.day") returns Some(23)
-        configuration.getOptional[Int]("Prod.default-creation-date.month") returns Some(12)
+        configuration.defaultCreationDate returns LocalDate.of(2010, 12, 23)
         val cds2 = new CreationDateService(configuration, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
         result shouldBe xmlStatusEnum.dateOld
       }
 
       "reportingEntity creationDate is missing" in {
-        configuration.getOptional[Int]("Prod.default-creation-date.year") returns Some(2017)
-        configuration.getOptional[Int]("Prod.default-creation-date.year") returns Some(2010)
-        configuration.getOptional[Int]("Prod.default-creation-date.day") returns Some(23)
-        configuration.getOptional[Int]("Prod.default-creation-date.month") returns Some(12)
+        configuration.defaultCreationDate returns LocalDate.of(2010, 12, 23)
         reportingEntity.queryReportingEntityData(*)(*) returnsF None
         val cds2 = new CreationDateService(configuration, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
@@ -161,11 +154,9 @@ class CreationDateSpec
       }
 
       "There's an error retrieving reportingEntityData" in {
-        configuration.getOptional[Int]("Prod.default-creation-date.year") returns Some(2017)
-        configuration.getOptional[Int]("Prod.default-creation-date.year") returns Some(2010)
-        configuration.getOptional[Int]("Prod.default-creation-date.day") returns Some(23)
-        configuration.getOptional[Int]("Prod.default-creation-date.month") returns Some(12)
-        reportingEntity.queryReportingEntityData(*)(*) returns EitherT[Future, CBCErrors, Option[ReportingEntityData]](Future.successful(Left(UnexpectedState(s"Call to QueryReportingEntity failed"))))
+        configuration.defaultCreationDate returns LocalDate.of(2010, 12, 23)
+        reportingEntity.queryReportingEntityData(*)(*) returns EitherT[Future, CBCErrors, Option[ReportingEntityData]](
+          Future.successful(Left(UnexpectedState(s"Call to QueryReportingEntity failed"))))
         val cds2 = new CreationDateService(configuration, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
         result shouldBe xmlStatusEnum.dateError

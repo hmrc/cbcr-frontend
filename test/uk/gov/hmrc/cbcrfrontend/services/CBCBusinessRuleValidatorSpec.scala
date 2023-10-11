@@ -24,8 +24,8 @@ import org.mockito.cats.IdiomaticMockitoCats.StubbingOpsCats
 import org.mockito.cats.MockitoCats
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.Configuration
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.emailaddress.EmailAddress
@@ -44,7 +44,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
   private val docRefIdService = mock[DocRefIdService]
   private val subscriptionDataService = mock[SubscriptionDataService]
   private val reportingEntity = mock[ReportingEntityDataService]
-  private val configuration = mock[Configuration]
+  private val configuration = mock[FrontendAppConfig]
   private val creationDateService = mock[CreationDateService]
   implicit private val cache: CBCSessionCache = mock[CBCSessionCache]
 
@@ -91,7 +91,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
   private val schemaVer = "2.0"
   docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
   subscriptionDataService.retrieveSubscriptionData(*)(*, *) returnsF Some(submissionData)
-  configuration.get[String](s"Prod.oecd-schema-version") returns schemaVer
+  configuration.oecdSchemaVersion returns schemaVer
 
   reportingEntity.queryReportingEntityDatesOverlaping(*, *)(*) returnsF Some(DatesOverlap(false))
 
