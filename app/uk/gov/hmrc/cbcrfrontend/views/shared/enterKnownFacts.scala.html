@@ -14,6 +14,7 @@
  * limitations under the License.
  *@
 
+@import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.views.html._
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
@@ -21,15 +22,22 @@
 @import uk.gov.hmrc.auth.core.AffinityGroup._
 
 @this(
-        layout: Layout,
-        formHelper: FormWithCSRF,
-        govukErrorSummary: GovukErrorSummary,
-        govukButton: GovukButton,
-        govukInput: GovukInput,
-        govukFieldset: GovukFieldset
+    layout: Layout,
+    formHelper: FormWithCSRF,
+    govukErrorSummary: GovukErrorSummary,
+    govukButton: GovukButton,
+    govukInput: GovukInput,
+    govukFieldset: GovukFieldset
 )
 
-@(form: Form[BPRKnownFacts], userType: AffinityGroup)(implicit request: Request[_], messages: Messages)
+@(
+  form: Form[BPRKnownFacts],
+  userType: AffinityGroup
+)( implicit 
+  request: Request[_],
+  messages: Messages,
+  config:FrontendAppConfig
+)
 
 @utrKey = @{"utr"}
 @postcodeKey = @{"postCode"}
@@ -69,7 +77,6 @@
 }
 
 @layout(title, backLinkUrl = backLink, hasErrors) {
-
     @if(hasErrors) {
         @govukErrorSummary(ErrorSummary(
             title = Text(messages("start.error.heading")),
@@ -96,4 +103,8 @@
             content = Text(messages("form.controls.continue"))
         ))
     }
+
+    <p class="govuk-body">
+        <a class="govuk-link" target="_blank" rel="noreferrer noopener" href="@config.cbcrGuidanceUtrUrl">@messages("subscribeFirst.utr.link")</a>
+    </p>
 }

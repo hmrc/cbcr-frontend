@@ -55,6 +55,7 @@ class FrontendAppConfig @Inject()(
   val cbcrGuidanceRegisterUrl: String = loadConfig("cbcr-guidance-register-url")
   val cbcrOecdGuideUrl: String = loadConfig("cbcr-OECD-guide-url")
   val emailDigitalService: String = loadConfig("email.digitalservice")
+  val cbcrGuidanceUtrUrl: String = loadConfig("cbcr-guidance-utr-url")
 
   val cbcEnhancementFeature: Boolean = loadConfig("features.cbcEnhancementFeature").toBoolean
 
