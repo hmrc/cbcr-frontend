@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.instances.all._
-import play.api.Configuration
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -31,30 +30,8 @@ object xmlStatusEnum extends Enumeration {
 }
 
 @Singleton
-class CreationDateService @Inject()(
-  configuration: Configuration,
-  runMode: RunMode,
-  reportingEntityDataService: ReportingEntityDataService)(implicit ec: ExecutionContext) {
-
-  val env: String = runMode.env
-
-  private val creationDay = configuration
-    .getOptional[Int](s"$env.default-creation-date.day")
-    .getOrElse(
-      throw new Exception(s"Missing configuration key: $env.default-creation-date.day")
-    )
-
-  private val creationMonth = configuration
-    .getOptional[Int](s"$env.default-creation-date.month")
-    .getOrElse(
-      throw new Exception(s"Missing configuration key: $env.default-creation-date.month")
-    )
-
-  private val creationYear = configuration
-    .getOptional[Int](s"$env.default-creation-date.year")
-    .getOrElse(
-      throw new Exception(s"Missing configuration key: $env.default-creation-date.year")
-    )
+class CreationDateService @Inject()(config: FrontendAppConfig, reportingEntityDataService: ReportingEntityDataService)(
+  implicit ec: ExecutionContext) {
 
   def isDateValid(in: XMLInfo)(implicit hc: HeaderCarrier): Future[xmlStatusEnum.xmlStatus] = {
 
@@ -72,7 +49,7 @@ class CreationDateService @Inject()(
               UnexpectedState(s"Error communicating with backend: $cbcErrors")
               xmlStatusEnum.dateError
             case Right(Some(red)) =>
-              val cd: LocalDate = red.creationDate.getOrElse(LocalDate.of(creationYear, creationMonth, creationDay))
+              val cd: LocalDate = red.creationDate.getOrElse(config.defaultCreationDate)
               val lcd: LocalDate = in.creationDate.getOrElse(LocalDate.now())
               if (Period.between(cd, lcd).getYears < 3) xmlStatusEnum.dateCorrect
               else xmlStatusEnum.dateOld

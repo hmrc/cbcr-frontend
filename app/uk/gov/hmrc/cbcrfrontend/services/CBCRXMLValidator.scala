@@ -40,9 +40,15 @@ class CBCRXMLValidator @Inject()(xmlValidationSchema: XMLValidationSchema) {
 
     try {
       val xmlStreamReader: XMLStreamReader2 = xmlInputFactory2.createXMLStreamReader(input)
-      xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
-      xmlStreamReader.validateAgainst(xmlValidationSchema)
-      while (xmlStreamReader.hasNext) { xmlStreamReader.next }
+      try {
+        xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
+        xmlStreamReader.validateAgainst(xmlValidationSchema)
+        while (xmlStreamReader.hasNext) {
+          xmlStreamReader.next
+        }
+      } finally {
+        xmlStreamReader.closeCompletely()
+      }
     } catch {
       case e: WstxException =>
         xmlErrorHandler.reportProblem(
