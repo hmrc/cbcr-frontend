@@ -20,9 +20,10 @@ import cats.data.Validated.{Invalid, Valid}
 import cats.data._
 import cats.instances.all._
 import cats.syntax.all._
-import play.api.{Configuration, Logger}
+import play.api.Logger
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.util.BusinessRulesUtil
 import uk.gov.hmrc.cbcrfrontend.{FutureValidBusinessResult, ValidBusinessResult, applicativeInstance, functorInstance}
@@ -55,12 +56,12 @@ class CBCBusinessRuleValidator @Inject()(
   docRefIdService: DocRefIdService,
   subscriptionDataService: SubscriptionDataService,
   reportingEntityDataService: ReportingEntityDataService,
-  configuration: Configuration,
+  configuration: FrontendAppConfig,
   creationDateService: CreationDateService)(implicit ec: ExecutionContext, cache: CBCSessionCache) {
 
   private val testData = "OECD1[0123]"
 
-  private val cbcVersion: String = configuration.get[String]("Prod.oecd-schema-version")
+  private val cbcVersion: String = configuration.oecdSchemaVersion
 
   lazy val logger: Logger = Logger(this.getClass)
 
@@ -70,9 +71,10 @@ class CBCBusinessRuleValidator @Inject()(
   private def extractXMLInfo(in: RawXMLInfo): ValidBusinessResult[XMLInfo] =
     if (in.numBodies > 1) MultipleCbcBodies.invalidNel[XMLInfo]
     else {
-      (extractCbcOecdVersion(in.cbcVal) *>
-        in.xmlEncoding.map(extractXmlEncodingVal).sequence[ValidBusinessResult, Unit] *>
-        extractMessageSpec(in.messageSpec),
+      (
+        extractCbcOecdVersion(in.cbcVal) *>
+          in.xmlEncoding.map(extractXmlEncodingVal).sequence[ValidBusinessResult, Unit] *>
+          extractMessageSpec(in.messageSpec),
         in.reportingEntity.map(extractReportingEntity).sequence[ValidBusinessResult, ReportingEntity],
         in.cbcReport.map(extractCBCReports).sequence[ValidBusinessResult, CbcReports],
         in.additionalInfo.map(extractAdditionalInfo).sequence[ValidBusinessResult, AdditionalInfo])
@@ -90,10 +92,10 @@ class CBCBusinessRuleValidator @Inject()(
   private def extractMessageSpec(in: RawMessageSpec): ValidBusinessResult[MessageSpec] =
     (
       extractMessageRefID(in),
-        extractReceivingCountry(in),
-        extractSendingEntityIn(in),
-        extractReportingPeriod(in),
-        extractMessageTypeIndic(in)
+      extractReceivingCountry(in),
+      extractSendingEntityIn(in),
+      extractReportingPeriod(in),
+      extractMessageTypeIndic(in)
     ).mapN(
       (messageRefID, receivingCountry, sendingEntityIn, reportingPeriod, messageTypeInic) =>
         MessageSpec(
@@ -108,10 +110,8 @@ class CBCBusinessRuleValidator @Inject()(
     )
 
   private def extractReportingEntity(in: RawReportingEntity): ValidBusinessResult[ReportingEntity] =
-    (extractReportingRole(in),
-      extractDocSpec(in.docSpec, ENT),
-      extractTIN(in),
-      extractEntityReportingPeriod(in)).mapN(ReportingEntity(_, _, _, in.name, in.city, _))
+    (extractReportingRole(in), extractDocSpec(in.docSpec, ENT), extractTIN(in), extractEntityReportingPeriod(in))
+      .mapN(ReportingEntity(_, _, _, in.name, in.city, _))
 
   private def extractCBCReports(in: RawCbcReports): ValidBusinessResult[CbcReports] =
     extractDocSpec(in.docSpec, REP).map(CbcReports(_))
@@ -120,7 +120,8 @@ class CBCBusinessRuleValidator @Inject()(
     extractDocSpec(in.docSpec, ADD).map(AdditionalInfo(_, in.otherInfo))
 
   private def extractDocSpec(d: RawDocSpec, parentGroupElement: ParentGroupElement): ValidBusinessResult[DocSpec] =
-    (extractDocTypeInidc(d.docType),
+    (
+      extractDocTypeInidc(d.docType),
       extractDocRefId(d.docRefId, parentGroupElement),
       extractCorrDocRefId(d.corrDocRefId, parentGroupElement)).mapN(DocSpec(_, _, _, d.corrMessageRefId))
 
@@ -347,8 +348,8 @@ class CBCBusinessRuleValidator @Inject()(
   private def validateMessageTypes(r: XMLInfo): ValidBusinessResult[XMLInfo] =
     r.messageSpec.messageType.contains(CBC401) match {
       case true if determineMessageTypeIndic(r).contains(CBC401) => r.validNel
-      case true                                                   => MessageTypeIndicDocTypeIncompatible.invalidNel
-      case false                                                  => r.validNel
+      case true                                                  => MessageTypeIndicDocTypeIncompatible.invalidNel
+      case false                                                 => r.validNel
     }
 
   /** Ensure there is not a mixture of OECD1 and other DocTypes within the document */
@@ -628,16 +629,14 @@ class CBCBusinessRuleValidator @Inject()(
         r.docSpec.docType == OECD2 ||
           r.docSpec.docType == OECD3 ||
           r.docSpec.docType == OECD0)
-
-    import uk.gov.hmrc.cbcrfrontend.services.xmlStatusEnum
     if (CBCReportsContainCorrectionsOrDeletions || AdditionalInfoContainsCorrectionsOrDeletions || ReportingEntityContainsCorrectionsOrDeletionsOrResent) {
       creationDateService
         .isDateValid(xmlInfo)
         .map {
           case xmlStatusEnum.dateCorrect => xmlInfo.validNel
           case xmlStatusEnum.dateMissing => CorrectedFileDateMissing.invalidNel
-          case xmlStatusEnum.dateError => CorrectedFileDateMissing.invalidNel
-          case xmlStatusEnum.dateOld => CorrectedFileTooOld.invalidNel
+          case xmlStatusEnum.dateError   => CorrectedFileDateMissing.invalidNel
+          case xmlStatusEnum.dateOld     => CorrectedFileTooOld.invalidNel
         }
     } else {
       xmlInfo.validNel
@@ -697,7 +696,6 @@ class CBCBusinessRuleValidator @Inject()(
           }
           .subflatMap {
             case Some(reportEntityData) =>
-
               val reportEntityDocRefId = reportEntityData.reportingEntityDRI.show
 
               if (reportEntityDocRefId.contains("OECD3")) {

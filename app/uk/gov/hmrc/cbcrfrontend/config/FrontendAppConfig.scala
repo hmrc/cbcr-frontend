@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.config
 import play.api.Configuration
 import uk.gov.hmrc.cbcrfrontend.util.ConfigurationOps.ConfigurationOps
 
+import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
 
 @Singleton
@@ -37,4 +38,12 @@ class FrontendAppConfig @Inject()(val config: Configuration) {
   val emailDigitalService: String = config.load[String]("email.digitalservice")
   val cbcrGuidanceUtrUrl: String = config.load[String]("cbcr-guidance-utr-url")
   val fallbackURLForLanguageSwitcher: String = config.load[String]("languageSwitcher.fallback.url")
+  val oecdSchemaVersion: String = config.load[String]("Prod.oecd-schema-version")
+
+  val defaultCreationDate: LocalDate = {
+    val creationDay = config.load[Int]("Prod.default-creation-date.day")
+    val creationMonth = config.load[Int]("Prod.default-creation-date.month")
+    val creationYear = config.load[Int]("Prod.default-creation-date.year")
+    LocalDate.of(creationYear, creationMonth, creationDay)
+  }
 }
