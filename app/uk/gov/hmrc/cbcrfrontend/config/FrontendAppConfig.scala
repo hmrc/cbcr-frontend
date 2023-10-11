@@ -29,8 +29,7 @@ class FrontendAppConfig @Inject()(
   servicesConfig: ServicesConfig) {
 
   val mode = environment.mode
-  private def loadConfig(key: String) =
-    runModeConfiguration.getOptional[String](key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
+  private def loadConfig(key: String) = runModeConfiguration.get[String](key)
 
   val contactHost = runModeConfiguration.getOptional[String](s"contact-frontend.host").getOrElse("")
   val contactFormServiceIdentifier = "CountryByCountryReporting"

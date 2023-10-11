@@ -38,23 +38,9 @@ class CreationDateService @Inject()(
 
   val env: String = runMode.env
 
-  private val creationDay = configuration
-    .getOptional[Int](s"$env.default-creation-date.day")
-    .getOrElse(
-      throw new Exception(s"Missing configuration key: $env.default-creation-date.day")
-    )
-
-  private val creationMonth = configuration
-    .getOptional[Int](s"$env.default-creation-date.month")
-    .getOrElse(
-      throw new Exception(s"Missing configuration key: $env.default-creation-date.month")
-    )
-
-  private val creationYear = configuration
-    .getOptional[Int](s"$env.default-creation-date.year")
-    .getOrElse(
-      throw new Exception(s"Missing configuration key: $env.default-creation-date.year")
-    )
+  private val creationDay = configuration.get[Int](s"$env.default-creation-date.day")
+  private val creationMonth = configuration.get[Int](s"$env.default-creation-date.month")
+  private val creationYear = configuration.get[Int](s"$env.default-creation-date.year")
 
   def isDateValid(in: XMLInfo)(implicit hc: HeaderCarrier): Future[xmlStatusEnum.xmlStatus] = {
 
