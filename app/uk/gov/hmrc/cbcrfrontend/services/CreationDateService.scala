@@ -30,7 +30,7 @@ object xmlStatusEnum extends Enumeration {
 }
 
 @Singleton
-class CreationDateService @Inject()(reportingEntityDataService: ReportingEntityDataService, config: FrontendAppConfig)(
+class CreationDateService @Inject()(config: FrontendAppConfig, reportingEntityDataService: ReportingEntityDataService)(
   implicit ec: ExecutionContext) {
 
   def isDateValid(in: XMLInfo)(implicit hc: HeaderCarrier): Future[xmlStatusEnum.xmlStatus] = {
