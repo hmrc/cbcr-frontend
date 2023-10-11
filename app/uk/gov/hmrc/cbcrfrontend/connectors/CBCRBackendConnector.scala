@@ -20,7 +20,7 @@ import cats.syntax.show._
 import com.typesafe.config.Config
 import configs.syntax._
 import play.api.Configuration
-import play.api.libs.json.{JsNull, JsString, JsValue, Json}
+import play.api.libs.json.{JsNull, JsString, JsValue}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}

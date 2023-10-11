@@ -28,7 +28,6 @@
 @(form:Form[_], envelopeId: String, fileId: String)(implicit request: Request[_], messages: Messages)
 
 @companyNameKey = @{"companyName"}
-@error = @{form.error("companyName").isDefined}
 
 @title = @{messages("enterCompanyName.title")}
 

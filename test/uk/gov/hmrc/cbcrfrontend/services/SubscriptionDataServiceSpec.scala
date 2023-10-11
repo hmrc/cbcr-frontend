@@ -21,11 +21,10 @@ import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Configuration
 import play.api.http.Status
 import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
-import uk.gov.hmrc.cbcrfrontend.model.{BusinessPartnerRecord, CBCId, EtmpAddress, OrganisationResponse, SubscriberContact, SubscriptionDetails, Utr}
+import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -38,7 +37,6 @@ class SubscriptionDataServiceSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val reads: HttpReads[HttpResponse] = uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-  private val runModeConfiguration = mock[Configuration]
   private val mockHttp = mock[HttpClient]
   private val servicesConfig = mock[ServicesConfig]
   private val sds = new SubscriptionDataService(mockHttp, servicesConfig)
