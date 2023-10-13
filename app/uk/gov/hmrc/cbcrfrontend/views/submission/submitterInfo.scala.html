@@ -24,8 +24,7 @@
         formHelper: FormWithCSRF,
         govukErrorSummary: GovukErrorSummary,
         govukInput: GovukInput,
-        govukButton: GovukButton,
-        govukFieldset: GovukFieldset
+        govukButton: GovukButton
 )
 
 @(form:Form[_], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
@@ -40,49 +39,9 @@
     case Some(Organisation) => routes.FileUploadController.fileValidate(envelopeId, fileId).url
     case _                  => routes.SubmissionController.enterCompanyName.url
 }}
-@fieldsetHtml = {
-    @govukInput(Input(
-        id = fullNameKey,
-        name = fullNameKey,
-        label = Label(
-            content = Text(messages("submitterInfo.fullName"))
-        ),
-        classes = "govuk-!-width-two-thirds",
-        value = form.data.get(fullNameKey),
-        errorMessage = if(form.error(fullNameKey).isDefined) Some(ErrorMessage(content = Text(fullNameSingleError))) else None,
-        autocomplete = Some("name")
-    ))
-    @govukInput(Input(
-        id = contactPhoneKey,
-        name = contactPhoneKey,
-        inputType = "tel",
-        label = Label(
-            content = Text(messages("submitterInfo.phoneNumber"))
-        ),
-        hint = Some(Hint(
-            content = Text(messages("submitterInfo.phoneNumber.hint"))
-        )),
-        classes = "govuk-!-width-two-thirds",
-        value = form.data.get(contactPhoneKey),
-        errorMessage = form.error(contactPhoneKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
-        autocomplete = Some("tel")
-    ))
-    @govukInput(Input(
-        id = emailKey,
-        name = emailKey,
-        inputType = "email",
-        label = Label(
-            content = Text(messages("submitterInfo.emailAddress"))
-        ),
-        classes = "govuk-!-width-two-thirds",
-        value = form.data.get(emailKey),
-        errorMessage = form.error(emailKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
-        autocomplete = Some("email")
-    ))
-}
 
 @layout(title, hasErrors = hasErrors, backLinkUrl = Some(backLink)) {
-
+<h1 class="govuk-heading-l">@title</h1>
     @if(form.hasErrors) {
         @govukErrorSummary(ErrorSummary(
             title = Text(messages("start.error.heading")),
@@ -93,20 +52,49 @@
             attributes = Map("id" -> "error-summary-display")
         ))
     }
-
     @formHelper(routes.SubmissionController.submitSubmitterInfo) {
-        @govukFieldset(Fieldset(
-            legend = Some(Legend(
-                content = Text(title),
-                classes = "govuk-fieldset__legend--l",
-                isPageHeading = true
-            )),
-            html = fieldsetHtml
+        @govukInput(Input(
+            id = fullNameKey,
+            name = fullNameKey,
+            label = Label(
+            content = Text(messages("submitterInfo.fullName"))
+            ),
+            classes = "govuk-!-width-two-thirds",
+            value = form.data.get(fullNameKey),
+            errorMessage = if(form.error(fullNameKey).isDefined) Some(ErrorMessage(content = Text(fullNameSingleError))) else None,
+            autocomplete = Some("name")
         ))
+        @govukInput(Input(
+            id = contactPhoneKey,
+            name = contactPhoneKey,
+            inputType = "tel",
+            label = Label(
+                content = Text(messages("submitterInfo.phoneNumber"))
+                ),
+            hint = Some(Hint(
+                content = Text(messages("submitterInfo.phoneNumber.hint"))
+                )),
+            classes = "govuk-!-width-two-thirds",
+            value = form.data.get(contactPhoneKey),
+            errorMessage = form.error(contactPhoneKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+            autocomplete = Some("tel")
+        ))
+        @govukInput(Input(
+            id = emailKey,
+            name = emailKey,
+            inputType = "email",
+            label = Label(
+                content = Text(messages("submitterInfo.emailAddress"))
+                ),
+            classes = "govuk-!-width-two-thirds",
+            value = form.data.get(emailKey),
+            errorMessage = form.error(emailKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+            autocomplete = Some("email")
+        ))
+
         @govukButton(Button(
             content = Text(messages("form.controls.continue")),
             attributes = Map("id" -> "btn-continue")
         ))
     }
-
 }
