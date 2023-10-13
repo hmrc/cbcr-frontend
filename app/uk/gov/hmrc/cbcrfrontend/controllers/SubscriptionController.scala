@@ -31,7 +31,6 @@ import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm._
 import uk.gov.hmrc.cbcrfrontend.model.Implicits.format
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
