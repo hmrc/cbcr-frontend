@@ -218,21 +218,6 @@ class SubscriptionController @Inject()(
     }
   }
 
-  def clearSubscriptionData(u: Utr): Action[AnyContent] = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and User) {
-      if (CbcrSwitches.clearSubscriptionDataRoute.enabled) {
-        subscriptionDataService
-          .clearSubscriptionData(u)
-          .fold(
-            error => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate), {
-              case Some(_) => Ok
-              case None    => NoContent
-            }
-          )
-      } else NotImplemented
-    }
-  }
-
   private def createFailedSubscriptionAuditEvent(
     credentials: Option[Credentials],
     cbcId: CBCId,

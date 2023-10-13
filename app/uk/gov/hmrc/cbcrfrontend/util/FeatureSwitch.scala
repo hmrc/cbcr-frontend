@@ -52,10 +52,7 @@ object FeatureSwitch {
 }
 
 object CbcrSwitches {
-  private val CLEAR_SUBSCRIPTION_DATA_ROUTE = "clearSubscriptionData"
   private val LANGUAGE_TOGGLE_SWITCH = "enableLanguageSwitching"
-  def clearSubscriptionDataRoute: FeatureSwitch =
-    FeatureSwitch.forName(CLEAR_SUBSCRIPTION_DATA_ROUTE)
   def enableLanguageSwitching: FeatureSwitch =
     FeatureSwitch.forName(LANGUAGE_TOGGLE_SWITCH)
 }
