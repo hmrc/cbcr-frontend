@@ -38,7 +38,6 @@ import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
@@ -487,43 +486,6 @@ class SubscriptionControllerSpec
       cache.readOption[Subscribed.type](Implicits.format, *, *) returns Future.successful(
         Some(Subscribed))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
-    }
-  }
-
-  "DELETE to clear-subscription-data/utr" should {
-    "work correctly when enabled and" when {
-      System.setProperty(CbcrSwitches.clearSubscriptionDataRoute.name, "true")
-      "return a 200 if data was successfully cleared" in {
-        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
-        val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
-        val u = Utr("7000000002")
-        subService.clearSubscriptionData(*)(*, *) returnsF Some("done")
-        status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.OK
-      }
-
-      "return a 204 if data was no data to clear" in {
-        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
-        val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
-        val u = Utr("7000000002")
-        subService.clearSubscriptionData(*)(*, *) returnsF None
-        status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.NO_CONTENT
-      }
-
-      "return a 500 if something goes wrong" in {
-        auth.authorise[Any](*, *)(*, *) returns Future.successful(())
-        val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
-        val u = Utr("7000000002")
-        subService.clearSubscriptionData(*)(*, *) raises UnexpectedState("oops")
-        status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.INTERNAL_SERVER_ERROR
-      }
-    }
-
-    "return 501 when feature-disabled" in {
-      auth.authorise[Any](*, *)(*, *) returns Future.successful(())
-      System.setProperty(CbcrSwitches.clearSubscriptionDataRoute.name, "false")
-      val fakeRequestSubscribe = addToken(FakeRequest("DELETE", "/clear-subscription-data"))
-      val u = Utr("7000000002")
-      status(controller.clearSubscriptionData(u)(fakeRequestSubscribe)) shouldBe Status.NOT_IMPLEMENTED
     }
   }
 
