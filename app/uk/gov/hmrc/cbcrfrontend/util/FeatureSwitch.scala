@@ -50,9 +50,3 @@ object FeatureSwitch {
 
   implicit val format: OFormat[BooleanFeatureSwitch] = Json.format[BooleanFeatureSwitch]
 }
-
-object CbcrSwitches {
-  private val LANGUAGE_TOGGLE_SWITCH = "enableLanguageSwitching"
-  def enableLanguageSwitching: FeatureSwitch =
-    FeatureSwitch.forName(LANGUAGE_TOGGLE_SWITCH)
-}
