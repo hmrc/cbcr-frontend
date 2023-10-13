@@ -49,25 +49,7 @@ class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers
       )
 
       val actualEnvelopeRequest =
-        new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", Some(envelopeExpiryDate))
-
-      actualEnvelopeRequest should be(expectedEnvelopeRequest)
-    }
-
-    "return the expected Json Object when the expiry Date is Not specified" in {
-      val expectedEnvelopeRequest = Json.obj(
-        "callbackUrl" -> "http://localhost:9797/cbcr/file-upload-response",
-        "metadata" -> Json.obj(
-          "application" -> "Country By Country Reporting Service"
-        ),
-        "constraints" -> Json.obj(
-          "maxSize"        -> "50MB",
-          "maxSizePerItem" -> "50MB",
-          "contentTypes"   -> List("application/xml", "text/xml")
-        )
-      )
-
-      val actualEnvelopeRequest = new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", None)
+        new FileUploadServiceConnector().envelopeRequest("http://localhost:9797", envelopeExpiryDate)
 
       actualEnvelopeRequest should be(expectedEnvelopeRequest)
     }
@@ -102,50 +84,6 @@ class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers
 
       result.fold(
         cbcError => cbcError.shouldBe(UnexpectedState(s"Header $LOCATION not found", None)),
-        _ => fail("No error generated")
-      )
-    }
-
-    "return the response body if call to extractFileUploadMessage with status = 200" in {
-      val response = mock[HttpResponse]
-      response.body returns "Test Body"
-      response.status returns 200
-
-      val result = new FileUploadServiceConnector().extractFileUploadMessage(response)
-      result should equal(Right("Test Body"))
-    }
-
-    "return an error if call to extractFileUploadMessage with status not 200" in {
-      val response = mock[HttpResponse]
-      response.body returns "Test Body"
-      response.status returns 400
-
-      val result = new FileUploadServiceConnector().extractFileUploadMessage(response)
-
-      result.fold(
-        cbcError => cbcError.shouldBe(UnexpectedState("Problems uploading the file", None)),
-        _ => fail("No error generated")
-      )
-    }
-
-    "return the response body if call to extractEnvelopeDeleteMessage with status = 200" in {
-      val response = mock[HttpResponse]
-      response.body returns "Test Body"
-      response.status returns 200
-
-      val result = new FileUploadServiceConnector().extractEnvelopeDeleteMessage(response)
-      result should equal(Right("Test Body"))
-    }
-
-    "return an error if call to extractEnvelopeDeleteMessage with status not 200" in {
-      val response = mock[HttpResponse]
-      response.body returns "Test Body"
-      response.status returns 400
-
-      val result = new FileUploadServiceConnector().extractEnvelopeDeleteMessage(response)
-
-      result.fold(
-        cbcError => cbcError.shouldBe(UnexpectedState("Problems deleting the envelope", None)),
         _ => fail("No error generated")
       )
     }
