@@ -29,7 +29,7 @@ import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
-import uk.gov.hmrc.cbcrfrontend.config.FileUploadFrontEndWS
+import uk.gov.hmrc.cbcrfrontend.config.{FileUploadFrontEndWS, FrontendAppConfig}
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -47,7 +47,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class FileUploadService @Inject()(
   fusConnector: FileUploadServiceConnector,
   ws: WSClient,
-  configuration: Configuration,
+  configuration: FrontendAppConfig,
   val messagesApi: MessagesApi,
   servicesConfig: ServicesConfig)(
   implicit http: HttpClient,
@@ -66,20 +66,15 @@ class FileUploadService @Inject()(
   private lazy val cbcrsUrl: String = servicesConfig.baseUrl("cbcr")
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[EnvelopeId] = {
-
-    val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-
-    val envelopeExpiryDays: Option[Int] = configuration.getOptional[Int]("envelope-expire-days")
-
-    def envelopeExpiryDate(numberOfDays: Option[Int]) = numberOfDays match {
-      case Some(n) => Some(formatter.print(new DateTime().plusDays(n)))
-      case _       => None
+    val envelopeExpiryDate = {
+      val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+      formatter.print(new DateTime().plusDays(configuration.envelopeExpiryDays))
     }
 
     EitherT(
       HttpExecutor(
         fusUrl,
-        CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate(envelopeExpiryDays))))
+        CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
         .map(fusConnector.extractEnvelopId))
   }
 

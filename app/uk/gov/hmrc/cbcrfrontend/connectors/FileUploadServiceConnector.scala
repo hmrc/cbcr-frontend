@@ -33,7 +33,7 @@ class FileUploadServiceConnector() {
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  def envelopeRequest(cbcrsUrl: String, expiryDate: Option[String]): JsObject = {
+  def envelopeRequest(cbcrsUrl: String, expiryDate: String): JsObject = {
 
     //@todo refactor the hardcode of the /cbcr/file-upload-response
     val jsObject = Json

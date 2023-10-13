@@ -46,4 +46,5 @@ class FrontendAppConfig @Inject()(val config: Configuration) {
     val creationYear = config.load[Int]("Prod.default-creation-date.year")
     LocalDate.of(creationYear, creationMonth, creationDay)
   }
+  val envelopeExpiryDays: Int = config.load[Int]("envelope-expire-days")
 }
