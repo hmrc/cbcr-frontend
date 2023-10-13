@@ -53,18 +53,6 @@ class FileUploadServiceConnector() {
       case None => Left(UnexpectedState(s"Header $LOCATION not found"))
     }
 
-  def extractFileUploadMessage(resp: HttpResponse): CBCErrorOr[String] =
-    resp.status match {
-      case Status.OK => Right(resp.body)
-      case _         => Left(UnexpectedState("Problems uploading the file"))
-    }
-
-  def extractEnvelopeDeleteMessage(resp: HttpResponse): CBCErrorOr[String] =
-    resp.status match {
-      case Status.OK => Right(resp.body)
-      case _         => Left(UnexpectedState("Problems deleting the envelope"))
-    }
-
   def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
     resp.status match {
       case Status.OK =>
