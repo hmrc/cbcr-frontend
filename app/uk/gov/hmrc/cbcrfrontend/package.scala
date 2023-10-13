@@ -38,7 +38,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import java.io.{File, FileInputStream}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
-import scala.util.Using
 
 package object cbcrfrontend {
 

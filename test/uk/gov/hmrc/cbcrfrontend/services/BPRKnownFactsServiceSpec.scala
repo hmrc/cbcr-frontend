@@ -26,7 +26,6 @@ import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, Utr}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
-import javax.inject.Inject
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 

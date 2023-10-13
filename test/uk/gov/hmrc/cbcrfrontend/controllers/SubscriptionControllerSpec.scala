@@ -20,7 +20,6 @@ import cats.data.OptionT
 import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchersSugar.{*, any}
 import org.mockito.IdiomaticMockito
-import org.mockito.IdiomaticMockito.WithExpect.{calls, expect}
 import org.mockito.cats.IdiomaticMockitoCats.StubbingOpsCats
 import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
