@@ -22,8 +22,7 @@
         formHelper: FormWithCSRF,
         govukInput: GovukInput,
         govukErrorSummary: GovukErrorSummary,
-        govukButton: GovukButton,
-        govukFieldset: GovukFieldset
+        govukButton: GovukButton
 )
 
 @(form:Form[_])(implicit request: Request[_], messages: Messages)
@@ -34,61 +33,10 @@
 @lastNameKey = @{"lastName"}
 @phoneNumberKey = @{"phoneNumber"}
 @emailKey = @{"email"}
-@fieldsetHtml = {
-    <p class="govuk-body" id="contactInfoSubscriber-hint">@messages("contactInfoSubscriber.additionalInfo")</p>
-    @govukInput(Input(
-        id = firstNameKey,
-        name = firstNameKey,
-        label = Label(
-            content = Text(messages("contactInfoSubscriber.firstName.label"))
-        ),
-        classes = "govuk-!-width-two-thirds",
-        value = form.data.get(firstNameKey),
-        errorMessage = form.error(firstNameKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
-        autocomplete = Some("given-name")
-    ))
-    @govukInput(Input(
-        id = lastNameKey,
-        name = lastNameKey,
-        label = Label(
-            content = Text(messages("contactInfoSubscriber.lastName.label"))
-        ),
-        classes = "govuk-!-width-two-thirds",
-        value = form.data.get(lastNameKey),
-        errorMessage = form.error(lastNameKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
-        autocomplete = Some("family-name")
-    ))
-    @govukInput(Input(
-        id = phoneNumberKey,
-        name = phoneNumberKey,
-        inputType = "tel",
-        label = Label(
-            content = Text(messages("contactInfoSubscriber.phoneNumber.label"))
-        ),
-        hint = Some(Hint(
-            content = Text(messages("contactInfoSubscriber.phoneNumber.hint"))
-        )),
-        classes = "govuk-!-width-two-thirds",
-        value = form.data.get(phoneNumberKey),
-        errorMessage = form.error(phoneNumberKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
-        autocomplete = Some("tel")
-    ))
-    @govukInput(Input(
-        id = emailKey,
-        name = emailKey,
-        inputType = "email",
-        label = Label(
-            content = Text(messages("contactInfoSubscriber.emailAddress.label"))
-        ),
-        classes = "govuk-!-width-two-thirds",
-        value = form.data.get(emailKey),
-        errorMessage = form.error(emailKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
-        autocomplete = Some("email")
-    ))
-}
-
 
 @layout(title, backLinkUrl = Some(routes.SharedController.knownFactsMatch.url), hasErrors = hasErrors) {
+    <h1 class="govuk-heading-l">@title</h1>
+    <p class="govuk-body" id="contactInfoSubscriber-hint">@messages("contactInfoSubscriber.additionalInfo")</p>
 
     @if(form.hasErrors) {
         @govukErrorSummary(ErrorSummary(
@@ -103,14 +51,54 @@
     }
 
     @formHelper(routes.SubscriptionController.submitSubscriptionData){
-        @govukFieldset(Fieldset(
-            legend = Some(Legend(
-                content = Text(title),
-                classes = "govuk-fieldset__legend--l",
-                isPageHeading = true
-            )),
-            html = fieldsetHtml,
-            describedBy = Some("contactInfoSubscriber-hint")
+        @govukInput(Input(
+            id = firstNameKey,
+            name = firstNameKey,
+            label = Label(
+            content = Text(messages("contactInfoSubscriber.firstName.label"))
+            ),
+            classes = "govuk-!-width-two-thirds",
+            value = form.data.get(firstNameKey),
+            errorMessage = form.error(firstNameKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+            autocomplete = Some("given-name")
+        ))
+        @govukInput(Input(
+            id = lastNameKey,
+            name = lastNameKey,
+            label = Label(
+                content = Text(messages("contactInfoSubscriber.lastName.label"))
+                ),
+            classes = "govuk-!-width-two-thirds",
+            value = form.data.get(lastNameKey),
+            errorMessage = form.error(lastNameKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+            autocomplete = Some("family-name")
+        ))
+        @govukInput(Input(
+            id = phoneNumberKey,
+            name = phoneNumberKey,
+            inputType = "tel",
+            label = Label(
+                content = Text(messages("contactInfoSubscriber.phoneNumber.label"))
+                ),
+            hint = Some(Hint(
+                content = Text(messages("contactInfoSubscriber.phoneNumber.hint"))
+                )),
+            classes = "govuk-!-width-two-thirds",
+            value = form.data.get(phoneNumberKey),
+            errorMessage = form.error(phoneNumberKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+            autocomplete = Some("tel")
+        ))
+        @govukInput(Input(
+            id = emailKey,
+            name = emailKey,
+            inputType = "email",
+            label = Label(
+                content = Text(messages("contactInfoSubscriber.emailAddress.label"))
+                ),
+            classes = "govuk-!-width-two-thirds",
+            value = form.data.get(emailKey),
+            errorMessage = form.error(emailKey).map(e => ErrorMessage(content = Text(messages(e.message)))),
+            autocomplete = Some("email")
         ))
         @govukButton(Button(
             content = Text(messages("form.controls.continue")),
