@@ -58,9 +58,9 @@ class FileUploadService @Inject()(
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  private implicit lazy val fusUrl: ServiceUrl[FusUrl] = new ServiceUrl[FusUrl] { val url: String = servicesConfig.baseUrl("file-upload") }
-  private implicit lazy val fusFeUrl: ServiceUrl[FusFeUrl] = new ServiceUrl[FusFeUrl] { val url: String = servicesConfig.baseUrl("file-upload-frontend") }
-  private implicit lazy val cbcrsUrl: ServiceUrl[CbcrsUrl] = new ServiceUrl[CbcrsUrl] { val url: String = servicesConfig.baseUrl("cbcr") }
+  private lazy val fusUrl: ServiceUrl[FusUrl] = new ServiceUrl[FusUrl] { val url: String = servicesConfig.baseUrl("file-upload") }
+  private lazy val fusFeUrl: ServiceUrl[FusFeUrl] = new ServiceUrl[FusFeUrl] { val url: String = servicesConfig.baseUrl("file-upload-frontend") }
+  private lazy val cbcrsUrl: String = servicesConfig.baseUrl("cbcr")
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[EnvelopeId] = {
 
@@ -76,7 +76,7 @@ class FileUploadService @Inject()(
     EitherT(
       HttpExecutor(
         fusUrl,
-        CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl.url, envelopeExpiryDate(envelopeExpiryDays))))
+        CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate(envelopeExpiryDays))))
         .map(fusConnector.extractEnvelopId))
   }
 
@@ -105,7 +105,7 @@ class FileUploadService @Inject()(
     ec: ExecutionContext): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
       http
-        .GET[HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response/$envelopeId", Seq.empty)
+        .GET[HttpResponse](s"$cbcrsUrl/cbcr/file-upload-response/$envelopeId", Seq.empty)
         .map(resp =>
           resp.status match {
             case Status.OK =>

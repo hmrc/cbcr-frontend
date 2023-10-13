@@ -15,41 +15,12 @@
  */
 
 package uk.gov.hmrc.cbcrfrontend.util
-import uk.gov.hmrc.cbcrfrontend.model.XMLInfo
+import uk.gov.hmrc.cbcrfrontend.model.{DocSpec, XMLInfo}
 
 object BusinessRulesUtil {
-
-  def isFullyCorrected(listOne: List[String], listTwo: List[String]): Boolean = {
-    val sortedFirst = listOne.sorted
-    val sortedSecond = listTwo.sorted
-    sortedFirst.equals(sortedSecond)
-  }
-
-  def extractAllCorrDocRefIds(in: XMLInfo): List[String] = {
-    val addDocSpec = in.additionalInfo
-      .filter(_.docSpec.corrDocRefId.isDefined)
-      .map(_.docSpec.corrDocRefId.get.cid.toString)
-    val entDocSpecs = in.reportingEntity
-      .filter(_.docSpec.corrDocRefId.isDefined)
-      .map(_.docSpec.corrDocRefId.get.cid.toString) match {
-      case Some(entDoc: String) => List(entDoc)
-      case None                 => List()
-    }
-    val repDocSpec = in.cbcReport
-      .filter(_.docSpec.corrDocRefId.isDefined)
-      .map(_.docSpec.corrDocRefId.get.cid.toString)
-
-    entDocSpecs ++ repDocSpec ++ addDocSpec
-  }
-
-  def extractAllDocTypes(in: XMLInfo): List[String] = {
-    val addDocSpec = in.additionalInfo.map(_.docSpec.docType.toString)
-    val entDocSpecs = in.reportingEntity match {
-      case Some(ent) => List(ent.docSpec.docType.toString)
-      case None      => List()
-    }
-    val repDocSpec = in.cbcReport.map(_.docSpec.docType.toString)
-
-    entDocSpecs ++ repDocSpec ++ addDocSpec
-  }
+  def isFullyCorrected(listOne: List[String], listTwo: List[String]): Boolean = listOne.sorted == listTwo.sorted
+  def allDocSpecs(in: XMLInfo): List[DocSpec] =
+    in.reportingEntity.map(_.docSpec).toList ++ in.cbcReport.map(_.docSpec) ++ in.additionalInfo.map(_.docSpec)
+  def extractAllCorrDocRefIds(in: XMLInfo): List[String] = allDocSpecs(in).flatMap(_.corrDocRefId).map(_.cid.toString)
+  def extractAllDocTypes(in: XMLInfo): List[String] = allDocSpecs(in).map(_.docType.toString)
 }
