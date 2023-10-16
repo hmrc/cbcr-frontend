@@ -29,7 +29,7 @@ import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
-import uk.gov.hmrc.cbcrfrontend.config.FileUploadFrontEndWS
+import uk.gov.hmrc.cbcrfrontend.config.{FileUploadFrontEndWS, FrontendAppConfig}
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -38,8 +38,7 @@ import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{HttpClient, _}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import java.io.{File, FileInputStream, PrintWriter}
-import java.time.LocalDateTime
+import java.io.{File, PrintWriter}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -48,7 +47,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class FileUploadService @Inject()(
   fusConnector: FileUploadServiceConnector,
   ws: WSClient,
-  configuration: Configuration,
+  configuration: FrontendAppConfig,
   val messagesApi: MessagesApi,
   servicesConfig: ServicesConfig)(
   implicit http: HttpClient,
@@ -58,46 +57,25 @@ class FileUploadService @Inject()(
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  private lazy val fusUrl: ServiceUrl[FusUrl] = new ServiceUrl[FusUrl] { val url: String = servicesConfig.baseUrl("file-upload") }
-  private lazy val fusFeUrl: ServiceUrl[FusFeUrl] = new ServiceUrl[FusFeUrl] { val url: String = servicesConfig.baseUrl("file-upload-frontend") }
+  private lazy val fusUrl: ServiceUrl[FusUrl] = new ServiceUrl[FusUrl] {
+    val url: String = servicesConfig.baseUrl("file-upload")
+  }
+  private lazy val fusFeUrl: ServiceUrl[FusFeUrl] = new ServiceUrl[FusFeUrl] {
+    val url: String = servicesConfig.baseUrl("file-upload-frontend")
+  }
   private lazy val cbcrsUrl: String = servicesConfig.baseUrl("cbcr")
 
   def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[EnvelopeId] = {
-
-    val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-
-    val envelopeExpiryDays: Option[Int] = configuration.getOptional[Int]("envelope-expire-days")
-
-    def envelopeExpiryDate(numberOfDays: Option[Int]) = numberOfDays match {
-      case Some(n) => Some(formatter.print(new DateTime().plusDays(n)))
-      case _       => None
+    val envelopeExpiryDate = {
+      val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+      formatter.print(new DateTime().plusDays(configuration.envelopeExpiryDays))
     }
 
     EitherT(
       HttpExecutor(
         fusUrl,
-        CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate(envelopeExpiryDays))))
+        CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
         .map(fusConnector.extractEnvelopId))
-  }
-
-  def uploadFile(xmlFile: java.io.File, envelopeId: String, fileId: String)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): ServiceResponse[String] = {
-
-    val fileNamePrefix = s"oecd-${LocalDateTime.now}"
-    val xmlByteArray: Array[Byte] = org.apache.commons.io.IOUtils.toByteArray(new FileInputStream(xmlFile))
-
-    logger.debug(s"Country by Country: FileUpload service: Uploading the file to the envelope - fileId = $fileId")
-    fromFutureOptA(
-      HttpExecutor(
-        fusFeUrl,
-        UploadFile(
-          EnvelopeId(envelopeId),
-          FileId(fileId),
-          s"$fileNamePrefix-cbcr.xml ",
-          "application/xml;charset=UTF-8",
-          xmlByteArray)).map(fusConnector.extractFileUploadMessage))
-
   }
 
   def getFileUploadResponse(envelopeId: String)(
@@ -153,12 +131,6 @@ class FileUploadService @Inject()(
         }
     )
 
-  def deleteEnvelope(envelopeId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] =
-    fromFutureOptA(
-      http
-        .DELETE[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId")
-        .map(fusConnector.extractEnvelopeDeleteMessage))
-
   def getFileMetaData(envelopeId: String, fileId: String)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): ServiceResponse[Option[FileMetadata]] =
@@ -189,7 +161,7 @@ class FileUploadService @Inject()(
   }
 
   private def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =
-    e.map(x => x.show.split(" ").map(x => messages(x)).map(_.toString).mkString(" "))
+    e.map(_.show.split(" ").map(messages(_)).mkString(" "))
 
   def errorsToMap(e: List[ValidationErrors])(implicit messages: Messages): Map[String, String] =
     errorsToList(e).foldLeft(Map[String, String]()) { (m, t) =>
@@ -197,7 +169,7 @@ class FileUploadService @Inject()(
     }
 
   def errorsToString(e: List[ValidationErrors])(implicit messages: Messages): String =
-    errorsToList(e).map(_.toString).mkString("\r\n")
+    errorsToList(e).mkString("\r\n")
 
   def errorsToFile(e: List[ValidationErrors], name: String)(implicit messages: Messages): File = {
     val b = SingletonTemporaryFileCreator.create(name, ".txt")

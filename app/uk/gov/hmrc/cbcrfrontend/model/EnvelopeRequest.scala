@@ -33,7 +33,7 @@ object Constraints {
 
 case class EnvelopeRequest(
   callbackUrl: String,
-  expiryDate: Option[String],
+  expiryDate: String,
   metadata: MetaData,
   constraints: Constraints)
 object EnvelopeRequest {

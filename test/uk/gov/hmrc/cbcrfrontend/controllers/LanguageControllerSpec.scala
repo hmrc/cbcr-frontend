@@ -25,7 +25,6 @@ import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{cookies, defaultAwaitTimeout, flash, header, status}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.util.FeatureSwitch
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -53,19 +52,17 @@ class LanguageControllerSpec
     }
 
     "return 303 and set lang=cy " when {
-      "switching to welsh enableLanguageSwitching = true and referer set in request header" in {
-        FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", enabled = true))
+      "switching to english, because Welsh is not supported" in {
         val result = controller.switchToWelsh()(requestWithReferer)
         status(result) shouldBe 303
 
         flash(result).get("switching-language") shouldBe Some("true")
-        cookies(result).get("PLAY_LANG").get.value shouldBe "cy"
+        cookies(result).get("PLAY_LANG").get.value shouldBe "en"
       }
     }
 
     "return 303 and set lang=en" when {
-      "switching to english enableLanguageSwitching = true and referer set in request header" in {
-        FeatureSwitch.enable(FeatureSwitch("enableLanguageSwitching", enabled = true))
+      "switching to english and referer set in request header" in {
         val result = controller.switchToEnglish()(requestWithReferer)
         status(result) shouldBe 303
 

@@ -31,7 +31,6 @@ import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm._
 import uk.gov.hmrc.cbcrfrontend.model.Implicits.format
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
@@ -215,21 +214,6 @@ class SubscriptionController @Inject()(
       CBCId(id).fold[Future[Result]](
         errorRedirect(UnexpectedState(s"CBCId: $id is not valid"), views.notAuthorisedIndividual, views.errorTemplate)
       )((cbcId: CBCId) => Ok(views.subscribeSuccessCbcId(cbcId, request.session.get("companyName"))))
-    }
-  }
-
-  def clearSubscriptionData(u: Utr): Action[AnyContent] = Action.async { implicit request =>
-    authorised(AffinityGroup.Organisation and User) {
-      if (CbcrSwitches.clearSubscriptionDataRoute.enabled) {
-        subscriptionDataService
-          .clearSubscriptionData(u)
-          .fold(
-            error => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate), {
-              case Some(_) => Ok
-              case None    => NoContent
-            }
-          )
-      } else NotImplemented
     }
   }
 

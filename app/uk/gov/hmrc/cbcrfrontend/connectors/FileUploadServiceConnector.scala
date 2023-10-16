@@ -33,7 +33,7 @@ class FileUploadServiceConnector() {
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  def envelopeRequest(cbcrsUrl: String, expiryDate: Option[String]): JsObject = {
+  def envelopeRequest(cbcrsUrl: String, expiryDate: String): JsObject = {
 
     //@todo refactor the hardcode of the /cbcr/file-upload-response
     val jsObject = Json
@@ -51,18 +51,6 @@ class FileUploadServiceConnector() {
           case _                               => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
         }
       case None => Left(UnexpectedState(s"Header $LOCATION not found"))
-    }
-
-  def extractFileUploadMessage(resp: HttpResponse): CBCErrorOr[String] =
-    resp.status match {
-      case Status.OK => Right(resp.body)
-      case _         => Left(UnexpectedState("Problems uploading the file"))
-    }
-
-  def extractEnvelopeDeleteMessage(resp: HttpResponse): CBCErrorOr[String] =
-    resp.status match {
-      case Status.OK => Right(resp.body)
-      case _         => Left(UnexpectedState("Problems deleting the envelope"))
     }
 
   def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =

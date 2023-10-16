@@ -61,7 +61,6 @@ POST          /contact-info-subscriber/update-form                  @uk.gov.hmrc
 GET           /contact-info-subscriber/updated                      @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.savedUpdatedInfoSubscriber
 GET           /subscribe-success-cbc-id/:cbcId                      @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
 POST          /subscription-data                                    @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.submitSubscriptionData
-DELETE        /subscription-data/:utr                               @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.clearSubscriptionData(utr:uk.gov.hmrc.cbcrfrontend.model.Utr)
 
 GET           /de-enrol                                             @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.deEnrol
 GET           /enrolments                                           @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.getEnrolments

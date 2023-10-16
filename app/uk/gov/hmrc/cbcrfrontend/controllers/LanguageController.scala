@@ -20,7 +20,6 @@ import play.api.Logger
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc.{Action, AnyContent, Flash, MessagesControllerComponents}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.util.CbcrSwitches
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import javax.inject.Inject
@@ -35,11 +34,11 @@ class LanguageController @Inject()(
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  def switchToEnglish: Action[AnyContent] = switchToLang(english)
-  def switchToWelsh: Action[AnyContent] = switchToLang(welsh)
+  def switchToEnglish: Action[AnyContent] = switchToLang()
+  def switchToWelsh: Action[AnyContent] = switchToLang()
 
-  private def switchToLang(lang: Lang) = Action { implicit request =>
-    val newLang = if (CbcrSwitches.enableLanguageSwitching.enabled) lang else english
+  private def switchToLang() = Action { implicit request =>
+    val newLang = english
     request.headers.get(REFERER) match {
       case Some(referrer) => Redirect(referrer).withLang(newLang).flashing(Flash(Map("switching-language" -> "true")))
       case None =>
