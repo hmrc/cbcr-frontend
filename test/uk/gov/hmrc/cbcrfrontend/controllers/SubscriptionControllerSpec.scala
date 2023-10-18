@@ -497,7 +497,7 @@ class SubscriptionControllerSpec
       subService.retrieveSubscriptionData(*)(*, *) returnsF None
       val result = controller.updateInfoSubscriber()(fakeRequest)
 
-      status(result) shouldEqual Status.BAD_REQUEST
+      status(result) shouldEqual Status.INTERNAL_SERVER_ERROR
     }
 
     "return an error if there is no etmp data" in {
@@ -511,7 +511,7 @@ class SubscriptionControllerSpec
 
       val result = controller.updateInfoSubscriber()(fakeRequest)
 
-      status(result) shouldEqual Status.BAD_REQUEST
+      status(result) shouldEqual Status.INTERNAL_SERVER_ERROR
     }
 
     "return OK otherwise" in {
