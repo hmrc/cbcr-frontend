@@ -19,7 +19,6 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import com.google.inject.Inject
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
@@ -28,11 +27,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class CBCEnhancementsController @Inject()(
   override val messagesApi: MessagesApi,
   messagesControllerComponents: MessagesControllerComponents,
-  views: Views)(implicit val ec: ExecutionContext, feConfig: FrontendAppConfig)
+  views: Views)(implicit val ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with I18nSupport {
 
   def enhancementUnavailable: Action[AnyContent] = Action.async { implicit request =>
     Future.successful(Unauthorized(views.notAuthorizedEnhancement()))
   }
-
 }

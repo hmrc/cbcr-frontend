@@ -27,7 +27,6 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{defaultAwaitTimeout, status}
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.views.Views
 
 import scala.concurrent.ExecutionContext
@@ -39,9 +38,8 @@ class CBCEnhancementsControllerSpec
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
   private val views = app.injector.instanceOf[Views]
-  private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
 
-  val controller = new CBCEnhancementsController(messagesApi, mcc, views)(ec, feConfig)
+  val controller = new CBCEnhancementsController(messagesApi, mcc, views)(ec)
 
   "enhancementUnavailable" should {
     "redirect user to Unauthorised for enhancement page" in {
