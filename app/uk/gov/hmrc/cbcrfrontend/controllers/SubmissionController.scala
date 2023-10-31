@@ -38,6 +38,7 @@ import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import java.time.format.DateTimeFormatter
@@ -225,8 +226,6 @@ class SubmissionController @Inject()(
           )
         )
         Json.obj(
-          "auditSource" -> "Country-By-Country-Frontend",
-          "auditType" -> "CBCRFilingSuccessful",
           "detail" -> Json.obj(
             "path" -> JsString(request.uri),
             "summaryData" -> Json.toJson(trimmmedSummaryData),
@@ -237,7 +236,11 @@ class SubmissionController @Inject()(
         auditEvent
       }
 
-    audit.sendExplicitAudit("CBCRFilingSuccessful", validAuditEvent)
+    audit.sendExtendedEvent(ExtendedDataEvent(
+      "Country-By-Country-Frontend",
+      "CBCRFilingSuccessful",
+      detail = validAuditEvent
+    ))
   }
 
   private val utrConstraint: Constraint[String] = Constraint(utr => {
