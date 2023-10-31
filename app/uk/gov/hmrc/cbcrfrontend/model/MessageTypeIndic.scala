@@ -36,9 +36,9 @@ object MessageTypeIndic {
 
   }
   def parseFrom(s: String): Option[MessageTypeIndic] = s.toLowerCase.trim match {
-    case "cbc401"                            => Some(CBC401)
-    case "cbc402"                            => Some(CBC402)
+    case "cbc401"                          => Some(CBC401)
+    case "cbc402"                          => Some(CBC402)
     case otherValue if otherValue.nonEmpty => Some(CBCInvalidMessageTypeIndic)
-    case _                                   => None
+    case _                                 => None
   }
 }

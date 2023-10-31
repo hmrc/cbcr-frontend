@@ -97,7 +97,8 @@ object DocRefId {
     case _ => None
   }
 
-  private val newDocRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,25})""".r
+  private val newDocRefIdRegex =
+    s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,25})""".r
   def applyNewDocRefIdRegex(s: String): Option[DocRefId] = s match {
     case newDocRefIdRegex(msgRef, _, _, _, _, _, _, tin, docType, pGroup, uniq) =>
       for {
@@ -170,7 +171,9 @@ object MessageSpec {
 }
 
 case class EntityReportingPeriod(startDate: LocalDate, endDate: LocalDate)
-object EntityReportingPeriod { implicit val format: OFormat[EntityReportingPeriod] = Json.format[EntityReportingPeriod] }
+object EntityReportingPeriod {
+  implicit val format: OFormat[EntityReportingPeriod] = Json.format[EntityReportingPeriod]
+}
 
 case class ReportingEntity(
   reportingRole: ReportingRole,

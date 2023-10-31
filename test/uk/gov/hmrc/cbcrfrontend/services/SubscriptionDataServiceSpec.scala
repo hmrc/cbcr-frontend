@@ -81,8 +81,7 @@ class SubscriptionDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      mockHttp.GET(*, *, *)(*, *, *) returns Future.failed(
-        new Exception("The sky is falling"))
+      mockHttp.GET(*, *, *)(*, *, *) returns Future.failed(new Exception("The sky is falling"))
       val result = Await.result(sds.retrieveSubscriptionData(idUtr).value, 2.seconds)
       result.isLeft shouldBe true
     }
@@ -90,19 +89,22 @@ class SubscriptionDataServiceSpec
 
   "SubscriptionDataService on a call to saveSubscriptionData" should {
     "save saveSubscriptionData if it exists in the DB store" in {
-      mockHttp.POST[SubscriptionDetails, HttpResponse](*, *, *)(*, *, *, *) returns Future.successful(HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
+      mockHttp.POST[SubscriptionDetails, HttpResponse](*, *, *)(*, *, *, *) returns Future.successful(
+        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(sds.saveSubscriptionData(subscriptionDetails).value, 2.seconds)
       result.isRight shouldBe true
     }
 
     "return Left() unexpected error if it does not exist in the DB store" in {
-      mockHttp.POST[SubscriptionDetails, HttpResponse](*, *, *)(*, *, *, *) returns Future.successful(HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]]))
+      mockHttp.POST[SubscriptionDetails, HttpResponse](*, *, *)(*, *, *, *) returns Future.successful(
+        HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(sds.saveSubscriptionData(subscriptionDetails).value, 2.seconds)
       result.isLeft shouldBe true
     }
 
     "return Left() and throw an exception" in {
-      mockHttp.POST[SubscriptionDetails, HttpResponse](*, *, *)(*, *, *, *) returns Future.failed(new Exception("Error occurred"))
+      mockHttp.POST[SubscriptionDetails, HttpResponse](*, *, *)(*, *, *, *) returns Future.failed(
+        new Exception("Error occurred"))
       val result = Await.result(sds.saveSubscriptionData(subscriptionDetails).value, 2.seconds)
       result.isLeft shouldBe true
     }
@@ -110,19 +112,22 @@ class SubscriptionDataServiceSpec
 
   "SubscriptionDataService on a call to updateSubscriptionData" should {
     "update subscriptionDetails if it exists in the DB store" in {
-      mockHttp.PUT[SubscriberContact, HttpResponse](*, *, *)(*, *, *, *) returns Future.successful(HttpResponse(200, JsNull, Map.empty[String, Seq[String]]))
+      mockHttp.PUT[SubscriberContact, HttpResponse](*, *, *)(*, *, *, *) returns Future.successful(
+        HttpResponse(200, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(sds.updateSubscriptionData(cbcId.get, subscriberContact).value, 2.seconds)
       result.isRight shouldBe true
     }
 
     "not update subscriptionDetails and return unexpected error if it fails to exist in the DB store" in {
-      mockHttp.PUT[SubscriberContact, HttpResponse](*, *, *)(*, *, *, *) returns Future.successful(HttpResponse(300, JsNull, Map.empty[String, Seq[String]]))
+      mockHttp.PUT[SubscriberContact, HttpResponse](*, *, *)(*, *, *, *) returns Future.successful(
+        HttpResponse(300, JsNull, Map.empty[String, Seq[String]]))
       val result = Await.result(sds.updateSubscriptionData(cbcId.get, subscriberContact).value, 2.seconds)
       result.isLeft shouldBe true
     }
 
     "return Left() and throw an exception" in {
-      mockHttp.PUT[SubscriberContact, HttpResponse](*, *, *)(*, *, *, *) returns Future.failed(new Exception("Error occurred"))
+      mockHttp.PUT[SubscriberContact, HttpResponse](*, *, *)(*, *, *, *) returns Future.failed(
+        new Exception("Error occurred"))
       val result = Await.result(sds.saveSubscriptionData(subscriptionDetails).value, 2.seconds)
       result.isLeft shouldBe true
     }

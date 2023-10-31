@@ -50,9 +50,8 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     http.GET[HttpResponse](url + s"/subscription/$safeId")
 
   def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(
-    implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT[CorrespondenceDetails, HttpResponse](url + s"/subscription/$safeId", correspondenceDetails)
-  }
 
   def messageRefIdExists(id: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET[HttpResponse](url + s"/message-ref-id/$id")

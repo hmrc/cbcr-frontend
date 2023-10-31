@@ -23,12 +23,12 @@ import cats.data.EitherT
 import cats.implicits._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import play.api.Logger
 import play.api.http.Status
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
-import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.config.{FileUploadFrontEndWS, FrontendAppConfig}
 import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core._
@@ -72,9 +72,7 @@ class FileUploadService @Inject()(
     }
 
     EitherT(
-      HttpExecutor(
-        fusUrl,
-        CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
+      HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
         .map(fusConnector.extractEnvelopId))
   }
 

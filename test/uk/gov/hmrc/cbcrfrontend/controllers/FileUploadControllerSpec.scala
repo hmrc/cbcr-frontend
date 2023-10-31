@@ -56,8 +56,7 @@ import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.language.{implicitConversions, postfixOps}
 
 class FileUploadControllerSpec
-    extends AnyWordSpec with Matchers with BeforeAndAfterEach with IdiomaticMockito
-    with MockitoCats {
+    extends AnyWordSpec with Matchers with BeforeAndAfterEach with IdiomaticMockito with MockitoCats {
 
   implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
 
@@ -166,7 +165,8 @@ class FileUploadControllerSpec
     val fakeRequestChooseXMLFile = FakeRequest("GET", "/upload-report")
 
     "return 200 when the envelope is created successfully" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future.successful(
+      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
+        .successful(
           new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment)))
       fuService.createEnvelope(*, *) returnsF EnvelopeId("1234")
       cache.create[EnvelopeId](*)(EnvelopeId.format, *, *) returnsF EnvelopeId("1234")
@@ -176,7 +176,8 @@ class FileUploadControllerSpec
     }
 
     "displays gateway account not registered page if Organisation user is not enrolled" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
+      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
+        .successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
       cache.readOption[CBCId](*, *, *) returns Future.successful(None)
 
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
@@ -189,21 +190,23 @@ class FileUploadControllerSpec
     }
 
     "allow agent to submit even when no enrolment" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future.successful(
-          new~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
+      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
+        .successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
       cache.readOption[CBCId](*, *, *) returns Future.successful(None)
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
 
     "redirect  when user is an individual" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None))
+      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
+        .successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None))
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.SEE_OTHER
     }
 
     "return 500 when there is an error creating the envelope" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future.successful(
+      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
+        .successful(
           new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment)))
       whenF(fuService.createEnvelope(*, *)) thenFailWith UnexpectedState("server error")
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
@@ -285,12 +288,13 @@ class FileUploadControllerSpec
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
         fuService.getFile(*, *)(*) returnsF validFile
         fuService.getFileMetaData(*, *)(*, *) returnsF None
-        
-          authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(
-            *, *) returns Future.successful(
-          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-            new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+
+        authConnector
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+          .successful(
+            new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+              new ~(Some(creds), Some(AffinityGroup.Organisation)),
+              Some(enrolment)))
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
@@ -304,13 +308,13 @@ class FileUploadControllerSpec
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
         fuService.getFile(*, *)(*) raises UnexpectedState("oops")
         fuService.getFileMetaData(*, *)(*, *) returnsF Some(md)
-        
-          authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(
-            *,
-            *) returns Future.successful(
-          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-            new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+
+        authConnector
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+          .successful(
+            new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+              new ~(Some(creds), Some(AffinityGroup.Organisation)),
+              Some(enrolment)))
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
@@ -323,11 +327,13 @@ class FileUploadControllerSpec
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
         fuService.getFile(*, *)(*) returnsF validFile
         fuService.getFileMetaData(*, *)(*, *) returnsF Some(md)
-        
-          authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future.successful(
-          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-            new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+
+        authConnector
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+          .successful(
+            new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+              new ~(Some(creds), Some(AffinityGroup.Organisation)),
+              Some(enrolment)))
         cache.save(*)(*, *, *) returns Future.failed(new Exception("bad"))
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
@@ -347,17 +353,17 @@ class FileUploadControllerSpec
       fuService.getFileMetaData(*, *)(*, *) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
       cache.save(*)(*, *, *) returns Future.successful(new CacheMap("", Map.empty))
-      cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(
-        Option(AffinityGroup.Organisation))
+      cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(Option(AffinityGroup.Organisation))
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Valid(xmlInfo))
-      businessRulesValidator.recoverReportingEntity(*) returns Future.successful(
-        Valid(completeXmlInfo))
-      
-        authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future.successful(
-        new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-          new ~(Some(creds), Some(AffinityGroup.Organisation)),
-          Some(enrolment)))
+      businessRulesValidator.recoverReportingEntity(*) returns Future.successful(Valid(completeXmlInfo))
+
+      authConnector
+        .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+        .successful(
+          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+            new ~(Some(creds), Some(AffinityGroup.Organisation)),
+            Some(enrolment)))
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.OK
       fuService.getFile(*, *)(*) was called
@@ -380,17 +386,17 @@ class FileUploadControllerSpec
       fuService.getFileMetaData(*, *)(*, *) returnsF Some(md)
       schemaValidator.validateSchema(*) returns xmlErrorHandler
       cache.save(*)(*, *, *) returns Future.successful(new CacheMap("", Map.empty))
-      cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(
-        Option(AffinityGroup.Organisation))
+      cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(Option(AffinityGroup.Organisation))
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Valid(xmlInfo))
-      businessRulesValidator.recoverReportingEntity(*) returns Future.successful(
-        Valid(completeXmlInfo))
-      
-        authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future.successful(
-        new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-          new ~(Some(creds), Some(AffinityGroup.Organisation)),
-          Some(enrol)))
+      businessRulesValidator.recoverReportingEntity(*) returns Future.successful(Valid(completeXmlInfo))
+
+      authConnector
+        .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+        .successful(
+          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+            new ~(Some(creds), Some(AffinityGroup.Organisation)),
+            Some(enrol)))
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.SEE_OTHER
       fuService.getFile(*, *)(*) was called
@@ -409,17 +415,17 @@ class FileUploadControllerSpec
       fuService.getFileMetaData(*, *)(*, *) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
       cache.save(*)(*, *, *) returns Future.successful(new CacheMap("", Map.empty))
-      cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(
-        Option(AffinityGroup.Organisation))
+      cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(Option(AffinityGroup.Organisation))
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Invalid(businessRuleErrors))
-      businessRulesValidator.recoverReportingEntity(*) returns Future.successful(
-        Valid(completeXmlInfo))
-      
-        authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future.successful(
-        new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-          new ~(Some(creds), Some(AffinityGroup.Organisation)),
-          Some(enrolment)))
+      businessRulesValidator.recoverReportingEntity(*) returns Future.successful(Valid(completeXmlInfo))
+
+      authConnector
+        .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+        .successful(
+          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+            new ~(Some(creds), Some(AffinityGroup.Organisation)),
+            Some(enrolment)))
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.SEE_OTHER
       fuService.getFile(*, *)(*) was called
@@ -438,11 +444,13 @@ class FileUploadControllerSpec
         fuService.getFileMetaData(*, *)(*, *) returnsF Some(md.copy(name = "bad.zip"))
         cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("baaa"))
         cache.save(*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty))
-        
-          authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future.successful(
-          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-            new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+
+        authConnector
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+          .successful(
+            new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+              new ~(Some(creds), Some(AffinityGroup.Organisation)),
+              Some(enrolment)))
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("invalid-file-type")
         status(result) shouldBe Status.SEE_OTHER
@@ -463,11 +471,13 @@ class FileUploadControllerSpec
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
-      
-        authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future.successful(
-        new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-          new ~(Some(creds), Some(AffinityGroup.Organisation)),
-          Some(enrolment)))
+
+      authConnector
+        .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+        .successful(
+          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+            new ~(Some(creds), Some(AffinityGroup.Organisation)),
+            Some(enrolment)))
       auditC.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       fuService.errorsToMap(*)(*) returns Map("error" -> "error message")
       val result = controller.fileInvalid(request)
@@ -487,11 +497,13 @@ class FileUploadControllerSpec
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
-      
-        authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future.successful(
-        new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-          new ~(Some(creds), Some(AffinityGroup.Organisation)),
-          Some(enrolment)))
+
+      authConnector
+        .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+        .successful(
+          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+            new ~(Some(creds), Some(AffinityGroup.Organisation)),
+            Some(enrolment)))
       auditC.sendExtendedEvent(*)(*, *) returns Future.successful(failure)
       fuService.errorsToMap(*)(*) returns Map("error" -> "error message")
       val result = controller.fileInvalid(request)
@@ -512,11 +524,13 @@ class FileUploadControllerSpec
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
-      
-        authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future.successful(
-        new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-          new ~(Some(creds), Some(AffinityGroup.Organisation)),
-          Some(enrolment)))
+
+      authConnector
+        .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+        .successful(
+          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+            new ~(Some(creds), Some(AffinityGroup.Organisation)),
+            Some(enrolment)))
       auditC.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       fuService.errorsToMap(*)(*) returns Map("error" -> "error message")
       val result = controller.fileTooLarge(request)
@@ -537,11 +551,13 @@ class FileUploadControllerSpec
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
-      
-        authConnector.authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future.successful(
-        new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
-          new ~(Some(creds), Some(AffinityGroup.Organisation)),
-          Some(enrolment)))
+
+      authConnector
+        .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
+        .successful(
+          new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
+            new ~(Some(creds), Some(AffinityGroup.Organisation)),
+            Some(enrolment)))
       auditC.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       fuService.errorsToMap(*)(*) returns Map("error" -> "error message")
       val result = controller.fileContainsVirus(request)
@@ -633,8 +649,13 @@ class FileUploadControllerSpec
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
-      val result = Await.result(controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")(HeaderCarrier(), FakeRequest()), 5 seconds)
-      result.map(r => r shouldBe AuditResult.Success)    }
+      val result = Await.result(
+        controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")(
+          HeaderCarrier(),
+          FakeRequest()),
+        5 seconds)
+      result.map(r => r shouldBe AuditResult.Success)
+    }
 
     "return success if audit disabled and sendExtendedEvent succeeds" in {
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
@@ -648,7 +669,9 @@ class FileUploadControllerSpec
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
       val result = Await.result(
-        controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), None, "just because")(HeaderCarrier(), FakeRequest()),
+        controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), None, "just because")(
+          HeaderCarrier(),
+          FakeRequest()),
         2.second)
       result.map(r => r shouldBe AuditResult.Success)
     }
@@ -668,7 +691,9 @@ class FileUploadControllerSpec
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
       val result = Await.result(
         controller
-          .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")(HeaderCarrier(), FakeRequest()),
+          .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")(
+            HeaderCarrier(),
+            FakeRequest()),
         2.second)
       result.fold(
         error => error.toString should contain("boo hoo"),

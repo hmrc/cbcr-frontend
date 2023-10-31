@@ -31,11 +31,7 @@ object Constraints {
   implicit val constraintFormat: OFormat[Constraints] = Json.format[Constraints]
 }
 
-case class EnvelopeRequest(
-  callbackUrl: String,
-  expiryDate: String,
-  metadata: MetaData,
-  constraints: Constraints)
+case class EnvelopeRequest(callbackUrl: String, expiryDate: String, metadata: MetaData, constraints: Constraints)
 object EnvelopeRequest {
 
   implicit val envelopeRequestFormat: OFormat[EnvelopeRequest] = Json.format[EnvelopeRequest]

@@ -33,7 +33,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class DocRefIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
+class DocRefIdServiceSpec
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
 
   private val connector = mock[CBCRBackendConnector]
   private val docRefIdService = new DocRefIdService(connector)
@@ -51,8 +52,7 @@ class DocRefIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     }
 
     "return Unexpected error state with message if the connector returns a HttpException" in {
-      connector.docRefIdSave(*)(*) returns Future.failed(
-        new HttpException("HttpException occurred", 400))
+      connector.docRefIdSave(*)(*) returns Future.failed(new HttpException("HttpException occurred", 400))
       val result = Await.result(docRefIdService.saveDocRefId(docRefId).value, 2.seconds)
       result.get.getClass.getName shouldBe "uk.gov.hmrc.cbcrfrontend.model.UnexpectedState"
     }
@@ -73,15 +73,13 @@ class DocRefIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     }
 
     "return Unexpected error state with message if the connector returns a HttpException if it fails to save CorrDocRefId" in {
-      connector.corrDocRefIdSave(*, *)(*) returns Future.failed(
-        new HttpException("HttpException occurred", 400))
+      connector.corrDocRefIdSave(*, *)(*) returns Future.failed(new HttpException("HttpException occurred", 400))
       val result = Await.result(docRefIdService.saveCorrDocRefID(corrDocRefId, docRefId).value, 2.seconds)
       result.get.getClass.getName shouldBe "uk.gov.hmrc.cbcrfrontend.model.UnexpectedState"
     }
 
     "return an error if anything else goes wrong and if the connector returns any other Exception if it fails to save CorrDocRefId" in {
-      connector.corrDocRefIdSave(*, *)(*) returns Future.failed(
-        new Exception("The sky is falling"))
+      connector.corrDocRefIdSave(*, *)(*) returns Future.failed(new Exception("The sky is falling"))
       val result = Await.result(docRefIdService.saveCorrDocRefID(corrDocRefId, docRefId).value, 2.seconds)
       result.get.errorMsg shouldBe "The sky is falling"
     }
