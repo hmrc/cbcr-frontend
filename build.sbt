@@ -1,8 +1,8 @@
-import sbt.Keys.*
+import play.sbt.PlayImport.*
 import sbt.*
+import sbt.Keys.*
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
-import play.sbt.PlayImport.*
 
 val appName = "cbcr-frontend"
 

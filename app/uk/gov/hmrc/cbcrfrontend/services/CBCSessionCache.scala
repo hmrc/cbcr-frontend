@@ -24,8 +24,8 @@ import play.api.http.Status
 import play.api.libs.json.{Format, Reads, Writes}
 import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
-import uk.gov.hmrc.http.{HttpClient, _}
 import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
+import uk.gov.hmrc.http.{HttpClient, _}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
