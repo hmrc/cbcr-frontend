@@ -85,8 +85,8 @@ class XmlErrorHandler() extends ValidationProblemHandler {
 
     val listBuffer: ListBuffer[String] = problem.getSeverity match {
       case XMLValidationProblem.SEVERITY_WARNING => warningsListBuffer
-      case XMLValidationProblem.SEVERITY_ERROR => errorsListBuffer
-      case XMLValidationProblem.SEVERITY_FATAL => fatalErrorsListBuffer
+      case XMLValidationProblem.SEVERITY_ERROR   => errorsListBuffer
+      case XMLValidationProblem.SEVERITY_FATAL   => fatalErrorsListBuffer
     }
 
     if (listBuffer.size < errorMessageLimit) {

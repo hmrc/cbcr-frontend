@@ -103,7 +103,8 @@ class TestCBCRController @Inject()(
 
   def dropReportingEntityDataCollection(): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      testCBCRConnector.dropReportingEntityDataCollection()
+      testCBCRConnector
+        .dropReportingEntityDataCollection()
         .map(_ => Ok("Reporting entity data collection dropped"))
         .recover {
           case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity data collection dropped")
@@ -134,21 +135,22 @@ class TestCBCRController @Inject()(
     }
   }
 
-  def updateReportingEntityCreationDate(createDate: String, docRefId: String): Action[AnyContent] = Action.async { implicit request =>
-    authorised() {
-      testCBCRConnector
-        .updateReportingEntityCreationDate(createDate, docRefId)
-        .map { s =>
-          s.status match {
-            case OK           => Ok("Reporting entity createDate updated")
-            case NOT_MODIFIED => Ok("Reporting entity createDate NOT updated")
-            case _            => Ok("Something went wrong")
+  def updateReportingEntityCreationDate(createDate: String, docRefId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        testCBCRConnector
+          .updateReportingEntityCreationDate(createDate, docRefId)
+          .map { s =>
+            s.status match {
+              case OK           => Ok("Reporting entity createDate updated")
+              case NOT_MODIFIED => Ok("Reporting entity createDate NOT updated")
+              case _            => Ok("Something went wrong")
+            }
           }
-        }
-        .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
-        }
-    }
+          .recover {
+            case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
+          }
+      }
   }
 
   def deleteReportingEntityCreationDate(docRefId: String): Action[AnyContent] = Action.async { implicit request =>
@@ -168,21 +170,22 @@ class TestCBCRController @Inject()(
     }
   }
 
-  def confirmReportingEntityCreationDate(createDate: String, docRefId: String): Action[AnyContent] = Action.async { implicit request =>
-    authorised() {
-      testCBCRConnector
-        .confirmReportingEntityCreationDate(createDate, docRefId)
-        .map { s =>
-          s.status match {
-            case OK        => Ok("Reporting entity createDate correct")
-            case NOT_FOUND => Ok("Reporting entity createDate NOT correct")
-            case _         => Ok("Something went wrong")
+  def confirmReportingEntityCreationDate(createDate: String, docRefId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised() {
+        testCBCRConnector
+          .confirmReportingEntityCreationDate(createDate, docRefId)
+          .map { s =>
+            s.status match {
+              case OK        => Ok("Reporting entity createDate correct")
+              case NOT_FOUND => Ok("Reporting entity createDate NOT correct")
+              case _         => Ok("Something went wrong")
+            }
           }
-        }
-        .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
-        }
-    }
+          .recover {
+            case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
+          }
+      }
   }
 
   def deleteReportingEntityReportingPeriod(docRefId: String): Action[AnyContent] = Action.async { implicit request =>

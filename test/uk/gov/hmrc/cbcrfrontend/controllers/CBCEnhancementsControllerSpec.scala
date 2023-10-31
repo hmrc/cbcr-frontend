@@ -32,8 +32,8 @@ import uk.gov.hmrc.cbcrfrontend.views.Views
 import scala.concurrent.ExecutionContext
 
 class CBCEnhancementsControllerSpec
-    extends AnyWordSpec with Matchers with ScalaFutures with GuiceOneAppPerSuite with CSRFTest
-    with BeforeAndAfterEach with IdiomaticMockito {
+    extends AnyWordSpec with Matchers with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
+    with IdiomaticMockito {
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]

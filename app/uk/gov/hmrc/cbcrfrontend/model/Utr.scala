@@ -38,12 +38,11 @@ case class Utr(utr: String) extends TaxIdentifier {
         checkCharacter == utr.charAt(0)
       case _ => false
     }
-     def stripUtr(utr: String): String = {
+    def stripUtr(utr: String): String =
       utr
         .replaceAll("\\s+", "")
         .replaceAll("[a-zA-Z]", "")
         .takeRight(Math.min(utr.length, 10))
-    }
   }
 }
 

@@ -29,7 +29,8 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class BPRKnownFactsServiceSpec (implicit val ec: ExecutionContext) extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
+class BPRKnownFactsServiceSpec(implicit val ec: ExecutionContext)
+    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
   private val mockConnector = mock[BPRKnownFactsConnector]
   private val mockAudit = mock[AuditConnector]
   private val bprKnownFactsService = new BPRKnownFactsService(mockConnector, mockAudit)

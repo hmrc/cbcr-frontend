@@ -28,7 +28,8 @@ import uk.gov.hmrc.http.HttpResponse
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers with EitherValues with IdiomaticMockito {
+class FileUploadControllerServiceConnectorSpec
+    extends AnyWordSpec with Matchers with EitherValues with IdiomaticMockito {
 
   "A FileUploadControllerServiceConnectorSpec " should {
     "create the expected Json Object when the expiry Date is specified" in {
@@ -56,7 +57,8 @@ class FileUploadControllerServiceConnectorSpec extends AnyWordSpec with Matchers
 
     "return the envelopeId if call to extractEnvelopId with valid location header" in {
       val response = mock[HttpResponse]
-      response.header(LOCATION) returns Option("localhost:8898/file-upload/envelopes/0f23a63e-d448-41af-a159-6ba23d88943e")
+      response.header(LOCATION) returns Option(
+        "localhost:8898/file-upload/envelopes/0f23a63e-d448-41af-a159-6ba23d88943e")
 
       val result = new FileUploadServiceConnector().extractEnvelopId(response)
       result should equal(Right(EnvelopeId("0f23a63e-d448-41af-a159-6ba23d88943e")))

@@ -156,7 +156,7 @@ object BusinessRuleErrors {
       case PrivateBetaCBCIdError                    => JsString(PrivateBetaCBCIdError.toString)
       case ResentDataIsUnknownError                 => JsString(ResentDataIsUnknownError.toString)
       case MultipleCbcBodies                        => JsString(MultipleCbcBodies.toString)
-      case CorrectedFileTooOld                       => JsString(CorrectedFileTooOld.toString)
+      case CorrectedFileTooOld                      => JsString(CorrectedFileTooOld.toString)
       case CorrectedFileDateMissing                 => JsString(CorrectedFileDateMissing.toString)
       case ReportingEntityOrConstituentEntityEmpty  => JsString(ReportingEntityOrConstituentEntityEmpty.toString)
       case CorrMessageRefIdNotAllowedInMessageSpec  => JsString(CorrMessageRefIdNotAllowedInMessageSpec.toString)
@@ -217,7 +217,7 @@ object BusinessRuleErrors {
             case Some(ci"originalsubmissionnotfound")              => JsSuccess(OriginalSubmissionNotFound)
             case Some(ci"privatebetacbciderror")                   => JsSuccess(PrivateBetaCBCIdError)
             case Some(ci"resentdataisunknownerror")                => JsSuccess(ResentDataIsUnknownError)
-            case Some(ci"CorrectedFileTooOld")                      => JsSuccess(CorrectedFileTooOld)
+            case Some(ci"CorrectedFileTooOld")                     => JsSuccess(CorrectedFileTooOld)
             case Some(ci"correctedfiledatemissing")                => JsSuccess(CorrectedFileDateMissing)
             case Some(ci"reportingentityorconstituententityempty") => JsSuccess(ReportingEntityOrConstituentEntityEmpty)
             case Some(ci"corrmessagerefidnotallowedinmessagespec") => JsSuccess(CorrMessageRefIdNotAllowedInMessageSpec)
@@ -275,7 +275,7 @@ object BusinessRuleErrors {
     case CorrDocRefIdDuplicate                    => "error.CorrDocRefIdDuplicate"
     case ResentDataIsUnknownError                 => "error.ResentDataIsUnknownError"
     case MultipleCbcBodies                        => "error.MultipleCbcBodies"
-    case CorrectedFileTooOld                       => "error.CorrectedFileTooOld"
+    case CorrectedFileTooOld                      => "error.CorrectedFileTooOld"
     case CorrectedFileDateMissing                 => "error.CorrectedFileDateMissing"
     case ReportingEntityOrConstituentEntityEmpty  => "error.ReportingEntityOrConstituentEntityEmpty"
     case i: InvalidXMLError                       => i.toString

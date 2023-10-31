@@ -108,7 +108,8 @@ class SubmissionController @Inject()(
     }
   }
 
-  private def storeOrUpdateReportingEntityData(xml: CompleteXMLInfo)(implicit hc: HeaderCarrier): ServiceResponse[Unit] =
+  private def storeOrUpdateReportingEntityData(xml: CompleteXMLInfo)(
+    implicit hc: HeaderCarrier): ServiceResponse[Unit] =
     xml.reportingEntity.docSpec.docType match {
       // RESENT| NEW
       case OECD1 =>
@@ -206,11 +207,11 @@ class SubmissionController @Inject()(
 
     val auditEvent = Json.obj(
       "auditSource" -> "Country-By-Country-Frontend",
-      "auditType" -> "CBCRFilingSuccessful",
+      "auditType"   -> "CBCRFilingSuccessful",
       "detail" -> Json.obj(
-        "path" -> JsString(request.uri),
+        "path"        -> JsString(request.uri),
         "summaryData" -> Json.toJson(summaryData),
-        "creds" -> Json.toJson(creds)
+        "creds"       -> Json.toJson(creds)
       )
     )
 
@@ -227,20 +228,21 @@ class SubmissionController @Inject()(
         )
         Json.obj(
           "detail" -> Json.obj(
-            "path" -> JsString(request.uri),
+            "path"        -> JsString(request.uri),
             "summaryData" -> Json.toJson(trimmmedSummaryData),
-            "creds" -> Json.toJson(creds)
+            "creds"       -> Json.toJson(creds)
           )
         )
       } else {
         auditEvent
       }
 
-    audit.sendExtendedEvent(ExtendedDataEvent(
-      "Country-By-Country-Frontend",
-      "CBCRFilingSuccessful",
-      detail = validAuditEvent
-    ))
+    audit.sendExtendedEvent(
+      ExtendedDataEvent(
+        "Country-By-Country-Frontend",
+        "CBCRFilingSuccessful",
+        detail = validAuditEvent
+      ))
   }
 
   private val utrConstraint: Constraint[String] = Constraint(utr => {
@@ -281,33 +283,37 @@ class SubmissionController @Inject()(
     }
   }
 
-  val submitUltimateParentEntity: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
-    authorised().retrieve(Retrievals.affinityGroup) { userType =>
-      (for {
-        reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
-        redirect <- EitherT.right[CBCErrors](ultimateParentEntityForm.bindFromRequest().fold[Future[Result]](
-                     formWithErrors => BadRequest(views.submitInfoUltimateParentEntity(formWithErrors)),
-                     success =>
-                       cache.save(success).map { _ =>
-                         (userType, reportingRole) match {
-                           case (_, CBC702) => Redirect(routes.SubmissionController.utr)
-                           case (Some(Agent), CBC703 | CBC704) =>
-                             Redirect(routes.SubmissionController.enterCompanyName)
-                           case (Some(Organisation), CBC703 | CBC704) =>
-                             Redirect(routes.SubmissionController.submitterInfo)
-                           case _ =>
-                             errorRedirect(
-                               UnexpectedState(
-                                 s"Unexpected userType/ReportingRole combination: $userType $reportingRole"),
-                               views.notAuthorisedIndividual,
-                               views.errorTemplate)
-                         }
-                     }
-                   ))
-      } yield redirect)
-        .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
-        .merge
-    }
+  val submitUltimateParentEntity: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) {
+    implicit request =>
+      authorised().retrieve(Retrievals.affinityGroup) { userType =>
+        (for {
+          reportingRole <- cache.read[CompleteXMLInfo].map(_.reportingEntity.reportingRole)
+          redirect <- EitherT.right[CBCErrors](
+                       ultimateParentEntityForm
+                         .bindFromRequest()
+                         .fold[Future[Result]](
+                           formWithErrors => BadRequest(views.submitInfoUltimateParentEntity(formWithErrors)),
+                           success =>
+                             cache.save(success).map { _ =>
+                               (userType, reportingRole) match {
+                                 case (_, CBC702) => Redirect(routes.SubmissionController.utr)
+                                 case (Some(Agent), CBC703 | CBC704) =>
+                                   Redirect(routes.SubmissionController.enterCompanyName)
+                                 case (Some(Organisation), CBC703 | CBC704) =>
+                                   Redirect(routes.SubmissionController.submitterInfo)
+                                 case _ =>
+                                   errorRedirect(
+                                     UnexpectedState(
+                                       s"Unexpected userType/ReportingRole combination: $userType $reportingRole"),
+                                     views.notAuthorisedIndividual,
+                                     views.errorTemplate)
+                               }
+                           }
+                         ))
+        } yield redirect)
+          .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
+          .merge
+      }
   }
 
   val utr: Action[AnyContent] = Action.async { implicit request =>
@@ -318,21 +324,23 @@ class SubmissionController @Inject()(
 
   val submitUtr: Action[AnyContent] = Action.async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
-      utrForm.bindFromRequest().fold[Future[Result]](
-        errors => BadRequest(views.utrCheck(errors)),
-        utr =>
-          cache.save(TIN(utr.utr, "")).map { _ =>
-            userType match {
-              case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo)
-              case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName)
-              case _ =>
-                errorRedirect(
-                  UnexpectedState(s"Bad affinityGroup: $userType"),
-                  views.notAuthorisedIndividual,
-                  views.errorTemplate)
-            }
-        }
-      )
+      utrForm
+        .bindFromRequest()
+        .fold[Future[Result]](
+          errors => BadRequest(views.utrCheck(errors)),
+          utr =>
+            cache.save(TIN(utr.utr, "")).map { _ =>
+              userType match {
+                case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo)
+                case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName)
+                case _ =>
+                  errorRedirect(
+                    UnexpectedState(s"Bad affinityGroup: $userType"),
+                    views.notAuthorisedIndividual,
+                    views.errorTemplate)
+              }
+          }
+        )
     }
   }
 
@@ -376,47 +384,48 @@ class SubmissionController @Inject()(
 
   val submitSubmitterInfo: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
-      submitterInfoForm.bindFromRequest().fold(
-        formWithErrors => {
-          cache
-            .read[FileDetails]
-            .map { fd =>
-              BadRequest(
-                views.submitterInfo(
-                  formWithErrors,
-                  fd.envelopeId,
-                  fd.fileId,
-                  userType
-                ))
-            }
-            .getOrElse(throw new RuntimeException("Missing file upload details"))
-        },
-        success => {
-          val result = for {
-            straightThrough <- EitherT.right[CBCErrors](cache.readOption[CBCId].map(_.isDefined))
-            xml             <- cache.read[CompleteXMLInfo]
-            name <- EitherT.right[CBCErrors](
-                     OptionT(cache.readOption[AgencyBusinessName])
+      submitterInfoForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors => {
+            cache
+              .read[FileDetails]
+              .map { fd =>
+                BadRequest(
+                  views.submitterInfo(
+                    formWithErrors,
+                    fd.envelopeId,
+                    fd.fileId,
+                    userType
+                  ))
+              }
+              .getOrElse(throw new RuntimeException("Missing file upload details"))
+          },
+          success => {
+            val result = for {
+              straightThrough <- EitherT.right[CBCErrors](cache.readOption[CBCId].map(_.isDefined))
+              xml             <- cache.read[CompleteXMLInfo]
+              name <- EitherT.right[CBCErrors](OptionT(cache.readOption[AgencyBusinessName])
                        .getOrElse(AgencyBusinessName(xml.reportingEntity.name)))
-            _ <- EitherT.right[CBCErrors](
-                  cache.save(success.copy(affinityGroup = userType, agencyBusinessName = Some(name))))
-            result <- EitherT.fromEither[Future](userType match {
-                       case Some(Organisation) if straightThrough =>
-                         Right(Redirect(routes.SubmissionController.submitSummary))
-                       case Some(Organisation) => Right(Redirect(routes.SharedController.enterCBCId))
-                       case Some(Agent) =>
-                         Right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ =>
-                           Redirect(routes.SharedController.verifyKnownFactsAgent))
-                       case _ => Left(UnexpectedState(s"Invalid affinityGroup: $userType").asInstanceOf[CBCErrors])
-                     })
-          } yield result
+              _ <- EitherT.right[CBCErrors](
+                    cache.save(success.copy(affinityGroup = userType, agencyBusinessName = Some(name))))
+              result <- EitherT.fromEither[Future](userType match {
+                         case Some(Organisation) if straightThrough =>
+                           Right(Redirect(routes.SubmissionController.submitSummary))
+                         case Some(Organisation) => Right(Redirect(routes.SharedController.enterCBCId))
+                         case Some(Agent) =>
+                           Right(cache.save(xml.messageSpec.sendingEntityIn)).map(_ =>
+                             Redirect(routes.SharedController.verifyKnownFactsAgent))
+                         case _ => Left(UnexpectedState(s"Invalid affinityGroup: $userType").asInstanceOf[CBCErrors])
+                       })
+            } yield result
 
-          result
-            .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
-            .merge
+            result
+              .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
+              .merge
 
-        }
-      )
+          }
+        )
     }
   }
 
@@ -541,10 +550,10 @@ class SubmissionController @Inject()(
       List(submittedInfo.email.toString()),
       "cbcr_report_confirmation",
       Map(
-        "name" -> submittedInfo.fullName,
+        "name"        -> submittedInfo.fullName,
         "received_at" -> formattedDate,
-        "hash" -> data.submissionMetaData.submissionInfo.hash.value,
-        "cbcrId" -> cbcId.value
+        "hash"        -> data.submissionMetaData.submissionInfo.hash.value,
+        "cbcrId"      -> cbcId.value
       )
     )
   }

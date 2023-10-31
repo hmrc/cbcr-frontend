@@ -1363,7 +1363,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         docRefIdService.queryDocRefId(corrDocRefId2)(*) returns Future.successful(Valid)
         docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
         docRefIdService.queryDocRefId(corrDocRefId5)(*) returns Future.successful(Valid)
-        reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red.copy(reportingPeriod = Some(LocalDate.of(2016, 3, 31))))
+        reportingEntity.queryReportingEntityData(*)(*) returnsF Some(
+          red.copy(reportingPeriod = Some(LocalDate.of(2016, 3, 31))))
 
         val result =
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
@@ -1617,14 +1618,14 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
       docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
-      docRefIdService.queryDocRefId(DocRefId(
-        "GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ENTDeletion").get)(*) returns Future
+      docRefIdService.queryDocRefId(
+        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ENTDeletion").get)(*) returns Future
         .successful(DoesNotExist)
-      docRefIdService.queryDocRefId(DocRefId(
-        "GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3REP1Deletion").get)(*) returns Future
+      docRefIdService.queryDocRefId(
+        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3REP1Deletion").get)(*) returns Future
         .successful(DoesNotExist)
-      docRefIdService.queryDocRefId(DocRefId(
-        "GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ADDDeletion").get)(*) returns Future
+      docRefIdService.queryDocRefId(
+        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ADDDeletion").get)(*) returns Future
         .successful(DoesNotExist)
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF Some(reportEntityData)
       reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(reportEntityDataModel)
@@ -1670,8 +1671,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     }
 
     "validate dates overlapping should return invalid if dates are overlapping" in {
-      reportingEntity.queryReportingEntityDatesOverlaping(*, *)(*) returnsF Some(
-        DatesOverlap(true))
+      reportingEntity.queryReportingEntityDatesOverlaping(*, *)(*) returnsF Some(DatesOverlap(true))
 
       messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
@@ -1691,8 +1691,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     }
 
     "validate dates overlapping should return valid if dates are not overlapping" in {
-      reportingEntity.queryReportingEntityDatesOverlaping(*, *)(*) returnsF Some(
-        DatesOverlap(false))
+      reportingEntity.queryReportingEntityDatesOverlaping(*, *)(*) returnsF Some(DatesOverlap(false))
 
       messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None

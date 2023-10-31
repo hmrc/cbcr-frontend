@@ -115,8 +115,7 @@ class ReportingEntityDataServiceSpec
       }
 
       "return an error if anything else goes wrong" in {
-        connector.reportingEntityDataQuery(*)(*) returns Future.failed(
-          new Exception("The sky is falling"))
+        connector.reportingEntityDataQuery(*)(*) returns Future.failed(new Exception("The sky is falling"))
         val result = Await.result(reds.queryReportingEntityData(docRefId).value, 2.seconds)
         result.isLeft shouldBe true
       }
@@ -173,8 +172,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      connector.reportingEntityDataModelQuery(*)(*) returns Future.failed(
-        new Exception("The sky is falling"))
+      connector.reportingEntityDataModelQuery(*)(*) returns Future.failed(new Exception("The sky is falling"))
       val result = Await.result(reds.queryReportingEntityDataModel(docRefId).value, 2.seconds)
       result.isLeft shouldBe true
     }
@@ -203,8 +201,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      connector.reportingEntityDocRefId(*)(*) returns Future.failed(
-        new Exception("The sky is falling"))
+      connector.reportingEntityDocRefId(*)(*) returns Future.failed(new Exception("The sky is falling"))
       val result = Await.result(reds.queryReportingEntityDataDocRefId(docRefId).value, 2.seconds)
       result.isLeft shouldBe true
     }
@@ -233,8 +230,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      connector.reportingEntityDataQueryTin(*, *)(*) returns Future.failed(
-        new Exception("The sky is falling"))
+      connector.reportingEntityDataQueryTin(*, *)(*) returns Future.failed(new Exception("The sky is falling"))
       val result = Await.result(reds.queryReportingEntityDataTin(tin.value, reportingPeriod).value, 2.seconds)
       result.isLeft shouldBe true
     }
@@ -249,8 +245,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      connector.reportingEntityDataUpdate(*)(*) returns Future.failed(
-        new Exception("The sky is falling"))
+      connector.reportingEntityDataUpdate(*)(*) returns Future.failed(new Exception("The sky is falling"))
       val result = Await.result(reds.updateReportingEntityData(partialRed).value, 2.seconds)
       result.isLeft shouldBe true
     }
@@ -265,8 +260,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      connector.reportingEntityDataSave(*)(*) returns Future.failed(
-        new Exception("The sky is falling"))
+      connector.reportingEntityDataSave(*)(*) returns Future.failed(new Exception("The sky is falling"))
       val result = Await.result(reds.saveReportingEntityData(red).value, 2.seconds)
       result.isLeft shouldBe true
     }

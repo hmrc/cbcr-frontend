@@ -57,26 +57,28 @@ class StartControllerSpec
     val fakeRequest = addToken(FakeRequest("GET", "/"))
 
     "return 303 if authorised and Agent" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future.successful(
+      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
+        .successful(
           new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Agent), Some(newCBCEnrolment)))
       status(controller.start(fakeRequest)) shouldBe Status.SEE_OTHER
     }
 
     "return 200 if authorized and registered Organisation for CBCR" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future.successful(
+      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
+        .successful(
           new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment)))
       status(controller.start(fakeRequest)) shouldBe Status.OK
     }
 
     "return 303 if authorised Organisation but not registered for CBCR" in {
       authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns
-          Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
+        Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
       status(controller.start(fakeRequest)) shouldBe Status.SEE_OTHER
     }
 
     "return 403 if authorised Individual" in {
       authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns
-          Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None))
+        Future.successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None))
       status(controller.start(fakeRequest)) shouldBe Status.FORBIDDEN
     }
     "return 303 if submit returns upload" in {

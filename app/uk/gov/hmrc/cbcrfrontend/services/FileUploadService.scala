@@ -72,9 +72,7 @@ class FileUploadService @Inject()(
     }
 
     EitherT(
-      HttpExecutor(
-        fusUrl,
-        CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
+      HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
         .map(fusConnector.extractEnvelopId))
   }
 

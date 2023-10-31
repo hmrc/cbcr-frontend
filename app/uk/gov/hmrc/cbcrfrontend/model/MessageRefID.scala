@@ -40,7 +40,8 @@ object MessageRefID {
   private val dateFmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
   private val cbcRegex: String = CBCId.cbcRegex.init.tail // strip the ^ and $ characters from the cbcRegex
   private val dateRegex = """\d{8}T\d{6}"""
-  val messageRefIDRegex: Regex = ("""GB(\d{4})(\w{2})(""" + cbcRegex + """)(CBC40[1,2])(""" + dateRegex + """)(\w{1,56})""").r
+  val messageRefIDRegex: Regex =
+    ("""GB(\d{4})(\w{2})(""" + cbcRegex + """)(CBC40[1,2])(""" + dateRegex + """)(\w{1,56})""").r
 
   implicit val show: Show[MessageRefID] = Show.show[MessageRefID](m =>
     s"${m.sendingRJ}${m.reportingPeriod}${m.receivingRJ}${m.cBCId}${m.messageType}${m.creationTimestamp

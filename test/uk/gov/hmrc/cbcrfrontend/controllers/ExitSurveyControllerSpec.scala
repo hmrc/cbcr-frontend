@@ -70,8 +70,10 @@ class ExitSurveyControllerSpec
 
     "return a 303 to the guidance page if satisfied selection is provided and should audit" in {
       auditC.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
-      val result = controller.submit(fakeSubmit.withMethod("POST")
-              .withFormUrlEncodedBody("satisfied" -> "splendid", "suggestions" -> ""))
+      val result = controller.submit(
+        fakeSubmit
+          .withMethod("POST")
+          .withFormUrlEncodedBody("satisfied" -> "splendid", "suggestions" -> ""))
       status(result) shouldBe 303
       header("Location", result).get endsWith "acknowledge"
       auditC.sendExtendedEvent(*)(*, *) was called
