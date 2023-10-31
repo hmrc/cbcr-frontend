@@ -14,13 +14,13 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     majorVersion := 1,
     scalaVersion := "2.13.11",
-    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test(),
+    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test()
   )
   .settings(
     scalacOptions += "-Wconf:src=routes/.*:s",
-    scalacOptions += "-Wconf:cat=unused-imports&src=html/.*:s")
+    scalacOptions += "-Wconf:cat=unused-imports&src=html/.*:s"
+  )
   .settings(PlayKeys.playDefaultPort := 9696)
-  .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings *)
   // Disable default sbt Test options (might change with new versions of bootstrap)
   .settings(Test / testOptions -= Tests.Argument("-o", "-u", "target/test-reports", "-h", "target/test-reports/html-report"))
