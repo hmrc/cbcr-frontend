@@ -218,8 +218,7 @@ fileUploadResult.xml.error.report=Download the <a href="{0}" class="govuk-link">
 fileUploadResult.error.xml.link=XML error summary
 fileUploadResult.error.xml.message=Give it to your XML creator to correct the errors
 fileUploadResult.error.guidance=Check formatting guidance
-fileUploadResult.error.oecdUrl=Read the XML user guide
-fileUploadResult.error.oecdInfo=for the rules you must follow.
+fileUploadResult.error.oecdInfo=For the rules you must follow <a class="govuk-link" href="{0}" target="_blank" rel="nofollow noreferrer">read the XML user guide in ‘How to prepare a report’ (opens in a new tab)</a>.
 
 fileUploadResult.error.FileTooLarge=The report is larger than 50MB. You will need to fix this issue before uploading it again.
 fileUploadResult.error.FileContainsVirus=The report has failed our anti-virus checks. You will need to fix this issue before uploading it again.
@@ -261,7 +260,7 @@ submitSummary.submit=Confirm and send report
 submitSummary.submitReport=Submit report
 
 uploadReport.title=Check a report
-uploadReport.moreInfo=This will check the report against <a href="{0}" class="govuk-link" target="_blank" rel="noopener noreferrer">HMRC and OECD guidelines (PDF, 1.6MB, opens in a new tab)</a>. Until you send the report, HMRC will not be able to access it.
+uploadReport.moreInfo=This will check the report against HMRC and OECD guidelines. To find out more about the guidelines <a href="{0}" class="govuk-link" target="_blank" rel="noopener noreferrer">read the XML user guide in ‘How to prepare a report’ (opens in a new tab)</a>. Until you send the report, HMRC will not be able to access it.
 uploadReport.inputField.label=Choose the file you want to check:
 uploadReport.hint = This file must be XML and must be smaller than 50MB
 uploadReport.uploadButton=Check report
