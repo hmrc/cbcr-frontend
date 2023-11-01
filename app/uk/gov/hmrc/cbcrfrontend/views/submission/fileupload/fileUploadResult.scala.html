@@ -58,7 +58,7 @@
             </p>
         }
         <p class="govuk-body">
-            <a href="@config.cbcrOecdGuideUrl" class="govuk-link">@messages("fileUploadResult.error.oecdUrl")</a> @messages("fileUploadResult.error.oecdInfo")
+            @Html(messages("fileUploadResult.error.oecdInfo", config.cbcrOecdGuideUrl))
         </p>
         @govukButton(Button(
             href = Some(routes.SharedController.signOutSurvey.url),
