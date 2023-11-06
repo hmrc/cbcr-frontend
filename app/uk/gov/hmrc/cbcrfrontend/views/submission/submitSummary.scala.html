@@ -155,7 +155,7 @@
                     content = Text(messages("submitSummary.reportDetails.period"))
                 ),
                 value = Value(
-                    content = Text(summaryData.xmlInfo.messageSpec.reportingPeriod.toString)
+                    content = Text(summaryData.xmlInfo.messageSpec.reportingPeriod.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")))
                 )
             ),
             SummaryListRow(
@@ -163,16 +163,11 @@
                     content = Text(messages("submitSummary.reportDetails.timestamp"))
                 ),
                 value = Value(
-                    content = Text(summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern(if(summaryData.doesCreationTimeStampHaveMillis) {
-                        "yyyy-MM-dd HH:mm:ss.SSS"
-                    } else {
-                        "yyyy-MM-dd HH:mm:ss"
-                    })))
+                    content = Text(summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("h:mm a 'on' dd MMMM yyyy")))
                 )
             )
         )
     ))
-
     @formHelper(routes.SubmissionController.confirm) {
          <p class="govuk-body">
             @messages("submitSummary.declaration.text")
