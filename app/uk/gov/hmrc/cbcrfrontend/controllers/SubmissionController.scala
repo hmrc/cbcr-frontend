@@ -347,7 +347,7 @@ class SubmissionController @Inject()(
   private def enterSubmitterInfo(userType: Option[AffinityGroup])(
     implicit request: Request[AnyContent]): Future[Result] =
     for {
-      form <- cache.readOption[SubmitterInfo].map { osi =>
+      form <- cache.get[SubmitterInfo].map { osi =>
                (osi.map(_.fullName), osi.map(_.contactPhone), osi.map(_.email))
                  .mapN { (name, phone, email) =>
                    submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
@@ -403,9 +403,9 @@ class SubmissionController @Inject()(
           },
           success => {
             val result = for {
-              straightThrough <- EitherT.right[CBCErrors](cache.readOption[CBCId].map(_.isDefined))
+              straightThrough <- EitherT.right[CBCErrors](cache.get[CBCId].map(_.isDefined))
               xml             <- cache.read[CompleteXMLInfo]
-              name <- EitherT.right[CBCErrors](OptionT(cache.readOption[AgencyBusinessName])
+              name <- EitherT.right[CBCErrors](OptionT(cache.get[AgencyBusinessName])
                        .getOrElse(AgencyBusinessName(xml.reportingEntity.name)))
               _ <- EitherT.right[CBCErrors](
                     cache.save(success.copy(affinityGroup = userType, agencyBusinessName = Some(name))))
@@ -523,7 +523,7 @@ class SubmissionController @Inject()(
                             (nonFatalCatch opt date.date.format(dateFormat).replace("AM", "am").replace("PM", "pm"))
                               .toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")
                                 .asInstanceOf[CBCErrors]))
-          emailSentAlready <- EitherT.right[CBCErrors](cache.readOption[ConfirmationEmailSent].map(_.isDefined))
+          emailSentAlready <- EitherT.right[CBCErrors](cache.get[ConfirmationEmailSent].map(_.isDefined))
           sentEmail <- if (!emailSentAlready)
                         EitherT.right[CBCErrors](
                           emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)

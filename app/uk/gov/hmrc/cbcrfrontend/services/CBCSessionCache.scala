@@ -16,82 +16,55 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.data.{EitherT, OptionT}
-import cats.instances.future._
-import com.typesafe.config.Config
-import configs.syntax._
-import play.api.http.Status
-import play.api.libs.json.{Format, Reads, Writes}
-import play.api.{Configuration, Logger}
-import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
-import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
-import uk.gov.hmrc.http.{HttpClient, _}
+import play.api.libs.json.{Reads, Writes}
+import play.api.{Configuration, Logging}
+import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, InvalidSession}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.mongo.cache.{CacheIdType, DataKey, MongoCacheRepository}
+import uk.gov.hmrc.mongo.{MongoComponent, TimestampSupport}
 
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
 import scala.util.control.NonFatal
 
 @Singleton
-class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)
-    extends SessionCache {
+class CBCSessionCache @Inject()(
+  mongoComponent: MongoComponent,
+  configuration: Configuration,
+  timestampSupport: TimestampSupport
+)(implicit ec: ExecutionContext)
+    extends MongoCacheRepository(
+      mongoComponent = mongoComponent,
+      collectionName = "cbcr-frontend",
+      ttl = configuration.get[FiniteDuration]("cache.expiry"),
+      timestampSupport = timestampSupport,
+      cacheIdType = CacheIdType.SimpleCacheId
+    ) with Logging {
 
-  val conf: Config = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
+  def save[T: Writes: TypeTag](body: T)(implicit hc: HeaderCarrier): Future[Either[CBCErrors, Unit]] =
+    put(hc.sessionId.get.toString)(DataKey("cbcr-session"), body).map(_ => Right())
 
-  lazy val logger: Logger = Logger(this.getClass)
-
-  override def defaultSource: String = "cbcr-frontend"
-
-  override def baseUri: String =
-    (for {
-      protocol <- conf.get[String]("protocol")
-      host     <- conf.get[String]("host")
-      port     <- conf.get[Int]("port")
-    } yield s"$protocol://$host:$port").value
-
-  override def domain: String = conf.get[String]("domain").value
-
-  def save[T: Writes: TypeTag](body: T)(implicit hc: HeaderCarrier): Future[CacheMap] =
-    cache(stripPackage(typeOf[T].toString), body)
-
-  def read[T: Reads: TypeTag](implicit hc: HeaderCarrier): EitherT[Future, ExpiredSession, T] =
-    EitherT[Future, ExpiredSession, T](
-      fetchAndGetEntry(stripPackage(typeOf[T].toString))
-        .map(_.toRight(ExpiredSession(s"Unable to read ${typeOf[T]} from cache")))
-    )
-
-  def readOption[T: Reads: TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] =
-    fetchAndGetEntry(stripPackage(typeOf[T].toString))
-
-  def readOrCreate[T: Format: TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] =
-    OptionT(
-      readOption[T].flatMap(
-        _.fold(
-          f.semiflatMap { t =>
-            save(t).map(_ => t)
-          }.value
-        )(t => Future.successful(Some(t)))))
-
-  def create[T: Format: TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] =
-    OptionT(f.semiflatMap { t =>
-      save(t).map(_ => t)
-    }.value)
-
-  private def stripPackage(s: String): String = s.split('.').last
+  def get[T: Reads: TypeTag](implicit hc: HeaderCarrier): Future[Either[CBCErrors, Option[T]]] =
+    hc.sessionId.map(_.value) match {
+      case Some(sessionId) =>
+        get[T](sessionId)(DataKey("cbcr-session")).map(maybe => Right(maybe))
+      case None => Future.successful(Left(InvalidSession))
+    }
 
   def clear(implicit hc: HeaderCarrier): Future[Boolean] =
-    super
-      .remove()
-      .map { response =>
-        response.status match {
-          case Status.OK         => true
-          case Status.NO_CONTENT => true
-          case _                 => false
-        }
-      }
-      .recover {
-        case NonFatal(t) =>
-          logger.info(s"CBCSessionCache Failed - error message: ${t.getMessage}")
-          false
-      }
+    hc.sessionId match {
+      case Some(s) =>
+        deleteEntity(s.value)
+          .map { _ =>
+            true
+          }
+          .recover {
+            case NonFatal(t) =>
+              logger.info(s"CBCSessionCache Failed - error message: ${t.getMessage}")
+              false
+          }
+      case None => Future.successful(false)
+    }
 }

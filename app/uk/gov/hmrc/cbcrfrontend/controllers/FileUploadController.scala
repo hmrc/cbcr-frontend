@@ -90,7 +90,7 @@ class FileUploadController @Inject()(
           UnexpectedState("Unable to query AffinityGroup"),
           views.notAuthorisedIndividual,
           views.errorTemplate)
-      case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
+      case Some(Organisation) ~ None if Await.result(cache.get[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
         Ok(views.unregisteredGGAccount())
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals)
       case affinityGroup ~ _ =>
@@ -266,7 +266,7 @@ class FileUploadController @Inject()(
 
   def getBusinessRuleErrors: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      OptionT(cache.readOption[AllBusinessRuleErrors])
+      OptionT(cache.get[AllBusinessRuleErrors])
         .map(x => fileUploadService.errorsToFile(x.errors, fileUploadName("fileUpload.BusinessRuleErrors")))
         .fold(
           NoContent
@@ -276,7 +276,7 @@ class FileUploadController @Inject()(
 
   def getXmlSchemaErrors: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      OptionT(cache.readOption[XMLErrors])
+      OptionT(cache.get[XMLErrors])
         .map(x => fileUploadService.errorsToFile(List(x), fileUploadName("fileUpload.XMLSchemaErrors")))
         .fold(
           NoContent
@@ -407,12 +407,12 @@ class FileUploadController @Inject()(
     enrolment: Option[CBCEnrolment],
     reason: String)(implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
     for {
-      md             <- EitherT.right[CBCErrors](cache.readOption[FileMetadata])
-      businessErrors <- EitherT.right[CBCErrors](cache.readOption[AllBusinessRuleErrors])
-      xmlErrors      <- EitherT.right[CBCErrors](cache.readOption[XMLErrors])
-      c              <- EitherT.right[CBCErrors](cache.readOption[CBCId])
+      md             <- EitherT.right[CBCErrors](cache.get[FileMetadata])
+      businessErrors <- EitherT.right[CBCErrors](cache.get[AllBusinessRuleErrors])
+      xmlErrors      <- EitherT.right[CBCErrors](cache.get[XMLErrors])
+      c              <- EitherT.right[CBCErrors](cache.get[CBCId])
       cbcId = if (enrolment.isEmpty) c else Option(enrolment.get.cbcId)
-      u <- EitherT.right[CBCErrors](cache.readOption[Utr])
+      u <- EitherT.right[CBCErrors](cache.get[Utr])
       utr = if (enrolment.isEmpty) u else Option(enrolment.get.utr)
       result <- EitherT(
                  audit

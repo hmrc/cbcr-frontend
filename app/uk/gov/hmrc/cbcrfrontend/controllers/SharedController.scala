@@ -245,8 +245,8 @@ class SharedController @Inject()(
   def enterKnownFacts(cbcEnrolment: Option[CBCEnrolment], userType: AffinityGroup)(
     implicit request: Request[AnyContent]): Future[Result] =
     for {
-      postCode <- cache.readOption[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
-      utr      <- cache.readOption[Utr].map(_.map(_.utr))
+      postCode <- cache.get[BusinessPartnerRecord].map(_.flatMap(_.address.postalCode))
+      utr      <- cache.get[Utr].map(_.map(_.utr))
       result <- cbcEnrolment
                  .map(_ => Future.successful(NotAcceptable(views.alreadySubscribed())))
                  .fold[Future[Result]]({
@@ -281,7 +281,7 @@ class SharedController @Inject()(
                         notFoundView(userType)
                       }
                 cbcIdFromXml <- EitherT.right(
-                                 OptionT(cache.readOption[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
+                                 OptionT(cache.get[CompleteXMLInfo]).map(_.messageSpec.sendingEntityIn).value)
                 subscriptionDetails <- subDataService
                                         .retrieveSubscriptionData(knownFacts.utr)
                                         .leftMap((error: CBCErrors) =>

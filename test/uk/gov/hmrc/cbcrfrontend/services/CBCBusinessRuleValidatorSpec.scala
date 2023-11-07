@@ -96,12 +96,12 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
   reportingEntity.queryReportingEntityDatesOverlaping(*, *)(*) returnsF Some(DatesOverlap(false))
 
   private def makeTheUserAnAgent =
-    cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
+    cache.get[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
 
   makeTheUserAnAgent
 
   private def makeTheUserAnOrganisation(cbcid: String) =
-    cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(CBCId(cbcid))
+    cache.get[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(CBCId(cbcid))
 
   creationDateService.isDateValid(*)(*) returns Future.successful(xmlStatusEnum.dateCorrect)
 

@@ -564,7 +564,7 @@ class CBCBusinessRuleValidator @Inject()(
         if (enrolment.cbcId.value == in.messageSpec.sendingEntityIn.value) in.validNel
         else SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
       case (Some(Organisation), None) =>
-        cache.readOption[CBCId].map {
+        cache.get[CBCId].map {
           case Some(maybeCBCId) if maybeCBCId.value != in.messageSpec.sendingEntityIn.value =>
             SendingEntityOrganisationMatchError.invalidNel[XMLInfo]
           case _ => in.validNel //user has logged in as an org but with an unregistered cbcId

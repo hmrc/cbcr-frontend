@@ -67,7 +67,7 @@ class SubscriptionController @Inject()(
           errors => BadRequest(views.contactInfoSubscriber(errors)),
           data => {
             val id_bpr_utr: ServiceResponse[(CBCId, BusinessPartnerRecord, Utr)] = for {
-              subscribed <- EitherT.right[CBCErrors](cache.readOption[Subscribed.type].map(_.isDefined))
+              subscribed <- EitherT.right[CBCErrors](cache.get[Subscribed.type].map(_.isDefined))
               _          <- EitherT.cond[Future](!subscribed, (), UnexpectedState("Already subscribed"))
               bpr_utr    <- (cache.read[BusinessPartnerRecord] |@| cache.read[Utr]).tupled
               subDetails = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
@@ -86,8 +86,7 @@ class SubscriptionController @Inject()(
                             cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@|
                             cache.save(Subscribed)).tupled
                         )
-                    subscriptionEmailSent <- EitherT.right[CBCErrors](
-                                              cache.readOption[SubscriptionEmailSent].map(_.isDefined))
+                    subscriptionEmailSent <- EitherT.right[CBCErrors](cache.get[SubscriptionEmailSent].map(_.isDefined))
                     emailSent <- if (!subscriptionEmailSent)
                                   EitherT.right[CBCErrors](emailService.sendEmail(makeSubEmail(data, id)).value)
                                 else EitherT.fromEither[Future](None.asRight[CBCErrors])

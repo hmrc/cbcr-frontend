@@ -207,7 +207,7 @@ class TestCBCRController @Inject()(
 
   def retrieveBusinessRuleValidationErrors(): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      OptionT(cache.readOption[AllBusinessRuleErrors])
+      OptionT(cache.get[AllBusinessRuleErrors])
         .map(x => fileUploadService.errorsToString(x.errors))
         .fold(
           NoContent
@@ -236,7 +236,7 @@ class TestCBCRController @Inject()(
 
   def retrieveSchemaValidationErrors(): Action[AnyContent] = Action.async { implicit request =>
     authorised() {
-      OptionT(cache.readOption[XMLErrors])
+      OptionT(cache.get[XMLErrors])
         .map(x => fileUploadService.errorsToString(List(x)))
         .fold(
           NoContent

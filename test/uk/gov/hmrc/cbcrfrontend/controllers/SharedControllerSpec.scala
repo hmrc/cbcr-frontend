@@ -144,18 +144,18 @@ class SharedControllerSpec
   "GET /known-facts-check" should {
     "return 406 if we have already subscribed" in {
       authC.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(Some(bpr))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(utr))
+      cache.get[Utr](Utr.utrRead, *, *) returns Future.successful(Some(utr))
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
     }
 
     "return 200 if we haven't already subscribed" in {
       authC.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(None)
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(Some(bpr))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(utr))
+      cache.get[Utr](Utr.utrRead, *, *) returns Future.successful(Some(utr))
       auditC.sendEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
@@ -163,9 +163,9 @@ class SharedControllerSpec
 
     "return 200 if an Agent" in {
       authC.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(Some(bpr))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(utr))
+      cache.get[Utr](Utr.utrRead, *, *) returns Future.successful(Some(utr))
       auditC.sendEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsAgent(fakeRequestSubscribe)) shouldBe Status.OK
@@ -175,18 +175,18 @@ class SharedControllerSpec
   "POST /checkKnownFacts" should {
     "return 400 when KnownFacts are missing" in {
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(None)
+      cache.get[Utr](Utr.utrRead, *, *) returns Future.successful(None)
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts"))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
 
     "return 400 when the postcode is invalid" in {
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(None)
+      cache.get[Utr](Utr.utrRead, *, *) returns Future.successful(None)
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts")
           .withFormUrlEncodedBody("utr" -> "1234567890", "postCode" -> "NOTAPOSTCODE"))
@@ -195,9 +195,9 @@ class SharedControllerSpec
 
     "return 400 when the utr is invalid" in {
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(None)
+      cache.get[Utr](Utr.utrRead, *, *) returns Future.successful(None)
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "IAMNOTAUTR", "postCode" -> "SW4 6NR"))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
@@ -207,9 +207,9 @@ class SharedControllerSpec
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(None)
+      cache.get[Utr](Utr.utrRead, *, *) returns Future.successful(None)
       bprKF.checkBPRKnownFacts(*)(*) returns OptionT.none[Future, BusinessPartnerRecord]
       subService.retrieveSubscriptionData(*)(*, *) returnsF None
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
@@ -219,10 +219,10 @@ class SharedControllerSpec
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(None)
-      cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
+      cache.get[Utr](Utr.utrRead, *, *) returns Future.successful(None)
+      cache.get[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
       val response = BusinessPartnerRecord(
         "safeid",
         Some(OrganisationResponse("My Corp")),
@@ -247,8 +247,8 @@ class SharedControllerSpec
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Agent))
       subService.retrieveSubscriptionData(*)(*, *) returnsF Some(subDetails)
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
-      cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
       cache.save[BusinessPartnerRecord](*)(*, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
@@ -266,9 +266,9 @@ class SharedControllerSpec
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
-      cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
+      cache.get[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
       cache.save[Utr](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
       subService.retrieveSubscriptionData(*)(*, *) returnsF None
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
@@ -285,9 +285,9 @@ class SharedControllerSpec
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> ""))
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
-      cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
+      cache.get[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
       cache.save[Utr](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
       subService.retrieveSubscriptionData(*)(*, *) returnsF None
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
@@ -305,10 +305,10 @@ class SharedControllerSpec
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Agent))
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
       subService.retrieveSubscriptionData(*)(*, *) returnsF Some(subDetails)
-      cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
+      cache.get[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(None)
-      cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
+      cache.get[Utr](Utr.utrRead, *, *) returns Future.successful(None)
+      cache.get[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
       cache.save[BusinessPartnerRecord](*)(*, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
       cache.save[Utr](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
