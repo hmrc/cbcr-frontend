@@ -63,15 +63,6 @@ class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)
   def readOption[T: Reads: TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] =
     fetchAndGetEntry(stripPackage(typeOf[T].toString))
 
-  def readOrCreate[T: Format: TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] =
-    OptionT(
-      readOption[T].flatMap(
-        _.fold(
-          f.semiflatMap { t =>
-            save(t).map(_ => t)
-          }.value
-        )(t => Future.successful(Some(t)))))
-
   def create[T: Format: TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] =
     OptionT(f.semiflatMap { t =>
       save(t).map(_ => t)
