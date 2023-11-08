@@ -30,7 +30,8 @@
         hasErrors: Boolean = false,
         withSignOutLink: Boolean = true,
         additionalScripts: Option[Html] = None,
-        additionalHeadForTemplate: Option[Html] = None
+        additionalHeadForTemplate: Option[Html] = None,
+        hasPhoneNumbers: Boolean = false
 )(contentBlock: Html)(implicit request: RequestHeader,  messages: Messages)
 
 @content = {
@@ -48,6 +49,9 @@
     }
     <style>body:not(.js-enabled) .js-visible { display: none; }</style>
     @additionalHeadForTemplate.getOrElse(Html(""))
+    @if(!hasPhoneNumbers) {
+        <meta name="format-detection" content="telephone=no" />
+    }
 }
 
 @hmrcStandardPage(
