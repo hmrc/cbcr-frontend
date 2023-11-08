@@ -20,6 +20,7 @@
 @import uk.gov.hmrc.cbcrfrontend.model._
 @import uk.gov.hmrc.cbcrfrontend.util.ModifySize
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
+@import java.util.Locale
 
 @import java.time.format.DateTimeFormatter
 
@@ -163,7 +164,7 @@
                     content = Text(messages("submitSummary.reportDetails.timestamp"))
                 ),
                 value = Value(
-                    content = Text(summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("h:mm a 'on' dd MMMM yyyy")))
+                    content = Text(summaryData.xmlInfo.messageSpec.timestamp.format(DateTimeFormatter.ofPattern("h:mma 'on' dd MMMM yyyy").withLocale(Locale.UK)))
                 )
             )
         )
