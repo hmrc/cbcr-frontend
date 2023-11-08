@@ -24,14 +24,27 @@
         govukButton: GovukButton
 )
 
-@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages)
+@(
+    submissionDateTime: String,
+    hash: String,
+    cbcId: String,
+    userType: String,
+    cacheCleared: Boolean,
+    hasPhoneNumbers: Boolean = true
+)(
+    implicit request: Request[_],
+    messages: Messages
+)
 
 @title = @{messages("submitSuccessReceipt.submissionDateLabel.title")}
-@layout(title) {
-        @govukPanel(Panel(
-            title = Text(title),
-            content = HtmlContent(s"${messages("submitSuccessReceipt.reportForCBC")}<br><strong>${cbcId}</strong>")
-        ))
+@layout(
+    title,
+    hasPhoneNumbers = hasPhoneNumbers
+) {
+    @govukPanel(Panel(
+        title = Text(title),
+        content = HtmlContent(s"${messages("submitSuccessReceipt.reportForCBC")}<br><strong>${cbcId}</strong>")
+    ))
 
     <p class="govuk-body js-visible govuk-!-display-none-print"><a class="govuk-link" href="#" onclick="window.print()">@messages("submitSuccessReceipt.print")</a></p>
     <p class="govuk-body">@messages("submitSuccessReceipt.receivedOn") @cbcId @messages("submitSuccessReceipt.receivedOn2") @submissionDateTime</p>

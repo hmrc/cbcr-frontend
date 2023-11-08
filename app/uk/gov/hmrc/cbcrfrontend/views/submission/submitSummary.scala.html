@@ -30,14 +30,23 @@
         govukButton: GovukButton
 )
 
-@(summaryData: SummaryData, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
+@(
+  summaryData: SummaryData,
+  userType: Option[AffinityGroup],
+  hasPhoneNumbers: Boolean = true
+)(
+  implicit request: Request[_],
+  messages: Messages
+)
 
 @title = @{messages("submitSummary.title")}
+
 @backLink = @{userType match {
     case Some(Organisation) => routes.SharedController.enterCBCId.url
     case _ => routes.SharedController.knownFactsMatch.url
 }}
-@layout(title, backLinkUrl = Some(backLink)) {
+
+@layout(title, backLinkUrl = Some(backLink), hasPhoneNumbers = hasPhoneNumbers) {
 
     <h1 class="govuk-heading-l">@title</h1>
 

@@ -19,18 +19,19 @@
 @import uk.gov.hmrc.hmrcfrontend.views.viewmodels.hmrcstandardpage._
 
 @this(
-        hmrcStandardPage: HmrcStandardPage,
-        hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
-        hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper
+    hmrcStandardPage: HmrcStandardPage,
+    hmrcReportTechnicalIssueHelper: HmrcReportTechnicalIssueHelper,
+    hmrcTimeoutDialogHelper: HmrcTimeoutDialogHelper
 )
 
 @(
-        pageTitle: String,
-        backLinkUrl: Option[String] = None,
-        hasErrors: Boolean = false,
-        withSignOutLink: Boolean = true,
-        additionalScripts: Option[Html] = None,
-        additionalHeadForTemplate: Option[Html] = None
+    pageTitle: String,
+    backLinkUrl: Option[String] = None,
+    hasErrors: Boolean = false,
+    withSignOutLink: Boolean = true,
+    additionalScripts: Option[Html] = None,
+    additionalHeadForTemplate: Option[Html] = None,
+    hasPhoneNumbers: Boolean = false
 )(contentBlock: Html)(implicit request: RequestHeader,  messages: Messages)
 
 @content = {
@@ -39,10 +40,15 @@
         @hmrcReportTechnicalIssueHelper()
     </div>
 }
+
 @errorPrefix = @{s"${messages("generic.errorPrefix")}: "}
+
 @gdsTitle = @{s"${if(hasErrors){ errorPrefix } else ""}$pageTitle - ${messages("application.title")} - GOV.UK"}
 
 @additionalHead = {
+    @if(hasPhoneNumbers) {
+        <meta name="format-detection" content="telephone=no" />
+    }
     @if(withSignOutLink) {
         @hmrcTimeoutDialogHelper(signOutUrl = routes.SharedController.signOutSurvey.url)
     }
