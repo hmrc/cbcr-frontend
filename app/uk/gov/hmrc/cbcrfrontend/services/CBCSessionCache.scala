@@ -22,7 +22,7 @@ import com.typesafe.config.Config
 import configs.syntax._
 import play.api.http.Status
 import play.api.libs.json.{Format, Reads, Writes}
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Logging}
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
 import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
 import uk.gov.hmrc.http.{HttpClient, _}
@@ -33,12 +33,10 @@ import scala.reflect.runtime.universe._
 import scala.util.control.NonFatal
 
 @Singleton
-class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)
-    extends SessionCache {
+class CBCSessionCache @Inject()(config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)
+    extends SessionCache with Logging {
 
-  val conf: Config = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
-
-  lazy val logger: Logger = Logger(this.getClass)
+  private val conf = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
 
   override def defaultSource: String = "cbcr-frontend"
 
