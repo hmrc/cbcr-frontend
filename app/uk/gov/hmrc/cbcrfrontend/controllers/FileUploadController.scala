@@ -72,10 +72,10 @@ class FileUploadController @Inject()(
     for {
       envelope <- fileUploadService.createEnvelope
       envelopeId <- cache
-                     .create[EnvelopeId](OptionT.some(envelope))
+                     .create[EnvelopeId](envelope)
                      .toRight(UnexpectedState("Unable to get envelopeId"))
       fileId <- cache
-                 .create[FileId](OptionT.liftF(Future.successful(FileId(UUID.randomUUID.toString))))
+                 .create[FileId](FileId(UUID.randomUUID.toString))
                  .toRight(UnexpectedState("Unable to get FileId"): CBCErrors)
       successRedirect = s"$hostName${routes.FileUploadController.checkFileUploadStatus(envelopeId.value, fileId.value, hasSeen = "false").url}"
       fileUploadUrl = s"$fileUploadHost/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
