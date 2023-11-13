@@ -475,10 +475,11 @@ class SubmissionController @Inject()(
     }
 
   private def doesCreationTimeStampHaveMillis(keyXMLFileInfo: CompleteXMLInfo) =
-    if (keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).forall(_.isDigit))
+    if (keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).forall(_.isDigit)) {
       true
-    else
+    } else {
       false
+    }
 
   def enterCompanyName: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
@@ -524,13 +525,17 @@ class SubmissionController @Inject()(
                               .toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")
                                 .asInstanceOf[CBCErrors]))
           emailSentAlready <- EitherT.right[CBCErrors](cache.readOption[ConfirmationEmailSent].map(_.isDefined))
-          sentEmail <- if (!emailSentAlready)
+          sentEmail <- if (!emailSentAlready) {
                         EitherT.right[CBCErrors](
                           emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
-                      else EitherT.fromEither[Future](None.asRight[CBCErrors])
-          _ <- if (sentEmail.getOrElse(false))
+                      } else {
+                        EitherT.fromEither[Future](None.asRight[CBCErrors])
+                      }
+          _ <- if (sentEmail.getOrElse(false)) {
                 EitherT.right[CBCErrors](cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
-              else EitherT.fromEither[Future](().asRight[CBCErrors])
+              } else {
+                EitherT.fromEither[Future](().asRight[CBCErrors])
+              }
           hash = data.submissionMetaData.submissionInfo.hash
           cacheCleared <- EitherT.right[CBCErrors](cache.clear)
         } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)
