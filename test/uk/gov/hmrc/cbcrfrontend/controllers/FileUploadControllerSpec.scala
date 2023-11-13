@@ -31,8 +31,10 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.Configuration
 import play.api.http.Status
+import play.api.i18n.Messages
 import play.api.libs.json.JsNull
-import play.api.test.Helpers.{charset, contentType, defaultAwaitTimeout, header, status}
+import play.api.mvc.AnyContentAsEmpty
+import play.api.test.Helpers.{await, charset, contentType, defaultAwaitTimeout, header, status}
 import play.api.test.{FakeRequest, Helpers}
 import play.twirl.api.Html
 import uk.gov.hmrc.auth.core._
@@ -51,14 +53,12 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import java.io.File
 import java.nio.file.StandardCopyOption._
 import java.time.{LocalDate, LocalDateTime}
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import scala.language.{implicitConversions, postfixOps}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.language.implicitConversions
 
 class FileUploadControllerSpec
     extends AnyWordSpec with Matchers with BeforeAndAfterEach with IdiomaticMockito with MockitoCats {
-
-  implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
 
   private val fuService = mock[FileUploadService]
   private val schemaValidator = mock[CBCRXMLValidator]
@@ -78,6 +78,10 @@ class FileUploadControllerSpec
 
   private implicit val configuration: Configuration = new Configuration(ConfigFactory.load("application.conf"))
   private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
+
+  private implicit val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
+  private implicit val messages: Messages = Helpers.stubMessages()
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private val creds = Credentials("totally", "legit")
 
@@ -153,7 +157,7 @@ class FileUploadControllerSpec
     Helpers.stubMessagesControllerComponents(),
     views,
     cache,
-    configuration)(ec, feConfig)
+    configuration)
 
   private val testFile = new File("test/resources/cbcr-valid.xml")
   private val tempFile = File.createTempFile("test", ".xml")
@@ -649,11 +653,9 @@ class FileUploadControllerSpec
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
-      val result = Await.result(
-        controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")(
-          HeaderCarrier(),
-          FakeRequest()),
-        5 seconds)
+      val result = await(
+        controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")
+      )
       result.map(r => r shouldBe AuditResult.Success)
     }
 
@@ -668,11 +670,8 @@ class FileUploadControllerSpec
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
-      val result = Await.result(
-        controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), None, "just because")(
-          HeaderCarrier(),
-          FakeRequest()),
-        2.second)
+      val result =
+        await(controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), None, "just because"))
       result.map(r => r shouldBe AuditResult.Success)
     }
 
@@ -689,12 +688,8 @@ class FileUploadControllerSpec
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
-      val result = Await.result(
-        controller
-          .auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")(
-            HeaderCarrier(),
-            FakeRequest()),
-        2.second)
+      val result = await(
+        controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because"))
       result.fold(
         error => error.toString should contain("boo hoo"),
         _ => fail("No error generated")

@@ -18,7 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.implicits.{catsStdInstancesForFuture, catsSyntaxEitherId}
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Configuration, Logger}
@@ -59,7 +59,7 @@ class FileUploadController @Inject()(
   views: Views,
   cache: CBCSessionCache,
   config: Configuration)(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
-    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
+    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions {
 
   implicit val credentialsFormat: OFormat[Credentials] = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
 
@@ -385,8 +385,7 @@ class FileUploadController @Inject()(
     }
 
   private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(
-    implicit
-    messages: Messages): JsObject =
+    implicit messages: Messages): JsObject =
     (
       all_errors._1.exists(bre => if (bre.errors.isEmpty) false else true),
       all_errors._2.exists(xml => if (xml.errors.isEmpty) false else true)) match {
@@ -405,7 +404,10 @@ class FileUploadController @Inject()(
     creds: Credentials,
     affinity: Option[AffinityGroup],
     enrolment: Option[CBCEnrolment],
-    reason: String)(implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
+    reason: String)(
+    implicit hc: HeaderCarrier,
+    request: Request[_],
+    messages: Messages): ServiceResponse[AuditResult.Success.type] =
     for {
       md             <- EitherT.right[CBCErrors](cache.readOption[FileMetadata])
       businessErrors <- EitherT.right[CBCErrors](cache.readOption[AllBusinessRuleErrors])
