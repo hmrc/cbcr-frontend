@@ -49,7 +49,8 @@ class SharedController @Inject()(
   audit: AuditConnector,
   val authConnector: AuthConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  views: Views)(implicit cache: CBCSessionCache, feConfig: FrontendAppConfig, ec: ExecutionContext)
+  views: Views,
+  cache: CBCSessionCache)(implicit feConfig: FrontendAppConfig, ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   lazy val logger: Logger = Logger(this.getClass)

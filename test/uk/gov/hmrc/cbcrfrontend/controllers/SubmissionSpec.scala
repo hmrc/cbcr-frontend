@@ -67,7 +67,7 @@ class SubmissionSpec
 
   private val creds = Credentials("totally", "legit")
 
-  private implicit val cache: CBCSessionCache = mock[CBCSessionCache]
+  private val cache = mock[CBCSessionCache]
   private val fus = mock[FileUploadService]
   private val docRefService = mock[DocRefIdService]
   private val messageRefIdService = mock[MessageRefIdService]
@@ -91,7 +91,8 @@ class SubmissionSpec
     auth,
     mockEmailService,
     mcc,
-    views)
+    views,
+    cache)
 
   override protected def afterEach(): Unit = {
     reset(cache, fus, docRefService, reportingEntity, mockEmailService, auth, messageRefIdService)
@@ -170,7 +171,7 @@ class SubmissionSpec
     }
 
     "use the UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
-      implicit val cache: CBCSessionCache = mock[CBCSessionCache]
+      val cache = mock[CBCSessionCache]
       val controller = new SubmissionController(
         fus,
         docRefService,
@@ -180,7 +181,8 @@ class SubmissionSpec
         auth,
         mockEmailService,
         mcc,
-        views)
+        views,
+        cache)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)
       auth.authorise[Any](*, *)(*, *) returns Future.successful(())
@@ -197,7 +199,7 @@ class SubmissionSpec
     }
 
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
-      implicit val cache: CBCSessionCache = mock[CBCSessionCache]
+      val cache = mock[CBCSessionCache]
       val controller = new SubmissionController(
         fus,
         docRefService,
@@ -207,7 +209,8 @@ class SubmissionSpec
         auth,
         mockEmailService,
         mcc,
-        views)
+        views,
+        cache)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       auth.authorise[Any](*, *)(*, *) returns Future.successful(())
       cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)
@@ -222,7 +225,7 @@ class SubmissionSpec
     }
 
     "use the Filing type form the xml when the ReportingRole is CBC703" in {
-      implicit val cache: CBCSessionCache = mock[CBCSessionCache]
+      val cache = mock[CBCSessionCache]
       val controller = new SubmissionController(
         fus,
         docRefService,
@@ -232,7 +235,8 @@ class SubmissionSpec
         auth,
         mockEmailService,
         mcc,
-        views)
+        views,
+        cache)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       auth.authorise[Any](*, *)(*, *) returns Future.successful(())
       cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)

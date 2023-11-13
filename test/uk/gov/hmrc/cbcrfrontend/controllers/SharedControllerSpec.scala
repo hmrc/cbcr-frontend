@@ -49,7 +49,7 @@ class SharedControllerSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito with MockitoCats {
 
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
-  private implicit val cache: CBCSessionCache = mock[CBCSessionCache]
+  private val cache = mock[CBCSessionCache]
   private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
   private val subService = mock[SubscriptionDataService]
   private val bprKF = mock[BPRKnownFactsService]
@@ -65,7 +65,7 @@ class SharedControllerSpec
   cache.save[Utr](*)(*, *, *) returns Future.successful(CacheMap("id", Map.empty[String, JsValue]))
 
   private val controller =
-    new SharedController(subService, bprKF, auditC, authC, mcc, views)
+    new SharedController(subService, bprKF, auditC, authC, mcc, views, cache)
 
   private val utr = Utr("7000000001")
   private val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))

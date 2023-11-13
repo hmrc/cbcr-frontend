@@ -57,7 +57,8 @@ class CBCBusinessRuleValidator @Inject()(
   subscriptionDataService: SubscriptionDataService,
   reportingEntityDataService: ReportingEntityDataService,
   configuration: FrontendAppConfig,
-  creationDateService: CreationDateService)(implicit ec: ExecutionContext, cache: CBCSessionCache) {
+  creationDateService: CreationDateService,
+  cache: CBCSessionCache)(implicit ec: ExecutionContext) {
 
   private val testData = "OECD1[0123]"
 

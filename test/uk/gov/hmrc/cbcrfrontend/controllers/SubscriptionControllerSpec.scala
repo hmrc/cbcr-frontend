@@ -62,7 +62,7 @@ class SubscriptionControllerSpec
   private val cbcIdService = mock[CBCIdService]
   private val cbcKF = mock[EnrolmentsService]
   private val emailMock = mock[EmailService]
-  private implicit val cache: CBCSessionCache = mock[CBCSessionCache]
+  private val cache = mock[CBCSessionCache]
   private val auth = mock[AuthConnector]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
   private val views = app.injector.instanceOf[Views]
@@ -78,7 +78,7 @@ class SubscriptionControllerSpec
   cache.read[AffinityGroup](AffinityGroup.jsonFormat, *, *) returnsF AffinityGroup.Organisation
 
   private val controller =
-    new SubscriptionController(subService, cbcIdService, emailMock, cbcKF, auditMock, auth, mcc, views)
+    new SubscriptionController(subService, cbcIdService, emailMock, cbcKF, auditMock, auth, mcc, views, cache)
 
   private implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
   private implicit val utrTag = implicitly[TypeTag[Utr]]
