@@ -18,13 +18,13 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.implicits._
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid}
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.I18nSupport
 import play.api.libs.json.{JsString, Json, OFormat}
 import play.api.mvc._
-import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
@@ -50,22 +50,15 @@ import scala.util.control.NonFatal
 
 @Singleton
 class SubmissionController @Inject()(
-  override val messagesApi: MessagesApi,
-  val fus: FileUploadService,
-  val docRefIdService: DocRefIdService,
-  val reportingEntityDataService: ReportingEntityDataService,
-  val messageRefIdService: MessageRefIdService,
-  val cbidService: CBCIdService,
-  val audit: AuditConnector,
-  val env: Environment,
+  fus: FileUploadService,
+  docRefIdService: DocRefIdService,
+  reportingEntityDataService: ReportingEntityDataService,
+  messageRefIdService: MessageRefIdService,
+  audit: AuditConnector,
   val authConnector: AuthConnector,
-  val emailService: EmailService,
+  emailService: EmailService,
   messagesControllerComponents: MessagesControllerComponents,
-  views: Views)(
-  implicit ec: ExecutionContext,
-  cache: CBCSessionCache,
-  val config: Configuration,
-  feConfig: FrontendAppConfig)
+  views: Views)(implicit ec: ExecutionContext, cache: CBCSessionCache, feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   implicit val credentialsFormat: OFormat[Credentials] = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
@@ -379,7 +372,6 @@ class SubmissionController @Inject()(
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
-
   }
 
   val submitSubmitterInfo: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
@@ -419,11 +411,9 @@ class SubmissionController @Inject()(
                          case _ => Left(UnexpectedState(s"Invalid affinityGroup: $userType").asInstanceOf[CBCErrors])
                        })
             } yield result
-
             result
               .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
               .merge
-
           }
         )
     }
@@ -449,7 +439,6 @@ class SubmissionController @Inject()(
             errorRedirect(UnexpectedState(e.getMessage), views.notAuthorisedIndividual, views.errorTemplate)
         }
     }
-
   }
 
   private def createSummaryData(submissionMetaData: SubmissionMetaData)(

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import com.typesafe.config.ConfigFactory
 import org.mockito.ArgumentMatchersSugar.*
 import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
@@ -26,26 +25,21 @@ import play.api.http.Status
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{defaultAwaitTimeout, status}
-import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
 import uk.gov.hmrc.cbcrfrontend.model.CBCId
 import uk.gov.hmrc.http.HttpResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class EnrolControllerSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
 
-  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-
-  private val config = new Configuration(ConfigFactory.load("application.conf"))
-
   private val authConnector = mock[AuthConnector]
   private val enrolConnector = mock[TaxEnrolmentsConnector]
-  private val env = mock[Environment]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
-  private val controller = new EnrolController(config, enrolConnector, authConnector, env, mcc)
+  private val controller = new EnrolController(enrolConnector, authConnector, mcc)
 
   private val id = CBCId.create(5678).getOrElse(fail("bad cbcid"))
 

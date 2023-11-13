@@ -18,10 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.controllers.test
 
 import cats.data.OptionT
 import cats.instances.all._
-import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -35,15 +33,12 @@ import scala.concurrent.ExecutionContext
 @Singleton
 class TestCBCRController @Inject()(
   val authConnector: AuthConnector,
-  val testCBCRConnector: TestCBCRConnector,
-  val env: Environment,
-  val fileUploadService: FileUploadService,
-  override val messagesApi: MessagesApi,
+  testCBCRConnector: TestCBCRConnector,
+  fileUploadService: FileUploadService,
   messagesControllerComponents: MessagesControllerComponents)(
   implicit ec: ExecutionContext,
-  cache: CBCSessionCache,
-  val config: Configuration)
-    extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
+  cache: CBCSessionCache
+) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions {
 
   def insertSubscriptionData(cbcId: String, utr: String): Action[AnyContent] = Action.async { implicit request =>
     authorised() {

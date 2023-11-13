@@ -32,7 +32,6 @@ import play.api.libs.json.JsValue
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsString, header, status}
-import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -42,21 +41,19 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.cache.client.CacheMap
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
 
 class SharedControllerSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito with MockitoCats {
 
-  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   private implicit val cache: CBCSessionCache = mock[CBCSessionCache]
-  private implicit val config: Configuration = app.injector.instanceOf[Configuration]
   private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
   private val subService = mock[SubscriptionDataService]
   private val bprKF = mock[BPRKnownFactsService]
   private val auditC: AuditConnector = mock[AuditConnector]
-  private val env = mock[Environment]
   private val authC = mock[AuthConnector]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
   private val views: Views = app.injector.instanceOf[Views]
@@ -68,7 +65,7 @@ class SharedControllerSpec
   cache.save[Utr](*)(*, *, *) returns Future.successful(CacheMap("id", Map.empty[String, JsValue]))
 
   private val controller =
-    new SharedController(messagesApi, subService, bprKF, auditC, env, authC, mcc, views)(cache, config, feConfig, ec)
+    new SharedController(subService, bprKF, auditC, authC, mcc, views)
 
   private val utr = Utr("7000000001")
   private val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))

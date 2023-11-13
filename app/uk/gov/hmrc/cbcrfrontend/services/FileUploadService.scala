@@ -25,7 +25,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.Logger
 import play.api.http.Status
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
@@ -48,12 +48,11 @@ class FileUploadService @Inject()(
   fusConnector: FileUploadServiceConnector,
   ws: WSClient,
   configuration: FrontendAppConfig,
-  val messagesApi: MessagesApi,
   servicesConfig: ServicesConfig)(
   implicit http: HttpClient,
   ac: ActorSystem,
   fileUploadFrontEndWS: FileUploadFrontEndWS,
-  ec: ExecutionContext) extends I18nSupport {
+  ec: ExecutionContext) {
 
   lazy val logger: Logger = Logger(this.getClass)
 
