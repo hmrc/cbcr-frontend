@@ -45,7 +45,7 @@ class ExitSurveyController @Inject()(
   lazy val logger: Logger = Logger(this.getClass)
 
   val doSurvey: Action[AnyContent] = Action { implicit request =>
-    Ok(views.exitSurvey(SurveyForm.surveyForm)).withNewSession
+    Ok(views.exitSurvey(SurveyForm.surveyForm))
   }
 
   val surveyAcknowledge: Action[AnyContent] = Action { implicit request =>
