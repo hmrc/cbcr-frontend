@@ -90,7 +90,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
   private val schemaVer = "2.0"
   docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
-  subscriptionDataService.retrieveSubscriptionData(*)(*, *) returnsF Some(submissionData)
+  subscriptionDataService.retrieveSubscriptionData(*)(*) returnsF Some(submissionData)
   configuration.oecdSchemaVersion returns schemaVer
 
   reportingEntity.queryReportingEntityDatesOverlaping(*, *)(*) returnsF Some(DatesOverlap(false))
@@ -535,7 +535,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "SendingEntityIn does not match any CBCId in the database" in {
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-        subscriptionDataService.retrieveSubscriptionData(*)(*, *) returnsF None
+        subscriptionDataService.retrieveSubscriptionData(*)(*) returnsF None
         val validFile = new File("test/resources/cbcr-valid.xml")
         val result =
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
@@ -547,7 +547,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "ReceivingCountry does not equal GB" in {
-        subscriptionDataService.retrieveSubscriptionData(*)(*, *) returnsF Some(submissionData)
+        subscriptionDataService.retrieveSubscriptionData(*)(*) returnsF Some(submissionData)
         val validFile = new File("test/resources/cbcr-invalidReceivingCountry.xml")
         val result =
           Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)

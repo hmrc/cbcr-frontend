@@ -600,8 +600,7 @@ class SubmissionSpec
           "lkjasdf",
           JsNull,
           "")
-        fus.getFile(any[String], any[String])(*) returns EitherT[Future, CBCErrors, File](
-          Future.successful(Right(file)))
+        fus.getFile(any[String], any[String]) returns EitherT[Future, CBCErrors, File](Future.successful(Right(file)))
         cache.save[SummaryData](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
         cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
         status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.OK
@@ -630,7 +629,7 @@ class SubmissionSpec
           new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
         cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
         cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
-        fus.uploadMetadataAndRoute(*)(*, *) raises UnexpectedState("fail")
+        fus.uploadMetadataAndRoute(*)(*) raises UnexpectedState("fail")
         val result = Await.result(controller.confirm(fakeRequestSubmitSummary), 50.seconds)
         status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       }
@@ -642,7 +641,7 @@ class SubmissionSpec
           new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
         cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
         cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
-        fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+        fus.uploadMetadataAndRoute(*)(*) returnsF "ok"
         docRefService.saveDocRefId(*)(*) returnsF UnexpectedState("fails!")
         docRefService.saveCorrDocRefID(*, *)(*) returnsF UnexpectedState("fails!")
         status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -656,12 +655,12 @@ class SubmissionSpec
             .successful(
               new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation)))
           cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
-          fus.uploadMetadataAndRoute(*)(*, *) returns EitherT[Future, CBCErrors, String](
+          fus.uploadMetadataAndRoute(*)(*) returns EitherT[Future, CBCErrors, String](
             Future.successful(Right("routed")))
           cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
           cache.save[SubmissionDate](*)(SubmissionDate.format, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+          fus.uploadMetadataAndRoute(*)(*) returnsF "ok"
           reportingEntity.saveReportingEntityData(*)(*) returnsF ()
           docRefService.saveCorrDocRefID(*, *)(*) returns OptionT.none[Future, UnexpectedState]
           docRefService.saveDocRefId(*)(*) returns OptionT.none[Future, UnexpectedState]
@@ -683,12 +682,12 @@ class SubmissionSpec
             .successful(
               new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation)))
           cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
-          fus.uploadMetadataAndRoute(*)(*, *) returns EitherT[Future, CBCErrors, String](
+          fus.uploadMetadataAndRoute(*)(*) returns EitherT[Future, CBCErrors, String](
             Future.successful(Right("routed")))
           cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF updateXml
           cache.save[SubmissionDate](*)(SubmissionDate.format, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+          fus.uploadMetadataAndRoute(*)(*) returnsF "ok"
           reportingEntity.updateReportingEntityData(*)(*) returnsF ()
           docRefService.saveCorrDocRefID(*, *)(*) returns OptionT.none[Future, UnexpectedState]
           docRefService.saveDocRefId(*)(*) returns OptionT.none[Future, UnexpectedState]
@@ -706,12 +705,12 @@ class SubmissionSpec
           auth.authorise(*, any[Retrieval[Credentials ~ Option[AffinityGroup]]])(*, *) returns Future.successful(
             new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
           cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
-          fus.uploadMetadataAndRoute(*)(*, *) returns EitherT[Future, CBCErrors, String](
+          fus.uploadMetadataAndRoute(*)(*) returns EitherT[Future, CBCErrors, String](
             Future.successful(Right("routed")))
           cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
           cache.save[SubmissionDate](*)(SubmissionDate.format, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+          fus.uploadMetadataAndRoute(*)(*) returnsF "ok"
           reportingEntity.saveReportingEntityData(*)(*) returnsF ()
           docRefService.saveCorrDocRefID(*, *)(*) returns OptionT.none[Future, UnexpectedState]
           docRefService.saveDocRefId(*)(*) returns OptionT.none[Future, UnexpectedState]

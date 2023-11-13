@@ -103,7 +103,7 @@ class SharedControllerSpec
 
     "return 400 if the CBCId has not been registered" in {
       authC.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
-      subService.retrieveSubscriptionData(*)(*, *) returnsF None
+      subService.retrieveSubscriptionData(*)(*) returnsF None
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.BAD_REQUEST
     }
@@ -111,14 +111,14 @@ class SharedControllerSpec
     "return 400 if the CBCId has been registered but doesnt match the CBCId in the bearer token" in {
       authC.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(
         Some(CBCEnrolment(CBCId.create(99).getOrElse(fail("bad cbcid")), utr)))
-      subService.retrieveSubscriptionData(*)(*, *) returnsF Some(subDetails)
+      subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.BAD_REQUEST
     }
 
     "return a redirect if successful" in {
       authC.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
-      subService.retrieveSubscriptionData(*)(*, *) returnsF Some(subDetails)
+      subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)
       cache.save(*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.SEE_OTHER
@@ -211,7 +211,7 @@ class SharedControllerSpec
         .successful(None)
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(None)
       bprKF.checkBPRKnownFacts(*)(*) returns OptionT.none[Future, BusinessPartnerRecord]
-      subService.retrieveSubscriptionData(*)(*, *) returnsF None
+      subService.retrieveSubscriptionData(*)(*) returnsF None
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
 
@@ -231,7 +231,7 @@ class SharedControllerSpec
       cache.save[BusinessPartnerRecord](*)(*, *, *) returns Future.successful(
         CacheMap("cache", Map.empty[String, JsValue]))
       cache.save[Utr](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-      subService.retrieveSubscriptionData(*)(*, *) returnsF Some(subDetails)
+      subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result).get should endWith("/already-subscribed")
@@ -245,7 +245,7 @@ class SharedControllerSpec
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Agent))
-      subService.retrieveSubscriptionData(*)(*, *) returnsF Some(subDetails)
+      subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
       cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
       cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
@@ -270,7 +270,7 @@ class SharedControllerSpec
         .successful(None)
       cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
       cache.save[Utr](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-      subService.retrieveSubscriptionData(*)(*, *) returnsF None
+      subService.retrieveSubscriptionData(*)(*) returnsF None
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result).get should endWith("/known-facts/match")
@@ -289,7 +289,7 @@ class SharedControllerSpec
         .successful(None)
       cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
       cache.save[Utr](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-      subService.retrieveSubscriptionData(*)(*, *) returnsF None
+      subService.retrieveSubscriptionData(*)(*) returnsF None
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result).get should endWith("/known-facts/match")
@@ -304,7 +304,7 @@ class SharedControllerSpec
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Agent))
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
-      subService.retrieveSubscriptionData(*)(*, *) returnsF Some(subDetails)
+      subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)
       cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
       cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(None)

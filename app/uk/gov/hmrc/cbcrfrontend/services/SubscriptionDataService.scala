@@ -32,7 +32,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
-class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: ServicesConfig) {
+class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(
+  implicit ec: ExecutionContext) {
 
   private lazy val logger = Logger(this.getClass)
 
@@ -41,8 +42,7 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
   }
 
   def retrieveSubscriptionData(id: Either[Utr, CBCId])(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): ServiceResponse[Option[SubscriptionDetails]] = {
+    implicit hc: HeaderCarrier): ServiceResponse[Option[SubscriptionDetails]] = {
     val fullUrl = id.fold(
       utr => url.url + s"/cbcr/subscription-data/utr/${utr.utr}",
       id => url.url + s"/cbcr/subscription-data/cbc-id/$id"
@@ -72,8 +72,7 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
   }
 
   def updateSubscriptionData(cbcId: CBCId, data: SubscriberContact)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): ServiceResponse[String] = {
+    implicit hc: HeaderCarrier): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data/$cbcId"
     EitherT(
       http
@@ -90,8 +89,7 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
     )
   }
 
-  def saveSubscriptionData(
-    data: SubscriptionDetails)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
+  def saveSubscriptionData(data: SubscriptionDetails)(implicit hc: HeaderCarrier): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data"
     EitherT(
       http
@@ -108,8 +106,7 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
     )
   }
 
-  def clearSubscriptionData(
-    id: Either[Utr, CBCId])(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[Option[String]] = {
+  def clearSubscriptionData(id: Either[Utr, CBCId])(implicit hc: HeaderCarrier): ServiceResponse[Option[String]] = {
 
     val fullUrl = (cbcId: CBCId) => url.url + s"/cbcr/subscription-data/$cbcId"
 
