@@ -55,7 +55,7 @@ object CBCId extends Modulus23Check {
   implicit val cbcFormatter: Formatter[CBCId] = new Formatter[CBCId] {
     override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], CBCId] =
       Formats.stringFormat.bind(key, data).flatMap { s =>
-        CBCId(s).toRight(Seq(FormError(key, "error.cbcid", Nil)))
+        CBCId(s.toUpperCase).toRight(Seq(FormError(key, "error.cbcid", Nil)))
       }
 
     override def unbind(key: String, value: CBCId): Map[String, String] = Map(key -> value.value)
