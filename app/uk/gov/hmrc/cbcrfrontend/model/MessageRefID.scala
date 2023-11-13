@@ -72,5 +72,4 @@ object MessageRefID {
       result.toValidatedNel
     case _ => MessageRefIDFormatError.invalidNel
   }
-
 }

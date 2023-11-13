@@ -58,7 +58,6 @@ class CBCRXMLValidator @Inject()(xmlValidationSchema: XMLValidationSchema) {
     }
 
     xmlErrorHandler
-
   }
 }
 
@@ -96,9 +95,7 @@ class XmlErrorHandler() extends ValidationProblemHandler {
       fatalErrorsListBuffer += s"Number of errors exceeding limit ($errorMessageLimit), aborting validation.."
       throw ErrorLimitExceededException
     }
-
   }
-
 }
 
 case object ErrorLimitExceededException extends Throwable

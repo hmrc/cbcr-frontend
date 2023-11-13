@@ -27,7 +27,6 @@ import scala.util.Try
 case class Creds(username: String, password: String) {
   def check(providedUsername: String, providedPassword: String): Boolean =
     (providedUsername == username) && BCrypt.checkpw(providedPassword, password)
-
 }
 
 case class AuthenticationController(credentials: Creds)(
@@ -49,7 +48,6 @@ object AuthenticationController {
                              }.toOption
       authenticatedUsername <- if (storedCredentials.check(username, password)) Some(username) else None
     } yield authenticatedUsername
-
   }
 
   private def onUnauthorised: RequestHeader => Result = { _ =>

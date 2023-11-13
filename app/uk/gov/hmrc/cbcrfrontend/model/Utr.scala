@@ -20,9 +20,6 @@ import play.api.libs.json.{Reads, Writes}
 import play.api.mvc.PathBindable
 import uk.gov.hmrc.domain.{Modulus11Check, SimpleObjectReads, SimpleObjectWrites, TaxIdentifier}
 
-/**
-  * Created by max on 10/04/17.
-  */
 case class Utr(utr: String) extends TaxIdentifier {
   override def value: String = utr
 

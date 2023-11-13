@@ -47,5 +47,4 @@ class MessageRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec
       .recover {
         case NonFatal(_) => false
       }
-
 }

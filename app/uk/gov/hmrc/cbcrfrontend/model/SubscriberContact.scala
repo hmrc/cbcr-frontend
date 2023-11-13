@@ -59,7 +59,6 @@ object CBCId extends Modulus23Check {
       }
 
     override def unbind(key: String, value: CBCId): Map[String, String] = Map(key -> value.value)
-
   }
 
   implicit val cbcIdFormat: Format[CBCId] = new Format[CBCId] {

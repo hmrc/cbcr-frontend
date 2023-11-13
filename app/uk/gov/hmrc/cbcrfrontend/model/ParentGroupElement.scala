@@ -42,6 +42,5 @@ object ParentGroupElement {
     }
 
     override def writes(o: ParentGroupElement): JsValue = JsString(o.toString)
-
   }
 }

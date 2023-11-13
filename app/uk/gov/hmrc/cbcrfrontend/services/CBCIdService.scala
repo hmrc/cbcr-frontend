@@ -60,5 +60,4 @@ class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
     OptionT(connector.updateETMPSubscriptionData(safeId, correspondenceDetails).map { response =>
       Option(response.json).flatMap(_.validate[UpdateResponse].asOpt)
     }).toRight(UnexpectedState("Failed to update ETMP subscription data"): CBCErrors)
-
 }

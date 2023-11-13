@@ -80,5 +80,4 @@ class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(impli
 
   def checkNumberOfCbcIdForUtr(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET[HttpResponse](s"$url/test-only/validateNumberOfCbcIdForUtr/$utr")
-
 }

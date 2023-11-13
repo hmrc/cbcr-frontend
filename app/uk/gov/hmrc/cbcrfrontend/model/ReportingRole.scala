@@ -54,5 +54,4 @@ object ReportingRole {
       case _ => JsError(s"Failed to parse $json as ReportingRole")
     }
   }
-
 }
