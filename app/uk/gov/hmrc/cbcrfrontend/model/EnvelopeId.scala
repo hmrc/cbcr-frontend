@@ -18,7 +18,9 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json._
 
-case class EnvelopeId(value: String)
+case class EnvelopeId(value: String) extends AnyVal {
+  override def toString: String = value
+}
 
 object EnvelopeId {
   implicit val format: Format[EnvelopeId] = Json.format[EnvelopeId]
