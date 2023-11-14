@@ -45,7 +45,6 @@ object GetBody {
   implicit object routeEnvelopeBody extends GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest] {
     def apply(obj: RouteEnvelopeRequest): RouteEnvelopeRequest = obj
   }
-
 }
 
 case class CreateEnvelope(body: JsObject)

@@ -25,11 +25,12 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, ExpiredSession}
 import uk.gov.hmrc.http.cache.client.CacheMap
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, SessionId, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, SessionId, UpstreamErrorResponse}
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 class CBCSessionCacheSpec extends AnyWordSpec with Matchers with IdiomaticMockito {
   private val config = Configuration.from(
@@ -61,7 +62,7 @@ class CBCSessionCacheSpec extends AnyWordSpec with Matchers with IdiomaticMockit
         httpClient.PUT[EnvelopeId, CacheMap](*, data, *)(*, *, *, *) returns Future.successful(
           CacheMap("some result", json))
 
-        val result = await(cache.save(data))
+        val result = await(cache.save[EnvelopeId](data))
 
         result shouldBe CacheMap("some result", json)
       }
@@ -89,6 +90,73 @@ class CBCSessionCacheSpec extends AnyWordSpec with Matchers with IdiomaticMockit
         val result = await(cache.read[EnvelopeId].value)
 
         result shouldBe Left(ExpiredSession("Unable to read uk.gov.hmrc.cbcrfrontend.model.EnvelopeId from cache"))
+      }
+    }
+
+    "readOption" should {
+      "read session data and return Option(data)" in {
+        val data = EnvelopeId("test id")
+
+        val json = Map(
+          "EnvelopeId" -> Json.toJson(data)
+        )
+
+        httpClient.GET[CacheMap](*, *, *)(*, *, *) returns Future.successful(CacheMap("some result", json))
+
+        val result = await(cache.readOption[EnvelopeId])
+
+        result shouldBe Some(data)
+      }
+    }
+
+    "create" should {
+      "save session data and return OptionT" in {
+        val data = EnvelopeId("test id")
+
+        val json = Map(
+          "" -> Json.toJson(data)
+        )
+
+        httpClient.PUT[EnvelopeId, CacheMap](*, data, *)(*, *, *, *) returns Future.successful(
+          CacheMap("some result", json))
+
+        val result = await(cache.create[EnvelopeId](data).value)
+
+        result shouldBe Some(data)
+      }
+    }
+
+    "clear" should {
+      "clear session data and return true when response is OK" in {
+        httpClient.DELETE[HttpResponse](*, *)(*, *, *) returns Future.successful(HttpResponse(200, ""))
+
+        val result = await(cache.clear)
+
+        result shouldBe true
+      }
+
+      "clear session data and return true when response is NO_CONTENT" in {
+        httpClient.DELETE[HttpResponse](*, *)(*, *, *) returns Future.successful(HttpResponse(204, ""))
+
+        val result = await(cache.clear)
+
+        result shouldBe true
+      }
+
+      "return true when downstream response is not either OK nor NO_CONTENT" in {
+        httpClient.DELETE[HttpResponse](*, *)(*, *, *) returns Future.successful(HttpResponse(400, ""))
+
+        val result = await(cache.clear)
+
+        result shouldBe false
+      }
+
+      "return true when future fails" in {
+        httpClient.DELETE[HttpResponse](*, *)(*, *, *) returns Future.failed(new RuntimeException())
+
+        val result = await(cache.clear)
+
+        result shouldBe false
       }
     }
   }
