@@ -54,7 +54,7 @@ class CBCSessionCache @Inject()(config: Configuration, val http: HttpClient)(imp
 
   def read[T: Reads: TypeTag](implicit hc: HeaderCarrier): EitherT[Future, ExpiredSession, T] =
     EitherT[Future, ExpiredSession, T](
-      fetchAndGetEntry(stripPackage(typeOf[T].toString))
+      readOption[T]
         .map(_.toRight(ExpiredSession(s"Unable to read ${typeOf[T]} from cache")))
     )
 
@@ -67,8 +67,7 @@ class CBCSessionCache @Inject()(config: Configuration, val http: HttpClient)(imp
   private def stripPackage(s: String): String = s.split('.').last
 
   def clear(implicit hc: HeaderCarrier): Future[Boolean] =
-    super
-      .remove()
+    remove()
       .map { response =>
         response.status match {
           case Status.OK         => true
