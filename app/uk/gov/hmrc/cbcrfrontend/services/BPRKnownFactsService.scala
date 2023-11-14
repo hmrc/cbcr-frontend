@@ -87,5 +87,4 @@ class BPRKnownFactsService @Inject()(dc: BPRKnownFactsConnector, audit: AuditCon
             case AuditResult.Success         => logger.info("Successful Audit for BPRKnownFactsService")
             case AuditResult.Failure(msg, _) => logger.error(s"Unable to audit a BPRKnowFacts lookup: $msg")
         })
-
 }

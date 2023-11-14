@@ -21,9 +21,7 @@ import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Configuration
 import play.api.http.Status
-import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
@@ -32,21 +30,19 @@ import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class ExitSurveyControllerSpec
     extends AnyWordSpecLike with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
 
-  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-  private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   private implicit val conf: FrontendAppConfig = mock[FrontendAppConfig]
 
-  private val configuration = mock[Configuration]
   private val auditC = mock[AuditConnector]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
   private val views = app.injector.instanceOf[Views]
 
-  private val controller = new ExitSurveyController(configuration, auditC, mcc, views)
+  private val controller = new ExitSurveyController(auditC, mcc, views)
 
   private val fakeSubmit = addToken(FakeRequest("POST", "/exit-survey/submit"))
 

@@ -25,9 +25,8 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class BPRKnownFactsConnector @Inject()(http: HttpClient)(
-  implicit ec: ExecutionContext,
-  servicesConfig: ServicesConfig) {
+class BPRKnownFactsConnector @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(
+  implicit ec: ExecutionContext) {
 
   private lazy val url = servicesConfig.baseUrl("cbcr")
 

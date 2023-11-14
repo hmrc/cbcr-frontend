@@ -18,13 +18,13 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.implicits._
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid}
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.I18nSupport
 import play.api.libs.json.{JsString, Json, OFormat}
 import play.api.mvc._
-import play.api.{Configuration, Environment, Logger}
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
@@ -50,22 +50,16 @@ import scala.util.control.NonFatal
 
 @Singleton
 class SubmissionController @Inject()(
-  override val messagesApi: MessagesApi,
-  val fus: FileUploadService,
-  val docRefIdService: DocRefIdService,
-  val reportingEntityDataService: ReportingEntityDataService,
-  val messageRefIdService: MessageRefIdService,
-  val cbidService: CBCIdService,
-  val audit: AuditConnector,
-  val env: Environment,
+  fus: FileUploadService,
+  docRefIdService: DocRefIdService,
+  reportingEntityDataService: ReportingEntityDataService,
+  messageRefIdService: MessageRefIdService,
+  audit: AuditConnector,
   val authConnector: AuthConnector,
-  val emailService: EmailService,
+  emailService: EmailService,
   messagesControllerComponents: MessagesControllerComponents,
-  views: Views)(
-  implicit ec: ExecutionContext,
-  cache: CBCSessionCache,
-  val config: Configuration,
-  feConfig: FrontendAppConfig)
+  views: Views,
+  cache: CBCSessionCache)(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   implicit val credentialsFormat: OFormat[Credentials] = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
@@ -379,7 +373,6 @@ class SubmissionController @Inject()(
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }
-
   }
 
   val submitSubmitterInfo: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
@@ -419,11 +412,9 @@ class SubmissionController @Inject()(
                          case _ => Left(UnexpectedState(s"Invalid affinityGroup: $userType").asInstanceOf[CBCErrors])
                        })
             } yield result
-
             result
               .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
               .merge
-
           }
         )
     }
@@ -449,7 +440,6 @@ class SubmissionController @Inject()(
             errorRedirect(UnexpectedState(e.getMessage), views.notAuthorisedIndividual, views.errorTemplate)
         }
     }
-
   }
 
   private def createSummaryData(submissionMetaData: SubmissionMetaData)(
@@ -475,10 +465,11 @@ class SubmissionController @Inject()(
     }
 
   private def doesCreationTimeStampHaveMillis(keyXMLFileInfo: CompleteXMLInfo) =
-    if (keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).forall(_.isDigit))
+    if (keyXMLFileInfo.messageSpec.messageRefID.uniqueElement.slice(0, 3).forall(_.isDigit)) {
       true
-    else
+    } else {
       false
+    }
 
   def enterCompanyName: Action[AnyContent] = Action.async { implicit request =>
     authorised() {
@@ -524,13 +515,17 @@ class SubmissionController @Inject()(
                               .toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")
                                 .asInstanceOf[CBCErrors]))
           emailSentAlready <- EitherT.right[CBCErrors](cache.readOption[ConfirmationEmailSent].map(_.isDefined))
-          sentEmail <- if (!emailSentAlready)
+          sentEmail <- if (!emailSentAlready) {
                         EitherT.right[CBCErrors](
                           emailService.sendEmail(makeSubmissionSuccessEmail(data, formattedDate, cbcId)).value)
-                      else EitherT.fromEither[Future](None.asRight[CBCErrors])
-          _ <- if (sentEmail.getOrElse(false))
+                      } else {
+                        EitherT.fromEither[Future](None.asRight[CBCErrors])
+                      }
+          _ <- if (sentEmail.getOrElse(false)) {
                 EitherT.right[CBCErrors](cache.save[ConfirmationEmailSent](ConfirmationEmailSent()))
-              else EitherT.fromEither[Future](().asRight[CBCErrors])
+              } else {
+                EitherT.fromEither[Future](().asRight[CBCErrors])
+              }
           hash = data.submissionMetaData.submissionInfo.hash
           cacheCleared <- EitherT.right[CBCErrors](cache.clear)
         } yield (hash, formattedDate, cbcId.value, userType, cacheCleared)

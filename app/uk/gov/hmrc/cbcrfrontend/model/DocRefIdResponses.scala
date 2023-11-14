@@ -31,5 +31,4 @@ object DocRefIdResponses {
   case object Valid extends DocRefIdQueryResponse
   case object Invalid extends DocRefIdQueryResponse
   case object DoesNotExist extends DocRefIdQueryResponse
-
 }

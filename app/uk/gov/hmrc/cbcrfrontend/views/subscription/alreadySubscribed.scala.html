@@ -20,10 +20,12 @@
 
 @this(layout: Layout)
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 
 @title = @{messages("subscribeFirst.alreadyRegistered.title")}
-@backLink = @{(routes.SharedController.verifyKnownFactsOrganisation.url)}
+@backLink = @{
+    routes.SharedController.verifyKnownFactsOrganisation.url
+}
 
 @layout(title, backLinkUrl = Some(backLink)) {
     <h1 class="govuk-heading-l">@title</h1>

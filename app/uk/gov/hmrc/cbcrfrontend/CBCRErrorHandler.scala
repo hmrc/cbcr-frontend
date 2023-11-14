@@ -21,7 +21,6 @@ import play.api.mvc._
 import play.api.{Configuration, Environment}
 import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.controllers.routes
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
@@ -31,11 +30,10 @@ import javax.inject.Inject
 import scala.concurrent.Future
 
 class CBCRErrorHandler @Inject()(
-  override val messagesApi: MessagesApi,
+  val messagesApi: MessagesApi,
   val env: Environment,
   val config: Configuration,
-  val authConnector: AuthConnector,
-  views: Views)(implicit val feConfig: FrontendAppConfig)
+  views: Views)
     extends FrontendErrorHandler with Results with AuthRedirects {
 
   override def resolveError(rh: RequestHeader, ex: Throwable): Result = ex match {

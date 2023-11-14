@@ -59,5 +59,4 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient, config: Configuration)(
       .map { response =>
         response
       }
-
 }

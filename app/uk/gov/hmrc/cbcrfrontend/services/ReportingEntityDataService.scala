@@ -180,5 +180,4 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
         .recover {
           case NonFatal(e) => Left(UnexpectedState(s"Call to QueryDatesOverlap failed: ${e.getMessage}"))
         })
-
 }

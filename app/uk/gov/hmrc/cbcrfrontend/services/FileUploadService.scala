@@ -25,7 +25,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.Logger
 import play.api.http.Status
-import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
@@ -48,12 +48,11 @@ class FileUploadService @Inject()(
   fusConnector: FileUploadServiceConnector,
   ws: WSClient,
   configuration: FrontendAppConfig,
-  val messagesApi: MessagesApi,
   servicesConfig: ServicesConfig)(
   implicit http: HttpClient,
   ac: ActorSystem,
-  fileUploadFrontEndWS: FileUploadFrontEndWS)
-    extends I18nSupport {
+  fileUploadFrontEndWS: FileUploadFrontEndWS,
+  ec: ExecutionContext) {
 
   lazy val logger: Logger = Logger(this.getClass)
 
@@ -65,7 +64,7 @@ class FileUploadService @Inject()(
   }
   private lazy val cbcrsUrl: String = servicesConfig.baseUrl("cbcr")
 
-  def createEnvelope(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[EnvelopeId] = {
+  def createEnvelope(implicit hc: HeaderCarrier): ServiceResponse[EnvelopeId] = {
     val envelopeExpiryDate = {
       val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
       formatter.print(new DateTime().plusDays(configuration.envelopeExpiryDays))
@@ -77,8 +76,7 @@ class FileUploadService @Inject()(
   }
 
   def getFileUploadResponse(envelopeId: String)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): ServiceResponse[Option[FileUploadCallbackResponse]] =
+    implicit hc: HeaderCarrier): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
       http
         .GET[HttpResponse](s"$cbcrsUrl/cbcr/file-upload-response/$envelopeId", Seq.empty)
@@ -96,7 +94,7 @@ class FileUploadService @Inject()(
         })
     )
 
-  def getFile(envelopeId: String, fileId: String)(implicit ec: ExecutionContext): ServiceResponse[File] =
+  def getFile(envelopeId: String, fileId: String): ServiceResponse[File] =
     EitherT(
       ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content")
         .withMethod("GET")
@@ -130,15 +128,13 @@ class FileUploadService @Inject()(
     )
 
   def getFileMetaData(envelopeId: String, fileId: String)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): ServiceResponse[Option[FileMetadata]] =
+    implicit hc: HeaderCarrier): ServiceResponse[Option[FileMetadata]] =
     fromFutureOptA(
       http
         .GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata")
         .map(fusConnector.extractFileMetadata))
 
-  def uploadMetadataAndRoute(
-    metaData: SubmissionMetaData)(implicit hc: HeaderCarrier, ec: ExecutionContext): ServiceResponse[String] = {
+  def uploadMetadataAndRoute(metaData: SubmissionMetaData)(implicit hc: HeaderCarrier): ServiceResponse[String] = {
 
     val metadataFileId = UUID.randomUUID.toString
     val envelopeId = metaData.fileInfo.envelopeId
@@ -177,5 +173,4 @@ class FileUploadService @Inject()(
     writer.close()
     b.path.toFile
   }
-
 }

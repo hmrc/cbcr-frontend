@@ -21,8 +21,6 @@ import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 
 package object controllers {
-
   val enrolmentsFormat: OFormat[Enrolments] = Json.format[Enrolments]
   val credentialsFormat: OFormat[Credentials] = Json.format[Credentials]
-
 }

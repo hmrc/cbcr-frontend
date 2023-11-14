@@ -399,7 +399,6 @@ back = Back
 
 notAuthorised.enhancement.title=You cannot access this URL
 
-
 postCode.error.tooLong=UK postcode must be 8 characters or fewer
 postCode.error.required=Enter a UK postcode
 postCode.error.invalidCharacters=UK postcode must only include letters, numbers and spaces

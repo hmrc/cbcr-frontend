@@ -20,7 +20,7 @@
 @this(layout: Layout)
 
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 @title = @{messages("sessionExpired.title")}
 @layout(title, withSignOutLink = false) {
  <h1 class="govuk-heading-l">

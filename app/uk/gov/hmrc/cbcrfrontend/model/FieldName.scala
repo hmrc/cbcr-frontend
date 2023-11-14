@@ -41,5 +41,4 @@ object FieldName {
     case ci"email"        => Some(ContactEmail)
     case _                => None
   }
-
 }

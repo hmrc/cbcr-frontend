@@ -19,10 +19,16 @@
 
 @this(layout: Layout, govukButton: GovukButton)
 
-@()(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@()(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 
 @title = @{messages("survey.acknowledge.title")}
 @layout(title, withSignOutLink = false) {
     <h1 class="govuk-heading-l">@title</h1>
     <p class="govuk-body">@messages("survey.acknowledge.message")</p>
+    <p class="govuk-body">
+      @govukButton(Button(
+       href = Some(config.cbcrGuidanceUrl),
+       content = Text(messages("form.controls.finished"))
+      ))
+     </p>
 }

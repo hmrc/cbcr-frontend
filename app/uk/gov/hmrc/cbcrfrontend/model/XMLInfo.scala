@@ -85,7 +85,6 @@ class DocRefId private[model] (
 
 }
 object DocRefId {
-
   private val docRefIdRegex = s"""(${MessageRefID.messageRefIDRegex})_(.{1,30})(OECD[0123])(ENT|REP|ADD)(.{0,41})""".r
   def apply(s: String): Option[DocRefId] = s match {
     case docRefIdRegex(msgRef, _, _, _, _, _, _, tin, docType, pGroup, uniq) =>
@@ -121,9 +120,7 @@ object DocRefId {
     }
 
     override def writes(o: DocRefId): JsValue = JsString(o.show)
-
   }
-
 }
 
 case class CorrDocRefId(cid: DocRefId)

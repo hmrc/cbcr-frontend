@@ -22,7 +22,7 @@ import com.typesafe.config.Config
 import configs.syntax._
 import play.api.http.Status
 import play.api.libs.json.{Format, Reads, Writes}
-import play.api.{Configuration, Logger}
+import play.api.{Configuration, Logging}
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
 import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
 import uk.gov.hmrc.http.{HttpClient, _}
@@ -33,12 +33,10 @@ import scala.reflect.runtime.universe._
 import scala.util.control.NonFatal
 
 @Singleton
-class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)
-    extends SessionCache {
+class CBCSessionCache @Inject()(config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)
+    extends SessionCache with Logging {
 
-  val conf: Config = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
-
-  lazy val logger: Logger = Logger(this.getClass)
+  private val conf = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
 
   override def defaultSource: String = "cbcr-frontend"
 
@@ -63,19 +61,8 @@ class CBCSessionCache @Inject()(val config: Configuration, val http: HttpClient)
   def readOption[T: Reads: TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] =
     fetchAndGetEntry(stripPackage(typeOf[T].toString))
 
-  def readOrCreate[T: Format: TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] =
-    OptionT(
-      readOption[T].flatMap(
-        _.fold(
-          f.semiflatMap { t =>
-            save(t).map(_ => t)
-          }.value
-        )(t => Future.successful(Some(t)))))
-
-  def create[T: Format: TypeTag](f: => OptionT[Future, T])(implicit hc: HeaderCarrier): OptionT[Future, T] =
-    OptionT(f.semiflatMap { t =>
-      save(t).map(_ => t)
-    }.value)
+  def create[T: Format: TypeTag](data: T)(implicit hc: HeaderCarrier): OptionT[Future, T] =
+    OptionT.liftF(save[T](data).map(_ => data))
 
   private def stripPackage(s: String): String = s.split('.').last
 

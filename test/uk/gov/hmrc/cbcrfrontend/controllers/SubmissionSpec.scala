@@ -34,7 +34,6 @@ import play.api.libs.json.{JsNull, JsValue, Json}
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{call, contentAsString, header, status, writeableOf_AnyContentAsFormUrlEncoded}
-import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend._
@@ -50,19 +49,17 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 class SubmissionSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
     with IdiomaticMockito with MockitoCats {
 
-  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   private implicit val as: ActorSystem = app.injector.instanceOf[ActorSystem]
-  private implicit val env: Environment = app.injector.instanceOf[Environment]
-  private implicit val config: Configuration = app.injector.instanceOf[Configuration]
   private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
   private implicit val timeout: Timeout = Timeout(5 seconds)
 
@@ -76,7 +73,6 @@ class SubmissionSpec
   private val messageRefIdService = mock[MessageRefIdService]
   private val auth = mock[AuthConnector]
   private val auditMock = mock[AuditConnector]
-  private val mockCBCIdService = mock[CBCIdService]
   private val mockEmailService = mock[EmailService]
   private val reportingEntity = mock[ReportingEntityDataService]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
@@ -87,18 +83,16 @@ class SubmissionSpec
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val controller = new SubmissionController(
-    messagesApi,
     fus,
     docRefService,
     reportingEntity,
     messageRefIdService,
-    mockCBCIdService,
     auditMock,
-    env,
     auth,
     mockEmailService,
     mcc,
-    views)(ec, cache, config, feConfig)
+    views,
+    cache)
 
   override protected def afterEach(): Unit = {
     reset(cache, fus, docRefService, reportingEntity, mockEmailService, auth, messageRefIdService)
@@ -179,18 +173,16 @@ class SubmissionSpec
     "use the UPE and Filing type form the xml when the ReportingRole is CBC701 " in {
       val cache = mock[CBCSessionCache]
       val controller = new SubmissionController(
-        messagesApi,
         fus,
         docRefService,
         reportingEntity,
         messageRefIdService,
-        mockCBCIdService,
         auditMock,
-        env,
         auth,
         mockEmailService,
         mcc,
-        views)(ec, cache, config, feConfig)
+        views,
+        cache)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)
       auth.authorise[Any](*, *)(*, *) returns Future.successful(())
@@ -209,18 +201,16 @@ class SubmissionSpec
     "use the Filing type form the xml when the ReportingRole is CBC702" in {
       val cache = mock[CBCSessionCache]
       val controller = new SubmissionController(
-        messagesApi,
         fus,
         docRefService,
         reportingEntity,
         messageRefIdService,
-        mockCBCIdService,
         auditMock,
-        env,
         auth,
         mockEmailService,
         mcc,
-        views)(ec, cache, config, feConfig)
+        views,
+        cache)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       auth.authorise[Any](*, *)(*, *) returns Future.successful(())
       cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)
@@ -237,18 +227,16 @@ class SubmissionSpec
     "use the Filing type form the xml when the ReportingRole is CBC703" in {
       val cache = mock[CBCSessionCache]
       val controller = new SubmissionController(
-        messagesApi,
         fus,
         docRefService,
         reportingEntity,
         messageRefIdService,
-        mockCBCIdService,
         auditMock,
-        env,
         auth,
         mockEmailService,
         mcc,
-        views)(ec, cache, config, feConfig)
+        views,
+        cache)
       val fakeRequestSubmit = addToken(FakeRequest("GET", "/submitter-info"))
       auth.authorise[Any](*, *)(*, *) returns Future.successful(())
       cache.readOption(SubmitterInfo.format, *, *) returns Future.successful(None)
@@ -600,8 +588,7 @@ class SubmissionSpec
           "lkjasdf",
           JsNull,
           "")
-        fus.getFile(any[String], any[String])(*) returns EitherT[Future, CBCErrors, File](
-          Future.successful(Right(file)))
+        fus.getFile(any[String], any[String]) returns EitherT[Future, CBCErrors, File](Future.successful(Right(file)))
         cache.save[SummaryData](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
         cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
         status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.OK
@@ -630,7 +617,7 @@ class SubmissionSpec
           new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
         cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
         cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
-        fus.uploadMetadataAndRoute(*)(*, *) raises UnexpectedState("fail")
+        fus.uploadMetadataAndRoute(*)(*) raises UnexpectedState("fail")
         val result = Await.result(controller.confirm(fakeRequestSubmitSummary), 50.seconds)
         status(result) shouldBe Status.INTERNAL_SERVER_ERROR
       }
@@ -642,7 +629,7 @@ class SubmissionSpec
           new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
         cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
         cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
-        fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+        fus.uploadMetadataAndRoute(*)(*) returnsF "ok"
         docRefService.saveDocRefId(*)(*) returnsF UnexpectedState("fails!")
         docRefService.saveCorrDocRefID(*, *)(*) returnsF UnexpectedState("fails!")
         status(controller.confirm(fakeRequestSubmitSummary)) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -656,12 +643,12 @@ class SubmissionSpec
             .successful(
               new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation)))
           cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
-          fus.uploadMetadataAndRoute(*)(*, *) returns EitherT[Future, CBCErrors, String](
+          fus.uploadMetadataAndRoute(*)(*) returns EitherT[Future, CBCErrors, String](
             Future.successful(Right("routed")))
           cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
           cache.save[SubmissionDate](*)(SubmissionDate.format, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+          fus.uploadMetadataAndRoute(*)(*) returnsF "ok"
           reportingEntity.saveReportingEntityData(*)(*) returnsF ()
           docRefService.saveCorrDocRefID(*, *)(*) returns OptionT.none[Future, UnexpectedState]
           docRefService.saveDocRefId(*)(*) returns OptionT.none[Future, UnexpectedState]
@@ -683,12 +670,12 @@ class SubmissionSpec
             .successful(
               new ~[Option[Credentials], Option[AffinityGroup]](Some(creds), Some(AffinityGroup.Organisation)))
           cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
-          fus.uploadMetadataAndRoute(*)(*, *) returns EitherT[Future, CBCErrors, String](
+          fus.uploadMetadataAndRoute(*)(*) returns EitherT[Future, CBCErrors, String](
             Future.successful(Right("routed")))
           cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF updateXml
           cache.save[SubmissionDate](*)(SubmissionDate.format, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+          fus.uploadMetadataAndRoute(*)(*) returnsF "ok"
           reportingEntity.updateReportingEntityData(*)(*) returnsF ()
           docRefService.saveCorrDocRefID(*, *)(*) returns OptionT.none[Future, UnexpectedState]
           docRefService.saveDocRefId(*)(*) returns OptionT.none[Future, UnexpectedState]
@@ -706,12 +693,12 @@ class SubmissionSpec
           auth.authorise(*, any[Retrieval[Credentials ~ Option[AffinityGroup]]])(*, *) returns Future.successful(
             new ~[Credentials, Option[AffinityGroup]](creds, Some(AffinityGroup.Organisation)))
           cache.read[SummaryData](SummaryData.format, *, *) returnsF summaryData
-          fus.uploadMetadataAndRoute(*)(*, *) returns EitherT[Future, CBCErrors, String](
+          fus.uploadMetadataAndRoute(*)(*) returns EitherT[Future, CBCErrors, String](
             Future.successful(Right("routed")))
           cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
           cache.save[SubmissionDate](*)(SubmissionDate.format, *, *) returns Future.successful(
             CacheMap("cache", Map.empty[String, JsValue]))
-          fus.uploadMetadataAndRoute(*)(*, *) returnsF "ok"
+          fus.uploadMetadataAndRoute(*)(*) returnsF "ok"
           reportingEntity.saveReportingEntityData(*)(*) returnsF ()
           docRefService.saveCorrDocRefID(*, *)(*) returns OptionT.none[Future, UnexpectedState]
           docRefService.saveDocRefId(*)(*) returns OptionT.none[Future, UnexpectedState]

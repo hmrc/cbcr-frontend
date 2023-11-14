@@ -31,7 +31,7 @@
 )
 
 
-@(fileUploadUrl: URI, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config:FrontendAppConfig)
+@(fileUploadUrl: URI, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 
 @title = @{messages("uploadReport.title")}
 @uploadParams = @{fileUploadUrl.getRawQuery.split("&").collect { case s"$key=$value" => key -> value }.toMap }

@@ -18,7 +18,6 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import play.api.libs.json.{Json, OFormat}
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
-import play.api.{Configuration, Environment}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend.connectors.TaxEnrolmentsConnector
@@ -29,10 +28,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class EnrolController @Inject()(
-  val config: Configuration,
-  val enrolConnector: TaxEnrolmentsConnector,
+  enrolConnector: TaxEnrolmentsConnector,
   val authConnector: AuthConnector,
-  val env: Environment,
   messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions {
 
@@ -49,5 +46,4 @@ class EnrolController @Inject()(
       Future.successful(Ok(Json.toJson(e)))
     }
   }
-
 }

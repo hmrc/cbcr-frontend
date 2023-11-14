@@ -23,23 +23,18 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
-import play.api.i18n.MessagesApi
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{defaultAwaitTimeout, status}
 import uk.gov.hmrc.cbcrfrontend.views.Views
 
-import scala.concurrent.ExecutionContext
-
 class CBCEnhancementsControllerSpec
     extends AnyWordSpec with Matchers with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
     with IdiomaticMockito {
-  private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-  private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
   private val views = app.injector.instanceOf[Views]
 
-  val controller = new CBCEnhancementsController(messagesApi, mcc, views)(ec)
+  val controller = new CBCEnhancementsController(mcc, views)
 
   "enhancementUnavailable" should {
     "redirect user to Unauthorised for enhancement page" in {

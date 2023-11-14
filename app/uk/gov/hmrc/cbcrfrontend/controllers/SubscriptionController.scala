@@ -49,7 +49,8 @@ class SubscriptionController @Inject()(
   audit: AuditConnector,
   val authConnector: AuthConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  views: Views)(implicit ec: ExecutionContext, val cache: CBCSessionCache, feConfig: FrontendAppConfig)
+  views: Views,
+  cache: CBCSessionCache)(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with Logging {
 
   val alreadySubscribed: Action[AnyContent] = Action.async { implicit request =>

@@ -18,10 +18,9 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.EitherT
 import cats.instances.future._
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request}
-import play.api.{Configuration, Logger}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SurveyForm
@@ -36,11 +35,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ExitSurveyController @Inject()(
-  val config: Configuration,
-  val audit: AuditConnector,
+  audit: AuditConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  views: Views)(implicit conf: FrontendAppConfig, override val messagesApi: MessagesApi, val ec: ExecutionContext)
-    extends FrontendController(messagesControllerComponents) with I18nSupport {
+  views: Views)(implicit conf: FrontendAppConfig, ec: ExecutionContext)
+    extends FrontendController(messagesControllerComponents) {
 
   lazy val logger: Logger = Logger(this.getClass)
 

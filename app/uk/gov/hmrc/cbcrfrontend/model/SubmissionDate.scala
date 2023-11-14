@@ -20,9 +20,6 @@ import play.api.libs.json.{Json, OFormat}
 
 import java.time.LocalDateTime
 
-/**
-  * Created by max on 18/07/17.
-  */
 case class SubmissionDate(date: LocalDateTime)
 object SubmissionDate {
   implicit val format: OFormat[SubmissionDate] = Json.format[SubmissionDate]

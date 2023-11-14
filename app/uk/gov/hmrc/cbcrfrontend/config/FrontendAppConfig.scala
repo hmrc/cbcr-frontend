@@ -37,7 +37,6 @@ class FrontendAppConfig @Inject()(val config: Configuration) {
   val cbcrOecdGuideUrl: String = config.load[String]("cbcr-OECD-guide-url")
   val emailDigitalService: String = config.load[String]("email.digitalservice")
   val cbcrGuidanceUtrUrl: String = config.load[String]("cbcr-guidance-utr-url")
-  val fallbackURLForLanguageSwitcher: String = config.load[String]("languageSwitcher.fallback.url")
   val oecdSchemaVersion: String = config.load[String]("Prod.oecd-schema-version")
 
   val defaultCreationDate: LocalDate = {
