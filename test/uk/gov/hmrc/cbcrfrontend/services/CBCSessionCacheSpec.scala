@@ -16,147 +16,131 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import org.mockito.ArgumentMatchersSugar.*
 import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.Configuration
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, ExpiredSession}
-import uk.gov.hmrc.http.cache.client.CacheMap
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, SessionId, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, SessionId}
+import uk.gov.hmrc.mongo.CurrentTimestampSupport
+import uk.gov.hmrc.mongo.cache.CacheIdType.SessionCacheId.NoSessionException
+import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, MongoSupport}
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.control.NonFatal
 
-class CBCSessionCacheSpec extends AnyWordSpec with Matchers with IdiomaticMockito {
+class CBCSessionCacheSpec
+    extends AnyWordSpec with Matchers with IdiomaticMockito with MongoSupport with CleanMongoCollectionSupport {
   private val config = Configuration.from(
     Map(
-      "microservice.services.cachable.session-cache" -> Map(
-        "protocol" -> "testtp",
-        "host"     -> "test-host",
-        "port"     -> 1234,
-        "domain"   -> "test-domain"
+      "mongodb" -> Map(
+        "uri"                 -> "mongodb://localhost:27017/test-cbcr-frontend",
+        "session.expireAfter" -> "1 minute"
       )
     )
   )
 
-  private val httpClient = mock[HttpClient]
+  private val cache =
+    new CBCSessionCache(config, mongoComponent, timestampSupport = new CurrentTimestampSupport)
 
-  private val cache = new CBCSessionCache(config, httpClient)
-
-  private implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(UUID.randomUUID().toString)))
+  private val sessionId = SessionId(UUID.randomUUID().toString)
+  private implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(sessionId))
 
   "CBCSessionCache" should {
     "save" should {
-      "save session data and return CacheMap" in {
+      "save session data and return CacheItem" in {
         val data = EnvelopeId("test id")
 
-        val json = Map(
-          "" -> Json.toJson(data)
-        )
-
-        httpClient.PUT[EnvelopeId, CacheMap](*, data, *)(*, *, *, *) returns Future.successful(
-          CacheMap("some result", json))
+        val json = JsObject(Map("EnvelopeId" -> Json.toJson(data)))
 
         val result = await(cache.save[EnvelopeId](data))
 
-        result shouldBe CacheMap("some result", json)
+        result.id shouldBe sessionId.value
+        result.data shouldBe json
+      }
+
+      "return exception when there is no session id in header carrier" in {
+        implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = None)
+
+        val data = EnvelopeId("test id")
+
+        cache.save[EnvelopeId](data).failed.futureValue shouldBe NoSessionException
+      }
+    }
+
+    "create" should {
+      "create session data and return OptionT" in {
+        val data = EnvelopeId("test id")
+
+        val result = await(cache.create[EnvelopeId](data).value)
+
+        result shouldBe Some(data)
+      }
+
+      "return exception when there is no session id in header carrier" in {
+        implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = None)
+
+        val data = EnvelopeId("test id")
+
+        cache.create[EnvelopeId](data).value.failed.futureValue shouldBe NoSessionException
       }
     }
 
     "read" should {
-      "read session data and return Right(data)" in {
+      "read session data" in {
         val data = EnvelopeId("test id")
 
-        val json = Map(
-          "EnvelopeId" -> Json.toJson(data)
-        )
-
-        httpClient.GET[CacheMap](*, *, *)(*, *, *) returns Future.successful(CacheMap("some result", json))
+        await(cache.save[EnvelopeId](data))
 
         val result = await(cache.read[EnvelopeId].value)
 
         result shouldBe Right(data)
       }
 
-      "return Left(error) when error occurs" in {
-        httpClient.GET[CacheMap](*, *, *)(*, *, *) returns Future.failed(
-          UpstreamErrorResponse("something went wrong", 404))
-
+      "return Left(error) when error occurs reading data" in {
         val result = await(cache.read[EnvelopeId].value)
 
-        result shouldBe Left(ExpiredSession("Unable to read uk.gov.hmrc.cbcrfrontend.model.EnvelopeId from cache"))
+        result shouldBe Left(ExpiredSession("Unable to read EnvelopeId from cache"))
+      }
+
+      "return exception when there is no session id in header carrier" in {
+        implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = None)
+
+        cache.read[EnvelopeId].value.failed.futureValue shouldBe NoSessionException
       }
     }
 
     "readOption" should {
-      "read session data and return Option(data)" in {
+      "read session data and return Some(data)" in {
         val data = EnvelopeId("test id")
 
-        val json = Map(
-          "EnvelopeId" -> Json.toJson(data)
-        )
-
-        httpClient.GET[CacheMap](*, *, *)(*, *, *) returns Future.successful(CacheMap("some result", json))
+        await(cache.save[EnvelopeId](data))
 
         val result = await(cache.readOption[EnvelopeId])
 
         result shouldBe Some(data)
       }
-    }
 
-    "create" should {
-      "save session data and return OptionT" in {
-        val data = EnvelopeId("test id")
+      "return exception when there is no session id in header carrier" in {
+        implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = None)
 
-        val json = Map(
-          "" -> Json.toJson(data)
-        )
-
-        httpClient.PUT[EnvelopeId, CacheMap](*, data, *)(*, *, *, *) returns Future.successful(
-          CacheMap("some result", json))
-
-        val result = await(cache.create[EnvelopeId](data).value)
-
-        result shouldBe Some(data)
+        cache.readOption[EnvelopeId].failed.futureValue shouldBe NoSessionException
       }
     }
 
     "clear" should {
-      "clear session data and return true when response is OK" in {
-        httpClient.DELETE[HttpResponse](*, *)(*, *, *) returns Future.successful(HttpResponse(200, ""))
-
+      "clear session data and return true" in {
         val result = await(cache.clear)
 
         result shouldBe true
       }
 
-      "clear session data and return true when response is NO_CONTENT" in {
-        httpClient.DELETE[HttpResponse](*, *)(*, *, *) returns Future.successful(HttpResponse(204, ""))
+      "return exception when there is no session id in header carrier" in {
+        implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = None)
 
-        val result = await(cache.clear)
-
-        result shouldBe true
-      }
-
-      "return true when downstream response is not either OK nor NO_CONTENT" in {
-        httpClient.DELETE[HttpResponse](*, *)(*, *, *) returns Future.successful(HttpResponse(400, ""))
-
-        val result = await(cache.clear)
-
-        result shouldBe false
-      }
-
-      "return true when future fails" in {
-        httpClient.DELETE[HttpResponse](*, *)(*, *, *) returns Future.failed(new RuntimeException())
-
-        val result = await(cache.clear)
-
-        result shouldBe false
+        cache.clear.failed.futureValue shouldBe NoSessionException
       }
     }
   }

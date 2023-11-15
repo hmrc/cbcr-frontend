@@ -32,7 +32,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import play.api.Configuration
 import play.api.http.Status
 import play.api.i18n.Messages
-import play.api.libs.json.JsNull
+import play.api.libs.json.{JsNull, JsObject}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.Helpers.{await, charset, contentType, defaultAwaitTimeout, header, status}
 import play.api.test.{FakeRequest, Helpers}
@@ -47,12 +47,12 @@ import uk.gov.hmrc.cbcrfrontend.views.html.error_template
 import uk.gov.hmrc.cbcrfrontend.views.html.submission.fileupload.{chooseFile, fileUploadError, fileUploadProgress, fileUploadResult}
 import uk.gov.hmrc.cbcrfrontend.views.html.submission.unregisteredGGAccount
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.mongo.cache.CacheItem
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import java.io.File
 import java.nio.file.StandardCopyOption._
-import java.time.{LocalDate, LocalDateTime}
+import java.time.{Instant, LocalDate, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -356,7 +356,7 @@ class FileUploadControllerSpec
       fuService.getFile(*, *) returnsF evenMoreValidFile
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
-      cache.save(*)(*, *, *) returns Future.successful(new CacheMap("", Map.empty))
+      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
       cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(Option(AffinityGroup.Organisation))
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Valid(xmlInfo))
@@ -389,7 +389,7 @@ class FileUploadControllerSpec
       fuService.getFile(*, *) returnsF evenMoreValidFile
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns xmlErrorHandler
-      cache.save(*)(*, *, *) returns Future.successful(new CacheMap("", Map.empty))
+      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
       cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(Option(AffinityGroup.Organisation))
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Valid(xmlInfo))
@@ -418,7 +418,7 @@ class FileUploadControllerSpec
       fuService.getFile(*, *) returnsF evenMoreValidFile
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
-      cache.save(*)(*, *, *) returns Future.successful(new CacheMap("", Map.empty))
+      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
       cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(Option(AffinityGroup.Organisation))
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Invalid(businessRuleErrors))
@@ -447,7 +447,7 @@ class FileUploadControllerSpec
         fuService.getFile(*, *) returnsF validFile
         fuService.getFileMetaData(*, *)(*) returnsF Some(md.copy(name = "bad.zip"))
         cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("baaa"))
-        cache.save(*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty))
+        cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
 
         authConnector
           .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future

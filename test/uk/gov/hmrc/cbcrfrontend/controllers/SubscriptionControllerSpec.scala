@@ -29,7 +29,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Play.materializer
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
-import play.api.libs.json.JsValue
+import play.api.libs.json.JsObject
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{call, contentAsString, defaultAwaitTimeout, status, writeableOf_AnyContentAsFormUrlEncoded}
@@ -40,10 +40,10 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.mongo.cache.CacheItem
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
-import java.time.LocalDateTime
+import java.time.{Instant, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.reflect.runtime.universe._
@@ -414,9 +414,10 @@ class SubscriptionControllerSpec
       cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF cbcId.getOrElse(fail("aslkjfd"))
       cache.readOption[SubscriptionEmailSent](SubscriptionEmailSent.SubscriptionEmailSentFormat, *, *) returns Future
         .successful(None)
-      cache.save[SubscriberContact](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+      cache.save[SubscriberContact](*)(*, *, *) returns Future.successful(
+        CacheItem("", JsObject.empty, Instant.now, Instant.now))
       cache.save[SubscriptionEmailSent](*)(*, *, *) returns Future.successful(
-        CacheMap("cache", Map.empty[String, JsValue]))
+        CacheItem("", JsObject.empty, Instant.now, Instant.now))
       auditMock.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       emailMock.sendEmail(*)(*) returnsF true
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
@@ -447,9 +448,10 @@ class SubscriptionControllerSpec
       cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF cbcId.getOrElse(fail("kajsjdf"))
       cache.readOption[SubscriptionEmailSent](SubscriptionEmailSent.SubscriptionEmailSentFormat, *, *) returns Future
         .successful(Some(SubscriptionEmailSent()))
-      cache.save[SubscriberContact](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
+      cache.save[SubscriberContact](*)(*, *, *) returns Future.successful(
+        CacheItem("", JsObject.empty, Instant.now, Instant.now))
       cache.save[SubscriptionEmailSent](*)(*, *, *) returns Future.successful(
-        CacheMap("cache", Map.empty[String, JsValue]))
+        CacheItem("", JsObject.empty, Instant.now, Instant.now))
       auditMock.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       emailMock.sendEmail(*)(*) returnsF true
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
@@ -486,7 +488,7 @@ class SubscriptionControllerSpec
       auth.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
       val fakeRequest = addToken(FakeRequest("GET", "contact-info-subscriber"))
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subscriptionDetails)
-      cache.save(*)(*, *, *) returns Future.successful(CacheMap("", Map.empty[String, JsValue]))
+      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
       cbcIdService.getETMPSubscriptionData(*)(*) returns OptionT.none
 
       val result = controller.updateInfoSubscriber()(fakeRequest)
@@ -498,7 +500,7 @@ class SubscriptionControllerSpec
       auth.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
       val fakeRequest = addToken(FakeRequest("GET", "contact-info-subscriber"))
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subscriptionDetails)
-      cache.save(*)(*, *, *) returns Future.successful(CacheMap("", Map.empty[String, JsValue]))
+      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
       cbcIdService.getETMPSubscriptionData(*)(*) returnsF etmpSubscription
 
       val result = controller.updateInfoSubscriber()(fakeRequest)

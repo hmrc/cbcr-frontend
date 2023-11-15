@@ -18,66 +18,63 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.{EitherT, OptionT}
 import cats.instances.future._
-import com.typesafe.config.Config
-import configs.syntax._
-import play.api.http.Status
 import play.api.libs.json.{Format, Reads, Writes}
 import play.api.{Configuration, Logging}
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
-import uk.gov.hmrc.http.cache.client.{CacheMap, SessionCache}
-import uk.gov.hmrc.http.{HttpClient, _}
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.mongo.cache.CacheIdType.SessionCacheId.NoSessionException
+import uk.gov.hmrc.mongo.cache.{CacheIdType, CacheItem, DataKey, MongoCacheRepository}
+import uk.gov.hmrc.mongo.{MongoComponent, TimestampSupport}
 
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
-import scala.util.control.NonFatal
 
 @Singleton
-class CBCSessionCache @Inject()(config: Configuration, val http: HttpClient)(implicit ec: ExecutionContext)
-    extends SessionCache with Logging {
+class CBCSessionCache @Inject()(
+  config: Configuration,
+  mongoComponent: MongoComponent,
+  timestampSupport: TimestampSupport)(implicit ec: ExecutionContext)
+    extends MongoCacheRepository(
+      mongoComponent = mongoComponent,
+      collectionName = "session-data",
+      ttl = config.get[FiniteDuration]("mongodb.session.expireAfter"),
+      timestampSupport = timestampSupport,
+      cacheIdType = CacheIdType.SimpleCacheId
+    ) with Logging {
 
-  private val conf = config.underlying.get[Config]("microservice.services.cachable.session-cache").value
+  private val noSession = Future.failed[String](NoSessionException)
 
-  override def defaultSource: String = "cbcr-frontend"
+  private def extractCacheId(implicit hc: HeaderCarrier): Future[String] =
+    hc.sessionId.fold(noSession)(c => Future.successful(c.value))
 
-  override def baseUri: String =
-    (for {
-      protocol <- conf.get[String]("protocol")
-      host     <- conf.get[String]("host")
-      port     <- conf.get[Int]("port")
-    } yield s"$protocol://$host:$port").value
+  private def extractType[T: TypeTag] = typeOf[T].typeSymbol.name.toString
 
-  override def domain: String = conf.get[String]("domain").value
-
-  def save[T: Writes: TypeTag](body: T)(implicit hc: HeaderCarrier): Future[CacheMap] =
-    cache(stripPackage(typeOf[T].toString), body)
+  def save[T: Writes: TypeTag](body: T)(implicit hc: HeaderCarrier): Future[CacheItem] =
+    for {
+      cacheId <- extractCacheId
+      result  <- put[T](cacheId)(DataKey[T](extractType), body)
+    } yield result
 
   def read[T: Reads: TypeTag](implicit hc: HeaderCarrier): EitherT[Future, ExpiredSession, T] =
     EitherT[Future, ExpiredSession, T](
       readOption[T]
-        .map(_.toRight(ExpiredSession(s"Unable to read ${typeOf[T]} from cache")))
-    )
+        .map(_.toRight(ExpiredSession(s"Unable to read $extractType from cache"))))
 
   def readOption[T: Reads: TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] =
-    fetchAndGetEntry(stripPackage(typeOf[T].toString))
+    for {
+      cacheId <- extractCacheId
+      result  <- get[T](cacheId)(DataKey[T](extractType))
+    } yield result
 
   def create[T: Format: TypeTag](data: T)(implicit hc: HeaderCarrier): OptionT[Future, T] =
     OptionT.liftF(save[T](data).map(_ => data))
 
-  private def stripPackage(s: String): String = s.split('.').last
-
   def clear(implicit hc: HeaderCarrier): Future[Boolean] =
-    remove()
-      .map { response =>
-        response.status match {
-          case Status.OK         => true
-          case Status.NO_CONTENT => true
-          case _                 => false
-        }
-      }
-      .recover {
-        case NonFatal(t) =>
-          logger.info(s"CBCSessionCache Failed - error message: ${t.getMessage}")
-          false
-      }
+    for {
+      cacheId <- extractCacheId
+      result  <- deleteEntity(cacheId).map(_ => true)
+    } yield result
 }
