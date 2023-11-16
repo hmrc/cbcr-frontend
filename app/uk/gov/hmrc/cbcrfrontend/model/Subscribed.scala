@@ -19,9 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.model
 import play.api.libs.json._
 
 /** Case object to be written to cache to indicate subscription has occurred */
-case object Subscribed
-
-object Implicits {
+case object Subscribed {
   implicit val format: Format[Subscribed.type] = new Format[Subscribed.type] {
     override def writes(o: Subscribed.type): JsValue = JsString(o.toString)
 

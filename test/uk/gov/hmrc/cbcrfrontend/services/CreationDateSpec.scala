@@ -121,13 +121,13 @@ class CreationDateSpec
       "repotingEntity creationDate is Null and default date of 2020/12/23 is less than 3 years ago" in {
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(redNoCreationDate)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe xmlStatusEnum.dateCorrect
+        result shouldBe DateCorrect
       }
 
       "repotingEntity creationDate is less than 3 years ago" in {
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe xmlStatusEnum.dateCorrect
+        result shouldBe DateCorrect
       }
     }
 
@@ -135,14 +135,14 @@ class CreationDateSpec
       "reportingEntity creationDate is older than 3 years ago" in {
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(redOldCreationDate)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe xmlStatusEnum.dateOld
+        result shouldBe DateOld
       }
 
       "reportingEntity creationDate is Null and default date is more than 3 years ago" in {
         configuration.defaultCreationDate returns LocalDate.of(2010, 12, 23)
         val cds2 = new CreationDateService(configuration, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe xmlStatusEnum.dateOld
+        result shouldBe DateOld
       }
 
       "reportingEntity creationDate is missing" in {
@@ -150,7 +150,7 @@ class CreationDateSpec
         reportingEntity.queryReportingEntityData(*)(*) returnsF None
         val cds2 = new CreationDateService(configuration, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe xmlStatusEnum.dateMissing
+        result shouldBe DateMissing
       }
 
       "There's an error retrieving reportingEntityData" in {
@@ -159,7 +159,7 @@ class CreationDateSpec
           Future.successful(Left(UnexpectedState(s"Call to QueryReportingEntity failed"))))
         val cds2 = new CreationDateService(configuration, reportingEntity)
         val result = Await.result(cds2.isDateValid(xmlInfo), 5.seconds)
-        result shouldBe xmlStatusEnum.dateError
+        result shouldBe DateError
       }
     }
   }

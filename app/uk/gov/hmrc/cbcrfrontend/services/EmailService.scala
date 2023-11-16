@@ -39,6 +39,9 @@ class EmailService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
         .map { response =>
           response.status match {
             case Status.ACCEPTED => Some(true)
+            case s =>
+              logger.error(s"The email has failed to send :( - status is $s")
+              Some(false)
           }
         }
         .recover {

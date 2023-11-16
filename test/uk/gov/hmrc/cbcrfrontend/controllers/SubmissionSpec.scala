@@ -391,7 +391,7 @@ class SubmissionSpec
             EmailAddress("max@max.com"),
             Some(AffinityGroup.Organisation))
           cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(CBCId.create(100).toOption)
-          cache.save[SubmitterInfo](*)(*, *, *) returns Future.successful(
+          cache.save[SubmitterInfo](*)(SubmitterInfo.format, *, *) returns Future.successful(
             CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
           cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
           cache.save[CBCId](*)(CBCId.cbcIdFormat, *, *) returns Future.successful(
@@ -417,7 +417,7 @@ class SubmissionSpec
             EmailAddress("max@max.com"),
             Some(AffinityGroup.Organisation))
           cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
-          cache.save[SubmitterInfo](*)(*, *, *) returns Future.successful(
+          cache.save[SubmitterInfo](*)(SubmitterInfo.format, *, *) returns Future.successful(
             CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
           cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
           cache.save[CBCId](*)(CBCId.cbcIdFormat, *, *) returns Future.successful(
@@ -445,7 +445,7 @@ class SubmissionSpec
             EmailAddress("max@max.com"),
             Some(AffinityGroup.Organisation))
           cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
-          cache.save[SubmitterInfo](*)(*, *, *) returns Future.successful(
+          cache.save[SubmitterInfo](*)(SubmitterInfo.format, *, *) returns Future.successful(
             CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
           cache.read[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returnsF keyXMLInfo
           cache.save[CBCId](*)(CBCId.cbcIdFormat, *, *) returns Future.successful(
@@ -556,7 +556,7 @@ class SubmissionSpec
           "lkjasdf",
           JsNull,
           "")
-        cache.save[SummaryData](*)(*, *, *) returns Future.successful(
+        cache.save[SummaryData](*)(SummaryData.format, *, *) returns Future.successful(
           CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
         cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
         val result = controller.submitSummary(fakeRequestSubmitSummary)
@@ -595,7 +595,7 @@ class SubmissionSpec
           JsNull,
           "")
         fus.getFile(any[String], any[String]) returns EitherT[Future, CBCErrors, File](Future.successful(Right(file)))
-        cache.save[SummaryData](*)(*, *, *) returns Future.successful(
+        cache.save[SummaryData](*)(SummaryData.format, *, *) returns Future.successful(
           CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
         cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
         status(controller.submitSummary(fakeRequestSubmitSummary)) shouldBe Status.OK
@@ -1071,7 +1071,8 @@ class SubmissionSpec
       val data = "companyName" -> "Any Old Co"
       val request = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody(data)
       auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
-      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
+      cache.save[AgencyBusinessName](*)(AgencyBusinessName.format, *, *) returns Future.successful(
+        CacheItem("", JsObject.empty, Instant.now, Instant.now))
       val result = call(controller.saveCompanyName, request)
       status(result) shouldBe Status.SEE_OTHER
     }
@@ -1080,7 +1081,8 @@ class SubmissionSpec
       val data = "sas" -> "Any Old Iron"
       val request = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody(data)
       auth.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
-      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
+      cache.save[AgencyBusinessName](*)(AgencyBusinessName.format, *, *) returns Future.successful(
+        CacheItem("", JsObject.empty, Instant.now, Instant.now))
       cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
       val result = call(controller.saveCompanyName, request)
       status(result) shouldBe Status.BAD_REQUEST

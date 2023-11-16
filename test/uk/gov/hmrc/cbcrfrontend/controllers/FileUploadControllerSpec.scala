@@ -182,7 +182,7 @@ class FileUploadControllerSpec
     "displays gateway account not registered page if Organisation user is not enrolled" in {
       authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
         .successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
-      cache.readOption[CBCId](*, *, *) returns Future.successful(None)
+      cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
 
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
@@ -196,7 +196,7 @@ class FileUploadControllerSpec
     "allow agent to submit even when no enrolment" in {
       authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
         .successful(new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
-      cache.readOption[CBCId](*, *, *) returns Future.successful(None)
+      cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
@@ -269,7 +269,7 @@ class FileUploadControllerSpec
 
     "return a 200" in {
       authConnector.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
-      cache.read[EnvelopeId](*, *, *) returnsF EnvelopeId("test")
+      cache.read[EnvelopeId](EnvelopeId.format, *, *) returnsF EnvelopeId("test")
       val request = FakeRequest("GET", "fileUploadProgress/envelopeId/fileId")
       val result = controller.fileUploadProgress("test", "test", "true")(request)
 
@@ -278,7 +278,7 @@ class FileUploadControllerSpec
 
     "return a 500 if the envelopeId doesn't match with the cache" in {
       authConnector.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
-      cache.read[EnvelopeId](*, *, *) returnsF EnvelopeId("test")
+      cache.read[EnvelopeId](EnvelopeId.format, *, *) returnsF EnvelopeId("test")
       val request = FakeRequest("GET", "fileUploadProgress/envelopeId/fileId")
       val result = controller.fileUploadProgress("test2", "test", "true")(request)
 
@@ -338,13 +338,13 @@ class FileUploadControllerSpec
             new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
               new ~(Some(creds), Some(AffinityGroup.Organisation)),
               Some(enrolment)))
-        cache.save(*)(*, *, *) returns Future.failed(new Exception("bad"))
+        cache.save[FileMetadata](*)(FileMetadata.fileMetadataFormat, *, *) returns Future.failed(new Exception("bad"))
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
         fuService.getFile(*, *) was called
         fuService.getFileMetaData(*, *)(*) was called
-        cache.save(*)(*, *, *) was called
+        cache.save[FileMetadata](*)(FileMetadata.fileMetadataFormat, *, *) was called
       }
     }
 
@@ -357,7 +357,6 @@ class FileUploadControllerSpec
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
       cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
-      cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(Option(AffinityGroup.Organisation))
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Valid(xmlInfo))
       businessRulesValidator.recoverReportingEntity(*) returns Future.successful(Valid(completeXmlInfo))
@@ -390,7 +389,6 @@ class FileUploadControllerSpec
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns xmlErrorHandler
       cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
-      cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(Option(AffinityGroup.Organisation))
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Valid(xmlInfo))
       businessRulesValidator.recoverReportingEntity(*) returns Future.successful(Valid(completeXmlInfo))
@@ -419,7 +417,6 @@ class FileUploadControllerSpec
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
       cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
-      cache.readOption(AffinityGroup.jsonFormat, *, *) returns Future.successful(Option(AffinityGroup.Organisation))
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Invalid(businessRuleErrors))
       businessRulesValidator.recoverReportingEntity(*) returns Future.successful(Valid(completeXmlInfo))
@@ -446,8 +443,8 @@ class FileUploadControllerSpec
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
         fuService.getFile(*, *) returnsF validFile
         fuService.getFileMetaData(*, *)(*) returnsF Some(md.copy(name = "bad.zip"))
-        cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId.create(1).getOrElse(fail("baaa"))
-        cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
+        cache.save[FileMetadata](*)(FileMetadata.fileMetadataFormat, *, *) returns Future.successful(
+          CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
 
         authConnector
           .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
@@ -474,7 +471,7 @@ class FileUploadControllerSpec
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
+      cache.readOption[Utr](Utr.format, *, *) returns Future.successful(Some(Utr("1234567890")))
 
       authConnector
         .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
@@ -500,7 +497,7 @@ class FileUploadControllerSpec
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
+      cache.readOption[Utr](Utr.format, *, *) returns Future.successful(Some(Utr("1234567890")))
 
       authConnector
         .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
@@ -527,7 +524,7 @@ class FileUploadControllerSpec
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
+      cache.readOption[Utr](Utr.format, *, *) returns Future.successful(Some(Utr("1234567890")))
 
       authConnector
         .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
@@ -554,7 +551,7 @@ class FileUploadControllerSpec
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
+      cache.readOption[Utr](Utr.format, *, *) returns Future.successful(Some(Utr("1234567890")))
 
       authConnector
         .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
@@ -652,7 +649,7 @@ class FileUploadControllerSpec
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
+      cache.readOption[Utr](Utr.format, *, *) returns Future.successful(Some(Utr("1234567890")))
       val result = await(
         controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")
       )
@@ -669,7 +666,7 @@ class FileUploadControllerSpec
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
+      cache.readOption[Utr](Utr.format, *, *) returns Future.successful(Some(Utr("1234567890")))
       val result =
         await(controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), None, "just because"))
       result.map(r => r shouldBe AuditResult.Success)
@@ -687,7 +684,7 @@ class FileUploadControllerSpec
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
-      cache.readOption[Utr](Utr.utrRead, *, *) returns Future.successful(Some(Utr("1234567890")))
+      cache.readOption[Utr](Utr.format, *, *) returns Future.successful(Some(Utr("1234567890")))
       val result = await(
         controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because"))
       result.fold(

@@ -506,10 +506,9 @@ class SubmissionController @Inject()(
     authorised() {
       val data: EitherT[Future, CBCErrors, (Hash, String, String, String, Boolean)] =
         for {
-          dataTuple <- (cache.read[SummaryData] |@| cache.read[SubmissionDate] |@| cache.read[CBCId]).tupled
-          data = dataTuple._1
-          date = dataTuple._2
-          cbcId = dataTuple._3
+          data  <- cache.read[SummaryData]
+          date  <- cache.read[SubmissionDate]
+          cbcId <- cache.read[CBCId]
           formattedDate <- EitherT.fromEither[Future](
                             (nonFatalCatch opt date.date.format(dateFormat).replace("AM", "am").replace("PM", "pm"))
                               .toRight(UnexpectedState(s"Unable to format date: ${date.date} to format $dateFormat")

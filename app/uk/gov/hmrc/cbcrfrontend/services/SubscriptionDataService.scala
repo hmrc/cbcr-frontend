@@ -61,6 +61,7 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
                 )
             case Status.NOT_FOUND =>
               Right(None)
+            case s => Left(UnexpectedState(s"Call to RetrieveSubscription failed - backend returned $s"))
           }
         }
         .recover {

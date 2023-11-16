@@ -17,8 +17,8 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.{EitherT, OptionT}
-import cats.instances.future._
-import play.api.libs.json.{Format, Reads, Writes}
+import cats.implicits.catsStdInstancesForFuture
+import play.api.libs.json.{Reads, Writes}
 import play.api.{Configuration, Logging}
 import uk.gov.hmrc.cbcrfrontend.model.ExpiredSession
 import uk.gov.hmrc.http._
@@ -29,7 +29,6 @@ import uk.gov.hmrc.mongo.{MongoComponent, TimestampSupport}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 
 @Singleton
@@ -50,26 +49,27 @@ class CBCSessionCache @Inject()(
   private def extractCacheId(implicit hc: HeaderCarrier): Future[String] =
     hc.sessionId.fold(noSession)(c => Future.successful(c.value))
 
-  private def extractType[T: TypeTag] = typeOf[T].typeSymbol.name.toString
+  private def extractType[T: TypeTag] =
+    typeOf[T].typeSymbol.name.toString
 
   def save[T: Writes: TypeTag](body: T)(implicit hc: HeaderCarrier): Future[CacheItem] =
     for {
       cacheId <- extractCacheId
-      result  <- put[T](cacheId)(DataKey[T](extractType), body)
+      result  <- put[T](cacheId)(DataKey[T](extractType[T]), body)
     } yield result
 
   def read[T: Reads: TypeTag](implicit hc: HeaderCarrier): EitherT[Future, ExpiredSession, T] =
     EitherT[Future, ExpiredSession, T](
       readOption[T]
-        .map(_.toRight(ExpiredSession(s"Unable to read $extractType from cache"))))
+        .map(_.toRight(ExpiredSession(s"Unable to read ${extractType[T]} from cache"))))
 
   def readOption[T: Reads: TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] =
     for {
       cacheId <- extractCacheId
-      result  <- get[T](cacheId)(DataKey[T](extractType))
+      result  <- get[T](cacheId)(DataKey[T](extractType[T]))
     } yield result
 
-  def create[T: Format: TypeTag](data: T)(implicit hc: HeaderCarrier): OptionT[Future, T] =
+  def create[T: Writes: TypeTag](data: T)(implicit hc: HeaderCarrier): OptionT[Future, T] =
     OptionT.liftF(save[T](data).map(_ => data))
 
   def clear(implicit hc: HeaderCarrier): Future[Boolean] =
