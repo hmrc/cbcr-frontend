@@ -44,10 +44,8 @@ class CBCSessionCache @Inject()(
       cacheIdType = CacheIdType.SimpleCacheId
     ) with Logging {
 
-  private val noSession = Future.failed[String](NoSessionException)
-
   private def extractCacheId(implicit hc: HeaderCarrier): Future[String] =
-    hc.sessionId.fold(noSession)(c => Future.successful(c.value))
+    hc.sessionId.fold(Future.failed[String](NoSessionException))(c => Future.successful(c.value))
 
   private def extractType[T: TypeTag] =
     typeOf[T].typeSymbol.name.toString
@@ -59,9 +57,7 @@ class CBCSessionCache @Inject()(
     } yield result
 
   def read[T: Reads: TypeTag](implicit hc: HeaderCarrier): EitherT[Future, ExpiredSession, T] =
-    EitherT[Future, ExpiredSession, T](
-      readOption[T]
-        .map(_.toRight(ExpiredSession(s"Unable to read ${extractType[T]} from cache"))))
+    EitherT.fromOptionF(readOption[T], ExpiredSession(s"Unable to read ${extractType[T]} from cache"))
 
   def readOption[T: Reads: TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] =
     for {
@@ -75,6 +71,6 @@ class CBCSessionCache @Inject()(
   def clear(implicit hc: HeaderCarrier): Future[Boolean] =
     for {
       cacheId <- extractCacheId
-      result  <- deleteEntity(cacheId).map(_ => true)
-    } yield result
+      _       <- deleteEntity(cacheId)
+    } yield true
 }

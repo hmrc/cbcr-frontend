@@ -61,10 +61,11 @@ class SharedControllerSpec
 
   private val id = CBCId.create(42).getOrElse(fail("unable to create cbcid"))
 
+  private val emptyCacheItem = CacheItem("", JsObject.empty, Instant.now(), Instant.now())
+
   private def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
-  cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(
-    CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
+  cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(emptyCacheItem)
 
   private val controller =
     new SharedController(subService, bprKF, auditC, authC, mcc, views, cache)
@@ -118,12 +119,9 @@ class SharedControllerSpec
     "return a redirect if successful" in {
       authC.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)
-      cache.save[TIN](*)(TIN.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
-      cache.save[BusinessPartnerRecord](*)(BusinessPartnerRecord.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
-      cache.save[CBCId](*)(CBCId.cbcIdFormat, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
+      cache.save[TIN](*)(TIN.format, *, *) returns Future.successful(emptyCacheItem)
+      cache.save[BusinessPartnerRecord](*)(BusinessPartnerRecord.format, *, *) returns Future.successful(emptyCacheItem)
+      cache.save[CBCId](*)(CBCId.cbcIdFormat, *, *) returns Future.successful(emptyCacheItem)
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.SEE_OTHER
     }
@@ -232,10 +230,8 @@ class SharedControllerSpec
         Some(OrganisationResponse("My Corp")),
         EtmpAddress("line1", None, None, None, Some("SW46NR"), "GB"))
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
-      cache.save[BusinessPartnerRecord](*)(BusinessPartnerRecord.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
-      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
+      cache.save[BusinessPartnerRecord](*)(BusinessPartnerRecord.format, *, *) returns Future.successful(emptyCacheItem)
+      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(emptyCacheItem)
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
@@ -255,10 +251,8 @@ class SharedControllerSpec
       cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
       cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
-      cache.save[BusinessPartnerRecord](*)(BusinessPartnerRecord.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
-      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
+      cache.save[BusinessPartnerRecord](*)(BusinessPartnerRecord.format, *, *) returns Future.successful(emptyCacheItem)
+      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(emptyCacheItem)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.NOT_FOUND
     }
@@ -275,8 +269,7 @@ class SharedControllerSpec
       cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
       cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
-      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
+      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(emptyCacheItem)
       subService.retrieveSubscriptionData(*)(*) returnsF None
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
@@ -295,8 +288,7 @@ class SharedControllerSpec
       cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
       cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
-      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
+      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(emptyCacheItem)
       subService.retrieveSubscriptionData(*)(*) returnsF None
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
@@ -317,10 +309,8 @@ class SharedControllerSpec
         .successful(None)
       cache.readOption[Utr](Utr.format, *, *) returns Future.successful(None)
       cache.readOption[CompleteXMLInfo](CompleteXMLInfo.format, *, *) returns Future.successful(None)
-      cache.save[BusinessPartnerRecord](*)(BusinessPartnerRecord.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
-      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(
-        CacheItem("id", JsObject.empty, Instant.now(), Instant.now()))
+      cache.save[BusinessPartnerRecord](*)(BusinessPartnerRecord.format, *, *) returns Future.successful(emptyCacheItem)
+      cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(emptyCacheItem)
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.NOT_FOUND
     }

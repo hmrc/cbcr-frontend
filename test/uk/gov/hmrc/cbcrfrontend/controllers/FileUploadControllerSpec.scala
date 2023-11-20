@@ -165,6 +165,8 @@ class FileUploadControllerSpec
 
   private val newCBCEnrolment = CBCEnrolment(CBCId.create(99).getOrElse(fail("booo")), Utr("1234567890"))
 
+  private val emptyCacheItem = CacheItem("", JsObject.empty, Instant.now(), Instant.now())
+
   "GET /upload-report" should {
     val fakeRequestChooseXMLFile = FakeRequest("GET", "/upload-report")
 
@@ -356,7 +358,7 @@ class FileUploadControllerSpec
       fuService.getFile(*, *) returnsF evenMoreValidFile
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
-      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
+      cache.save(*)(*, *, *) returns Future.successful(emptyCacheItem)
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Valid(xmlInfo))
       businessRulesValidator.recoverReportingEntity(*) returns Future.successful(Valid(completeXmlInfo))
@@ -388,7 +390,7 @@ class FileUploadControllerSpec
       fuService.getFile(*, *) returnsF evenMoreValidFile
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns xmlErrorHandler
-      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
+      cache.save(*)(*, *, *) returns Future.successful(emptyCacheItem)
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Valid(xmlInfo))
       businessRulesValidator.recoverReportingEntity(*) returns Future.successful(Valid(completeXmlInfo))
@@ -416,7 +418,7 @@ class FileUploadControllerSpec
       fuService.getFile(*, *) returnsF evenMoreValidFile
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
-      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
+      cache.save(*)(*, *, *) returns Future.successful(emptyCacheItem)
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) returns Future
         .successful(Invalid(businessRuleErrors))
       businessRulesValidator.recoverReportingEntity(*) returns Future.successful(Valid(completeXmlInfo))
@@ -443,8 +445,7 @@ class FileUploadControllerSpec
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
         fuService.getFile(*, *) returnsF validFile
         fuService.getFileMetaData(*, *)(*) returnsF Some(md.copy(name = "bad.zip"))
-        cache.save[FileMetadata](*)(FileMetadata.fileMetadataFormat, *, *) returns Future.successful(
-          CacheItem("", JsObject.empty, Instant.now(), Instant.now()))
+        cache.save[FileMetadata](*)(FileMetadata.fileMetadataFormat, *, *) returns Future.successful(emptyCacheItem)
 
         authConnector
           .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](*, *)(*, *) returns Future
