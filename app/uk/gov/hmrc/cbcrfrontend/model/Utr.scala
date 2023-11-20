@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import play.api.libs.json.{Reads, Writes}
+import play.api.libs.json.{Format, Reads, Writes}
 import play.api.mvc.PathBindable
 import uk.gov.hmrc.domain.{Modulus11Check, SimpleObjectReads, SimpleObjectWrites, TaxIdentifier}
 
@@ -63,6 +63,7 @@ object Utr {
 
   private val utrRegex = "^[0-9]{10}$".r
 
-  implicit val utrFormat: Writes[Utr] = new SimpleObjectWrites[Utr](_.value)
-  implicit val utrRead: Reads[Utr] = new SimpleObjectReads[Utr]("utr", Utr.apply)
+  private val writes: Writes[Utr] = new SimpleObjectWrites[Utr](_.value)
+  private val reads: Reads[Utr] = new SimpleObjectReads[Utr]("utr", Utr.apply)
+  implicit val format: Format[Utr] = Format[Utr](reads, writes)
 }

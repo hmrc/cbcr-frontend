@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.EitherT
-import cats.implicits.{catsStdInstancesForFuture, catsSyntaxApply, catsSyntaxEitherId, catsSyntaxSemigroupal, toShow}
+import cats.implicits.{catsStdInstancesForFuture, catsSyntaxApply, catsSyntaxEitherId, toShow}
 import play.api.Logging
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc._
@@ -28,7 +28,6 @@ import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm._
-import uk.gov.hmrc.cbcrfrontend.model.Implicits.format
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
@@ -70,10 +69,11 @@ class SubscriptionController @Inject()(
             val id_bpr_utr: ServiceResponse[(CBCId, BusinessPartnerRecord, Utr)] = for {
               subscribed <- EitherT.right[CBCErrors](cache.readOption[Subscribed.type].map(_.isDefined))
               _          <- EitherT.cond[Future](!subscribed, (), UnexpectedState("Already subscribed"))
-              bpr_utr    <- (cache.read[BusinessPartnerRecord] |@| cache.read[Utr]).tupled
-              subDetails = SubscriptionDetails(bpr_utr._1, data, None, bpr_utr._2)
+              bpr        <- cache.read[BusinessPartnerRecord]
+              utr        <- cache.read[Utr]
+              subDetails = SubscriptionDetails(bpr, data, None, utr)
               id <- cbcIdService.subscribe(subDetails).toRight[CBCErrors](UnexpectedState("Unable to get CBCId"))
-            } yield Tuple3(id, bpr_utr._1, bpr_utr._2)
+            } yield Tuple3(id, bpr, utr)
 
             id_bpr_utr
               .semiflatMap {
@@ -81,12 +81,10 @@ class SubscriptionController @Inject()(
                   val result = for {
                     _ <- subscriptionDataService.saveSubscriptionData(SubscriptionDetails(bpr, data, Some(id), utr))
                     _ <- enrolService.enrol(CBCKnownFacts(utr, id))
-                    _ <- EitherT.right[CBCErrors](
-                          (cache.save(id) |@|
-                            cache.save(data) |@|
-                            cache.save(SubscriptionDetails(bpr, data, Some(id), utr)) |@|
-                            cache.save(Subscribed)).tupled
-                        )
+                    _ <- EitherT.liftF(cache.save[CBCId](id))
+                    _ <- EitherT.liftF(cache.save[SubscriberContact](data))
+                    _ <- EitherT.liftF(cache.save[SubscriptionDetails](SubscriptionDetails(bpr, data, Some(id), utr)))
+                    _ <- EitherT.liftF(cache.save[Subscribed.type](Subscribed))
                     subscriptionEmailSent <- EitherT.right[CBCErrors](
                                               cache.readOption[SubscriptionEmailSent].map(_.isDefined))
                     emailSent <- if (!subscriptionEmailSent)

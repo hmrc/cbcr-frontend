@@ -117,13 +117,12 @@ class FileUploadController @Inject()(
           .subflatMap { e =>
             if (e.value != envelopeId) {
               logger.error("BAD_ENVELOPE_ID")
-              cache.remove()
+              cache.clear
               Left(UnexpectedState(
                 s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
             } else {
               Right(Ok(views.fileUploadProgress(envelopeId, fileId, hostName, hasSeen)))
             }
-
           }
           .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
           .merge

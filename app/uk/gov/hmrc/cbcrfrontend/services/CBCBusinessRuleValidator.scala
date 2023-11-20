@@ -346,7 +346,6 @@ class CBCBusinessRuleValidator @Inject()(
       case (None, false)         => Some(CBC402)
       case _                     => None
     }
-
   }
 
   /** Ensure that if the messageType is [[CBC401]] there are no [[DocTypeIndic]] other than [[OECD1]] */
@@ -610,10 +609,10 @@ class CBCBusinessRuleValidator @Inject()(
       creationDateService
         .isDateValid(xmlInfo)
         .map {
-          case xmlStatusEnum.dateCorrect => xmlInfo.validNel
-          case xmlStatusEnum.dateMissing => CorrectedFileDateMissing.invalidNel
-          case xmlStatusEnum.dateError   => CorrectedFileDateMissing.invalidNel
-          case xmlStatusEnum.dateOld     => CorrectedFileTooOld.invalidNel
+          case DateCorrect => xmlInfo.validNel
+          case DateMissing => CorrectedFileDateMissing.invalidNel
+          case DateError   => CorrectedFileDateMissing.invalidNel
+          case DateOld     => CorrectedFileTooOld.invalidNel
         }
     } else {
       xmlInfo.validNel
@@ -656,8 +655,8 @@ class CBCBusinessRuleValidator @Inject()(
   private def validateMultipleFileUploadForSameReportingPeriod(x: XMLInfo)(
     implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     /** checking for Reporting type because this rule only applies to CBC401*/
-    x.messageSpec.messageType.getOrElse(determineMessageTypeIndic(x)) match {
-      case CBC401 =>
+    x.messageSpec.messageType.fold(determineMessageTypeIndic(x))(v => Some(v)) match {
+      case Some(CBC401) =>
         val tin = x.reportingEntity.fold("")(_.tin.value)
         val currentReportingPeriod = x.messageSpec.reportingPeriod
 
@@ -804,7 +803,7 @@ class CBCBusinessRuleValidator @Inject()(
     entityReportingPeriod match {
       case Some(erp) =>
         reportingEntityDataService
-          .queryReportingEntityDatesOverlaping(tin, erp)
+          .queryReportingEntityDatesOverlapping(tin, erp)
           .leftMap { cbcErrors =>
             logger.error(s"Got error back: $cbcErrors")
             throw new Exception(s"Error communicating with backend to get dates overlap check: $cbcErrors")

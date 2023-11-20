@@ -22,7 +22,7 @@ import _root_.play.api.libs.json.Reads
 import _root_.play.api.mvc.Results._
 import _root_.play.api.mvc._
 import cats.data.ValidatedNel
-import cats.implicits.catsSyntaxSemigroupal
+import cats.implicits.catsSyntaxTuple10Semigroupal
 import cats.instances.future._
 import cats.syntax.show._
 import cats.{Applicative, Functor}
@@ -118,37 +118,38 @@ package object cbcrfrontend {
   def generateMetadataFile(cache: CBCSessionCache, creds: Credentials)(
     implicit hc: HeaderCarrier,
     ec: ExecutionContext): Future[ValidatedNel[ExpiredSession, SubmissionMetaData]] =
-    ((cache.read[BusinessPartnerRecord].toValidatedNel: FutureCacheResult[BusinessPartnerRecord]) |@|
-      cache.read[TIN].toValidatedNel |@|
-      cache.read[Hash].toValidatedNel |@|
-      cache.read[CBCId].toValidatedNel |@|
-      cache.read[FileId].toValidatedNel |@|
-      cache.read[EnvelopeId].toValidatedNel |@|
-      cache.read[SubmitterInfo].toValidatedNel |@|
-      cache.read[FilingType].toValidatedNel |@|
-      cache.read[UltimateParentEntity].toValidatedNel |@|
-      cache.read[FileMetadata].toValidatedNel)
-      .map { (record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
-        SubmissionMetaData(
-          SubmissionInfo(
-            gwCredId = creds.toString,
-            cbcId = id,
-            bpSafeId = record.safeId,
-            hash = hash,
-            ofdsRegime = "cbc",
-            tin = tin,
-            filingType = filingType,
-            ultimateParentEntity = upe
-          ),
-          info,
-          FileInfo(
-            fileId,
-            envelopeId,
-            metadata.status,
-            metadata.name,
-            metadata.contentType,
-            metadata.length,
-            metadata.created)
-        )
-      }
+    (
+      cache.read[BusinessPartnerRecord].toValidatedNel: FutureCacheResult[BusinessPartnerRecord],
+      cache.read[TIN].toValidatedNel: FutureCacheResult[TIN],
+      cache.read[Hash].toValidatedNel: FutureCacheResult[Hash],
+      cache.read[CBCId].toValidatedNel: FutureCacheResult[CBCId],
+      cache.read[FileId].toValidatedNel: FutureCacheResult[FileId],
+      cache.read[EnvelopeId].toValidatedNel: FutureCacheResult[EnvelopeId],
+      cache.read[SubmitterInfo].toValidatedNel: FutureCacheResult[SubmitterInfo],
+      cache.read[FilingType].toValidatedNel: FutureCacheResult[FilingType],
+      cache.read[UltimateParentEntity].toValidatedNel: FutureCacheResult[UltimateParentEntity],
+      cache.read[FileMetadata].toValidatedNel: FutureCacheResult[FileMetadata]
+    ).mapN { (record, tin, hash, id, fileId, envelopeId, info, filingType, upe, metadata) =>
+      SubmissionMetaData(
+        SubmissionInfo(
+          gwCredId = creds.toString,
+          cbcId = id,
+          bpSafeId = record.safeId,
+          hash = hash,
+          ofdsRegime = "cbc",
+          tin = tin,
+          filingType = filingType,
+          ultimateParentEntity = upe
+        ),
+        info,
+        FileInfo(
+          fileId,
+          envelopeId,
+          metadata.status,
+          metadata.name,
+          metadata.contentType,
+          metadata.length,
+          metadata.created)
+      )
+    }
 }

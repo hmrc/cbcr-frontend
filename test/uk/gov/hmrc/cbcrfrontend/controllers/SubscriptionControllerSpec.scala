@@ -29,7 +29,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Play.materializer
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
-import play.api.libs.json.JsValue
+import play.api.libs.json.JsObject
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{call, contentAsString, defaultAwaitTimeout, status, writeableOf_AnyContentAsFormUrlEncoded}
@@ -40,13 +40,12 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.http.cache.client.CacheMap
+import uk.gov.hmrc.mongo.cache.CacheItem
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
-import java.time.LocalDateTime
+import java.time.{Instant, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.reflect.runtime.universe._
 
 class SubscriptionControllerSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
@@ -79,9 +78,6 @@ class SubscriptionControllerSpec
 
   private val controller =
     new SubscriptionController(subService, cbcIdService, emailMock, cbcKF, auditMock, auth, mcc, views, cache)
-
-  private implicit val bprTag = implicitly[TypeTag[BusinessPartnerRecord]]
-  private implicit val utrTag = implicitly[TypeTag[Utr]]
 
   private val cbcId = CBCId.create(1).toOption
 
@@ -329,12 +325,12 @@ class SubscriptionControllerSpec
       subService.saveSubscriptionData(any[SubscriptionDetails])(*) raises UnexpectedState(
         "return 500 when the SubscriptionDataService errors")
       subService.clearSubscriptionData(*)(*) returnsF None
-      cache.readOption[Subscribed.type](Implicits.format, *, *) returns Future.successful(None)
-      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, bprTag, *) returnsF BusinessPartnerRecord(
+      cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(None)
+      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
         EtmpAddress("Line1", None, None, None, None, "GB"))
-      cache.read[Utr](Utr.utrRead, utrTag, *) returnsF Utr("700000002")
+      cache.read[Utr](Utr.format, *, *) returnsF Utr("700000002")
       cache.readOption[GGId](GGId.format, *, *) returns Future.successful(Some(GGId("ggid", "type")))
       auditMock.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -354,12 +350,12 @@ class SubscriptionControllerSpec
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       cache.read[SubscriptionDetails](SubscriptionDetails.subscriptionDetailsFormat, *, *) returnsF subscriptionDetails
       cbcIdService.subscribe(*)(*) returns OptionT.none
-      cache.readOption[Subscribed.type](Implicits.format, *, *) returns Future.successful(None)
-      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, bprTag, *) returnsF BusinessPartnerRecord(
+      cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(None)
+      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
         EtmpAddress("Line1", None, None, None, None, "GB"))
-      cache.read[Utr](Utr.utrRead, utrTag, *) returnsF Utr("700000002")
+      cache.read[Utr](Utr.format, *, *) returnsF Utr("700000002")
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
       subService.clearSubscriptionData(*)(*) wasNever called
     }
@@ -377,12 +373,12 @@ class SubscriptionControllerSpec
       subService.saveSubscriptionData(any[SubscriptionDetails])(*) raises UnexpectedState("oops")
       cbcIdService.subscribe(*)(*) returnsF CBCId("XGCBC0000000001").get
       cbcKF.enrol(*)(*) raises UnexpectedState("oops")
-      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, bprTag, *) returnsF BusinessPartnerRecord(
+      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
         EtmpAddress("Line1", None, None, None, None, "GB"))
-      cache.readOption[Subscribed.type](Implicits.format, *, *) returns Future.successful(None)
-      cache.read[Utr](Utr.utrRead, utrTag, *) returnsF Utr("123456789")
+      cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(None)
+      cache.read[Utr](Utr.format, *, *) returnsF Utr("123456789")
       cache.readOption[GGId](GGId.format, *, *) returns Future.successful(Some(GGId("ggid", "type")))
       auditMock.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       subService.clearSubscriptionData(*)(*) returnsF None
@@ -405,18 +401,18 @@ class SubscriptionControllerSpec
       cache.readOption[GGId](GGId.format, *, *) returns Future.successful(Some(GGId("ggid", "type")))
       cbcIdService.subscribe(*)(*) returnsF CBCId("XGCBC0000000001").get
       cbcKF.enrol(*)(*) returnsF ()
-      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, bprTag, *) returnsF BusinessPartnerRecord(
+      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
         EtmpAddress("Line1", None, None, None, None, "GB"))
-      cache.read[Utr](Utr.utrRead, utrTag, *) returnsF Utr("123456789")
-      cache.readOption[Subscribed.type](Implicits.format, *, *) returns Future.successful(None)
+      cache.read[Utr](Utr.format, *, *) returnsF Utr("123456789")
+      cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(None)
       cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF cbcId.getOrElse(fail("aslkjfd"))
       cache.readOption[SubscriptionEmailSent](SubscriptionEmailSent.SubscriptionEmailSentFormat, *, *) returns Future
         .successful(None)
-      cache.save[SubscriberContact](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-      cache.save[SubscriptionEmailSent](*)(*, *, *) returns Future.successful(
-        CacheMap("cache", Map.empty[String, JsValue]))
+      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
+      cache.save[SubscriptionEmailSent](*)(SubscriptionEmailSent.SubscriptionEmailSentFormat, *, *) returns Future
+        .successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
       auditMock.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       emailMock.sendEmail(*)(*) returnsF true
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
@@ -438,18 +434,18 @@ class SubscriptionControllerSpec
       subService.saveSubscriptionData(any[SubscriptionDetails])(*) returnsF "done"
       cbcIdService.subscribe(*)(*) returnsF CBCId("XGCBC0000000001").get
       cbcKF.enrol(*)(*) returnsF ()
-      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, bprTag, *) returnsF BusinessPartnerRecord(
+      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
         EtmpAddress("Line1", None, None, None, None, "GB"))
-      cache.read[Utr](Utr.utrRead, utrTag, *) returnsF Utr("123456789")
-      cache.readOption[Subscribed.type](Implicits.format, *, *) returns Future.successful(None)
+      cache.read[Utr](Utr.format, *, *) returnsF Utr("123456789")
+      cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(None)
       cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF cbcId.getOrElse(fail("kajsjdf"))
       cache.readOption[SubscriptionEmailSent](SubscriptionEmailSent.SubscriptionEmailSentFormat, *, *) returns Future
         .successful(Some(SubscriptionEmailSent()))
-      cache.save[SubscriberContact](*)(*, *, *) returns Future.successful(CacheMap("cache", Map.empty[String, JsValue]))
-      cache.save[SubscriptionEmailSent](*)(*, *, *) returns Future.successful(
-        CacheMap("cache", Map.empty[String, JsValue]))
+      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
+      cache.save[SubscriptionEmailSent](*)(SubscriptionEmailSent.SubscriptionEmailSentFormat, *, *) returns Future
+        .successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
       auditMock.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       emailMock.sendEmail(*)(*) returnsF true
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.SEE_OTHER
@@ -467,7 +463,7 @@ class SubscriptionControllerSpec
         "email"       -> sData.email.toString,
       )
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
-      cache.readOption[Subscribed.type](Implicits.format, *, *) returns Future.successful(Some(Subscribed))
+      cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(Some(Subscribed))
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
     }
   }
@@ -486,7 +482,7 @@ class SubscriptionControllerSpec
       auth.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
       val fakeRequest = addToken(FakeRequest("GET", "contact-info-subscriber"))
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subscriptionDetails)
-      cache.save(*)(*, *, *) returns Future.successful(CacheMap("", Map.empty[String, JsValue]))
+      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
       cbcIdService.getETMPSubscriptionData(*)(*) returns OptionT.none
 
       val result = controller.updateInfoSubscriber()(fakeRequest)
@@ -498,7 +494,7 @@ class SubscriptionControllerSpec
       auth.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
       val fakeRequest = addToken(FakeRequest("GET", "contact-info-subscriber"))
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subscriptionDetails)
-      cache.save(*)(*, *, *) returns Future.successful(CacheMap("", Map.empty[String, JsValue]))
+      cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
       cbcIdService.getETMPSubscriptionData(*)(*) returnsF etmpSubscription
 
       val result = controller.updateInfoSubscriber()(fakeRequest)
@@ -594,7 +590,7 @@ class SubscriptionControllerSpec
 
       val fakeRequest = addToken(FakeRequest("POST", "contact-info-subscriber").withFormUrlEncodedBody(data: _*))
       auth.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
-      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, bprTag, *) returnsF BusinessPartnerRecord(
+      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
         EtmpAddress("Line1", None, None, None, None, "GB"))
