@@ -139,19 +139,25 @@ class FileUploadService @Inject()(
     val metadataFileId = UUID.randomUUID.toString
     val envelopeId = metaData.fileInfo.envelopeId
 
-    for {
-      _ <- EitherT.right(
-            HttpExecutor(
-              fusFeUrl,
-              UploadFile(
-                envelopeId,
-                FileId(s"json-$metadataFileId"),
-                "metadata.json ",
-                " application/json; charset=UTF-8",
-                Json.toJson(metaData).toString().getBytes)
-            ))
-      resourceUrl <- EitherT.right(HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")))
-    } yield resourceUrl.body
+    EitherT(for {
+      _ <- HttpExecutor(
+            fusFeUrl,
+            UploadFile(
+              envelopeId,
+              FileId(s"json-$metadataFileId"),
+              "metadata.json ",
+              " application/json; charset=UTF-8",
+              Json.toJson(metaData).toString().getBytes)
+          )
+      response <- HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"))
+    } yield
+      response match {
+        case HttpResponse(201, body, _) => Right(body)
+        case error =>
+          Left(
+            UnexpectedState(
+              s"[FileUploadService][uploadMetadataAndRoute] Failed to create route request, received ${error.status}"))
+      })
   }
 
   private def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =
