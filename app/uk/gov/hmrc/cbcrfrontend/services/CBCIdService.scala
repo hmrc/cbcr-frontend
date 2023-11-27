@@ -20,6 +20,7 @@ import cats.data.OptionT
 import cats.instances.future._
 import play.api.Logger
 import play.api.http.Status
+import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -52,7 +53,10 @@ class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
 
   def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): OptionT[Future, ETMPSubscription] =
     OptionT(connector.getETMPSubscriptionData(safeId).map { response =>
-      Option(response.json).flatMap(_.validate[ETMPSubscription].asOpt)
+      Option(response.body)
+        .filter(_.nonEmpty)
+        .map(Json.parse)
+        .flatMap(_.validate[ETMPSubscription].asOpt)
     })
 
   def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(
