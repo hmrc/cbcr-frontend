@@ -35,8 +35,6 @@
 @emailKey = @{"email"}
 
 @layout(title, backLinkUrl = Some(routes.SharedController.knownFactsMatch.url), hasErrors = hasErrors) {
-    <h1 class="govuk-heading-l">@title</h1>
-    <p class="govuk-body" id="contactInfoSubscriber-hint">@messages("contactInfoSubscriber.additionalInfo")</p>
 
     @if(form.hasErrors) {
         @govukErrorSummary(ErrorSummary(
@@ -49,6 +47,9 @@
             attributes = Map("id" -> "error-summary-display")
         ))
     }
+
+    <h1 class="govuk-heading-l">@title</h1>
+    <p class="govuk-body" id="contactInfoSubscriber-hint">@messages("contactInfoSubscriber.additionalInfo")</p>
 
     @formHelper(routes.SubscriptionController.submitSubscriptionData){
         @govukInput(Input(

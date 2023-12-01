@@ -45,7 +45,7 @@
 @title = @{messages("subscribeFirst.title")}
 
 @layout(title, backLinkUrl = backLink, hasErrors) {
-<h1 class="govuk-heading-l">@title</h1>
+
     @if(hasErrors) {
         @govukErrorSummary(ErrorSummary(
             title = Text(messages("start.error.heading")),
@@ -58,6 +58,8 @@
             attributes = Map("id" -> "error-summary-display")
         ))
     }
+
+    <h1 class="govuk-heading-l">@title</h1>
 
     @formHelper(uk.gov.hmrc.cbcrfrontend.controllers.routes.SharedController.checkKnownFacts) {
         @govukInput(Input(
