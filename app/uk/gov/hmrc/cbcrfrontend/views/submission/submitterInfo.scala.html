@@ -41,7 +41,7 @@
 }}
 
 @layout(title, hasErrors = hasErrors, backLinkUrl = Some(backLink)) {
-<h1 class="govuk-heading-l">@title</h1>
+
     @if(form.hasErrors) {
         @govukErrorSummary(ErrorSummary(
             title = Text(messages("start.error.heading")),
@@ -52,6 +52,9 @@
             attributes = Map("id" -> "error-summary-display")
         ))
     }
+
+    <h1 class="govuk-heading-l">@title</h1>
+
     @formHelper(routes.SubmissionController.submitSubmitterInfo) {
         @govukInput(Input(
             id = fullNameKey,
