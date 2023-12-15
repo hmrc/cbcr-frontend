@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 import org.apache.http.HttpStatus
 import org.mockito.ArgumentMatchersSugar.*
 import org.mockito.IdiomaticMockito
+import org.mockito.Mockito.{never, verify}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -80,6 +81,15 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
         val result = Await.result(cbcidService.getETMPSubscriptionData(safeId).value, 2.seconds)
         result shouldBe None
       }
+    }
+
+    "not parse response body if the returned status is not a 200" in {
+      val response = mock[HttpResponse]
+      connector.getETMPSubscriptionData(*)(*) returns Future.successful(response)
+      response.status returns HttpStatus.SC_INTERNAL_SERVER_ERROR
+
+      Await.result(cbcidService.getETMPSubscriptionData(safeId).value, 2.seconds)
+      verify(response, never()).body
     }
 
     "throw exception if the connector fails to responds for given request" in {
