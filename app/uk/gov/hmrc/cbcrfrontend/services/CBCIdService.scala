@@ -52,12 +52,20 @@ class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
         })
 
   def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): OptionT[Future, ETMPSubscription] =
-    OptionT(connector.getETMPSubscriptionData(safeId).map { response =>
-      Option(response.body)
-        .filter(_.nonEmpty)
-        .map(Json.parse)
-        .flatMap(_.validate[ETMPSubscription].asOpt)
-    })
+    OptionT(
+      connector
+        .getETMPSubscriptionData(safeId)
+        .map { response =>
+          response.status match {
+            case Status.OK =>
+              Option(response.body)
+                .filter(_.nonEmpty)
+                .map(Json.parse)
+                .flatMap(_.validate[ETMPSubscription].asOpt)
+            case _ =>
+              None
+          }
+        })
 
   def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(
     implicit hc: HeaderCarrier): ServiceResponse[UpdateResponse] =
