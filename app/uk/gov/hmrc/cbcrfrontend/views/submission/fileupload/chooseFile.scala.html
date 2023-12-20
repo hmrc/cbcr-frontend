@@ -50,10 +50,15 @@
         }
     }
 }
-@templateScripts = {<script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>}
+@templateScripts = @{
+    if(config.jsUploadingEnabled) {
+        Some({Html(s"""<script src="${controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>""")})
+    } else None
+}
+
 @headContent = {<link rel="stylesheet" href="@{controllers.routes.Assets.versioned("styles/file-upload-styles.css")}">}
 
-@layout(title, backLinkUrl = backLink, additionalScripts = Some(templateScripts), additionalHeadForTemplate = Some(headContent)) {
+@layout(title, backLinkUrl = backLink, additionalScripts = templateScripts, additionalHeadForTemplate = Some(headContent)) {
     <h1 class="govuk-heading-l">@title</h1>
     <p class="govuk-body">
         @Html(messages("uploadReport.moreInfo", config.cbcrOecdGuideUrl))

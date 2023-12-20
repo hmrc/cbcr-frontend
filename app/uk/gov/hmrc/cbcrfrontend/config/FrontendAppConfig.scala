@@ -27,6 +27,7 @@ class FrontendAppConfig @Inject()(val config: Configuration) {
   val cbcrFrontendHost: String = config.load[String](s"cbcr-frontend.host")
   val fileUploadMaxPolls: Int = config.load[Int]("maximum-js-polls")
   val millisecondsBeforePoll: Int = config.load[Int]("milliseconds-before-poll")
+  val jsUploadingEnabled: Boolean = config.load[Boolean]("js-uploading-enabled")
 
   val governmentGatewaySignInUrl: String = config.load[String]("government-gateway-sign-in-url")
   val governmentGatewaySignOutUrl: String = config.load[String]("government-gateway-sign-out-url")
