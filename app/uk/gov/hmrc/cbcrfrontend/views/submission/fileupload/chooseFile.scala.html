@@ -34,9 +34,6 @@
 @(fileUploadUrl: URI, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 
 @title = @{messages("uploadReport.title")}
-@uploadParams = @{fileUploadUrl.getRawQuery.split("&").collect { case s"$key=$value" => key -> value }.toMap }
-@uploadWithJSBaseUrl = @{new URI(fileUploadUrl.getScheme, fileUploadUrl.getUserInfo, fileUploadUrl.getHost, fileUploadUrl.getPort, fileUploadUrl.getPath, null, null)}
-@uploadUrlWithJS = @{s"${uploadWithJSBaseUrl.toString}?redirect-success-url=${config.cbcrFrontendBaseUrl}${routes.FileUploadController.fileUploadPolling.url}&redirect-error-url=${uploadParams.getOrElse("redirect-error-url", "")}"}
 @urlParts = @{fileUploadUrl.getPath.split("/")}
 @envelopeId = @{urlParts(4)}
 @fileId = @{urlParts(6)}
@@ -50,20 +47,18 @@
         }
     }
 }
-@templateScripts = @{
-    if(config.jsUploadingEnabled) {
-        Some({Html(s"""<script src="${controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>""")})
-    } else None
+@templateScripts = {
+    <script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>
 }
 
 @headContent = {<link rel="stylesheet" href="@{controllers.routes.Assets.versioned("styles/file-upload-styles.css")}">}
 
-@layout(title, backLinkUrl = backLink, additionalScripts = templateScripts, additionalHeadForTemplate = Some(headContent)) {
+@layout(title, backLinkUrl = backLink, additionalScripts = Some(templateScripts), additionalHeadForTemplate = Some(headContent)) {
     <h1 class="govuk-heading-l">@title</h1>
     <p class="govuk-body">
         @Html(messages("uploadReport.moreInfo", config.cbcrOecdGuideUrl))
     </p>
-    <form id="fileUploadForm" action="@fileUploadUrl" data-with-polling="@uploadUrlWithJS" method="post" enctype="multipart/form-data">
+    <form id="fileUploadForm" action="@fileUploadUrl" method="post" enctype="multipart/form-data">
         @govukFileUpload(FileUpload(
             name = fileName,
             id = "file-input",
@@ -81,13 +76,7 @@
             <span
                 id="file-upload-progress"
                 data-poll="@routes.FileUploadController.fileUploadResponse(envelopeId)"
-                data-success="@routes.FileUploadController.fileValidate(envelopeId, fileId)"
-                data-error="@routes.SharedController.technicalDifficulties"
-                data-virus="@routes.FileUploadController.fileContainsVirus"
                 data-handle-error="@routes.FileUploadController.handleError().url"
-                data-max-polls="@config.fileUploadMaxPolls"
-                data-milliseconds-before-poll="@config.millisecondsBeforePoll"
-                aria-live="assertive"
             >
             </span>
             @govukButton(Button(
@@ -114,10 +103,5 @@
             <span class="govuk-visually-hidden">@messages("generic.errorPrefix"): </span>
             @messages("uploadReport.error")
         </div>
-    </template>
-
-    <template id="live-region-content">
-        <span class="spinner"></span>
-        <span class="govuk-body">@messages("fileUploadProgress.message")</span>
     </template>
 }

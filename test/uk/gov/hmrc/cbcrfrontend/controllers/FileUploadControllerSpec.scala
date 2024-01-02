@@ -144,7 +144,7 @@ class FileUploadControllerSpec
   chooseFileView.apply(*, *, *)(*, *, *) returns Html("some html content")
   fileUploadErrorView.apply(*)(*, *) returns Html("some html content")
   errorTemplateView.apply(*, *, *)(*, *) returns Html("some html content")
-  fileUploadProgressView.apply(*, *, *, *)(*, *) returns Html("some html content")
+  fileUploadProgressView.apply(*, *, *, *)(*, *, *) returns Html("some html content")
   fileUploadResultView.apply(*, *, *, *, *, *)(*, *, *) returns Html("some html content")
 
   private val controller = new FileUploadController(

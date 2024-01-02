@@ -203,6 +203,7 @@ fileUploadProgress.title=We are checking the report
 fileUploadProgress.message=Checking report
 fileUploadProgress.instruction.p1=Wait a few seconds and then select ‘Continue’.
 fileUploadProgress.instruction.p2=You should be taken to the results page but there can be a short delay. You can select ‘Continue’ to try again.
+fileUploadProgress.ready=Checks have completed. To see the results select ‘Continue’.
 
 fileUploadResult.notYetSubmitted=The report has been checked and is ready to send. If you do not want to send it yet, you can <a href="{0}" class="govuk-link">sign out</a>.
 fileUploadResult.notYetSubmitted2=HMRC will not be able to access the report if you sign out now, and you will have to upload it again when you want to send it.
