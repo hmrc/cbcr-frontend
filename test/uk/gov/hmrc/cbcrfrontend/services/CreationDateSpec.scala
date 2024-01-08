@@ -41,8 +41,6 @@ class CreationDateSpec
   private val reportingEntity = mock[ReportingEntityDataService]
   private val configuration = mock[FrontendAppConfig]
 
-  configuration.defaultCreationDate returns LocalDate.of(2020, 12, 23)
-
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -51,6 +49,8 @@ class CreationDateSpec
   private val docRefId = "GB2016RGXVCBC0000000056CBC40120170311T090000X_7000000002OECD1"
   private val actualDocRefId = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD62").get
   private val actualDocRefId2 = DocRefId("GB2016RGXGCBC0100000132CBC40120170311T090000X_4590617080OECD2ADD63").get
+  private val lessThan3YearsAgo: LocalDate = LocalDate.now().minusYears(2)
+  configuration.defaultCreationDate returns lessThan3YearsAgo
 
   private val redNoCreationDate = ReportingEntityData(
     NonEmptyList.of(actualDocRefId),
@@ -118,7 +118,7 @@ class CreationDateSpec
 
   "The CreationDateService" should {
     "return true" when {
-      "repotingEntity creationDate is Null and default date of 2020/12/23 is less than 3 years ago" in {
+      "repotingEntity creationDate is Null and default date is less than 3 years ago" in {
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(redNoCreationDate)
         val result = Await.result(cds.isDateValid(xmlInfo), 5.seconds)
         result shouldBe DateCorrect
