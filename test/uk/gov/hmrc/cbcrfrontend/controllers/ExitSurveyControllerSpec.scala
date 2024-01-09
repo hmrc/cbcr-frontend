@@ -26,7 +26,6 @@ import play.api.libs.json.Json
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{defaultAwaitTimeout, header, status}
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
@@ -35,9 +34,6 @@ import scala.concurrent.Future
 
 class ExitSurveyControllerSpec
     extends AnyWordSpecLike with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
-
-  private implicit val conf: FrontendAppConfig = mock[FrontendAppConfig]
-
   private val auditC = mock[AuditConnector]
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
   private val views = app.injector.instanceOf[Views]
