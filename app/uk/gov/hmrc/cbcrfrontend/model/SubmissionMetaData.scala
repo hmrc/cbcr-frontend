@@ -78,6 +78,5 @@ object SubmissionInfo {
 
 case class SubmissionMetaData(submissionInfo: SubmissionInfo, submitterInfo: SubmitterInfo, fileInfo: FileInfo)
 object SubmissionMetaData {
-
   implicit val format: OFormat[SubmissionMetaData] = Json.format[SubmissionMetaData]
 }

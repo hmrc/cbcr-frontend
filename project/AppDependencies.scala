@@ -25,9 +25,11 @@ object AppDependencies {
   )
 
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"       %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
-    "uk.gov.hmrc.mongo" %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
-    "org.mockito"       %% "mockito-scala"                 % mockitoScalaVersion  % scope,
-    "org.mockito"       %% "mockito-scala-cats"            % mockitoScalaVersion  % scope
+    "uk.gov.hmrc"              %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
+    "uk.gov.hmrc.mongo"        %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
+    "org.mockito"              %% "mockito-scala"                 % mockitoScalaVersion  % scope,
+    "org.mockito"              %% "mockito-scala-cats"            % mockitoScalaVersion  % scope,
+    "de.leanovate.play-mockws" %% "play-mockws"                   % "2.8.1"              % scope,
+    "com.typesafe.akka"        %% "akka-testkit"                  % "2.6.21"             % scope
   )
 }

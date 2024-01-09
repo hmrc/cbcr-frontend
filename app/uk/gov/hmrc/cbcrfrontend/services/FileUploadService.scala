@@ -80,7 +80,7 @@ class FileUploadService @Inject()(
     implicit hc: HeaderCarrier): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
       http
-        .GET[HttpResponse](s"$cbcrsUrl/cbcr/file-upload-response/$envelopeId", Seq.empty)
+        .GET[HttpResponse](s"$cbcrsUrl/cbcr/file-upload-response/$envelopeId")
         .map(resp =>
           resp.status match {
             case Status.OK =>
@@ -145,8 +145,8 @@ class FileUploadService @Inject()(
             UploadFile(
               envelopeId,
               FileId(s"json-$metadataFileId"),
-              "metadata.json ",
-              " application/json; charset=UTF-8",
+              "metadata.json",
+              "application/json; charset=UTF-8",
               Json.toJson(metaData).toString().getBytes)
           )
       response <- HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"))
