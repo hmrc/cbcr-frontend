@@ -32,11 +32,8 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class FileUploadFrontEndWS @Inject()(
-  implicit ec: ExecutionContext,
-  override val wsClient: WSClient,
-  config: Configuration,
-  actor: ActorSystem)
+class FileUploadFrontEndWS @Inject()(override val wsClient: WSClient, config: Configuration, actor: ActorSystem)(
+  implicit ec: ExecutionContext)
     extends HttpPost with WSPost {
 
   def doFormPartPost(
