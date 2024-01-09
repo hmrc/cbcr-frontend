@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import play.api.Logger
+import play.api.Logging
 import play.api.http.HeaderNames.LOCATION
 import play.api.http.Status
 import play.api.libs.json._
@@ -27,14 +27,10 @@ import uk.gov.hmrc.http.HttpResponse
 import javax.inject.Singleton
 
 @Singleton
-class FileUploadServiceConnector() {
-
+class FileUploadServiceConnector extends Logging {
   private val envelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
 
-  lazy val logger: Logger = Logger(this.getClass)
-
   def envelopeRequest(cbcrsUrl: String, expiryDate: String): JsObject = {
-
     //@todo refactor the hardcode of the /cbcr/file-upload-response
     val jsObject = Json
       .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
