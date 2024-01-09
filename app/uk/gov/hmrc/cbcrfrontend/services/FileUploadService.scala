@@ -23,7 +23,7 @@ import cats.data.EitherT
 import cats.implicits._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import play.api.Logger
+import play.api.Logging
 import play.api.http.Status
 import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
@@ -52,17 +52,18 @@ class FileUploadService @Inject()(
   implicit http: HttpClient,
   ac: ActorSystem,
   fileUploadFrontEndWS: FileUploadFrontEndWS,
-  ec: ExecutionContext) {
+  ec: ExecutionContext)
+    extends Logging {
 
-  lazy val logger: Logger = Logger(this.getClass)
-
-  private lazy val fusUrl: ServiceUrl[FusUrl] = new ServiceUrl[FusUrl] {
+  private lazy val fusUrl = new ServiceUrl[FusUrl] {
     val url: String = servicesConfig.baseUrl("file-upload")
   }
-  private lazy val fusFeUrl: ServiceUrl[FusFeUrl] = new ServiceUrl[FusFeUrl] {
+
+  private lazy val fusFeUrl = new ServiceUrl[FusFeUrl] {
     val url: String = servicesConfig.baseUrl("file-upload-frontend")
   }
-  private lazy val cbcrsUrl: String = servicesConfig.baseUrl("cbcr")
+
+  private lazy val cbcrsUrl = servicesConfig.baseUrl("cbcr")
 
   def createEnvelope(implicit hc: HeaderCarrier): ServiceResponse[EnvelopeId] = {
     val envelopeExpiryDate = {
@@ -135,7 +136,6 @@ class FileUploadService @Inject()(
         .map(fusConnector.extractFileMetadata))
 
   def uploadMetadataAndRoute(metaData: SubmissionMetaData)(implicit hc: HeaderCarrier): ServiceResponse[String] = {
-
     val metadataFileId = UUID.randomUUID.toString
     val envelopeId = metaData.fileInfo.envelopeId
 
