@@ -1,6 +1,7 @@
 (async function(document, window) {
+    const sleep = ms => new Promise(resolve => window.setTimeout(resolve, ms))
     const progressIndicator = document.getElementById('file-upload-progress')
-    const config = progressIndicator.dataset
+    const config = progressIndicator && progressIndicator.dataset
     const pendingContent = document.getElementById('pending-content')
     const readyContent = document.getElementById('ready-content')
     const continueButtonWrapper = document.getElementById('continue-button-wrapper')
@@ -9,11 +10,11 @@
             progressIndicator.removeChild(progressIndicator.firstChild)
         }
         progressIndicator.appendChild(pendingContent.content)
+        // aria-live added only once we have our starting content in place
         progressIndicator.setAttribute('aria-live', 'assertive')
         progressIndicator.removeAttribute('class')
-        window.setTimeout(function () {
-            poll(config, 1)
-        }, Number(config.millisecondsBeforePoll))
+        await sleep(3000)
+        await poll(config, 1)
     }
 
     async function poll(config, count) {
@@ -32,20 +33,22 @@
         const response = await window.fetch(config.poll)
         if (response.status === 202 || response.status === 409 || !response.ok) {
             // these outcomes are handled by the results page
-            fileIsReady()
+            await fileIsReady()
         } else {
-            window.setTimeout(function () {
-                poll(config, count+1)
-            }, 1000)
+            await sleep(1000)
+            await poll(config, count+1)
         }
     }
 
-    function fileIsReady() {
+    async function fileIsReady() {
         while(progressIndicator.firstChild) {
             progressIndicator.removeChild(progressIndicator.firstChild)
         }
+        // use setTimeout to ring-fence updates to the live region within the event loop
         window.setTimeout(function(){ progressIndicator.appendChild(readyContent.content) }, 10)
-        window.setTimeout(function () { progressIndicator.after(continueButtonWrapper.content)}, 20)
+        // ensure the button is rendered after the content and not before it
+        await sleep(20)
+        progressIndicator.after(continueButtonWrapper.content)
     }
 
     function renderFormError(uploadInput) {

@@ -46,7 +46,6 @@
         id="file-upload-progress"
         data-poll="@routes.FileUploadController.fileUploadResponse(envelopeId)"
         data-max-polls="@config.fileUploadMaxPolls"
-        data-milliseconds-before-poll="@config.millisecondsBeforePoll"
         data-error="@routes.SharedController.technicalDifficulties"
         data-handle-error="@routes.FileUploadController.handleError().url"
         class="js-hidden"
