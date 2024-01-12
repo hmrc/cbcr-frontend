@@ -25,7 +25,6 @@ import scala.util.matching.Regex
 sealed trait CBCErrors extends Product with Serializable
 
 object CBCErrors {
-
   implicit val show: Show[CBCErrors] = Show.show[CBCErrors] {
     case UnexpectedState(errorMsg, _) => errorMsg
     case v: ValidationErrors          => v.show
@@ -255,7 +254,7 @@ object BusinessRuleErrors {
     case SendingEntityOrganisationMatchError => "error.SendingEntityOrganisationMatchError"
     case ReceivingCountryError               => "error.ReceivingCountryError"
     case FileNameError(f, e) =>
-      s"error.FileNameError1" + " \r\n" + s" error.FileNameError2 $f" + " \r\n" + s" error.FileNameError3 $e"
+      s"error.FileNameError1 \r\n error.FileNameError2 $f \r\n error.FileNameError3 $e"
     case MessageTypeIndicError                    => "error.MessageTypeIndicError"
     case CorrDocRefIdInvalidRecord                => "error.CorrDocRefIdInvalidRecord"
     case CorrDocRefIdUnknownRecord                => "error.CorrDocRefIdUnknownRecord"
@@ -284,7 +283,7 @@ object BusinessRuleErrors {
     case ReportingPeriodInvalid                   => "error.ReportingPeriodInvalid"
     case MultipleFileUploadForSameReportingPeriod => "error.MultipleFileUploadForSameReportingPeriod"
     case AdditionalInfoDRINotFound(f, m) =>
-      s"error.AdditionalInfoDRINotFound1 $m error.AdditionalInfoDRINotFound2" + " \r\n" + s" error.AdditionalInfoDRINotFound3 $f error.AdditionalInfoDRINotFound4"
+      s"error.AdditionalInfoDRINotFound1 $m error.AdditionalInfoDRINotFound2 \r\n error.AdditionalInfoDRINotFound3 $f error.AdditionalInfoDRINotFound4"
     case MessageRefIdDontMatchWithDocRefId => "error.MessageRefIdDontMatchWithDocRefId"
     case DocRefIdMismatch                  => "error.DocRefIdMismatch"
     case InconsistentCurrencyCodes         => "error.InconsistentCurrencyCodes"
@@ -334,7 +333,7 @@ object XMLErrors {
   implicit val format: OFormat[XMLErrors] = Json.format[XMLErrors]
   def errorHandlerToXmlErrors(x: XmlErrorHandler): XMLErrors = XMLErrors(x.fatalErrorsCollection ++ x.errorsCollection)
   implicit val xmlShows: Show[XMLErrors] =
-    Show.show[XMLErrors](e => "xmlError.header " + "\n\n " + e.errors.mkString("\n"))
+    Show.show[XMLErrors](e => s"xmlError.header \n\n ${e.errors.mkString("\n")}")
 }
 
 case class AllBusinessRuleErrors(errors: List[BusinessRuleErrors]) extends ValidationErrors

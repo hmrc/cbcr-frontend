@@ -31,7 +31,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
-
   private val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
   private val url = (for {
@@ -65,11 +64,8 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
   def docRefIdSave(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT[JsValue, HttpResponse](url + s"/doc-ref-id/${d.show}", JsNull)
 
-  def corrDocRefIdSave(c: CorrDocRefId, d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    val jsonObj = JsString(d.show)
-
-    http.PUT[JsValue, HttpResponse](url + s"/corr-doc-ref-id/${c.cid.show}", jsonObj)
-  }
+  def corrDocRefIdSave(c: CorrDocRefId, d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.PUT[JsValue, HttpResponse](url + s"/corr-doc-ref-id/${c.cid.show}", JsString(d.show))
 
   def reportingEntityDataSave(r: ReportingEntityData)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.POST[ReportingEntityData, HttpResponse](url + "/reporting-entity", r)
@@ -104,8 +100,7 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
 
   def adminReportingEntityCBCIdAndReportingPeriod(cbcId: String, reportingPeriod: LocalDate)(
     implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http
-      .GET[HttpResponse](url + s"/admin/reporting-entity/query-cbc-id/$cbcId/${reportingPeriod.toString}")
+    http.GET[HttpResponse](url + s"/admin/reporting-entity/query-cbc-id/$cbcId/${reportingPeriod.toString}")
 
   def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(
     implicit hc: HeaderCarrier): Future[HttpResponse] =

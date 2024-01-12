@@ -17,35 +17,13 @@
 package uk.gov.hmrc.cbcrfrontend.typesclasses
 
 import akka.util.ByteString
-import play.api.libs.json.{JsObject, Json, OFormat, Writes}
+import play.api.libs.json.{JsObject, Json, OFormat}
 import uk.gov.hmrc.cbcrfrontend.config.FileUploadFrontEndWS
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpPut, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
-
-trait GetBody[O, T] {
-  def apply(obj: O): T
-}
-
-object GetBody {
-  implicit object createEnvelopBody extends GetBody[CreateEnvelope, JsObject] {
-    def apply(obj: CreateEnvelope): JsObject = obj.body
-  }
-
-  implicit object uploadFileBody extends GetBody[UploadFile, Array[Byte]] {
-    def apply(obj: UploadFile): Array[Byte] = obj.body
-  }
-
-  implicit object FileUploadCallbackResponseBody extends GetBody[FUCallbackResponse, JsObject] {
-    def apply(obj: FUCallbackResponse): JsObject = obj.body
-  }
-
-  implicit object routeEnvelopeBody extends GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest] {
-    def apply(obj: RouteEnvelopeRequest): RouteEnvelopeRequest = obj
-  }
-}
 
 case class CreateEnvelope(body: JsObject)
 case class UploadFile(envelopeId: EnvelopeId, fileId: FileId, fileName: String, contentType: String, body: Array[Byte])
@@ -64,10 +42,6 @@ trait HttpExecutor[U, P, I] {
   )(
     implicit
     hc: HeaderCarrier,
-    wts: Writes[I],
-    getBody: GetBody[P, I],
-//              TO DO - is http2 required
-    http2: HttpPut,
     fileUploadFrontEndWS: FileUploadFrontEndWS,
     ec: ExecutionContext
   ): Future[HttpResponse]
@@ -81,15 +55,11 @@ object HttpExecutor {
     )(
       implicit
       hc: HeaderCarrier,
-      wts: Writes[JsObject],
-      getBody: GetBody[CreateEnvelope, JsObject],
-      //              TO DO - is http2 required
-      http2: HttpPut,
       fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] =
       fileUploadFrontEndWS
-        .POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", getBody(obj))
+        .POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", obj.body)
   }
 
   implicit object uploadFile extends HttpExecutor[FusFeUrl, UploadFile, Array[Byte]] {
@@ -99,17 +69,13 @@ object HttpExecutor {
     )(
       implicit
       hc: HeaderCarrier,
-      wts: Writes[Array[Byte]],
-      getBody: GetBody[UploadFile, Array[Byte]],
-      //              TO DO - is http2 required
-      http2: HttpPut,
       fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] = {
       import obj._
       val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
       fileUploadFrontEndWS
-        .doFormPartPost(url, fileName, contentType, ByteString.fromArray(getBody(obj)), Seq("CSRF-token" -> "nocheck"))
+        .doFormPartPost(url, fileName, contentType, ByteString.fromArray(obj.body), Seq("CSRF-token" -> "nocheck"))
     }
   }
 
@@ -120,16 +86,11 @@ object HttpExecutor {
     )(
       implicit
       hc: HeaderCarrier,
-      wts: Writes[JsObject],
-      getBody: GetBody[FUCallbackResponse, JsObject],
-      //              TO DO - is http2 required
-      http2: HttpPut,
       fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] =
       fileUploadFrontEndWS
-        .POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", getBody(obj))
-
+        .POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", obj.body)
   }
 
   implicit object routeRequest extends HttpExecutor[FusUrl, RouteEnvelopeRequest, RouteEnvelopeRequest] {
@@ -139,15 +100,11 @@ object HttpExecutor {
     )(
       implicit
       hc: HeaderCarrier,
-      wts: Writes[RouteEnvelopeRequest],
-      getBody: GetBody[RouteEnvelopeRequest, RouteEnvelopeRequest],
-      //              TO DO - is http2 required
-      http2: HttpPut,
       fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] =
       fileUploadFrontEndWS
-        .POST[RouteEnvelopeRequest, HttpResponse](s"${fusUrl.url}/file-routing/requests", getBody(obj))
+        .POST[RouteEnvelopeRequest, HttpResponse](s"${fusUrl.url}/file-routing/requests", obj)
   }
 
   def apply[U, P, I](
@@ -158,10 +115,6 @@ object HttpExecutor {
     hc: HeaderCarrier,
     ec: ExecutionContext,
     httpExecutor: HttpExecutor[U, P, I],
-    wts: Writes[I],
-    getBody: GetBody[P, I],
-    //              TO DO - is http2 required
-    http2: HttpPut,
     fileUploadFrontEndWS: FileUploadFrontEndWS
   ): Future[HttpResponse] =
     httpExecutor.makeCall(url, obj)
