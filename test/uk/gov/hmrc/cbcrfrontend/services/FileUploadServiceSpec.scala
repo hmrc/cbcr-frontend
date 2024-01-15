@@ -20,6 +20,8 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import akka.util.ByteString
 import mockws.{MockWS, MockWSHelpers}
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentMatchersSugar.*
 import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
 import org.scalatest.BeforeAndAfterAll
@@ -29,10 +31,9 @@ import play.api.i18n.Messages
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Results.{InternalServerError, Ok}
 import play.api.test.Helpers
-import play.api.test.Helpers.{GET, await, defaultAwaitTimeout}
+import play.api.test.Helpers.{GET, LOCATION, await, defaultAwaitTimeout}
 import uk.gov.hmrc.auth.core.AffinityGroup.Individual
 import uk.gov.hmrc.cbcrfrontend.config.{FileUploadFrontEndWS, FrontendAppConfig}
-import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CreateEnvelope, RouteEnvelopeRequest, UploadFile}
 import uk.gov.hmrc.emailaddress.EmailAddress
@@ -45,7 +46,6 @@ import scala.concurrent.Future
 class FileUploadServiceSpec
     extends TestKit(ActorSystem()) with AnyWordSpecLike with Matchers with IdiomaticMockito with MockWSHelpers
     with BeforeAndAfterAll {
-
   private val envelopeIdString = "test-envelope-id"
   private val envelopeId = EnvelopeId(envelopeIdString)
 
@@ -81,7 +81,12 @@ class FileUploadServiceSpec
       ))
   )
 
-  private val mockFUSConnector = mock[FileUploadServiceConnector]
+  private val expiryDateString = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").print(new DateTime().plusDays(7))
+
+  private val envelopeRequestJson = Json
+    .toJson(EnvelopeRequest("/cbcr/file-upload-response", expiryDateString, MetaData(), Constraints()))
+    .as[JsObject]
+
   private val ws = MockWS {
     case (GET, s"/file-upload/envelopes/$envelopeIdString/files/$fileId/content") =>
       Action {
@@ -96,7 +101,7 @@ class FileUploadServiceSpec
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private val fileUploadService =
-    new FileUploadService(mockFUSConnector, ws, mockFrontendAppConfig, mockServicesConfig)
+    new FileUploadService(ws, mockFrontendAppConfig, mockServicesConfig)
 
   override def afterAll(): Unit = {
     shutdownHelpers()
@@ -105,21 +110,40 @@ class FileUploadServiceSpec
 
   "The FileUploadService" when {
     "createEnvelope is called" should {
-      "return successful response with envelope ID" in {
-        val envelopeRequestJson = Json.toJson(EnvelopeRequest("", "", MetaData(), Constraints())).as[JsObject]
-        mockFUSConnector.envelopeRequest(*, *) returns envelopeRequestJson
+      mockFrontendAppConfig.envelopeExpiryDays returns 7
 
-        val httpResponse = HttpResponse(200, "")
+      "return successful response with envelope ID" in {
         mockFileUploadFrontEndWS.POST[JsObject, HttpResponse](
           "/file-upload/envelopes",
           CreateEnvelope(envelopeRequestJson).body,
-          Seq.empty)(*, *, *, *) returns Future.successful(httpResponse)
-
-        mockFUSConnector.extractEnvelopId(httpResponse) returns Right(envelopeId)
+          Seq.empty)(*, *, *, *) returns Future.successful(
+          HttpResponse(200, "", Map(LOCATION -> Seq(s"envelopes/$envelopeIdString"))))
 
         val response = await(fileUploadService.createEnvelope.value)
 
         response shouldBe Right(envelopeId)
+      }
+
+      "return Left(UnexpectedState) when response LOCATION header is missing" in {
+        mockFileUploadFrontEndWS.POST[JsObject, HttpResponse](
+          "/file-upload/envelopes",
+          CreateEnvelope(envelopeRequestJson).body,
+          Seq.empty)(*, *, *, *) returns Future.successful(HttpResponse(200, ""))
+
+        val response = await(fileUploadService.createEnvelope.value)
+
+        response shouldBe Left(UnexpectedState("Header Location not found"))
+      }
+
+      "return Left(UnexpectedState) when response LOCATION header is invalid" in {
+        mockFileUploadFrontEndWS.POST[JsObject, HttpResponse](
+          "/file-upload/envelopes",
+          CreateEnvelope(envelopeRequestJson).body,
+          Seq.empty)(*, *, *, *) returns Future.successful(HttpResponse(200, "", Map(LOCATION -> Seq(s"invalid"))))
+
+        val response = await(fileUploadService.createEnvelope.value)
+
+        response shouldBe Left(UnexpectedState(s"EnvelopeId in $LOCATION header: invalid not found"))
       }
     }
 
@@ -190,7 +214,7 @@ class FileUploadServiceSpec
             }
         }
         val fileUploadService =
-          new FileUploadService(mockFUSConnector, ws, mockFrontendAppConfig, mockServicesConfig)
+          new FileUploadService(ws, mockFrontendAppConfig, mockServicesConfig)
 
         val response = await(fileUploadService.getFile(envelopeIdString, fileIdString).value)
 
@@ -202,15 +226,34 @@ class FileUploadServiceSpec
 
     "getFileMetaData is called" should {
       "return successful response with file metadata" in {
-        val httpResponse = HttpResponse(200, "")
+        val fileMetadataJson =
+          """
+            |{
+            |"id": "test-metadata-id",
+            |"status": "test-metadata-status",
+            |"name": "test-metadata-name",
+            |"contentType": "test-metadata-content-type",
+            |"length": 0,
+            |"created": "test-metadata-created",
+            |"metadata": "test-metadata",
+            |"href": "test-metadata-href"
+            |}
+            |""".stripMargin
         mockHttpClient.GET[HttpResponse](s"/file-upload/envelopes/$envelopeId/files/$fileIdString/metadata")(*, *, *) returns Future
-          .successful(httpResponse)
-        val fileMetadata = FileMetadata("", "", "", "", BigDecimal(0), "", Json.toJson(MetaData()), "")
-        mockFUSConnector.extractFileMetadata(httpResponse) returns Right(Some(fileMetadata))
+          .successful(HttpResponse(200, fileMetadataJson))
 
         val response = await(fileUploadService.getFileMetaData(envelopeIdString, fileIdString).value)
 
-        response shouldBe Right(Some(fileMetadata))
+        response shouldBe Right(Some(Json.parse(fileMetadataJson).as[FileMetadata]))
+      }
+
+      "return Left(UnexpectedState) for other http status" in {
+        mockHttpClient.GET[HttpResponse](s"/file-upload/envelopes/$envelopeId/files/$fileIdString/metadata")(*, *, *) returns Future
+          .successful(HttpResponse(500, ""))
+
+        val response = await(fileUploadService.getFileMetaData(envelopeIdString, fileIdString).value)
+
+        response shouldBe Left(UnexpectedState("Problems getting File Metadata"))
       }
     }
 

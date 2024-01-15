@@ -24,18 +24,18 @@ import cats.implicits._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.Logging
+import play.api.http.HeaderNames.LOCATION
 import play.api.http.Status
 import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.cbcrfrontend.config.{FileUploadFrontEndWS, FrontendAppConfig}
-import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses._
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HttpClient, _}
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.io.{File, PrintWriter}
@@ -44,11 +44,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class FileUploadService @Inject()(
-  fusConnector: FileUploadServiceConnector,
-  ws: WSClient,
-  configuration: FrontendAppConfig,
-  servicesConfig: ServicesConfig)(
+class FileUploadService @Inject()(ws: WSClient, configuration: FrontendAppConfig, servicesConfig: ServicesConfig)(
   implicit http: HttpClient,
   ac: ActorSystem,
   fileUploadFrontEndWS: FileUploadFrontEndWS,
@@ -65,15 +61,36 @@ class FileUploadService @Inject()(
 
   private lazy val cbcrsUrl = servicesConfig.baseUrl("cbcr")
 
+  private val envelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
+
   def createEnvelope(implicit hc: HeaderCarrier): ServiceResponse[EnvelopeId] = {
+    def envelopeRequest(cbcrsUrl: String, expiryDate: String): JsObject = {
+      //@todo refactor the hardcode of the /cbcr/file-upload-response
+      val jsObject = Json
+        .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
+        .as[JsObject]
+      logger.info(s"Envelope Request built as $jsObject")
+      jsObject
+    }
+
+    def extractEnvelopId(resp: HttpResponse): CBCErrorOr[EnvelopeId] =
+      resp.header(LOCATION) match {
+        case Some(location) =>
+          location match {
+            case envelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
+            case _                               => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
+          }
+        case None => Left(UnexpectedState(s"Header $LOCATION not found"))
+      }
+
     val envelopeExpiryDate = {
       val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
       formatter.print(new DateTime().plusDays(configuration.envelopeExpiryDays))
     }
 
     EitherT(
-      HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
-        .map(fusConnector.extractEnvelopId))
+      HttpExecutor(fusUrl, CreateEnvelope(envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
+        .map(extractEnvelopId))
   }
 
   def getFileUploadResponse(envelopeId: String)(
@@ -129,11 +146,20 @@ class FileUploadService @Inject()(
     )
 
   def getFileMetaData(envelopeId: String, fileId: String)(
-    implicit hc: HeaderCarrier): ServiceResponse[Option[FileMetadata]] =
+    implicit hc: HeaderCarrier): ServiceResponse[Option[FileMetadata]] = {
+    def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
+      resp.status match {
+        case Status.OK =>
+          logger.debug("FileMetaData: " + resp.json)
+          Right(resp.json.asOpt[FileMetadata])
+        case _ => Left(UnexpectedState("Problems getting File Metadata"))
+      }
+
     fromFutureOptA(
       http
         .GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata")
-        .map(fusConnector.extractFileMetadata))
+        .map(extractFileMetadata))
+  }
 
   def uploadMetadataAndRoute(metaData: SubmissionMetaData)(implicit hc: HeaderCarrier): ServiceResponse[String] = {
     val metadataFileId = UUID.randomUUID.toString
