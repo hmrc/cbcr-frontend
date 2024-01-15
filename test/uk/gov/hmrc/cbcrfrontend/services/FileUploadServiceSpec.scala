@@ -40,6 +40,7 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -81,12 +82,14 @@ class FileUploadServiceSpec
       ))
   )
 
-  private val expiryDateString = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").print(new DateTime().plusDays(7))
+  private val clock = Clock.fixed(Instant.parse("2014-12-22T10:15:30Z"), ZoneId.of("UTC"))
+
+  private val expiryDateString =
+    DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").print(new DateTime(clock.millis()).plusDays(7))
 
   private val envelopeRequestJson = Json
     .toJson(EnvelopeRequest("/cbcr/file-upload-response", expiryDateString, MetaData(), Constraints()))
     .as[JsObject]
-
   private val ws = MockWS {
     case (GET, s"/file-upload/envelopes/$envelopeIdString/files/$fileId/content") =>
       Action {
@@ -96,12 +99,13 @@ class FileUploadServiceSpec
   private val mockFrontendAppConfig = mock[FrontendAppConfig]
   private val mockServicesConfig = mock[ServicesConfig]
   private implicit val mockHttpClient: HttpClient = mock[HttpClient]
+
   private implicit val mockFileUploadFrontEndWS: FileUploadFrontEndWS = mock[FileUploadFrontEndWS]
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private val fileUploadService =
-    new FileUploadService(ws, mockFrontendAppConfig, mockServicesConfig)
+    new FileUploadService(ws, mockFrontendAppConfig, mockServicesConfig, clock)
 
   override def afterAll(): Unit = {
     shutdownHelpers()
@@ -214,7 +218,7 @@ class FileUploadServiceSpec
             }
         }
         val fileUploadService =
-          new FileUploadService(ws, mockFrontendAppConfig, mockServicesConfig)
+          new FileUploadService(ws, mockFrontendAppConfig, mockServicesConfig, clock)
 
         val response = await(fileUploadService.getFile(envelopeIdString, fileIdString).value)
 

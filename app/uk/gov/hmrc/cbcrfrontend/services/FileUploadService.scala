@@ -39,12 +39,17 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.io.{File, PrintWriter}
+import java.time.Clock
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class FileUploadService @Inject()(ws: WSClient, configuration: FrontendAppConfig, servicesConfig: ServicesConfig)(
+class FileUploadService @Inject()(
+  ws: WSClient,
+  configuration: FrontendAppConfig,
+  servicesConfig: ServicesConfig,
+  clock: Clock)(
   implicit http: HttpClient,
   ac: ActorSystem,
   fileUploadFrontEndWS: FileUploadFrontEndWS,
@@ -85,7 +90,7 @@ class FileUploadService @Inject()(ws: WSClient, configuration: FrontendAppConfig
 
     val envelopeExpiryDate = {
       val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-      formatter.print(new DateTime().plusDays(configuration.envelopeExpiryDays))
+      formatter.print(new DateTime(clock.millis()).plusDays(configuration.envelopeExpiryDays))
     }
 
     EitherT(
