@@ -26,7 +26,6 @@ GET           /keepSessionAlive                                     @uk.gov.hmrc
 
 GET           /file-upload-ready/:envelopeId/:fileId                @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileValidate(envelopeId: String, fileId:String)
 GET           /file-upload-progress/:envelopeId/:fileId/:hasSeen             @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadProgress(envelopeId: String, fileId: String, hasSeen: String)
-GET           /file-upload-polling                                  @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadPolling
 GET           /file-upload-response/:envelopeId                     @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.fileUploadResponse(envelopeId: String)
 GET           /file-upload-check-status/:envelopeId/:fileId/:hasSeen        @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.checkFileUploadStatus(envelopeId: String, fileId: String, hasSeen: String)
 GET           /report/upload-form                                   @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.chooseXMLFile

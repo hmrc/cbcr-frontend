@@ -1,3 +1,7 @@
+.js-enabled .js-hidden {
+    display: none!important;
+}
+
 #file-upload-progress {
     display: block;
     margin-bottom: 1em;

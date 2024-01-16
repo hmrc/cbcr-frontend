@@ -129,10 +129,6 @@ class FileUploadController @Inject()(
       }
   }
 
-  def fileUploadPolling: Action[AnyContent] = Action {
-    Ok("no redirection required for polling")
-  }
-
   private def fileUploadResponseToResult(optResponse: Option[FileUploadCallbackResponse]): Result =
     optResponse
       .map(response =>
@@ -331,8 +327,6 @@ class FileUploadController @Inject()(
     }
   }
 
-  // Provided for the users who do not have JavaScript polling for status to see if FU has called us back and the file
-  // is ready for the next stage (validate)
   def checkFileUploadStatus(envelopeId: String, fileId: String, hasSeen: String): Action[AnyContent] = Action.async {
     implicit request =>
       authorised() {

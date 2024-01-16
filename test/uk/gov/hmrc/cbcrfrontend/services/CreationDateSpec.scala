@@ -40,7 +40,6 @@ class CreationDateSpec
 
   private val reportingEntity = mock[ReportingEntityDataService]
   private val configuration = mock[FrontendAppConfig]
-
   private implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
