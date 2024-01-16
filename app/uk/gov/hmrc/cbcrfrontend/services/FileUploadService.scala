@@ -26,19 +26,21 @@ import org.joda.time.format.DateTimeFormat
 import play.api.Logging
 import play.api.http.HeaderNames.LOCATION
 import play.api.http.Status
+import play.api.http.Status.{CREATED, NO_CONTENT, OK}
 import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
-import play.api.libs.ws.WSClient
 import uk.gov.hmrc.cbcrfrontend.config.{FileUploadFrontEndWS, FrontendAppConfig}
 import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses._
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.io.{File, PrintWriter}
+import java.net.URL
 import java.time.Clock
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
@@ -46,14 +48,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class FileUploadService @Inject()(
-  ws: WSClient,
   configuration: FrontendAppConfig,
   servicesConfig: ServicesConfig,
-  clock: Clock)(
-  implicit http: HttpClient,
-  ac: ActorSystem,
-  fileUploadFrontEndWS: FileUploadFrontEndWS,
-  ec: ExecutionContext)
+  clock: Clock,
+  http: HttpClientV2)(implicit ac: ActorSystem, fileUploadFrontEndWS: FileUploadFrontEndWS, ec: ExecutionContext)
     extends Logging {
 
   private lazy val fusUrl = new ServiceUrl[FusUrl] {
@@ -102,7 +100,8 @@ class FileUploadService @Inject()(
     implicit hc: HeaderCarrier): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
       http
-        .GET[HttpResponse](s"$cbcrsUrl/cbcr/file-upload-response/$envelopeId")
+        .get(new URL(s"$cbcrsUrl/cbcr/file-upload-response/$envelopeId"))
+        .execute[HttpResponse]
         .map(resp =>
           resp.status match {
             case Status.OK =>
@@ -112,19 +111,19 @@ class FileUploadService @Inject()(
                   invalid => Left(UnexpectedState("Problems extracting File Upload response message " + invalid)),
                   response => Right(Some(response))
                 )
-            case 204 => Right(None)
-            case _   => Left(UnexpectedState("Problems getting File Upload response message"))
+            case NO_CONTENT => Right(None)
+            case _          => Left(UnexpectedState("Problems getting File Upload response message"))
         })
     )
 
-  def getFile(envelopeId: String, fileId: String): ServiceResponse[File] =
+  def getFile(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): ServiceResponse[File] =
     EitherT(
-      ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content")
-        .withMethod("GET")
-        .stream()
+      http
+        .get(new URL(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content"))
+        .stream[HttpResponse]
         .flatMap { res =>
           res.status match {
-            case Status.OK =>
+            case OK =>
               val file = java.nio.file.Files.createTempFile(envelopeId, "xml")
               val outputStream = java.nio.file.Files.newOutputStream(file)
 
@@ -154,7 +153,7 @@ class FileUploadService @Inject()(
     implicit hc: HeaderCarrier): ServiceResponse[Option[FileMetadata]] = {
     def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
       resp.status match {
-        case Status.OK =>
+        case OK =>
           logger.debug("FileMetaData: " + resp.json)
           Right(resp.json.asOpt[FileMetadata])
         case _ => Left(UnexpectedState("Problems getting File Metadata"))
@@ -162,7 +161,8 @@ class FileUploadService @Inject()(
 
     fromFutureOptA(
       http
-        .GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata")
+        .get(new URL(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata"))
+        .execute[HttpResponse]
         .map(extractFileMetadata))
   }
 
@@ -183,7 +183,7 @@ class FileUploadService @Inject()(
       response <- HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"))
     } yield
       response match {
-        case HttpResponse(201, body, _) => Right(body)
+        case HttpResponse(CREATED, body, _) => Right(body)
         case error =>
           Left(
             UnexpectedState(
