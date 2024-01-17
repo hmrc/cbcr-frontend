@@ -187,7 +187,7 @@ class SharedController @Inject()(
 
   val signOutSurvey: Action[AnyContent] = Action.async {
     Future.successful(
-      Redirect(routes.ExitSurveyController.doSurvey.url).withNewSession
+      Redirect(feConfig.exitSurveyUrl).withNewSession
     )
   }
 

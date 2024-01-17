@@ -38,6 +38,10 @@ class FrontendAppConfig @Inject()(val config: Configuration) {
   val cbcrGuidanceUtrUrl: String = config.load[String]("cbcr-guidance-utr-url")
   val oecdSchemaVersion: String = config.load[String]("Prod.oecd-schema-version")
 
+  private val feedbackFeUrl: String = config.load[String]("microservice.services.feedback-frontend.url")
+
+  val exitSurveyUrl: String = s"$feedbackFeUrl/CBCR"
+
   val defaultCreationDate: LocalDate = {
     val creationDay = config.load[Int]("Prod.default-creation-date.day")
     val creationMonth = config.load[Int]("Prod.default-creation-date.month")
