@@ -18,39 +18,49 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
-import akka.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentMatchersSugar.*
-import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito}
+import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, OK}
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.i18n.Messages
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.Helpers
 import play.api.test.Helpers.{LOCATION, await, defaultAwaitTimeout}
 import uk.gov.hmrc.auth.core.AffinityGroup.Individual
-import uk.gov.hmrc.cbcrfrontend.config.{FileUploadFrontEndWS, FrontendAppConfig}
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.typesclasses.{CreateEnvelope, RouteEnvelopeRequest, UploadFile}
+import uk.gov.hmrc.cbcrfrontend.typesclasses.{RouteEnvelopeRequest, UploadFile}
+import uk.gov.hmrc.cbcrfrontend.util.UUIDGenerator
 import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.{HttpClientV2Support, WireMockSupport}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.{Clock, Instant, ZoneId}
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 class FileUploadServiceSpec
     extends TestKit(ActorSystem()) with AnyWordSpecLike with Matchers with IdiomaticMockito with HttpClientV2Support
     with WireMockSupport {
+
+//  override lazy val wireMockServer: WireMockServer =
+//    new WireMockServer(
+//      wireMockConfig()
+//        .notifier(new ConsoleNotifier(true))
+//        .port(wireMockPort)
+//        .withRootDirectory(wireMockRootDirectory)
+//    )
+
   private val envelopeIdString = "test-envelope-id"
   private val envelopeId = EnvelopeId(envelopeIdString)
 
-  private val fileIdString = "test-file-id"
+  private val uuid = UUID.fromString("f3147a43-185a-48d7-8805-3b32f973a1e0")
+  private val fileIdString = s"json-$uuid"
 
   private val otherHttpStatus = INTERNAL_SERVER_ERROR
 
@@ -91,27 +101,37 @@ class FileUploadServiceSpec
     .toJson(EnvelopeRequest(s"$wireMockUrl/cbcr/file-upload-response", expiryDateString, MetaData(), Constraints()))
     .as[JsObject]
 
+  private val uploadFileBody = UploadFile(
+    envelopeId,
+    FileId(fileIdString),
+    "metadata.json",
+    "application/json; charset=UTF-8",
+    Json.toJson(metadata).toString().getBytes
+  ).body
+
   private val mockFrontendAppConfig = mock[FrontendAppConfig]
   private val mockServicesConfig = mock[ServicesConfig]
+  private val mockUUIDGenerator = mock[UUIDGenerator]
 
-  private implicit val mockFileUploadFrontEndWS: FileUploadFrontEndWS = mock[FileUploadFrontEndWS]
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   mockServicesConfig.baseUrl(*) returns wireMockUrl
 
+  mockUUIDGenerator.randomUUID returns uuid
+
   private val fileUploadService =
-    new FileUploadService(mockFrontendAppConfig, mockServicesConfig, clock, httpClientV2)
+    new FileUploadService(mockFrontendAppConfig, mockServicesConfig, clock, mockUUIDGenerator, httpClientV2)
 
   "The FileUploadService" when {
     "createEnvelope is called" should {
       mockFrontendAppConfig.envelopeExpiryDays returns 7
 
       "return successful response with envelope ID" in {
-        mockFileUploadFrontEndWS.POST[JsObject, HttpResponse](
-          s"$wireMockUrl/file-upload/envelopes",
-          CreateEnvelope(envelopeRequestJson).body,
-          Seq.empty)(*, *, *, *) returns Future.successful(
-          HttpResponse(OK, "", Map(LOCATION -> Seq(s"envelopes/$envelopeIdString"))))
+        stubFor(
+          post(urlEqualTo("/file-upload/envelopes"))
+            .withRequestBody(equalToJson(envelopeRequestJson.toString()))
+            .willReturn(ok.withHeader("LOCATION", s"envelopes/$envelopeIdString"))
+        )
 
         val response = await(fileUploadService.createEnvelope.value)
 
@@ -119,10 +139,11 @@ class FileUploadServiceSpec
       }
 
       "return Left(UnexpectedState) when response LOCATION header is missing" in {
-        mockFileUploadFrontEndWS.POST[JsObject, HttpResponse](
-          s"$wireMockUrl/file-upload/envelopes",
-          CreateEnvelope(envelopeRequestJson).body,
-          Seq.empty)(*, *, *, *) returns Future.successful(HttpResponse(OK, ""))
+        stubFor(
+          post(urlEqualTo("/file-upload/envelopes"))
+            .withRequestBody(equalToJson(envelopeRequestJson.toString()))
+            .willReturn(ok)
+        )
 
         val response = await(fileUploadService.createEnvelope.value)
 
@@ -130,10 +151,11 @@ class FileUploadServiceSpec
       }
 
       "return Left(UnexpectedState) when response LOCATION header is invalid" in {
-        mockFileUploadFrontEndWS.POST[JsObject, HttpResponse](
-          s"$wireMockUrl/file-upload/envelopes",
-          CreateEnvelope(envelopeRequestJson).body,
-          Seq.empty)(*, *, *, *) returns Future.successful(HttpResponse(OK, "", Map(LOCATION -> Seq(s"invalid"))))
+        stubFor(
+          post(urlEqualTo("/file-upload/envelopes"))
+            .withRequestBody(equalToJson(envelopeRequestJson.toString()))
+            .willReturn(ok.withHeader("LOCATION", "invalid"))
+        )
 
         val response = await(fileUploadService.createEnvelope.value)
 
@@ -205,7 +227,7 @@ class FileUploadServiceSpec
     "getFile is called" should {
       "return successful response with file" in {
         stubFor(
-          get(urlEqualTo(s"/file-upload/envelopes/$envelopeId/files/$fileIdString/content"))
+          get(urlEqualTo(s"/file-upload/envelopes/$envelopeIdString/files/$fileIdString/content"))
             .willReturn(ok())
         )
 
@@ -216,12 +238,12 @@ class FileUploadServiceSpec
 
       "return Left(UnexpectedState) for any other http status" in {
         stubFor(
-          get(urlEqualTo(s"/file-upload/envelopes/$envelopeId/files/$fileIdString/content"))
+          get(urlEqualTo(s"/file-upload/envelopes/$envelopeIdString/files/$fileIdString/content"))
             .willReturn(status(otherHttpStatus))
         )
 
         val fileUploadService =
-          new FileUploadService(mockFrontendAppConfig, mockServicesConfig, clock, httpClientV2)
+          new FileUploadService(mockFrontendAppConfig, mockServicesConfig, clock, mockUUIDGenerator, httpClientV2)
 
         val response = await(fileUploadService.getFile(envelopeIdString, fileIdString).value)
 
@@ -247,7 +269,7 @@ class FileUploadServiceSpec
             |}
             |""".stripMargin
         stubFor(
-          get(urlEqualTo(s"/file-upload/envelopes/$envelopeId/files/$fileIdString/metadata"))
+          get(urlEqualTo(s"/file-upload/envelopes/$envelopeIdString/files/$fileIdString/metadata"))
             .willReturn(aResponse().withBody(fileMetadataJson))
         )
 
@@ -258,7 +280,7 @@ class FileUploadServiceSpec
 
       "return Left(UnexpectedState) for other http status" in {
         stubFor(
-          get(urlEqualTo(s"/file-upload/envelopes/$envelopeId/files/$fileIdString/metadata"))
+          get(urlEqualTo(s"/file-upload/envelopes/$envelopeIdString/files/$fileIdString/metadata"))
             .willReturn(status(otherHttpStatus))
         )
 
@@ -270,44 +292,66 @@ class FileUploadServiceSpec
 
     "uploadMetadataAndRoute is called" should {
       "return successful response with body when route envelope request returns 201" in {
-        mockFileUploadFrontEndWS.doFormPartPost(
-          ArgumentMatchersSugar.startsWith(s"$wireMockUrl/file-upload/upload/envelopes/$envelopeIdString/files/"),
-          "metadata.json",
-          "application/json; charset=UTF-8",
-          ByteString.fromArray(
-            UploadFile(envelopeId, FileId(fileIdString), "", "", Json.toJson(metadata).toString().getBytes).body),
-          Seq("CSRF-token" -> "nocheck")
-        )(*, *) returns Future.successful(HttpResponse(OK, ""))
+        stubFor(
+          post(urlEqualTo(s"/file-upload/upload/envelopes/$envelopeIdString/files/$fileIdString"))
+            .withMultipartRequestBody(aMultipart()
+              .withName("metadata.json")
+              .withBody(binaryEqualTo(uploadFileBody)))
+            .withHeader("CSRF-token", containing("nocheck"))
+            .willReturn(created)
+        )
 
-        mockFileUploadFrontEndWS.POST[RouteEnvelopeRequest, HttpResponse](
-          s"$wireMockUrl/file-routing/requests",
-          RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"))(*, *, *, *) returns Future.successful(
-          HttpResponse(CREATED, "route-envelope-response"))
+        stubFor(
+          post(urlEqualTo("/file-routing/requests"))
+            .withRequestBody(equalToJson(Json.toJson(RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")).toString()))
+            .willReturn(created.withBody("route-envelope-response"))
+        )
 
         val response = await(fileUploadService.uploadMetadataAndRoute(metadata).value)
 
         response shouldBe Right("route-envelope-response")
+
+        verify(
+          postRequestedFor(urlEqualTo(s"/file-upload/upload/envelopes/$envelopeIdString/files/$fileIdString"))
+            .withRequestBodyPart(
+              aMultipart()
+                .withName("metadata.json")
+                .withBody(binaryEqualTo(uploadFileBody))
+                .build())
+            .withHeader("CSRF-token", equalTo("nocheck"))
+        )
       }
 
       "return Left(UnexpectedState) response when route envelope request returns other http status" in {
-        mockFileUploadFrontEndWS.doFormPartPost(
-          ArgumentMatchersSugar.startsWith(s"$wireMockUrl/file-upload/upload/envelopes/$envelopeIdString/files/"),
-          "metadata.json",
-          "application/json; charset=UTF-8",
-          ByteString.fromArray(
-            UploadFile(envelopeId, FileId(fileIdString), "", "", Json.toJson(metadata).toString().getBytes).body),
-          Seq("CSRF-token" -> "nocheck")
-        )(*, *) returns Future.successful(HttpResponse(OK, ""))
+        stubFor(
+          post(urlEqualTo(s"/file-upload/upload/envelopes/$envelopeIdString/files/$fileIdString"))
+            .withMultipartRequestBody(aMultipart()
+              .withName("metadata.json")
+              .withBody(binaryEqualTo(uploadFileBody)))
+            .withHeader("CSRF-token", containing("nocheck"))
+            .willReturn(created)
+        )
 
-        mockFileUploadFrontEndWS.POST[RouteEnvelopeRequest, HttpResponse](
-          s"$wireMockUrl/file-routing/requests",
-          RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"))(*, *, *, *) returns Future.successful(
-          HttpResponse(otherHttpStatus, ""))
+        stubFor(
+          post(urlEqualTo("/file-routing/requests"))
+            .withRequestBody(equalToJson(Json.toJson(RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS")).toString()))
+            .willReturn(status(otherHttpStatus))
+        )
 
         val response = await(fileUploadService.uploadMetadataAndRoute(metadata).value)
 
         response shouldBe Left(
           UnexpectedState(s"[FileUploadService][uploadMetadataAndRoute] Failed to create route request, received 500"))
+
+        verify(
+          postRequestedFor(urlEqualTo(s"/file-upload/upload/envelopes/$envelopeIdString/files/$fileIdString"))
+            .withRequestBodyPart(
+              aMultipart()
+                .withName("metadata.json")
+                .withBody(binaryEqualTo(uploadFileBody))
+                .build())
+            .withHeader("CSRF-token", equalTo("nocheck"))
+        )
       }
     }
 

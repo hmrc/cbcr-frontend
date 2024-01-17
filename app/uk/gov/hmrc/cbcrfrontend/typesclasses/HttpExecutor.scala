@@ -16,13 +16,16 @@
 
 package uk.gov.hmrc.cbcrfrontend.typesclasses
 
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import play.api.libs.json.{JsObject, Json, OFormat}
-import uk.gov.hmrc.cbcrfrontend.config.FileUploadFrontEndWS
+import play.api.mvc.MultipartFormData.FilePart
 import uk.gov.hmrc.cbcrfrontend.model.{EnvelopeId, FileId}
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
+import java.net.URL
 import scala.concurrent.{ExecutionContext, Future}
 
 case class CreateEnvelope(body: JsObject)
@@ -38,11 +41,11 @@ object RouteEnvelopeRequest {
 trait HttpExecutor[U, P, I] {
   def makeCall(
     url: ServiceUrl[U],
-    obj: P
+    obj: P,
+    httpClient: HttpClientV2
   )(
     implicit
     hc: HeaderCarrier,
-    fileUploadFrontEndWS: FileUploadFrontEndWS,
     ec: ExecutionContext
   ): Future[HttpResponse]
 }
@@ -51,71 +54,81 @@ object HttpExecutor {
   implicit object createEnvelope extends HttpExecutor[FusUrl, CreateEnvelope, JsObject] {
     def makeCall(
       fusUrl: ServiceUrl[FusUrl],
-      obj: CreateEnvelope
+      obj: CreateEnvelope,
+      httpClient: HttpClientV2
     )(
       implicit
       hc: HeaderCarrier,
-      fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] =
-      fileUploadFrontEndWS
-        .POST[JsObject, HttpResponse](s"${fusUrl.url}/file-upload/envelopes", obj.body)
+      httpClient
+        .post(new URL(s"${fusUrl.url}/file-upload/envelopes"))
+        .withBody(obj.body)
+        .execute
   }
 
   implicit object uploadFile extends HttpExecutor[FusFeUrl, UploadFile, Array[Byte]] {
     def makeCall(
       fusFeUrl: ServiceUrl[FusFeUrl],
-      obj: UploadFile
+      obj: UploadFile,
+      httpClient: HttpClientV2
     )(
       implicit
       hc: HeaderCarrier,
-      fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] = {
       import obj._
-      val url = s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"
-      fileUploadFrontEndWS
-        .doFormPartPost(url, fileName, contentType, ByteString.fromArray(obj.body), Seq("CSRF-token" -> "nocheck"))
+      httpClient
+        .post(new URL(s"${fusFeUrl.url}/file-upload/upload/envelopes/$envelopeId/files/$fileId"))
+        .withBody(
+          Source(FilePart(fileName, fileName, Some(contentType), Source.single(ByteString.fromArray(obj.body))) :: Nil)
+        )
+        .setHeader(("CSRF-token", "nocheck"))
+        .execute
     }
   }
 
   implicit object fileUploadCallbackResponse extends HttpExecutor[CbcrsUrl, FUCallbackResponse, JsObject] {
     def makeCall(
       cbcrsUrl: ServiceUrl[CbcrsUrl],
-      obj: FUCallbackResponse
+      obj: FUCallbackResponse,
+      httpClient: HttpClientV2
     )(
       implicit
       hc: HeaderCarrier,
-      fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] =
-      fileUploadFrontEndWS
-        .POST[JsObject, HttpResponse](s"${cbcrsUrl.url}/cbcr/file-upload-response", obj.body)
+      httpClient
+        .post(new URL(s"${cbcrsUrl.url}/cbcr/file-upload-response"))
+        .withBody(obj.body)
+        .execute
   }
 
   implicit object routeRequest extends HttpExecutor[FusUrl, RouteEnvelopeRequest, RouteEnvelopeRequest] {
     def makeCall(
       fusUrl: ServiceUrl[FusUrl],
-      obj: RouteEnvelopeRequest
+      obj: RouteEnvelopeRequest,
+      httpClient: HttpClientV2
     )(
       implicit
       hc: HeaderCarrier,
-      fileUploadFrontEndWS: FileUploadFrontEndWS,
       ec: ExecutionContext
     ): Future[HttpResponse] =
-      fileUploadFrontEndWS
-        .POST[RouteEnvelopeRequest, HttpResponse](s"${fusUrl.url}/file-routing/requests", obj)
+      httpClient
+        .post(new URL(s"${fusUrl.url}/file-routing/requests"))
+        .withBody(Json.toJson(obj))
+        .execute
   }
 
   def apply[U, P, I](
     url: ServiceUrl[U],
-    obj: P
+    obj: P,
+    httpClient: HttpClientV2
   )(
     implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
-    httpExecutor: HttpExecutor[U, P, I],
-    fileUploadFrontEndWS: FileUploadFrontEndWS
+    httpExecutor: HttpExecutor[U, P, I]
   ): Future[HttpResponse] =
-    httpExecutor.makeCall(url, obj)
+    httpExecutor.makeCall(url, obj, httpClient)
 }

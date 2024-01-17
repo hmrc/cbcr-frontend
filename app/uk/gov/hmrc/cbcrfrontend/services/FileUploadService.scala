@@ -30,10 +30,11 @@ import play.api.http.Status.{CREATED, NO_CONTENT, OK}
 import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
-import uk.gov.hmrc.cbcrfrontend.config.{FileUploadFrontEndWS, FrontendAppConfig}
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses._
+import uk.gov.hmrc.cbcrfrontend.util.UUIDGenerator
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -42,7 +43,6 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import java.io.{File, PrintWriter}
 import java.net.URL
 import java.time.Clock
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,7 +51,11 @@ class FileUploadService @Inject()(
   configuration: FrontendAppConfig,
   servicesConfig: ServicesConfig,
   clock: Clock,
-  http: HttpClientV2)(implicit ac: ActorSystem, fileUploadFrontEndWS: FileUploadFrontEndWS, ec: ExecutionContext)
+  uuidGenerator: UUIDGenerator,
+  httpClient: HttpClientV2)(
+  implicit
+  ac: ActorSystem,
+  ec: ExecutionContext)
     extends Logging {
 
   private lazy val fusUrl = new ServiceUrl[FusUrl] {
@@ -92,14 +96,14 @@ class FileUploadService @Inject()(
     }
 
     EitherT(
-      HttpExecutor(fusUrl, CreateEnvelope(envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
+      HttpExecutor(fusUrl, CreateEnvelope(envelopeRequest(cbcrsUrl, envelopeExpiryDate)), httpClient)
         .map(extractEnvelopId))
   }
 
   def getFileUploadResponse(envelopeId: String)(
     implicit hc: HeaderCarrier): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
-      http
+      httpClient
         .get(new URL(s"$cbcrsUrl/cbcr/file-upload-response/$envelopeId"))
         .execute[HttpResponse]
         .map(resp =>
@@ -118,7 +122,7 @@ class FileUploadService @Inject()(
 
   def getFile(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): ServiceResponse[File] =
     EitherT(
-      http
+      httpClient
         .get(new URL(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content"))
         .stream[HttpResponse]
         .flatMap { res =>
@@ -160,14 +164,14 @@ class FileUploadService @Inject()(
       }
 
     fromFutureOptA(
-      http
+      httpClient
         .get(new URL(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata"))
         .execute[HttpResponse]
         .map(extractFileMetadata))
   }
 
   def uploadMetadataAndRoute(metaData: SubmissionMetaData)(implicit hc: HeaderCarrier): ServiceResponse[String] = {
-    val metadataFileId = UUID.randomUUID.toString
+    val metadataFileId = uuidGenerator.randomUUID
     val envelopeId = metaData.fileInfo.envelopeId
 
     EitherT(for {
@@ -178,9 +182,11 @@ class FileUploadService @Inject()(
               FileId(s"json-$metadataFileId"),
               "metadata.json",
               "application/json; charset=UTF-8",
-              Json.toJson(metaData).toString().getBytes)
+              Json.toJson(metaData).toString().getBytes
+            ),
+            httpClient
           )
-      response <- HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"))
+      response <- HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"), httpClient)
     } yield
       response match {
         case HttpResponse(CREATED, body, _) => Right(body)
