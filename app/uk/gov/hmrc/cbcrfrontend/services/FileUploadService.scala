@@ -31,9 +31,9 @@ import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
 import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.typesclasses._
 import uk.gov.hmrc.cbcrfrontend.util.UUIDGenerator
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
@@ -52,26 +52,18 @@ class FileUploadService @Inject()(
   servicesConfig: ServicesConfig,
   clock: Clock,
   uuidGenerator: UUIDGenerator,
-  httpClient: HttpClientV2)(
+  httpClient: HttpClientV2,
+  fileUploadServiceConnector: FileUploadServiceConnector)(
   implicit
   ac: ActorSystem,
   ec: ExecutionContext)
     extends Logging {
-
-  private lazy val fusUrl = new ServiceUrl[FusUrl] {
-    val url: String = servicesConfig.baseUrl("file-upload")
-  }
-
-  private lazy val fusFeUrl = new ServiceUrl[FusFeUrl] {
-    val url: String = servicesConfig.baseUrl("file-upload-frontend")
-  }
-
   private lazy val cbcrsUrl = servicesConfig.baseUrl("cbcr")
 
   private val envelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
 
   def createEnvelope(implicit hc: HeaderCarrier): ServiceResponse[EnvelopeId] = {
-    def envelopeRequest(cbcrsUrl: String, expiryDate: String): JsObject = {
+    def envelopeRequest(expiryDate: String): JsObject = {
       //@todo refactor the hardcode of the /cbcr/file-upload-response
       val jsObject = Json
         .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
@@ -96,7 +88,8 @@ class FileUploadService @Inject()(
     }
 
     EitherT(
-      HttpExecutor(fusUrl, CreateEnvelope(envelopeRequest(cbcrsUrl, envelopeExpiryDate)), httpClient)
+      fileUploadServiceConnector
+        .createEnvelope(CreateEnvelope(envelopeRequest(envelopeExpiryDate)))
         .map(extractEnvelopId))
   }
 
@@ -122,9 +115,8 @@ class FileUploadService @Inject()(
 
   def getFile(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): ServiceResponse[File] =
     EitherT(
-      httpClient
-        .get(new URL(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content"))
-        .stream[HttpResponse]
+      fileUploadServiceConnector
+        .getFile(envelopeId, fileId)
         .flatMap { res =>
           res.status match {
             case OK =>
@@ -164,9 +156,8 @@ class FileUploadService @Inject()(
       }
 
     fromFutureOptA(
-      httpClient
-        .get(new URL(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata"))
-        .execute[HttpResponse]
+      fileUploadServiceConnector
+        .getFileMetaData(envelopeId, fileId)
         .map(extractFileMetadata))
   }
 
@@ -174,27 +165,25 @@ class FileUploadService @Inject()(
     val metadataFileId = uuidGenerator.randomUUID
     val envelopeId = metaData.fileInfo.envelopeId
 
-    EitherT(for {
-      _ <- HttpExecutor(
-            fusFeUrl,
-            UploadFile(
-              envelopeId,
-              FileId(s"json-$metadataFileId"),
-              "metadata.json",
-              "application/json; charset=UTF-8",
-              Json.toJson(metaData).toString().getBytes
-            ),
-            httpClient
-          )
-      response <- HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"), httpClient)
-    } yield
-      response match {
-        case HttpResponse(CREATED, body, _) => Right(body)
-        case error =>
-          Left(
-            UnexpectedState(
+    EitherT(
+      for {
+        _ <- fileUploadServiceConnector.uploadFile(
+              UploadFile(
+                envelopeId,
+                FileId(s"json-$metadataFileId"),
+                "metadata.json",
+                "application/json; charset=UTF-8",
+                metaData
+              )
+            )
+        response <- fileUploadServiceConnector.routeEnvelopeRequest(RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"))
+      } yield
+        response match {
+          case HttpResponse(CREATED, body, _) => Right(body)
+          case error =>
+            Left(UnexpectedState(
               s"[FileUploadService][uploadMetadataAndRoute] Failed to create route request, received ${error.status}"))
-      })
+        })
   }
 
   private def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =
