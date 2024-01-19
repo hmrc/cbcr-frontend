@@ -18,25 +18,22 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
-import com.github.tomakehurst.wiremock.client.WireMock._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.mockito.ArgumentMatchersSugar.*
 import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, OK}
+import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.i18n.Messages
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.Helpers
 import play.api.test.Helpers.{LOCATION, await, defaultAwaitTimeout}
 import uk.gov.hmrc.auth.core.AffinityGroup.Individual
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
+import uk.gov.hmrc.cbcrfrontend.connectors.{CBCRBackendConnector, FileUploadServiceConnector}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.util.UUIDGenerator
 import uk.gov.hmrc.emailaddress.EmailAddress
-import uk.gov.hmrc.http.test.{HttpClientV2Support, WireMockSupport}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -45,18 +42,7 @@ import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class FileUploadServiceSpec
-    extends TestKit(ActorSystem()) with AnyWordSpecLike with Matchers with IdiomaticMockito with HttpClientV2Support
-    with WireMockSupport {
-
-//  override lazy val wireMockServer: WireMockServer =
-//    new WireMockServer(
-//      wireMockConfig()
-//        .notifier(new ConsoleNotifier(true))
-//        .port(wireMockPort)
-//        .withRootDirectory(wireMockRootDirectory)
-//    )
-
+class FileUploadServiceSpec extends TestKit(ActorSystem()) with AnyWordSpecLike with Matchers with IdiomaticMockito {
   private val envelopeIdString = "test-envelope-id"
   private val envelopeId = EnvelopeId(envelopeIdString)
 
@@ -100,7 +86,8 @@ class FileUploadServiceSpec
     DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").print(new DateTime(clock.millis()).plusDays(7))
 
   private val envelopeRequestJson = Json
-    .toJson(EnvelopeRequest(s"$wireMockUrl/cbcr/file-upload-response", expiryDateString, MetaData(), Constraints()))
+    .toJson(
+      EnvelopeRequest(s"http://cbcr-backend/cbcr/file-upload-response", expiryDateString, MetaData(), Constraints()))
     .as[JsObject]
 
   private val uploadFileBody = UploadFile(
@@ -117,10 +104,11 @@ class FileUploadServiceSpec
   private val mockServicesConfig = mock[ServicesConfig]
   private val mockUUIDGenerator = mock[UUIDGenerator]
   private val mockFileUploadServiceConnector = mock[FileUploadServiceConnector]
+  private val mockCBCRConnector = mock[CBCRBackendConnector]
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  mockServicesConfig.baseUrl(*) returns wireMockUrl
+  mockServicesConfig.baseUrl("cbcr") returns "http://cbcr-backend"
 
   mockUUIDGenerator.randomUUID returns uuid
 
@@ -130,8 +118,8 @@ class FileUploadServiceSpec
       mockServicesConfig,
       clock,
       mockUUIDGenerator,
-      httpClientV2,
-      mockFileUploadServiceConnector)
+      mockFileUploadServiceConnector,
+      mockCBCRConnector)
 
   "The FileUploadService" when {
     "createEnvelope is called" should {
@@ -177,10 +165,8 @@ class FileUploadServiceSpec
              |}
              |""".stripMargin
 
-        stubFor(
-          get(urlEqualTo(s"/cbcr/file-upload-response/$envelopeIdString"))
-            .willReturn(ok(fileUploadResponseJson))
-        )
+        mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(
+          HttpResponse(OK, fileUploadResponseJson))
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -188,10 +174,7 @@ class FileUploadServiceSpec
       }
 
       "return Left(UnexpectedState) when http status is 200 and FileUploadCallbackResponse json is invalid" in {
-        stubFor(
-          get(urlEqualTo(s"/cbcr/file-upload-response/$envelopeIdString"))
-            .willReturn(aResponse().withBody("{}"))
-        )
+        mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(HttpResponse(OK, "{}"))
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -204,10 +187,8 @@ class FileUploadServiceSpec
       }
 
       "return Right(None) when http status is 204" in {
-        stubFor(
-          get(urlEqualTo(s"/cbcr/file-upload-response/$envelopeIdString"))
-            .willReturn(noContent())
-        )
+        mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(
+          HttpResponse(NO_CONTENT, ""))
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -215,10 +196,8 @@ class FileUploadServiceSpec
       }
 
       "return Left(UnexpectedState) for any other http status" in {
-        stubFor(
-          get(urlEqualTo(s"/cbcr/file-upload-response/$envelopeIdString"))
-            .willReturn(status(otherHttpStatus))
-        )
+        mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(
+          HttpResponse(otherHttpStatus, ""))
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -246,8 +225,8 @@ class FileUploadServiceSpec
             mockServicesConfig,
             clock,
             mockUUIDGenerator,
-            httpClientV2,
-            mockFileUploadServiceConnector)
+            mockFileUploadServiceConnector,
+            mockCBCRConnector)
 
         val response = await(fileUploadService.getFile(envelopeIdString, fileIdString).value)
 

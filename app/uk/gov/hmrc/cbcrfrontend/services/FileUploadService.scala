@@ -31,17 +31,14 @@ import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
-import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
+import uk.gov.hmrc.cbcrfrontend.connectors.{CBCRBackendConnector, FileUploadServiceConnector}
 import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.util.UUIDGenerator
-import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.io.{File, PrintWriter}
-import java.net.URL
 import java.time.Clock
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,8 +49,8 @@ class FileUploadService @Inject()(
   servicesConfig: ServicesConfig,
   clock: Clock,
   uuidGenerator: UUIDGenerator,
-  httpClient: HttpClientV2,
-  fileUploadServiceConnector: FileUploadServiceConnector)(
+  fileUploadServiceConnector: FileUploadServiceConnector,
+  cbcrConnector: CBCRBackendConnector)(
   implicit
   ac: ActorSystem,
   ec: ExecutionContext)
@@ -96,9 +93,8 @@ class FileUploadService @Inject()(
   def getFileUploadResponse(envelopeId: String)(
     implicit hc: HeaderCarrier): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
-      httpClient
-        .get(new URL(s"$cbcrsUrl/cbcr/file-upload-response/$envelopeId"))
-        .execute[HttpResponse]
+      cbcrConnector
+        .getFileUploadResponse(envelopeId)
         .map(resp =>
           resp.status match {
             case Status.OK =>

@@ -23,7 +23,7 @@ import play.api.Configuration
 import play.api.libs.json.{JsNull, JsString, JsValue}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, StringContextOps}
 
 import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
@@ -38,6 +38,9 @@ class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(im
     host  <- conf.get[String]("host")
     port  <- conf.get[Int]("port")
   } yield s"$proto://$host:$port/cbcr").value
+
+  def getFileUploadResponse(envelopeId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    http.GET[HttpResponse](url"$url/file-upload-response/$envelopeId")
 
   def subscribe(s: SubscriptionDetails)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.POST[SubscriptionDetails, HttpResponse](url + "/subscription", s)
