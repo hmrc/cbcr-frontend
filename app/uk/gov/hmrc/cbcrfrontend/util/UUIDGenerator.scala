@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import uk.gov.hmrc.cbcrfrontend.views.html._
+package uk.gov.hmrc.cbcrfrontend.util
 
-@this(layout: Layout)
+import java.util.UUID
+import javax.inject.Singleton
 
-@()(implicit request: Request[_], messages: Messages)
-
-@title = @{
-    messages("survey.acknowledge.title")
-}
-@layout(title, withSignOutLink = false) {
-    <h1 class="govuk-heading-l">@title</h1>
-    <p class="govuk-body">@messages("survey.acknowledge.message")</p>
+@Singleton
+class UUIDGenerator {
+  def randomUUID: UUID =
+    UUID.randomUUID()
 }

@@ -2,7 +2,7 @@ import play.sbt.PlayImport.ws
 import sbt.*
 
 object AppDependencies {
-  val hmrcBootstrapVersion = "7.19.0"
+  val hmrcBootstrapVersion = "7.23.0"
   val mockitoScalaVersion = "1.17.12"
   val hmrcMongoVersion = "1.4.0"
   val playVersion = "play-28"
@@ -10,7 +10,7 @@ object AppDependencies {
   val compile: Seq[ModuleID] = Seq(
     ws,
     "uk.gov.hmrc"              %% s"bootstrap-frontend-$playVersion" % hmrcBootstrapVersion,
-    "uk.gov.hmrc"              %% "play-frontend-hmrc"               % s"7.14.0-$playVersion",
+    "uk.gov.hmrc"              %% "play-frontend-hmrc"               % s"7.29.0-$playVersion",
     "uk.gov.hmrc.mongo"        %% s"hmrc-mongo-$playVersion"         % hmrcMongoVersion,
     "uk.gov.hmrc"              %% "emailaddress"                     % "3.7.0",
     "uk.gov.hmrc"              %% "domain"                           % s"8.1.0-$playVersion",
@@ -25,9 +25,10 @@ object AppDependencies {
   )
 
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"       %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
-    "uk.gov.hmrc.mongo" %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
-    "org.mockito"       %% "mockito-scala"                 % mockitoScalaVersion  % scope,
-    "org.mockito"       %% "mockito-scala-cats"            % mockitoScalaVersion  % scope
+    "uk.gov.hmrc"              %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
+    "uk.gov.hmrc.mongo"        %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
+    "org.mockito"              %% "mockito-scala"                 % mockitoScalaVersion  % scope,
+    "org.mockito"              %% "mockito-scala-cats"            % mockitoScalaVersion  % scope,
+    "com.typesafe.akka"        %% "akka-testkit"                  % "2.6.21"             % scope
   )
 }

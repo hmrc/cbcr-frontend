@@ -28,7 +28,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
-
   private val conf = config.underlying.get[Config]("microservice.services.cbcr").value
 
   private val url = (for {

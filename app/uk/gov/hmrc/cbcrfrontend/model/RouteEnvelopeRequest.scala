@@ -1,5 +1,5 @@
-@*
- * Copyright 2023 HM Revenue & Customs
+/*
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,18 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@import uk.gov.hmrc.cbcrfrontend.views.html._
+package uk.gov.hmrc.cbcrfrontend.model
 
-@this(layout: Layout)
+import play.api.libs.json.{Json, OWrites}
 
-@()(implicit request: Request[_], messages: Messages)
+case class RouteEnvelopeRequest(envelopeId: EnvelopeId, application: String, destination: String)
 
-@title = @{
-    messages("survey.acknowledge.title")
-}
-@layout(title, withSignOutLink = false) {
-    <h1 class="govuk-heading-l">@title</h1>
-    <p class="govuk-body">@messages("survey.acknowledge.message")</p>
+object RouteEnvelopeRequest {
+  implicit val writes: OWrites[RouteEnvelopeRequest] = Json.writes
 }

@@ -21,7 +21,6 @@ import cats.instances.future._
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents, Request}
-import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SurveyForm
 import uk.gov.hmrc.cbcrfrontend.model.{SurveyAnswers, UnexpectedState}
@@ -37,7 +36,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ExitSurveyController @Inject()(
   audit: AuditConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  views: Views)(implicit conf: FrontendAppConfig, ec: ExecutionContext)
+  views: Views)(implicit ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) {
 
   lazy val logger: Logger = Logger(this.getClass)
