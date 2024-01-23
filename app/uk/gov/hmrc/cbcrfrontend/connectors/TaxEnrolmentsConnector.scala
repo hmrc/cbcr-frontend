@@ -29,7 +29,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class TaxEnrolmentsConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
-
   private val conf = config.underlying.get[Config]("microservice.services.tax-enrolments").value
 
   private val url = (for {
@@ -40,23 +39,24 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient, config: Configuration)(
   } yield s"$protocol://$host:$port/$service").value
 
   def deEnrol(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http
-      .POST[JsObject, HttpResponse](url + "/de-enrol/HMRC-CBC-ORG", Json.obj("keepAgentAllocations" -> false))
+    http.POST[JsObject, HttpResponse](url + "/de-enrol/HMRC-CBC-ORG", Json.obj("keepAgentAllocations" -> false))
 
   def enrol(cBCId: CBCId, utr: Utr)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http
-      .PUT(
-        url + "/service/HMRC-CBC-ORG/enrolment",
-        Json.obj(
-          "identifiers" -> JsArray(
-            List(
-              Json.obj("key" -> "cbcId", "value" -> cBCId.value),
-              Json.obj("key" -> "UTR", "value"   -> utr.value)
-            )),
-          "verifiers" -> JsArray()
-        )
-      )
-      .map { response =>
-        response
-      }
+    http.PUT(
+      url + "/service/HMRC-CBC-ORG/enrolment",
+      Json.obj(
+        "identifiers" -> JsArray(
+          List(
+            Json.obj(
+              "key"   -> "cbcId",
+              "value" -> cBCId.value
+            ),
+            Json.obj(
+              "key"   -> "UTR",
+              "value" -> utr.value
+            )
+          )
+        ),
+        "verifiers" -> JsArray())
+    )
 }

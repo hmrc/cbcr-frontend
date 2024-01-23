@@ -16,48 +16,60 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import play.api.Logger
-import play.api.http.HeaderNames.LOCATION
-import play.api.http.Status
-import play.api.libs.json._
-import uk.gov.hmrc.cbcrfrontend.core.CBCErrorOr
-import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.http.HttpResponse
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import play.api.libs.json.Json
+import play.api.mvc.MultipartFormData.FilePart
+import uk.gov.hmrc.cbcrfrontend.model.{CreateEnvelope, RouteEnvelopeRequest, UploadFile}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import javax.inject.Singleton
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class FileUploadServiceConnector() {
+class FileUploadServiceConnector @Inject()(httpClient: HttpClientV2, servicesConfig: ServicesConfig)(
+  implicit ec: ExecutionContext) {
+  private lazy val fusUrl = servicesConfig.baseUrl("file-upload")
+  private lazy val fusFeUrl = servicesConfig.baseUrl("file-upload-frontend")
 
-  private val envelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
+  def createEnvelope(body: CreateEnvelope)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    httpClient
+      .post(url"$fusUrl/file-upload/envelopes")
+      .withBody(body.body)
+      .execute
 
-  lazy val logger: Logger = Logger(this.getClass)
+  def getFile(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    httpClient
+      .get(url"$fusUrl/file-upload/envelopes/$envelopeId/files/$fileId/content")
+      .stream[HttpResponse]
 
-  def envelopeRequest(cbcrsUrl: String, expiryDate: String): JsObject = {
+  def getFileMetaData(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    httpClient
+      .get(url"$fusUrl/file-upload/envelopes/$envelopeId/files/$fileId/metadata")
+      .execute[HttpResponse]
 
-    //@todo refactor the hardcode of the /cbcr/file-upload-response
-    val jsObject = Json
-      .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
-      .as[JsObject]
-    logger.info(s"Envelope Request built as $jsObject")
-    jsObject
-  }
+  def uploadFile(body: UploadFile)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    httpClient
+      .post(url"$fusFeUrl/file-upload/upload/envelopes/${body.envelopeId}/files/${body.fileId}")
+      .withBody(
+        Source(
+          FilePart(
+            body.fileName,
+            body.fileName,
+            Some(body.contentType),
+            Source.single(
+              ByteString.fromString(body.metadata.toString)
+            )
+          ) :: Nil)
+      )
+      .setHeader(("CSRF-token", "nocheck"))
+      .execute
 
-  def extractEnvelopId(resp: HttpResponse): CBCErrorOr[EnvelopeId] =
-    resp.header(LOCATION) match {
-      case Some(location) =>
-        location match {
-          case envelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
-          case _                               => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
-        }
-      case None => Left(UnexpectedState(s"Header $LOCATION not found"))
-    }
-
-  def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
-    resp.status match {
-      case Status.OK =>
-        logger.debug("FileMetaData: " + resp.json)
-        Right(resp.json.asOpt[FileMetadata])
-      case _ => Left(UnexpectedState("Problems getting File Metadata"))
-    }
+  def routeEnvelopeRequest(body: RouteEnvelopeRequest)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    httpClient
+      .post(url"$fusUrl/file-routing/requests")
+      .withBody(Json.toJson(body))
+      .execute
 }

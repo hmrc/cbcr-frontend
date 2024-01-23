@@ -23,63 +23,78 @@ import cats.data.EitherT
 import cats.implicits._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import play.api.Logger
+import play.api.Logging
+import play.api.http.HeaderNames.LOCATION
 import play.api.http.Status
+import play.api.http.Status.{CREATED, NO_CONTENT, OK}
 import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json._
-import play.api.libs.ws.WSClient
-import uk.gov.hmrc.cbcrfrontend.config.{FileUploadFrontEndWS, FrontendAppConfig}
-import uk.gov.hmrc.cbcrfrontend.connectors.FileUploadServiceConnector
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+import uk.gov.hmrc.cbcrfrontend.connectors.{CBCRBackendConnector, FileUploadServiceConnector}
 import uk.gov.hmrc.cbcrfrontend.core._
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.typesclasses._
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HttpClient, _}
+import uk.gov.hmrc.cbcrfrontend.util.UUIDGenerator
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.io.{File, PrintWriter}
-import java.util.UUID
+import java.time.Clock
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class FileUploadService @Inject()(
-  fusConnector: FileUploadServiceConnector,
-  ws: WSClient,
   configuration: FrontendAppConfig,
-  servicesConfig: ServicesConfig)(
-  implicit http: HttpClient,
+  servicesConfig: ServicesConfig,
+  clock: Clock,
+  uuidGenerator: UUIDGenerator,
+  fileUploadServiceConnector: FileUploadServiceConnector,
+  cbcrConnector: CBCRBackendConnector)(
+  implicit
   ac: ActorSystem,
-  fileUploadFrontEndWS: FileUploadFrontEndWS,
-  ec: ExecutionContext) {
+  ec: ExecutionContext)
+    extends Logging {
+  private lazy val cbcrsUrl = servicesConfig.baseUrl("cbcr")
 
-  lazy val logger: Logger = Logger(this.getClass)
-
-  private lazy val fusUrl: ServiceUrl[FusUrl] = new ServiceUrl[FusUrl] {
-    val url: String = servicesConfig.baseUrl("file-upload")
-  }
-  private lazy val fusFeUrl: ServiceUrl[FusFeUrl] = new ServiceUrl[FusFeUrl] {
-    val url: String = servicesConfig.baseUrl("file-upload-frontend")
-  }
-  private lazy val cbcrsUrl: String = servicesConfig.baseUrl("cbcr")
+  private val envelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
 
   def createEnvelope(implicit hc: HeaderCarrier): ServiceResponse[EnvelopeId] = {
+    def envelopeRequest(expiryDate: String): JsObject = {
+      //@todo refactor the hardcode of the /cbcr/file-upload-response
+      val jsObject = Json
+        .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
+        .as[JsObject]
+      logger.info(s"Envelope Request built as $jsObject")
+      jsObject
+    }
+
+    def extractEnvelopId(resp: HttpResponse): CBCErrorOr[EnvelopeId] =
+      resp.header(LOCATION) match {
+        case Some(location) =>
+          location match {
+            case envelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
+            case _                               => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
+          }
+        case None => Left(UnexpectedState(s"Header $LOCATION not found"))
+      }
+
     val envelopeExpiryDate = {
       val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-      formatter.print(new DateTime().plusDays(configuration.envelopeExpiryDays))
+      formatter.print(new DateTime(clock.millis()).plusDays(configuration.envelopeExpiryDays))
     }
 
     EitherT(
-      HttpExecutor(fusUrl, CreateEnvelope(fusConnector.envelopeRequest(cbcrsUrl, envelopeExpiryDate)))
-        .map(fusConnector.extractEnvelopId))
+      fileUploadServiceConnector
+        .createEnvelope(CreateEnvelope(envelopeRequest(envelopeExpiryDate)))
+        .map(extractEnvelopId))
   }
 
   def getFileUploadResponse(envelopeId: String)(
     implicit hc: HeaderCarrier): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
-      http
-        .GET[HttpResponse](s"$cbcrsUrl/cbcr/file-upload-response/$envelopeId", Seq.empty)
+      cbcrConnector
+        .getFileUploadResponse(envelopeId)
         .map(resp =>
           resp.status match {
             case Status.OK =>
@@ -89,19 +104,18 @@ class FileUploadService @Inject()(
                   invalid => Left(UnexpectedState("Problems extracting File Upload response message " + invalid)),
                   response => Right(Some(response))
                 )
-            case 204 => Right(None)
-            case _   => Left(UnexpectedState("Problems getting File Upload response message"))
+            case NO_CONTENT => Right(None)
+            case _          => Left(UnexpectedState("Problems getting File Upload response message"))
         })
     )
 
-  def getFile(envelopeId: String, fileId: String): ServiceResponse[File] =
+  def getFile(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): ServiceResponse[File] =
     EitherT(
-      ws.url(s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/content")
-        .withMethod("GET")
-        .stream()
+      fileUploadServiceConnector
+        .getFile(envelopeId, fileId)
         .flatMap { res =>
           res.status match {
-            case Status.OK =>
+            case OK =>
               val file = java.nio.file.Files.createTempFile(envelopeId, "xml")
               val outputStream = java.nio.file.Files.newOutputStream(file)
 
@@ -128,36 +142,44 @@ class FileUploadService @Inject()(
     )
 
   def getFileMetaData(envelopeId: String, fileId: String)(
-    implicit hc: HeaderCarrier): ServiceResponse[Option[FileMetadata]] =
+    implicit hc: HeaderCarrier): ServiceResponse[Option[FileMetadata]] = {
+    def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
+      resp.status match {
+        case OK =>
+          logger.debug("FileMetaData: " + resp.json)
+          Right(resp.json.asOpt[FileMetadata])
+        case _ => Left(UnexpectedState("Problems getting File Metadata"))
+      }
+
     fromFutureOptA(
-      http
-        .GET[HttpResponse](s"${fusUrl.url}/file-upload/envelopes/$envelopeId/files/$fileId/metadata")
-        .map(fusConnector.extractFileMetadata))
+      fileUploadServiceConnector
+        .getFileMetaData(envelopeId, fileId)
+        .map(extractFileMetadata))
+  }
 
   def uploadMetadataAndRoute(metaData: SubmissionMetaData)(implicit hc: HeaderCarrier): ServiceResponse[String] = {
-
-    val metadataFileId = UUID.randomUUID.toString
+    val metadataFileId = uuidGenerator.randomUUID
     val envelopeId = metaData.fileInfo.envelopeId
 
-    EitherT(for {
-      _ <- HttpExecutor(
-            fusFeUrl,
-            UploadFile(
-              envelopeId,
-              FileId(s"json-$metadataFileId"),
-              "metadata.json ",
-              " application/json; charset=UTF-8",
-              Json.toJson(metaData).toString().getBytes)
-          )
-      response <- HttpExecutor(fusUrl, RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"))
-    } yield
-      response match {
-        case HttpResponse(201, body, _) => Right(body)
-        case error =>
-          Left(
-            UnexpectedState(
+    EitherT(
+      for {
+        _ <- fileUploadServiceConnector.uploadFile(
+              UploadFile(
+                envelopeId,
+                FileId(s"json-$metadataFileId"),
+                "metadata.json",
+                "application/json; charset=UTF-8",
+                metaData
+              )
+            )
+        response <- fileUploadServiceConnector.routeEnvelopeRequest(RouteEnvelopeRequest(envelopeId, "cbcr", "OFDS"))
+      } yield
+        response match {
+          case HttpResponse(CREATED, body, _) => Right(body)
+          case error =>
+            Left(UnexpectedState(
               s"[FileUploadService][uploadMetadataAndRoute] Failed to create route request, received ${error.status}"))
-      })
+        })
   }
 
   private def errorsToList(e: List[ValidationErrors])(implicit messages: Messages): List[String] =

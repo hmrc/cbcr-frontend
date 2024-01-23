@@ -59,7 +59,6 @@ import scala.language.implicitConversions
 
 class FileUploadControllerSpec
     extends AnyWordSpec with Matchers with BeforeAndAfterEach with IdiomaticMockito with MockitoCats {
-
   private val fuService = mock[FileUploadService]
   private val schemaValidator = mock[CBCRXMLValidator]
   private val businessRulesValidator = mock[CBCBusinessRuleValidator]
@@ -292,7 +291,7 @@ class FileUploadControllerSpec
         val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        fuService.getFile(*, *) returnsF validFile
+        fuService.getFile(*, *)(*) returnsF validFile
         fuService.getFileMetaData(*, *)(*) returnsF None
 
         authConnector
@@ -304,7 +303,7 @@ class FileUploadControllerSpec
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
-        fuService.getFile(*, *) was called
+        fuService.getFile(*, *)(*) was called
         fuService.getFileMetaData(*, *)(*) was called
       }
 
@@ -312,7 +311,7 @@ class FileUploadControllerSpec
         val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        fuService.getFile(*, *) raises UnexpectedState("oops")
+        fuService.getFile(*, *)(*) raises UnexpectedState("oops")
         fuService.getFileMetaData(*, *)(*) returnsF Some(md)
 
         authConnector
@@ -324,14 +323,14 @@ class FileUploadControllerSpec
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
-        fuService.getFile(*, *) was called
+        fuService.getFile(*, *)(*) was called
       }
 
       "the call to cache.save fails" in {
         val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        fuService.getFile(*, *) returnsF validFile
+        fuService.getFile(*, *)(*) returnsF validFile
         fuService.getFileMetaData(*, *)(*) returnsF Some(md)
 
         authConnector
@@ -344,7 +343,7 @@ class FileUploadControllerSpec
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
-        fuService.getFile(*, *) was called
+        fuService.getFile(*, *)(*) was called
         fuService.getFileMetaData(*, *)(*) was called
         cache.save[FileMetadata](*)(FileMetadata.fileMetadataFormat, *, *) was called
       }
@@ -355,7 +354,7 @@ class FileUploadControllerSpec
       val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      fuService.getFile(*, *) returnsF evenMoreValidFile
+      fuService.getFile(*, *)(*) returnsF evenMoreValidFile
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
       cache.save(*)(*, *, *) returns Future.successful(emptyCacheItem)
@@ -371,7 +370,7 @@ class FileUploadControllerSpec
             Some(enrolment)))
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.OK
-      fuService.getFile(*, *) was called
+      fuService.getFile(*, *)(*) was called
       fuService.getFileMetaData(*, *)(*) was called
       cache.save(*)(*, *, *) wasCalled atLeastOnce
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) was called
@@ -387,7 +386,7 @@ class FileUploadControllerSpec
       val e = new WstxException("error")
       xmlErrorHandler.reportProblem(new XMLValidationProblem(e.getLocation, "", XMLValidationProblem.SEVERITY_FATAL))
 
-      fuService.getFile(*, *) returnsF evenMoreValidFile
+      fuService.getFile(*, *)(*) returnsF evenMoreValidFile
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns xmlErrorHandler
       cache.save(*)(*, *, *) returns Future.successful(emptyCacheItem)
@@ -403,7 +402,7 @@ class FileUploadControllerSpec
             Some(enrol)))
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.SEE_OTHER
-      fuService.getFile(*, *) was called
+      fuService.getFile(*, *)(*) was called
       fuService.getFileMetaData(*, *)(*) was called
       cache.save(*)(*, *, *) wasCalled atLeastOnce
       schemaValidator.validateSchema(*) was called
@@ -415,7 +414,7 @@ class FileUploadControllerSpec
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
       val businessRuleErrors = NonEmptyList.of(TestDataError)
-      fuService.getFile(*, *) returnsF evenMoreValidFile
+      fuService.getFile(*, *)(*) returnsF evenMoreValidFile
       fuService.getFileMetaData(*, *)(*) returnsF Some(md)
       schemaValidator.validateSchema(*) returns new XmlErrorHandler()
       cache.save(*)(*, *, *) returns Future.successful(emptyCacheItem)
@@ -431,7 +430,7 @@ class FileUploadControllerSpec
             Some(enrolment)))
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.SEE_OTHER
-      fuService.getFile(*, *) was called
+      fuService.getFile(*, *)(*) was called
       fuService.getFileMetaData(*, *)(*) was called
       cache.save(*)(*, *, *) wasCalled atLeastOnce
       businessRulesValidator.validateBusinessRules(*, *, *, *)(*) was called
@@ -443,7 +442,7 @@ class FileUploadControllerSpec
         val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        fuService.getFile(*, *) returnsF validFile
+        fuService.getFile(*, *)(*) returnsF validFile
         fuService.getFileMetaData(*, *)(*) returnsF Some(md.copy(name = "bad.zip"))
         cache.save[FileMetadata](*)(FileMetadata.fileMetadataFormat, *, *) returns Future.successful(emptyCacheItem)
 

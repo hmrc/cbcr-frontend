@@ -22,9 +22,10 @@ import play.api.{Configuration, Environment}
 import uk.gov.hmrc.cbcrfrontend.util.ConfigurationOps.ConfigurationOps
 
 import java.io.File
+import java.time.Clock
 
 class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule {
-  override def configure(): Unit =
+  override def configure(): Unit = {
     bind(classOf[XMLValidationSchema]).toInstance {
       val path = "Prod.oecd-schema-version"
       val schemaVer: String = configuration.load[String](path)
@@ -32,4 +33,6 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
       val schemaFile: File = new File(s"conf/schema/$schemaVer/CbcXML_v$schemaVer.xsd")
       xmlValidationSchemaFactory.createSchema(schemaFile)
     }
+    bind(classOf[Clock]).toInstance(Clock.systemDefaultZone())
+  }
 }

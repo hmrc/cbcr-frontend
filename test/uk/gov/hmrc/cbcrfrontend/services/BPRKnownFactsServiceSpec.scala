@@ -26,11 +26,11 @@ import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, Utr}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 
-class BPRKnownFactsServiceSpec(implicit val ec: ExecutionContext)
-    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
+class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
   private val mockConnector = mock[BPRKnownFactsConnector]
   private val mockAudit = mock[AuditConnector]
   private val bprKnownFactsService = new BPRKnownFactsService(mockConnector, mockAudit)
