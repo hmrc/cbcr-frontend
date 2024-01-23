@@ -42,6 +42,7 @@ import java.io.{File, PrintWriter}
 import java.time.Clock
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.chaining._
 
 @Singleton
 class FileUploadService @Inject()(
@@ -60,54 +61,45 @@ class FileUploadService @Inject()(
   private val envelopeIdExtractor = "envelopes/([\\w\\d-]+)$".r.unanchored
 
   def createEnvelope(implicit hc: HeaderCarrier): ServiceResponse[EnvelopeId] = {
-    def envelopeRequest(expiryDate: String): JsObject = {
-      //@todo refactor the hardcode of the /cbcr/file-upload-response
-      val jsObject = Json
-        .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
-        .as[JsObject]
-      logger.info(s"Envelope Request built as $jsObject")
-      jsObject
-    }
-
-    def extractEnvelopId(resp: HttpResponse): CBCErrorOr[EnvelopeId] =
-      resp.header(LOCATION) match {
-        case Some(location) =>
-          location match {
-            case envelopeIdExtractor(envelopeId) => Right(EnvelopeId(envelopeId))
-            case _                               => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
-          }
-        case None => Left(UnexpectedState(s"Header $LOCATION not found"))
-      }
-
-    val envelopeExpiryDate = {
+    val expiryDate = {
       val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
       formatter.print(new DateTime(clock.millis()).plusDays(configuration.envelopeExpiryDays))
     }
 
+    //@todo refactor the hardcode of the /cbcr/file-upload-response
+    val envelopeRequest = Json
+      .toJson(EnvelopeRequest(s"$cbcrsUrl/cbcr/file-upload-response", expiryDate, MetaData(), Constraints()))
+      .as[JsObject]
+    logger.info(s"Envelope Request built as $envelopeRequest")
+
     EitherT(
-      fileUploadServiceConnector
-        .createEnvelope(CreateEnvelope(envelopeRequest(envelopeExpiryDate)))
-        .map(extractEnvelopId))
+      for {
+        response <- fileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequest))
+      } yield
+        response.header(LOCATION) match {
+          case Some(envelopeIdExtractor(envelopeId)) => Right(EnvelopeId(envelopeId))
+          case Some(location)                        => Left(UnexpectedState(s"EnvelopeId in $LOCATION header: $location not found"))
+          case None                                  => Left(UnexpectedState(s"Header $LOCATION not found"))
+        })
   }
 
   def getFileUploadResponse(envelopeId: String)(
     implicit hc: HeaderCarrier): ServiceResponse[Option[FileUploadCallbackResponse]] =
     EitherT(
-      cbcrConnector
-        .getFileUploadResponse(envelopeId)
-        .map(resp =>
-          resp.status match {
-            case Status.OK =>
-              resp.json
-                .validate[FileUploadCallbackResponse]
-                .fold(
-                  invalid => Left(UnexpectedState("Problems extracting File Upload response message " + invalid)),
-                  response => Right(Some(response))
-                )
-            case NO_CONTENT => Right(None)
-            case _          => Left(UnexpectedState("Problems getting File Upload response message"))
+      for {
+        resp <- cbcrConnector.getFileUploadResponse(envelopeId)
+      } yield
+        resp.status match {
+          case Status.OK =>
+            resp.json
+              .validate[FileUploadCallbackResponse]
+              .fold(
+                invalid => Left(UnexpectedState("Problems extracting File Upload response message " + invalid)),
+                response => Right(Some(response))
+              )
+          case NO_CONTENT => Right(None)
+          case _          => Left(UnexpectedState("Problems getting File Upload response message"))
         })
-    )
 
   def getFile(envelopeId: String, fileId: String)(implicit hc: HeaderCarrier): ServiceResponse[File] =
     EitherT(
@@ -142,20 +134,17 @@ class FileUploadService @Inject()(
     )
 
   def getFileMetaData(envelopeId: String, fileId: String)(
-    implicit hc: HeaderCarrier): ServiceResponse[Option[FileMetadata]] = {
-    def extractFileMetadata(resp: HttpResponse): CBCErrorOr[Option[FileMetadata]] =
-      resp.status match {
-        case OK =>
-          logger.debug("FileMetaData: " + resp.json)
-          Right(resp.json.asOpt[FileMetadata])
-        case _ => Left(UnexpectedState("Problems getting File Metadata"))
-      }
-
-    fromFutureOptA(
-      fileUploadServiceConnector
-        .getFileMetaData(envelopeId, fileId)
-        .map(extractFileMetadata))
-  }
+    implicit hc: HeaderCarrier): ServiceResponse[Option[FileMetadata]] =
+    fileUploadServiceConnector
+      .getFileMetaData(envelopeId, fileId)
+      .map(resp =>
+        resp.status match {
+          case OK =>
+            logger.debug("FileMetaData: " + resp.json)
+            Right(resp.json.asOpt[FileMetadata])
+          case _ => Left(UnexpectedState("Problems getting File Metadata"))
+      })
+      .pipe(fromFutureOptA)
 
   def uploadMetadataAndRoute(metaData: SubmissionMetaData)(implicit hc: HeaderCarrier): ServiceResponse[String] = {
     val metadataFileId = uuidGenerator.randomUUID

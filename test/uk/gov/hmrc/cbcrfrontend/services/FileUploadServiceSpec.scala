@@ -178,12 +178,11 @@ class FileUploadServiceSpec extends TestKit(ActorSystem()) with AnyWordSpecLike 
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
-        response.fold({
-          case e: UnexpectedState => e.errorMsg should startWith("Problems extracting File Upload response message")
-          case _                  => fail()
-        }, _ => {
-          fail()
-        })
+        response match {
+          case Left(e: UnexpectedState) =>
+            e.errorMsg should startWith("Problems extracting File Upload response message")
+          case _ => fail()
+        }
       }
 
       "return Right(None) when http status is 204" in {
