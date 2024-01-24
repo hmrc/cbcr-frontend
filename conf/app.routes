@@ -4,10 +4,6 @@
 GET           /                                                     @uk.gov.hmrc.cbcrfrontend.controllers.StartController.start
 POST          /                                                     @uk.gov.hmrc.cbcrfrontend.controllers.StartController.submit
 
-GET           /exit-survey                                          @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.doSurvey
-POST          /exit-survey/submit                                   @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.submit
-GET           /exit-survey/acknowledge                              @uk.gov.hmrc.cbcrfrontend.controllers.ExitSurveyController.surveyAcknowledge
-
 GET           /session-expired                                      @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.sessionExpired
 GET           /technical-difficulties                               @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
 GET           /cbc-id/entry-form                                    @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
