@@ -30,13 +30,9 @@
         govukErrorSummary: GovukErrorSummary
 )
 
-
 @(fileUploadUrl: URI, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 
 @title = @{messages("uploadReport.title")}
-@urlParts = @{fileUploadUrl.getPath.split("/")}
-@envelopeId = @{urlParts(4)}
-@fileId = @{urlParts(6)}
 @backLink = @{
     if(request.uri.contains("/unregistered-gg-account")) {
         Some(routes.FileUploadController.chooseXMLFile.url)
