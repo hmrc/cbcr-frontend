@@ -16,27 +16,19 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import com.typesafe.config.Config
-import configs.syntax._
-import play.api.Configuration
 import play.api.libs.json.{JsArray, JsObject, Json}
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TaxEnrolmentsConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
-  private val conf = config.underlying.get[Config]("microservice.services.tax-enrolments").value
-
-  private val url = (for {
-    host     <- conf.get[String]("host")
-    port     <- conf.get[Int]("port")
-    service  <- conf.get[String]("url")
-    protocol <- conf.get[String]("protocol")
-  } yield s"$protocol://$host:$port/$service").value
+class TaxEnrolmentsConnector @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(
+  implicit ec: ExecutionContext) {
+  private val url = servicesConfig.baseUrl("tax-enrolments")
 
   def deEnrol(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.POST[JsObject, HttpResponse](url + "/de-enrol/HMRC-CBC-ORG", Json.obj("keepAgentAllocations" -> false))
