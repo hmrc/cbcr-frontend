@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.services
+package uk.gov.hmrc.cbcrfrontend.repositories
 
 import cats.data.{EitherT, OptionT}
 import cats.implicits.catsStdInstancesForFuture
