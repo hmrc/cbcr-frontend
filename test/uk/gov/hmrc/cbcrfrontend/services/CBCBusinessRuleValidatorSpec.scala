@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, Validated}
 import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchersSugar.*
 import org.mockito.IdiomaticMockito
@@ -24,6 +24,7 @@ import org.mockito.cats.IdiomaticMockitoCats.StubbingOpsCats
 import org.mockito.cats.MockitoCats
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
@@ -1332,15 +1333,12 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInMsgSpecDocSpec.xml")
 
         val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
-        result.fold(
-          errors =>
-            errors.toList should contain allOf (CorrMessageRefIdNotAllowedInMessageSpec, CorrMessageRefIdNotAllowedInDocSpec),
-          _ =>
-            fail(
-              "CorrMessageRefIdNotAllowedInMessageSpec, CorrMessageRefIdNotAllowedInDocSpec and StartDateNotBefore01012016 messages not generated")
-        )
+        result shouldBe Validated.Invalid(
+          NonEmptyList(
+            CorrMessageRefIdNotAllowedInMessageSpec,
+            List(CorrMessageRefIdNotAllowedInDocSpec, StartDateNotBefore01012016)))
       }
 
       "the reporting period of a correction does not match the reporting period of original submission" in {
