@@ -16,25 +16,17 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors.test
 
-import com.typesafe.config.Config
-import configs.syntax._
-import play.api.Configuration
 import play.api.libs.json.{JsNull, JsValue}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TestCBCRConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
-  private val conf = config.underlying.get[Config]("microservice.services.cbcr").value
-
-  private val url = (for {
-    proto <- conf.get[String]("protocol")
-    host  <- conf.get[String]("host")
-    port  <- conf.get[Int]("port")
-  } yield s"$proto://$host:$port/cbcr").value
+class TestCBCRConnector @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(implicit ec: ExecutionContext) {
+  private val url = servicesConfig.baseUrl("cbcr")
 
   def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.POST[JsValue, HttpResponse](s"$url/test-only/insertSubscriptionData", jsonData)

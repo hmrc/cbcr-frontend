@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.cbcrfrontend.services
+package uk.gov.hmrc.cbcrfrontend.repositories
 
 import cats.data.{EitherT, OptionT}
 import cats.implicits.catsStdInstancesForFuture
@@ -25,6 +25,7 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.mongo.cache.CacheIdType.SessionCacheId.NoSessionException
 import uk.gov.hmrc.mongo.cache.{CacheIdType, CacheItem, DataKey, MongoCacheRepository}
 import uk.gov.hmrc.mongo.{MongoComponent, TimestampSupport}
+import uk.gov.hmrc.play.http.logging.Mdc.preservingMdc
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.FiniteDuration
@@ -51,26 +52,32 @@ class CBCSessionCache @Inject()(
     typeOf[T].typeSymbol.name.toString
 
   def save[T: Writes: TypeTag](body: T)(implicit hc: HeaderCarrier): Future[CacheItem] =
-    for {
-      cacheId <- extractCacheId
-      result  <- put[T](cacheId)(DataKey[T](extractType[T]), body)
-    } yield result
+    preservingMdc {
+      for {
+        cacheId <- extractCacheId
+        result  <- put[T](cacheId)(DataKey[T](extractType[T]), body)
+      } yield result
+    }
 
   def read[T: Reads: TypeTag](implicit hc: HeaderCarrier): EitherT[Future, ExpiredSession, T] =
     EitherT.fromOptionF(readOption[T], ExpiredSession(s"Unable to read ${extractType[T]} from cache"))
 
   def readOption[T: Reads: TypeTag](implicit hc: HeaderCarrier): Future[Option[T]] =
-    for {
-      cacheId <- extractCacheId
-      result  <- get[T](cacheId)(DataKey[T](extractType[T]))
-    } yield result
+    preservingMdc {
+      for {
+        cacheId <- extractCacheId
+        result  <- get[T](cacheId)(DataKey[T](extractType[T]))
+      } yield result
+    }
 
   def create[T: Writes: TypeTag](data: T)(implicit hc: HeaderCarrier): OptionT[Future, T] =
     OptionT.liftF(save[T](data).map(_ => data))
 
   def clear(implicit hc: HeaderCarrier): Future[Boolean] =
-    for {
-      cacheId <- extractCacheId
-      _       <- deleteEntity(cacheId)
-    } yield true
+    preservingMdc {
+      for {
+        cacheId <- extractCacheId
+        _       <- deleteEntity(cacheId)
+      } yield true
+    }
 }

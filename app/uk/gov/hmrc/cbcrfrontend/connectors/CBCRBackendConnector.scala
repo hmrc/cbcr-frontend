@@ -17,27 +17,19 @@
 package uk.gov.hmrc.cbcrfrontend.connectors
 
 import cats.syntax.show._
-import com.typesafe.config.Config
-import configs.syntax._
-import play.api.Configuration
 import play.api.libs.json.{JsNull, JsString, JsValue}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, StringContextOps}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CBCRBackendConnector @Inject()(http: HttpClient, config: Configuration)(implicit ec: ExecutionContext) {
-  private val conf = config.underlying.get[Config]("microservice.services.cbcr").value
-
-  private val url = (for {
-    proto <- conf.get[String]("protocol")
-    host  <- conf.get[String]("host")
-    port  <- conf.get[Int]("port")
-  } yield s"$proto://$host:$port/cbcr").value
+class CBCRBackendConnector @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(implicit ec: ExecutionContext) {
+  private val url = servicesConfig.baseUrl("cbcr")
 
   def getFileUploadResponse(envelopeId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET[HttpResponse](url"$url/file-upload-response/$envelopeId")

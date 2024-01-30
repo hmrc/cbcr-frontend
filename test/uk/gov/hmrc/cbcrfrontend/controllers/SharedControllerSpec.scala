@@ -35,6 +35,7 @@ import play.api.test.Helpers.{contentAsString, header, status}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.emailaddress.EmailAddress

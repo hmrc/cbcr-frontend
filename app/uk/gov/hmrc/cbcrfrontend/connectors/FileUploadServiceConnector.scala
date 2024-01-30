@@ -21,6 +21,7 @@ import akka.util.ByteString
 import play.api.libs.json.Json
 import play.api.mvc.MultipartFormData.FilePart
 import uk.gov.hmrc.cbcrfrontend.model.{CreateEnvelope, RouteEnvelopeRequest, UploadFile}
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig

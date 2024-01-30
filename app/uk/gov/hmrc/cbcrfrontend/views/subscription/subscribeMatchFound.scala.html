@@ -15,7 +15,7 @@
  *@
 
 @import uk.gov.hmrc.auth.core.AffinityGroup
-@import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
+@import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
@@ -75,7 +75,7 @@
                 ))
             </p>
         }
-        case Agent => {
+        case _ => {
             <p class="govuk-body">
                 @govukButton(Button(
                 href = Some(routes.SubmissionController.submitSummary.url),

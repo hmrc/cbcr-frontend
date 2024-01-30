@@ -23,7 +23,8 @@ import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.cbcrfrontend.connectors.test.TestCBCRConnector
 import uk.gov.hmrc.cbcrfrontend.model._
-import uk.gov.hmrc.cbcrfrontend.services.{CBCSessionCache, FileUploadService}
+import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
+import uk.gov.hmrc.cbcrfrontend.services.FileUploadService
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
