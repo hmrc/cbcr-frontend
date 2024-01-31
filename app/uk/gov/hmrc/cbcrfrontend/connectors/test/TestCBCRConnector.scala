@@ -26,7 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class TestCBCRConnector @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(implicit ec: ExecutionContext) {
-  private val url = servicesConfig.baseUrl("cbcr")
+  private val url = s"${servicesConfig.baseUrl("cbcr")}/cbcr"
 
   def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.POST[JsValue, HttpResponse](s"$url/test-only/insertSubscriptionData", jsonData)

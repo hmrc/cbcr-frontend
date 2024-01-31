@@ -29,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class CBCRBackendConnector @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(implicit ec: ExecutionContext) {
-  private val url = servicesConfig.baseUrl("cbcr")
+  private val url = s"${servicesConfig.baseUrl("cbcr")}/cbcr"
 
   def getFileUploadResponse(envelopeId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET[HttpResponse](url"$url/file-upload-response/$envelopeId")
