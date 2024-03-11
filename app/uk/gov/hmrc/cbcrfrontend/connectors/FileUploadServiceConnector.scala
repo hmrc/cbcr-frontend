@@ -61,7 +61,7 @@ class FileUploadServiceConnector @Inject()(httpClient: HttpClientV2, servicesCon
             body.fileName,
             Some(body.contentType),
             Source.single(
-              ByteString.fromString(body.metadata.toString)
+              ByteString(Json.toJson(body.metadata).toString().getBytes)
             )
           ) :: Nil)
       )
