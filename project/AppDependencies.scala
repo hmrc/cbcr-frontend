@@ -24,10 +24,11 @@ object AppDependencies {
   )
 
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"              %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
-    "uk.gov.hmrc.mongo"        %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
-    "org.mockito"              %% "mockito-scala"                 % mockitoScalaVersion  % scope,
-    "org.mockito"              %% "mockito-scala-cats"            % mockitoScalaVersion  % scope,
-    "com.typesafe.akka"        %% "akka-testkit"                  % "2.6.21"             % scope
+    "uk.gov.hmrc"       %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
+    "uk.gov.hmrc.mongo" %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
+    "org.mockito"       %% "mockito-scala"                 % mockitoScalaVersion  % scope,
+    "org.mockito"       %% "mockito-scala-cats"            % mockitoScalaVersion  % scope,
+    "com.typesafe.akka" %% "akka-testkit"                  % "2.6.21"             % scope,
+    "org.wiremock"      % "wiremock-standalone"            % "3.0.4"              % scope,
   )
 }
