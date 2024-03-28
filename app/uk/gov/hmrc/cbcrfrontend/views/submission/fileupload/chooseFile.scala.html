@@ -37,10 +37,7 @@
     if(request.uri.contains("/unregistered-gg-account")) {
         Some(routes.FileUploadController.chooseXMLFile.url)
     } else {
-        userType match {
-            case Some(Organisation) => Some(routes.StartController.start.url)
-            case _ => None
-        }
+            None
     }
 }
 @templateScripts = {
