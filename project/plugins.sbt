@@ -11,7 +11,7 @@ addSbtPlugin("uk.gov.hmrc" %% "sbt-distributables" % "2.2.0")
 
 addSbtPlugin("com.typesafe.play" %% "sbt-plugin" % "2.8.20")
 
-addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "2.0.8")
+addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "2.0.9")
 
 addSbtPlugin("com.lucidchart" %% "sbt-scalafmt" % "1.16")
 
