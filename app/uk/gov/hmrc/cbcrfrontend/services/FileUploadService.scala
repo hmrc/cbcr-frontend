@@ -21,8 +21,6 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import play.api.Logging
 import play.api.http.HeaderNames.LOCATION
 import play.api.http.Status
@@ -39,7 +37,8 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.io.{File, PrintWriter}
-import java.time.Clock
+import java.time.format.DateTimeFormatter
+import java.time.{Clock, LocalDateTime}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -80,8 +79,8 @@ class FileUploadService @Inject()(
       }
 
     val envelopeExpiryDate = {
-      val formatter = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-      formatter.print(new DateTime(clock.millis()).plusDays(configuration.envelopeExpiryDays))
+      val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+      formatter.format(LocalDateTime.now(clock).plusDays(configuration.envelopeExpiryDays))
     }
 
     EitherT(
