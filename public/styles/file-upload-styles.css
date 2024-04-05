@@ -1,5 +1,5 @@
 .js-enabled .js-hidden {
-    display: none!important;
+    display: none !important;
 }
 
 #file-upload-progress {
@@ -7,6 +7,7 @@
     margin-bottom: 1em;
     line-height: 1;
 }
+
 .spinner {
     width: 28px;
     height: 28px;
@@ -30,7 +31,9 @@
 }
 
 @media (prefers-reduced-motion) {
-    .spinner { display: none; }
+    .spinner {
+        display: none;
+    }
 }
 
 @media (min-width: 40.0625em) {
@@ -39,14 +42,17 @@
         display: block;
         clear: both;
     }
+
     #upload-handling > .govuk-button[disabled] {
         float: left;
         margin-right: 1em;
     }
+
     #file-upload-progress.active {
         display: inline-block;
         padding-top: 8px;
     }
+
     .spinner {
         margin-top: -8px;
     }
