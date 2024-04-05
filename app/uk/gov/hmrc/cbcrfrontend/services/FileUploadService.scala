@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.Sink
-import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits._
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.util.ByteString
 import play.api.Logging
 import play.api.http.HeaderNames.LOCATION
 import play.api.http.Status
@@ -49,10 +49,7 @@ class FileUploadService @Inject()(
   clock: Clock,
   uuidGenerator: UUIDGenerator,
   fileUploadServiceConnector: FileUploadServiceConnector,
-  cbcrConnector: CBCRBackendConnector)(
-  implicit
-  ac: ActorSystem,
-  ec: ExecutionContext)
+  cbcrConnector: CBCRBackendConnector)(implicit mat: Materializer, ec: ExecutionContext)
     extends Logging {
   private lazy val cbcrsUrl = servicesConfig.baseUrl("cbcr")
 

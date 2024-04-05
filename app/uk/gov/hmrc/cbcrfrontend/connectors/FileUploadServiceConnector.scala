@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import play.api.libs.json.Json
 import play.api.mvc.MultipartFormData.FilePart
 import uk.gov.hmrc.cbcrfrontend.model.{CreateEnvelope, RouteEnvelopeRequest, UploadFile}

@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import akka.actor.ActorSystem
-import akka.testkit.TestKit
 import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Play.materializer
 import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.i18n.Messages
 import play.api.libs.json.{JsObject, Json}
@@ -41,7 +41,7 @@ import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class FileUploadServiceSpec extends TestKit(ActorSystem()) with AnyWordSpecLike with Matchers with IdiomaticMockito {
+class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito with GuiceOneAppPerSuite {
   private val envelopeIdString = "test-envelope-id"
   private val envelopeId = EnvelopeId(envelopeIdString)
 

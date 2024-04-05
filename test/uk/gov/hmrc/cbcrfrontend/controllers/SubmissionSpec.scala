@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import akka.actor.ActorSystem
-import akka.util.Timeout
 import cats.data.{EitherT, OptionT}
 import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchersSugar.{*, any}
@@ -28,12 +26,13 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Play.materializer
 import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsNull, JsObject, Json}
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{call, contentAsString, header, status, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.test.Helpers.{call, contentAsString, defaultAwaitTimeout, header, status, writeableOf_AnyContentAsFormUrlEncoded}
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend._
@@ -53,16 +52,13 @@ import java.time.{Instant, LocalDate, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.language.postfixOps
 
 class SubmissionSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
     with IdiomaticMockito with MockitoCats {
 
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
-  private implicit val as: ActorSystem = app.injector.instanceOf[ActorSystem]
   private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
-  private implicit val timeout: Timeout = Timeout(5 seconds)
 
   private def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
 
