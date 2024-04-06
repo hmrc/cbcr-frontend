@@ -16,13 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import akka.actor.ActorSystem
-import akka.testkit.TestKit
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Play.materializer
 import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
 import play.api.i18n.Messages
 import play.api.libs.json.{JsObject, Json}
@@ -37,12 +35,13 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import java.time.{Clock, Instant, ZoneId}
+import java.time.format.DateTimeFormatter
+import java.time.{Clock, Instant, LocalDateTime, ZoneId}
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class FileUploadServiceSpec extends TestKit(ActorSystem()) with AnyWordSpecLike with Matchers with IdiomaticMockito {
+class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito with GuiceOneAppPerSuite {
   private val envelopeIdString = "test-envelope-id"
   private val envelopeId = EnvelopeId(envelopeIdString)
 
@@ -83,7 +82,7 @@ class FileUploadServiceSpec extends TestKit(ActorSystem()) with AnyWordSpecLike 
   private val clock = Clock.fixed(Instant.parse("2014-12-22T10:15:30Z"), ZoneId.of("UTC"))
 
   private val expiryDateString =
-    DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").print(new DateTime(clock.millis()).plusDays(7))
+    DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").format(LocalDateTime.now(clock).plusDays(7))
 
   private val envelopeRequestJson = Json
     .toJson(

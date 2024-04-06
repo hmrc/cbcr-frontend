@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import akka.util.Timeout
 import cats.data.OptionT
 import cats.implicits._
 import org.mockito.ArgumentMatchersSugar.*
@@ -31,7 +30,7 @@ import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.JsObject
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{contentAsString, header, status}
+import play.api.test.Helpers.{contentAsString, defaultAwaitTimeout, header, status}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -45,11 +44,9 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 class SharedControllerSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito with MockitoCats {
-
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   private val cache = mock[CBCSessionCache]
   private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
@@ -79,8 +76,6 @@ class SharedControllerSpec
     Some(id),
     utr
   )
-
-  private implicit val timeout: Timeout = Duration.apply(20, "s")
 
   private val fakeRequestEnterCBCId = addToken(FakeRequest("GET", "/enter-CBCId"))
 
