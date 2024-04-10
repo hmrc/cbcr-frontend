@@ -360,6 +360,13 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         )
       }
 
+      "there are no CbcReports elements" in {
+        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        val file = new File("test/resources/cbcr-valid-no-cbcreports.xml")
+        val result = await(validator.validateBusinessRules(file, filename, Some(enrol), Some(Organisation)))
+        result.fold(_.toList should contain(NoCbcReports), _ => fail("no errors generated"))
+      }
+
       "messageRefId is empty" in {
         val missingMessageRefID = new File("test/resources/cbcr-invalid-empty-messageRefID.xml")
         val result = Await.result(

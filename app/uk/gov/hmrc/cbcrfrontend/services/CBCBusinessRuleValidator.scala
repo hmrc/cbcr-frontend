@@ -212,6 +212,7 @@ class CBCBusinessRuleValidator @Inject()(
     enrolment: Option[CBCEnrolment],
     affinityGroup: Option[AffinityGroup])(implicit hc: HeaderCarrier): FutureValidBusinessResult[XMLInfo] =
     validateMessageRefIdD(x.messageSpec) *>
+      validateCbcMessagesNotEmpty(x) *>
       validateCorrMessageRefIdD(x) *>
       validateReportingEntity(x) *>
       validateMessageTypes(x) *>
@@ -348,6 +349,8 @@ class CBCBusinessRuleValidator @Inject()(
       case _                     => None
     }
   }
+
+  private def isFirstTimeSubmission(x: XMLInfo): Boolean = determineMessageTypeIndic(x).contains(CBC401)
 
   /** Ensure that if the messageType is [[CBC401]] there are no [[DocTypeIndic]] other than [[OECD1]] */
   private def validateMessageTypes(r: XMLInfo): ValidBusinessResult[XMLInfo] =
@@ -708,6 +711,10 @@ class CBCBusinessRuleValidator @Inject()(
   private def validateCorrMessageRefIdD(x: XMLInfo): FutureValidBusinessResult[XMLInfo] =
     validateCorrMsgRefIdNotInMessageSpec(x) *>
       validateCorrMsgRefIdNotInDocSpec(x)
+
+  private def validateCbcMessagesNotEmpty(x: XMLInfo): FutureValidBusinessResult[XMLInfo] =
+    if (isFirstTimeSubmission(x) && x.cbcReport.isEmpty) NoCbcReports.invalidNel[XMLInfo]
+    else x.validNel
 
   private def validateCorrMsgRefIdNotInMessageSpec(x: XMLInfo): ValidBusinessResult[XMLInfo] =
     if (x.messageSpec.corrMessageRefId.isDefined) CorrMessageRefIdNotAllowedInMessageSpec.invalidNel

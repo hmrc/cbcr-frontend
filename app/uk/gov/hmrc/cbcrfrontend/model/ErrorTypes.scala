@@ -81,6 +81,7 @@ case object InvalidDocRefId extends BusinessRuleErrors
 case object InvalidCorrDocRefId extends BusinessRuleErrors
 case object ResentDataIsUnknownError extends BusinessRuleErrors
 case object MultipleCbcBodies extends BusinessRuleErrors
+case object NoCbcReports extends BusinessRuleErrors
 case object CorrectedFileTooOld extends BusinessRuleErrors
 case object CorrectedFileDateMissing extends BusinessRuleErrors
 case object ReportingEntityOrConstituentEntityEmpty extends BusinessRuleErrors
@@ -155,6 +156,7 @@ object BusinessRuleErrors {
       case PrivateBetaCBCIdError                    => JsString(PrivateBetaCBCIdError.toString)
       case ResentDataIsUnknownError                 => JsString(ResentDataIsUnknownError.toString)
       case MultipleCbcBodies                        => JsString(MultipleCbcBodies.toString)
+      case NoCbcReports                             => JsString(NoCbcReports.toString)
       case CorrectedFileTooOld                      => JsString(CorrectedFileTooOld.toString)
       case CorrectedFileDateMissing                 => JsString(CorrectedFileDateMissing.toString)
       case ReportingEntityOrConstituentEntityEmpty  => JsString(ReportingEntityOrConstituentEntityEmpty.toString)
@@ -194,6 +196,7 @@ object BusinessRuleErrors {
         .orElse[BusinessRuleErrors] {
           json.asOpt[String] match {
             case Some(ci"multiplecbcbodies")                       => JsSuccess(MultipleCbcBodies)
+            case Some(ci"nocbcreports")                            => JsSuccess(NoCbcReports)
             case Some(ci"messagetypeindicerror")                   => JsSuccess(MessageTypeIndicError)
             case Some(ci"testdataerror")                           => JsSuccess(TestDataError)
             case Some(ci"sendingentityerror")                      => JsSuccess(SendingEntityError)
@@ -274,6 +277,7 @@ object BusinessRuleErrors {
     case CorrDocRefIdDuplicate                    => "error.CorrDocRefIdDuplicate"
     case ResentDataIsUnknownError                 => "error.ResentDataIsUnknownError"
     case MultipleCbcBodies                        => "error.MultipleCbcBodies"
+    case NoCbcReports                             => "error.NoCbcReports"
     case CorrectedFileTooOld                      => "error.CorrectedFileTooOld"
     case CorrectedFileDateMissing                 => "error.CorrectedFileDateMissing"
     case ReportingEntityOrConstituentEntityEmpty  => "error.ReportingEntityOrConstituentEntityEmpty"
