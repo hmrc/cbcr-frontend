@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import cats.data.{NonEmptyList, Validated}
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchersSugar.*
 import org.mockito.IdiomaticMockito
@@ -36,9 +36,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import java.io.File
 import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.language.implicitConversions
+import scala.util.chaining.scalaUtilChainingOps
 
 class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with IdiomaticMockito with MockitoCats {
 
@@ -204,6 +204,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     creationDateService,
     cache)
 
+  def errors[A](s: ValidatedNel[BusinessRuleErrors, A]): List[BusinessRuleErrors] =
+    s.fold(errors => errors.toList, _ => fail("Errors expected"))
+
   "The CBCBusinessRuleValidator" should {
     "throw an error if currency codes are not consistent in same xml report " in {
       messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
@@ -213,12 +216,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         new File("test/resources/cbcr-inconsistent-currency-codes" + ".xml")
       val validFile = new File("test/resources/cbcr-valid-currency-codes" + ".xml")
 
-      val result1 = Await.result(
-        validator.validateBusinessRules(inconsistentCurrency, filename, Some(enrol), Some(Organisation)),
-        5.seconds)
-      val result2 =
-        Await
-          .result(validator.validateBusinessRules(validFile, filenameTemp, Some(enrol), Some(Organisation)), 5.seconds)
+      val result1 =
+        await(validator.validateBusinessRules(inconsistentCurrency, filename, Some(enrol), Some(Organisation)))
+      val result2 = await(validator.validateBusinessRules(validFile, filenameTemp, Some(enrol), Some(Organisation)))
 
       result1.fold(
         errors => errors.toList should contain(InconsistentCurrencyCodes),
@@ -257,15 +257,11 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       val multipleSubmissionForSameReportingPeriod =
         new File("test/resources/cbcr-multiplefileupload-original" + ".xml")
 
-      val result = Await.result(
+      val result = await(
         validator
-          .validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)),
-        5.seconds)
+          .validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)))
 
-      result.fold(
-        errors => errors.toList should contain(MultipleFileUploadForSameReportingPeriod),
-        _ => fail("MultipleFileUploadForSameReportingPeriod")
-      )
+      result pipe errors should contain(MultipleFileUploadForSameReportingPeriod)
     }
 
     "let the file go through when multiple file uploaded for different years" in {
@@ -275,10 +271,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       val multipleSubmissionForSameReportingPeriod =
         new File("test/resources/cbcr-multiplefileupload-original" + ".xml")
 
-      val result = Await.result(
+      val result = await(
         validator
-          .validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)),
-        5.seconds)
+          .validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)))
 
       result.fold(
         errors => fail(s"Errors were generated ${errors.toList}"),
@@ -293,9 +288,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       val messageRefIdValidation =
         new File("test/resources/cbcr-messageRefId-dontMatchAgainst-messageRefId-inDocRefId" + ".xml")
 
-      val result = Await.result(
-        validator.validateBusinessRules(messageRefIdValidation, filename, Some(enrol), Some(Organisation)),
-        5.seconds)
+      val result =
+        await(validator.validateBusinessRules(messageRefIdValidation, filename, Some(enrol), Some(Organisation)))
 
       result.fold(
         errors => errors.toList should contain(MessageRefIdDontMatchWithDocRefId),
@@ -309,9 +303,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         val multipleCbcBodies = new File("test/resources/cbcr-valid-reporting-entity-name.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result =
+          await(validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(ReportingEntityOrConstituentEntityEmpty),
@@ -324,9 +317,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         val multipleCbcBodies = new File("test/resources/cbcr-valid-reporting-entity-name.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result =
+          await(validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(AddressCityEmpty),
@@ -337,9 +329,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "the constEntity name is an empty string" in {
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         val multipleCbcBodies = new File("test/resources/cbcr-valid-const-entity-name.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result =
+          await(validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(ReportingEntityOrConstituentEntityEmpty),
@@ -350,9 +341,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "there are multiple CbcBody elements" in {
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         val multipleCbcBodies = new File("test/resources/cbcr-valid-multiple-bodies.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result =
+          await(validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MultipleCbcBodies),
@@ -369,9 +359,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "messageRefId is empty" in {
         val missingMessageRefID = new File("test/resources/cbcr-invalid-empty-messageRefID.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(missingMessageRefID, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result =
+          await(validator.validateBusinessRules(missingMessageRefID, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDMissing),
@@ -381,9 +370,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "messageRefId is null" in {
         val nullMessageRefID = new File("test/resources/cbcr-invalid-null-messageRefID.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(nullMessageRefID, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result = await(validator.validateBusinessRules(nullMessageRefID, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDMissing),
@@ -393,9 +380,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "messageRefId format is wrong" in {
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-invalid-messageRefID.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result =
+          await(validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDFormatError),
@@ -406,9 +392,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "messageRefId contains a CBCId that doesnt match the CBCId in the SendingEntityIN field" in {
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-cbcId-messageRefID.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result =
+          await(validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDCBCIdMismatch),
@@ -420,8 +405,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         makeTheUserAnOrganisation("XTCBC0100000001")
 
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, None, Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, None, Some(Organisation)))
         result.fold(
           errors => {
             errors.toList should contain(SendingEntityOrganisationMatchError)
@@ -440,8 +424,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         makeTheUserAnOrganisation("XLCBC0100000056")
 
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, None, Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, None, Some(Organisation)))
         result.fold(
           errors => fail(s"Errors were generated ${errors.toList}"),
           _ => ()
@@ -454,8 +437,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         val enrol2 = CBCEnrolment(cbcId3, Utr("7000000002"))
 
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result = Await
-          .result(validator.validateBusinessRules(validFile, filename, Some(enrol2), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol2), Some(Organisation)))
         result.fold(
           errors => errors.toList should contain(SendingEntityOrganisationMatchError),
           _ => fail("No Sending Entity Organisation Match Error")
@@ -472,8 +454,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         makeTheUserAnOrganisation("XLCBC0100000056")
 
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result.fold(
           errors => fail(s"Errors were generated ${errors.toList}"),
           _ => ()
@@ -484,9 +465,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "messageRefId contains a Reporting Year that doesn't match the year in the ReportingPeriod field" in {
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-reportingYear-messageRefID.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result =
+          await(validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDReportingPeriodMismatch),
@@ -497,9 +477,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "messageRefId contains a creation timestamp that isn't valid" in {
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-creationTimestamp-messageRefID.xml")
-        val result = Await.result(
-          validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result =
+          await(validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDTimestampError),
@@ -510,8 +489,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "messageRefId has been seen before" in {
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(true)
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageRefIDDuplicate),
@@ -522,8 +500,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "test data is present" when {
         "the xml file has a single CBCReports element" in {
           val validFile = new File("test/resources/cbcr-testData.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(TestDataError),
@@ -533,8 +510,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         "the xml file has a multiple CBCReports elements" in {
           val validFile = new File("test/resources/cbcr-testDataM.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(TestDataError),
@@ -547,8 +523,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         subscriptionDataService.retrieveSubscriptionData(*)(*) returnsF None
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.head shouldBe SendingEntityError,
@@ -559,8 +534,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "ReceivingCountry does not equal GB" in {
         subscriptionDataService.retrieveSubscriptionData(*)(*) returnsF Some(submissionData)
         val validFile = new File("test/resources/cbcr-invalidReceivingCountry.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.head shouldBe ReceivingCountryError,
@@ -571,9 +545,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "Filename does not match MessageRefId" in {
         val validFile = new File("test/resources/cbcr-valid.xml")
         val invalidFilename = "INVALID" + filename
-        val result = Await.result(
-          validator.validateBusinessRules(validFile, invalidFilename, Some(enrol), Some(Organisation)),
-          5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, invalidFilename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.head shouldBe FileNameError(invalidFilename, filename),
@@ -584,7 +556,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "ReportingEntity is missing" in {
         reportingEntity.queryReportingEntityData(*)(*) returnsF None
 
-        val result = Await.result(validator.recoverReportingEntity(xmlinfo), 5.seconds)
+        val result = await(validator.recoverReportingEntity(xmlinfo))
 
         result.fold(
           errors => errors.toList should contain(ReportingEntityElementMissing),
@@ -594,8 +566,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "CBCReports.docTypeIndic is OECD0" in {
         val validFile = new File("test/resources/cbcr-cbcReportsOECD0.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should not contain MessageTypeIndicError,
@@ -605,8 +576,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "AdditionalInfo.docTypeInidc is OECD0" in {
         val validFile = new File("test/resources/cbcr-additionalInfoOECD0.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should not contain MessageTypeIndicError,
@@ -616,8 +586,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "AdditionalInfo.otherInfo is Empty" in {
         val validFile = new File("test/resources/cbcr-additionalInfoOECD0.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(OtherInfoEmpty),
@@ -627,8 +596,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "ReportingEntity.ReportingStartDate is after ReportingPeriod EndDate " in {
         val validFile = new File("test/resources/cbcr-invalidReportingDates1.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => {
@@ -641,8 +609,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "ReportingEntity.ReportingStartDate is in Future " in {
         val validFile = new File("test/resources/cbcr-invalidReportingDates2.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => {
@@ -655,8 +622,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "MessageTypeIndic is blank and AdditionalInfo.docTypeInidc is OECD0" in {
         val validFile = new File("test/resources/cbcr-additionalInfoOECD0-2.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should not contain MessageTypeIndicError,
@@ -666,8 +632,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "MessageTypeIndic is blank and CBCReports.docTypeIndic is OECD0" in {
         val validFile = new File("test/resources/cbcr-cbcReportsOECD0-2.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageTypeIndicBlank),
@@ -679,8 +644,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         "CBCReports.docTypeIndic isn't OECD2 or OECD3" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndic.xml")
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(MessageTypeIndicError),
@@ -691,8 +655,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         "CBCReports[*].docTypeIndic isn't OECD2 or OECD3" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndicM.xml")
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(MessageTypeIndicError),
@@ -702,8 +665,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         "AdditionalInfo.docTypeIndic isn't OECD2 or OECD3" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndic2.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(MessageTypeIndicError),
@@ -713,8 +675,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         "ReportingEntity.docTypeIndic isn't OECD2 or OECD3 or OECD0" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndic3.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(MessageTypeIndicError),
@@ -726,9 +687,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "MessageTypeIndic is not provided" in {
         val invalidFile = new File("test/resources/cbcr-noMessageTypeIndic.xml")
         reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-        val result =
-          Await
-            .result(validator.validateBusinessRules(invalidFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(invalidFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageTypeIndicBlank),
@@ -739,9 +698,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "MessageTypeIndic is provided but invalid" in {
         val invalidFile = new File("test/resources/cbcr-InvalidMessageTypeIndic.xml")
         reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-        val result =
-          Await
-            .result(validator.validateBusinessRules(invalidFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(invalidFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageTypeIndicInvalid),
@@ -763,8 +720,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrDocRefIdUnknownRecord),
@@ -782,8 +738,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrDocRefIdInvalidRecord),
@@ -796,8 +751,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(DocRefIdDuplicate),
@@ -810,8 +764,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
         docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(DocRefIdDuplicate),
@@ -825,8 +778,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         docRefIdService.queryDocRefId(docRefId2)(*) returns Future.successful(DoesNotExist)
         docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.head shouldBe DocRefIdDuplicate,
@@ -845,8 +797,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
         reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           _ => fail("No errors should be generated"),
@@ -861,29 +812,25 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
 
         val validFile1 = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds1.xml")
-        Await
-          .result(validator.validateBusinessRules(validFile1, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        await(validator.validateBusinessRules(validFile1, filename, Some(enrol), Some(Organisation)))
           .fold(
             errors => errors.toList should contain(CorrDocRefIdNotNeeded),
             _ => fail("No InvalidXMLError generated")
           )
         val validFile2 = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds2.xml")
-        Await
-          .result(validator.validateBusinessRules(validFile2, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        await(validator.validateBusinessRules(validFile2, filename, Some(enrol), Some(Organisation)))
           .fold(
             errors => errors.toList should contain(CorrDocRefIdNotNeeded),
             _ => fail("No InvalidXMLError generated")
           )
         val validFile3 = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds3.xml")
-        Await
-          .result(validator.validateBusinessRules(validFile3, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        await(validator.validateBusinessRules(validFile3, filename, Some(enrol), Some(Organisation)))
           .fold(
             errors => errors.toList should contain(CorrDocRefIdNotNeeded),
             _ => fail("No InvalidXMLError generated")
           )
         val validFile4 = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds4.xml")
-        Await
-          .result(validator.validateBusinessRules(validFile4, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        await(validator.validateBusinessRules(validFile4, filename, Some(enrol), Some(Organisation)))
           .fold(
             errors => errors.toList should contain(CorrDocRefIdNotNeeded),
             _ => fail("No InvalidXMLError generated")
@@ -892,8 +839,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when the DocType is OECD[23] but there are no CorrDocRefIds defined" in {
         val validFile = new File("test/resources/cbcr-OECD2-with-NoCorrDocRefIds.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrDocRefIdMissing),
@@ -905,8 +851,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
 
         val validFile = new File("test/resources/cbcr-OECD2-Incompatible-messageTypes.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(MessageTypeIndicDocTypeIncompatible),
@@ -916,8 +861,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when the messageTypeIndic is CBC401 but REP doctypeIndic is OECD1 or OECD0" in {
         val validFile = new File("test/resources/cbcr-OECD0[1]-valid.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => fail(s"errors generated: $errors"),
@@ -925,8 +869,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         )
 
         val validFile2 = new File("test/resources/cbcr-OECD0[1]-valid2.xml")
-        val result2 = Await
-          .result(validator.validateBusinessRules(validFile2, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result2 = await(validator.validateBusinessRules(validFile2, filename, Some(enrol), Some(Organisation)))
 
         result2.fold(
           errors => fail(s"errors generated: $errors"),
@@ -936,8 +879,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when the messageTypeIndic is CBC401 but REP doctypeIndic is not OECD1 or OECD0" in {
         val validFile = new File("test/resources/cbcr-OECD0[1]-invalid.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(IncompatibleOECDTypes),
@@ -951,8 +893,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
         reportingEntity.queryReportingEntityDataDocRefId(*)(*) returnsF None
         reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(ResentDataIsUnknownError),
@@ -963,8 +904,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "when there are a mixture of OECD1 and OECD[23] docTypeIndics" in {
         val validFile = new File("test/resources/cbcr-docTypeIndicMixture.xml")
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(IncompatibleOECDTypes),
@@ -974,8 +914,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when there are invalid docRefIds" in {
         val validFile = new File("test/resources/cbcr-withInvalidDocRefId.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(InvalidDocRefId),
@@ -989,8 +928,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         docRefIdService.queryDocRefId(corrDocRefId2)(*) returns Future.successful(Valid)
         docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(InvalidCorrDocRefId),
@@ -1000,8 +938,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when the CBC_OECD version is invalid" in {
         val validFile = new File("test/resources/cbcr-withInvalidCBC-OECDVersion.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CbcOecdVersionError),
@@ -1011,8 +948,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when the XML Encoding value is NOT UTF-8" in {
         val validFile = new File("test/resources/cbcr-withInvalidXmlEncodingValue.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(XmlEncodingError),
@@ -1022,8 +958,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when the DocRefId refers to the wrong parent group element" in {
         val validFile = new File("test/resources/cbcr-invalid-docrefid-PGE.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(DocRefIdInvalidParentGroupElement),
@@ -1033,8 +968,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when the CorrDocRefId refers to the wrong parent group element" in {
         val validFile = new File("test/resources/cbcr-invalid-corrdocrefid-PGE.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrDocRefIdInvalidParentGroupElement),
@@ -1056,8 +990,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrDocRefIdDuplicate),
@@ -1068,8 +1001,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "when the FilingType == CBC701" when {
         "the TIN field is not a valid UTR" in {
           val validFile = new File("test/resources/cbcr-CBC701-badTIN.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors =>
@@ -1082,8 +1014,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         "the @issuedBy attribute of the TIN is not 'GB' " in {
           val validFile = new File("test/resources/cbcr-CBC701-badTINAttribute.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(InvalidXMLError("xmlValidationError.TINIssuedBy")),
@@ -1095,8 +1026,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "when the FilingType == CBC703" when {
         "the TIN field is not a valid UTR" in {
           val validFile = new File("test/resources/cbcr-CBC703-badTIN.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(InvalidXMLError("xmlValidationError.InvalidTIN")),
@@ -1108,8 +1038,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
 
           val validFile = new File("test/resources/cbcr-CBC703-badTINAttribute.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(InvalidXMLError("xmlValidationError.TINIssuedBy")),
@@ -1121,8 +1050,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "when the FilingType == CBC704" when {
         "the TIN field is not a valid UTR" in {
           val validFile = new File("test/resources/cbcr-CBC704-badTIN.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(InvalidXMLError("xmlValidationError.InvalidTIN")),
@@ -1134,8 +1062,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
 
           val validFile = new File("test/resources/cbcr-CBC704-badTINAttribute.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(InvalidXMLError("xmlValidationError.TINIssuedBy")),
@@ -1147,9 +1074,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "when the FilingType == CBC702" when {
         "the TIN field is unrestricted" in {
           val validFile = new File("test/resources/cbcr-CBC702-badTIN.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
-
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result.fold(
             errors => fail(s"CBC702 should handle non UTR in TIN field: ${errors.toList.mkString("\n")}"),
             _ => ()
@@ -1160,8 +1085,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
 
           val validFile = new File("test/resources/cbcr-CBC702-badTINAttribute.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => fail(s"CBC703 should handle non GB issuedBy field: ${errors.toList.mkString("\n")}"),
@@ -1174,8 +1098,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
 
         val validFile = new File("test/resources/cbcr-valid-nonGBTINInDocRefId.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => fail(s"Error were generated: $errors"),
@@ -1187,8 +1110,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
 
         val validFile = new File("test/resources/cbcr-valid.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => fail(s"Error were generated: $errors"),
@@ -1199,8 +1121,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "should not create an error" when {
         "Should not fail when utf-8 is lowercase" in {
           val validFile = new File("test/resources/lower-case-utf8-pre-amble.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             _ => fail("Should not fail when utf-8 is lowercase"),
@@ -1215,8 +1136,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
           docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(CorrectedFileTooOld),
@@ -1229,8 +1149,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
           docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(CorrectedFileDateMissing),
@@ -1255,8 +1174,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
           creationDateService.isDateValid(*)(*) returns Future.successful(DateCorrect)
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => fail(s"Error were generated: $errors"),
@@ -1273,8 +1191,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
         messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => fail(s"Error were generated: $errors"),
@@ -1284,8 +1201,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the CorrMessageRefID included in MessageSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInMessageSpec.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrMessageRefIdNotAllowedInMessageSpec),
@@ -1295,8 +1211,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the CorrMessageRefID included in ReportingEntity DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInReportingEntity.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrMessageRefIdNotAllowedInDocSpec),
@@ -1306,8 +1221,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the CorrMessageRefID included in CbcReports DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInCbcReports.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrMessageRefIdNotAllowedInDocSpec),
@@ -1317,8 +1231,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the CorrMessageRefID included in AdditionalInfo DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInAdditionalInfo.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrMessageRefIdNotAllowedInDocSpec),
@@ -1328,8 +1241,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the CorrMessageRefID included in AdditionalInfo DocSpec and CbcReports DocSpec and ReportingEntity DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInAllDocSpec.xml")
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrMessageRefIdNotAllowedInDocSpec),
@@ -1340,8 +1252,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "the CorrMessageRefID included in both MessageSpec and DocSpec" in {
         val validFile = new File("test/resources/cbcr-invalidCorrMessageRefIdInMsgSpecDocSpec.xml")
 
-        val result =
-          await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result shouldBe Validated.Invalid(
           NonEmptyList(
@@ -1354,8 +1265,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(redReportPeriod)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => errors.toList should contain(CorrectedFileDateMissing),
@@ -1372,8 +1282,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(
           red.copy(reportingPeriod = Some(LocalDate.of(2016, 3, 31))))
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => fail(s"Error were generated: $errors"),
@@ -1386,8 +1295,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
 
-        val result =
-          Await.result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+        val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
         result.fold(
           errors => fail(s"Error were generated: $errors"),
@@ -1404,8 +1312,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(DoesNotExist)
           reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors =>
@@ -1422,8 +1329,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
           reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(ReportingEntityElementMissing),
@@ -1441,8 +1347,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
           reportingEntity.queryReportingEntityDataDocRefId(*)(*) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => fail(s"Error were generated: $errors"),
@@ -1458,8 +1363,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
           reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(ReportingEntityElementMissing),
@@ -1475,8 +1379,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
           reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => fail(s"Error were generated: $errors"),
@@ -1492,8 +1395,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(DoesNotExist)
           reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(CorrDocRefIdUnknownRecord),
@@ -1509,8 +1411,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
           docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Invalid)
           reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
-          val result = Await
-            .result(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)), 5.seconds)
+          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
           result.fold(
             errors => errors.toList should contain(CorrDocRefIdInvalidRecord),
@@ -1566,15 +1467,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         new File("test/resources/cbcr-with-partially-corrected-currency" + ".xml")
 
       val fullFile = new File("test/resources/cbcr-with-fully-corrected-currency" + ".xml")
-      val result1 = Await.result(
-        validator
-          .validateBusinessRules(partiallyCorrectedCurrency, filename, Some(enrol), Some(Organisation)),
-        5.seconds)
-      val result2 = Await.result(
-        validator
-          .validateBusinessRules(fullFile, filename, Some(enrol), Some(Organisation)),
-        5.seconds
-      )
+      val result1 =
+        await(validator.validateBusinessRules(partiallyCorrectedCurrency, filename, Some(enrol), Some(Organisation)))
+      val result2 = await(validator.validateBusinessRules(fullFile, filename, Some(enrol), Some(Organisation)))
 
       result1.fold(
         errors => errors.toList should contain(PartiallyCorrectedCurrency),
@@ -1645,21 +1540,12 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       val filenameOrig = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018.xml"
       val filenameSecond = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018Second.xml"
       val filenameThird = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018Third.xml"
-      val result1 = Await.result(
-        validator
-          .validateBusinessRules(partialDeletionFile, filenameOrig, Some(enrol), Some(Organisation)),
-        5.seconds)
-      val result2 = Await.result(
-        validator
-          .validateBusinessRules(anotherPartialDeletion, filenameSecond, Some(enrol), Some(Organisation)),
-        5.seconds
-      )
+      val result1 =
+        await(validator.validateBusinessRules(partialDeletionFile, filenameOrig, Some(enrol), Some(Organisation)))
+      val result2 =
+        await(validator.validateBusinessRules(anotherPartialDeletion, filenameSecond, Some(enrol), Some(Organisation)))
 
-      val result3 = Await.result(
-        validator
-          .validateBusinessRules(fullDeletion, filenameThird, Some(enrol), Some(Organisation)),
-        5.seconds
-      )
+      val result3 = await(validator.validateBusinessRules(fullDeletion, filenameThird, Some(enrol), Some(Organisation)))
 
       result1.fold(
         errors => errors.toList should contain(PartialDeletion),
@@ -1685,11 +1571,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       val validFile = new File("test/resources/cbcr-valid-2" + ".xml")
       val filename = "GB2019RGXLCBC0100000056CBC40120201101T090000Xvalid2.xml"
 
-      val result = Await.result(
-        validator
-          .validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)),
-        5.seconds
-      )
+      val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
       result.fold(
         errors => errors.toList should contain(DatesOverlapInvalid),
         _ => fail("Dates Overlap")
@@ -1705,11 +1587,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       val validFile = new File("test/resources/cbcr-valid-2" + ".xml")
       val filename = "GB2019RGXLCBC0100000056CBC40120201101T090000Xvalid2.xml"
 
-      val result = Await.result(
-        validator
-          .validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)),
-        5.seconds
-      )
+      val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
       result.fold(
         errors => errors.toList should not contain DatesOverlapInvalid,
         _ => fail("Dates Overlap")
