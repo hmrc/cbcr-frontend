@@ -212,9 +212,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
 
-      val inconsistentCurrency =
-        new File("test/resources/cbcr-inconsistent-currency-codes" + ".xml")
-      val validFile = new File("test/resources/cbcr-valid-currency-codes" + ".xml")
+      val inconsistentCurrency = new File("test/resources/cbcr-inconsistent-currency-codes.xml")
+      val validFile = new File("test/resources/cbcr-valid-currency-codes.xml")
 
       val result1 =
         await(validator.validateBusinessRules(inconsistentCurrency, filename, Some(enrol), Some(Organisation)))
@@ -251,8 +250,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF Some(reportEntityData)
 
-      val multipleSubmissionForSameReportingPeriod =
-        new File("test/resources/cbcr-multiplefileupload-original" + ".xml")
+      val multipleSubmissionForSameReportingPeriod = new File("test/resources/cbcr-multiplefileupload-original.xml")
 
       val result = await(
         validator
@@ -264,8 +262,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
 
-      val multipleSubmissionForSameReportingPeriod =
-        new File("test/resources/cbcr-multiplefileupload-original" + ".xml")
+      val multipleSubmissionForSameReportingPeriod = new File("test/resources/cbcr-multiplefileupload-original.xml")
 
       val result = await(
         validator
@@ -282,7 +279,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
 
       val messageRefIdValidation =
-        new File("test/resources/cbcr-messageRefId-dontMatchAgainst-messageRefId-inDocRefId" + ".xml")
+        new File("test/resources/cbcr-messageRefId-dontMatchAgainst-messageRefId-inDocRefId.xml")
 
       val result =
         await(validator.validateBusinessRules(messageRefIdValidation, filename, Some(enrol), Some(Organisation)))
@@ -1163,9 +1160,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       reportingEntity.queryReportingEntityData(*)(*) returnsF Some(reportEntityData)
       val partiallyCorrectedCurrency =
-        new File("test/resources/cbcr-with-partially-corrected-currency" + ".xml")
+        new File("test/resources/cbcr-with-partially-corrected-currency.xml")
 
-      val fullFile = new File("test/resources/cbcr-with-fully-corrected-currency" + ".xml")
+      val fullFile = new File("test/resources/cbcr-with-fully-corrected-currency.xml")
       await(validator.validateBusinessRules(partiallyCorrectedCurrency, filename, Some(enrol), Some(Organisation))) pipe
         errors should contain(PartiallyCorrectedCurrency)
       await(validator.validateBusinessRules(fullFile, filename, Some(enrol), Some(Organisation))) pipe
@@ -1223,11 +1220,10 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(reportEntityDataModel)
 
       reportingEntity.queryReportingEntityData(*)(*) returnsF Some(reportEntityData)
-      val partialDeletionFile =
-        new File("test/resources/cbcr-partial-deletion" + ".xml")
-      val anotherPartialDeletion = new File("test/resources/cbcr-inconsistent-OECD3" + ".xml")
+      val partialDeletionFile = new File("test/resources/cbcr-partial-deletion.xml")
+      val anotherPartialDeletion = new File("test/resources/cbcr-inconsistent-OECD3.xml")
 
-      val fullDeletion = new File("test/resources/cbcr-full-deletion" + ".xml")
+      val fullDeletion = new File("test/resources/cbcr-full-deletion.xml")
       val filenameOrig = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018.xml"
       val filenameSecond = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018Second.xml"
       val filenameThird = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018Third.xml"
@@ -1245,7 +1241,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
 
-      val validFile = new File("test/resources/cbcr-valid-2" + ".xml")
+      val validFile = new File("test/resources/cbcr-valid-2.xml")
       val filename = "GB2019RGXLCBC0100000056CBC40120201101T090000Xvalid2.xml"
 
       val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
@@ -1258,7 +1254,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
 
-      val validFile = new File("test/resources/cbcr-valid-2" + ".xml")
+      val validFile = new File("test/resources/cbcr-valid-2.xml")
       val filename = "GB2019RGXLCBC0100000056CBC40120201101T090000Xvalid2.xml"
 
       val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
