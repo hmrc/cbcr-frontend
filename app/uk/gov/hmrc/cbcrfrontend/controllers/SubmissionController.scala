@@ -49,6 +49,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.Exception.nonFatalCatch
 import scala.util.control.NonFatal
 
+// scalastyle:off <number.of.methods>
+
 @Singleton
 class SubmissionController @Inject()(
   fus: FileUploadService,
