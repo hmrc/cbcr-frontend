@@ -24,6 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.model.{ContactDetails, ContactName, ETMPSubscription, EtmpAddress}
@@ -31,8 +32,7 @@ import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
 
@@ -65,7 +65,7 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
        """.stripMargin
 
       connector.getETMPSubscriptionData(*)(*) returns Future.successful(HttpResponse(Status.OK, desResponse))
-      val result = Await.result(cbcidService.getETMPSubscriptionData(safeId).value, 2.seconds)
+      val result = await(cbcidService.getETMPSubscriptionData(safeId).value)
       result should not be None
       result.get shouldBe ETMPSubscription(
         "XP0000100099577",
@@ -78,7 +78,7 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
     "return NONE if the connector returns empty string or empty json object response" in {
       List("", "{}").map { responseBody =>
         connector.getETMPSubscriptionData(*)(*) returns Future.successful(HttpResponse(Status.OK, responseBody))
-        val result = Await.result(cbcidService.getETMPSubscriptionData(safeId).value, 2.seconds)
+        val result = await(cbcidService.getETMPSubscriptionData(safeId).value)
         result shouldBe None
       }
     }
@@ -88,7 +88,7 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
       connector.getETMPSubscriptionData(*)(*) returns Future.successful(response)
       response.status returns HttpStatus.SC_INTERNAL_SERVER_ERROR
 
-      Await.result(cbcidService.getETMPSubscriptionData(safeId).value, 2.seconds)
+      await(cbcidService.getETMPSubscriptionData(safeId).value)
       verify(response, never()).body
     }
 
@@ -96,7 +96,7 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
       connector.getETMPSubscriptionData(*)(*) returns Future.failed(
         new HttpException("HttpException occurred", HttpStatus.SC_BAD_REQUEST))
       intercept[HttpException] {
-        Await.result(cbcidService.getETMPSubscriptionData(safeId).value, 2.seconds)
+        await(cbcidService.getETMPSubscriptionData(safeId).value)
       }
     }
   }

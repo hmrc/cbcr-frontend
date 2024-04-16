@@ -21,14 +21,14 @@ import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
 import uk.gov.hmrc.cbcrfrontend.model.{BPRKnownFacts, Utr}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
   private val mockConnector = mock[BPRKnownFactsConnector]
@@ -59,7 +59,7 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
       mockAudit.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       result.body returns bodyKnownFact1
 
-      val maybeKnownFact = Await.result(bprKnownFactsService.checkBPRKnownFacts(kf1).value, 2.second)
+      val maybeKnownFact = await(bprKnownFactsService.checkBPRKnownFacts(kf1).value)
 
       maybeKnownFact.isDefined shouldBe false
     }
@@ -70,8 +70,8 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
       mockAudit.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       result.body returns bodyKnownFact1
 
-      val maybeKnownFact = Await
-        .result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN3 5XB")).value, 2.second)
+      val maybeKnownFact =
+        await(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN3 5XB")).value)
 
       maybeKnownFact.isDefined shouldBe false
     }
@@ -82,8 +82,8 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
       mockAudit.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       result.body returns bodyKnownFact1
 
-      val maybeKnownFact = Await
-        .result(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value, 2.second)
+      val maybeKnownFact =
+        await(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value)
 
       maybeKnownFact.isDefined shouldBe false
     }
