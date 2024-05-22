@@ -32,6 +32,7 @@ import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsString, defaultAwaitTimeout, header, status}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
+import uk.gov.hmrc.cbcrfrontend.actions.AddCorrelationIdAction
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
@@ -65,8 +66,10 @@ class SharedControllerSpec
 
   cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(emptyCacheItem)
 
+  private val addCorrelationId = new AddCorrelationIdAction()
+
   private val controller =
-    new SharedController(subService, bprKF, auditC, authC, mcc, views, cache)
+    new SharedController(subService, bprKF, auditC, authC, mcc, views, cache, addCorrelationId)
 
   private val utr = Utr("7000000001")
   private val bpr = BusinessPartnerRecord("safeid", None, EtmpAddress("Line1", None, None, None, None, "GB"))
