@@ -25,6 +25,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.cbcrfrontend.actions.AddCorrelationIdAction
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm._
@@ -50,7 +51,8 @@ class SubscriptionController @Inject()(
   val authConnector: AuthConnector,
   messagesControllerComponents: MessagesControllerComponents,
   views: Views,
-  cache: CBCSessionCache)(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
+  cache: CBCSessionCache,
+  addCorrelationId: AddCorrelationIdAction)(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with Logging {
 
   val alreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
@@ -59,7 +61,7 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
+  val submitSubscriptionData: Action[AnyContent] = Action.andThen(addCorrelationId).async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(Retrievals.credentials) { creds =>
       logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm
@@ -135,7 +137,7 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val updateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
+  val updateInfoSubscriber: Action[AnyContent] = Action.andThen(addCorrelationId).async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
         cbcId <- EitherT.fromEither[Future](
@@ -167,8 +169,8 @@ class SubscriptionController @Inject()(
     }
   }
 
-  val saveUpdatedInfoSubscriber: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) {
-    implicit request =>
+  val saveUpdatedInfoSubscriber: Action[Map[String, Seq[String]]] =
+    Action(parse.formUrlEncoded).andThen(addCorrelationId).async { implicit request =>
       {
         authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
           val ci: ServiceResponse[CBCId] = for {
@@ -207,7 +209,7 @@ class SubscriptionController @Inject()(
             )
         }
       }
-  }
+    }
 
   val savedUpdatedInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
