@@ -30,6 +30,7 @@ import uk.gov.hmrc.auth.core.AffinityGroup.Individual
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
+import uk.gov.hmrc.cbcrfrontend.actions.AddCorrelationIdAction
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
@@ -51,7 +52,8 @@ class SharedController @Inject()(
   val authConnector: AuthConnector,
   messagesControllerComponents: MessagesControllerComponents,
   views: Views,
-  cache: CBCSessionCache)(implicit feConfig: FrontendAppConfig, ec: ExecutionContext)
+  cache: CBCSessionCache,
+  addCorrelationId: AddCorrelationIdAction)(implicit feConfig: FrontendAppConfig, ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with I18nSupport {
 
   lazy val logger: Logger = Logger(this.getClass)
@@ -256,7 +258,7 @@ class SharedController @Inject()(
   private def notFoundView(userType: AffinityGroup)(implicit request: Request[_]) =
     NotFound(views.knownFactsNotFound(userType))
 
-  val checkKnownFacts: Action[AnyContent] = Action.async { implicit request =>
+  val checkKnownFacts: Action[AnyContent] = Action.andThen(addCorrelationId).async { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) {
       case None =>
         errorRedirect(

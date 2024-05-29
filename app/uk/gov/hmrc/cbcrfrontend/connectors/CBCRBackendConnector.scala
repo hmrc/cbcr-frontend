@@ -89,18 +89,4 @@ class CBCRBackendConnector @Inject()(http: HttpClient, servicesConfig: ServicesC
     implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET[HttpResponse](
       url + s"/reporting-entity/query-dates/$tin/start-date/${entityReportingPeriod.startDate.toString}/end-date/${entityReportingPeriod.endDate.toString}")
-
-  def adminReportingEntityDataQuery(d: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/admin/reporting-entity/doc-ref-id/$d")
-
-  def adminReportingEntityCBCIdAndReportingPeriod(cbcId: String, reportingPeriod: LocalDate)(
-    implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/admin/reporting-entity/query-cbc-id/$cbcId/${reportingPeriod.toString}")
-
-  def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(
-    implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/admin/reporting-entity/query-tin/$tin/$reportingPeriod")
-
-  def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT[JsValue, HttpResponse](url + s"/admin/updateDocRefId/$docRefId", JsNull)
 }
