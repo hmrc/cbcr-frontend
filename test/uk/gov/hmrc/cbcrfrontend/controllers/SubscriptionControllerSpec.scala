@@ -35,7 +35,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.{call, contentAsString, defaultAwaitTimeout, status, writeableOf_AnyContentAsFormUrlEncoded}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
-import uk.gov.hmrc.cbcrfrontend.actions.AddCorrelationIdAction
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
@@ -78,20 +77,8 @@ class SubscriptionControllerSpec
 
   cache.read[AffinityGroup](AffinityGroup.jsonFormat, *, *) returnsF AffinityGroup.Organisation
 
-  val addCorrelationId = new AddCorrelationIdAction()
-
   private val controller =
-    new SubscriptionController(
-      subService,
-      cbcIdService,
-      emailMock,
-      cbcKF,
-      auditMock,
-      auth,
-      mcc,
-      views,
-      cache,
-      addCorrelationId)
+    new SubscriptionController(subService, cbcIdService, emailMock, cbcKF, auditMock, auth, mcc, views, cache)
 
   private val cbcId = CBCId.create(1).toOption
 
