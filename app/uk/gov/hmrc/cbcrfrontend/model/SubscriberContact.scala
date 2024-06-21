@@ -27,13 +27,9 @@ import play.api.libs.json._
 import uk.gov.hmrc.domain.Modulus23Check
 import uk.gov.hmrc.emailaddress.EmailAddress
 
-/**
-  * A CBCId defined as at 15 digit reference using a modulus 23 check digit
-  * Digit  1     is an 'X'
-  * Digit  2     is the check digit
-  * Digits 3-5   is the short name 'CBC'
-  * Digits 6-9   are '0000'
-  * Digits 10-15 are for the id sequence e.g. '000001' - '999999'
+/** A CBCId defined as at 15 digit reference using a modulus 23 check digit Digit 1 is an 'X' Digit 2 is the check digit
+  * Digits 3-5 is the short name 'CBC' Digits 6-9 are '0000' Digits 10-15 are for the id sequence e.g. '000001' -
+  * '999999'
   *
   * Note: This is a hard limit of 999999 unique CBCIds
   */
@@ -97,9 +93,7 @@ object CBCId extends Modulus23Check {
       val checkChar = calculateCheckCharacter(id)
       CBCId(s"X$checkChar" + id).fold[Validated[Throwable, CBCId]](
         Invalid(new Exception(s"Generated CBCId did not validate: $id"))
-      )(
-        cbcId => Valid(cbcId)
-      )
+      )(cbcId => Valid(cbcId))
     }
 }
 
@@ -114,7 +108,8 @@ case class SubscriptionDetails(
   businessPartnerRecord: BusinessPartnerRecord,
   subscriberContact: SubscriberContact,
   cbcId: Option[CBCId],
-  utr: Utr)
+  utr: Utr
+)
 
 object SubscriptionDetails {
   implicit val subscriptionDetailsFormat: Format[SubscriptionDetails] = Json.format[SubscriptionDetails]

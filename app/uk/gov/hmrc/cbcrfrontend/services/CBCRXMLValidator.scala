@@ -27,7 +27,7 @@ import javax.xml.stream.XMLInputFactory
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Exception.nonFatalCatch
 
-class CBCRXMLValidator @Inject()(xmlValidationSchema: XMLValidationSchema) {
+class CBCRXMLValidator @Inject() (xmlValidationSchema: XMLValidationSchema) {
 
   lazy val logger: Logger = Logger(this.getClass)
 
@@ -43,16 +43,15 @@ class CBCRXMLValidator @Inject()(xmlValidationSchema: XMLValidationSchema) {
       try {
         xmlStreamReader.setValidationProblemHandler(xmlErrorHandler)
         xmlStreamReader.validateAgainst(xmlValidationSchema)
-        while (xmlStreamReader.hasNext) {
+        while (xmlStreamReader.hasNext)
           xmlStreamReader.next
-        }
-      } finally {
+      } finally
         xmlStreamReader.closeCompletely()
-      }
     } catch {
       case e: WstxException =>
         xmlErrorHandler.reportProblem(
-          new XMLValidationProblem(e.getLocation, e.getMessage, XMLValidationProblem.SEVERITY_FATAL))
+          new XMLValidationProblem(e.getLocation, e.getMessage, XMLValidationProblem.SEVERITY_FATAL)
+        )
       case ErrorLimitExceededException =>
         logger.warn(s"Errors exceeding the ${xmlErrorHandler.errorMessageLimit} encountered, validation aborting.")
     }

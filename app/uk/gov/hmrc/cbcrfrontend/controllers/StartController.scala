@@ -33,10 +33,11 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class StartController @Inject()(
+class StartController @Inject() (
   val authConnector: AuthConnector,
   messagesControllerComponents: MessagesControllerComponents,
-  views: Views)(implicit feConfig: FrontendAppConfig, ec: ExecutionContext)
+  views: Views
+)(implicit feConfig: FrontendAppConfig, ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions {
 
   private val startForm = Form(
@@ -52,27 +53,27 @@ class StartController @Inject()(
         errorRedirect(
           UnexpectedState("Individuals are not permitted to use this service"),
           views.notAuthorisedIndividual,
-          views.errorTemplate)
+          views.errorTemplate
+        )
       case _ => BadRequest(views.start(startForm))
     }
   }
 
   def submit: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
-    {
-      authorised() {
-        startForm
-          .bindFromRequest()
-          .fold(
-            errors => BadRequest(views.start(errors)), {
-              case "upload" =>
-                Redirect(routes.FileUploadController.chooseXMLFile)
-              case "editSubscriberInfo" =>
-                Redirect(routes.SubscriptionController.updateInfoSubscriber)
-              case _ =>
-                BadRequest(views.start(startForm))
-            }
-          )
-      }
+    authorised() {
+      startForm
+        .bindFromRequest()
+        .fold(
+          errors => BadRequest(views.start(errors)),
+          {
+            case "upload" =>
+              Redirect(routes.FileUploadController.chooseXMLFile)
+            case "editSubscriberInfo" =>
+              Redirect(routes.SubscriptionController.updateInfoSubscriber)
+            case _ =>
+              BadRequest(views.start(startForm))
+          }
+        )
     }
   }
 }

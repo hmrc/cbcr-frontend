@@ -28,7 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
-class DocRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
+class DocRefIdService @Inject() (connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
   def saveDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): OptionT[Future, UnexpectedState] =
     OptionT(connector.docRefIdSave(d).map(_ => None).recover {
@@ -53,7 +53,7 @@ class DocRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Ex
           case _                => Invalid
         }
       }
-      .recover {
-        case NonFatal(_) => Invalid
+      .recover { case NonFatal(_) =>
+        Invalid
       }
 }

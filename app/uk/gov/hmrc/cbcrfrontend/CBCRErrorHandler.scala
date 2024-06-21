@@ -29,12 +29,12 @@ import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
 import javax.inject.Inject
 import scala.concurrent.Future
 
-class CBCRErrorHandler @Inject()(
+class CBCRErrorHandler @Inject() (
   val messagesApi: MessagesApi,
   val env: Environment,
   val config: Configuration,
-  views: Views)
-    extends FrontendErrorHandler with Results with AuthRedirects {
+  views: Views
+) extends FrontendErrorHandler with Results with AuthRedirects {
 
   override def resolveError(rh: RequestHeader, ex: Throwable): Result = ex match {
     case _: NoActiveSession =>
@@ -51,7 +51,8 @@ class CBCRErrorHandler @Inject()(
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
     resolveError(request, exception)
 
-  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(
-    implicit request: Request[_]): HtmlFormat.Appendable =
+  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit
+    request: Request[_]
+  ): HtmlFormat.Appendable =
     views.errorTemplate(pageTitle, heading, message)
 }

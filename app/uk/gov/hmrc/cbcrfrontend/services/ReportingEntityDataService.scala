@@ -30,18 +30,18 @@ import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
 @Singleton
-class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
+class ReportingEntityDataService @Inject() (connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
   lazy val logger: Logger = Logger(this.getClass)
 
   def updateReportingEntityData(data: PartialReportingEntityData)(implicit hc: HeaderCarrier): ServiceResponse[Unit] =
-    EitherT(connector.reportingEntityDataUpdate(data).map(_ => Right(())).recover {
-      case NonFatal(t) => Left(UnexpectedState(s"Attempt to update reporting entity data failed: ${t.getMessage}"))
+    EitherT(connector.reportingEntityDataUpdate(data).map(_ => Right(())).recover { case NonFatal(t) =>
+      Left(UnexpectedState(s"Attempt to update reporting entity data failed: ${t.getMessage}"))
     })
 
   def saveReportingEntityData(data: ReportingEntityData)(implicit hc: HeaderCarrier): ServiceResponse[Unit] =
-    EitherT(connector.reportingEntityDataSave(data).map(_ => Right(())).recover {
-      case NonFatal(t) => Left(UnexpectedState(s"Attempt to save reporting entity data failed: ${t.getMessage}"))
+    EitherT(connector.reportingEntityDataSave(data).map(_ => Right(())).recover { case NonFatal(t) =>
+      Left(UnexpectedState(s"Attempt to save reporting entity data failed: ${t.getMessage}"))
     })
 
   def queryReportingEntityData(d: DocRefId)(implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityData]] =
@@ -64,13 +64,14 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
             case s => Left(UnexpectedState(s"Call to QueryReportingEntity failed - backend returned $s"))
           }
         }
-        .recover {
-          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+        .recover { case NonFatal(e) =>
+          Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         }
     )
 
-  def queryReportingEntityDataModel(d: DocRefId)(
-    implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityDataModel]] =
+  def queryReportingEntityDataModel(
+    d: DocRefId
+  )(implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityDataModel]] =
     EitherT(
       connector
         .reportingEntityDataModelQuery(d)
@@ -90,13 +91,14 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
             case s => Left(UnexpectedState(s"Call to QueryReportingEntity failed - backend returned $s"))
           }
         }
-        .recover {
-          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+        .recover { case NonFatal(e) =>
+          Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
         }
     )
 
-  def queryReportingEntityDataByCbcId(cbcId: CBCId, reportingPeriod: LocalDate)(
-    implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityData]] =
+  def queryReportingEntityDataByCbcId(cbcId: CBCId, reportingPeriod: LocalDate)(implicit
+    hc: HeaderCarrier
+  ): ServiceResponse[Option[ReportingEntityData]] =
     EitherT(
       connector
         .reportingEntityCBCIdAndReportingPeriod(cbcId, reportingPeriod)
@@ -114,12 +116,14 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
             case s                => Left(UnexpectedState(s"Call to QueryReportingEntity failed - backend returned $s"))
           }
         }
-        .recover {
-          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
-        })
+        .recover { case NonFatal(e) =>
+          Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+        }
+    )
 
-  def queryReportingEntityDataDocRefId(d: DocRefId)(
-    implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityData]] =
+  def queryReportingEntityDataDocRefId(
+    d: DocRefId
+  )(implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityData]] =
     EitherT(
       connector
         .reportingEntityDocRefId(d)
@@ -137,12 +141,14 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
             case s                => Left(UnexpectedState(s"Call to QueryReportingEntity failed - backend returned $s"))
           }
         }
-        .recover {
-          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
-        })
+        .recover { case NonFatal(e) =>
+          Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+        }
+    )
 
-  def queryReportingEntityDataTin(tin: String, reportingPeriod: String)(
-    implicit hc: HeaderCarrier): ServiceResponse[Option[ReportingEntityData]] =
+  def queryReportingEntityDataTin(tin: String, reportingPeriod: String)(implicit
+    hc: HeaderCarrier
+  ): ServiceResponse[Option[ReportingEntityData]] =
     EitherT(
       connector
         .reportingEntityDataQueryTin(tin, reportingPeriod)
@@ -154,35 +160,39 @@ class ReportingEntityDataService @Inject()(connector: CBCRBackendConnector)(impl
                 .fold(
                   failed =>
                     Left(UnexpectedState(s"Unable to deserialise response as ReportingEntityData: ${failed.mkString}")),
-                  data => Right(Some(data)))
+                  data => Right(Some(data))
+                )
             case Status.NOT_FOUND => Right(None)
             case s                => Left(UnexpectedState(s"Call to QueryReportingEntity failed - backend returned $s"))
           }
         }
-        .recover {
-          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
-        })
+        .recover { case NonFatal(e) =>
+          Left(UnexpectedState(s"Call to QueryReportingEntity failed: ${e.getMessage}"))
+        }
+    )
 
-  def queryReportingEntityDatesOverlapping(tin: String, entityReportingPeriod: EntityReportingPeriod)(
-    implicit hc: HeaderCarrier): ServiceResponse[Option[DatesOverlap]] =
+  def queryReportingEntityDatesOverlapping(tin: String, entityReportingPeriod: EntityReportingPeriod)(implicit
+    hc: HeaderCarrier
+  ): ServiceResponse[Option[DatesOverlap]] =
     EitherT(
       connector
         .overlapQuery(tin, entityReportingPeriod)
-        .map(
-          response =>
-            response.status match {
-              case Status.OK =>
-                response.json
-                  .validate[DatesOverlap]
-                  .fold(
-                    failed =>
-                      Left(UnexpectedState(s"Unable to deserialise response as DatesOverlap: ${failed.mkString}")),
-                    data => Right(Some(data)))
-              case Status.NOT_FOUND => Right(None)
-              case s                => Left(UnexpectedState(s"Call to QueryReportingEntity failed - backend returned $s"))
+        .map(response =>
+          response.status match {
+            case Status.OK =>
+              response.json
+                .validate[DatesOverlap]
+                .fold(
+                  failed =>
+                    Left(UnexpectedState(s"Unable to deserialise response as DatesOverlap: ${failed.mkString}")),
+                  data => Right(Some(data))
+                )
+            case Status.NOT_FOUND => Right(None)
+            case s                => Left(UnexpectedState(s"Call to QueryReportingEntity failed - backend returned $s"))
           }
         )
-        .recover {
-          case NonFatal(e) => Left(UnexpectedState(s"Call to QueryDatesOverlap failed: ${e.getMessage}"))
-        })
+        .recover { case NonFatal(e) =>
+          Left(UnexpectedState(s"Call to QueryDatesOverlap failed: ${e.getMessage}"))
+        }
+    )
 }

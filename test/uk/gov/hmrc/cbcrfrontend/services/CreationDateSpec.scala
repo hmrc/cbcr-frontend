@@ -155,7 +155,8 @@ class CreationDateSpec
       "There's an error retrieving reportingEntityData" in {
         configuration.defaultCreationDate returns LocalDate.of(2010, 12, 23)
         reportingEntity.queryReportingEntityData(*)(*) returns EitherT[Future, CBCErrors, Option[ReportingEntityData]](
-          Future.successful(Left(UnexpectedState(s"Call to QueryReportingEntity failed"))))
+          Future.successful(Left(UnexpectedState(s"Call to QueryReportingEntity failed")))
+        )
         val cds2 = new CreationDateService(configuration, reportingEntity)
         val result = await(cds2.isDateValid(xmlInfo))
         result shouldBe DateError

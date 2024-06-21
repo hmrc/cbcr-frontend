@@ -32,12 +32,13 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class TestCBCRController @Inject()(
+class TestCBCRController @Inject() (
   val authConnector: AuthConnector,
   testCBCRConnector: TestCBCRConnector,
   fileUploadService: FileUploadService,
-  messagesControllerComponents: MessagesControllerComponents)(
-  implicit ec: ExecutionContext,
+  messagesControllerComponents: MessagesControllerComponents
+)(implicit
+  ec: ExecutionContext,
   cache: CBCSessionCache
 ) extends FrontendController(messagesControllerComponents) with AuthorisedFunctions {
 
@@ -102,8 +103,8 @@ class TestCBCRController @Inject()(
       testCBCRConnector
         .dropReportingEntityDataCollection()
         .map(_ => Ok("Reporting entity data collection dropped"))
-        .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity data collection dropped")
+        .recover { case UpstreamErrorResponse.Upstream4xxResponse(_) =>
+          Ok("Reporting entity data collection dropped")
         }
     }
   }
@@ -125,8 +126,8 @@ class TestCBCRController @Inject()(
             case _            => Ok("Something went wrong while deleting EntityReportingPeriod for the ReportingEntity")
           }
         }
-        .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
+        .recover { case UpstreamErrorResponse.Upstream4xxResponse(_) =>
+          Ok("Reporting entity not found")
         }
     }
   }
@@ -143,8 +144,8 @@ class TestCBCRController @Inject()(
               case _            => Ok("Something went wrong")
             }
           }
-          .recover {
-            case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
+          .recover { case UpstreamErrorResponse.Upstream4xxResponse(_) =>
+            Ok("Reporting entity not found")
           }
       }
   }
@@ -160,8 +161,8 @@ class TestCBCRController @Inject()(
             case _            => Ok("Something went wrong")
           }
         }
-        .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
+        .recover { case UpstreamErrorResponse.Upstream4xxResponse(_) =>
+          Ok("Reporting entity not found")
         }
     }
   }
@@ -178,8 +179,8 @@ class TestCBCRController @Inject()(
               case _         => Ok("Something went wrong")
             }
           }
-          .recover {
-            case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
+          .recover { case UpstreamErrorResponse.Upstream4xxResponse(_) =>
+            Ok("Reporting entity not found")
           }
       }
   }
@@ -195,8 +196,8 @@ class TestCBCRController @Inject()(
             case _            => Ok("Something went wrong")
           }
         }
-        .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
+        .recover { case UpstreamErrorResponse.Upstream4xxResponse(_) =>
+          Ok("Reporting entity not found")
         }
     }
   }
@@ -224,8 +225,8 @@ class TestCBCRController @Inject()(
             case _            => Ok("Something went wrong")
           }
         }
-        .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Reporting entity not found")
+        .recover { case UpstreamErrorResponse.Upstream4xxResponse(_) =>
+          Ok("Reporting entity not found")
         }
     }
   }
@@ -253,8 +254,8 @@ class TestCBCRController @Inject()(
             case _         => Ok("Something went wrong")
           }
         }
-        .recover {
-          case UpstreamErrorResponse.Upstream4xxResponse(_) => Ok("Subscription data not found")
+        .recover { case UpstreamErrorResponse.Upstream4xxResponse(_) =>
+          Ok("Subscription data not found")
         }
     }
   }

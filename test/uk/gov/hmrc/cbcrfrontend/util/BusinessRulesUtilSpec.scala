@@ -66,11 +66,15 @@ class BusinessRulesUtilSpec extends AnyWordSpec with Matchers {
     Some(reportingEntity),
     List(
       CbcReports(
-        DocSpec(OECD1, DocRefId(docRefId + "REP").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "REP").get)), None))),
+        DocSpec(OECD1, DocRefId(docRefId + "REP").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "REP").get)), None)
+      )
+    ),
     List(
       AdditionalInfo(
         DocSpec(OECD1, DocRefId(docRefId + "ADD").get, Some(CorrDocRefId(DocRefId(corrDocRefId + "ADD").get)), None),
-        "Some Other Info")),
+        "Some Other Info"
+      )
+    ),
     Some(LocalDate.now()),
     List.empty[String],
     List.empty[String]
@@ -101,7 +105,8 @@ class BusinessRulesUtilSpec extends AnyWordSpec with Matchers {
 
     "Extract all corr doc ref ids should extract every occurrence of corr doc ref id" in {
       BusinessRulesUtil.extractAllCorrDocRefIds(xmlInfo(Some(reportingEntity))) shouldBe List(
-        "GB2016RGXVCBC0000000056CBC40220170311T090000X_7000000002OECD2ENT")
+        "GB2016RGXVCBC0000000056CBC40220170311T090000X_7000000002OECD2ENT"
+      )
       BusinessRulesUtil.extractAllCorrDocRefIds(xmlInfo(None)) shouldBe List()
       BusinessRulesUtil.extractAllCorrDocRefIds(xmlInfo2) shouldBe expectedList
     }

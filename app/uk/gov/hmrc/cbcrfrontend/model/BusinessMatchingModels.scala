@@ -26,7 +26,8 @@ case class EtmpAddress(
   addressLine3: Option[String],
   addressLine4: Option[String],
   postalCode: Option[String],
-  countryCode: String)
+  countryCode: String
+)
 
 object EtmpAddress {
   implicit val bprFormat: OFormat[EtmpAddress] = Json.format[EtmpAddress]

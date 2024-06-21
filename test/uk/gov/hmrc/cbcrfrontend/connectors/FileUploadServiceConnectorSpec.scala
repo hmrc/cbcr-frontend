@@ -47,7 +47,7 @@ class FileUploadServiceConnectorSpec
   override lazy val fakeApplication: Application = new GuiceApplicationBuilder()
     .configure(
       "microservice.services.file-upload-frontend.host" -> "127.0.0.1",
-      "microservice.services.file-upload-frontend.port" -> stubPort,
+      "microservice.services.file-upload-frontend.port" -> stubPort
     )
     .build()
 
@@ -84,7 +84,8 @@ class FileUploadServiceConnectorSpec
           "",
           TIN("", ""),
           FilingType(CBC701),
-          UltimateParentEntity("")),
+          UltimateParentEntity("")
+        ),
         SubmitterInfo("", Some(AgencyBusinessName("")), "", EmailAddress("abc@xyz.com"), Some(Individual)),
         FileInfo(FileId(""), envelopeId, "", "", "", BigDecimal(0), "")
       )
@@ -101,7 +102,8 @@ class FileUploadServiceConnectorSpec
           new MultipartValuePatternBuilder()
             .withBody(equalToJson(Json.toJson(uploadFile.metadata).toString()))
             .build()
-        ))
+        )
+      )
     }
   }
 }

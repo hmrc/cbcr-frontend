@@ -30,8 +30,9 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class FileUploadServiceConnector @Inject()(httpClient: HttpClientV2, servicesConfig: ServicesConfig)(
-  implicit ec: ExecutionContext) {
+class FileUploadServiceConnector @Inject() (httpClient: HttpClientV2, servicesConfig: ServicesConfig)(implicit
+  ec: ExecutionContext
+) {
   private lazy val fusUrl = servicesConfig.baseUrl("file-upload")
   private lazy val fusFeUrl = servicesConfig.baseUrl("file-upload-frontend")
 
@@ -63,7 +64,8 @@ class FileUploadServiceConnector @Inject()(httpClient: HttpClientV2, servicesCon
             Source.single(
               ByteString(Json.toJson(body.metadata).toString().getBytes)
             )
-          ) :: Nil)
+          ) :: Nil
+        )
       )
       .setHeader(("CSRF-token", "nocheck"))
       .execute

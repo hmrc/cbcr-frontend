@@ -94,7 +94,8 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
 
     "throw exception if the connector fails to responds for given request" in {
       connector.getETMPSubscriptionData(*)(*) returns Future.failed(
-        new HttpException("HttpException occurred", HttpStatus.SC_BAD_REQUEST))
+        new HttpException("HttpException occurred", HttpStatus.SC_BAD_REQUEST)
+      )
       intercept[HttpException] {
         await(cbcidService.getETMPSubscriptionData(safeId).value)
       }

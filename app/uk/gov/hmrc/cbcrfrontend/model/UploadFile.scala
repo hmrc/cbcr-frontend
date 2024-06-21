@@ -21,4 +21,5 @@ case class UploadFile(
   fileId: FileId,
   fileName: String,
   contentType: String,
-  metadata: SubmissionMetaData)
+  metadata: SubmissionMetaData
+)

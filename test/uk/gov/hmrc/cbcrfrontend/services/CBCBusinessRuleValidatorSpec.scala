@@ -84,7 +84,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     BusinessPartnerRecord(
       "SAFEID",
       Some(OrganisationResponse("blagh")),
-      EtmpAddress("Line1", None, None, None, Some("TF3 XFE"), "GB")),
+      EtmpAddress("Line1", None, None, None, Some("TF3 XFE"), "GB")
+    ),
     SubscriberContact("Brian", "Lastname", "phonenum", EmailAddress("test@test.com")),
     cbcId,
     Utr("7000000002")
@@ -202,7 +203,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     reportingEntity,
     configuration,
     creationDateService,
-    cache)
+    cache
+  )
 
   def errors[A](s: ValidatedNel[BusinessRuleErrors, A]): List[BusinessRuleErrors] =
     s.fold(errors => errors.toList, _ => fail("Errors expected"))
@@ -254,7 +256,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       val result = await(
         validator
-          .validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)))
+          .validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation))
+      )
       result pipe errors should contain(MultipleFileUploadForSameReportingPeriod)
     }
 
@@ -266,7 +269,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       val result = await(
         validator
-          .validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation)))
+          .validateBusinessRules(multipleSubmissionForSameReportingPeriod, filename, Some(enrol), Some(Organisation))
+      )
 
       result.fold(
         errors => fail(s"Errors were generated ${errors.toList}"),
@@ -978,7 +982,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         result shouldBe Validated.Invalid(
           NonEmptyList(
             CorrMessageRefIdNotAllowedInMessageSpec,
-            List(CorrMessageRefIdNotAllowedInDocSpec, StartDateNotBefore01012016)))
+            List(CorrMessageRefIdNotAllowedInDocSpec, StartDateNotBefore01012016)
+          )
+        )
       }
 
       "the reporting period of a correction does not match the reporting period of original submission" in {
@@ -997,7 +1003,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
         docRefIdService.queryDocRefId(corrDocRefId5)(*) returns Future.successful(Valid)
         reportingEntity.queryReportingEntityData(*)(*) returnsF Some(
-          red.copy(reportingPeriod = Some(LocalDate.of(2016, 3, 31))))
+          red.copy(reportingPeriod = Some(LocalDate.of(2016, 3, 31)))
+        )
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
@@ -1208,13 +1215,16 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
       docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
       docRefIdService.queryDocRefId(
-        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ENTDeletion").get)(*) returns Future
+        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ENTDeletion").get
+      )(*) returns Future
         .successful(DoesNotExist)
       docRefIdService.queryDocRefId(
-        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3REP1Deletion").get)(*) returns Future
+        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3REP1Deletion").get
+      )(*) returns Future
         .successful(DoesNotExist)
       docRefIdService.queryDocRefId(
-        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ADDDeletion").get)(*) returns Future
+        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ADDDeletion").get
+      )(*) returns Future
         .successful(DoesNotExist)
       reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF Some(reportEntityData)
       reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(reportEntityDataModel)
@@ -1229,7 +1239,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       val filenameThird = "GB2017RGXLCBC0100000056CBC40120180311T090000X2018Third.xml"
       await(validator.validateBusinessRules(partialDeletionFile, filenameOrig, Some(enrol), Some(Organisation))) pipe
         errors should contain(PartialDeletion)
-      await(validator.validateBusinessRules(anotherPartialDeletion, filenameSecond, Some(enrol), Some(Organisation))) pipe
+      await(
+        validator.validateBusinessRules(anotherPartialDeletion, filenameSecond, Some(enrol), Some(Organisation))
+      ) pipe
         errors should contain(PartialDeletion)
       await(validator.validateBusinessRules(fullDeletion, filenameThird, Some(enrol), Some(Organisation))) pipe
         errors shouldNot contain(PartialDeletion)

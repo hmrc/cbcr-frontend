@@ -86,7 +86,8 @@ class SubscriptionControllerSpec
     BusinessPartnerRecord(
       "SAFEID",
       Some(OrganisationResponse("blagh")),
-      EtmpAddress("Line1", None, None, None, Some("TF3 XFE"), "GB")),
+      EtmpAddress("Line1", None, None, None, Some("TF3 XFE"), "GB")
+    ),
     SubscriberContact("Jimbo", "Jones", "phonenum", EmailAddress("test@test.com")),
     cbcId,
     Utr("7000000002")
@@ -314,23 +315,26 @@ class SubscriptionControllerSpec
         firstName = "Dave",
         lastName = "Smith",
         phoneNumber = "0207456789",
-        email = EmailAddress("Bob@bob.com"))
+        email = EmailAddress("Bob@bob.com")
+      )
       val dataSeq = Seq(
         "firstName"   -> sData.firstName,
         "lastName"    -> sData.lastName,
         "phoneNumber" -> sData.phoneNumber,
-        "email"       -> sData.email.toString,
+        "email"       -> sData.email.toString
       )
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       cbcIdService.subscribe(*)(*) returnsF cbcId.get
       subService.saveSubscriptionData(any[SubscriptionDetails])(*) raises UnexpectedState(
-        "return 500 when the SubscriptionDataService errors")
+        "return 500 when the SubscriptionDataService errors"
+      )
       subService.clearSubscriptionData(*)(*) returnsF None
       cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(None)
       cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
-        EtmpAddress("Line1", None, None, None, None, "GB"))
+        EtmpAddress("Line1", None, None, None, None, "GB")
+      )
       cache.read[Utr](Utr.format, *, *) returnsF Utr("700000002")
       cache.readOption[GGId](GGId.format, *, *) returns Future.successful(Some(GGId("ggid", "type")))
       auditMock.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
@@ -346,7 +350,7 @@ class SubscriptionControllerSpec
         "firstName"   -> sData.firstName,
         "lastName"    -> sData.lastName,
         "phoneNumber" -> sData.phoneNumber,
-        "email"       -> sData.email.toString,
+        "email"       -> sData.email.toString
       )
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       cache.read[SubscriptionDetails](SubscriptionDetails.subscriptionDetailsFormat, *, *) returnsF subscriptionDetails
@@ -355,7 +359,8 @@ class SubscriptionControllerSpec
       cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
-        EtmpAddress("Line1", None, None, None, None, "GB"))
+        EtmpAddress("Line1", None, None, None, None, "GB")
+      )
       cache.read[Utr](Utr.format, *, *) returnsF Utr("700000002")
       status(controller.submitSubscriptionData(fakeRequest)) shouldBe Status.INTERNAL_SERVER_ERROR
       subService.clearSubscriptionData(*)(*) wasNever called
@@ -368,7 +373,7 @@ class SubscriptionControllerSpec
         "firstName"   -> sData.firstName,
         "lastName"    -> sData.lastName,
         "phoneNumber" -> sData.phoneNumber,
-        "email"       -> sData.email.toString,
+        "email"       -> sData.email.toString
       )
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       subService.saveSubscriptionData(any[SubscriptionDetails])(*) raises UnexpectedState("oops")
@@ -377,7 +382,8 @@ class SubscriptionControllerSpec
       cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
-        EtmpAddress("Line1", None, None, None, None, "GB"))
+        EtmpAddress("Line1", None, None, None, None, "GB")
+      )
       cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(None)
       cache.read[Utr](Utr.format, *, *) returnsF Utr("123456789")
       cache.readOption[GGId](GGId.format, *, *) returns Future.successful(Some(GGId("ggid", "type")))
@@ -395,7 +401,7 @@ class SubscriptionControllerSpec
         "firstName"   -> sData.firstName,
         "lastName"    -> sData.lastName,
         "phoneNumber" -> sData.phoneNumber,
-        "email"       -> sData.email.toString,
+        "email"       -> sData.email.toString
       )
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       subService.saveSubscriptionData(any[SubscriptionDetails])(*) returnsF "done"
@@ -405,7 +411,8 @@ class SubscriptionControllerSpec
       cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
-        EtmpAddress("Line1", None, None, None, None, "GB"))
+        EtmpAddress("Line1", None, None, None, None, "GB")
+      )
       cache.read[Utr](Utr.format, *, *) returnsF Utr("123456789")
       cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(None)
       cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF cbcId.getOrElse(fail("aslkjfd"))
@@ -428,7 +435,7 @@ class SubscriptionControllerSpec
         "firstName"   -> sData.firstName,
         "lastName"    -> sData.lastName,
         "phoneNumber" -> sData.phoneNumber,
-        "email"       -> sData.email.toString,
+        "email"       -> sData.email.toString
       )
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       cache.readOption[GGId](GGId.format, *, *) returns Future.successful(Some(GGId("ggid", "type")))
@@ -438,7 +445,8 @@ class SubscriptionControllerSpec
       cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
-        EtmpAddress("Line1", None, None, None, None, "GB"))
+        EtmpAddress("Line1", None, None, None, None, "GB")
+      )
       cache.read[Utr](Utr.format, *, *) returnsF Utr("123456789")
       cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(None)
       cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF cbcId.getOrElse(fail("kajsjdf"))
@@ -461,7 +469,7 @@ class SubscriptionControllerSpec
         "firstName"   -> sData.firstName,
         "lastName"    -> sData.lastName,
         "phoneNumber" -> sData.phoneNumber,
-        "email"       -> sData.email.toString,
+        "email"       -> sData.email.toString
       )
       val fakeRequest = addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(dataSeq: _*))
       cache.readOption[Subscribed.type](Subscribed.format, *, *) returns Future.successful(Some(Subscribed))
@@ -594,7 +602,8 @@ class SubscriptionControllerSpec
       cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returnsF BusinessPartnerRecord(
         "safeid",
         None,
-        EtmpAddress("Line1", None, None, None, None, "GB"))
+        EtmpAddress("Line1", None, None, None, None, "GB")
+      )
       cache.read[CBCId](CBCId.cbcIdFormat, *, *) returnsF CBCId("XGCBC0000000001").getOrElse(fail("lsadkjf"))
       cbcIdService.updateETMPSubscriptionData(*, *)(*) returnsF UpdateResponse(LocalDateTime.now())
       subService.updateSubscriptionData(*, *)(*) returnsF "Ok"

@@ -26,8 +26,9 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TaxEnrolmentsConnector @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(
-  implicit ec: ExecutionContext) {
+class TaxEnrolmentsConnector @Inject() (http: HttpClient, servicesConfig: ServicesConfig)(implicit
+  ec: ExecutionContext
+) {
   private val url = servicesConfig.baseUrl("tax-enrolments")
 
   def deEnrol(implicit hc: HeaderCarrier): Future[HttpResponse] =
@@ -49,6 +50,7 @@ class TaxEnrolmentsConnector @Inject()(http: HttpClient, servicesConfig: Service
             )
           )
         ),
-        "verifiers" -> JsArray())
+        "verifiers" -> JsArray()
+      )
     )
 }

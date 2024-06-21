@@ -22,7 +22,8 @@ case class SummaryData(
   businessPartnerRecord: BusinessPartnerRecord,
   submissionMetaData: SubmissionMetaData,
   xmlInfo: CompleteXMLInfo,
-  doesCreationTimeStampHaveMillis: Boolean)
+  doesCreationTimeStampHaveMillis: Boolean
+)
 
 object SummaryData {
   implicit val format: OFormat[SummaryData] = Json.format[SummaryData]

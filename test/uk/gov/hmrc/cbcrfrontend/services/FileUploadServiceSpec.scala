@@ -60,7 +60,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
       "",
       TIN("", ""),
       FilingType(CBC701),
-      UltimateParentEntity("")),
+      UltimateParentEntity("")
+    ),
     SubmitterInfo("", Some(AgencyBusinessName("")), "", EmailAddress("abc@xyz.com"), Some(Individual)),
     FileInfo(FileId(""), envelopeId, "", "", "", BigDecimal(0), "")
   )
@@ -76,7 +77,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
         FileNameError("test found", "test expected"),
         InvalidXMLError("test xml error"),
         AdditionalInfoDRINotFound("test firstCdri", "test missingCdri")
-      ))
+      )
+    )
   )
 
   private val clock = Clock.fixed(Instant.parse("2014-12-22T10:15:30Z"), ZoneId.of("UTC"))
@@ -86,7 +88,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
   private val envelopeRequestJson = Json
     .toJson(
-      EnvelopeRequest(s"http://cbcr-backend/cbcr/file-upload-response", expiryDateString, MetaData(), Constraints()))
+      EnvelopeRequest(s"http://cbcr-backend/cbcr/file-upload-response", expiryDateString, MetaData(), Constraints())
+    )
     .as[JsObject]
 
   private val uploadFileBody = UploadFile(
@@ -118,7 +121,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
       clock,
       mockUUIDGenerator,
       mockFileUploadServiceConnector,
-      mockCBCRConnector)
+      mockCBCRConnector
+    )
 
   "The FileUploadService" when {
     "createEnvelope is called" should {
@@ -126,7 +130,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
       "return successful response with envelope ID" in {
         mockFileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequestJson)) returns Future.successful(
-          HttpResponse(OK, "", Map(LOCATION -> Seq(s"envelopes/$envelopeIdString"))))
+          HttpResponse(OK, "", Map(LOCATION -> Seq(s"envelopes/$envelopeIdString")))
+        )
 
         val response = await(fileUploadService.createEnvelope.value)
 
@@ -135,7 +140,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
       "return Left(UnexpectedState) when response LOCATION header is missing" in {
         mockFileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequestJson)) returns Future.successful(
-          HttpResponse(OK, ""))
+          HttpResponse(OK, "")
+        )
 
         val response = await(fileUploadService.createEnvelope.value)
 
@@ -144,7 +150,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
       "return Left(UnexpectedState) when response LOCATION header is invalid" in {
         mockFileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequestJson)) returns Future.successful(
-          HttpResponse(OK, "", Map(LOCATION -> Seq("invalid"))))
+          HttpResponse(OK, "", Map(LOCATION -> Seq("invalid")))
+        )
 
         val response = await(fileUploadService.createEnvelope.value)
 
@@ -165,7 +172,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
              |""".stripMargin
 
         mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(
-          HttpResponse(OK, fileUploadResponseJson))
+          HttpResponse(OK, fileUploadResponseJson)
+        )
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -186,7 +194,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
       "return Right(None) when http status is 204" in {
         mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(
-          HttpResponse(NO_CONTENT, ""))
+          HttpResponse(NO_CONTENT, "")
+        )
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -195,7 +204,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
       "return Left(UnexpectedState) for any other http status" in {
         mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(
-          HttpResponse(otherHttpStatus, ""))
+          HttpResponse(otherHttpStatus, "")
+        )
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -206,7 +216,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
     "getFile is called" should {
       "return successful response with file" in {
         mockFileUploadServiceConnector.getFile(envelopeIdString, fileIdString) returns Future.successful(
-          HttpResponse(OK, ""))
+          HttpResponse(OK, "")
+        )
 
         val response = await(fileUploadService.getFile(envelopeIdString, fileIdString).value)
 
@@ -215,7 +226,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
       "return Left(UnexpectedState) for any other http status" in {
         mockFileUploadServiceConnector.getFile(envelopeIdString, fileIdString) returns Future.successful(
-          HttpResponse(otherHttpStatus, ""))
+          HttpResponse(otherHttpStatus, "")
+        )
 
         val fileUploadService =
           new FileUploadService(
@@ -224,13 +236,16 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
             clock,
             mockUUIDGenerator,
             mockFileUploadServiceConnector,
-            mockCBCRConnector)
+            mockCBCRConnector
+          )
 
         val response = await(fileUploadService.getFile(envelopeIdString, fileIdString).value)
 
         response shouldBe Left(
           UnexpectedState(
-            s"Failed to retrieve file $fileIdString from envelope $envelopeId - received $otherHttpStatus response"))
+            s"Failed to retrieve file $fileIdString from envelope $envelopeId - received $otherHttpStatus response"
+          )
+        )
       }
     }
 
@@ -250,7 +265,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
             |}
             |""".stripMargin
         mockFileUploadServiceConnector.getFileMetaData(envelopeIdString, fileIdString) returns Future.successful(
-          HttpResponse(OK, fileMetadataJson))
+          HttpResponse(OK, fileMetadataJson)
+        )
 
         val response = await(fileUploadService.getFileMetaData(envelopeIdString, fileIdString).value)
 
@@ -259,7 +275,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
       "return Left(UnexpectedState) for other http status" in {
         mockFileUploadServiceConnector.getFileMetaData(envelopeIdString, fileIdString) returns Future.successful(
-          HttpResponse(otherHttpStatus, ""))
+          HttpResponse(otherHttpStatus, "")
+        )
 
         val response = await(fileUploadService.getFileMetaData(envelopeIdString, fileIdString).value)
 
@@ -272,7 +289,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
         mockFileUploadServiceConnector.uploadFile(uploadFileBody) returns Future.successful(HttpResponse(CREATED, ""))
 
         mockFileUploadServiceConnector.routeEnvelopeRequest(routeEnvelopeRequest) returns Future.successful(
-          HttpResponse(CREATED, "route-envelope-response"))
+          HttpResponse(CREATED, "route-envelope-response")
+        )
 
         val response = await(fileUploadService.uploadMetadataAndRoute(metadata).value)
 
@@ -283,12 +301,14 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
         mockFileUploadServiceConnector.uploadFile(uploadFileBody) returns Future.successful(HttpResponse(CREATED, ""))
 
         mockFileUploadServiceConnector.routeEnvelopeRequest(routeEnvelopeRequest) returns Future.successful(
-          HttpResponse(otherHttpStatus, ""))
+          HttpResponse(otherHttpStatus, "")
+        )
 
         val response = await(fileUploadService.uploadMetadataAndRoute(metadata).value)
 
         response shouldBe Left(
-          UnexpectedState(s"[FileUploadService][uploadMetadataAndRoute] Failed to create route request, received 500"))
+          UnexpectedState(s"[FileUploadService][uploadMetadataAndRoute] Failed to create route request, received 500")
+        )
       }
     }
 
@@ -317,16 +337,16 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
         response shouldBe
           "xmlError.header \n\n" +
-            " test error 1\n" +
-            "test error 2\n" +
-            "test error 3\r\n" +
-            "error.TestDataError\r\n" +
-            "Fatal Schema Error\r\n" +
-            "File test type is an invalid file type\r\n" +
-            "messageRefIdError.Duplicate,error.FileNameError1 \r\n" +
-            " error.FileNameError2 test found \r\n" +
-            " error.FileNameError3 test expected,InvalidXMLError: test xml error,error.AdditionalInfoDRINotFound1 test missingCdri error.AdditionalInfoDRINotFound2 \r\n" +
-            " error.AdditionalInfoDRINotFound3 test firstCdri error.AdditionalInfoDRINotFound4"
+          " test error 1\n" +
+          "test error 2\n" +
+          "test error 3\r\n" +
+          "error.TestDataError\r\n" +
+          "Fatal Schema Error\r\n" +
+          "File test type is an invalid file type\r\n" +
+          "messageRefIdError.Duplicate,error.FileNameError1 \r\n" +
+          " error.FileNameError2 test found \r\n" +
+          " error.FileNameError3 test expected,InvalidXMLError: test xml error,error.AdditionalInfoDRINotFound1 test missingCdri error.AdditionalInfoDRINotFound2 \r\n" +
+          " error.AdditionalInfoDRINotFound3 test firstCdri error.AdditionalInfoDRINotFound4"
       }
     }
 
@@ -345,16 +365,16 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
         text shouldBe
           "xmlError.header \n\n" +
-            " test error 1\n" +
-            "test error 2\n" +
-            "test error 3\n" +
-            "error.TestDataError\n" +
-            "Fatal Schema Error\n" +
-            "File test type is an invalid file type\n" +
-            "messageRefIdError.Duplicate,error.FileNameError1 \n" +
-            " error.FileNameError2 test found \n" +
-            " error.FileNameError3 test expected,InvalidXMLError: test xml error,error.AdditionalInfoDRINotFound1 test missingCdri error.AdditionalInfoDRINotFound2 \n" +
-            " error.AdditionalInfoDRINotFound3 test firstCdri error.AdditionalInfoDRINotFound4"
+          " test error 1\n" +
+          "test error 2\n" +
+          "test error 3\n" +
+          "error.TestDataError\n" +
+          "Fatal Schema Error\n" +
+          "File test type is an invalid file type\n" +
+          "messageRefIdError.Duplicate,error.FileNameError1 \n" +
+          " error.FileNameError2 test found \n" +
+          " error.FileNameError3 test expected,InvalidXMLError: test xml error,error.AdditionalInfoDRINotFound1 test missingCdri error.AdditionalInfoDRINotFound2 \n" +
+          " error.AdditionalInfoDRINotFound3 test firstCdri error.AdditionalInfoDRINotFound4"
       }
     }
   }

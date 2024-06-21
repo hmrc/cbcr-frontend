@@ -57,7 +57,7 @@ class XmlInfoExtract extends Logging {
 
     def extractMessageSpec =
       (cbc \ "MessageSpec").iterator
-        .map(ms => {
+        .map { ms =>
           val msgRefId = (ms \ "MessageRefId").text
           val receivingCountry = (ms \ "ReceivingCountry").text
           val sendingEntityIn = (ms \ "SendingEntityIN").text
@@ -66,7 +66,7 @@ class XmlInfoExtract extends Logging {
           val reportingPeriod = (ms \ "ReportingPeriod").text
           val corrMsgRefId = (ms \ "CorrMessageRefId").textOption
           RawMessageSpec(msgRefId, receivingCountry, sendingEntityIn, timestamp, reportingPeriod, msgType, corrMsgRefId)
-        })
+        }
         .toList
         .headOption
         .getOrElse(RawMessageSpec("", "", "", "", "", None, None))
@@ -79,35 +79,31 @@ class XmlInfoExtract extends Logging {
         }
 
       (cbcBody \ "ReportingEntity").iterator
-        .map(re => {
+        .map { re =>
           val tin = (re \ "Entity" \ "TIN").text
           val tinIB = (re \ "Entity" \ "TIN") \@ "issuedBy"
           val name = (re \ "Entity" \ "Name").text
           val city = getAddressCity((re \ "Entity" \ "Address").headOption)
           val rr = (re \ "ReportingRole").text
-          val ds = getDocSpec((re \ "DocSpec").head) //DocSpec is required in ReportingEntity so this will exist!
+          val ds = getDocSpec((re \ "DocSpec").head) // DocSpec is required in ReportingEntity so this will exist!
           val startDate = (re \ "ReportingPeriod" \ "StartDate").text
           val endDate = (re \ "ReportingPeriod" \ "EndDate").text
           RawReportingEntity(rr, ds, tin, tinIB, name, city, startDate, endDate)
-        })
+        }
         .toList
         .headOption
     }
 
     def extractCbcReports =
       (cbcReports \ "DocSpec").iterator
-        .map(
-          ds => RawCbcReports(getDocSpec(ds))
-        )
+        .map(ds => RawCbcReports(getDocSpec(ds)))
         .toList
 
     def extractAdditionalInfo =
-      (cbcBody \ "AdditionalInfo").iterator
-        .map(ds => {
-          val otherInfo = (ds \ "OtherInfo").text
-          RawAdditionalInfo(getDocSpec((ds \ "DocSpec").head), otherInfo)
-        })
-        .toList
+      (cbcBody \ "AdditionalInfo").iterator.map { ds =>
+        val otherInfo = (ds \ "OtherInfo").text
+        RawAdditionalInfo(getDocSpec((ds \ "DocSpec").head), otherInfo)
+      }.toList
 
     def extractCbcVal(input: File) = {
       val xmlStreamReader = xmlInputFactory.createXMLStreamReader(input)
@@ -148,13 +144,13 @@ class XmlInfoExtract extends Logging {
     def countBodies(input: File) = {
       val xmlStreamReader = xmlInputFactory.createXMLStreamReader(input)
       var count = 0
-      try {
+      try
         while (xmlStreamReader.hasNext) {
           val event = xmlStreamReader.next()
           if (event == XMLStreamConstants.START_ELEMENT && xmlStreamReader.getLocalName.equalsIgnoreCase("CbcBody"))
             count = count + 1
         }
-      } catch {
+      catch {
         case NonFatal(e) => logger.warn(s"Error counting CBCBody elements: ${e.getMessage}")
       }
       count
@@ -166,22 +162,19 @@ class XmlInfoExtract extends Logging {
         .toList
 
     def extractCurrencyCodes =
-      (cbcReports \ "Summary").iterator
-        .map(su => {
-          val unrelated = (su \ "Revenues" \ "Unrelated") \@ "currCode"
-          val related = (su \ "Revenues" \ "Related") \@ "currCode"
-          val total = (su \ "Revenues" \ "Total") \@ "currCode"
-          val profitOrLoss = (su \ "ProfitOrLoss") \@ "currCode"
-          val taxPaid = (su \ "TaxPaid") \@ "currCode"
-          val taxAccrued = (su \ "TaxAccrued") \@ "currCode"
-          val capital = (su \ "Capital") \@ "currCode"
-          val earnings = (su \ "Earnings") \@ "currCode"
-          val assets = (su \ "Assets") \@ "currCode"
+      (cbcReports \ "Summary").iterator.map { su =>
+        val unrelated = (su \ "Revenues" \ "Unrelated") \@ "currCode"
+        val related = (su \ "Revenues" \ "Related") \@ "currCode"
+        val total = (su \ "Revenues" \ "Total") \@ "currCode"
+        val profitOrLoss = (su \ "ProfitOrLoss") \@ "currCode"
+        val taxPaid = (su \ "TaxPaid") \@ "currCode"
+        val taxAccrued = (su \ "TaxAccrued") \@ "currCode"
+        val capital = (su \ "Capital") \@ "currCode"
+        val earnings = (su \ "Earnings") \@ "currCode"
+        val assets = (su \ "Assets") \@ "currCode"
 
-          RawCurrencyCodes(
-            List(unrelated, related, total, profitOrLoss, taxPaid, taxAccrued, capital, earnings, assets))
-        })
-        .toList
+        RawCurrencyCodes(List(unrelated, related, total, profitOrLoss, taxPaid, taxAccrued, capital, earnings, assets))
+      }.toList
 
     val ms = extractMessageSpec
 
