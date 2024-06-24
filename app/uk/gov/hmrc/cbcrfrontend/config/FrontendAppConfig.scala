@@ -23,7 +23,7 @@ import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class FrontendAppConfig @Inject()(val config: Configuration) {
+class FrontendAppConfig @Inject() (val config: Configuration) {
   val cbcrFrontendHost: String = config.load[String](s"cbcr-frontend.host")
   val fileUploadMaxPolls: Int = config.load[Int]("maximum-js-polls")
 

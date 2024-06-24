@@ -22,19 +22,24 @@ import play.api.libs.json._
 
 import java.time.LocalDate
 
-/**
-  * This Data is stored in our mongo store on initial submission of an XML
-  * On subsequent update/delete submissions, if the [[ReportingEntity]] section is missing, we can use the [[DocRefId]]
-  * from one of the other sections ([[CbcReports]]/[[AdditionalInfo]]) to query this data, and fill in the missing
-  * [[Utr]], [[UltimateParentEntity]] and [[FilingType]]
-  * If the [[ReportingEntity]] is included in an update, we need to update our data in our mongo store
+/** This Data is stored in our mongo store on initial submission of an XML On subsequent update/delete submissions, if
+  * the [[ReportingEntity]] section is missing, we can use the [[DocRefId]] from one of the other sections
+  * ([[CbcReports]]/[[AdditionalInfo]]) to query this data, and fill in the missing [[Utr]], [[UltimateParentEntity]]
+  * and [[FilingType]] If the [[ReportingEntity]] is included in an update, we need to update our data in our mongo
+  * store
   *
-  * @param cbcReportsDRI The [[DocRefId]] from the [[CbcReports]] section of the XML document
-  * @param additionalInfoDRI The [[DocRefId]] from the [[AdditionalInfo]] section of the XML document
-  * @param reportingEntityDRI The [[DocRefId]] from the [[ReportingEntity]] section of the XML document
-  * @param tin The [[Utr]] (or other tax identifier) from the [[ReportingEntity]] section of the XML document
-  * @param ultimateParentEntity The [[UltimateParentEntity]] from the [[ReportingEntity]] section of the XML document
-  * @param reportingRole The [[ReportingRole]] from the [[ReportingEntity]] section of the XML document
+  * @param cbcReportsDRI
+  *   The [[DocRefId]] from the [[CbcReports]] section of the XML document
+  * @param additionalInfoDRI
+  *   The [[DocRefId]] from the [[AdditionalInfo]] section of the XML document
+  * @param reportingEntityDRI
+  *   The [[DocRefId]] from the [[ReportingEntity]] section of the XML document
+  * @param tin
+  *   The [[Utr]] (or other tax identifier) from the [[ReportingEntity]] section of the XML document
+  * @param ultimateParentEntity
+  *   The [[UltimateParentEntity]] from the [[ReportingEntity]] section of the XML document
+  * @param reportingRole
+  *   The [[ReportingRole]] from the [[ReportingEntity]] section of the XML document
   */
 case class ReportingEntityData(
   cbcReportsDRI: NonEmptyList[DocRefId],
@@ -46,7 +51,8 @@ case class ReportingEntityData(
   creationDate: Option[LocalDate],
   reportingPeriod: Option[LocalDate],
   currencyCode: Option[String],
-  entityReportingPeriod: Option[EntityReportingPeriod])
+  entityReportingPeriod: Option[EntityReportingPeriod]
+)
 
 object ReportingEntityData {
   implicit def formatNEL[A: Format]: Format[NonEmptyList[A]] = new Format[NonEmptyList[A]] {
@@ -59,7 +65,8 @@ object ReportingEntityData {
           NonEmptyList.fromList(l) match {
             case None    => JsError(s"Unable to serialise $json as NonEmptyList")
             case Some(a) => JsSuccess(a)
-        })
+          }
+        )
         .orElse {
           json.validate[A].map(a => NonEmptyList(a, Nil))
         }

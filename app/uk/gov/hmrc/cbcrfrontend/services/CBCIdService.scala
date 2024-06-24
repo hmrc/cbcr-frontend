@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
-class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
+class CBCIdService @Inject() (connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
   lazy val logger: Logger = Logger(this.getClass)
 
@@ -45,11 +45,11 @@ class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
             case _         => None
           }
         }
-        .recover {
-          case NonFatal(t) =>
-            logger.error("Failed to call subscribe", t)
-            None
-        })
+        .recover { case NonFatal(t) =>
+          logger.error("Failed to call subscribe", t)
+          None
+        }
+    )
 
   def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): OptionT[Future, ETMPSubscription] =
     OptionT(
@@ -65,10 +65,12 @@ class CBCIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
             case _ =>
               None
           }
-        })
+        }
+    )
 
-  def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(
-    implicit hc: HeaderCarrier): ServiceResponse[UpdateResponse] =
+  def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(implicit
+    hc: HeaderCarrier
+  ): ServiceResponse[UpdateResponse] =
     OptionT(connector.updateETMPSubscriptionData(safeId, correspondenceDetails).map { response =>
       Option(response.json).flatMap(_.validate[UpdateResponse].asOpt)
     }).toRight(UnexpectedState("Failed to update ETMP subscription data"): CBCErrors)

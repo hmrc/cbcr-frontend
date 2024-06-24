@@ -32,7 +32,8 @@ case class ReportingEntityDataModel(
   reportingPeriod: Option[LocalDate],
   oldModel: Boolean,
   currencyCode: Option[String],
-  entityReportingPeriod: Option[EntityReportingPeriod])
+  entityReportingPeriod: Option[EntityReportingPeriod]
+)
 
 object ReportingEntityDataModel {
   implicit def formatNEL: Format[NonEmptyList[DocRefId]] =

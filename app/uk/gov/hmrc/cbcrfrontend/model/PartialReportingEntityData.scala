@@ -30,7 +30,8 @@ case class PartialReportingEntityData(
   creationDate: Option[LocalDate],
   reportingPeriod: Option[LocalDate],
   currencyCode: Option[String],
-  entityReportingPeriod: Option[EntityReportingPeriod])
+  entityReportingPeriod: Option[EntityReportingPeriod]
+)
 
 object PartialReportingEntityData {
   implicit val format: OFormat[PartialReportingEntityData] = Json.format[PartialReportingEntityData]

@@ -49,7 +49,7 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
 @Singleton
-class FileUploadController @Inject()(
+class FileUploadController @Inject() (
   val authConnector: AuthConnector,
   schemaValidator: CBCRXMLValidator,
   businessRuleValidator: CBCBusinessRuleValidator,
@@ -59,7 +59,8 @@ class FileUploadController @Inject()(
   messagesControllerComponents: MessagesControllerComponents,
   views: Views,
   cache: CBCSessionCache,
-  config: Configuration)(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
+  config: Configuration
+)(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions {
 
   implicit val credentialsFormat: OFormat[Credentials] = uk.gov.hmrc.cbcrfrontend.controllers.credentialsFormat
@@ -73,15 +74,16 @@ class FileUploadController @Inject()(
     for {
       envelope <- fileUploadService.createEnvelope
       envelopeId <- cache
-                     .create[EnvelopeId](envelope)
-                     .toRight(UnexpectedState("Unable to get envelopeId"))
+                      .create[EnvelopeId](envelope)
+                      .toRight(UnexpectedState("Unable to get envelopeId"))
       fileId <- cache
-                 .create[FileId](FileId(UUID.randomUUID.toString))
-                 .toRight(UnexpectedState("Unable to get FileId"): CBCErrors)
-      successRedirect = s"$hostName${routes.FileUploadController.checkFileUploadStatus(envelopeId.value, fileId.value, hasSeen = "false").url}"
+                  .create[FileId](FileId(UUID.randomUUID.toString))
+                  .toRight(UnexpectedState("Unable to get FileId"): CBCErrors)
+      successRedirect =
+        s"$hostName${routes.FileUploadController.checkFileUploadStatus(envelopeId.value, fileId.value, hasSeen = "false").url}"
       fileUploadUrl = s"$fileUploadHost/file-upload/upload/envelopes/$envelopeId/files/$fileId?" +
-        s"redirect-success-url=$successRedirect&" +
-        s"redirect-error-url=$fileUploadErrorRedirectUrl"
+                        s"redirect-success-url=$successRedirect&" +
+                        s"redirect-error-url=$fileUploadErrorRedirectUrl"
     } yield fileUploadUrl
 
   val chooseXMLFile: Action[AnyContent] = Action.async { implicit request =>
@@ -90,7 +92,8 @@ class FileUploadController @Inject()(
         errorRedirect(
           UnexpectedState("Unable to query AffinityGroup"),
           views.notAuthorisedIndividual,
-          views.errorTemplate)
+          views.errorTemplate
+        )
       case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
         Ok(views.unregisteredGGAccount())
       case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals)
@@ -102,13 +105,15 @@ class FileUploadController @Inject()(
     }
   }
 
-  /**
-    * Prepare the page to use to embedded the poller js function. This will have been the redirect url passed to
+  /** Prepare the page to use to embedded the poller js function. This will have been the redirect url passed to
     * FileUpload during the client side POST.
     *
-    * @param envelopeId the envelope just uploaded to.
-    * @param fileId the Id of the Xml File just uploaded.
-    * @return the view to display the poller.
+    * @param envelopeId
+    *   the envelope just uploaded to.
+    * @param fileId
+    *   the Id of the Xml File just uploaded.
+    * @return
+    *   the view to display the poller.
     */
   def fileUploadProgress(envelopeId: String, fileId: String, hasSeen: String): Action[AnyContent] = Action.async {
     implicit request =>
@@ -119,8 +124,11 @@ class FileUploadController @Inject()(
             if (e.value != envelopeId) {
               logger.error("BAD_ENVELOPE_ID")
               cache.clear
-              Left(UnexpectedState(
-                s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"))
+              Left(
+                UnexpectedState(
+                  s"The envelopeId in the cache was: ${e.value} while the progress request was for $envelopeId"
+                )
+              )
             } else {
               Right(Ok(views.fileUploadProgress(envelopeId, fileId, hostName, hasSeen)))
             }
@@ -141,15 +149,17 @@ class FileUploadController @Inject()(
               case _                     => InternalServerError
             }
           case _ => NoContent
-      })
+        }
+      )
       .getOrElse(NoContent)
 
-  private def getMetaData(envelopeId: String, fileId: String)(
-    implicit hc: HeaderCarrier): ServiceResponse[FileMetadata] =
+  private def getMetaData(envelopeId: String, fileId: String)(implicit
+    hc: HeaderCarrier
+  ): ServiceResponse[FileMetadata] =
     for {
       metadata <- fileUploadService
-                   .getFileMetaData(envelopeId, fileId)
-                   .subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
+                    .getFileMetaData(envelopeId, fileId)
+                    .subflatMap(_.toRight(UnexpectedState("MetaData File not found")))
       _ <- EitherT.cond[Future](metadata.name.toLowerCase.endsWith(".xml"), (), InvalidFileType(metadata.name))
       _ <- EitherT.right(cache.save(metadata))
     } yield metadata
@@ -157,17 +167,18 @@ class FileUploadController @Inject()(
   def validateBusinessRules(
     file_metadata: (File, FileMetadata),
     enrolment: Option[CBCEnrolment],
-    affinityGroup: Option[AffinityGroup])(
-    implicit hc: HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors], CompleteXMLInfo]] = {
+    affinityGroup: Option[AffinityGroup]
+  )(implicit hc: HeaderCarrier): ServiceResponse[Either[NonEmptyList[BusinessRuleErrors], CompleteXMLInfo]] = {
     val startValidation = LocalDateTime.now()
 
     val rawXmlInfo = xmlExtractor.extract(file_metadata._1)
 
     val result = for {
       xmlInfo <- EitherT(
-                  businessRuleValidator
-                    .validateBusinessRules(rawXmlInfo, file_metadata._2.name, enrolment, affinityGroup)
-                    .map(_.toEither))
+                   businessRuleValidator
+                     .validateBusinessRules(rawXmlInfo, file_metadata._2.name, enrolment, affinityGroup)
+                     .map(_.toEither)
+                 )
       completeXI <- EitherT(businessRuleValidator.recoverReportingEntity(xmlInfo).map(_.toEither))
     } yield completeXI
 
@@ -175,11 +186,13 @@ class FileUploadController @Inject()(
       case Failure(_) =>
         val endValidation = LocalDateTime.now()
         logger.info(
-          s"File validation failed for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
+          s"File validation failed for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds "
+        )
       case Success(_) =>
         val endValidation = LocalDateTime.now()
         logger.info(
-          s"File validation succeeded for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds ")
+          s"File validation succeeded for file ${file_metadata._2.id} (${calculateFileSize(file_metadata._2)}kb) in ${Duration.between(startValidation, endValidation).toMillis} milliseconds "
+        )
     }
 
     EitherT.right(
@@ -188,7 +201,8 @@ class FileUploadController @Inject()(
           errors => cache.save(AllBusinessRuleErrors(errors.toList)).map(_ => Left(errors)),
           info => cache.save(info).flatMap(_ => cache.save(Hash(sha256Hash(file_metadata._1))).map(_ => Right(info)))
         )
-        .flatten)
+        .flatten
+    )
   }
 
   private def calculateFileSize(md: FileMetadata) =
@@ -202,21 +216,22 @@ class FileUploadController @Inject()(
           metadata <- getMetaData(envelopeId, fileId)
           _        <- EitherT.right[CBCErrors](cache.save(metadata))
           _        <- EitherT.right[CBCErrors](cache.save(FileDetails(envelopeId, fileId)))
-          _        <- EitherT.cond[Future](metadata.name.toLowerCase endsWith ".xml", (), InvalidFileType(metadata.name))
+          _ <- EitherT.cond[Future](metadata.name.toLowerCase endsWith ".xml", (), InvalidFileType(metadata.name))
           schemaErrors = schemaValidator.validateSchema(file)
           xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
           schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
           _ <- EitherT.right[CBCErrors](cache.save(XMLErrors.errorHandlerToXmlErrors(schemaErrors)))
           _ <- if (!schemaErrors.hasFatalErrors) EitherT.fromEither[Future](().asRight[CBCErrors])
-              else
-                auditFailedSubmission(creds, affinity, enrolment, "schema validation errors").flatMap(_ =>
-                  EitherT.left[Result](Future.successful(FatalSchemaErrors(schemaSize).asInstanceOf[CBCErrors])))
+               else
+                 auditFailedSubmission(creds, affinity, enrolment, "schema validation errors").flatMap(_ =>
+                   EitherT.left[Result](Future.successful(FatalSchemaErrors(schemaSize).asInstanceOf[CBCErrors]))
+                 )
           result <- validateBusinessRules((file, metadata), enrolment, affinity)
           businessSize = result.fold(e => Some(getErrorFileSize(e.toList)), _ => None)
           length = calculateFileSize(metadata)
           _ <- if (schemaErrors.hasErrors) auditFailedSubmission(creds, affinity, enrolment, "schema validation errors")
-              else if (result.isLeft) auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
-              else EitherT.fromEither[Future](().asRight[CBCErrors])
+               else if (result.isLeft) auditFailedSubmission(creds, affinity, enrolment, "business rules errors")
+               else EitherT.fromEither[Future](().asRight[CBCErrors])
           _ = java.nio.file.Files.deleteIfExists(file.toPath)
         } yield {
           logger.info(s"FileUpload succeeded - envelopeId: $envelopeId")
@@ -227,7 +242,9 @@ class FileUploadController @Inject()(
               Some(length),
               schemaSize,
               businessSize,
-              result.map(_.reportingEntity.reportingRole).toOption))
+              result.map(_.reportingEntity.reportingRole).toOption
+            )
+          )
         }
 
         result
@@ -241,10 +258,9 @@ class FileUploadController @Inject()(
               Redirect(routes.SharedController.technicalDifficulties)
           }
           .merge
-          .recover {
-            case NonFatal(e) =>
-              logger.error(e.getMessage, e)
-              Redirect(routes.SharedController.technicalDifficulties)
+          .recover { case NonFatal(e) =>
+            logger.error(e.getMessage, e)
+            Redirect(routes.SharedController.technicalDifficulties)
           }
       case None ~ _ ~ _ => Unauthorized
     }
@@ -359,7 +375,7 @@ class FileUploadController @Inject()(
       }
   }
 
-  //Turn a Case class into a map
+  // Turn a Case class into a map
   private[controllers] def getCCParams(cc: AnyRef): Map[String, String] =
     cc.getClass.getDeclaredFields.foldLeft[Map[String, String]](Map.empty) { (acc, field) =>
       field.setAccessible(true)
@@ -378,11 +394,13 @@ class FileUploadController @Inject()(
       case _     => Json.obj("affinityGroup" -> "none retrieved")
     }
 
-  private def auditDetailErrors(all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors]))(
-    implicit messages: Messages): JsObject =
+  private def auditDetailErrors(
+    all_errors: (Option[AllBusinessRuleErrors], Option[XMLErrors])
+  )(implicit messages: Messages): JsObject =
     (
       all_errors._1.exists(bre => if (bre.errors.isEmpty) false else true),
-      all_errors._2.exists(xml => if (xml.errors.isEmpty) false else true)) match {
+      all_errors._2.exists(xml => if (xml.errors.isEmpty) false else true)
+    ) match {
       case (true, true) =>
         Json.obj(
           "businessRuleErrors" -> Json.toJson(fileUploadService.errorsToMap(all_errors._1.get.errors)),
@@ -391,17 +409,15 @@ class FileUploadController @Inject()(
       case (true, false) =>
         Json.obj("businessRuleErrors" -> Json.toJson(fileUploadService.errorsToMap(all_errors._1.get.errors)))
       case (false, true) => Json.obj("xmlErrors" -> Json.toJson(fileUploadService.errorsToMap(List(all_errors._2.get))))
-      case _             => Json.obj("none"      -> "no business rule or schema errors")
+      case _             => Json.obj("none" -> "no business rule or schema errors")
     }
 
   def auditFailedSubmission(
     creds: Credentials,
     affinity: Option[AffinityGroup],
     enrolment: Option[CBCEnrolment],
-    reason: String)(
-    implicit hc: HeaderCarrier,
-    request: Request[_],
-    messages: Messages): ServiceResponse[AuditResult.Success.type] =
+    reason: String
+  )(implicit hc: HeaderCarrier, request: Request[_], messages: Messages): ServiceResponse[AuditResult.Success.type] =
     for {
       md             <- EitherT.right[CBCErrors](cache.readOption[FileMetadata])
       businessErrors <- EitherT.right[CBCErrors](cache.readOption[AllBusinessRuleErrors])
@@ -411,32 +427,36 @@ class FileUploadController @Inject()(
       u <- EitherT.right[CBCErrors](cache.readOption[Utr])
       utr = if (enrolment.isEmpty) u else Option(enrolment.get.utr)
       result <- EitherT(
-                 audit
-                   .sendExtendedEvent(ExtendedDataEvent(
-                     "Country-By-Country-Frontend",
-                     "CBCRFilingFailed",
-                     detail = Json.obj(
-                       "reason"        -> JsString(reason),
-                       "path"          -> JsString(request.uri),
-                       "file metadata" -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String, String])),
-                       "creds"         -> Json.toJson(creds),
-                       "registration"  -> auditDetailAffinity(affinity.get, cbcId, utr),
-                       "errorTypes"    -> auditDetailErrors((businessErrors, xmlErrors))
-                     )
-                   ))
-                   .map {
-                     case AuditResult.Success => Right(AuditResult.Success)
-                     case AuditResult.Failure(msg, _) =>
-                       Left(UnexpectedState(s"Unable to audit a failed submission: $msg").asInstanceOf[CBCErrors])
-                     case AuditResult.Disabled => Right(AuditResult.Success)
-                   })
+                  audit
+                    .sendExtendedEvent(
+                      ExtendedDataEvent(
+                        "Country-By-Country-Frontend",
+                        "CBCRFilingFailed",
+                        detail = Json.obj(
+                          "reason"        -> JsString(reason),
+                          "path"          -> JsString(request.uri),
+                          "file metadata" -> Json.toJson(md.map(getCCParams).getOrElse(Map.empty[String, String])),
+                          "creds"         -> Json.toJson(creds),
+                          "registration"  -> auditDetailAffinity(affinity.get, cbcId, utr),
+                          "errorTypes"    -> auditDetailErrors((businessErrors, xmlErrors))
+                        )
+                      )
+                    )
+                    .map {
+                      case AuditResult.Success => Right(AuditResult.Success)
+                      case AuditResult.Failure(msg, _) =>
+                        Left(UnexpectedState(s"Unable to audit a failed submission: $msg").asInstanceOf[CBCErrors])
+                      case AuditResult.Disabled => Right(AuditResult.Success)
+                    }
+                )
     } yield result
 
   val unregisteredGGAccount: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       fileUploadUrl()
         .map(fuu =>
-          Ok(views.chooseFile(new URI(fuu), s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation))))
+          Ok(views.chooseFile(new URI(fuu), s"oecd-${LocalDateTime.now}-cbcr.xml", Some(AffinityGroup.Organisation)))
+        )
         .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
         .merge
     }

@@ -25,7 +25,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TestCBCRConnector @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(implicit ec: ExecutionContext) {
+class TestCBCRConnector @Inject() (http: HttpClient, servicesConfig: ServicesConfig)(implicit ec: ExecutionContext) {
   private val url = s"${servicesConfig.baseUrl("cbcr")}/cbcr"
 
   def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] =
@@ -49,8 +49,9 @@ class TestCBCRConnector @Inject()(http: HttpClient, servicesConfig: ServicesConf
   def dropSubscriptionData()(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.DELETE(s"$url/test-only/deleteSubscription")
 
-  def updateReportingEntityCreationDate(createDate: String, docRefId: String)(
-    implicit hc: HeaderCarrier): Future[HttpResponse] =
+  def updateReportingEntityCreationDate(createDate: String, docRefId: String)(implicit
+    hc: HeaderCarrier
+  ): Future[HttpResponse] =
     http.PUT(s"$url/test-only/updateReportingEntityCreationDate/$createDate/$docRefId", JsNull)
 
   def updateReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
@@ -59,8 +60,9 @@ class TestCBCRConnector @Inject()(http: HttpClient, servicesConfig: ServicesConf
   def deleteReportingEntityCreationDate(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.DELETE(s"$url/test-only/deleteReportingEntityCreationDate/$docRefId")
 
-  def confirmReportingEntityCreationDate(createDate: String, docRefId: String)(
-    implicit hc: HeaderCarrier): Future[HttpResponse] =
+  def confirmReportingEntityCreationDate(createDate: String, docRefId: String)(implicit
+    hc: HeaderCarrier
+  ): Future[HttpResponse] =
     http.PUT(s"$url/test-only/confirmReportingEntityCreationDate/$createDate/$docRefId", JsNull)
 
   def deleteReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =

@@ -26,7 +26,8 @@ case class FileMetadata(
   length: BigDecimal,
   created: String,
   metadata: JsValue,
-  href: String)
+  href: String
+)
 
 object FileMetadata {
   implicit val fileMetadataFormat: OFormat[FileMetadata] = Json.format[FileMetadata]

@@ -46,7 +46,8 @@ class DocRefIdServiceSpec
   "DocRefIdService" should {
     "save a DocRefId in backend CBCR" in {
       connector.docRefIdSave(*)(*) returns Future.successful(
-        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
+        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]])
+      )
       val result = await(docRefIdService.saveDocRefId(docRefId).value)
       result shouldBe None
     }
@@ -67,7 +68,8 @@ class DocRefIdServiceSpec
   "DocRefIdService" should {
     "save a CorrDocRefId in backend CBCR" in {
       connector.corrDocRefIdSave(*, *)(*) returns Future.successful(
-        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
+        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]])
+      )
       val result = await(docRefIdService.saveCorrDocRefID(corrDocRefId, docRefId).value)
       result shouldBe None
     }
@@ -88,21 +90,24 @@ class DocRefIdServiceSpec
   "DocRefIdService" should {
     "return a docRefId valid state from backend CBCR if it exists in the DB" in {
       connector.docRefIdQuery(*)(*) returns Future.successful(
-        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]]))
+        HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]])
+      )
       val result = await(docRefIdService.queryDocRefId(docRefId))
       result shouldBe Valid
     }
 
     "return DoesNotExist error state with message if the docRefId is not found in the DB" in {
       connector.docRefIdQuery(*)(*) returns Future.successful(
-        HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]]))
+        HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]])
+      )
       val result = await(docRefIdService.queryDocRefId(docRefId))
       result shouldBe DoesNotExist
     }
 
     "return an Invalid state of DocRefId if an exception occurs while retrieving " in {
       connector.docRefIdQuery(*)(*) returns Future.successful(
-        HttpResponse(Status.CONFLICT, JsNull, Map.empty[String, Seq[String]]))
+        HttpResponse(Status.CONFLICT, JsNull, Map.empty[String, Seq[String]])
+      )
       val result = await(docRefIdService.queryDocRefId(docRefId))
       result shouldBe Invalid
     }

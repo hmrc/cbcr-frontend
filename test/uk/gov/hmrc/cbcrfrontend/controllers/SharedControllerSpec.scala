@@ -106,7 +106,8 @@ class SharedControllerSpec
 
     "return 400 if the CBCId has been registered but doesnt match the CBCId in the bearer token" in {
       authC.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(
-        Some(CBCEnrolment(CBCId.create(99).getOrElse(fail("bad cbcid")), utr)))
+        Some(CBCEnrolment(CBCId.create(99).getOrElse(fail("bad cbcid")), utr))
+      )
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.BAD_REQUEST
@@ -135,7 +136,8 @@ class SharedControllerSpec
       val result = controller.signOut(fakeRequestSignOut)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result) shouldBe Some(
-        s"http://localhost:9553/bas-gateway/sign-out-without-state?continue=$guidanceUrl")
+        s"http://localhost:9553/bas-gateway/sign-out-without-state?continue=$guidanceUrl"
+      )
     }
   }
 
@@ -187,7 +189,8 @@ class SharedControllerSpec
       cache.readOption[Utr](Utr.format, *, *) returns Future.successful(None)
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts")
-          .withFormUrlEncodedBody("utr" -> "1234567890", "postCode" -> "NOTAPOSTCODE"))
+          .withFormUrlEncodedBody("utr" -> "1234567890", "postCode" -> "NOTAPOSTCODE")
+      )
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
 
@@ -197,14 +200,16 @@ class SharedControllerSpec
         .successful(None)
       cache.readOption[Utr](Utr.format, *, *) returns Future.successful(None)
       val fakeRequestSubscribe = addToken(
-        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "IAMNOTAUTR", "postCode" -> "SW4 6NR"))
+        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "IAMNOTAUTR", "postCode" -> "SW4 6NR")
+      )
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
 
     "return 404 when the utr and postcode are valid but the postcode doesn't match" in {
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
       val fakeRequestSubscribe = addToken(
-        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
+        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
+      )
       cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
       cache.readOption[Utr](Utr.format, *, *) returns Future.successful(None)
@@ -215,7 +220,8 @@ class SharedControllerSpec
 
     "return 303 when we have already used that utr and we are an Organisation" in {
       val fakeRequestSubscribe = addToken(
-        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
+        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
+      )
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
       cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
         .successful(None)
@@ -224,7 +230,8 @@ class SharedControllerSpec
       val response = BusinessPartnerRecord(
         "safeid",
         Some(OrganisationResponse("My Corp")),
-        EtmpAddress("line1", None, None, None, Some("SW46NR"), "GB"))
+        EtmpAddress("line1", None, None, None, Some("SW46NR"), "GB")
+      )
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
       cache.save[BusinessPartnerRecord](*)(BusinessPartnerRecord.format, *, *) returns Future.successful(emptyCacheItem)
       cache.save[Utr](*)(Utr.format, *, *) returns Future.successful(emptyCacheItem)
@@ -238,9 +245,11 @@ class SharedControllerSpec
       val response = BusinessPartnerRecord(
         "safeid",
         Some(OrganisationResponse("My Corp")),
-        EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
+        EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB")
+      )
       val fakeRequestSubscribe = addToken(
-        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
+        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
+      )
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Agent))
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
@@ -257,9 +266,11 @@ class SharedControllerSpec
       val response = BusinessPartnerRecord(
         "safeid",
         Some(OrganisationResponse("My Corp")),
-        EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
+        EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB")
+      )
       val fakeRequestSubscribe = addToken(
-        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
+        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
+      )
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
       cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
@@ -276,9 +287,11 @@ class SharedControllerSpec
       val response = BusinessPartnerRecord(
         "safeid",
         Some(OrganisationResponse("I live far away")),
-        EtmpAddress("Line1", None, None, None, None, "NL"))
+        EtmpAddress("Line1", None, None, None, None, "NL")
+      )
       val fakeRequestSubscribe = addToken(
-        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> ""))
+        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "")
+      )
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
       cache.readOption[BusinessPartnerRecord](BusinessPartnerRecord.format, *, *) returns Future
@@ -295,9 +308,11 @@ class SharedControllerSpec
       val response = BusinessPartnerRecord(
         "safeid",
         Some(OrganisationResponse("My Corp")),
-        EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB"))
+        EtmpAddress("Line1", None, None, None, Some("SW46NR"), "GB")
+      )
       val fakeRequestSubscribe = addToken(
-        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR"))
+        FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
+      )
       authC.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Agent))
       bprKF.checkBPRKnownFacts(*)(*) returnsF response
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subDetails)

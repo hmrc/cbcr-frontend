@@ -76,10 +76,8 @@ package object cbcrfrontend {
   def errorRedirect(
     error: CBCErrors,
     notAuthorisedIndividual: not_authorised_individual,
-    errorTemplate: error_template)(
-    implicit request: Request[_],
-    msgs: Messages,
-    feConfig: FrontendAppConfig): Result = {
+    errorTemplate: error_template
+  )(implicit request: Request[_], msgs: Messages, feConfig: FrontendAppConfig): Result = {
     logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired)
@@ -99,7 +97,7 @@ package object cbcrfrontend {
 
   def sha256Hash(file: File): String = {
     val stream = new FileInputStream(file)
-    try {
+    try
       String.format(
         "%064x",
         new java.math.BigInteger(
@@ -108,16 +106,17 @@ package object cbcrfrontend {
             .getInstance("SHA-256")
             .digest(
               org.apache.commons.io.IOUtils.toByteArray(stream)
-            ))
+            )
+        )
       )
-    } finally {
+    finally
       stream.close()
-    }
   }
 
-  def generateMetadataFile(cache: CBCSessionCache, creds: Credentials)(
-    implicit hc: HeaderCarrier,
-    ec: ExecutionContext): Future[ValidatedNel[ExpiredSession, SubmissionMetaData]] =
+  def generateMetadataFile(cache: CBCSessionCache, creds: Credentials)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[ValidatedNel[ExpiredSession, SubmissionMetaData]] =
     (
       cache.read[BusinessPartnerRecord].toValidatedNel: FutureCacheResult[BusinessPartnerRecord],
       cache.read[TIN].toValidatedNel: FutureCacheResult[TIN],
@@ -149,7 +148,8 @@ package object cbcrfrontend {
           metadata.name,
           metadata.contentType,
           metadata.length,
-          metadata.created)
+          metadata.created
+        )
       )
     }
 }

@@ -33,10 +33,11 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.runtime.universe._
 
 @Singleton
-class CBCSessionCache @Inject()(
+class CBCSessionCache @Inject() (
   config: Configuration,
   mongoComponent: MongoComponent,
-  timestampSupport: TimestampSupport)(implicit ec: ExecutionContext)
+  timestampSupport: TimestampSupport
+)(implicit ec: ExecutionContext)
     extends MongoCacheRepository(
       mongoComponent = mongoComponent,
       collectionName = "session-data",

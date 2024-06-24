@@ -28,7 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
-class MessageRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
+class MessageRefIdService @Inject() (connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
   def saveMessageRefId(m: MessageRefID)(implicit hc: HeaderCarrier): OptionT[Future, UnexpectedState] =
     OptionT(connector.saveMessageRefId(m.show).map(_ => None).recover {
@@ -43,8 +43,9 @@ class MessageRefIdService @Inject()(connector: CBCRBackendConnector)(implicit ec
         response.status match {
           case Status.OK => true
           case _         => false
-      })
-      .recover {
-        case NonFatal(_) => false
+        }
+      )
+      .recover { case NonFatal(_) =>
+        false
       }
 }

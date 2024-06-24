@@ -26,7 +26,8 @@ case class SubmitterInfo(
   agencyBusinessName: Option[AgencyBusinessName],
   contactPhone: String,
   email: EmailAddress,
-  affinityGroup: Option[AffinityGroup])
+  affinityGroup: Option[AffinityGroup]
+)
 
 object SubmitterInfo {
   implicit val format: Format[SubmitterInfo] = new Format[SubmitterInfo] {

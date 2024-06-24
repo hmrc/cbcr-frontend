@@ -32,8 +32,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
-class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: ServicesConfig)(
-  implicit ec: ExecutionContext) {
+class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: ServicesConfig)(implicit
+  ec: ExecutionContext
+) {
 
   private lazy val logger = Logger(this.getClass)
 
@@ -41,8 +42,9 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
     val url: String = servicesConfig.baseUrl("cbcr")
   }
 
-  def retrieveSubscriptionData(id: Either[Utr, CBCId])(
-    implicit hc: HeaderCarrier): ServiceResponse[Option[SubscriptionDetails]] = {
+  def retrieveSubscriptionData(
+    id: Either[Utr, CBCId]
+  )(implicit hc: HeaderCarrier): ServiceResponse[Option[SubscriptionDetails]] = {
     val fullUrl = id.fold(
       utr => url.url + s"/cbcr/subscription-data/utr/${utr.utr}",
       id => url.url + s"/cbcr/subscription-data/cbc-id/$id"
@@ -64,16 +66,16 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
             case s => Left(UnexpectedState(s"Call to RetrieveSubscription failed - backend returned $s"))
           }
         }
-        .recover {
-          case NonFatal(t) =>
-            logger.error("GET future failed", t)
-            Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
+        .recover { case NonFatal(t) =>
+          logger.error("GET future failed", t)
+          Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(t.getMessage))
         }
     )
   }
 
-  def updateSubscriptionData(cbcId: CBCId, data: SubscriberContact)(
-    implicit hc: HeaderCarrier): ServiceResponse[String] = {
+  def updateSubscriptionData(cbcId: CBCId, data: SubscriberContact)(implicit
+    hc: HeaderCarrier
+  ): ServiceResponse[String] = {
     val fullUrl = url.url + s"/cbcr/subscription-data/$cbcId"
     EitherT(
       http
@@ -84,8 +86,8 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
             case _         => Left[CBCErrors, String](UnexpectedState(response.body))
           }
         }
-        .recover {
-          case NonFatal(t) => Left[CBCErrors, String](UnexpectedState(t.getMessage))
+        .recover { case NonFatal(t) =>
+          Left[CBCErrors, String](UnexpectedState(t.getMessage))
         }
     )
   }
@@ -101,8 +103,8 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
             case _         => Left[CBCErrors, String](UnexpectedState(response.body))
           }
         }
-        .recover {
-          case NonFatal(t) => Left[CBCErrors, String](UnexpectedState(t.getMessage))
+        .recover { case NonFatal(t) =>
+          Left[CBCErrors, String](UnexpectedState(t.getMessage))
         }
     )
   }
@@ -113,23 +115,22 @@ class SubscriptionDataService @Inject()(http: HttpClient, servicesConfig: Servic
 
     for {
       cbc <- id.fold(
-              utr => retrieveSubscriptionData(Left(utr)).map(_.flatMap(_.cbcId)),
-              id => EitherT.rightT(Some(id))
-            )
-      result <- cbc.fold(EitherT.rightT[Future, CBCErrors](Option.empty[String]))(
-                 id => {
-                   EitherT(
-                     http
-                       .DELETE[HttpResponse](fullUrl(id))
-                       .map { response =>
-                         Right(Some(response.body))
-                       }
-                       .recover {
-                         case UpstreamErrorResponse.Upstream4xxResponse(_) => Right(None)
-                         case NonFatal(t)                                  => Left(UnexpectedState(t.getMessage))
-                       })
-                 }
-               )
+               utr => retrieveSubscriptionData(Left(utr)).map(_.flatMap(_.cbcId)),
+               id => EitherT.rightT(Some(id))
+             )
+      result <- cbc.fold(EitherT.rightT[Future, CBCErrors](Option.empty[String])) { id =>
+                  EitherT(
+                    http
+                      .DELETE[HttpResponse](fullUrl(id))
+                      .map { response =>
+                        Right(Some(response.body))
+                      }
+                      .recover {
+                        case UpstreamErrorResponse.Upstream4xxResponse(_) => Right(None)
+                        case NonFatal(t)                                  => Left(UnexpectedState(t.getMessage))
+                      }
+                  )
+                }
     } yield result
   }
 }

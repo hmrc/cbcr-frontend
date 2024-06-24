@@ -27,10 +27,11 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EnrolController @Inject()(
+class EnrolController @Inject() (
   enrolConnector: TaxEnrolmentsConnector,
   val authConnector: AuthConnector,
-  messagesControllerComponents: MessagesControllerComponents)(implicit ec: ExecutionContext)
+  messagesControllerComponents: MessagesControllerComponents
+)(implicit ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions {
 
   implicit val format: OFormat[Enrolments] = uk.gov.hmrc.cbcrfrontend.controllers.enrolmentsFormat

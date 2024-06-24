@@ -35,7 +35,8 @@ class MessageRefID private (
   val cBCId: CBCId,
   val messageType: MessageTypeIndic,
   val creationTimestamp: LocalDateTime,
-  val uniqueElement: String)
+  val uniqueElement: String
+)
 object MessageRefID {
   private val dateFmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
   private val cbcRegex: String = CBCId.cbcRegex.init.tail // strip the ^ and $ characters from the cbcRegex
@@ -45,7 +46,8 @@ object MessageRefID {
 
   implicit val show: Show[MessageRefID] = Show.show[MessageRefID](m =>
     s"${m.sendingRJ}${m.reportingPeriod}${m.receivingRJ}${m.cBCId}${m.messageType}${m.creationTimestamp
-      .format(dateFmt)}${m.uniqueElement}")
+        .format(dateFmt)}${m.uniqueElement}"
+  )
 
   implicit val format: Format[MessageRefID] = new Format[MessageRefID] {
     override def writes(o: MessageRefID): JsValue = JsString(o.show)

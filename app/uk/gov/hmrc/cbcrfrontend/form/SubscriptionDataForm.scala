@@ -32,12 +32,14 @@ object SubscriptionDataForm {
         .verifying("contactInfoSubscriber.phoneNumber.error.empty", _.trim != "")
         .verifying(
           "contactInfoSubscriber.phoneNumber.error.invalid",
-          x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))),
+          x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))
+        ),
       "email" -> text
         .verifying("contactInfoSubscriber.emailAddress.error.empty", _.trim != "")
         .verifying(
           "contactInfoSubscriber.emailAddress.error.invalid",
-          x => condTrue(x.trim != "", EmailAddress.isValid(x)))
+          x => condTrue(x.trim != "", EmailAddress.isValid(x))
+        )
         .transform[EmailAddress](EmailAddress(_), _.value)
     )(SubscriberContact.apply)(SubscriberContact.unapply)
   )

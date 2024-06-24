@@ -28,7 +28,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
-class EmailService @Inject()(connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
+class EmailService @Inject() (connector: CBCRBackendConnector)(implicit ec: ExecutionContext) {
 
   lazy val logger: Logger = Logger(this.getClass)
 
@@ -44,9 +44,9 @@ class EmailService @Inject()(connector: CBCRBackendConnector)(implicit ec: Execu
               Some(false)
           }
         }
-        .recover {
-          case NonFatal(e) =>
-            logger.error(s"The email has failed to send :( - exception is $e")
-            Some(false)
-        })
+        .recover { case NonFatal(e) =>
+          logger.error(s"The email has failed to send :( - exception is $e")
+          Some(false)
+        }
+    )
 }

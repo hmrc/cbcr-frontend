@@ -23,7 +23,7 @@ import play.api.libs.json._
 import java.time.{LocalDate, LocalDateTime, Year}
 import scala.util.control.Exception._
 
-/** These models represent the raw data extracted from the XML file*/
+/** These models represent the raw data extracted from the XML file */
 sealed trait RawXmlFields extends Product with Serializable
 
 case object RawBody extends RawXmlFields
@@ -42,8 +42,8 @@ case class RawMessageSpec(
   timestamp: String,
   reportingPeriod: String,
   messageType: Option[String],
-  corrMessageRefId: Option[String])
-    extends RawXmlFields
+  corrMessageRefId: Option[String]
+) extends RawXmlFields
 case class RawReportingEntity(
   reportingRole: String,
   docSpec: RawDocSpec,
@@ -52,8 +52,8 @@ case class RawReportingEntity(
   name: String,
   city: Option[String],
   startDate: String,
-  endDate: String)
-    extends RawXmlFields
+  endDate: String
+) extends RawXmlFields
 case class RawXMLInfo(
   messageSpec: RawMessageSpec,
   reportingEntity: Option[RawReportingEntity],
@@ -63,8 +63,8 @@ case class RawXMLInfo(
   xmlEncoding: Option[RawXmlEncodingVal],
   numBodies: Int,
   constEntityNames: List[String],
-  currencyCodes: List[RawCurrencyCodes])
-    extends RawXmlFields
+  currencyCodes: List[RawCurrencyCodes]
+) extends RawXmlFields
 
 /** These models represent the type-validated data, derived from the raw data */
 class DocRefId private[model] (
@@ -72,7 +72,8 @@ class DocRefId private[model] (
   val tin: String,
   val docTypeIndic: DocTypeIndic,
   val parentGroupElement: ParentGroupElement,
-  val uniq: String) {
+  val uniq: String
+) {
 
   override def equals(obj: scala.Any): Boolean = obj match {
     case d: DocRefId => d.show == this.show
@@ -135,7 +136,8 @@ case class DocSpec(
   docType: DocTypeIndic,
   docRefId: DocRefId,
   corrDocRefId: Option[CorrDocRefId],
-  corrMessageRefId: Option[String])
+  corrMessageRefId: Option[String]
+)
 object DocSpec { implicit val format: OFormat[DocSpec] = Json.format[DocSpec] }
 
 case class AdditionalInfo(docSpec: DocSpec, otherInfo: String)
@@ -151,7 +153,8 @@ case class MessageSpec(
   timestamp: LocalDateTime,
   reportingPeriod: LocalDate,
   messageType: Option[MessageTypeIndic],
-  corrMessageRefId: Option[String])
+  corrMessageRefId: Option[String]
+)
 object MessageSpec {
   implicit val yearFormat: Format[Year] = new Format[Year] {
     override def reads(json: JsValue): JsResult[Year] = json match {
@@ -178,7 +181,8 @@ case class ReportingEntity(
   tin: TIN,
   name: String,
   city: Option[String],
-  entityReportingPeriod: EntityReportingPeriod)
+  entityReportingPeriod: EntityReportingPeriod
+)
 
 object ReportingEntity { implicit val format: OFormat[ReportingEntity] = Json.format[ReportingEntity] }
 
@@ -192,7 +196,8 @@ case class XMLInfo(
   additionalInfo: List[AdditionalInfo],
   creationDate: Option[LocalDate],
   constEntityNames: List[String],
-  currencyCodes: List[String])
+  currencyCodes: List[String]
+)
 object XMLInfo { implicit val format: OFormat[XMLInfo] = Json.format[XMLInfo] }
 
 case class CompleteXMLInfo(
@@ -202,7 +207,8 @@ case class CompleteXMLInfo(
   additionalInfo: List[AdditionalInfo],
   creationDate: Option[LocalDate],
   constEntityNames: List[String],
-  currencyCodes: List[String])
+  currencyCodes: List[String]
+)
 object CompleteXMLInfo {
   def apply(x: XMLInfo, reportingEntity: ReportingEntity): CompleteXMLInfo =
     CompleteXMLInfo(
@@ -212,6 +218,7 @@ object CompleteXMLInfo {
       x.additionalInfo,
       x.creationDate,
       x.constEntityNames,
-      x.currencyCodes)
+      x.currencyCodes
+    )
   implicit val format: OFormat[CompleteXMLInfo] = Json.format[CompleteXMLInfo]
 }

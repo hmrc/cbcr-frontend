@@ -52,14 +52,16 @@ class StartControllerSpec
     "return 303 if authorised and Agent" in {
       authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
         .successful(
-          new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Agent), Some(newCBCEnrolment)))
+          new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Agent), Some(newCBCEnrolment))
+        )
       status(controller.start(fakeRequest)) shouldBe Status.SEE_OTHER
     }
 
     "return 200 if authorized and registered Organisation for CBCR" in {
       authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
         .successful(
-          new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment)))
+          new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
+        )
       status(controller.start(fakeRequest)) shouldBe Status.OK
     }
 

@@ -111,7 +111,8 @@ class FileUploadControllerSpec
         "name",
         None,
         EntityReportingPeriod(LocalDate.parse("2016-03-31"), LocalDate.parse("2017-03-30"))
-      )),
+      )
+    ),
     List(CbcReports(DocSpec(OECD1, DocRefId(docRefId + "ENT").get, None, None))),
     List(AdditionalInfo(DocSpec(OECD1, DocRefId(docRefId + "ADD").get, None, None), "Some Other Info")),
     Some(LocalDate.now()),
@@ -157,7 +158,8 @@ class FileUploadControllerSpec
     Helpers.stubMessagesControllerComponents(),
     views,
     cache,
-    configuration)
+    configuration
+  )
 
   private val testFile = new File("test/resources/cbcr-valid.xml")
   private val tempFile = File.createTempFile("test", ".xml")
@@ -173,7 +175,8 @@ class FileUploadControllerSpec
     "return 200 when the envelope is created successfully" in {
       authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
         .successful(
-          new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment)))
+          new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
+        )
       fuService.createEnvelope(*) returnsF EnvelopeId("1234")
       cache.create[EnvelopeId](*)(EnvelopeId.format, *, *) returnsF EnvelopeId("1234")
       cache.create[FileId](*)(FileId.fileIdFormat, *, *) returnsF FileId("abcd")
@@ -213,7 +216,8 @@ class FileUploadControllerSpec
     "return 500 when there is an error creating the envelope" in {
       authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
         .successful(
-          new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment)))
+          new ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
+        )
       whenF(fuService.createEnvelope(*)) thenFailWith UnexpectedState("server error")
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -300,7 +304,9 @@ class FileUploadControllerSpec
           .successful(
             new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
               new ~(Some(creds), Some(AffinityGroup.Organisation)),
-              Some(enrolment)))
+              Some(enrolment)
+            )
+          )
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
@@ -320,7 +326,9 @@ class FileUploadControllerSpec
           .successful(
             new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
               new ~(Some(creds), Some(AffinityGroup.Organisation)),
-              Some(enrolment)))
+              Some(enrolment)
+            )
+          )
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
@@ -339,7 +347,9 @@ class FileUploadControllerSpec
           .successful(
             new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
               new ~(Some(creds), Some(AffinityGroup.Organisation)),
-              Some(enrolment)))
+              Some(enrolment)
+            )
+          )
         cache.save[FileMetadata](*)(FileMetadata.fileMetadataFormat, *, *) returns Future.failed(new Exception("bad"))
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
@@ -368,7 +378,9 @@ class FileUploadControllerSpec
         .successful(
           new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
             new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+            Some(enrolment)
+          )
+        )
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.OK
       fuService.getFile(*, *)(*) was called
@@ -400,7 +412,9 @@ class FileUploadControllerSpec
         .successful(
           new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
             new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrol)))
+            Some(enrol)
+          )
+        )
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.SEE_OTHER
       fuService.getFile(*, *)(*) was called
@@ -428,7 +442,9 @@ class FileUploadControllerSpec
         .successful(
           new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
             new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+            Some(enrolment)
+          )
+        )
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.SEE_OTHER
       fuService.getFile(*, *)(*) was called
@@ -452,7 +468,9 @@ class FileUploadControllerSpec
           .successful(
             new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
               new ~(Some(creds), Some(AffinityGroup.Organisation)),
-              Some(enrolment)))
+              Some(enrolment)
+            )
+          )
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("invalid-file-type")
         status(result) shouldBe Status.SEE_OTHER
@@ -468,7 +486,8 @@ class FileUploadControllerSpec
       cache.readOption[AllBusinessRuleErrors](AllBusinessRuleErrors.format, *, *) returns Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       cache.readOption[XMLErrors](XMLErrors.format, *, *) returns Future.successful(
-        Some(XMLErrors(List("Big xml error"))))
+        Some(XMLErrors(List("Big xml error")))
+      )
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
@@ -479,7 +498,9 @@ class FileUploadControllerSpec
         .successful(
           new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
             new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+            Some(enrolment)
+          )
+        )
       auditC.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       fuService.errorsToMap(*)(*) returns Map("error" -> "error message")
       val result = controller.fileInvalid(request)
@@ -494,7 +515,8 @@ class FileUploadControllerSpec
       cache.readOption[AllBusinessRuleErrors](AllBusinessRuleErrors.format, *, *) returns Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       cache.readOption[XMLErrors](XMLErrors.format, *, *) returns Future.successful(
-        Some(XMLErrors(List("Big xml error"))))
+        Some(XMLErrors(List("Big xml error")))
+      )
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
@@ -505,7 +527,9 @@ class FileUploadControllerSpec
         .successful(
           new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
             new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+            Some(enrolment)
+          )
+        )
       auditC.sendExtendedEvent(*)(*, *) returns Future.successful(failure)
       fuService.errorsToMap(*)(*) returns Map("error" -> "error message")
       val result = controller.fileInvalid(request)
@@ -521,7 +545,8 @@ class FileUploadControllerSpec
       cache.readOption[AllBusinessRuleErrors](AllBusinessRuleErrors.format, *, *) returns Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       cache.readOption[XMLErrors](XMLErrors.format, *, *) returns Future.successful(
-        Some(XMLErrors(List("Big xml error"))))
+        Some(XMLErrors(List("Big xml error")))
+      )
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
@@ -532,7 +557,9 @@ class FileUploadControllerSpec
         .successful(
           new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
             new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+            Some(enrolment)
+          )
+        )
       auditC.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       fuService.errorsToMap(*)(*) returns Map("error" -> "error message")
       val result = controller.fileTooLarge(request)
@@ -548,7 +575,8 @@ class FileUploadControllerSpec
       cache.readOption[AllBusinessRuleErrors](AllBusinessRuleErrors.format, *, *) returns Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       cache.readOption[XMLErrors](XMLErrors.format, *, *) returns Future.successful(
-        Some(XMLErrors(List("Big xml error"))))
+        Some(XMLErrors(List("Big xml error")))
+      )
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
@@ -559,7 +587,9 @@ class FileUploadControllerSpec
         .successful(
           new ~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]](
             new ~(Some(creds), Some(AffinityGroup.Organisation)),
-            Some(enrolment)))
+            Some(enrolment)
+          )
+        )
       auditC.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
       fuService.errorsToMap(*)(*) returns Map("error" -> "error message")
       val result = controller.fileContainsVirus(request)
@@ -621,7 +651,8 @@ class FileUploadControllerSpec
       val request = FakeRequest()
       authConnector.authorise[Any](*, *)(*, *) returns Future.successful((): Unit)
       cache.readOption[XMLErrors](XMLErrors.format, *, *) returns Future.successful(
-        Some(XMLErrors(List("Big xml error"))))
+        Some(XMLErrors(List("Big xml error")))
+      )
       file.delete returns true
       fuService.errorsToFile(*, *)(*) returns validFile
       val result = controller.getXmlSchemaErrors(request)
@@ -646,7 +677,8 @@ class FileUploadControllerSpec
       cache.readOption[AllBusinessRuleErrors](AllBusinessRuleErrors.format, *, *) returns Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       cache.readOption[XMLErrors](XMLErrors.format, *, *) returns Future.successful(
-        Some(XMLErrors(List("Big xml error"))))
+        Some(XMLErrors(List("Big xml error")))
+      )
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
@@ -663,7 +695,8 @@ class FileUploadControllerSpec
       cache.readOption[AllBusinessRuleErrors](AllBusinessRuleErrors.format, *, *) returns Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       cache.readOption[XMLErrors](XMLErrors.format, *, *) returns Future.successful(
-        Some(XMLErrors(List("Big xml error"))))
+        Some(XMLErrors(List("Big xml error")))
+      )
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
@@ -681,13 +714,15 @@ class FileUploadControllerSpec
       cache.readOption[AllBusinessRuleErrors](AllBusinessRuleErrors.format, *, *) returns Future
         .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       cache.readOption[XMLErrors](XMLErrors.format, *, *) returns Future.successful(
-        Some(XMLErrors(List("Big xml error"))))
+        Some(XMLErrors(List("Big xml error")))
+      )
       cache.readOption[FileMetadata](FileMetadata.fileMetadataFormat, *, *) returns Future
         .successful(Some(md))
       cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(Some(cbcId))
       cache.readOption[Utr](Utr.format, *, *) returns Future.successful(Some(Utr("1234567890")))
       val result = await(
-        controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because"))
+        controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")
+      )
       result.fold(
         error => error.toString should contain("boo hoo"),
         _ => fail("No error generated")

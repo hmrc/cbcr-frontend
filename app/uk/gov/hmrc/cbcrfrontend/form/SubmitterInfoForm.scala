@@ -30,12 +30,13 @@ object SubmitterInfoForm {
         .verifying("submitterInfo.phoneNumber.error.empty", _.trim != "")
         .verifying(
           "submitterInfo.phoneNumber.error.invalid",
-          x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))),
+          x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))
+        ),
       "email" -> text
         .verifying("submitterInfo.emailAddress.error.empty", _.trim != "")
         .verifying("submitterInfo.emailAddress.error.invalid", x => condTrue(x.trim != "", EmailAddress.isValid(x)))
-    )((fullName: String, contactPhone: String, email: String) => {
+    ) { (fullName: String, contactPhone: String, email: String) =>
       SubmitterInfo(fullName, None, contactPhone, EmailAddress(email), None)
-    })(si => Some((si.fullName, si.contactPhone, si.email.value)))
+    }(si => Some((si.fullName, si.contactPhone, si.email.value)))
   )
 }

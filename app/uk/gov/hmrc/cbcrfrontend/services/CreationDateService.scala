@@ -35,8 +35,9 @@ case object DateMissing extends XmlStatusEnum("dateMissing")
 case object DateError extends XmlStatusEnum("dateError")
 
 @Singleton
-class CreationDateService @Inject()(config: FrontendAppConfig, reportingEntityDataService: ReportingEntityDataService)(
-  implicit ec: ExecutionContext) {
+class CreationDateService @Inject() (config: FrontendAppConfig, reportingEntityDataService: ReportingEntityDataService)(
+  implicit ec: ExecutionContext
+) {
 
   def isDateValid(in: XMLInfo)(implicit hc: HeaderCarrier): Future[XmlStatusEnum] = {
 
@@ -46,30 +47,26 @@ class CreationDateService @Inject()(config: FrontendAppConfig, reportingEntityDa
       .orElse(in.additionalInfo.headOption.flatMap(_.docSpec.corrDocRefId))
       .orElse(in.reportingEntity.flatMap(_.docSpec.corrDocRefId))
     id.map { drid =>
-        reportingEntityDataService
-          .queryReportingEntityData(drid.cid)
-          .value
-          .map {
-            case Left(cbcErrors) =>
-              UnexpectedState(s"Error communicating with backend: $cbcErrors")
-              DateError
-            case Right(Some(red)) =>
-              val cd: LocalDate = red.creationDate.getOrElse(config.defaultCreationDate)
-              val lcd: LocalDate = in.creationDate.getOrElse(LocalDate.now())
-              if (Period.between(cd, lcd).getYears < 3) DateCorrect
-              else DateOld
-            case Right(None) => DateMissing
-          }
-      }
-      .getOrElse {
+      reportingEntityDataService
+        .queryReportingEntityData(drid.cid)
+        .value
+        .map {
+          case Left(cbcErrors) =>
+            UnexpectedState(s"Error communicating with backend: $cbcErrors")
+            DateError
+          case Right(Some(red)) =>
+            val cd: LocalDate = red.creationDate.getOrElse(config.defaultCreationDate)
+            val lcd: LocalDate = in.creationDate.getOrElse(LocalDate.now())
+            if (Period.between(cd, lcd).getYears < 3) DateCorrect
+            else DateOld
+          case Right(None) => DateMissing
+        }
+    }.getOrElse {
 
-        /************************************************
-          *                                               *
-          *    If we reach this then the submitted file   *
-          *    is an addition and NOT a correction        *
-          *                                               *
-      ************************************************/
-        Future.successful(DateMissing)
-      }
+      /** ********************************************** * If we reach this then the submitted file * is an addition and
+        * NOT a correction * *
+        */
+      Future.successful(DateMissing)
+    }
   }
 }

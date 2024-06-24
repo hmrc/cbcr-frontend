@@ -27,7 +27,8 @@ case class FileInfo(
   name: String,
   contentType: String,
   length: BigDecimal,
-  created: String)
+  created: String
+)
 object FileInfo {
   implicit val format: OFormat[FileInfo] = Json.format[FileInfo]
 }
@@ -40,7 +41,8 @@ case class SubmissionInfo(
   ofdsRegime: String,
   tin: TIN,
   filingType: FilingType,
-  ultimateParentEntity: UltimateParentEntity)
+  ultimateParentEntity: UltimateParentEntity
+)
 object SubmissionInfo {
   implicit val format: Format[SubmissionInfo] = new Format[SubmissionInfo] {
     override def reads(json: JsValue): JsResult[SubmissionInfo] = json match {
@@ -54,11 +56,11 @@ object SubmissionInfo {
           tin        <- m.get("tin").fold[JsResult[String]](JsError("TIN not found"))(_.validate[String])
           fts        <- m.get("filingType").fold[JsResult[String]](JsError("FilingType not found"))(_.validate[String])
           ft <- ReportingRole
-                 .parseFromString(fts)
-                 .fold[JsResult[FilingType]](JsError(s"FilingType invalid: $fts"))(r => JsSuccess(FilingType(r)))
+                  .parseFromString(fts)
+                  .fold[JsResult[FilingType]](JsError(s"FilingType invalid: $fts"))(r => JsSuccess(FilingType(r)))
           upe <- m.get("ultimateParentEntity")
-                  .fold[JsResult[String]](JsError("UPE not found"))(_.validate[String])
-                  .map(UltimateParentEntity(_))
+                   .fold[JsResult[String]](JsError("UPE not found"))(_.validate[String])
+                   .map(UltimateParentEntity(_))
         } yield SubmissionInfo(gwCredId, cbcId, bpSafeId, hash, ofdsRegime, TIN(tin, ""), ft, upe)
       case _ => JsError(s"Unable to parse $json as SubmissionInfo")
     }

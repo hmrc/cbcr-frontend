@@ -23,7 +23,7 @@ import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-class CBCEnhancementsController @Inject()(messagesControllerComponents: MessagesControllerComponents, views: Views)
+class CBCEnhancementsController @Inject() (messagesControllerComponents: MessagesControllerComponents, views: Views)
     extends FrontendController(messagesControllerComponents) {
 
   def enhancementUnavailable: Action[AnyContent] = Action.async { implicit request =>
