@@ -20,7 +20,11 @@ import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import uk.gov.hmrc.cbcrfrontend.model.SurveyAnswers
 
+import scala.annotation.unused
+
+@unused
 object SurveyForm {
+  @unused
   val surveyForm: Form[SurveyAnswers] = Form(
     mapping(
       "satisfied"   -> text,

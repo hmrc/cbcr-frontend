@@ -60,7 +60,7 @@ class CBCRXMLValidator @Inject() (xmlValidationSchema: XMLValidationSchema) {
   }
 }
 
-class XmlErrorHandler() extends ValidationProblemHandler {
+class XmlErrorHandler extends ValidationProblemHandler {
 
   // How many errors should be handle before giving up?
   val errorMessageLimit = 100

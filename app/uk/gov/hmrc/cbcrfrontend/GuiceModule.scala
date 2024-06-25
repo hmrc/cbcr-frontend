@@ -23,8 +23,10 @@ import uk.gov.hmrc.cbcrfrontend.util.ConfigurationOps.ConfigurationOps
 
 import java.io.File
 import java.time.Clock
+import scala.annotation.unused
 
-class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule {
+@unused
+class GuiceModule(@unused environment: Environment, @unused configuration: Configuration) extends AbstractModule {
   override def configure(): Unit = {
     bind(classOf[XMLValidationSchema]).toInstance {
       val path = "Prod.oecd-schema-version"
