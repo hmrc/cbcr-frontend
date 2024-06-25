@@ -22,9 +22,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.{LocalDate, Period}
 import javax.inject.{Inject, Singleton}
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
-sealed abstract class XmlStatusEnum(val xmlStatus: String)
+sealed abstract class XmlStatusEnum(@unused val xmlStatus: String)
 
 case object DateOld extends XmlStatusEnum("dateOld")
 

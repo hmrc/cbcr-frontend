@@ -16,4 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
+import scala.annotation.unused
+
+@unused
 case class CBCRXMLFile(fileName: String, size: String)

@@ -20,6 +20,8 @@ import play.api.libs.json.{Format, Reads, Writes}
 import play.api.mvc.PathBindable
 import uk.gov.hmrc.domain.{Modulus11Check, SimpleObjectReads, SimpleObjectWrites, TaxIdentifier}
 
+import scala.annotation.unused
+
 case class Utr(utr: String) extends TaxIdentifier {
   override def value: String = utr
 
@@ -45,6 +47,7 @@ case class Utr(utr: String) extends TaxIdentifier {
 
 object Utr {
 
+  @unused
   def safeApply(utr: String): Option[Utr] = {
     val u = Utr(utr)
     if (u.isValid) Some(u)

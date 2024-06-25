@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
+import scala.annotation.unused
+
 object DocRefIdResponses {
 
   sealed trait DocRefIdResponses extends Product with Serializable
@@ -23,7 +25,9 @@ object DocRefIdResponses {
   sealed trait DocRefIdSaveResponse extends DocRefIdResponses
 
   case object Ok extends DocRefIdSaveResponse
+  @unused
   case object AlreadyExists extends DocRefIdSaveResponse
+  @unused
   case object Failed extends DocRefIdSaveResponse
 
   sealed trait DocRefIdQueryResponse extends DocRefIdResponses

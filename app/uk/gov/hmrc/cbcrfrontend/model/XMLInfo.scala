@@ -21,11 +21,13 @@ import cats.syntax.show._
 import play.api.libs.json._
 
 import java.time.{LocalDate, LocalDateTime, Year}
+import scala.annotation.unused
 import scala.util.control.Exception._
 
 /** These models represent the raw data extracted from the XML file */
 sealed trait RawXmlFields extends Product with Serializable
 
+@unused
 case object RawBody extends RawXmlFields
 case class RawAdditionalInfo(docSpec: RawDocSpec, otherInfo: String) extends RawXmlFields
 case class RawCbcReports(docSpec: RawDocSpec) extends RawXmlFields
@@ -187,6 +189,7 @@ case class ReportingEntity(
 object ReportingEntity { implicit val format: OFormat[ReportingEntity] = Json.format[ReportingEntity] }
 
 case class CbcOecdInfo(cbcVer: String)
+@unused
 object CbcOecdInfo { implicit val format: OFormat[CbcOecdInfo] = Json.format[CbcOecdInfo] }
 
 case class XMLInfo(
