@@ -27,13 +27,15 @@ import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
 import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
 
 import javax.inject.Inject
+import scala.annotation.unused
 import scala.concurrent.Future
 
+@unused
 class CBCRErrorHandler @Inject() (
   val messagesApi: MessagesApi,
   val env: Environment,
   val config: Configuration,
-  views: Views
+  @unused views: Views
 ) extends FrontendErrorHandler with Results with AuthRedirects {
 
   override def resolveError(rh: RequestHeader, ex: Throwable): Result = ex match {

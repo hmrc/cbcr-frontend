@@ -320,7 +320,8 @@ class SharedController @Inject() (
                          cache.save(TIN(knownFacts.utr.value, ""))).map(_ => ())
                      )
               } yield Redirect(routes.SharedController.knownFactsMatch)
-          ).merge
+          )
+          .merge
     }
   }
 

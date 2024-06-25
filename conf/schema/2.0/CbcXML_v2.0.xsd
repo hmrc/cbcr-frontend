@@ -2,7 +2,7 @@
 <!-- edited with XMLSpy v2012 rel. 2 sp1 (x64) (http://www.altova.com) by Sebastien Michon (OECD) -->
 <xsd:schema xmlns:cbc="urn:oecd:ties:cbc:v2" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:stf="urn:oecd:ties:cbcstf:v5" xmlns:iso="urn:oecd:ties:isocbctypes:v1"
-            targetNamespace="urn:oecd:ties:cbc:v2" elementFormDefault="qualified" attributeFormDefault="unqualified"
+            targetNamespace="urn:oecd:ties:cbc:v2" elementFormDefault="qualified"
             version="2.0">
     <xsd:import namespace="urn:oecd:ties:isocbctypes:v1" schemaLocation="isocbctypes_v1.1.xsd"/>
     <xsd:import namespace="urn:oecd:ties:cbcstf:v5" schemaLocation="oecdcbctypes_v5.0.xsd"/>
@@ -281,7 +281,7 @@
                 </xsd:sequence>
             </xsd:choice>
         </xsd:sequence>
-        <xsd:attribute name="legalAddressType" type="stf:OECDLegalAddressType_EnumType" use="optional"/>
+        <xsd:attribute name="legalAddressType" type="stf:OECDLegalAddressType_EnumType"/>
     </xsd:complexType>
     <!--  -->
     <!-- General Type for Monetary Amounts -->
@@ -321,7 +321,7 @@
         </xsd:annotation>
         <xsd:simpleContent>
             <xsd:extension base="stf:StringMin1Max200_Type">
-                <xsd:attribute name="issuedBy" type="iso:CountryCode_Type" use="optional">
+                <xsd:attribute name="issuedBy" type="iso:CountryCode_Type">
                     <xsd:annotation>
                         <xsd:documentation xml:lang="en">Country code of issuing country, indicating country of
                             Residence (to taxes and other)
@@ -509,14 +509,14 @@
         </xsd:annotation>
         <xsd:simpleContent>
             <xsd:extension base="stf:StringMin1Max200_Type">
-                <xsd:attribute name="issuedBy" type="iso:CountryCode_Type" use="optional">
+                <xsd:attribute name="issuedBy" type="iso:CountryCode_Type">
                     <xsd:annotation>
                         <xsd:documentation xml:lang="en">Country code of issuing country, indicating country of
                             Residence (to taxes and other)
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="INType" type="stf:StringMin1Max200_Type" use="optional">
+                <xsd:attribute name="INType" type="stf:StringMin1Max200_Type">
                     <xsd:annotation>
                         <xsd:documentation xml:lang="en">Identification Number Type</xsd:documentation>
                     </xsd:annotation>

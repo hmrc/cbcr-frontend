@@ -20,6 +20,7 @@ import cats.syntax.show._
 import play.api.libs.json._
 import uk.gov.hmrc.cbcrfrontend.services.XmlErrorHandler
 
+import scala.annotation.unused
 import scala.util.matching.Regex
 
 sealed trait CBCErrors extends Product with Serializable
@@ -184,7 +185,9 @@ object BusinessRuleErrors {
       case AllReportingdatesInFuture                => JsString(AllReportingdatesInFuture.toString)
     }
 
+    @unused
     implicit class CaseInsensitiveRegex(sc: StringContext) {
+      @unused
       def ci: Regex = ("(?i)" + sc.parts.mkString).r
     }
 

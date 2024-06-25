@@ -22,15 +22,17 @@ import uk.gov.hmrc.emailaddress.{EmailAddress, PlayJsonFormats}
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import scala.annotation.unused
 
 class PhoneNumber private (val number: String)
 
 //Must match telephone type from API docs
 //***REMOVED***
 
+@unused
 object PhoneNumber {
 
-  val pattern = "^[0-9 )/(-*#]+$"
+  private val pattern = "^[0-9 )/(-*#]+$"
 
   def apply(number: String): Option[PhoneNumber] =
     if (number.matches(pattern)) {
@@ -79,11 +81,10 @@ object CorrespondenceDetails {
 case class UpdateResponse(processingDate: LocalDateTime)
 object UpdateResponse {
   private val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
-  implicit val format: Writes[UpdateResponse] = new Writes[UpdateResponse] {
-    override def writes(o: UpdateResponse): JsObject = Json.obj(
+  implicit val format: Writes[UpdateResponse] = (o: UpdateResponse) =>
+    Json.obj(
       "processingDate" -> o.processingDate.format(formatter)
     )
-  }
 
   implicit val reads: Reads[UpdateResponse] = (JsPath \ "processingDate").read[LocalDateTime].map(UpdateResponse(_))
 }
