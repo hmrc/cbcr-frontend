@@ -22,14 +22,12 @@ import uk.gov.hmrc.emailaddress.{EmailAddress, PlayJsonFormats}
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import scala.annotation.unused
 
 class PhoneNumber private (val number: String)
 
 //Must match telephone type from API docs
 //***REMOVED***
 
-@unused
 object PhoneNumber {
 
   private val pattern = "^[0-9 )/(-*#]+$"

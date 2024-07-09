@@ -21,7 +21,6 @@ import play.api.mvc.Security.AuthenticatedBuilder
 import play.api.mvc._
 
 import java.util.Base64
-import scala.annotation.unused
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
@@ -30,7 +29,6 @@ case class Creds(username: String, password: String) {
     (providedUsername == username) && BCrypt.checkpw(providedPassword, password)
 }
 
-@unused
 case class AuthenticationController(credentials: Creds)(implicit
   executionContext: ExecutionContext,
   defaultParser: BodyParser[AnyContent]

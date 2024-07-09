@@ -25,7 +25,6 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
-import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -96,23 +95,19 @@ class CBCRBackendConnector @Inject() (http: HttpClient, servicesConfig: Services
       url + s"/reporting-entity/query-dates/$tin/start-date/${entityReportingPeriod.startDate.toString}/end-date/${entityReportingPeriod.endDate.toString}"
     )
 
-  @unused
   def adminReportingEntityDataQuery(d: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.GET[HttpResponse](url + s"/admin/reporting-entity/doc-ref-id/$d")
 
-  @unused
   def adminReportingEntityCBCIdAndReportingPeriod(cbcId: String, reportingPeriod: LocalDate)(implicit
     hc: HeaderCarrier
   ): Future[HttpResponse] =
     http.GET[HttpResponse](url + s"/admin/reporting-entity/query-cbc-id/$cbcId/${reportingPeriod.toString}")
 
-  @unused
   def adminReportingEntityDataQueryTin(tin: String, reportingPeriod: String)(implicit
     hc: HeaderCarrier
   ): Future[HttpResponse] =
     http.GET[HttpResponse](url + s"/admin/reporting-entity/query-tin/$tin/$reportingPeriod")
 
-  @unused
   def adminEditDocRefId(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.PUT[JsValue, HttpResponse](url + s"/admin/updateDocRefId/$docRefId", JsNull)
 }

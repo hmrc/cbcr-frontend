@@ -16,11 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.typesclasses
 
-import scala.annotation.unused
-
-@unused
 trait FusUrl
-@unused
+
 trait FusFeUrl
 trait CbcrsUrl
 

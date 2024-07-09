@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.model
 
-import scala.annotation.unused
 import scala.util.matching.Regex
 
 sealed trait FieldName
@@ -31,13 +30,11 @@ case object ContactEmail extends FieldName {
   override def toString: String = "email"
 }
 
-@unused
 object FieldName {
   implicit class CaseInsensitiveRegex(sc: StringContext) {
     def ci: Regex = ("(?i)" + sc.parts.mkString).r
   }
 
-  @unused
   def fromString(s: String): Option[FieldName] = s match {
     case ci"fullname"     => Some(FullName)
     case ci"contactphone" => Some(ContactPhone)

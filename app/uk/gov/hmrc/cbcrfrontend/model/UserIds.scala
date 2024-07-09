@@ -18,10 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json.{Json, OFormat}
 
-import scala.annotation.unused
-
 case class UserIds(internalId: String, externalId: String)
-@unused
+
 object UserIds {
   implicit val format: OFormat[UserIds] = Json.format[UserIds]
 }

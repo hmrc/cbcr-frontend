@@ -19,7 +19,6 @@ package uk.gov.hmrc.cbcrfrontend
 import cats.data.EitherT
 import uk.gov.hmrc.cbcrfrontend.model.{CBCErrors, UnexpectedState}
 
-import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 
 package object core {
@@ -30,15 +29,12 @@ package object core {
   def fromFutureOptA[A](fa: Future[CBCErrorOr[A]]): ServiceResponse[A] =
     EitherT[Future, CBCErrors, A](fa)
 
-  @unused
   def fromFutureA[A](fa: Future[A])(implicit ec: ExecutionContext): ServiceResponse[A] =
     EitherT[Future, CBCErrors, A](fa.map(Right(_)))
 
-  @unused
   def fromOptA[A](oa: CBCErrorOr[A]): ServiceResponse[A] =
     EitherT[Future, CBCErrors, A](Future.successful(oa))
 
-  @unused
   def fromFutureOptionA[A](
     fo: Future[Option[A]]
   )(invalid: => UnexpectedState)(implicit ec: ExecutionContext): ServiceResponse[A] = {
