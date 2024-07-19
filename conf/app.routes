@@ -6,6 +6,7 @@ POST        /                                                             @uk.go
 
 GET         /session-expired                                              @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.sessionExpired
 GET         /technical-difficulties                                       @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.technicalDifficulties
+GET         /contact-details-error                                        @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.contactDetailsError
 GET         /cbc-id/entry-form                                            @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
 POST        /cbc-id                                                       @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.submitCBCId
 GET         /                                                             @uk.gov.hmrc.cbcrfrontend.controllers.SharedController.enterCBCId
