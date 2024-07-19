@@ -151,7 +151,12 @@ class SubscriptionController @Inject() (
       } yield Tuple2(subData, cbcId)
 
       subscriptionData.fold[Result](
-        (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
+        (error: CBCErrors) =>
+          if (error == UnexpectedState("No SubscriptionDetails")) {
+            Redirect(routes.SharedController.contactDetailsError)
+          } else {
+            errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
+          },
         tuple2 => {
           val subData: ETMPSubscription = tuple2._1
           val cbcId: CBCId = tuple2._2
