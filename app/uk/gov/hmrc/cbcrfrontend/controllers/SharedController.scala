@@ -107,8 +107,12 @@ class SharedController @Inject() (
     single("cbcId" -> of[CBCId])
   )
 
-  val technicalDifficulties: Action[AnyContent] = Action { implicit request =>
+  def technicalDifficulties: Action[AnyContent] = Action { implicit request =>
     InternalServerError(views.errorTemplate("Internal Server Error", "Internal Server Error", "Something went wrong"))
+  }
+
+  def contactDetailsError: Action[AnyContent] = Action { implicit request =>
+    InternalServerError(views.errorContactDetails())
   }
 
   val sessionExpired: Action[AnyContent] = Action { implicit request =>
@@ -126,7 +130,7 @@ class SharedController @Inject() (
   private def cacheSubscriptionDetails(s: SubscriptionDetails, id: CBCId)(implicit hc: HeaderCarrier): Future[Unit] =
     (cache.save(TIN(s.utr.value, "")) *> cache.save(s.businessPartnerRecord) *> cache.save(id)).map(_ => ())
 
-  val submitCBCId: Action[AnyContent] = Action.async { implicit request =>
+  def submitCBCId: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation).retrieve(cbcEnrolment) { cbcEnrolment =>
       cbcIdForm
         .bindFromRequest()
@@ -320,7 +324,8 @@ class SharedController @Inject() (
                          cache.save(TIN(knownFacts.utr.value, ""))).map(_ => ())
                      )
               } yield Redirect(routes.SharedController.knownFactsMatch)
-          ).merge
+          )
+          .merge
     }
   }
 

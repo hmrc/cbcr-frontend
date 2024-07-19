@@ -135,7 +135,7 @@ class SubscriptionController @Inject() (
     }
   }
 
-  val updateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
+  def updateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
         cbcId <- EitherT.fromEither[Future](
@@ -169,7 +169,7 @@ class SubscriptionController @Inject() (
     }
   }
 
-  val saveUpdatedInfoSubscriber: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) {
+  def saveUpdatedInfoSubscriber: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) {
     implicit request =>
       authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
         val ci: ServiceResponse[CBCId] = for {
@@ -208,7 +208,7 @@ class SubscriptionController @Inject() (
       }
   }
 
-  val savedUpdatedInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
+  def savedUpdatedInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactDetailsUpdated())
     }
