@@ -149,7 +149,12 @@ class SubscriptionController @Inject() (
       } yield subData -> cbcId
 
       subscriptionData.fold[Result](
-        (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
+        (error: CBCErrors) =>
+          if (error == UnexpectedState("No SubscriptionDetails")) {
+            Redirect(routes.SharedController.contactDetailsError)
+          } else {
+            errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
+          },
         { case subData -> cbcId =>
           val prepopulatedForm = subscriptionDataForm.bind(
             Map(
