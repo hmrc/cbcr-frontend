@@ -23,7 +23,9 @@ object DocRefIdResponses {
   sealed trait DocRefIdSaveResponse extends DocRefIdResponses
 
   case object Ok extends DocRefIdSaveResponse
+
   case object AlreadyExists extends DocRefIdSaveResponse
+
   case object Failed extends DocRefIdSaveResponse
 
   sealed trait DocRefIdQueryResponse extends DocRefIdResponses

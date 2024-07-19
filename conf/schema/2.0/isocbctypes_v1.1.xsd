@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XMLSpy v2012 rel. 2 sp1 (x64) (http://www.altova.com) by Sebastien Michon (OECD) -->
-<xsd:schema xmlns:iso="urn:oecd:ties:isocbctypes:v1" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             targetNamespace="urn:oecd:ties:isocbctypes:v1" elementFormDefault="qualified"
             attributeFormDefault="unqualified" version="1.1">
     <!--  ISO 3166 alpha 2 Country Code

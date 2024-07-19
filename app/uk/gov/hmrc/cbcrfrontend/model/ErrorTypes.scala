@@ -185,6 +185,7 @@ object BusinessRuleErrors {
     }
 
     implicit class CaseInsensitiveRegex(sc: StringContext) {
+
       def ci: Regex = ("(?i)" + sc.parts.mkString).r
     }
 

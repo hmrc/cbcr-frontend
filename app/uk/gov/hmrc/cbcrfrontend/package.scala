@@ -56,8 +56,8 @@ package object cbcrfrontend {
     }
   )
 
-  type ValidResult[A] = ValidatedNel[CBCErrors, A]
-  type CacheResult[A] = ValidatedNel[ExpiredSession, A]
+  private type ValidResult[A] = ValidatedNel[CBCErrors, A]
+  private type CacheResult[A] = ValidatedNel[ExpiredSession, A]
   type FutureValidResult[A] = Future[ValidResult[A]]
   type FutureCacheResult[A] = Future[CacheResult[A]]
   type ValidBusinessResult[A] = ValidatedNel[BusinessRuleErrors, A]

@@ -38,7 +38,7 @@ case class AuthenticationController(credentials: Creds)(implicit
       AuthenticationController.onUnauthorised
     )
 
-object AuthenticationController {
+private object AuthenticationController {
   private def extractCredentials(storedCredentials: Creds): RequestHeader => Option[String] = { header =>
     for {
       authHeader <- header.headers.get("Authorization")

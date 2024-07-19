@@ -187,6 +187,7 @@ case class ReportingEntity(
 object ReportingEntity { implicit val format: OFormat[ReportingEntity] = Json.format[ReportingEntity] }
 
 case class CbcOecdInfo(cbcVer: String)
+
 object CbcOecdInfo { implicit val format: OFormat[CbcOecdInfo] = Json.format[CbcOecdInfo] }
 
 case class XMLInfo(

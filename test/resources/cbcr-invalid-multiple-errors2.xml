@@ -33,23 +33,23 @@
                 <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrDocRefId</ns2:CorrDocRefId>
             </ns1:DocSpec>
         </ns1:ReportingEntity>
-        <asdljs></asdljs>
+        <asdljs/>
         <ns1:CbcReports>
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
-                <asdljs></asdljs>
-                <asdljs></asdljs>
-                <asdljs></asdljs>
-                <asdljs></asdljs>
+                <asdljs/>
+                <asdljs/>
+                <asdljs/>
+                <asdljs/>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_DocRefId</ns2:DocRefId>
                 <ns2:CorrMessageRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
                 <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrDocRefId</ns2:CorrDocRefId>
             </ns1:DocSpec>
-            <asdljs></asdljs>
+            <asdljs/>
             <ns1:ResCountryCode>US</ns1:ResCountryCode>
             <ns1:Summary>
-                <asdljs></asdljs>
-                <asdljs></asdljs>
+                <asdljs/>
+                <asdljs/>
                 <ns1:Revenues>
                     <ns1:Unrelated currCode="USD">CBC601</ns1:Unrelated>
                     <ns1:Related currCode="USD">CBC602</ns1:Related>
@@ -69,7 +69,7 @@
                     <ns1:TIN issuedBy="USGOV">3001</ns1:TIN>
                     <ns1:IN INType="4001" issuedBy="USGOV"/>
                     <ns1:Name/>
-                    <yeah></yeah>
+                    <yeah/>
                     <ns1:Address legalAddressType="OECD303">
                         <ns1:CountryCode>99</ns1:CountryCode>
                         <ns1:AddressFree>Free Text</ns1:AddressFree>
@@ -119,7 +119,7 @@
             <ns1:DocSpec>
                 <ns2:DocTypeIndic xmlns:ns2="urn:oecd:ties:stf:v4">OECD1</ns2:DocTypeIndic>
                 <ns2:DocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_DocRefId</ns2:DocRefId>
-                <ns2:CorrMessageRefId xmlns:nasds2="urn:oecd:ties:stf:v4">String_CorrMessageRefId</ns2:CorrMessageRefId>
+                <ns2:CorrMessageRefId>String_CorrMessageRefId</ns2:CorrMessageRefId>
                 <ns2:CorrDocRefId xmlns:ns2="urn:oecd:ties:stf:v4">String_CorrDocRefId</ns2:CorrDocRefId>
             </ns1:DocSpec>
             <ns1:OtherInfo>String_OtherInfo</ns1:OtherInfo>
