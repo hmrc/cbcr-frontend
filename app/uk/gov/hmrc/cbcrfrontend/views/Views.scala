@@ -21,6 +21,7 @@ import javax.inject.Inject
 class Views @Inject() (
   val start: uk.gov.hmrc.cbcrfrontend.views.html.start,
   val errorTemplate: uk.gov.hmrc.cbcrfrontend.views.html.error_template,
+  val errorContactDetails: uk.gov.hmrc.cbcrfrontend.views.html.error_contact_details,
   val notAuthorisedIndividual: uk.gov.hmrc.cbcrfrontend.views.html.not_authorised_individual,
   val notAuthorisedAssistant: uk.gov.hmrc.cbcrfrontend.views.html.not_authorised_assistant,
   val notRegistered: uk.gov.hmrc.cbcrfrontend.views.html.submission.notRegistered,
