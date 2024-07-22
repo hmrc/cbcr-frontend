@@ -24,7 +24,6 @@ import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm._
@@ -32,6 +31,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
+import uk.gov.hmrc.cbcrfrontend.{errorRedirect, _}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
@@ -138,23 +138,19 @@ class SubscriptionController @Inject() (
   def updateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
-        cbcId <- EitherT.fromOption[Future](cbcEnrolment.map(_.cbcId), UnexpectedState("Couldn't get CBCId"))
+        cbcId           <- EitherT.fromOption[Future](cbcEnrolment.map(_.cbcId), UnexpectedState("Couldn't get CBCId"))
         optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
         details         <- EitherT.fromOption[Future](optionalDetails, UnexpectedState("No SubscriptionDetails"))
         bpr = details.businessPartnerRecord
-        _ <- EitherT.right(cache.save(bpr) *> cache.save(cbcId))
-        subData <- cbcIdService
-                     .getETMPSubscriptionData(bpr.safeId)
-                     .toRight(UnexpectedState("No ETMP Subscription Data"): CBCErrors)
+        _       <- EitherT.right(cache.save(bpr) *> cache.save(cbcId))
+        subData <- cbcIdService.getETMPSubscriptionData(bpr.safeId).toRight(NoETMPSubscriptionData: CBCErrors)
       } yield subData -> cbcId
 
       subscriptionData.fold[Result](
-        (error: CBCErrors) =>
-          if (error == UnexpectedState("No SubscriptionDetails")) {
-            Redirect(routes.SharedController.contactDetailsError)
-          } else {
-            errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
-          },
+        {
+          case NoETMPSubscriptionData => Redirect(routes.SharedController.contactDetailsError)
+          case error                  => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
+        },
         { case subData -> cbcId =>
           val prepopulatedForm = subscriptionDataForm.bind(
             Map(

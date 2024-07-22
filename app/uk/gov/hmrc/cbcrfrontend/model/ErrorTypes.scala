@@ -41,6 +41,7 @@ object UnexpectedState {
 case class ExpiredSession(msg: String) extends CBCErrors
 case object InvalidSession extends CBCErrors
 sealed trait ValidationErrors extends CBCErrors
+case object NoETMPSubscriptionData extends CBCErrors
 
 case class InvalidFileType(file: String) extends ValidationErrors
 case class XMLErrors(errors: List[String]) extends ValidationErrors
