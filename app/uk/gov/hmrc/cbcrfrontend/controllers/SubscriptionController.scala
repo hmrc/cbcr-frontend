@@ -138,9 +138,7 @@ class SubscriptionController @Inject() (
   def updateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
-        cbcId <- EitherT.fromEither[Future](
-                   cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId"))
-                 )
+        cbcId <- EitherT.fromOption[Future](cbcEnrolment.map(_.cbcId), UnexpectedState("Couldn't get CBCId"))
         optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
         details         <- EitherT.fromOption[Future](optionalDetails, UnexpectedState("No SubscriptionDetails"))
         bpr = details.businessPartnerRecord
@@ -148,13 +146,11 @@ class SubscriptionController @Inject() (
         subData <- cbcIdService
                      .getETMPSubscriptionData(bpr.safeId)
                      .toRight(UnexpectedState("No ETMP Subscription Data"): CBCErrors)
-      } yield Tuple2(subData, cbcId)
+      } yield subData -> cbcId
 
       subscriptionData.fold[Result](
         (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
-        tuple2 => {
-          val subData: ETMPSubscription = tuple2._1
-          val cbcId: CBCId = tuple2._2
+        { case subData -> cbcId =>
           val prepopulatedForm = subscriptionDataForm.bind(
             Map(
               "firstName"   -> subData.names.name1,
