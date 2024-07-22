@@ -32,7 +32,7 @@ import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.JsObject
 import play.api.mvc.MessagesControllerComponents
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{call, contentAsString, defaultAwaitTimeout, status, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.test.Helpers.{await, call, contentAsString, defaultAwaitTimeout, status, writeableOf_AnyContentAsFormUrlEncoded}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
@@ -46,7 +46,7 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import java.time.{Instant, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 
 class SubscriptionControllerSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
@@ -487,16 +487,17 @@ class SubscriptionControllerSpec
       status(result) shouldEqual Status.INTERNAL_SERVER_ERROR
     }
 
-    "return an error if there is no etmp data" in {
+    "Redirect to the support page if etmp details are empty" in {
       auth.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
       val fakeRequest = addToken(FakeRequest("GET", "contact-info-subscriber"))
       subService.retrieveSubscriptionData(*)(*) returnsF Some(subscriptionDetails)
       cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
-      cbcIdService.getETMPSubscriptionData(*)(*) returns OptionT.none
+      cbcIdService.getETMPSubscriptionData(*)(*) returns OptionT.none[Future, ETMPSubscription]
 
-      val result = controller.updateInfoSubscriber()(fakeRequest)
+      val result = await(controller.updateInfoSubscriber()(fakeRequest))
 
-      status(result) shouldEqual Status.INTERNAL_SERVER_ERROR
+      result.header.status shouldEqual Status.SEE_OTHER
+      result.header.headers shouldEqual Map("Location" -> routes.SharedController.contactDetailsError.url)
     }
 
     "return OK otherwise" in {
