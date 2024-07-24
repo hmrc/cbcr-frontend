@@ -69,7 +69,7 @@ class StartController @Inject() (
             case "upload" =>
               Redirect(routes.FileUploadController.chooseXMLFile)
             case "editSubscriberInfo" =>
-              Redirect(routes.SubscriptionController.updateInfoSubscriber)
+              Redirect(routes.SubscriptionController.getUpdateInfoSubscriber)
             case _ =>
               BadRequest(views.start(startForm))
           }

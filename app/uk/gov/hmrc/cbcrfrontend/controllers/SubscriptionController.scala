@@ -135,7 +135,7 @@ class SubscriptionController @Inject() (
     }
   }
 
-  def updateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
+  def getUpdateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
         cbcId           <- EitherT.fromOption[Future](cbcEnrolment.map(_.cbcId), UnexpectedState("Couldn't get CBCId"))

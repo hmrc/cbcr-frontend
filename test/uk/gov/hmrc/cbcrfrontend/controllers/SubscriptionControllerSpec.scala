@@ -482,7 +482,7 @@ class SubscriptionControllerSpec
       auth.authorise[Option[CBCEnrolment]](*, *)(*, *) returns Future.successful(Some(CBCEnrolment(id, utr)))
       val fakeRequest = addToken(FakeRequest("GET", "contact-info-subscriber"))
       subService.retrieveSubscriptionData(*)(*) returnsF None
-      val result = controller.updateInfoSubscriber()(fakeRequest)
+      val result = controller.getUpdateInfoSubscriber()(fakeRequest)
 
       status(result) shouldEqual Status.INTERNAL_SERVER_ERROR
     }
@@ -494,7 +494,7 @@ class SubscriptionControllerSpec
       cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
       cbcIdService.getETMPSubscriptionData(*)(*) returns OptionT.none[Future, ETMPSubscription]
 
-      val result = await(controller.updateInfoSubscriber()(fakeRequest))
+      val result = await(controller.getUpdateInfoSubscriber()(fakeRequest))
 
       result.header.status shouldEqual Status.SEE_OTHER
       result.header.headers shouldEqual Map("Location" -> routes.SharedController.contactDetailsError.url)
@@ -507,7 +507,7 @@ class SubscriptionControllerSpec
       cache.save(*)(*, *, *) returns Future.successful(CacheItem("", JsObject.empty, Instant.now, Instant.now))
       cbcIdService.getETMPSubscriptionData(*)(*) returnsF etmpSubscription
 
-      val result = controller.updateInfoSubscriber()(fakeRequest)
+      val result = controller.getUpdateInfoSubscriber()(fakeRequest)
 
       status(result) shouldEqual Status.OK
     }
