@@ -24,7 +24,6 @@ import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.Credentials
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm._
@@ -32,6 +31,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.services._
 import uk.gov.hmrc.cbcrfrontend.views.Views
+import uk.gov.hmrc.cbcrfrontend.{errorRedirect, _}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
@@ -54,13 +54,13 @@ class SubscriptionController @Inject() (
 )(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with Logging {
 
-  val alreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
+  def alreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Future.successful(Ok(views.alreadySubscribed()))
     }
   }
 
-  val submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
+  def submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(Retrievals.credentials) { creds =>
       logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm
@@ -129,32 +129,29 @@ class SubscriptionController @Inject() (
       Map("f_name" -> subscriberContact.firstName, "s_name" -> subscriberContact.lastName, "cbcrId" -> cbcId.value)
     )
 
-  val contactInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
+  def contactInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactInfoSubscriber(subscriptionDataForm))
     }
   }
 
-  val updateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
+  def getUpdateInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
       val subscriptionData: EitherT[Future, CBCErrors, (ETMPSubscription, CBCId)] = for {
-        cbcId <- EitherT.fromEither[Future](
-                   cbcEnrolment.map(_.cbcId).toRight[CBCErrors](UnexpectedState("Couldn't get CBCId"))
-                 )
+        cbcId           <- EitherT.fromOption[Future](cbcEnrolment.map(_.cbcId), UnexpectedState("Couldn't get CBCId"))
         optionalDetails <- subscriptionDataService.retrieveSubscriptionData(Right(cbcId))
         details         <- EitherT.fromOption[Future](optionalDetails, UnexpectedState("No SubscriptionDetails"))
         bpr = details.businessPartnerRecord
-        _ <- EitherT.right(cache.save(bpr) *> cache.save(cbcId))
-        subData <- cbcIdService
-                     .getETMPSubscriptionData(bpr.safeId)
-                     .toRight(UnexpectedState("No ETMP Subscription Data"): CBCErrors)
-      } yield Tuple2(subData, cbcId)
+        _       <- EitherT.right(cache.save(bpr) *> cache.save(cbcId))
+        subData <- cbcIdService.getETMPSubscriptionData(bpr.safeId).toRight(NoETMPSubscriptionData: CBCErrors)
+      } yield subData -> cbcId
 
       subscriptionData.fold[Result](
-        (error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate),
-        tuple2 => {
-          val subData: ETMPSubscription = tuple2._1
-          val cbcId: CBCId = tuple2._2
+        {
+          case NoETMPSubscriptionData => Redirect(routes.SharedController.contactDetailsError)
+          case error                  => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
+        },
+        { case subData -> cbcId =>
           val prepopulatedForm = subscriptionDataForm.bind(
             Map(
               "firstName"   -> subData.names.name1,
@@ -169,7 +166,7 @@ class SubscriptionController @Inject() (
     }
   }
 
-  val saveUpdatedInfoSubscriber: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) {
+  def saveUpdatedInfoSubscriber: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) {
     implicit request =>
       authorised(AffinityGroup.Organisation and User).retrieve(cbcEnrolment) { cbcEnrolment =>
         val ci: ServiceResponse[CBCId] = for {
@@ -208,7 +205,7 @@ class SubscriptionController @Inject() (
       }
   }
 
-  val savedUpdatedInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
+  def savedUpdatedInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactDetailsUpdated())
     }
