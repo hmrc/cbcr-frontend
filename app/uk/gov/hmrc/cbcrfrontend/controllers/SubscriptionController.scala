@@ -54,13 +54,13 @@ class SubscriptionController @Inject() (
 )(implicit ec: ExecutionContext, feConfig: FrontendAppConfig)
     extends FrontendController(messagesControllerComponents) with AuthorisedFunctions with Logging {
 
-  val alreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
+  def alreadySubscribed: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Future.successful(Ok(views.alreadySubscribed()))
     }
   }
 
-  val submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
+  def submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(Retrievals.credentials) { creds =>
       logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm
@@ -129,7 +129,7 @@ class SubscriptionController @Inject() (
       Map("f_name" -> subscriberContact.firstName, "s_name" -> subscriberContact.lastName, "cbcrId" -> cbcId.value)
     )
 
-  val contactInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
+  def contactInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
       Ok(views.contactInfoSubscriber(subscriptionDataForm))
     }
