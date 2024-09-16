@@ -46,7 +46,7 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import java.time.{Instant, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 class SubscriptionControllerSpec
     extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach

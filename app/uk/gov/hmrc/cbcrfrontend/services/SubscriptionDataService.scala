@@ -46,8 +46,8 @@ class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: Servi
     id: Either[Utr, CBCId]
   )(implicit hc: HeaderCarrier): ServiceResponse[Option[SubscriptionDetails]] = {
     val fullUrl = id.fold(
-      utr => url.url + s"/cbcr/subscription-data/utr/${utr.utr}",
-      id => url.url + s"/cbcr/subscription-data/cbc-id/$id"
+      utr => s"${url.url}/cbcr/subscription-data/utr/${utr.utr}",
+      id => s"${url.url}/cbcr/subscription-data/cbc-id/$id"
     )
     EitherT(
       http
@@ -76,7 +76,7 @@ class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: Servi
   def updateSubscriptionData(cbcId: CBCId, data: SubscriberContact)(implicit
     hc: HeaderCarrier
   ): ServiceResponse[String] = {
-    val fullUrl = url.url + s"/cbcr/subscription-data/$cbcId"
+    val fullUrl = s"${url.url}/cbcr/subscription-data/$cbcId"
     EitherT(
       http
         .PUT[SubscriberContact, HttpResponse](fullUrl, data)
@@ -93,7 +93,7 @@ class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: Servi
   }
 
   def saveSubscriptionData(data: SubscriptionDetails)(implicit hc: HeaderCarrier): ServiceResponse[String] = {
-    val fullUrl = url.url + s"/cbcr/subscription-data"
+    val fullUrl = s"${url.url}/cbcr/subscription-data"
     EitherT(
       http
         .POST[SubscriptionDetails, HttpResponse](fullUrl, data)
@@ -111,7 +111,7 @@ class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: Servi
 
   def clearSubscriptionData(id: Either[Utr, CBCId])(implicit hc: HeaderCarrier): ServiceResponse[Option[String]] = {
 
-    val fullUrl = (cbcId: CBCId) => url.url + s"/cbcr/subscription-data/$cbcId"
+    val fullUrl = (cbcId: CBCId) => s"${url.url}/cbcr/subscription-data/$cbcId"
 
     for {
       cbc <- id.fold(
