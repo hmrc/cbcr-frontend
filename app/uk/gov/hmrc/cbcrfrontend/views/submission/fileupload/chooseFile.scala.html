@@ -72,7 +72,7 @@
             </span>
             @govukButton(Button(
                 content = Text(messages("uploadReport.uploadButton")),
-                attributes = Map("id" -> "upload-button", "type" -> "submit")
+                attributes = Map("id" -> "upload-button", "type" -> "submit", "data-prevent-double-click" -> "true")
             ))
         </div>
 

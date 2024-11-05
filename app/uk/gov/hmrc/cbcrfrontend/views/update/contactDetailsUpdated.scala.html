@@ -39,6 +39,7 @@
     <h2 class="govuk-heading-m">@messages("contactDetailsUpdate.next")</h2>
     <p class="govuk-body">@messages("contactDetailsUpdate.email")</p>
     @govukButton(Button(
+        attributes=Map("data-prevent-double-click"->"true"),
         href = Some(routes.StartController.start.url),
         content = Text(messages("contactDetailsUpdate.next2"))
     ))

@@ -97,7 +97,7 @@
 
         @govukButton(Button(
             content = Text(messages("form.controls.continue")),
-            attributes = Map("id" -> "btn-continue")
+            attributes = Map("id" -> "btn-continue", "data-prevent-double-click"->"true")
         ))
     }
 }

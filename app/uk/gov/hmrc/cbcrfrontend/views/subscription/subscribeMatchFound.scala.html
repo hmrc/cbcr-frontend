@@ -78,6 +78,7 @@
         case _ => {
             <p class="govuk-body">
                 @govukButton(Button(
+                attributes=Map("data-prevent-double-click"->"true"),
                 href = Some(routes.SubmissionController.submitSummary.url),
                 content = Text(messages("form.controls.confirmAndContinue"))
                 ))

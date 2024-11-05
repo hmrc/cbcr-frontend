@@ -77,7 +77,7 @@
 
     @govukButton(Button(
       content = Text(messages("start.button")),
-      attributes = Map("id" -> "continue", "type" -> "submit")
+      attributes = Map("id" -> "continue", "type" -> "submit", "data-prevent-double-click"->"true")
     ))
   }
 
