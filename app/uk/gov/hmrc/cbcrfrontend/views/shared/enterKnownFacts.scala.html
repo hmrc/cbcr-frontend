@@ -92,6 +92,7 @@
             autocomplete = Some("postal-code")
         ))
         @govukButton(Button(
+            attributes=Map("data-prevent-double-click"->"true"),
             content = Text(messages("form.controls.continue"))
         ))
     }

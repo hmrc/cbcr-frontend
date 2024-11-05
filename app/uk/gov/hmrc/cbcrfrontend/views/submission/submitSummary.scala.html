@@ -175,7 +175,7 @@
         <p>
         @govukButton(Button(
             content = Text(messages("submitSummary.submit")),
-            attributes = Map("id" -> "btn-submitSummary", "type" -> "submit")
+            attributes = Map("id" -> "btn-submitSummary", "type" -> "submit", "data-prevent-double-click" -> "true")
         ))
 
     }

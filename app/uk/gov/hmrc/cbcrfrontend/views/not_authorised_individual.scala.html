@@ -30,6 +30,7 @@
     <p class="govuk-body">@messages("notAuthorised.Individual.message.start") <a class="govuk-link" href="@config.cbcrGuidanceRegisterUrl">@messages("notAuthorised.Individual.message.link")</a></p>
     @govukButton(Button(
         href = Some(config.cbcrGuidanceUrl),
-        content = Text(messages("notAuthorised.individual.button"))
+        content = Text(messages("notAuthorised.individual.button")),
+        attributes = Map("data-prevent-double-click" -> "true")
     ))
 }

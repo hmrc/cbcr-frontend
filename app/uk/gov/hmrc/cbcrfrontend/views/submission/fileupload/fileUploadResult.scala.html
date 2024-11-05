@@ -62,7 +62,7 @@
         </p>
         @govukButton(Button(
             href = Some(routes.SharedController.signOutSurvey.url),
-            attributes = Map("id" -> "btn-continue"),
+            attributes = Map("id" -> "btn-continue", "data-prevent-double-click" -> "true"),
             content = Text(messages("form.controls.finished"))
         ))
     } else {
@@ -97,7 +97,7 @@
 
         @govukButton(Button(
             href = Some(continueUrl),
-            attributes = Map("id" -> "btn-continue"),
+            attributes = Map("id" -> "btn-continue", "data-prevent-double-click"->"true"),
             content = Text(messages("form.controls.continue"))
         ))
 
