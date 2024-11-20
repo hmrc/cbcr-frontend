@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import cats.syntax.apply._
 import cats.data.EitherT
-import cats.implicits.{catsStdInstancesForFuture, catsSyntaxApply, catsSyntaxEitherId, toShow}
+import cats.implicits.{catsStdInstancesForFuture, catsSyntaxEitherId, toShow}
 import play.api.Logging
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc._

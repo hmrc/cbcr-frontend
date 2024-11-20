@@ -497,7 +497,7 @@ class SubscriptionControllerSpec
       val result = await(controller.getUpdateInfoSubscriber()(fakeRequest))
 
       result.header.status shouldEqual Status.SEE_OTHER
-      result.header.headers shouldEqual Map("Location" -> routes.SharedController.contactDetailsError.url)
+      result.header.headers.toMap shouldEqual Map("Location" -> routes.SharedController.contactDetailsError.url)
     }
 
     "return OK otherwise" in {
