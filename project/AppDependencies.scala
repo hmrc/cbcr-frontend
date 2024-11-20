@@ -28,7 +28,6 @@ object AppDependencies {
     "uk.gov.hmrc.mongo"     %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
     "org.mockito"           %% "mockito-scala"                 % mockitoScalaVersion  % scope,
     "org.mockito"           %% "mockito-scala-cats"            % mockitoScalaVersion  % scope,
-    "com.github.tomakehurst" % "wiremock"                      % "3.0.0-beta-7"       % scope,
     "xerces"                 % "xercesImpl"                    % "2.12.2"             % scope
   )
 }
