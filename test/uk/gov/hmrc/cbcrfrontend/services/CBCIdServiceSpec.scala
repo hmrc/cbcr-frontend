@@ -27,8 +27,8 @@ import play.api.http.Status
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.cbcrfrontend.connectors.CBCRBackendConnector
 import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
+import uk.gov.hmrc.cbcrfrontend.emailaddress.EmailAddress
 import uk.gov.hmrc.cbcrfrontend.model.{ContactDetails, ContactName, ETMPSubscription, EtmpAddress}
-import uk.gov.hmrc.emailaddress.EmailAddress
 import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
 
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -25,7 +25,7 @@ import play.api.data.FormError
 import play.api.data.format.{Formats, Formatter}
 import play.api.libs.json._
 import uk.gov.hmrc.domain.Modulus23Check
-import uk.gov.hmrc.emailaddress.EmailAddress
+import uk.gov.hmrc.cbcrfrontend.emailaddress.EmailAddress
 
 /** A CBCId defined as at 15 digit reference using a modulus 23 check digit Digit 1 is an 'X' Digit 2 is the check digit
   * Digits 3-5 is the short name 'CBC' Digits 6-9 are '0000' Digits 10-15 are for the id sequence e.g. '000001' -

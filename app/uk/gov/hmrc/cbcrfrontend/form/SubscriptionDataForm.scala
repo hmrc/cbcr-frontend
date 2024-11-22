@@ -18,8 +18,8 @@ package uk.gov.hmrc.cbcrfrontend.form
 
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
+import uk.gov.hmrc.cbcrfrontend.emailaddress.{EmailAddress, EmailAddressValidation}
 import uk.gov.hmrc.cbcrfrontend.model.SubscriberContact
-import uk.gov.hmrc.emailaddress.EmailAddress
 
 object SubscriptionDataForm {
   def condTrue(condition: Boolean, statement: Boolean): Boolean = if (condition) statement else true
@@ -38,9 +38,9 @@ object SubscriptionDataForm {
         .verifying("contactInfoSubscriber.emailAddress.error.empty", _.trim != "")
         .verifying(
           "contactInfoSubscriber.emailAddress.error.invalid",
-          x => condTrue(x.trim != "", EmailAddress.isValid(x))
+          x => condTrue(x.trim != "", new EmailAddressValidation().isValid(x))
         )
         .transform[EmailAddress](EmailAddress(_), _.value)
-    )(SubscriberContact.apply)(SubscriberContact.unapply)
+    )(SubscriberContact.apply)(SubscriberContact.unapply(_))
   )
 }
