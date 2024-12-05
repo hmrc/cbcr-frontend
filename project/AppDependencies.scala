@@ -4,7 +4,7 @@ import sbt.*
 object AppDependencies {
   val hmrcBootstrapVersion = "8.5.0"
   val mockitoScalaVersion = "1.17.37"
-  val hmrcMongoVersion = "1.4.0"
+  val hmrcMongoVersion = "2.3.0"
   val playVersion = "play-30"
 
   val compile: Seq[ModuleID] = Seq(
@@ -18,7 +18,7 @@ object AppDependencies {
     "org.codehaus.woodstox"    % "woodstox-core-asl"                % "4.4.1",
     "commons-io"               % "commons-io"                       % "2.16.1",
     "org.mindrot"              % "jbcrypt"                          % "0.4",
-    "com.sun.msv.datatype.xsd" % "xsdlib"                           % "20060615",
+    "com.sun.msv.datatype.xsd" % "xsdlib"                           % "2013.2",
     "msv"                      % "msv"                              % "20050913"
   )
 
