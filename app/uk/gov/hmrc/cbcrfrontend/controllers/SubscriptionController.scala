@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
+import cats.syntax.apply._
 import cats.data.EitherT
-import cats.implicits.{catsStdInstancesForFuture, catsSyntaxApply, catsSyntaxEitherId, toShow}
+import cats.implicits.{catsStdInstancesForFuture, catsSyntaxEitherId, toShow}
 import play.api.Logging
 import play.api.libs.json.{JsString, Json}
 import play.api.mvc._
@@ -124,7 +125,7 @@ class SubscriptionController @Inject() (
 
   private def makeSubEmail(subscriberContact: SubscriberContact, cbcId: CBCId): Email =
     Email(
-      List(subscriberContact.email.value),
+      List(subscriberContact.email),
       "cbcr_subscription",
       Map("f_name" -> subscriberContact.firstName, "s_name" -> subscriberContact.lastName, "cbcrId" -> cbcId.value)
     )
@@ -156,7 +157,7 @@ class SubscriptionController @Inject() (
             Map(
               "firstName"   -> subData.names.name1,
               "lastName"    -> subData.names.name2,
-              "email"       -> subData.contact.email.value,
+              "email"       -> subData.contact.email,
               "phoneNumber" -> subData.contact.phoneNumber
             )
           )

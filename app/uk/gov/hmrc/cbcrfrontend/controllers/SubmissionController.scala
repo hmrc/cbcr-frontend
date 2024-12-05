@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,7 +361,7 @@ class SubmissionController @Inject() (
       form <- cache.readOption[SubmitterInfo].map { osi =>
                 (osi.map(_.fullName), osi.map(_.contactPhone), osi.map(_.email))
                   .mapN { (name, phone, email) =>
-                    submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
+                    submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email))
                   }
                   .getOrElse(submitterInfoForm)
               }

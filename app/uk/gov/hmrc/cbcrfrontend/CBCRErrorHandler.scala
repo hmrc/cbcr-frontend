@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import play.api.mvc._
 import play.api.{Configuration, Environment}
 import play.twirl.api.HtmlFormat
 import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.cbcrfrontend.auth.AuthRedirectsExternal
 import uk.gov.hmrc.cbcrfrontend.controllers.routes
 import uk.gov.hmrc.cbcrfrontend.views.Views
-import uk.gov.hmrc.play.bootstrap.config.AuthRedirects
 import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
 
 import javax.inject.Inject
@@ -34,7 +34,7 @@ class CBCRErrorHandler @Inject() (
   val env: Environment,
   val config: Configuration,
   views: Views
-) extends FrontendErrorHandler with Results with AuthRedirects {
+) extends FrontendErrorHandler with Results with AuthRedirectsExternal {
 
   override def resolveError(rh: RequestHeader, ex: Throwable): Result = ex match {
     case _: NoActiveSession =>

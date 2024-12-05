@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package uk.gov.hmrc.cbcrfrontend.form
 
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
+import uk.gov.hmrc.cbcrfrontend.emailaddress.{EmailAddress, EmailAddressValidation}
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm.condTrue
 import uk.gov.hmrc.cbcrfrontend.model.SubmitterInfo
-import uk.gov.hmrc.emailaddress.EmailAddress
 
 object SubmitterInfoForm {
   val submitterInfoForm: Form[SubmitterInfo] = Form(
@@ -34,9 +34,12 @@ object SubmitterInfoForm {
         ),
       "email" -> text
         .verifying("submitterInfo.emailAddress.error.empty", _.trim != "")
-        .verifying("submitterInfo.emailAddress.error.invalid", x => condTrue(x.trim != "", EmailAddress.isValid(x)))
+        .verifying(
+          "submitterInfo.emailAddress.error.invalid",
+          x => condTrue(x.trim != "", new EmailAddressValidation().isValid(x))
+        )
     ) { (fullName: String, contactPhone: String, email: String) =>
       SubmitterInfo(fullName, None, contactPhone, EmailAddress(email), None)
-    }(si => Some((si.fullName, si.contactPhone, si.email.value)))
+    }(si => Some((si.fullName, si.contactPhone, si.email)))
   )
 }
