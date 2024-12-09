@@ -16,27 +16,20 @@
 
 package uk.gov.hmrc.cbcrfrontend.emailaddress
 
-import com.google.inject.ImplementedBy
-import play.api.data.validation.{Constraint, Constraints, Valid}
-import uk.gov.hmrc.cbcrfrontend
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-import javax.inject.Singleton
-
-case class EmailAddress(value: String) extends StringValue
-
-@ImplementedBy(classOf[EmailAddressValidation])
-trait EmailValidation {
-  def isValid(email: String): Boolean
-}
-
-@Singleton
-class EmailAddressValidation extends EmailValidation {
-
-  def isValid(email: String): Boolean = {
-    val emailConstraint: Constraint[String] = Constraints.emailAddress
-    emailConstraint(email) match {
-      case Valid => true
-      case _     => cbcrfrontend.logger.debug(s"Invalid email:$email"); false
+class EmailAddressSpec extends AnyWordSpec with Matchers {
+  "EmailValidation" should {
+    "validate a correct email address" in {
+      new EmailAddressValidation().isValid("user@test.com") shouldBe true
+      new EmailAddressValidation().isValid("user@test.co.uk") shouldBe true
+      new EmailAddressValidation().isValid("a@a") shouldBe true
+    }
+    "validate invalid email" in {
+      new EmailAddressValidation().isValid("user @test.com") shouldBe false
+      new EmailAddressValidation().isValid("user@") shouldBe false
     }
   }
+
 }
