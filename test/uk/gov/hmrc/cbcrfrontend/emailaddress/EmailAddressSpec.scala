@@ -24,9 +24,9 @@ class EmailAddressSpec extends AnyWordSpec with Matchers {
     "validate a correct email address" in {
       new EmailAddressValidation().isValid("user@test.com") shouldBe true
       new EmailAddressValidation().isValid("user@test.co.uk") shouldBe true
-      new EmailAddressValidation().isValid("a@a") shouldBe true
     }
     "validate invalid email" in {
+      new EmailAddressValidation().isValid("a@a") shouldBe false
       new EmailAddressValidation().isValid("user @test.com") shouldBe false
       new EmailAddressValidation().isValid("user@") shouldBe false
     }

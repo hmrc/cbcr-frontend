@@ -125,7 +125,7 @@ class SubscriptionController @Inject() (
 
   private def makeSubEmail(subscriberContact: SubscriberContact, cbcId: CBCId): Email =
     Email(
-      List(subscriberContact.email),
+      List(subscriberContact.email.value),
       "cbcr_subscription",
       Map("f_name" -> subscriberContact.firstName, "s_name" -> subscriberContact.lastName, "cbcrId" -> cbcId.value)
     )
@@ -157,7 +157,7 @@ class SubscriptionController @Inject() (
             Map(
               "firstName"   -> subData.names.name1,
               "lastName"    -> subData.names.name2,
-              "email"       -> subData.contact.email,
+              "email"       -> subData.contact.email.value,
               "phoneNumber" -> subData.contact.phoneNumber
             )
           )

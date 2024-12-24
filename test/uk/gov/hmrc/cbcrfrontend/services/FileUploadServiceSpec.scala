@@ -84,7 +84,7 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
   private val clock = Clock.fixed(Instant.parse("2014-12-22T10:15:30Z"), ZoneId.of("UTC"))
 
   private val expiryDateString =
-    DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'").format(LocalDateTime.now(clock).plusDays(7))
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").format(LocalDateTime.now(clock).plusDays(7))
 
   private val envelopeRequestJson = Json
     .toJson(
