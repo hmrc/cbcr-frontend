@@ -18,12 +18,14 @@ package uk.gov.hmrc.cbcrfrontend.model
 
 import play.api.libs.json._
 import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.cbcrfrontend.emailaddress.EmailAddress
+import uk.gov.hmrc.cbcrfrontend.emailaddress.PlayJsonFormats._
 
 case class SubmitterInfo(
   fullName: String,
   agencyBusinessName: Option[AgencyBusinessName],
   contactPhone: String,
-  email: String,
+  email: EmailAddress,
   affinityGroup: Option[AffinityGroup]
 )
 
@@ -35,7 +37,7 @@ object SubmitterInfo {
           fullName <- m.get("fullName").flatMap(_.asOpt[String])
           abn      <- m.get("agencyBusinessName").map(_.asOpt[String])
           cp       <- m.get("contactPhone").flatMap(_.asOpt[String])
-          email    <- m.get("email").flatMap(_.asOpt[String])
+          email    <- m.get("email").flatMap(_.asOpt[EmailAddress])
           ag       <- m.get("affinityGroup").map(_.asOpt[AffinityGroup])
         } yield JsSuccess(SubmitterInfo(fullName, abn.map(AgencyBusinessName(_)), cp, email, ag))
         result.getOrElse(JsError(s"Unable to serialise $json as a  SubmitterInfo"))
