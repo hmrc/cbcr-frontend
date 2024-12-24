@@ -52,7 +52,7 @@ object PhoneNumber {
   }
 }
 
-case class ContactDetails(email: String, phoneNumber: String)
+case class ContactDetails(email: EmailAddress, phoneNumber: String)
 
 object ContactDetails {
   implicit val emailFormat: Format[EmailAddress] =

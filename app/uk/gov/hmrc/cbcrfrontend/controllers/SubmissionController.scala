@@ -361,7 +361,7 @@ class SubmissionController @Inject() (
       form <- cache.readOption[SubmitterInfo].map { osi =>
                 (osi.map(_.fullName), osi.map(_.contactPhone), osi.map(_.email))
                   .mapN { (name, phone, email) =>
-                    submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email))
+                    submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
                   }
                   .getOrElse(submitterInfoForm)
               }
