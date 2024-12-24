@@ -77,7 +77,7 @@ class FileUploadService @Inject() (
       }
 
     val envelopeExpiryDate = {
-      val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+      val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
       formatter.format(LocalDateTime.now(clock).plusDays(configuration.envelopeExpiryDays))
     }
 

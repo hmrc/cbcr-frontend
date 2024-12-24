@@ -78,7 +78,7 @@ object CorrespondenceDetails {
 }
 case class UpdateResponse(processingDate: LocalDateTime)
 object UpdateResponse {
-  private val formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:ss'Z'")
+  private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
   implicit val format: Writes[UpdateResponse] = (o: UpdateResponse) =>
     Json.obj(
       "processingDate" -> o.processingDate.format(formatter)
