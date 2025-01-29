@@ -16,41 +16,45 @@
 
 package uk.gov.hmrc.cbcrfrontend.connectors
 
-import play.api.libs.json.{JsArray, JsObject, Json}
+import play.api.libs.json.{JsArray, Json}
 import uk.gov.hmrc.cbcrfrontend.model.{CBCId, Utr}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TaxEnrolmentsConnector @Inject() (http: HttpClient, servicesConfig: ServicesConfig)(implicit
+class TaxEnrolmentsConnector @Inject() (http: HttpClientV2, servicesConfig: ServicesConfig)(implicit
   ec: ExecutionContext
 ) {
   private val url = servicesConfig.baseUrl("tax-enrolments")
 
   def deEnrol(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.POST[JsObject, HttpResponse](url + "/de-enrol/HMRC-CBC-ORG", Json.obj("keepAgentAllocations" -> false))
+    http.post(url"$url/de-enrol/HMRC-CBC-ORG").withBody(Json.obj("keepAgentAllocations" -> false)).execute[HttpResponse]
 
   def enrol(cBCId: CBCId, utr: Utr)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT(
-      url + "/service/HMRC-CBC-ORG/enrolment",
-      Json.obj(
-        "identifiers" -> JsArray(
-          List(
-            Json.obj(
-              "key"   -> "cbcId",
-              "value" -> cBCId.value
-            ),
-            Json.obj(
-              "key"   -> "UTR",
-              "value" -> utr.value
+    http
+      .post(url"$url/service/HMRC-CBC-ORG/enrolment")
+      .withBody(
+        Json.obj(
+          "identifiers" -> JsArray(
+            List(
+              Json.obj(
+                "key"   -> "cbcId",
+                "value" -> cBCId.value
+              ),
+              Json.obj(
+                "key"   -> "UTR",
+                "value" -> utr.value
+              )
             )
-          )
-        ),
-        "verifiers" -> JsArray()
+          ),
+          "verifiers" -> JsArray()
+        )
       )
-    )
+      .execute[HttpResponse]
+
 }

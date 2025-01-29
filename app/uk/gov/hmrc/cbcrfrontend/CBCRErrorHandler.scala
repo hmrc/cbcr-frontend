@@ -34,7 +34,8 @@ class CBCRErrorHandler @Inject() (
   val env: Environment,
   val config: Configuration,
   views: Views
-) extends FrontendErrorHandler with Results with AuthRedirectsExternal {
+)(implicit val ec: ExecutionContext)
+    extends FrontendErrorHandler with Results with AuthRedirectsExternal {
 
   override def resolveError(rh: RequestHeader, ex: Throwable): Future[Result] = ex match {
     case _: NoActiveSession =>
@@ -54,12 +55,6 @@ class CBCRErrorHandler @Inject() (
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit
     request: RequestHeader
   ): Future[Html] =
-    convertToFutureHtml(views.errorTemplate(pageTitle, heading, message))
+    Future(Html(views.errorTemplate(pageTitle, heading, message).toString()))
 
-  override protected implicit val ec: ExecutionContext = ExecutionContext.global
-
-  private def convertToFutureHtml(appendable: HtmlFormat.Appendable): Future[Html] =
-    Future {
-      Html(appendable.toString())
-    }
 }

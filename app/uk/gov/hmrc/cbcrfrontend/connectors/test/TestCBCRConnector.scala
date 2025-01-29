@@ -18,59 +18,70 @@ package uk.gov.hmrc.cbcrfrontend.connectors.test
 
 import play.api.libs.json.{JsNull, JsValue}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import java.net.URL
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TestCBCRConnector @Inject() (http: HttpClient, servicesConfig: ServicesConfig)(implicit ec: ExecutionContext) {
+class TestCBCRConnector @Inject() (http: HttpClientV2, servicesConfig: ServicesConfig)(implicit ec: ExecutionContext) {
   private val url = s"${servicesConfig.baseUrl("cbcr")}/cbcr"
 
   def insertSubscriptionData(jsonData: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.POST[JsValue, HttpResponse](s"$url/test-only/insertSubscriptionData", jsonData)
+    http.post(url"$url/test-only/insertSubscriptionData").withBody(jsonData).execute[HttpResponse]
 
   def deleteSubscription(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.DELETE[HttpResponse](s"$url/test-only/deleteSubscription/$utr")
+    http.delete(new URL(s"$url/test-only/deleteSubscription/$utr")).execute[HttpResponse]
 
   def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.DELETE[HttpResponse](s"$url/test-only/deleteDocRefId/$docRefId")
+    http.delete(new URL(s"$url/test-only/deleteDocRefId/$docRefId")).execute[HttpResponse]
 
   def deleteReportingEntityData(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.DELETE(s"$url/test-only/reportingEntityData/$docRefId")
+    http.delete(new URL(s"$url/test-only/reportingEntityData/$docRefId")).execute[HttpResponse]
 
   def deleteSingleMessageRefId(messageRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.DELETE[HttpResponse](s"$url/test-only/deleteMessageRefId/$messageRefId")
+    http.delete(new URL(s"$url/test-only/deleteMessageRefId/$messageRefId")).execute[HttpResponse]
 
   def dropReportingEntityDataCollection()(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.DELETE(s"$url/test-only/reportingEntityData")
+    http.delete(url"$url/test-only/reportingEntityData").execute[HttpResponse]
 
   def dropSubscriptionData()(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.DELETE(s"$url/test-only/deleteSubscription")
+    http.delete(url"$url/test-only/deleteSubscription").execute[HttpResponse]
 
   def updateReportingEntityCreationDate(createDate: String, docRefId: String)(implicit
     hc: HeaderCarrier
   ): Future[HttpResponse] =
-    http.PUT(s"$url/test-only/updateReportingEntityCreationDate/$createDate/$docRefId", JsNull)
+    http
+      .put(new URL(s"$url/test-only/updateReportingEntityCreationDate/$createDate/$docRefId"))
+      .withBody(JsNull)
+      .execute[HttpResponse]
 
   def updateReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT(s"$url/test-only/deleteReportingPeriodByRepEntDocRefId/$docRefId", JsNull)
+    http
+      .put(new URL(s"$url/test-only/deleteReportingPeriodByRepEntDocRefId/$docRefId"))
+      .withBody(JsNull)
+      .execute[HttpResponse]
 
   def deleteReportingEntityCreationDate(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.DELETE(s"$url/test-only/deleteReportingEntityCreationDate/$docRefId")
+    http.delete(new URL(s"$url/test-only/deleteReportingEntityCreationDate/$docRefId")).execute[HttpResponse]
 
   def confirmReportingEntityCreationDate(createDate: String, docRefId: String)(implicit
     hc: HeaderCarrier
   ): Future[HttpResponse] =
-    http.PUT(s"$url/test-only/confirmReportingEntityCreationDate/$createDate/$docRefId", JsNull)
+    http.put(new URL(s"$url/test-only/confirmReportingEntityCreationDate/$createDate/$docRefId")).execute[HttpResponse]
 
   def deleteReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.DELETE(s"$url/test-only/deleteReportingEntityReportingPeriod/$docRefId")
+    http.delete(new URL(s"$url/test-only/deleteReportingEntityReportingPeriod/$docRefId")).execute[HttpResponse]
 
   def updateReportingEntityAdditionalInfoDRI(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT(s"$url/test-only/updateReportingEntityAdditionalInfoDRI/$docRefId", JsNull)
+    http
+      .put(new URL(s"$url/test-only/updateReportingEntityAdditionalInfoDRI/$docRefId"))
+      .withBody(JsNull)
+      .execute[HttpResponse]
 
   def checkNumberOfCbcIdForUtr(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](s"$url/test-only/validateNumberOfCbcIdForUtr/$utr")
+    http.get(new URL(s"$url/test-only/validateNumberOfCbcIdForUtr/$utr")).execute[HttpResponse]
 }

@@ -20,11 +20,13 @@ import cats.data.EitherT
 import cats.instances.future._
 import play.api.Logger
 import play.api.http.Status
+import play.api.libs.json.Json
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.typesclasses.{CbcrsUrl, ServiceUrl}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
@@ -32,7 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 @Singleton
-class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: ServicesConfig)(implicit
+class SubscriptionDataService @Inject() (http: HttpClientV2, servicesConfig: ServicesConfig)(implicit
   ec: ExecutionContext
 ) {
 
@@ -51,7 +53,8 @@ class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: Servi
     )
     EitherT(
       http
-        .GET[HttpResponse](fullUrl)
+        .get(url"$fullUrl")
+        .execute[HttpResponse]
         .map { response =>
           response.status match {
             case Status.OK =>
@@ -79,7 +82,9 @@ class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: Servi
     val fullUrl = s"${url.url}/cbcr/subscription-data/$cbcId"
     EitherT(
       http
-        .PUT[SubscriberContact, HttpResponse](fullUrl, data)
+        .put(url"$fullUrl")
+        .withBody(Json.toJson(data))
+        .execute[HttpResponse]
         .map { response =>
           response.status match {
             case Status.OK => Right[CBCErrors, String](response.body)
@@ -96,7 +101,9 @@ class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: Servi
     val fullUrl = s"${url.url}/cbcr/subscription-data"
     EitherT(
       http
-        .POST[SubscriptionDetails, HttpResponse](fullUrl, data)
+        .post(url"$fullUrl")
+        .withBody(Json.toJson(data))
+        .execute[HttpResponse]
         .map { response =>
           response.status match {
             case Status.OK => Right[CBCErrors, String](response.body)
@@ -121,7 +128,8 @@ class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: Servi
       result <- cbc.fold(EitherT.rightT[Future, CBCErrors](Option.empty[String])) { id =>
                   EitherT(
                     http
-                      .DELETE[HttpResponse](fullUrl(id))
+                      .delete(url"$fullUrl(id)")
+                      .execute[HttpResponse]
                       .map { response =>
                         Right(Some(response.body))
                       }
