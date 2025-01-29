@@ -18,7 +18,7 @@
 govUkWrapper: uk.gov.hmrc.cbcrfrontend.views.html.Layout
 )
 
-@(pageTitle: String, heading: String, message: String)(implicit request: Request[_], messages: Messages)
+@(pageTitle: String, heading: String, message: String)(implicit request: RequestHeader, messages: Messages)
 
 @mainContent = {
  <h1 class="govuk-heading-l">@heading</h1>

@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend
 import play.api.i18n.MessagesApi
 import play.api.mvc._
 import play.api.{Configuration, Environment}
-import play.twirl.api.HtmlFormat
+import play.twirl.api.{Html, HtmlFormat}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.auth.AuthRedirectsExternal
 import uk.gov.hmrc.cbcrfrontend.controllers.routes
@@ -27,7 +27,7 @@ import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
 
 import javax.inject.Inject
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class CBCRErrorHandler @Inject() (
   val messagesApi: MessagesApi,
@@ -36,7 +36,7 @@ class CBCRErrorHandler @Inject() (
   views: Views
 ) extends FrontendErrorHandler with Results with AuthRedirectsExternal {
 
-  override def resolveError(rh: RequestHeader, ex: Throwable): Result = ex match {
+  override def resolveError(rh: RequestHeader, ex: Throwable): Future[Result] = ex match {
     case _: NoActiveSession =>
       toGGLogin(rh.uri)
     case _: UnsupportedCredentialRole =>
@@ -52,7 +52,14 @@ class CBCRErrorHandler @Inject() (
     resolveError(request, exception)
 
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit
-    request: Request[_]
-  ): HtmlFormat.Appendable =
-    views.errorTemplate(pageTitle, heading, message)
+    request: RequestHeader
+  ): Future[Html] =
+    convertToFutureHtml(views.errorTemplate(pageTitle, heading, message))
+
+  override protected implicit val ec: ExecutionContext = ExecutionContext.global
+
+  private def convertToFutureHtml(appendable: HtmlFormat.Appendable): Future[Html] =
+    Future {
+      Html(appendable.toString())
+    }
 }
