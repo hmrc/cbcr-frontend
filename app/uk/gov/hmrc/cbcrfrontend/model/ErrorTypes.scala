@@ -30,6 +30,7 @@ object CBCErrors {
     case v: ValidationErrors          => v.show
     case InvalidSession               => InvalidSession.toString
     case ExpiredSession(msg)          => msg
+    case error: CBCErrors             => error.toString
   }
 }
 
