@@ -175,7 +175,10 @@ class CBCBusinessRuleValidator @Inject() (
     ReportingRole.parseFromString(in.reportingRole).toValidNel(InvalidXMLError("xmlValidationError.ReportingRole"))
 
   private def extractSendingEntityIn(in: RawMessageSpec): ValidBusinessResult[CBCId] =
-    CBCId(in.sendingEntityIn).fold[ValidBusinessResult[CBCId]](SendingEntityError.invalidNel[CBCId]) { cbcId =>
+    CBCId(in.sendingEntityIn).fold[ValidBusinessResult[CBCId]] {
+      logger.error("Missing cbcId in raw message")
+      SendingEntityError.invalidNel[CBCId]
+    } { cbcId =>
       cbcId.validNel
     }
 
@@ -564,11 +567,17 @@ class CBCBusinessRuleValidator @Inject() (
     subscriptionDataService
       .retrieveSubscriptionData(Right(cbcId))
       .fold[ValidBusinessResult[CBCId]](
-        (_: CBCErrors) => SendingEntityError.invalidNel,
+        (errors: CBCErrors) => {
+          logger.error(s"Subscription retrieval failed with : ${errors.show}")
+          SendingEntityError.invalidNel
+        },
         (maybeDetails: Option[SubscriptionDetails]) =>
           maybeDetails match {
-            case None    => SendingEntityError.invalidNel
-            case Some(_) => cbcId.validNel
+            case None =>
+              logger.warn(s"No subscription data found for cbcId : $cbcId")
+              SendingEntityError.invalidNel
+            case Some(_) =>
+              cbcId.validNel
           }
       )
 

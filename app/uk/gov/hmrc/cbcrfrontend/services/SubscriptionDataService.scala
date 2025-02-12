@@ -61,9 +61,11 @@ class SubscriptionDataService @Inject() (http: HttpClient, servicesConfig: Servi
                   errors => Left[CBCErrors, Option[SubscriptionDetails]](UnexpectedState(errors.mkString)),
                   details => Right[CBCErrors, Option[SubscriptionDetails]](Some(details))
                 )
-            case Status.NOT_FOUND =>
-              Right(None)
-            case s => Left(UnexpectedState(s"Call to RetrieveSubscription failed - backend returned $s"))
+            case Status.NOT_FOUND => Right(None)
+            case s =>
+              val message = s"Call to RetrieveSubscription failed - backend returned $s"
+              logger.warn(message)
+              Left(UnexpectedState(message))
           }
         }
         .recover { case NonFatal(t) =>
