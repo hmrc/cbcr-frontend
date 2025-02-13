@@ -30,8 +30,9 @@ import uk.gov.hmrc.cbcrfrontend.controllers.CSRFTest
 import uk.gov.hmrc.cbcrfrontend.emailaddress.EmailAddress
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.util.WireMockMethods
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.test.WireMockSupport
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpReads, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -59,7 +60,7 @@ class SubscriptionDataServiceSpec
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val reads: HttpReads[HttpResponse] = uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-  private val mockHttp = fakeApplication().injector.instanceOf[HttpClient]
+  private val mockHttp = fakeApplication().injector.instanceOf[HttpClientV2]
   private val servicesConfig = fakeApplication().injector.instanceOf[ServicesConfig]
   private val sds = new SubscriptionDataService(mockHttp, servicesConfig)
   private val cbcId = CBCId.create(56).toOption

@@ -17,10 +17,11 @@
 package uk.gov.hmrc.cbcrfrontend.connectors
 
 import cats.syntax.show._
-import play.api.libs.json.{JsNull, JsString, JsValue}
+import play.api.libs.json.{JsNull, JsString, Json}
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.LocalDate
@@ -28,70 +29,62 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CBCRBackendConnector @Inject() (http: HttpClient, servicesConfig: ServicesConfig)(implicit ec: ExecutionContext) {
+class CBCRBackendConnector @Inject() (http: HttpClientV2, servicesConfig: ServicesConfig)(implicit
+  ec: ExecutionContext
+) {
   private val url = s"${servicesConfig.baseUrl("cbcr")}/cbcr"
 
   def getFileUploadResponse(envelopeId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url"$url/file-upload-response/$envelopeId")
+    http.get(url"$url/file-upload-response/$envelopeId").execute[HttpResponse]
 
   def subscribe(s: SubscriptionDetails)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.POST[SubscriptionDetails, HttpResponse](url + "/subscription", s)
-
+    http.post(url"$url/subscription").withBody(Json.toJson(s)).execute[HttpResponse]
   def sendEmail(email: Email)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.POST[Email, HttpResponse](url + s"/email", email)
-
+    http.post(url"$url/email").withBody(Json.toJson(email)).execute[HttpResponse]
   def getETMPSubscriptionData(safeId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/subscription/$safeId")
-
+    http.get(url"$url/subscription/$safeId").execute[HttpResponse]
   def updateETMPSubscriptionData(safeId: String, correspondenceDetails: CorrespondenceDetails)(implicit
     hc: HeaderCarrier
   ): Future[HttpResponse] =
-    http.PUT[CorrespondenceDetails, HttpResponse](url + s"/subscription/$safeId", correspondenceDetails)
+    http.put(url"$url/subscription/$safeId").withBody(Json.toJson(correspondenceDetails)).execute[HttpResponse]
 
   def messageRefIdExists(id: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/message-ref-id/$id")
+    http.get(url"$url/message-ref-id/$id").execute[HttpResponse]
 
   def saveMessageRefId(id: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT[JsValue, HttpResponse](url + s"/message-ref-id/$id", JsNull)
-
+    http.put(url"$url/message-ref-id/$id").withBody(Json.toJson(JsNull)).execute[HttpResponse]
   def docRefIdQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/doc-ref-id/${d.show}")
-
+    http.get(url"$url/doc-ref-id/${d.show}").execute[HttpResponse]
   def docRefIdSave(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT[JsValue, HttpResponse](url + s"/doc-ref-id/${d.show}", JsNull)
-
+    http.put(url"$url/doc-ref-id/${d.show}").withBody(Json.toJson(JsNull)).execute[HttpResponse]
   def corrDocRefIdSave(c: CorrDocRefId, d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT[JsValue, HttpResponse](url + s"/corr-doc-ref-id/${c.cid.show}", JsString(d.show))
-
+    http.put(url"$url/corr-doc-ref-id/${c.cid.show}").withBody(Json.toJson(JsString(d.show))).execute[HttpResponse]
   def reportingEntityDataSave(r: ReportingEntityData)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.POST[ReportingEntityData, HttpResponse](url + "/reporting-entity", r)
-
+    http.post(url"$url/reporting-entity").withBody(Json.toJson(r)).execute[HttpResponse]
   def reportingEntityDataUpdate(r: PartialReportingEntityData)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.PUT[PartialReportingEntityData, HttpResponse](url + "/reporting-entity", r)
-
+    http.put(url"$url/reporting-entity").withBody(Json.toJson(r)).execute[HttpResponse]
   def reportingEntityDataQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/reporting-entity/query/${d.show}")
-
+    http.get(url"$url/reporting-entity/query/${d.show}").execute[HttpResponse]
   def reportingEntityDataModelQuery(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/reporting-entity/model/${d.show}")
-
+    http.get(url"$url/reporting-entity/model/${d.show}").execute[HttpResponse]
   def reportingEntityDocRefId(d: DocRefId)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/reporting-entity/doc-ref-id/${d.show}")
-
+    http.get(url"$url/reporting-entity/doc-ref-id/${d.show}").execute[HttpResponse]
   def reportingEntityCBCIdAndReportingPeriod(cbcId: CBCId, reportingPeriod: LocalDate)(implicit
     hc: HeaderCarrier
   ): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/reporting-entity/query-cbc-id/${cbcId.toString}/${reportingPeriod.toString}")
-
+    http
+      .get(url"$url/reporting-entity/query-cbc-id/${cbcId.toString}/${reportingPeriod.toString}")
+      .execute[HttpResponse]
   def reportingEntityDataQueryTin(tin: String, reportingPeriod: String)(implicit
     hc: HeaderCarrier
   ): Future[HttpResponse] =
-    http.GET[HttpResponse](url + s"/reporting-entity/query-tin/$tin/$reportingPeriod")
-
+    http.get(url"$url/reporting-entity/query-tin/$tin/$reportingPeriod").execute[HttpResponse]
   def overlapQuery(tin: String, entityReportingPeriod: EntityReportingPeriod)(implicit
     hc: HeaderCarrier
   ): Future[HttpResponse] =
-    http.GET[HttpResponse](
-      url + s"/reporting-entity/query-dates/$tin/start-date/${entityReportingPeriod.startDate.toString}/end-date/${entityReportingPeriod.endDate.toString}"
-    )
+    http
+      .get(
+        url"$url/reporting-entity/query-dates/$tin/start-date/${entityReportingPeriod.startDate.toString}/end-date/${entityReportingPeriod.endDate.toString}"
+      )
+      .execute[HttpResponse]
 }
