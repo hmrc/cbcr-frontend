@@ -18,12 +18,13 @@ package uk.gov.hmrc.cbcrfrontend.config
 
 import play.api.Configuration
 import uk.gov.hmrc.cbcrfrontend.util.ConfigurationOps.ConfigurationOps
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
 
 @Singleton
-class FrontendAppConfig @Inject() (val config: Configuration) {
+class FrontendAppConfig @Inject() (val config: Configuration, servicesConfig: ServicesConfig) {
   val cbcrFrontendHost: String = config.load[String](s"cbcr-frontend.host")
   val fileUploadMaxPolls: Int = config.load[Int]("maximum-js-polls")
 
@@ -49,4 +50,8 @@ class FrontendAppConfig @Inject() (val config: Configuration) {
     LocalDate.of(creationYear, creationMonth, creationDay)
   }
   val envelopeExpiryDays: Int = config.load[Int]("envelope-expire-days")
+
+  val upscanInitiateHost: String = servicesConfig.baseUrl("upscan")
+  val upscanProtocol: String = servicesConfig.getConfString("upscan.protocol", "https")
+  val upscanRedirectBase: String = config.get[String]("microservice.services.upscan.redirect-base")
 }

@@ -54,6 +54,7 @@ class FileUploadController @Inject() (
   schemaValidator: CBCRXMLValidator,
   businessRuleValidator: CBCBusinessRuleValidator,
   fileUploadService: FileUploadService,
+  upscanService: UpscanService,
   xmlExtractor: XmlInfoExtract,
   audit: AuditConnector,
   messagesControllerComponents: MessagesControllerComponents,
@@ -94,14 +95,10 @@ class FileUploadController @Inject() (
           views.notAuthorisedIndividual,
           views.errorTemplate
         )
-      case Some(Organisation) ~ None if Await.result(cache.readOption[CBCId].map(_.isEmpty), SDuration(5, "seconds")) =>
-        Ok(views.unregisteredGGAccount())
-      case Some(Individual) ~ _ => Redirect(routes.SubmissionController.noIndividuals)
-      case affinityGroup ~ _ =>
-        fileUploadUrl()
-          .map(fuu => Ok(views.chooseFile(new URI(fuu), s"oecd-${LocalDateTime.now}-cbcr.xml", affinityGroup)))
-          .leftMap((error: CBCErrors) => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate))
-          .merge
+      case _ =>
+        for {
+          upscanResponseModel <- upscanService.getUpscanFormData()
+        } yield Ok(views.upscanFileUpload(upscanResponseModel))
     }
   }
 
