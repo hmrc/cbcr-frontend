@@ -40,26 +40,31 @@ govukErrorSummary: GovukErrorSummary
     @Html(messages("uploadReport.moreInfo", config.cbcrOecdGuideUrl))
 </p>
 <form action="@upscanInitiateResponse.postTarget" method="post" enctype="multipart/form-data">
-@govukFileUpload(FileUpload(
-    name = "file",
-    id = "file-input",
-    label = Label(
-    content = Text(messages("uploadReport.label")),
-    classes = "govuk-label--m"
-    ),
-    hint = Some(Hint(
-    content = Text(messages("uploadReport.hint"))
-    )),
-    attributes = Map("accept" -> ".xml, .XML", "required" -> "true")
-    ))
 
-    <div class="govuk-section">
-        @govukButton(Button(
-        content = Text(messages("uploadReport.uploadButton")),
-        attributes = Map("id" -> "upload-button", "type" -> "submit", "data-prevent-double-click" -> "true")
-        ))
+    @for(field <- upscanInitiateResponse.formFields) {
+    <input type="hidden" name="@field._1" value="@field._2"/>
+    }
+
+    <div class="js-visible mt-3">
+
+        <div class="govuk-form-group">
+            <label class="govuk-label" for="file-input">
+                <span class="">File to upload</span>
+            </label>
+            <input
+                    type="file"
+                    id="file-input"
+                    name="file"
+                    class="govuk-file-upload"
+                    accept=".xml"
+            />
+        </div>
+
     </div>
 
+    <div class="section">
+        <button id="submit" class="govuk-button"> Upload </button>
+    </div>
 </form>
 
 }

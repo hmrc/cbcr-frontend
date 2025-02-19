@@ -63,3 +63,8 @@ GET         /enrolments                                                   @uk.go
 GET         /assets/*file                                                 controllers.Assets.versioned(path="/public", file: Asset)
 
 GET         /enhancement-unauthorised                                     @uk.gov.hmrc.cbcrfrontend.controllers.CBCEnhancementsController.enhancementUnavailable
+
+GET        /upscan/submission-form/result                                 @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.showSubmissionResult()
+
+# upload file redirects
+GET        /upscan/success                                                @uk.gov.hmrc.cbcrfrontend.controllers.FileUploadController.showResult(uploadId: uk.gov.hmrc.cbcrfrontend.model.upscan.UploadId)

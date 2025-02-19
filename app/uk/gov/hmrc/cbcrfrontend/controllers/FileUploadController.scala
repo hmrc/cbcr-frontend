@@ -18,20 +18,25 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.implicits.{catsStdInstancesForFuture, catsSyntaxEitherId}
+import play.api.data.Form
+import play.api.data.Forms.{mapping, text}
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Configuration, Logger}
-import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.cbcrfrontend._
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+import uk.gov.hmrc.cbcrfrontend.connectors.UpscanConnector
 import uk.gov.hmrc.cbcrfrontend.core.ServiceResponse
 import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.upscan.{Reference, UploadId}
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.services.upscan.UploadProgressTracker
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
@@ -43,8 +48,7 @@ import java.net.URI
 import java.time.{Duration, LocalDateTime}
 import java.util.UUID
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.duration.{Duration => SDuration}
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
@@ -54,7 +58,9 @@ class FileUploadController @Inject() (
   schemaValidator: CBCRXMLValidator,
   businessRuleValidator: CBCBusinessRuleValidator,
   fileUploadService: FileUploadService,
-  upscanService: UpscanService,
+  upscanConnector: UpscanConnector,
+  uploadProgressTracker: UploadProgressTracker,
+  appConfig: FrontendAppConfig,
   xmlExtractor: XmlInfoExtract,
   audit: AuditConnector,
   messagesControllerComponents: MessagesControllerComponents,
@@ -96,11 +102,29 @@ class FileUploadController @Inject() (
           views.errorTemplate
         )
       case _ =>
+        val uploadId = UploadId.generate()
+        val successRedirectUrl = appConfig.callbackEndpointTarget + routes.FileUploadController.showResult(uploadId).url
+        val errorRedirectUrl = appConfig.callbackEndpointTarget + "/cbcr/upscan/error"
         for {
-          upscanResponseModel <- upscanService.getUpscanFormData()
-        } yield Ok(views.upscanFileUpload(upscanResponseModel))
+          upscanInitiateResponse <- upscanConnector.initiateToUpscan(Some(successRedirectUrl), Some(errorRedirectUrl))
+          _ <- uploadProgressTracker.requestUpload(uploadId, Reference(upscanInitiateResponse.fileReference.reference))
+
+        } yield Ok(views.upscanFileUpload(upscanInitiateResponse))
     }
   }
+
+  def showResult(uploadId: UploadId): Action[AnyContent] =
+    Action.async { implicit request =>
+      for { uploadResult <- uploadProgressTracker.getUploadResult(uploadId) } yield uploadResult match {
+        case Some(result) => Ok(views.uploadResultView(uploadId, result))
+        case None         => BadRequest(s"Upload with id $uploadId not found")
+      }
+    }
+
+  def showSubmissionResult(): Action[AnyContent] =
+    Action.async { implicit request =>
+      Future.successful(Ok(views.submissionResultView()))
+    }
 
   /** Prepare the page to use to embedded the poller js function. This will have been the redirect url passed to
     * FileUpload during the client side POST.

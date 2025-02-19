@@ -1,5 +1,5 @@
-/*
- * Copyright 2024 HM Revenue & Customs
+@*
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,20 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package uk.gov.hmrc.cbcrfrontend.model.upscan
+@import play.api.mvc.RequestHeader
+@import uk.gov.hmrc.cbcrfrontend.views.html.Layout
 
-import play.api.libs.json.{Json, OFormat}
+@this(layout: Layout)
 
-case class UpscanInitiateRequest(
-  callbackUrl: String,
-  successRedirect: Option[String] = None,
-  errorRedirect: Option[String] = None,
-  minimumFileSize: Option[Int] = None,
-  maximumFileSize: Option[Int] = Some(512)
-)
-
-object UpscanInitiateRequest {
-  implicit val format: OFormat[UpscanInitiateRequest] = Json.format[UpscanInitiateRequest]
+@()(implicit messages: Messages, request: RequestHeader)
+@title = @{("Your form has been submitted successfully")}
+@layout(title) {
+    <h1 class="govuk-heading-l">Your form has been submitted successfully</h1>
 }

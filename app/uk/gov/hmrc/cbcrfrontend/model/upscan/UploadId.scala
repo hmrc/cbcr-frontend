@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.model.upscan
 
-import play.api.libs.json.{Json, OFormat}
+import java.util.UUID
 
-case class UpscanInitiateRequest(
-  callbackUrl: String,
-  successRedirect: Option[String] = None,
-  errorRedirect: Option[String] = None,
-  minimumFileSize: Option[Int] = None,
-  maximumFileSize: Option[Int] = Some(512)
-)
+case class UploadId(value: String) extends AnyVal
 
-object UpscanInitiateRequest {
-  implicit val format: OFormat[UpscanInitiateRequest] = Json.format[UpscanInitiateRequest]
+object UploadId {
+  def generate(): UploadId =
+    UploadId(UUID.randomUUID().toString)
 }

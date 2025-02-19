@@ -52,6 +52,6 @@ class FrontendAppConfig @Inject() (val config: Configuration, servicesConfig: Se
   val envelopeExpiryDays: Int = config.load[Int]("envelope-expire-days")
 
   val upscanInitiateHost: String = servicesConfig.baseUrl("upscan")
-  val upscanProtocol: String = servicesConfig.getConfString("upscan.protocol", "https")
-  val upscanRedirectBase: String = config.get[String]("microservice.services.upscan.redirect-base")
+  lazy val callbackEndpointTarget = config.load[String]("microservice.services.upscan.callback-endpoint")
+
 }

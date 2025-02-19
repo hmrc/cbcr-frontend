@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.cbcrfrontend.views
 
-import uk.gov.hmrc.cbcrfrontend.views.html.upscan.upscan_file_upload
-
 import javax.inject.Inject
 
 class Views @Inject() (
@@ -50,5 +48,7 @@ class Views @Inject() (
   val enterKnownFacts: uk.gov.hmrc.cbcrfrontend.views.html.shared.enterKnownFacts,
   val knownFactsNotFound: uk.gov.hmrc.cbcrfrontend.views.html.shared.knownFactsNotFound,
   val notAuthorizedEnhancement: uk.gov.hmrc.cbcrfrontend.views.html.notAuthorisedEnhancement,
-  val upscanFileUpload: upscan_file_upload
+  val upscanFileUpload: uk.gov.hmrc.cbcrfrontend.views.html.upscan.upscan_file_upload,
+  val uploadResultView: uk.gov.hmrc.cbcrfrontend.views.html.upscan.UploadResult,
+  val submissionResultView: uk.gov.hmrc.cbcrfrontend.views.html.upscan.SubmissionResult
 )
