@@ -2,9 +2,9 @@ import play.sbt.PlayImport.ws
 import sbt.*
 
 object AppDependencies {
-  val hmrcBootstrapVersion = "9.7.0"
+  val hmrcBootstrapVersion = "9.10.0"
   val mockitoScalaVersion = "1.17.37"
-  val hmrcMongoVersion = "2.4.0"
+  val hmrcMongoVersion = "2.5.0"
   val playVersion = "play-30"
 
   val compile: Seq[ModuleID] = Seq(
@@ -23,10 +23,10 @@ object AppDependencies {
   )
 
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
-    "uk.gov.hmrc"           %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
-    "uk.gov.hmrc.mongo"     %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
-    "org.mockito"           %% "mockito-scala"                 % mockitoScalaVersion  % scope,
-    "org.mockito"           %% "mockito-scala-cats"            % mockitoScalaVersion  % scope,
-    "xerces"                 % "xercesImpl"                    % "2.12.2"             % scope
+    "uk.gov.hmrc"       %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
+    "uk.gov.hmrc.mongo" %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
+    "org.mockito"       %% "mockito-scala"                 % mockitoScalaVersion  % scope,
+    "org.mockito"       %% "mockito-scala-cats"            % mockitoScalaVersion  % scope,
+    "xerces"             % "xercesImpl"                    % "2.12.2"             % scope
   )
 }
