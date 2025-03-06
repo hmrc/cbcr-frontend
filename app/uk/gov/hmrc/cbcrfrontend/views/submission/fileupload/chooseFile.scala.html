@@ -19,6 +19,7 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import views.html.helper.CSPNonce
 
 @import java.net.URI
 
@@ -40,10 +41,10 @@
     }
 }
 @templateScripts = {
-    <script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>
+    <script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}" @CSPNonce.attr></script>
 }
 
-@headContent = {<link rel="stylesheet" href="@{controllers.routes.Assets.versioned("styles/file-upload-styles.css")}">}
+@headContent = {<link rel="stylesheet" href="@{controllers.routes.Assets.versioned("styles/file-upload-styles.css")}" @CSPNonce.attr>}
 
 @layout(title, backLinkUrl = backLink, additionalScripts = Some(templateScripts), additionalHeadForTemplate = Some(headContent)) {
     <h1 class="govuk-heading-l">@title</h1>

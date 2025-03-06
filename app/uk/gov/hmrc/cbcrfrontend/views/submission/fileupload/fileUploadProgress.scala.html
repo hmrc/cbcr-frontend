@@ -17,6 +17,7 @@
 @import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 @import uk.gov.hmrc.cbcrfrontend.controllers.routes
 @import uk.gov.hmrc.cbcrfrontend.views.html._
+@import views.html.helper.CSPNonce
 
 @this(
         layout: Layout,
@@ -26,8 +27,8 @@
 @(envelopeId: String, fileId: String, hostName: String, hasSeen: String)(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
 
 @title = @{messages("fileUploadProgress.title")}
-@templateScripts = {<script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>}
-@headContent = {<link rel="stylesheet" href="@{controllers.routes.Assets.versioned("styles/file-upload-styles.css")}">}
+@templateScripts = {<script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}" @CSPNonce.attr></script>}
+@headContent = {<link rel="stylesheet" href="@{controllers.routes.Assets.versioned("styles/file-upload-styles.css")}" @CSPNonce.attr>}
 @continueButton = {
     @govukButton(Button(
         href = Some(routes.FileUploadController.checkFileUploadStatus(envelopeId, fileId, hasSeen = "true").url),
