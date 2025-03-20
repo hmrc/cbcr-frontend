@@ -31,6 +31,7 @@ import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm._
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.{PhoneNumberErrors, phoneNumberConstraint, ukPhoneNumberConstraint}
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.cbcrfrontend.{errorRedirect, _}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -64,7 +65,16 @@ class SubscriptionController @Inject() (
   def submitSubscriptionData: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User).retrieve(Retrievals.credentials) { creds =>
       logger.debug("Country by Country: Generate CBCId and Store Data")
-      subscriptionDataForm
+      subscriptionDataForm(
+        ukPhoneNumberConstraint(
+          PhoneNumberErrors(
+            "contactInfoSubscriber.phoneNumber.error.empty",
+            "contactInfoSubscriber.phoneNumber.error.invalid.plus.sign",
+            "contactInfoSubscriber.phoneNumber.error.invalid",
+            "contactInfoSubscriber.phoneNumber.error.invalid.forbidden.char"
+          )
+        )
+      )
         .bindFromRequest()
         .fold(
           errors => BadRequest(views.contactInfoSubscriber(errors)),
@@ -132,7 +142,16 @@ class SubscriptionController @Inject() (
 
   def contactInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
-      Ok(views.contactInfoSubscriber(subscriptionDataForm))
+      Ok(
+        views.contactInfoSubscriber(
+          subscriptionDataForm(
+            phoneNumberConstraint(
+              "contactInfoSubscriber.phoneNumber.error.empty",
+              "contactInfoSubscriber.phoneNumber.error.invalid"
+            )
+          )
+        )
+      )
     }
   }
 
@@ -153,7 +172,12 @@ class SubscriptionController @Inject() (
           case error                  => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
         },
         { case subData -> cbcId =>
-          val prepopulatedForm = subscriptionDataForm.bind(
+          val prepopulatedForm = subscriptionDataForm(
+            phoneNumberConstraint(
+              "contactInfoSubscriber.phoneNumber.error.empty",
+              "contactInfoSubscriber.phoneNumber.error.invalid"
+            )
+          ).bind(
             Map(
               "firstName"   -> subData.names.name1,
               "lastName"    -> subData.names.name2,
@@ -176,7 +200,16 @@ class SubscriptionController @Inject() (
                    )
         } yield cbcId
 
-        subscriptionDataForm
+        subscriptionDataForm(
+          ukPhoneNumberConstraint(
+            PhoneNumberErrors(
+              "contactInfoSubscriber.phoneNumber.error.empty",
+              "contactInfoSubscriber.phoneNumber.error.invalid.plus.sign",
+              "contactInfoSubscriber.phoneNumber.error.invalid",
+              "contactInfoSubscriber.phoneNumber.error.invalid.forbidden.char"
+            )
+          )
+        )
           .bindFromRequest()
           .fold(
             errors =>

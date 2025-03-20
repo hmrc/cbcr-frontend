@@ -211,7 +211,6 @@ class SubscriptionControllerSpec
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
       webPageAsString should include("There is a problem")
       webPageAsString should not include "found some errors"
-      webPageAsString should not include getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty")
     }
 
     "return a custom error message when the phone number is empty" in {
@@ -229,9 +228,70 @@ class SubscriptionControllerSpec
       status(result) shouldBe Status.BAD_REQUEST
       val webPageAsString = contentAsString(result)
       webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.empty"))
-      webPageAsString should include("Enter the phone number")
+      webPageAsString should include("Enter a UK telephone number")
       webPageAsString should not include "found some errors"
       webPageAsString should not include getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid")
+    }
+
+    "return a custom error message when the phone number has + sign" in {
+      auth.authorise[Option[Credentials]](*, *)(*, *) returns Future.successful(Some(Credentials("asdf", "gateway")))
+      val data = Seq(
+        "phoneNumber" -> "+44 123456789",
+        "firstName"   -> "Dave",
+        "lastName"    -> "Jones",
+        "email"       -> "blagh@blagh.com"
+      )
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*)
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
+      val result = controller.submitSubscriptionData(fakeRequestSubscribe)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString = contentAsString(result)
+      webPageAsString should include(
+        getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid.plus.sign")
+      )
+      webPageAsString should include("There is a problem")
+      webPageAsString should not include "found some errors"
+    }
+
+    "return a custom error message when the phone number is Invalid" in {
+      auth.authorise[Option[Credentials]](*, *)(*, *) returns Future.successful(Some(Credentials("asdf", "gateway")))
+      val data = Seq(
+        "phoneNumber" -> "01642-123456",
+        "firstName"   -> "Dave",
+        "lastName"    -> "Jones",
+        "email"       -> "blagh@blagh.com"
+      )
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*)
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
+      val result = controller.submitSubscriptionData(fakeRequestSubscribe)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString = contentAsString(result)
+      webPageAsString should include(getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid"))
+      webPageAsString should include("There is a problem")
+      webPageAsString should not include "found some errors"
+    }
+
+    "return a custom error message when the phone number has forbidden characters" in {
+      auth.authorise[Option[Credentials]](*, *)(*, *) returns Future.successful(Some(Credentials("asdf", "gateway")))
+      val data = Seq(
+        "phoneNumber" -> "$44123456789",
+        "firstName"   -> "Dave",
+        "lastName"    -> "Jones",
+        "email"       -> "blagh@blagh.com"
+      )
+      val fakeRequest = FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*)
+      val fakeRequestSubscribe =
+        addToken(FakeRequest("POST", "/submitSubscriptionData").withFormUrlEncodedBody(data: _*))
+      val result = controller.submitSubscriptionData(fakeRequestSubscribe)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString = contentAsString(result)
+      webPageAsString should include(
+        getMessages(fakeRequest)("contactInfoSubscriber.phoneNumber.error.invalid.forbidden.char")
+      )
+      webPageAsString should include("There is a problem")
+      webPageAsString should not include "found some errors"
     }
 
     "return a custom error message when the email  is invalid" in {
