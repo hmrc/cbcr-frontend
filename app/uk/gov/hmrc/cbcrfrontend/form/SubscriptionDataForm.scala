@@ -21,7 +21,7 @@ import play.api.data.Forms.{mapping, text}
 import play.api.data.validation.Constraint
 import uk.gov.hmrc.cbcrfrontend.emailaddress.{EmailAddress, EmailAddressValidation}
 import uk.gov.hmrc.cbcrfrontend.model.SubscriberContact
-import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.{PhoneNumberErrors, ukPhoneNumberConstraint, validatePhoneNumber}
+import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.validatePhoneNumber
 
 object SubscriptionDataForm {
   def condTrue(condition: Boolean, statement: Boolean): Boolean = if (condition) statement else true

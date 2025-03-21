@@ -22,7 +22,7 @@ import play.api.data.validation.Constraint
 import uk.gov.hmrc.cbcrfrontend.emailaddress.{EmailAddress, EmailAddressValidation}
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm.condTrue
 import uk.gov.hmrc.cbcrfrontend.model.SubmitterInfo
-import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.{PhoneNumberErrors, validatePhoneNumber}
+import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.validatePhoneNumber
 
 object SubmitterInfoForm {
   def submitterInfoForm(constraint: Constraint[String]): Form[SubmitterInfo] = Form(
