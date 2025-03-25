@@ -22,32 +22,25 @@ import play.api.data.validation.{Constraint, Invalid, Valid}
 
 object CBCRMapping {
 
-  case class PhoneNumberErrors(
-    emptyError: String,
-    plusSignError: String,
-    invalidCharactersError: String,
-    forbiddenCharacterError: String
-  )
-
   def validatePhoneNumber(constraint: Constraint[String]): Mapping[String] =
     text.verifying(constraint)
 
-  def ukPhoneNumberConstraint(errors: PhoneNumberErrors): Constraint[String] =
+  val ukPhoneNumberConstraint: Constraint[String] =
     Constraint {
-      case text if text.isBlank       => Invalid(errors.emptyError)
-      case text if text.contains("+") => Invalid(errors.plusSignError)
+      case text if text.isBlank       => Invalid("submitterInfo.phoneNumber.error.empty")
+      case text if text.contains("+") => Invalid("submitterInfo.phoneNumber.error.invalid.plus.sign")
       case text if text.exists(c => "@!$%^&_=~{}[]:".contains(c)) =>
-        Invalid(errors.forbiddenCharacterError)
+        Invalid("submitterInfo.phoneNumber.error.invalid.forbidden.char")
       case text if !text.matches("^[A-Z0-9 )/(-*#]+$") =>
-        Invalid(errors.invalidCharactersError)
+        Invalid("submitterInfo.phoneNumber.error.invalid")
       case _ => Valid
     }
 
-  def phoneNumberConstraint(emptyError: String, invalidError: String): Constraint[String] =
+  val phoneNumberConstraint: Constraint[String] =
     Constraint {
-      case text if text.isBlank => Invalid(emptyError)
+      case text if text.isBlank => Invalid("contactInfoSubscriber.phoneNumber.error.empty")
       case text if !text.matches("^[0-9 )/(-*#]{1,24}$") =>
-        Invalid(invalidError)
+        Invalid("contactInfoSubscriber.phoneNumber.error.invalid")
       case _ => Valid
     }
 

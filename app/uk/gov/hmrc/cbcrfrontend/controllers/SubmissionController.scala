@@ -36,7 +36,7 @@ import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.{PhoneNumberErrors, ukPhoneNumberConstraint}
+import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.ukPhoneNumberConstraint
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -363,26 +363,12 @@ class SubmissionController @Inject() (
                 (osi.map(_.fullName), osi.map(_.contactPhone), osi.map(_.email))
                   .mapN { (name, phone, email) =>
                     submitterInfoForm(
-                      ukPhoneNumberConstraint(
-                        PhoneNumberErrors(
-                          "submitterInfo.phoneNumber.error.empty",
-                          "submitterInfo.phoneNumber.error.invalid.plus.sign",
-                          "submitterInfo.phoneNumber.error.invalid",
-                          "submitterInfo.phoneNumber.error.invalid.forbidden.char"
-                        )
-                      )
+                      ukPhoneNumberConstraint
                     ).bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
                   }
                   .getOrElse(
                     submitterInfoForm(
-                      ukPhoneNumberConstraint(
-                        PhoneNumberErrors(
-                          "submitterInfo.phoneNumber.error.empty",
-                          "submitterInfo.phoneNumber.error.invalid.plus.sign",
-                          "submitterInfo.phoneNumber.error.invalid",
-                          "submitterInfo.phoneNumber.error.invalid.forbidden.char"
-                        )
-                      )
+                      ukPhoneNumberConstraint
                     )
                   )
               }
@@ -414,16 +400,7 @@ class SubmissionController @Inject() (
 
   val submitSubmitterInfo: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
-      submitterInfoForm(
-        ukPhoneNumberConstraint(
-          PhoneNumberErrors(
-            "submitterInfo.phoneNumber.error.empty",
-            "submitterInfo.phoneNumber.error.invalid.plus.sign",
-            "submitterInfo.phoneNumber.error.invalid",
-            "submitterInfo.phoneNumber.error.invalid.forbidden.char"
-          )
-        )
-      )
+      submitterInfoForm(ukPhoneNumberConstraint)
         .bindFromRequest()
         .fold(
           formWithErrors =>

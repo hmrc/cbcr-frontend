@@ -42,7 +42,7 @@ import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.services._
-import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.{PhoneNumberErrors, ukPhoneNumberConstraint}
+import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.ukPhoneNumberConstraint
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.cache.CacheItem
@@ -454,14 +454,7 @@ class SubmissionSpec
       val submitterInfo = SubmitterInfo("Fullname", None, "07 9234 5670 8", EmailAddress("abc@xyz.com"), None)
       val dataSeq = SubmitterInfoForm
         .submitterInfoForm(
-          ukPhoneNumberConstraint(
-            PhoneNumberErrors(
-              "submitterInfo.phoneNumber.error.empty",
-              "submitterInfo.phoneNumber.error.invalid.plus.sign",
-              "submitterInfo.phoneNumber.error.invalid",
-              "submitterInfo.phoneNumber.error.forbidden.char"
-            )
-          )
+          ukPhoneNumberConstraint
         )
         .fill(submitterInfo)
         .data
@@ -495,14 +488,7 @@ class SubmissionSpec
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
           val dataSeq = SubmitterInfoForm
             .submitterInfoForm(
-              ukPhoneNumberConstraint(
-                PhoneNumberErrors(
-                  "submitterInfo.phoneNumber.error.empty",
-                  "submitterInfo.phoneNumber.error.invalid.plus.sign",
-                  "submitterInfo.phoneNumber.error.invalid",
-                  "submitterInfo.phoneNumber.error.forbidden.char"
-                )
-              )
+              ukPhoneNumberConstraint
             )
             .fill(submitterInfo)
             .data
@@ -537,14 +523,7 @@ class SubmissionSpec
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
           val dataSeq = SubmitterInfoForm
             .submitterInfoForm(
-              ukPhoneNumberConstraint(
-                PhoneNumberErrors(
-                  "submitterInfo.phoneNumber.error.empty",
-                  "submitterInfo.phoneNumber.error.invalid.plus.sign",
-                  "submitterInfo.phoneNumber.error.invalid",
-                  "submitterInfo.phoneNumber.error.forbidden.char"
-                )
-              )
+              ukPhoneNumberConstraint
             )
             .fill(submitterInfo)
             .data
@@ -581,14 +560,7 @@ class SubmissionSpec
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
           val dataSeq = SubmitterInfoForm
             .submitterInfoForm(
-              ukPhoneNumberConstraint(
-                PhoneNumberErrors(
-                  "submitterInfo.phoneNumber.error.empty",
-                  "submitterInfo.phoneNumber.error.invalid.plus.sign",
-                  "submitterInfo.phoneNumber.error.invalid",
-                  "submitterInfo.phoneNumber.error.forbidden.char"
-                )
-              )
+              ukPhoneNumberConstraint
             )
             .fill(submitterInfo)
             .data
