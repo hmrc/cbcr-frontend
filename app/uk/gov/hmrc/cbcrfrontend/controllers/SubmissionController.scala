@@ -36,6 +36,7 @@ import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm.submitterInfoForm
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.ukPhoneNumberConstraint
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -361,9 +362,15 @@ class SubmissionController @Inject() (
       form <- cache.readOption[SubmitterInfo].map { osi =>
                 (osi.map(_.fullName), osi.map(_.contactPhone), osi.map(_.email))
                   .mapN { (name, phone, email) =>
-                    submitterInfoForm.bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
+                    submitterInfoForm(
+                      ukPhoneNumberConstraint
+                    ).bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
                   }
-                  .getOrElse(submitterInfoForm)
+                  .getOrElse(
+                    submitterInfoForm(
+                      ukPhoneNumberConstraint
+                    )
+                  )
               }
       fileDetails <- cache.read[FileDetails].getOrElse(throw new RuntimeException("Missing file upload details"))
 
@@ -393,7 +400,7 @@ class SubmissionController @Inject() (
 
   val submitSubmitterInfo: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
-      submitterInfoForm
+      submitterInfoForm(ukPhoneNumberConstraint)
         .bindFromRequest()
         .fold(
           formWithErrors =>

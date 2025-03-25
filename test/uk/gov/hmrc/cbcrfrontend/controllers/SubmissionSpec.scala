@@ -42,6 +42,7 @@ import uk.gov.hmrc.cbcrfrontend.form.SubmitterInfoForm
 import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.ukPhoneNumberConstraint
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.cache.CacheItem
@@ -318,6 +319,88 @@ class SubmissionSpec
       status(result) shouldBe Status.BAD_REQUEST
     }
 
+    "return 400 when Contact Phone is empty" in {
+      val submitterInfo = SubmitterInfo("Fullname", None, "", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = Seq(
+        "fullName"           -> submitterInfo.fullName,
+        "contactPhone"       -> "",
+        "agencyBusinessName" -> submitterInfo.agencyBusinessName.toString,
+        "email"              -> submitterInfo.email.toString,
+        "affinityGroup"      -> submitterInfo.affinityGroup.toString
+      )
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
+      val fakeRequestSubmit =
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString = contentAsString(result)
+      webPageAsString should include("Enter a UK telephone number")
+    }
+
+    "return 400 when Contact Phone has + sign" in {
+      val submitterInfo = SubmitterInfo("Fullname", None, "+44123456789", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = Seq(
+        "fullName"           -> submitterInfo.fullName,
+        "contactPhone"       -> submitterInfo.contactPhone,
+        "agencyBusinessName" -> submitterInfo.agencyBusinessName.toString,
+        "email"              -> submitterInfo.email.toString,
+        "affinityGroup"      -> submitterInfo.affinityGroup.toString
+      )
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
+      val fakeRequestSubmit =
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString = contentAsString(result)
+      webPageAsString should include("Enter your telephone number without a plus sign")
+    }
+
+    "return 400 when Contact Phone has forbidden character" in {
+      val submitterInfo = SubmitterInfo("Fullname", None, "$44123456789", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = Seq(
+        "fullName"           -> submitterInfo.fullName,
+        "contactPhone"       -> submitterInfo.contactPhone,
+        "agencyBusinessName" -> submitterInfo.agencyBusinessName.toString,
+        "email"              -> submitterInfo.email.toString,
+        "affinityGroup"      -> submitterInfo.affinityGroup.toString
+      )
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
+      val fakeRequestSubmit =
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString = contentAsString(result)
+      webPageAsString should include(
+        "Telephone number must only include letters a to z, numbers 0 to 9, round brackets, forward slashes, hyphens, spaces, asterisks and hash signs"
+      )
+    }
+
+    "return 400 when Contact Phone is invalid " in {
+      val submitterInfo = SubmitterInfo("Fullname", None, "01642-123456", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = Seq(
+        "fullName"           -> submitterInfo.fullName,
+        "contactPhone"       -> submitterInfo.contactPhone,
+        "agencyBusinessName" -> submitterInfo.agencyBusinessName.toString,
+        "email"              -> submitterInfo.email.toString,
+        "affinityGroup"      -> submitterInfo.affinityGroup.toString
+      )
+      auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
+      cache.read[CBCId](CBCId.cbcIdFormat, *, *) raises ExpiredSession("")
+      val fakeRequestSubmit =
+        addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
+      cache.read[FileDetails](FileDetails.fileDetailsFormat, *, *) returnsF fileDetails
+      val result = call(controller.submitSubmitterInfo, fakeRequestSubmit)
+      status(result) shouldBe Status.BAD_REQUEST
+      val webPageAsString = contentAsString(result)
+      webPageAsString should include("Enter a UK telephone number in the right format")
+    }
+
     "return 400 when the all data exists but Email Address" in {
       val submitterInfo = Seq(
         "fullName"     -> "Fullname",
@@ -368,8 +451,14 @@ class SubmissionSpec
     }
 
     "return 303 when all of the data exists & valid" in {
-      val submitterInfo = SubmitterInfo("Fullname", None, "07923456708", EmailAddress("abc@xyz.com"), None)
-      val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
+      val submitterInfo = SubmitterInfo("Fullname", None, "07 9234 5670 8", EmailAddress("abc@xyz.com"), None)
+      val dataSeq = SubmitterInfoForm
+        .submitterInfoForm(
+          ukPhoneNumberConstraint
+        )
+        .fill(submitterInfo)
+        .data
+        .toSeq
       val fakeRequestSubmit =
         addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
 
@@ -397,7 +486,13 @@ class SubmissionSpec
       "the AffinityGroup is Organisation it" should {
         "redirect to submit-summary if a cbcId exists" in {
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
-          val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
+          val dataSeq = SubmitterInfoForm
+            .submitterInfoForm(
+              ukPhoneNumberConstraint
+            )
+            .fill(submitterInfo)
+            .data
+            .toSeq
           val fakeRequestSubmit =
             addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
           auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
@@ -426,7 +521,13 @@ class SubmissionSpec
 
         "redirect to enter-cbcId if a cbcid does not exist" in {
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
-          val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
+          val dataSeq = SubmitterInfoForm
+            .submitterInfoForm(
+              ukPhoneNumberConstraint
+            )
+            .fill(submitterInfo)
+            .data
+            .toSeq
           val fakeRequestSubmit =
             addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
           auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Organisation))
@@ -457,7 +558,13 @@ class SubmissionSpec
       "the AffinityGroup is Agent it" should {
         "redirect to enter-known-facts if a cbcid does not exist" in {
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
-          val dataSeq = SubmitterInfoForm.submitterInfoForm.fill(submitterInfo).data.toSeq
+          val dataSeq = SubmitterInfoForm
+            .submitterInfoForm(
+              ukPhoneNumberConstraint
+            )
+            .fill(submitterInfo)
+            .data
+            .toSeq
           val fakeRequestSubmit =
             addToken(FakeRequest("POST", "/submitSubmitterInfo").withFormUrlEncodedBody(dataSeq: _*))
           auth.authorise[Option[AffinityGroup]](*, *)(*, *) returns Future.successful(Some(AffinityGroup.Agent))

@@ -18,22 +18,21 @@ package uk.gov.hmrc.cbcrfrontend.form
 
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
+import play.api.data.validation.Constraint
 import uk.gov.hmrc.cbcrfrontend.emailaddress.{EmailAddress, EmailAddressValidation}
 import uk.gov.hmrc.cbcrfrontend.model.SubscriberContact
+import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.validatePhoneNumber
 
 object SubscriptionDataForm {
   def condTrue(condition: Boolean, statement: Boolean): Boolean = if (condition) statement else true
 
-  val subscriptionDataForm: Form[SubscriberContact] = Form(
+  def subscriptionDataForm(constraint: Constraint[String]): Form[SubscriberContact] = Form(
     mapping(
       "firstName" -> text.verifying("contactInfoSubscriber.firstName.error", _.trim != ""),
       "lastName"  -> text.verifying("contactInfoSubscriber.lastName.error", _.trim != ""),
-      "phoneNumber" -> text
-        .verifying("contactInfoSubscriber.phoneNumber.error.empty", _.trim != "")
-        .verifying(
-          "contactInfoSubscriber.phoneNumber.error.invalid",
-          x => condTrue(x.trim != "", x.matches("""^[0-9 )/(-*#]{1,24}$"""))
-        ),
+      "phoneNumber" -> validatePhoneNumber(
+        constraint
+      ),
       "email" -> text
         .verifying("contactInfoSubscriber.emailAddress.error.empty", _.trim != "")
         .verifying(
