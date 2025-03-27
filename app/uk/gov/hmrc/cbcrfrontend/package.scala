@@ -87,7 +87,11 @@ package object cbcrfrontend {
         )
       case _ =>
         InternalServerError(
-          errorTemplate("Internal Server Error", "Internal Server Error", "Something went wrong")
+          errorTemplate(
+            Messages("global.error.InternalServerError500.title"),
+            Messages("global.error.InternalServerError500.heading"),
+            Messages("global.error.InternalServerError500.message")
+          )
         )
     }
   }
