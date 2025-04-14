@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend
 import play.api.i18n.MessagesApi
 import play.api.mvc._
 import play.api.{Configuration, Environment}
-import play.twirl.api.{Html, HtmlFormat}
+import play.twirl.api.Html
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.cbcrfrontend.auth.AuthRedirectsExternal
 import uk.gov.hmrc.cbcrfrontend.controllers.routes
