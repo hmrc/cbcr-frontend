@@ -18,12 +18,13 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.implicits.catsStdInstancesForFuture
-import org.mockito.ArgumentMatchersSugar.*
-import org.mockito.IdiomaticMockito
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito.when
 import org.mockito.cats.IdiomaticMockitoCats.StubbingOpsCats
 import org.mockito.cats.MockitoCats
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
@@ -40,7 +41,7 @@ import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.util.chaining.scalaUtilChainingOps
 
-class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with IdiomaticMockito with MockitoCats {
+class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with MockitoSugar with MockitoCats {
 
   private val messageRefIdService = mock[MessageRefIdService]
   private val docRefIdService = mock[DocRefIdService]
@@ -92,21 +93,21 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
   )
 
   private val schemaVer = "2.0"
-  docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
-  subscriptionDataService.retrieveSubscriptionData(*)(*) returnsF Some(submissionData)
-  configuration.oecdSchemaVersion returns schemaVer
+  when(docRefIdService.queryDocRefId(any)(any)).thenReturn(Future.successful(DoesNotExist))
+  subscriptionDataService.retrieveSubscriptionData(any)(any) returnsF Some(submissionData)
+  when(configuration.oecdSchemaVersion).thenReturn(schemaVer)
 
-  reportingEntity.queryReportingEntityDatesOverlapping(*, *)(*) returnsF Some(DatesOverlap(false))
+  reportingEntity.queryReportingEntityDatesOverlapping(any, any)(any) returnsF Some(DatesOverlap(false))
 
   private def makeTheUserAnAgent =
-    cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(None)
+    when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(None))
 
   makeTheUserAnAgent
 
   private def makeTheUserAnOrganisation(cbcid: String) =
-    cache.readOption[CBCId](CBCId.cbcIdFormat, *, *) returns Future.successful(CBCId(cbcid))
+    when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(CBCId(cbcid)))
 
-  creationDateService.isDateValid(*)(*) returns Future.successful(DateCorrect)
+  when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateCorrect))
 
   implicit private val hc: HeaderCarrier = HeaderCarrier()
   private val extract = new XmlInfoExtract()
@@ -211,8 +212,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
   "The CBCBusinessRuleValidator" should {
     "throw an error if currency codes are not consistent in same xml report " in {
-      messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-      reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
+      when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+      reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF None
 
       val inconsistentCurrency = new File("test/resources/cbcr-inconsistent-currency-codes.xml")
       val validFile = new File("test/resources/cbcr-valid-currency-codes.xml")
@@ -248,9 +249,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         Some(EntityReportingPeriod(LocalDate.parse("2016-01-01"), LocalDate.parse("2016-03-31")))
       )
 
-      messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+      when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
 
-      reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF Some(reportEntityData)
+      reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF Some(reportEntityData)
 
       val multipleSubmissionForSameReportingPeriod = new File("test/resources/cbcr-multiplefileupload-original.xml")
 
@@ -262,8 +263,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     }
 
     "let the file go through when multiple file uploaded for different years" in {
-      messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-      reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
+      when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+      reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF None
 
       val multipleSubmissionForSameReportingPeriod = new File("test/resources/cbcr-multiplefileupload-original.xml")
 
@@ -279,8 +280,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     }
 
     "when message-ref-id within doc-ref-id doesn't match with the message-ref-id of message spec" in {
-      messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-      reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
+      when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+      reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF None
 
       val messageRefIdValidation =
         new File("test/resources/cbcr-messageRefId-dontMatchAgainst-messageRefId-inDocRefId.xml")
@@ -292,9 +293,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
     "return the correct error" when {
       "the reportingEntity name is an empty string" in {
-        reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+        reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
 
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
         val multipleCbcBodies = new File("test/resources/cbcr-valid-reporting-entity-name.xml")
         val result =
           await(validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)))
@@ -302,9 +303,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "the City inside addressFix tag is an empty string" in {
-        reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+        reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
 
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
         val multipleCbcBodies = new File("test/resources/cbcr-valid-reporting-entity-name.xml")
         val result =
           await(validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)))
@@ -312,7 +313,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "the constEntity name is an empty string" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
         val multipleCbcBodies = new File("test/resources/cbcr-valid-const-entity-name.xml")
         val result =
           await(validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)))
@@ -320,7 +321,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "there are multiple CbcBody elements" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
         val multipleCbcBodies = new File("test/resources/cbcr-valid-multiple-bodies.xml")
         val result =
           await(validator.validateBusinessRules(multipleCbcBodies, filename, Some(enrol), Some(Organisation)))
@@ -328,7 +329,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "there are no CbcReports elements" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
         val file = new File("test/resources/cbcr-valid-no-cbcreports.xml")
         val result = await(validator.validateBusinessRules(file, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(NoCbcReports)
@@ -355,7 +356,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "messageRefId contains a CBCId that doesnt match the CBCId in the SendingEntityIN field" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-cbcId-messageRefID.xml")
         val result =
           await(validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)))
@@ -372,10 +373,10 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "the Organisation user has a CBCId that does match that in the SendingEntityIn field on straight through journey" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-        reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF None
 
-        reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+        reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
 
         makeTheUserAnOrganisation("XLCBC0100000056")
 
@@ -399,10 +400,10 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "the Organisation user has a CBCId matches that in the SendingEntityIn field" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-        reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF None
 
-        reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+        reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
 
         makeTheUserAnOrganisation("XLCBC0100000056")
 
@@ -416,7 +417,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "messageRefId contains a Reporting Year that doesn't match the year in the ReportingPeriod field" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-reportingYear-messageRefID.xml")
         val result =
           await(validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)))
@@ -424,7 +425,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "messageRefId contains a creation timestamp that isn't valid" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-creationTimestamp-messageRefID.xml")
         val result =
           await(validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)))
@@ -432,7 +433,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "messageRefId has been seen before" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(true)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(true))
         val validFile = new File("test/resources/cbcr-valid.xml")
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(MessageRefIDDuplicate)
@@ -453,15 +454,15 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "SendingEntityIn does not match any CBCId in the database" in {
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-        subscriptionDataService.retrieveSubscriptionData(*)(*) returnsF None
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        subscriptionDataService.retrieveSubscriptionData(any)(any) returnsF None
         val validFile = new File("test/resources/cbcr-valid.xml")
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors shouldBe List(SendingEntityError)
       }
 
       "ReceivingCountry does not equal GB" in {
-        subscriptionDataService.retrieveSubscriptionData(*)(*) returnsF Some(submissionData)
+        subscriptionDataService.retrieveSubscriptionData(any)(any) returnsF Some(submissionData)
         val validFile = new File("test/resources/cbcr-invalidReceivingCountry.xml")
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(ReceivingCountryError)
@@ -475,7 +476,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "ReportingEntity is missing" in {
-        reportingEntity.queryReportingEntityData(*)(*) returnsF None
+        reportingEntity.queryReportingEntityData(any)(any) returnsF None
         val result = await(validator.recoverReportingEntity(xmlinfo))
         result pipe errors should contain(ReportingEntityElementMissing)
       }
@@ -529,14 +530,14 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       "MessageTypeIndic is CBC402 and the DocTypeIndic's are invalid" when {
         "CBCReports.docTypeIndic isn't OECD2 or OECD3" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndic.xml")
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(MessageTypeIndicError)
         }
 
-        "CBCReports[*].docTypeIndic isn't OECD2 or OECD3" in {
+        "CBCReports[any].docTypeIndic isn't OECD2 or OECD3" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndicM.xml")
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(MessageTypeIndicError)
         }
@@ -556,45 +557,45 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "MessageTypeIndic is not provided" in {
         val invalidFile = new File("test/resources/cbcr-noMessageTypeIndic.xml")
-        reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+        reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
         val result = await(validator.validateBusinessRules(invalidFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(MessageTypeIndicBlank)
       }
 
       "MessageTypeIndic is provided but invalid" in {
         val invalidFile = new File("test/resources/cbcr-InvalidMessageTypeIndic.xml")
-        reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+        reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
         val result = await(validator.validateBusinessRules(invalidFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(MessageTypeIndicInvalid)
       }
 
-      "when a corrRefId is present but refers to an *unknown* docRefId" in {
+      "when a corrRefId is present but refers to an anyunknownany docRefId" in {
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
-        docRefIdService.queryDocRefId(docRefId1)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(docRefId2)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(docRefId4)(*) returns Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(eqTo(docRefId1))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId2))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId4))(any)).thenReturn(Future.successful(DoesNotExist))
 
-        docRefIdService.queryDocRefId(corrDocRefId1)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId2)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId4)(*) returns Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId1))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId2))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId4))(any)).thenReturn(Future.successful(DoesNotExist))
 
-        reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+        reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(CorrDocRefIdUnknownRecord)
       }
 
-      "when a corrRefId is present but refers to an *invalid* docRefId" in {
+      "when a corrRefId is present but refers to an anyinvalidany docRefId" in {
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
 
-        docRefIdService.queryDocRefId(corrDocRefId1)(*) returns Future.successful(Invalid)
-        docRefIdService.queryDocRefId(corrDocRefId2)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId4)(*) returns Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId1))(any)).thenReturn(Future.successful(Invalid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId2))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId4))(any)).thenReturn(Future.successful(Valid))
 
-        reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+        reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(CorrDocRefIdInvalidRecord)
@@ -602,8 +603,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when a CBCReports docRefId is a duplicate within the file" in {
         val validFile = new File("test/resources/cbcr-valid-dup.xml")
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-        docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        when(docRefIdService.queryDocRefId(any)(any)).thenReturn(Future.successful(DoesNotExist))
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(DocRefIdDuplicate)
@@ -611,8 +612,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when a AdditionalInfo docRefId is a duplicate within the file" in {
         val validFile = new File("test/resources/cbcr-valid-additional-dup.xml")
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-        docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        when(docRefIdService.queryDocRefId(any)(any)).thenReturn(Future.successful(DoesNotExist))
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(DocRefIdDuplicate)
@@ -620,9 +621,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when a docRefId is a duplicate" in {
         val validFile = new File("test/resources/cbcr-valid.xml")
-        docRefIdService.queryDocRefId(docRefId1)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(docRefId2)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(eqTo(docRefId1))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId2))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors shouldBe List(DocRefIdDuplicate)
@@ -630,14 +631,14 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when a docRefId is a duplicate but the duplicate is in an Unchanged ReportingEntity section" in {
         val validFile = new File("test/resources/cbcr-valid-dup-re-unchanged.xml")
-        docRefIdService.queryDocRefId(docRefId1)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(docRefId2)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(corrDocRefId2)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-        reportingEntity.queryReportingEntityDataDocRefId(*)(*) returnsF Some(red)
-        reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
-        reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+        when(docRefIdService.queryDocRefId(eqTo(docRefId1))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId2))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId2))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+        reportingEntity.queryReportingEntityDataDocRefId(any)(any) returnsF Some(red)
+        reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
+        reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
@@ -648,10 +649,10 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "when the DocType is OECD1 but there are CorrDocRefIds defined" in {
-        docRefIdService.queryDocRefId(docRefId1)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(docRefId2)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-        reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+        when(docRefIdService.queryDocRefId(eqTo(docRefId1))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId2))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+        reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
 
         val validFile1 = new File("test/resources/cbcr-OECD1-with-CorrDocRefIds1.xml")
         await(validator.validateBusinessRules(validFile1, filename, Some(enrol), Some(Organisation))) pipe
@@ -674,7 +675,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "when the messageTypeIndic is CBC401 but ADD or ENT doctypeIndic is not OECD1" in {
-        reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+        reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
 
         val validFile = new File("test/resources/cbcr-OECD2-Incompatible-messageTypes.xml")
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
@@ -707,10 +708,10 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when the messageTypeIndic is CBC401 and REP doctypeIndic OECD0 but is not a known docrefid" in {
         val validFile = new File("test/resources/cbcr-OECD0[1]-invalid1.xml")
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-        reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
-        reportingEntity.queryReportingEntityDataDocRefId(*)(*) returnsF None
-        reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF None
+        reportingEntity.queryReportingEntityDataDocRefId(any)(any) returnsF None
+        reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(ResentDataIsUnknownError)
       }
@@ -730,9 +731,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when there are invalid corrDocRefIds" in {
         val validFile = new File("test/resources/cbcr-withInvalidCorrDocRefId.xml")
-        docRefIdService.queryDocRefId(corrDocRefId1)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId2)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId1))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId2))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(InvalidCorrDocRefId)
@@ -764,17 +765,17 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "when the same CorrDocRefId is used multiple times" in {
         val validFile = new File("test/resources/cbcr-withCorrRefIdDup.xml")
-        docRefIdService.queryDocRefId(docRefId1)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(docRefId2)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-        docRefIdService.queryDocRefId(docRefId4)(*) returns Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(eqTo(docRefId1))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId2))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+        when(docRefIdService.queryDocRefId(eqTo(docRefId4))(any)).thenReturn(Future.successful(DoesNotExist))
 
-        docRefIdService.queryDocRefId(corrDocRefId1)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId2)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId4)(*) returns Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId1))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId2))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId4))(any)).thenReturn(Future.successful(DoesNotExist))
 
-        reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+        reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(CorrDocRefIdDuplicate)
@@ -802,7 +803,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the @issuedBy attribute of the TIN is not 'GB' " in {
-          reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+          reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
           val validFile = new File("test/resources/cbcr-CBC703-badTINAttribute.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(InvalidXMLError("xmlValidationError.TINIssuedBy"))
@@ -817,7 +818,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the @issuedBy attribute of the TIN is not 'GB' " in {
-          reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+          reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
           val validFile = new File("test/resources/cbcr-CBC704-badTINAttribute.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(InvalidXMLError("xmlValidationError.TINIssuedBy"))
@@ -835,7 +836,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the @issuedBy attribute of the TIN is unrestricted" in {
-          reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+          reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
 
           val validFile = new File("test/resources/cbcr-CBC702-badTINAttribute.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
@@ -848,7 +849,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "return the KeyXmlInfo when everything is fine and were using a NON GB TIN for a 702 submission" in {
-        reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+        reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
 
         val validFile = new File("test/resources/cbcr-valid-nonGBTINInDocRefId.xml")
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
@@ -860,7 +861,7 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
       }
 
       "return the KeyXmlInfo when everything is fine" in {
-        reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+        reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
 
         val validFile = new File("test/resources/cbcr-valid.xml")
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
@@ -885,39 +886,39 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the submission contains a correction" when {
         "the original submission was created > 3 years ago" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateOld)
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-          docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateOld))
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
+          when(docRefIdService.queryDocRefId(any)(any)).thenReturn(Future.successful(Valid))
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(CorrectedFileTooOld)
         }
 
         "the original submission's date is missing" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateMissing)
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-          docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateMissing))
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
+          when(docRefIdService.queryDocRefId(any)(any)).thenReturn(Future.successful(Valid))
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(CorrectedFileDateMissing)
         }
 
         "the original submission was < 3 years ago" in {
-          reportingEntity.queryReportingEntityDataByCbcId(*, *)(*) returnsF None
+          reportingEntity.queryReportingEntityDataByCbcId(any, any)(any) returnsF None
 
-          docRefIdService.queryDocRefId(docRefId6)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(docRefId7)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(docRefId8)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(docRefId9)(*) returns Future.successful(DoesNotExist)
+          when(docRefIdService.queryDocRefId(eqTo(docRefId6))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(docRefId7))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(docRefId8))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(docRefId9))(any)).thenReturn(Future.successful(DoesNotExist))
 
-          docRefIdService.queryDocRefId(corrDocRefId1)(*) returns Future.successful(Valid)
-          docRefIdService.queryDocRefId(corrDocRefId2)(*) returns Future.successful(Valid)
-          docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-          docRefIdService.queryDocRefId(corrDocRefId5)(*) returns Future.successful(Valid)
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId1))(any)).thenReturn(Future.successful(Valid))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId2))(any)).thenReturn(Future.successful(Valid))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId5))(any)).thenReturn(Future.successful(Valid))
 
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
 
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateCorrect)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateCorrect))
           val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
@@ -930,11 +931,11 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the CorrMessageRefID not in MessageSpec or DocSpec" in {
         val validFile = new File("test/resources/cbcr-valid.xml")
-        docRefIdService.queryDocRefId(*)(*) returns Future.successful(DoesNotExist)
+        when(docRefIdService.queryDocRefId(any)(any)).thenReturn(Future.successful(DoesNotExist))
 
-        reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
+        reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
 
-        messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
@@ -989,8 +990,8 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the reporting period of a correction does not match the reporting period of original submission" in {
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
-        docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-        reportingEntity.queryReportingEntityData(*)(*) returnsF Some(redReportPeriod)
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+        reportingEntity.queryReportingEntityData(any)(any) returnsF Some(redReportPeriod)
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(CorrectedFileDateMissing)
@@ -998,11 +999,11 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the reporting period of a correction matches the reporting period of original submission" in {
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
-        docRefIdService.queryDocRefId(corrDocRefId1)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId2)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-        docRefIdService.queryDocRefId(corrDocRefId5)(*) returns Future.successful(Valid)
-        reportingEntity.queryReportingEntityData(*)(*) returnsF Some(
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId1))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId2))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId5))(any)).thenReturn(Future.successful(Valid))
+        reportingEntity.queryReportingEntityData(any)(any) returnsF Some(
           red.copy(reportingPeriod = Some(LocalDate.of(2016, 3, 31)))
         )
 
@@ -1014,10 +1015,10 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         )
       }
 
-      "the original submission di not persist a reporting period and so reportingEntity returns None" in {
+      "the original submission di not persist a reporting period and so reportingEntity).thenReturn(None" in {
         val validFile = new File("test/resources/cbcr-withCorrRefId.xml")
-        docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-        reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
+        when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+        reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
 
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
@@ -1029,38 +1030,38 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
 
       "the submission corrects AdditionalIno" when {
         "the original submission only persisted the 1st AdditionalInfo DRI but the submission corrects a subsequent AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateError)
-          messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmTrue)
-          docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(DoesNotExist)
-          reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateError))
+          when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmTrue)
+          when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+          reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(AdditionalInfoDRINotFound(actualDocRefId2.toString, corrDocRefId3.toString))
         }
 
         "the original submission only persisted the 1st AdditionalInfo DRI when no ReportingEntity is present" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateCorrect)
-          messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmTrue)
-          docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-          reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateCorrect))
+          when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmTrue)
+          when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+          reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(ReportingEntityElementMissing)
         }
 
         "the original submission only persisted the 1st AdditionalInfo DRI and the submission corrects that AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateCorrect)
-          messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmTrue)
-          docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-          docRefIdService.queryDocRefId(docRefId1)(*) returns Future.successful(Valid)
-          reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
-          reportingEntity.queryReportingEntityDataDocRefId(*)(*) returnsF Some(red)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateCorrect))
+          when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmTrue)
+          when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+          when(docRefIdService.queryDocRefId(eqTo(docRefId1))(any)).thenReturn(Future.successful(Valid))
+          reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
+          reportingEntity.queryReportingEntityDataDocRefId(any)(any) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
@@ -1071,24 +1072,24 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the original submission persisted ALL AdditionalInfo DRI and no ReportingEntity is present" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateCorrect)
-          messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-          docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-          reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateCorrect))
+          when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
+          when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+          reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(ReportingEntityElementMissing)
         }
 
         "the original submission persisted ALL AdditionalInfo DRI and the submission correctly corrects one AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateCorrect)
-          messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-          docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Valid)
-          reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateCorrect))
+          when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
+          when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Valid))
+          reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
 
@@ -1099,24 +1100,24 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         }
 
         "the original submission persisted ALL AdditionalInfo DRI but the submission attempts to corrects a none-existent AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateCorrect)
-          messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-          docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(DoesNotExist)
-          reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateCorrect))
+          when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
+          when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+          reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(CorrDocRefIdUnknownRecord)
         }
 
         "the original submission persisted ALL AdditionalInfo DRI but the submission attempts to corrects a previously corrected AdditionalInfo section" in {
-          creationDateService.isDateValid(*)(*) returns Future.successful(DateCorrect)
-          messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-          reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(redmFalse)
-          docRefIdService.queryDocRefId(docRefId3)(*) returns Future.successful(DoesNotExist)
-          docRefIdService.queryDocRefId(corrDocRefId3)(*) returns Future.successful(Invalid)
-          reportingEntity.queryReportingEntityData(*)(*) returnsF Some(red)
+          when(creationDateService.isDateValid(any)(any)).thenReturn(Future.successful(DateCorrect))
+          when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+          reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(redmFalse)
+          when(docRefIdService.queryDocRefId(eqTo(docRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
+          when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(Invalid))
+          reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(CorrDocRefIdInvalidRecord)
@@ -1160,12 +1161,12 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         Some(EntityReportingPeriod(LocalDate.parse("2016-01-02"), LocalDate.parse("2016-03-31")))
       )
 
-      messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-      docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
-      reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF Some(reportEntityData)
-      reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(reportEntityDataModel)
+      when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+      when(docRefIdService.queryDocRefId(any)(any)).thenReturn(Future.successful(Valid))
+      reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF Some(reportEntityData)
+      reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(reportEntityDataModel)
 
-      reportingEntity.queryReportingEntityData(*)(*) returnsF Some(reportEntityData)
+      reportingEntity.queryReportingEntityData(any)(any) returnsF Some(reportEntityData)
       val partiallyCorrectedCurrency =
         new File("test/resources/cbcr-with-partially-corrected-currency.xml")
 
@@ -1212,24 +1213,36 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
         Some(EntityReportingPeriod(LocalDate.parse("2017-01-02"), LocalDate.parse("2017-03-31")))
       )
 
-      messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-      docRefIdService.queryDocRefId(*)(*) returns Future.successful(Valid)
-      docRefIdService.queryDocRefId(
-        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ENTDeletion").get
-      )(*) returns Future
-        .successful(DoesNotExist)
-      docRefIdService.queryDocRefId(
-        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3REP1Deletion").get
-      )(*) returns Future
-        .successful(DoesNotExist)
-      docRefIdService.queryDocRefId(
-        DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ADDDeletion").get
-      )(*) returns Future
-        .successful(DoesNotExist)
-      reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF Some(reportEntityData)
-      reportingEntity.queryReportingEntityDataModel(*)(*) returnsF Some(reportEntityDataModel)
+      when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+      when(docRefIdService.queryDocRefId(any)(any)).thenReturn(Future.successful(Valid))
+      when(
+        docRefIdService.queryDocRefId(
+          eqTo(DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ENTDeletion").get)
+        )(any)
+      ).thenReturn(
+        Future
+          .successful(DoesNotExist)
+      )
+      when(
+        docRefIdService.queryDocRefId(
+          eqTo(DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3REP1Deletion").get)
+        )(any)
+      ).thenReturn(
+        Future
+          .successful(DoesNotExist)
+      )
+      when(
+        docRefIdService.queryDocRefId(
+          eqTo(DocRefId("GB2017RGXLCBC0100000056CBC40220180311T090000X2018_7000000002OECD3ADDDeletion").get)
+        )(any)
+      ).thenReturn(
+        Future
+          .successful(DoesNotExist)
+      )
+      reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF Some(reportEntityData)
+      reportingEntity.queryReportingEntityDataModel(any)(any) returnsF Some(reportEntityDataModel)
 
-      reportingEntity.queryReportingEntityData(*)(*) returnsF Some(reportEntityData)
+      reportingEntity.queryReportingEntityData(any)(any) returnsF Some(reportEntityData)
       val partialDeletionFile = new File("test/resources/cbcr-partial-deletion.xml")
       val anotherPartialDeletion = new File("test/resources/cbcr-inconsistent-OECD3.xml")
 
@@ -1248,10 +1261,10 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     }
 
     "validate dates overlapping should return invalid if dates are overlapping" in {
-      reportingEntity.queryReportingEntityDatesOverlapping(*, *)(*) returnsF Some(DatesOverlap(true))
+      reportingEntity.queryReportingEntityDatesOverlapping(any, any)(any) returnsF Some(DatesOverlap(true))
 
-      messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-      reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
+      when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+      reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF None
 
       val validFile = new File("test/resources/cbcr-valid-2.xml")
       val filename = "GB2019RGXLCBC0100000056CBC40120201101T090000Xvalid2.xml"
@@ -1261,10 +1274,10 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Idioma
     }
 
     "validate dates overlapping should return valid if dates are not overlapping" in {
-      reportingEntity.queryReportingEntityDatesOverlapping(*, *)(*) returnsF Some(DatesOverlap(false))
+      reportingEntity.queryReportingEntityDatesOverlapping(any, any)(any) returnsF Some(DatesOverlap(false))
 
-      messageRefIdService.messageRefIdExists(*)(*) returns Future.successful(false)
-      reportingEntity.queryReportingEntityDataTin(*, *)(*) returnsF None
+      when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+      reportingEntity.queryReportingEntityDataTin(any, any)(any) returnsF None
 
       val validFile = new File("test/resources/cbcr-valid-2.xml")
       val filename = "GB2019RGXLCBC0100000056CBC40120201101T090000Xvalid2.xml"

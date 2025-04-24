@@ -25,9 +25,9 @@ object AppDependencies {
   def test(scope: String = "test"): Seq[ModuleID] = Seq(
     "uk.gov.hmrc"           %% s"bootstrap-test-$playVersion"  % hmrcBootstrapVersion % scope,
     "uk.gov.hmrc.mongo"     %% s"hmrc-mongo-test-$playVersion" % hmrcMongoVersion     % scope,
-    "org.scalatestplus"           %% "mockito-4-11"                 % mockitoScalaVersion  % scope,
-   /* "org.mockito"           %% "mockito-scala-cats"            % mockitoScalaVersion  % scope,*/
-    "org.typelevel"           %% "cats-effect"                        % "3.6.1" % scope,
-    "xerces"                 % "xercesImpl"                    % "2.12.2"             % scope
-  )
+    ("org.scalatestplus"           %% "mockito-4-11"                 % mockitoScalaVersion  % scope ).cross(CrossVersion.for3Use2_13),
+    ("org.mockito"           %% "mockito-scala-cats"            % "1.17.37" % scope).cross(CrossVersion.for3Use2_13),
+/*"org.typelevel"           %% "cats-effect"                        % "3.6.1" % scope,*/
+"xerces"                 % "xercesImpl"                    % "2.12.2"             % scope
+)
 }

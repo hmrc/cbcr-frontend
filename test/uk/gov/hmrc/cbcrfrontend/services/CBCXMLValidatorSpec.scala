@@ -18,15 +18,15 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import com.typesafe.config.ConfigFactory
 import org.codehaus.stax2.validation.{XMLValidationSchema, XMLValidationSchemaFactory}
-import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Configuration
 
 import java.io.File
 
-class CBCXMLValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
+class CBCXMLValidatorSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
 
   private def loadFile(filename: String) = new File(s"test/resources/$filename")
 

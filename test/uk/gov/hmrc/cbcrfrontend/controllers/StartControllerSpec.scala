@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import org.mockito.ArgumentMatchersSugar.{*, any}
-import org.mockito.IdiomaticMockito
+import org.mockito.ArgumentMatchersSugar.{any, eq => eqTo}
+import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Play.materializer
 import play.api.http.Status
@@ -35,8 +36,7 @@ import uk.gov.hmrc.cbcrfrontend.views.Views
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StartControllerSpec
-    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
+class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   private implicit val feConf: FrontendAppConfig = mock[FrontendAppConfig]
 
@@ -50,50 +50,61 @@ class StartControllerSpec
     val fakeRequest = addToken(FakeRequest("GET", "/"))
 
     "return 303 if authorised and Agent" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
-        .successful(
-          ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Agent), Some(newCBCEnrolment))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+        .thenReturn(
+          Future
+            .successful(
+              ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Agent), Some(newCBCEnrolment))
+            )
         )
       status(controller.start(fakeRequest)) shouldBe Status.SEE_OTHER
     }
 
     "return 200 if authorized and registered Organisation for CBCR" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns Future
-        .successful(
-          ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+        .thenReturn(
+          Future
+            .successful(
+              ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
+            )
         )
       status(controller.start(fakeRequest)) shouldBe Status.OK
     }
 
     "return 303 if authorised Organisation but not registered for CBCR" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns
-        Future.successful(~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+        .thenReturn(
+          Future.successful(~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
+        )
       status(controller.start(fakeRequest)) shouldBe Status.SEE_OTHER
     }
 
     "return 403 if authorised Individual" in {
-      authConnector.authorise(*, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(*, *) returns
-        Future.successful(~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None))
+      when(feConf.cbcrGuidanceUrl).thenReturn("http://localhost:9696/")
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+        .thenReturn(
+          Future.successful(~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None))
+        )
       status(controller.start(fakeRequest)) shouldBe Status.FORBIDDEN
     }
 
     "return 303 if submit returns upload" in {
       val fakeRequest = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody("choice" -> "upload")
-      authConnector.authorise[Any](*, *)(*, *) returns Future.successful(())
+      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
       val result = call(controller.submit, fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
     }
 
     "return 303 if submit returns editSubscriberInfo" in {
       val fakeRequest = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody("choice" -> "editSubscriberInfo")
-      authConnector.authorise[Any](*, *)(*, *) returns Future.successful(())
+      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
       val result = call(controller.submit, fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
     }
 
-    "return 303 if submit returns no choice" in {
+    "return 303 if submit ).thenReturn no choice" in {
       val fakeRequest = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody("choice" -> "")
-      authConnector.authorise[Any](*, *)(*, *) returns Future.successful(())
+      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
       val result = call(controller.submit, fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
     }

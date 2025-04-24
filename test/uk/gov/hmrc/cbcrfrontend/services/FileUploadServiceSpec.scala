@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import org.mockito.IdiomaticMockito
+import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Play.materializer
 import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, OK}
@@ -41,7 +42,7 @@ import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with IdiomaticMockito with GuiceOneAppPerSuite {
+class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with MockitoSugar with GuiceOneAppPerSuite {
   private val envelopeIdString = "test-envelope-id"
   private val envelopeId = EnvelopeId(envelopeIdString)
 
@@ -110,9 +111,9 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  mockServicesConfig.baseUrl("cbcr") returns "http://cbcr-backend"
+  when(mockServicesConfig.baseUrl("cbcr")).thenReturn("http://cbcr-backend")
 
-  mockUUIDGenerator.randomUUID returns uuid
+  when(mockUUIDGenerator.randomUUID).thenReturn(uuid)
 
   private val fileUploadService =
     new FileUploadService(
@@ -126,11 +127,13 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
   "The FileUploadService" when {
     "createEnvelope is called" should {
-      mockFrontendAppConfig.envelopeExpiryDays returns 7
+      when(mockFrontendAppConfig.envelopeExpiryDays).thenReturn(7)
 
       "return successful response with envelope ID" in {
-        mockFileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequestJson)) returns Future.successful(
-          HttpResponse(OK, "", Map(LOCATION -> Seq(s"envelopes/$envelopeIdString")))
+        when(mockFileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequestJson))).thenReturn(
+          Future.successful(
+            HttpResponse(OK, "", Map(LOCATION -> Seq(s"envelopes/$envelopeIdString")))
+          )
         )
 
         val response = await(fileUploadService.createEnvelope.value)
@@ -139,20 +142,22 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
       }
 
       "return Left(UnexpectedState) when response LOCATION header is missing" in {
-        mockFileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequestJson)) returns Future.successful(
-          HttpResponse(OK, "")
+        when(mockFileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequestJson))).thenReturn(
+          Future.successful(
+            HttpResponse(OK, "")
+          )
         )
-
         val response = await(fileUploadService.createEnvelope.value)
 
         response shouldBe Left(UnexpectedState("Header Location not found"))
       }
 
       "return Left(UnexpectedState) when response LOCATION header is invalid" in {
-        mockFileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequestJson)) returns Future.successful(
-          HttpResponse(OK, "", Map(LOCATION -> Seq("invalid")))
+        when(mockFileUploadServiceConnector.createEnvelope(CreateEnvelope(envelopeRequestJson))).thenReturn(
+          Future.successful(
+            HttpResponse(OK, "", Map(LOCATION -> Seq("invalid")))
+          )
         )
-
         val response = await(fileUploadService.createEnvelope.value)
 
         response shouldBe Left(UnexpectedState(s"EnvelopeId in $LOCATION header: invalid not found"))
@@ -171,8 +176,10 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
              |}
              |""".stripMargin
 
-        mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(
-          HttpResponse(OK, fileUploadResponseJson)
+        when(mockCBCRConnector.getFileUploadResponse(envelopeIdString)).thenReturn(
+          Future.successful(
+            HttpResponse(OK, fileUploadResponseJson)
+          )
         )
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
@@ -181,7 +188,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
       }
 
       "return Left(UnexpectedState) when http status is 200 and FileUploadCallbackResponse json is invalid" in {
-        mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(HttpResponse(OK, "{}"))
+        when(mockCBCRConnector.getFileUploadResponse(envelopeIdString))
+          .thenReturn(Future.successful(HttpResponse(OK, "{}")))
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -193,9 +201,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
       }
 
       "return Right(None) when http status is 204" in {
-        mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(
-          HttpResponse(NO_CONTENT, "")
-        )
+        when(mockCBCRConnector.getFileUploadResponse(envelopeIdString))
+          .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -203,9 +210,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
       }
 
       "return Left(UnexpectedState) for any other http status" in {
-        mockCBCRConnector.getFileUploadResponse(envelopeIdString) returns Future.successful(
-          HttpResponse(otherHttpStatus, "")
-        )
+        when(mockCBCRConnector.getFileUploadResponse(envelopeIdString))
+          .thenReturn(Future.successful(HttpResponse(otherHttpStatus, "")))
 
         val response = await(fileUploadService.getFileUploadResponse(envelopeIdString).value)
 
@@ -215,9 +221,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
     "getFile is called" should {
       "return successful response with file" in {
-        mockFileUploadServiceConnector.getFile(envelopeIdString, fileIdString) returns Future.successful(
-          HttpResponse(OK, "")
-        )
+        when(mockFileUploadServiceConnector.getFile(envelopeIdString, fileIdString))
+          .thenReturn(Future.successful(HttpResponse(OK, "")))
 
         val response = await(fileUploadService.getFile(envelopeIdString, fileIdString).value)
 
@@ -225,9 +230,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
       }
 
       "return Left(UnexpectedState) for any other http status" in {
-        mockFileUploadServiceConnector.getFile(envelopeIdString, fileIdString) returns Future.successful(
-          HttpResponse(otherHttpStatus, "")
-        )
+        when(mockFileUploadServiceConnector.getFile(envelopeIdString, fileIdString))
+          .thenReturn(Future.successful(HttpResponse(otherHttpStatus, "")))
 
         val fileUploadService =
           new FileUploadService(
@@ -264,9 +268,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
             |"href": "test-metadata-href"
             |}
             |""".stripMargin
-        mockFileUploadServiceConnector.getFileMetaData(envelopeIdString, fileIdString) returns Future.successful(
-          HttpResponse(OK, fileMetadataJson)
-        )
+        when(mockFileUploadServiceConnector.getFileMetaData(envelopeIdString, fileIdString))
+          .thenReturn(Future.successful(HttpResponse(OK, fileMetadataJson)))
 
         val response = await(fileUploadService.getFileMetaData(envelopeIdString, fileIdString).value)
 
@@ -274,9 +277,8 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
       }
 
       "return Left(UnexpectedState) for other http status" in {
-        mockFileUploadServiceConnector.getFileMetaData(envelopeIdString, fileIdString) returns Future.successful(
-          HttpResponse(otherHttpStatus, "")
-        )
+        when(mockFileUploadServiceConnector.getFileMetaData(envelopeIdString, fileIdString))
+          .thenReturn(Future.successful(HttpResponse(otherHttpStatus, "")))
 
         val response = await(fileUploadService.getFileMetaData(envelopeIdString, fileIdString).value)
 
@@ -286,10 +288,13 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
 
     "uploadMetadataAndRoute is called" should {
       "return successful response with body when route envelope request returns 201" in {
-        mockFileUploadServiceConnector.uploadFile(uploadFileBody) returns Future.successful(HttpResponse(CREATED, ""))
+        when(mockFileUploadServiceConnector.uploadFile(uploadFileBody))
+          .thenReturn(Future.successful(HttpResponse(CREATED, "")))
 
-        mockFileUploadServiceConnector.routeEnvelopeRequest(routeEnvelopeRequest) returns Future.successful(
-          HttpResponse(CREATED, "route-envelope-response")
+        when(mockFileUploadServiceConnector.routeEnvelopeRequest(routeEnvelopeRequest)).thenReturn(
+          Future.successful(
+            HttpResponse(CREATED, "route-envelope-response")
+          )
         )
 
         val response = await(fileUploadService.uploadMetadataAndRoute(metadata).value)
@@ -297,11 +302,14 @@ class FileUploadServiceSpec extends AnyWordSpecLike with Matchers with Idiomatic
         response shouldBe Right("route-envelope-response")
       }
 
-      "return Left(UnexpectedState) response when route envelope request returns other http status" in {
-        mockFileUploadServiceConnector.uploadFile(uploadFileBody) returns Future.successful(HttpResponse(CREATED, ""))
+      "return Left(UnexpectedState) response when route envelope request).thenReturn(other http status" in {
+        when(mockFileUploadServiceConnector.uploadFile(uploadFileBody))
+          .thenReturn(Future.successful(HttpResponse(CREATED, "")))
 
-        mockFileUploadServiceConnector.routeEnvelopeRequest(routeEnvelopeRequest) returns Future.successful(
-          HttpResponse(otherHttpStatus, "")
+        when(mockFileUploadServiceConnector.routeEnvelopeRequest(routeEnvelopeRequest)).thenReturn(
+          Future.successful(
+            HttpResponse(otherHttpStatus, "")
+          )
         )
 
         val response = await(fileUploadService.uploadMetadataAndRoute(metadata).value)

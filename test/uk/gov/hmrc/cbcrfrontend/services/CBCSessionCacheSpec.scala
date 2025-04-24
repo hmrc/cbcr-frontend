@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import org.mockito.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.libs.json.{JsObject, Json}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
@@ -33,7 +33,7 @@ import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class CBCSessionCacheSpec
-    extends AnyWordSpec with Matchers with IdiomaticMockito with MongoSupport with CleanMongoCollectionSupport {
+    extends AnyWordSpec with Matchers with MockitoSugar with MongoSupport with CleanMongoCollectionSupport {
   private val config = Configuration.from(
     Map(
       "mongodb" -> Map(

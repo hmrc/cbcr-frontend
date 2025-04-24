@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import org.mockito.ArgumentMatchers.{any, anyInt, eq => eqTo}
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
@@ -34,8 +34,7 @@ import uk.gov.hmrc.http.HttpResponse
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class EnrolControllerSpec
-    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
+class EnrolControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   private val authConnector = mock[AuthConnector]
   private val enrolConnector = mock[TaxEnrolmentsConnector]
@@ -50,7 +49,7 @@ class EnrolControllerSpec
       val response = mock[HttpResponse]
       when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
       when(enrolConnector.deEnrol(any)).thenReturn(Future.successful(response))
-      when(eqTo(response.body)).thenReturn("deEnrol")
+      when(response.body).thenReturn("deEnrol")
       status(controller.deEnrol()(fakeRequest)) shouldBe Status.OK
     }
 
