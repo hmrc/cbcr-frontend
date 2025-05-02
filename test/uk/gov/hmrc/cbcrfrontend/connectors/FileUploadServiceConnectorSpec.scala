@@ -21,7 +21,6 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.matching.MultipartValuePatternBuilder
-import org.mockito.MockitoSugar
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -35,7 +34,7 @@ import uk.gov.hmrc.cbcrfrontend.model._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
+import org.scalatestplus.mockito.MockitoSugar
 import scala.concurrent.ExecutionContext
 
 class FileUploadServiceConnectorSpec
@@ -44,20 +43,20 @@ class FileUploadServiceConnectorSpec
   val stubHost = "localhost"
   val wireMockServer = new WireMockServer(wireMockConfig().port(stubPort))
 
-  override lazy val fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure(
       "microservice.services.file-upload-frontend.host" -> "127.0.0.1",
       "microservice.services.file-upload-frontend.port" -> stubPort
     )
     .build()
 
-  implicit val ec: ExecutionContext = fakeApplication.injector.instanceOf[ExecutionContext]
+  implicit val ec: ExecutionContext = fakeApplication().injector.instanceOf[ExecutionContext]
 
   trait Setup {
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
-    val config: ServicesConfig = fakeApplication.injector.instanceOf[ServicesConfig]
-    val httpClient: HttpClientV2 = fakeApplication.injector.instanceOf[HttpClientV2]
+    val config: ServicesConfig = fakeApplication().injector.instanceOf[ServicesConfig]
+    val httpClient: HttpClientV2 = fakeApplication().injector.instanceOf[HttpClientV2]
     val fileUploadConnector = new FileUploadServiceConnector(httpClient, config)
     implicit val format: OFormat[UploadFile] = Json.format[UploadFile]
   }

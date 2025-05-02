@@ -41,7 +41,7 @@
 @utrKey = @{"utr"}
 @postcodeKey = @{"postCode"}
 @hasErrors = @{form.hasErrors}
-@backLink = @{if(userType.equals(Agent)) { Some(routes.SubmissionController.submitterInfo.url) } else { None }}
+@backLink = @{if(userType.equals(Agent)) { Some(routes.SubmissionController.submitterInfo().url) } else { None }}
 @title = @{messages("subscribeFirst.title")}
 
 @layout(title, backLinkUrl = backLink, hasErrors) {

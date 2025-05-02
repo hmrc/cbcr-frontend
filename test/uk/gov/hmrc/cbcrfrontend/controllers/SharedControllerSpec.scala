@@ -16,12 +16,10 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import cats.data.OptionT
-import cats.implicits._
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import cats.data.{EitherT, OptionT}
+import cats.implicits.*
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.when
-import org.mockito.cats.IdiomaticMockitoCats.StubbingOpsCats
-import org.mockito.cats.MockitoCats
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
@@ -35,9 +33,9 @@ import play.api.test.Helpers.{contentAsString, defaultAwaitTimeout, header, stat
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.emailaddress.EmailAddress
-import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.model.*
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
-import uk.gov.hmrc.cbcrfrontend.services._
+import uk.gov.hmrc.cbcrfrontend.services.*
 import uk.gov.hmrc.cbcrfrontend.views.Views
 import uk.gov.hmrc.mongo.cache.CacheItem
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
@@ -46,8 +44,7 @@ import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SharedControllerSpec
-    extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar with MockitoCats {
+class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
   private implicit val messagesApi: MessagesApi = app.injector.instanceOf[MessagesApi]
   private val cache = mock[CBCSessionCache]
   private implicit val feConfig: FrontendAppConfig = mock[FrontendAppConfig]
@@ -83,7 +80,7 @@ class SharedControllerSpec
   "GET /enter-CBCId" should {
     "return 200" in {
       when(authC.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
-      cache.read[CBCId](CBCId.cbcIdFormat, any, any) returnsF id
+      when(cache.read[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(EitherT.right(Future.successful(id)))
       val result = controller.enterCBCId(fakeRequestEnterCBCId)
       status(result) shouldBe Status.OK
     }
@@ -102,7 +99,7 @@ class SharedControllerSpec
     "return 400 if the CBCId has not been registered" in {
       when(authC.authorise[Option[CBCEnrolment]](any, any)(any, any))
         .thenReturn(Future.successful(Some(CBCEnrolment(id, utr))))
-      subService.retrieveSubscriptionData(any)(any) returnsF None
+      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.BAD_REQUEST
     }
@@ -113,7 +110,7 @@ class SharedControllerSpec
           Some(CBCEnrolment(CBCId.create(99).getOrElse(fail("bad cbcid")), utr))
         )
       )
-      subService.retrieveSubscriptionData(any)(any) returnsF Some(subDetails)
+      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.BAD_REQUEST
     }
@@ -121,7 +118,7 @@ class SharedControllerSpec
     "return a redirect if successful" in {
       when(authC.authorise[Option[CBCEnrolment]](any, any)(any, any))
         .thenReturn(Future.successful(Some(CBCEnrolment(id, utr))))
-      subService.retrieveSubscriptionData(any)(any) returnsF Some(subDetails)
+      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
       when(cache.save[TIN](any)(eqTo(TIN.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
       when(cache.save[BusinessPartnerRecord](any)(eqTo(BusinessPartnerRecord.format), any, any))
         .thenReturn(Future.successful(emptyCacheItem))
@@ -240,7 +237,7 @@ class SharedControllerSpec
       )
       when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
       when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.none[Future, BusinessPartnerRecord])
-      subService.retrieveSubscriptionData(any)(any) returnsF None
+      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
 
@@ -262,11 +259,11 @@ class SharedControllerSpec
         Some(OrganisationResponse("My Corp")),
         EtmpAddress("line1", None, None, None, Some("SW46NR"), "GB")
       )
-      bprKF.checkBPRKnownFacts(any)(any) returnsF response
+      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
       when(cache.save[BusinessPartnerRecord](any)(eqTo(BusinessPartnerRecord.format), any, any))
         .thenReturn(Future.successful(emptyCacheItem))
       when(cache.save[Utr](any)(eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
-      subService.retrieveSubscriptionData(any)(any) returnsF Some(subDetails)
+      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result).get should endWith("/already-subscribed")
@@ -283,8 +280,8 @@ class SharedControllerSpec
       )
       when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Agent)))
-      subService.retrieveSubscriptionData(any)(any) returnsF Some(subDetails)
-      bprKF.checkBPRKnownFacts(any)(any) returnsF response
+      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
+      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
       when(cache.readOption[CompleteXMLInfo](eqTo(CompleteXMLInfo.format), any, any))
         .thenReturn(Future.successful(None))
       when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
@@ -309,7 +306,7 @@ class SharedControllerSpec
       )
       when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      bprKF.checkBPRKnownFacts(any)(any) returnsF response
+      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
       when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
@@ -317,7 +314,7 @@ class SharedControllerSpec
       when(cache.readOption[CompleteXMLInfo](eqTo(CompleteXMLInfo.format), any, any))
         .thenReturn(Future.successful(None))
       when(cache.save[Utr](any)(eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
-      subService.retrieveSubscriptionData(any)(any) returnsF None
+      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result).get should endWith("/known-facts/match")
@@ -334,7 +331,7 @@ class SharedControllerSpec
       )
       when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      bprKF.checkBPRKnownFacts(any)(any) returnsF response
+      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
       when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
@@ -342,7 +339,7 @@ class SharedControllerSpec
       when(cache.readOption[CompleteXMLInfo](eqTo(CompleteXMLInfo.format), any, any))
         .thenReturn(Future.successful(None))
       when(cache.save[Utr](any)(eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
-      subService.retrieveSubscriptionData(any)(any) returnsF None
+      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result).get should endWith("/known-facts/match")
@@ -359,8 +356,8 @@ class SharedControllerSpec
       )
       when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Agent)))
-      bprKF.checkBPRKnownFacts(any)(any) returnsF response
-      subService.retrieveSubscriptionData(any)(any) returnsF Some(subDetails)
+      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
+      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
       when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
@@ -453,8 +450,9 @@ class SharedControllerSpec
       val request = addToken(FakeRequest())
       when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      cache.read[BusinessPartnerRecord](BusinessPartnerRecord.format, any, any) returnsF bpr
-      cache.read[Utr](Utr.format, any, any) returnsF Utr("700000002")
+      when(cache.read[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any))
+        .thenReturn(EitherT.right(Future.successful(bpr)))
+      when(cache.read[Utr](eqTo(Utr.format), any, any)).thenReturn(EitherT.right(Future.successful(Utr("700000002"))))
       val result = controller.knownFactsMatch(request)
       status(result) shouldBe Status.OK
     }

@@ -26,6 +26,6 @@ object SurveyForm {
     mapping(
       "satisfied"   -> text,
       "suggestions" -> text
-    )(SurveyAnswers.apply)(SurveyAnswers.unapply)
+    )(SurveyAnswers.apply)(o => Some(o.satisfied, o.suggestions))
   )
 }

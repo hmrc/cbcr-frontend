@@ -31,6 +31,16 @@ case class FileInfo(
 )
 object FileInfo {
   implicit val format: OFormat[FileInfo] = Json.format[FileInfo]
+  def unapply(fileInfo: FileInfo): Option[(FileId, EnvelopeId, String, String, String, BigDecimal, String)] =
+    Some(
+      fileInfo.id,
+      fileInfo.envelopeId,
+      fileInfo.status,
+      fileInfo.name,
+      fileInfo.contentType,
+      fileInfo.length,
+      fileInfo.created
+    )
 }
 
 case class SubmissionInfo(
@@ -76,9 +86,24 @@ object SubmissionInfo {
       "ultimateParentEntity" -> o.ultimateParentEntity.ultimateParentEntity
     )
   }
+  def unapply(
+    submissionInfo: SubmissionInfo
+  ): Option[(String, CBCId, String, Hash, String, TIN, FilingType, UltimateParentEntity)] =
+    Some(
+      submissionInfo.gwCredId,
+      submissionInfo.cbcId,
+      submissionInfo.bpSafeId,
+      submissionInfo.hash,
+      submissionInfo.ofdsRegime,
+      submissionInfo.tin,
+      submissionInfo.filingType,
+      submissionInfo.ultimateParentEntity
+    )
 }
 
 case class SubmissionMetaData(submissionInfo: SubmissionInfo, submitterInfo: SubmitterInfo, fileInfo: FileInfo)
 object SubmissionMetaData {
   implicit val format: OFormat[SubmissionMetaData] = Json.format[SubmissionMetaData]
+  def unapply(submissionMetaData: SubmissionMetaData): Option[(SubmissionInfo, SubmitterInfo, FileInfo)] =
+    Some(submissionMetaData.submissionInfo, submissionMetaData.submitterInfo, submissionMetaData.fileInfo)
 }

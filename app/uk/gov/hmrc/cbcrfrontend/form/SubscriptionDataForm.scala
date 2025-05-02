@@ -40,6 +40,6 @@ object SubscriptionDataForm {
           x => condTrue(x.trim != "", new EmailAddressValidation().isValid(x))
         )
         .transform[EmailAddress](EmailAddress(_), _.value)
-    )(SubscriberContact.apply)(SubscriberContact.unapply(_))
+    )(SubscriberContact.apply)(o => Some(o.firstName, o.lastName, o.phoneNumber, o.email))
   )
 }

@@ -21,8 +21,6 @@ import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito.when
-import org.mockito.cats.IdiomaticMockitoCats.StubbingOpsCats
-import org.mockito.cats.MockitoCats
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -37,8 +35,7 @@ import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.{ExecutionContext, Future}
 
 class CreationDateSpec
-    extends AnyWordSpec with Matchers with BeforeAndAfterEach with GuiceOneAppPerSuite with MockitoSugar
-    with MockitoCats {
+    extends AnyWordSpec with Matchers with BeforeAndAfterEach with GuiceOneAppPerSuite with MockitoSugar {
 
   private val reportingEntity = mock[ReportingEntityDataService]
   private val configuration = mock[FrontendAppConfig]
@@ -120,13 +117,14 @@ class CreationDateSpec
   "The CreationDateService" should {
     "return true" when {
       "repotingEntity creationDate is Null and default date is less than 3 years ago" in {
-        reportingEntity.queryReportingEntityData(any)(any) returnsF Some(redNoCreationDate)
+        when(reportingEntity.queryReportingEntityData(any)(any))
+          .thenReturn(EitherT.right(Future.successful(Some(redNoCreationDate))))
         val result = await(cds.isDateValid(xmlInfo))
         result shouldBe DateCorrect
       }
 
       "repotingEntity creationDate is less than 3 years ago" in {
-        reportingEntity.queryReportingEntityData(any)(any) returnsF Some(red)
+        when(reportingEntity.queryReportingEntityData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(red))))
         val result = await(cds.isDateValid(xmlInfo))
         result shouldBe DateCorrect
       }
@@ -134,7 +132,8 @@ class CreationDateSpec
 
     "return false" when {
       "reportingEntity creationDate is older than 3 years ago" in {
-        reportingEntity.queryReportingEntityData(any)(any) returnsF Some(redOldCreationDate)
+        when(reportingEntity.queryReportingEntityData(any)(any))
+          .thenReturn(EitherT.right(Future.successful(Some(redOldCreationDate))))
         val result = await(cds.isDateValid(xmlInfo))
         result shouldBe DateOld
       }
@@ -148,7 +147,7 @@ class CreationDateSpec
 
       "reportingEntity creationDate is missing" in {
         when(configuration.defaultCreationDate).thenReturn(LocalDate.of(2010, 12, 23))
-        reportingEntity.queryReportingEntityData(any)(any) returnsF None
+        when(reportingEntity.queryReportingEntityData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
         val cds2 = new CreationDateService(configuration, reportingEntity)
         val result = await(cds2.isDateValid(xmlInfo))
         result shouldBe DateMissing

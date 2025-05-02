@@ -27,4 +27,5 @@ case class SummaryData(
 
 object SummaryData {
   implicit val format: OFormat[SummaryData] = Json.format[SummaryData]
+
 }

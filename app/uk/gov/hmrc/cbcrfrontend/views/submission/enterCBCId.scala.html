@@ -39,7 +39,7 @@
 
 @key = @{"cbcId"}
 
-@backLinkUrl = @{Some(routes.SubmissionController.submitterInfo.url)}
+@backLinkUrl = @{Some(routes.SubmissionController.submitterInfo().url)}
 
 @hasErrors = @{form.error("cbcId").isDefined || missMatch || noMatch}
 

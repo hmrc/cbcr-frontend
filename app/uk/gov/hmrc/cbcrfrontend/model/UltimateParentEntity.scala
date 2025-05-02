@@ -30,4 +30,5 @@ object UltimateParentEntity {
 
     override def writes(o: UltimateParentEntity): JsString = JsString(o.ultimateParentEntity)
   }
+  def unapply(upe: UltimateParentEntity): Option[String] = Some(upe.ultimateParentEntity)
 }

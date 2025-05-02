@@ -17,7 +17,7 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.EitherT
-import cats.implicits._
+import cats.syntax.all.*
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.util.ByteString
@@ -27,13 +27,13 @@ import play.api.http.Status
 import play.api.http.Status.{CREATED, NO_CONTENT, OK}
 import play.api.i18n.Messages
 import play.api.libs.Files.SingletonTemporaryFileCreator
-import play.api.libs.json._
+import play.api.libs.json.*
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.connectors.{CBCRBackendConnector, FileUploadServiceConnector}
-import uk.gov.hmrc.cbcrfrontend.core._
-import uk.gov.hmrc.cbcrfrontend.model._
+import uk.gov.hmrc.cbcrfrontend.core.*
+import uk.gov.hmrc.cbcrfrontend.model.*
 import uk.gov.hmrc.cbcrfrontend.util.UUIDGenerator
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.io.{File, PrintWriter}

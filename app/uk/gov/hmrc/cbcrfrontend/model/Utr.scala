@@ -66,4 +66,6 @@ object Utr {
   private val writes: Writes[Utr] = new SimpleObjectWrites[Utr](_.value)
   private val reads: Reads[Utr] = new SimpleObjectReads[Utr]("utr", Utr.apply)
   implicit val format: Format[Utr] = Format[Utr](reads, writes)
+
+  def unapply(utr: Utr): Option[String] = Some(utr.utr)
 }

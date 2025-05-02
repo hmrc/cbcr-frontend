@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import org.mockito.ArgumentMatchersSugar.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -54,7 +54,7 @@ class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
         .thenReturn(
           Future
             .successful(
-              ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Agent), Some(newCBCEnrolment))
+              new ~(Some(AffinityGroup.Agent), Some(newCBCEnrolment))
             )
         )
       status(controller.start(fakeRequest)) shouldBe Status.SEE_OTHER
@@ -63,10 +63,9 @@ class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     "return 200 if authorized and registered Organisation for CBCR" in {
       when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
         .thenReturn(
-          Future
-            .successful(
-              ~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
-            )
+          Future.successful(
+            new ~(Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
+          )
         )
       status(controller.start(fakeRequest)) shouldBe Status.OK
     }
@@ -74,7 +73,9 @@ class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     "return 303 if authorised Organisation but not registered for CBCR" in {
       when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
         .thenReturn(
-          Future.successful(~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Organisation), None))
+          Future.successful(
+            new ~(Some(AffinityGroup.Organisation), None)
+          )
         )
       status(controller.start(fakeRequest)) shouldBe Status.SEE_OTHER
     }
@@ -83,7 +84,9 @@ class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
       when(feConf.cbcrGuidanceUrl).thenReturn("http://localhost:9696/")
       when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
         .thenReturn(
-          Future.successful(~[Option[AffinityGroup], Option[CBCEnrolment]](Some(AffinityGroup.Individual), None))
+          Future.successful(
+            new ~(Some(AffinityGroup.Individual), None)
+          )
         )
       status(controller.start(fakeRequest)) shouldBe Status.FORBIDDEN
     }

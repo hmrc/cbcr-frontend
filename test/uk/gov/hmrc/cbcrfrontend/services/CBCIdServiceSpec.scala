@@ -18,8 +18,6 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import org.apache.http.HttpStatus
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.*
-import org.mockito.IdiomaticMockito
 import org.mockito.Mockito.{never, verify, when}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

@@ -13,13 +13,14 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalafmtOnCompile := true)
   .settings(
     majorVersion := 1,
-    scalaVersion := "2.13.16",
-    crossScalaVersions ++= Seq("2.13.16", "3.3.5"),
+    scalaVersion := "3.3.5",
+    //crossScalaVersions ++= Seq("2.13.16", "3.3.5"),
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test()
   )
   .settings(
     scalacOptions += "-Wconf:src=routes/.*:s",
-    scalacOptions += "-Wconf:cat=unused-imports&src=html/.*:s"
+    scalacOptions += "-Wconf:cat=unused-imports&src=html/.*:s",
+    scalacOptions := Seq("-explain")
   )
   .settings(PlayKeys.playDefaultPort := 9696)
   .settings(CodeCoverageSettings.settings *)

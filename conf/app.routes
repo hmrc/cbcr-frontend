@@ -36,7 +36,7 @@ GET         /unregistered-gg-account                                      @uk.go
 
 GET         /ultimate-parent-entity/entry-form                            @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.upe
 POST        /ultimate-parent-entity                                       @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUltimateParentEntity
-GET         /submitter-info/entry-form                                    @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitterInfo
+GET         /submitter-info/entry-form                                    @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitterInfo()
 POST        /submitter-info                                               @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitSubmitterInfo
 POST        /utr                                                          @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.submitUtr
 GET         /utr/entry-form                                               @uk.gov.hmrc.cbcrfrontend.controllers.SubmissionController.utr
@@ -57,7 +57,7 @@ GET         /contact-info-subscriber/updated                              @uk.go
 GET         /subscribe-success-cbc-id/:cbcId                              @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.subscribeSuccessCbcId(cbcId:String)
 POST        /subscription-data                                            @uk.gov.hmrc.cbcrfrontend.controllers.SubscriptionController.submitSubscriptionData
 
-GET         /de-enrol                                                     @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.deEnrol
+GET         /de-enrol                                                     @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.deEnrol()
 GET         /enrolments                                                   @uk.gov.hmrc.cbcrfrontend.controllers.EnrolController.getEnrolments
 
 GET         /assets/*file                                                 controllers.Assets.versioned(path="/public", file: Asset)
