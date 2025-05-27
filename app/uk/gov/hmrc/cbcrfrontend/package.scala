@@ -21,13 +21,10 @@ import _root_.play.api.i18n.Messages
 import _root_.play.api.libs.json.Reads
 import _root_.play.api.mvc.Results.*
 import _root_.play.api.mvc.*
-import cats.data.{EitherT, NonEmptyList, ValidatedNel}
-import cats.implicits.catsSyntaxTuple10Semigroupal
+import cats.data.{NonEmptyList, ValidatedNel}
 import cats.instances.future.*
-import cats.syntax.show.*
 import cats.{Applicative, Functor}
 import cats.syntax.all.*
-import scala.reflect.runtime.universe.*
 import uk.gov.hmrc.auth.core.Enrolment
 import uk.gov.hmrc.auth.core.retrieve.{Credentials, Retrieval, SimpleRetrieval}
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
@@ -60,16 +57,9 @@ package object cbcrfrontend {
 
   private type ValidResult[A] = ValidatedNel[CBCErrors, A]
   private type CacheResult[A] = ValidatedNel[ExpiredSession, A]
-  type FutureValidResult[A] = Future[ValidResult[A]]
   private type FutureCacheResult[A] = Future[CacheResult[A]]
   type ValidBusinessResult[A] = ValidatedNel[BusinessRuleErrors, A]
   type FutureValidBusinessResult[A] = Future[ValidBusinessResult[A]]
-
-  private type FutureEitherBusinessResult[A] = EitherT[Future, NonEmptyList[BusinessRuleErrors], A]
-
-  extension [A](fa: FutureValidBusinessResult[A])
-    def liftToEitherT(using ExecutionContext): FutureEitherBusinessResult[A] =
-      EitherT(fa.map(_.toEither))
 
   implicit def applicativeInstance(implicit ec: ExecutionContext): Applicative[FutureValidBusinessResult] =
     Applicative[Future] compose Applicative[ValidBusinessResult]

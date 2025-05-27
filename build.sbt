@@ -14,7 +14,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     majorVersion := 1,
     scalaVersion := "3.3.5",
-    //crossScalaVersions ++= Seq("2.13.16", "3.3.5"),
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test()
   )
   .settings(
@@ -23,7 +22,7 @@ lazy val microservice = Project(appName, file("."))
     scalacOptions := Seq("-explain")
   )
   .settings(PlayKeys.playDefaultPort := 9696)
-  .settings(CodeCoverageSettings.settings *)
+  .settings(CodeCoverageSettings.settings*)
   // Disable default sbt Test options (might change with new versions of bootstrap)
   .settings(
     Test / testOptions -= Tests

@@ -18,6 +18,7 @@ package uk.gov.hmrc.cbcrfrontend.services
 
 import cats.data.{EitherT, NonEmptyList, Validated, ValidatedNel}
 import cats.implicits.catsStdInstancesForFuture
+import org.apache.pekko.util.Timeout
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers
@@ -36,8 +37,10 @@ import java.io.File
 import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 import scala.language.implicitConversions
 import scala.util.chaining.scalaUtilChainingOps
+import scala.concurrent.duration._
 
 class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with MockitoSugar {
 
@@ -361,6 +364,11 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Mockit
 
       "messageRefId contains a CBCId that doesnt match the CBCId in the SendingEntityIN field" in {
         when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        when(reportingEntity.queryReportingEntityDataTin(any, any)(any))
+          .thenReturn(EitherT.right(Future.successful(None)))
+        when(reportingEntity.queryReportingEntityData(any)(any))
+          .thenReturn(EitherT.right(Future.successful(Some(red))))
+
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-cbcId-messageRefID.xml")
         val result =
           await(validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)))
@@ -424,6 +432,11 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Mockit
 
       "messageRefId contains a Reporting Year that doesn't match the year in the ReportingPeriod field" in {
         when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        when(reportingEntity.queryReportingEntityDataTin(any, any)(any))
+          .thenReturn(EitherT.right(Future.successful(None)))
+        when(reportingEntity.queryReportingEntityData(any)(any))
+          .thenReturn(EitherT.right(Future.successful(Some(red))))
+
         val invalidMessageRefID = new File("test/resources/cbcr-invalid-reportingYear-messageRefID.xml")
         val result =
           await(validator.validateBusinessRules(invalidMessageRefID, filename, Some(enrol), Some(Organisation)))
@@ -477,6 +490,12 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Mockit
       }
 
       "Filename does not match MessageRefId" in {
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        when(reportingEntity.queryReportingEntityDataTin(any, any)(any))
+          .thenReturn(EitherT.right(Future.successful(None)))
+        when(reportingEntity.queryReportingEntityData(any)(any))
+          .thenReturn(EitherT.right(Future.successful(Some(red))))
+
         val validFile = new File("test/resources/cbcr-valid.xml")
         val invalidFilename = "INVALID" + filename
         val result = await(validator.validateBusinessRules(validFile, invalidFilename, Some(enrol), Some(Organisation)))
@@ -496,12 +515,24 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Mockit
       }
 
       "AdditionalInfo.docTypeInidc is OECD0" in {
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        when(reportingEntity.queryReportingEntityDataTin(any, any)(any))
+          .thenReturn(EitherT.right(Future.successful(None)))
+        when(reportingEntity.queryReportingEntityData(any)(any))
+          .thenReturn(EitherT.right(Future.successful(Some(red))))
+
         val validFile = new File("test/resources/cbcr-additionalInfoOECD0.xml")
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should not contain MessageTypeIndicError
       }
 
       "AdditionalInfo.otherInfo is Empty" in {
+        when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+        when(reportingEntity.queryReportingEntityDataTin(any, any)(any))
+          .thenReturn(EitherT.right(Future.successful(None)))
+        when(reportingEntity.queryReportingEntityData(any)(any))
+          .thenReturn(EitherT.right(Future.successful(Some(red))))
+
         val validFile = new File("test/resources/cbcr-additionalInfoOECD0.xml")
         val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
         result pipe errors should contain(OtherInfoEmpty)
@@ -540,6 +571,12 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Mockit
           val validFile = new File("test/resources/cbcr-messageTypeIndic.xml")
           when(reportingEntity.queryReportingEntityDataModel(any)(any))
             .thenReturn(EitherT.right(Future.successful(Some(redmFalse))))
+          when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+          when(reportingEntity.queryReportingEntityDataTin(any, any)(any))
+            .thenReturn(EitherT.right(Future.successful(None)))
+          when(reportingEntity.queryReportingEntityData(any)(any))
+            .thenReturn(EitherT.right(Future.successful(Some(red))))
+
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(MessageTypeIndicError)
         }
@@ -554,7 +591,13 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Mockit
 
         "AdditionalInfo.docTypeIndic isn't OECD2 or OECD3" in {
           val validFile = new File("test/resources/cbcr-messageTypeIndic2.xml")
-          val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
+          when(messageRefIdService.messageRefIdExists(any)(any)).thenReturn(Future.successful(false))
+          when(reportingEntity.queryReportingEntityDataTin(any, any)(any))
+            .thenReturn(EitherT.right(Future.successful(None)))
+          when(reportingEntity.queryReportingEntityData(any)(any))
+            .thenReturn(EitherT.right(Future.successful(Some(red))))
+          val result =
+            await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))(120.seconds)
           result pipe errors should contain(MessageTypeIndicError)
         }
 
@@ -1072,6 +1115,9 @@ class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with Mockit
           when(docRefIdService.queryDocRefId(eqTo(corrDocRefId3))(any)).thenReturn(Future.successful(DoesNotExist))
           when(reportingEntity.queryReportingEntityData(any)(any))
             .thenReturn(EitherT.right(Future.successful(Some(red))))
+          when(reportingEntity.queryReportingEntityDataTin(any, any)(any))
+            .thenReturn(EitherT.right(Future.successful(None)))
+
           val validFile = new File("test/resources/cbcr-withAddInfoCorrRefId-invalid.xml")
           val result = await(validator.validateBusinessRules(validFile, filename, Some(enrol), Some(Organisation)))
           result pipe errors should contain(AdditionalInfoDRINotFound(actualDocRefId2.toString, corrDocRefId3.toString))
