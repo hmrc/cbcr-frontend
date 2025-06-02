@@ -37,7 +37,7 @@
     if(!reportingRole.contains(CBC701)){
         routes.SubmissionController.upe.url
     } else if(userType.contains(Organisation)){
-        routes.SubmissionController.submitterInfo.url
+        routes.SubmissionController.submitterInfo().url
     } else {
         routes.SubmissionController.enterCompanyName.url
     }

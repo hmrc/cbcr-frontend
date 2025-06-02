@@ -53,6 +53,10 @@ object EtmpAddress {
     override def reads(json: JsValue): JsResult[EtmpAddress] = etmpAddressReads.reads(json)
   }
 
+  def unapply(
+    etmp: EtmpAddress
+  ): Option[(String, Option[String], Option[String], Option[String], Option[String], String)] =
+    Some(etmp.addressLine1, etmp.addressLine2, etmp.addressLine3, etmp.addressLine4, etmp.postalCode, etmp.countryCode)
 }
 
 case class OrganisationResponse(organisationName: String)
@@ -65,4 +69,5 @@ case class BusinessPartnerRecord(safeId: String, organisation: Option[Organisati
 
 object BusinessPartnerRecord {
   implicit val format: OFormat[BusinessPartnerRecord] = Json.format[BusinessPartnerRecord]
+  def unapply(orgResponse: OrganisationResponse): Option[String] = Some(orgResponse.organisationName)
 }

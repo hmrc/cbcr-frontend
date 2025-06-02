@@ -85,7 +85,7 @@
                 actions = Some(Actions(
                     items = Seq(
                         ActionItem(
-                            href = routes.SubmissionController.submitterInfo.url,
+                            href = routes.SubmissionController.submitterInfo().url,
                             content = Text(messages("generic.change")),
                             visuallyHiddenText = Some(messages("submitSummary.contactDetails.name")),
                             attributes = Map("id" -> "change-contact-name")
@@ -103,7 +103,7 @@
                 actions = Some(Actions(
                     items = Seq(
                         ActionItem(
-                            href = routes.SubmissionController.submitterInfo.url,
+                            href = routes.SubmissionController.submitterInfo().url,
                             content = Text(messages("generic.change")),
                             visuallyHiddenText = Some(messages("submitSummary.contactDetails.phone")),
                             attributes = Map("id" -> "change-contact-phone")
@@ -121,7 +121,7 @@
                 actions = Some(Actions(
                     items = Seq(
                         ActionItem(
-                            href = routes.SubmissionController.submitterInfo.url,
+                            href = routes.SubmissionController.submitterInfo().url,
                             content = Text(messages("generic.change")),
                             visuallyHiddenText = Some(messages("submitSummary.contactDetails.email")),
                             attributes = Map("id" -> "change-contact-email")

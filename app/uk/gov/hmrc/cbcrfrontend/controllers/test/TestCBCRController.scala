@@ -208,7 +208,7 @@ class TestCBCRController @Inject() (
         .map(x => fileUploadService.errorsToString(x.errors))
         .fold(
           NoContent
-        ) { errors: String =>
+        ) { (errors: String) =>
           Ok(errors)
         }
     }
@@ -237,7 +237,7 @@ class TestCBCRController @Inject() (
         .map(x => fileUploadService.errorsToString(List(x)))
         .fold(
           NoContent
-        ) { errors: String =>
+        ) { (errors: String) =>
           Ok(errors)
         }
     }

@@ -307,7 +307,7 @@ class SubmissionController @Inject() (
                                   case (Some(Agent), CBC703 | CBC704) =>
                                     Redirect(routes.SubmissionController.enterCompanyName)
                                   case (Some(Organisation), CBC703 | CBC704) =>
-                                    Redirect(routes.SubmissionController.submitterInfo)
+                                    Redirect(routes.SubmissionController.submitterInfo())
                                   case _ =>
                                     errorRedirect(
                                       UnexpectedState(
@@ -341,7 +341,7 @@ class SubmissionController @Inject() (
           utr =>
             cache.save(TIN(utr.utr, "")).map { _ =>
               userType match {
-                case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo)
+                case Some(Organisation) => Redirect(routes.SubmissionController.submitterInfo())
                 case Some(Agent)        => Redirect(routes.SubmissionController.enterCompanyName)
                 case _ =>
                   errorRedirect(
@@ -522,7 +522,7 @@ class SubmissionController @Inject() (
                 BadRequest(views.enterCompanyName(errors, fd.envelopeId, fd.fileId))
               }
               .getOrElse(throw new RuntimeException("Missing file upload details")),
-          name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo))
+          name => cache.save(name).map(_ => Redirect(routes.SubmissionController.submitterInfo()))
         )
     }
   }

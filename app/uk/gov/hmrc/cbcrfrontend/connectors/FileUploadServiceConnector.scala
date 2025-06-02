@@ -25,9 +25,11 @@ import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.http.client.readStreamHttpResponse
+import play.api.libs.ws.WSBodyWritables.bodyWritableOf_Multipart
 
 @Singleton
 class FileUploadServiceConnector @Inject() (httpClient: HttpClientV2, servicesConfig: ServicesConfig)(implicit

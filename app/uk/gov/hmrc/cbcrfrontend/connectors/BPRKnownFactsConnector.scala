@@ -21,7 +21,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import java.net.URL
+import java.net.URI
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,5 +34,6 @@ class BPRKnownFactsConnector @Inject() (http: HttpClientV2, servicesConfig: Serv
   def lookup(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.get(generateUrl(url, utr)).execute[HttpResponse]
 
-  private def generateUrl(baseUrl: String, utr: String): URL = new URL(s"$baseUrl/cbcr/business-partner-record/$utr")
+  private def generateUrl(baseUrl: String, utr: String) =
+    new URI(s"$baseUrl/cbcr/business-partner-record/$utr").toURL
 }

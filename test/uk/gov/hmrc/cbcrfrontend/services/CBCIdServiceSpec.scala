@@ -17,11 +17,11 @@
 package uk.gov.hmrc.cbcrfrontend.services
 
 import org.apache.http.HttpStatus
-import org.mockito.ArgumentMatchersSugar.*
-import org.mockito.IdiomaticMockito
-import org.mockito.Mockito.{never, verify}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{never, verify, when}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
@@ -34,7 +34,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with IdiomaticMockito {
+class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with CSRFTest with MockitoSugar {
 
   private val connector = mock[CBCRBackendConnector]
   private val cbcidService = new CBCIdService(connector)
@@ -64,7 +64,8 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
                            |}
        """.stripMargin
 
-      connector.getETMPSubscriptionData(*)(*) returns Future.successful(HttpResponse(Status.OK, desResponse))
+      when(connector.getETMPSubscriptionData(any)(any))
+        .thenReturn(Future.successful(HttpResponse(Status.OK, desResponse)))
       val result = await(cbcidService.getETMPSubscriptionData(safeId).value)
       result should not be None
       result.get shouldBe ETMPSubscription(
@@ -77,7 +78,8 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
 
     "return NONE if the connector returns empty string or empty json object response" in {
       List("", "{}").map { responseBody =>
-        connector.getETMPSubscriptionData(*)(*) returns Future.successful(HttpResponse(Status.OK, responseBody))
+        when(connector.getETMPSubscriptionData(any)(any))
+          .thenReturn(Future.successful(HttpResponse(Status.OK, responseBody)))
         val result = await(cbcidService.getETMPSubscriptionData(safeId).value)
         result shouldBe None
       }
@@ -85,16 +87,18 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
 
     "not parse response body if the returned status is not a 200" in {
       val response = mock[HttpResponse]
-      connector.getETMPSubscriptionData(*)(*) returns Future.successful(response)
-      response.status returns HttpStatus.SC_INTERNAL_SERVER_ERROR
+      when(connector.getETMPSubscriptionData(any)(any)).thenReturn(Future.successful(response))
+      when(response.status).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR)
 
       await(cbcidService.getETMPSubscriptionData(safeId).value)
       verify(response, never()).body
     }
 
     "throw exception if the connector fails to responds for given request" in {
-      connector.getETMPSubscriptionData(*)(*) returns Future.failed(
-        new HttpException("HttpException occurred", HttpStatus.SC_BAD_REQUEST)
+      when(connector.getETMPSubscriptionData(any)(any)).thenReturn(
+        Future.failed(
+          new HttpException("HttpException occurred", HttpStatus.SC_BAD_REQUEST)
+        )
       )
       intercept[HttpException] {
         await(cbcidService.getETMPSubscriptionData(safeId).value)

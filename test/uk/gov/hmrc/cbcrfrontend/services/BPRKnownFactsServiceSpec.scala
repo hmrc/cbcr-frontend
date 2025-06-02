@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.services
 
-import org.mockito.ArgumentMatchersSugar.*
-import org.mockito.IdiomaticMockito
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.cbcrfrontend.connectors.BPRKnownFactsConnector
@@ -30,7 +31,7 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with IdiomaticMockito {
+class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuite with MockitoSugar {
   private val mockConnector = mock[BPRKnownFactsConnector]
   private val mockAudit = mock[AuditConnector]
   private val bprKnownFactsService = new BPRKnownFactsService(mockConnector, mockAudit)
@@ -55,9 +56,9 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
   "The BPRKnowFactsService" should {
     "return a match for a check with an exact matching post code " in {
       val result = mock[HttpResponse]
-      mockConnector.lookup(kf1.utr.utr) returns Future.successful(result)
-      mockAudit.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
-      result.body returns bodyKnownFact1
+      when(mockConnector.lookup(eqTo(kf1.utr.utr))(any)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact = await(bprKnownFactsService.checkBPRKnownFacts(kf1).value)
 
@@ -66,9 +67,9 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
 
     "return a non match for a check with an non matching post code " in {
       val result = mock[HttpResponse]
-      mockConnector.lookup(kf1.utr.utr) returns Future.successful(result)
-      mockAudit.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
-      result.body returns bodyKnownFact1
+      when(mockConnector.lookup(eqTo(kf1.utr.utr))(any)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact =
         await(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN3 5XB")).value)
@@ -78,9 +79,9 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
 
     "return a match for a check with no space in the post code when the DES version has a space" in {
       val result = mock[HttpResponse]
-      mockConnector.lookup(kf1.utr.utr) returns Future.successful(result)
-      mockAudit.sendExtendedEvent(*)(*, *) returns Future.successful(AuditResult.Success)
-      result.body returns bodyKnownFact1
+      when(mockConnector.lookup(eqTo(kf1.utr.utr))(any)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact =
         await(bprKnownFactsService.checkBPRKnownFacts(BPRKnownFacts(Utr("7000000002"), "BN54ZZ")).value)

@@ -32,6 +32,7 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+import play.api.libs.ws.writeableOf_JsValue
 
 @Singleton
 class SubscriptionDataService @Inject() (http: HttpClientV2, servicesConfig: ServicesConfig)(implicit

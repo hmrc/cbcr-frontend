@@ -45,8 +45,7 @@ class CBCRXMLValidator @Inject() (xmlValidationSchema: XMLValidationSchema) {
         xmlStreamReader.validateAgainst(xmlValidationSchema)
         while (xmlStreamReader.hasNext)
           xmlStreamReader.next
-      } finally
-        xmlStreamReader.closeCompletely()
+      } finally xmlStreamReader.closeCompletely()
     } catch {
       case e: WstxException =>
         xmlErrorHandler.reportProblem(

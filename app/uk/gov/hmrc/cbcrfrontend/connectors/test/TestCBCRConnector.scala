@@ -18,11 +18,12 @@ package uk.gov.hmrc.cbcrfrontend.connectors.test
 
 import play.api.libs.json.{JsNull, JsValue}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import java.net.URL
+import java.net.{URI, URL}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,16 +35,16 @@ class TestCBCRConnector @Inject() (http: HttpClientV2, servicesConfig: ServicesC
     http.post(url"$url/test-only/insertSubscriptionData").withBody(jsonData).execute[HttpResponse]
 
   def deleteSubscription(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.delete(new URL(s"$url/test-only/deleteSubscription/$utr")).execute[HttpResponse]
+    http.delete(new URI(s"$url/test-only/deleteSubscription/$utr").toURL).execute[HttpResponse]
 
   def deleteSingleDocRefId(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.delete(new URL(s"$url/test-only/deleteDocRefId/$docRefId")).execute[HttpResponse]
+    http.delete(new URI(s"$url/test-only/deleteDocRefId/$docRefId").toURL).execute[HttpResponse]
 
   def deleteReportingEntityData(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.delete(new URL(s"$url/test-only/reportingEntityData/$docRefId")).execute[HttpResponse]
+    http.delete(new URI(s"$url/test-only/reportingEntityData/$docRefId").toURL).execute[HttpResponse]
 
   def deleteSingleMessageRefId(messageRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.delete(new URL(s"$url/test-only/deleteMessageRefId/$messageRefId")).execute[HttpResponse]
+    http.delete(new URI(s"$url/test-only/deleteMessageRefId/$messageRefId").toURL).execute[HttpResponse]
 
   def dropReportingEntityDataCollection()(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http.delete(url"$url/test-only/reportingEntityData").execute[HttpResponse]
@@ -55,30 +56,32 @@ class TestCBCRConnector @Inject() (http: HttpClientV2, servicesConfig: ServicesC
     hc: HeaderCarrier
   ): Future[HttpResponse] =
     http
-      .put(new URL(s"$url/test-only/updateReportingEntityCreationDate/$createDate/$docRefId"))
+      .put(new URI(s"$url/test-only/updateReportingEntityCreationDate/$createDate/$docRefId").toURL)
       .withBody(JsNull)
       .execute[HttpResponse]
 
   def updateReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http
-      .put(new URL(s"$url/test-only/deleteReportingPeriodByRepEntDocRefId/$docRefId"))
+      .put(new URI(s"$url/test-only/deleteReportingPeriodByRepEntDocRefId/$docRefId").toURL)
       .withBody(JsNull)
       .execute[HttpResponse]
 
   def deleteReportingEntityCreationDate(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.delete(new URL(s"$url/test-only/deleteReportingEntityCreationDate/$docRefId")).execute[HttpResponse]
+    http.delete(new URI(s"$url/test-only/deleteReportingEntityCreationDate/$docRefId").toURL).execute[HttpResponse]
 
   def confirmReportingEntityCreationDate(createDate: String, docRefId: String)(implicit
     hc: HeaderCarrier
   ): Future[HttpResponse] =
-    http.put(new URL(s"$url/test-only/confirmReportingEntityCreationDate/$createDate/$docRefId")).execute[HttpResponse]
+    http
+      .put(new URI(s"$url/test-only/confirmReportingEntityCreationDate/$createDate/$docRefId").toURL)
+      .execute[HttpResponse]
 
   def deleteReportingEntityReportingPeriod(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.delete(new URL(s"$url/test-only/deleteReportingEntityReportingPeriod/$docRefId")).execute[HttpResponse]
+    http.delete(new URI(s"$url/test-only/deleteReportingEntityReportingPeriod/$docRefId").toURL).execute[HttpResponse]
 
   def updateReportingEntityAdditionalInfoDRI(docRefId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     http
-      .put(new URL(s"$url/test-only/updateReportingEntityAdditionalInfoDRI/$docRefId"))
+      .put(new URI(s"$url/test-only/updateReportingEntityAdditionalInfoDRI/$docRefId").toURL)
       .withBody(JsNull)
       .execute[HttpResponse]
 

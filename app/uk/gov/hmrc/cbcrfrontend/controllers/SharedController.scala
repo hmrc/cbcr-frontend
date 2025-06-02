@@ -295,29 +295,30 @@ class SharedController @Inject() (
                                          .leftMap((error: CBCErrors) =>
                                            errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
                                          )
-                _ <- EitherT.fromEither[Future](userType match {
-                       case AffinityGroup.Agent if subscriptionDetails.isEmpty =>
-                         logger.error(
-                           s"Agent supplying known facts for a UTR that is not registered. Check for an internal error!"
-                         )
-                         Left(notFoundView(AffinityGroup.Agent))
-                       case AffinityGroup.Agent
-                           if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined =>
-                         logger.warn(
-                           s"Agent submitting Xml where the CBCId associated with the UTR does not match that in the Xml File. Request the original Xml File and Known Facts from the Agent"
-                         )
-                         auditBPRKnowFactsFailure(cbcIdFromXml, bpr, knownFacts)
-                         Left(notFoundView(AffinityGroup.Agent))
-                       case AffinityGroup.Agent if cbcIdFromXml.isEmpty =>
-                         logger.error(
-                           s"Agent submitting Xml where the CBCId is not in the Xml. Check for an internal error!"
-                         )
-                         Left(notFoundView(AffinityGroup.Agent))
-                       case AffinityGroup.Organisation if subscriptionDetails.isDefined =>
-                         Left(Redirect(routes.SubscriptionController.alreadySubscribed))
-                       case _ =>
-                         Right(())
-                     })
+                _ <-
+                  EitherT.fromEither[Future](userType match {
+                    case AffinityGroup.Agent if subscriptionDetails.isEmpty =>
+                      logger.error(
+                        s"Agent supplying known facts for a UTR that is not registered. Check for an internal error!"
+                      )
+                      Left(notFoundView(AffinityGroup.Agent))
+                    case AffinityGroup.Agent
+                        if subscriptionDetails.flatMap(_.cbcId) != cbcIdFromXml && cbcIdFromXml.isDefined =>
+                      logger.warn(
+                        s"Agent submitting Xml where the CBCId associated with the UTR does not match that in the Xml File. Request the original Xml File and Known Facts from the Agent"
+                      )
+                      auditBPRKnowFactsFailure(cbcIdFromXml, bpr, knownFacts)
+                      Left(notFoundView(AffinityGroup.Agent))
+                    case AffinityGroup.Agent if cbcIdFromXml.isEmpty =>
+                      logger.error(
+                        s"Agent submitting Xml where the CBCId is not in the Xml. Check for an internal error!"
+                      )
+                      Left(notFoundView(AffinityGroup.Agent))
+                    case AffinityGroup.Organisation if subscriptionDetails.isDefined =>
+                      Left(Redirect(routes.SubscriptionController.alreadySubscribed))
+                    case _ =>
+                      Right(())
+                  })
                 _ <- EitherT.right(
                        (cache.save(bpr) *>
                          cache.save(knownFacts.utr) *>

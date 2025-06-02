@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.cbcrfrontend.controllers
 
-import org.mockito.IdiomaticMockito
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.Status
 import play.api.mvc.MessagesControllerComponents
@@ -30,7 +30,7 @@ import uk.gov.hmrc.cbcrfrontend.views.Views
 
 class CBCEnhancementsControllerSpec
     extends AnyWordSpec with Matchers with ScalaFutures with GuiceOneAppPerSuite with CSRFTest with BeforeAndAfterEach
-    with IdiomaticMockito {
+    with MockitoSugar {
   private val mcc = app.injector.instanceOf[MessagesControllerComponents]
   private val views = app.injector.instanceOf[Views]
 
