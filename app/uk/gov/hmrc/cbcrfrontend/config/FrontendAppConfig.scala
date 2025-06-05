@@ -42,6 +42,12 @@ class FrontendAppConfig @Inject() (val config: Configuration) {
 
   val exitSurveyUrl: String = s"$feedbackFeUrl/CBCR"
 
+  private val basGatewayUrl: String = config.load[String]("microservice.services.bas-gateway.url")
+
+  private val signOutURi: String = config.load[String]("microservice.services.bas-gateway.signout.uri")
+
+  val oneLoginSignoutUrl: String = s"$basGatewayUrl$signOutURi?continue=$exitSurveyUrl"
+
   val defaultCreationDate: LocalDate = {
     val creationDay = config.load[Int]("Prod.default-creation-date.day")
     val creationMonth = config.load[Int]("Prod.default-creation-date.month")
