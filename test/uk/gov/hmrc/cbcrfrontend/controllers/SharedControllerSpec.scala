@@ -397,10 +397,13 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
     }
 
     "redirect to signOutSurvey page and return 200" in {
+      val expectedUrl =
+        "http://localhost:9553/bas-gateway/sign-out-without-state?continue=http://localhost:9514/feedback/CBCR"
       val request = addToken(FakeRequest())
       when(authC.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
       when(feConfig.cbcrFrontendHost).thenReturn("http://localhost:9696")
       when(feConfig.exitSurveyUrl).thenReturn("http://localhost:9553")
+      when(feConfig.oneLoginSignoutUrl).thenReturn(expectedUrl)
       val result = controller.signOutSurvey(request)
       status(result) shouldBe Status.SEE_OTHER
     }
@@ -457,4 +460,17 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       status(result) shouldBe Status.OK
     }
   }
+
+  "signOutSurvey" should {
+    "return feedback survey with bas-gateway signout url when signOutSurvey called" in {
+      val request = addToken(FakeRequest())
+      val expectedUrl =
+        "http://localhost:9553/bas-gateway/sign-out-without-state?continue=http://localhost:9514/feedback/CBCR"
+      when(feConfig.oneLoginSignoutUrl).thenReturn(expectedUrl)
+      val result = controller.signOutSurvey(request)
+      status(result) shouldBe Status.SEE_OTHER
+      header("Location", result) shouldBe Some(expectedUrl)
+    }
+  }
+
 }
