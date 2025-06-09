@@ -17,12 +17,13 @@
 package uk.gov.hmrc.cbcrfrontend.emailaddress
 
 import com.google.inject.ImplementedBy
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.emailaddress.EmailAddressValidation.validEmail
 
-import javax.naming.Context.{INITIAL_CONTEXT_FACTORY => ICF}
-import javax.inject.Singleton
+import javax.naming.Context.INITIAL_CONTEXT_FACTORY as ICF
+import javax.inject.{Inject, Singleton}
 import javax.naming.directory.InitialDirContext
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.matching.Regex
 
@@ -52,7 +53,7 @@ trait EmailValidation {
 }
 
 @Singleton
-class EmailAddressValidation extends EmailValidation {
+class EmailAddressValidation @Inject() (config: FrontendAppConfig) extends EmailValidation {
 
   private val DNS_CONTEXT_FACTORY = "com.sun.jndi.dns.DnsContextFactory"
   private val env = new java.util.Hashtable[String, String]()
@@ -77,14 +78,24 @@ class EmailAddressValidation extends EmailValidation {
   }
 
   def isValid(email: String): Boolean =
-    email match {
-      case validEmail(_, _) if isHostMailServer(EmailAddress(email).domain) => true
-      case _                                                                => false
+    if (WhiteListValidation.isWhitelisted(email)(config)) true
+    else {
+      email match {
+        case validEmail(_, _) if isHostMailServer(EmailAddress(email).domain.value) => true
+        case _                                                                      => false
+      }
     }
+
 }
 
 object EmailAddressValidation {
   val validEmail: Regex = """^([a-zA-Z0-9.!#$%&’'*+/=?^_`{|}~-]+)@([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)$""".r
   val validDomain: Regex = """^([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)$""".r
+}
 
+object WhiteListValidation {
+  def isWhitelisted(email: String)(implicit config: FrontendAppConfig): Boolean = {
+    val domain = email.split("@").lastOption.getOrElse("")
+    config.emailDomainWhitelist.exists(_.equalsIgnoreCase(domain))
+  }
 }
