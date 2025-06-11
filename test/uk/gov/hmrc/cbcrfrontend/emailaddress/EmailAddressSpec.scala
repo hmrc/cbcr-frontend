@@ -16,11 +16,13 @@
 
 package uk.gov.hmrc.cbcrfrontend.emailaddress
 
-import com.typesafe.config.ConfigFactory
-import org.scalatest.wordspec.AnyWordSpec
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
+
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 class EmailAddressSpec extends AnyWordSpec with GuiceOneAppPerSuite with Matchers {
 
@@ -48,8 +50,24 @@ class EmailAddressSpec extends AnyWordSpec with GuiceOneAppPerSuite with Matcher
 
     "validate an email with unknow domain based on whitelisted domain configuration" in {
       new EmailAddressValidation(appConfig).isValid("test@uk.tiauto.com") shouldBe true
+      new EmailAddressValidation(appConfig).isValid("test@ie.tiautu.com") shouldBe false
       new EmailAddressValidation(appConfigWithEmptyEmailWhitelist).isValid("test@uk.tiauto.com") shouldBe false
     }
+
+    "validate emails with all whitelisted domains" in {
+      val configTemp: Config = ConfigFactory.defaultApplication()
+      val whitelistedDomains: Seq[String] = configTemp.getStringList("email-domains-whitelist").asScala.toSeq
+
+      val emailValidator = new EmailAddressValidation(appConfig)
+
+      whitelistedDomains.foreach { domain =>
+        val email = s"testUser@$domain"
+        withClue(s"Failed for domain: $domain") {
+          emailValidator.isValid(email) shouldBe true
+        }
+      }
+    }
+
   }
 
 }
