@@ -77,25 +77,20 @@ class EmailAddressValidation @Inject() (config: FrontendAppConfig) extends Email
     }
   }
 
-  def isValid(email: String): Boolean =
-    if (WhiteListValidation.isWhitelisted(email)(config)) true
-    else {
-      email match {
-        case validEmail(_, _) if isHostMailServer(EmailAddress(email).domain.value) => true
-        case _                                                                      => false
-      }
+  def isValid(email: String): Boolean = {
+    lazy val isValidDomain = {
+      val domain = EmailAddress(email).domain.value
+      isHostMailServer(domain) || config.emailDomainsWhitelist.exists(_.equalsIgnoreCase(domain))
     }
 
+    email match {
+      case validEmail(_, _) if isValidDomain => true
+      case _                                 => false
+    }
+  }
 }
 
 object EmailAddressValidation {
   val validEmail: Regex = """^([a-zA-Z0-9.!#$%&’'*+/=?^_`{|}~-]+)@([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)$""".r
   val validDomain: Regex = """^([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)$""".r
-}
-
-object WhiteListValidation {
-  def isWhitelisted(email: String)(implicit config: FrontendAppConfig): Boolean = {
-    val domain = email.split("@").lastOption.getOrElse("")
-    config.emailDomainWhitelist.exists(_.equalsIgnoreCase(domain))
-  }
 }

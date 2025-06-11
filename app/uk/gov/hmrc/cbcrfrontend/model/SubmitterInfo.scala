@@ -42,6 +42,7 @@ object SubmitterInfo {
           email    <- m.get("email").flatMap(_.asOpt[EmailAddress])
           ag       <- m.get("affinityGroup").map(_.asOpt[AffinityGroup])
         } yield JsSuccess(SubmitterInfo(fullName, abn.map(AgencyBusinessName(_)), cp, email, ag))
+
         result.getOrElse(JsError(s"Unable to serialise $json as a  SubmitterInfo"))
       case _ => JsError(s"Unable to serialise $json as a  SubmitterInfo")
 

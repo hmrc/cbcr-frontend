@@ -363,11 +363,13 @@ class SubmissionController @Inject() (
                 (osi.map(_.fullName), osi.map(_.contactPhone), osi.map(_.email))
                   .mapN { (name, phone, email) =>
                     submitterInfoForm(
+                      feConfig,
                       ukPhoneNumberConstraint
                     ).bind(Map("fullName" -> name, "contactPhone" -> phone, "email" -> email.value))
                   }
                   .getOrElse(
                     submitterInfoForm(
+                      feConfig,
                       ukPhoneNumberConstraint
                     )
                   )
@@ -400,7 +402,7 @@ class SubmissionController @Inject() (
 
   val submitSubmitterInfo: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { implicit request =>
     authorised().retrieve(Retrievals.affinityGroup) { userType =>
-      submitterInfoForm(ukPhoneNumberConstraint)
+      submitterInfoForm(feConfig, ukPhoneNumberConstraint)
         .bindFromRequest()
         .fold(
           formWithErrors =>

@@ -16,19 +16,39 @@
 
 package uk.gov.hmrc.cbcrfrontend.emailaddress
 
-import org.scalatest.matchers.should.Matchers
+import com.typesafe.config.ConfigFactory
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 
-class EmailAddressSpec extends AnyWordSpec with Matchers {
+class EmailAddressSpec extends AnyWordSpec with GuiceOneAppPerSuite with Matchers {
+
+  private val appConfig = fakeApplication().injector.instanceOf[FrontendAppConfig]
+
+  private val appConfigWithEmptyEmailWhitelist =
+    FrontendAppConfig(
+      fakeApplication().configuration
+        .copy(underlying = ConfigFactory.parseString("email-domains-whitelist = []"))
+        .withFallback(appConfig.config)
+    )
+
   "EmailValidation" should {
+    val validation = new EmailAddressValidation(appConfig)
+
     "validate a correct email address" in {
-      new EmailAddressValidation().isValid("user@test.com") shouldBe true
-      new EmailAddressValidation().isValid("user@test.co.uk") shouldBe true
+      validation.isValid("user@test.com") shouldBe true
+      validation.isValid("user@test.co.uk") shouldBe true
     }
     "validate invalid email" in {
-      new EmailAddressValidation().isValid("a@a") shouldBe false
-      new EmailAddressValidation().isValid("user @test.com") shouldBe false
-      new EmailAddressValidation().isValid("user@") shouldBe false
+      validation.isValid("a@a") shouldBe false
+      validation.isValid("user @test.com") shouldBe false
+      validation.isValid("user@") shouldBe false
+    }
+
+    "validate an email with unknow domain based on whitelisted domain configuration" in {
+      new EmailAddressValidation(appConfig).isValid("test@uk.tiauto.com") shouldBe true
+      new EmailAddressValidation(appConfigWithEmptyEmailWhitelist).isValid("test@uk.tiauto.com") shouldBe false
     }
   }
 
