@@ -557,6 +557,7 @@ class SubmissionSpec
       val submitterInfo = SubmitterInfo("Fullname", None, "07 9234 5670 8", EmailAddress("abc@xyz.com"), None)
       val dataSeq = SubmitterInfoForm
         .submitterInfoForm(
+          feConfig,
           ukPhoneNumberConstraint
         )
         .fill(submitterInfo)
@@ -600,6 +601,7 @@ class SubmissionSpec
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
           val dataSeq = SubmitterInfoForm
             .submitterInfoForm(
+              feConfig,
               ukPhoneNumberConstraint
             )
             .fill(submitterInfo)
@@ -645,6 +647,7 @@ class SubmissionSpec
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
           val dataSeq = SubmitterInfoForm
             .submitterInfoForm(
+              feConfig,
               ukPhoneNumberConstraint
             )
             .fill(submitterInfo)
@@ -702,6 +705,7 @@ class SubmissionSpec
           val submitterInfo = SubmitterInfo("Billy Bob", None, "07923456708", EmailAddress("abc@xyz.com"), None)
           val dataSeq = SubmitterInfoForm
             .submitterInfoForm(
+              feConfig,
               ukPhoneNumberConstraint
             )
             .fill(submitterInfo)

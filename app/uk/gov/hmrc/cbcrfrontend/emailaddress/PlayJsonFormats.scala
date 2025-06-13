@@ -22,8 +22,8 @@ object PlayJsonFormats {
 
   implicit val emailAddressReads: Reads[EmailAddress] = (js: JsValue) =>
     js.validate[String].flatMap {
-      case s if (new EmailAddressValidation).isValid(s) => JsSuccess(EmailAddress(s))
-      case _                                            => JsError("not a valid email address")
+      case s    => JsSuccess(EmailAddress(s))
+      case null => JsError("not a valid email address")
     }
   implicit val emailAddressWrites: Writes[EmailAddress] = (e: EmailAddress) => JsString(e.value)
 

@@ -19,6 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.form
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.data.validation.Constraint
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.emailaddress.{EmailAddress, EmailAddressValidation}
 import uk.gov.hmrc.cbcrfrontend.model.SubscriberContact
 import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.validatePhoneNumber
@@ -26,7 +27,10 @@ import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.validatePhoneNumber
 object SubscriptionDataForm {
   def condTrue(condition: Boolean, statement: Boolean): Boolean = if (condition) statement else true
 
-  def subscriptionDataForm(constraint: Constraint[String]): Form[SubscriberContact] = Form(
+  def subscriptionDataForm(
+    frontendAppConfig: FrontendAppConfig,
+    constraint: Constraint[String]
+  ): Form[SubscriberContact] = Form(
     mapping(
       "firstName" -> text.verifying("contactInfoSubscriber.firstName.error", _.trim != ""),
       "lastName"  -> text.verifying("contactInfoSubscriber.lastName.error", _.trim != ""),
@@ -37,7 +41,7 @@ object SubscriptionDataForm {
         .verifying("contactInfoSubscriber.emailAddress.error.empty", _.trim != "")
         .verifying(
           "contactInfoSubscriber.emailAddress.error.invalid",
-          x => condTrue(x.trim != "", new EmailAddressValidation().isValid(x))
+          x => condTrue(x.trim != "", new EmailAddressValidation(frontendAppConfig).isValid(x))
         )
         .transform[EmailAddress](EmailAddress(_), _.value)
     )(SubscriberContact.apply)(o => Some(o.firstName, o.lastName, o.phoneNumber, o.email))
