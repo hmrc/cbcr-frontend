@@ -19,26 +19,28 @@ package uk.gov.hmrc.cbcrfrontend.form
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.data.validation.Constraint
+import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.emailaddress.{EmailAddress, EmailAddressValidation}
 import uk.gov.hmrc.cbcrfrontend.form.SubscriptionDataForm.condTrue
 import uk.gov.hmrc.cbcrfrontend.model.SubmitterInfo
 import uk.gov.hmrc.cbcrfrontend.util.CBCRMapping.validatePhoneNumber
 
 object SubmitterInfoForm {
-  def submitterInfoForm(constraint: Constraint[String]): Form[SubmitterInfo] = Form(
-    mapping(
-      "fullName" -> text.verifying("submitterInfo.fullName.error", _.trim != ""),
-      "contactPhone" -> validatePhoneNumber(
-        constraint
-      ),
-      "email" -> text
-        .verifying("submitterInfo.emailAddress.error.empty", _.trim != "")
-        .verifying(
-          "submitterInfo.emailAddress.error.invalid",
-          x => condTrue(x.trim != "", new EmailAddressValidation().isValid(x))
-        )
-    ) { (fullName: String, contactPhone: String, email: String) =>
-      SubmitterInfo(fullName, None, contactPhone, EmailAddress(email), None)
-    }(si => Some((si.fullName, si.contactPhone, si.email)))
-  )
+  def submitterInfoForm(frontendAppConfig: FrontendAppConfig, constraint: Constraint[String]): Form[SubmitterInfo] =
+    Form(
+      mapping(
+        "fullName" -> text.verifying("submitterInfo.fullName.error", _.trim != ""),
+        "contactPhone" -> validatePhoneNumber(
+          constraint
+        ),
+        "email" -> text
+          .verifying("submitterInfo.emailAddress.error.empty", _.trim != "")
+          .verifying(
+            "submitterInfo.emailAddress.error.invalid",
+            x => condTrue(x.trim != "", new EmailAddressValidation(frontendAppConfig).isValid(x))
+          )
+      ) { (fullName: String, contactPhone: String, email: String) =>
+        SubmitterInfo(fullName, None, contactPhone, EmailAddress(email), None)
+      }(si => Some((si.fullName, si.contactPhone, si.email)))
+    )
 }

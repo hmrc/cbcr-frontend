@@ -55,4 +55,6 @@ class FrontendAppConfig @Inject() (val config: Configuration) {
     LocalDate.of(creationYear, creationMonth, creationDay)
   }
   val envelopeExpiryDays: Int = config.load[Int]("envelope-expire-days")
+  val emailDomainsWhitelist: Seq[String] =
+    config.getOptional[Seq[String]]("email-domains-whitelist").getOrElse(Seq.empty[String])
 }

@@ -66,6 +66,7 @@ class SubscriptionController @Inject() (
     authorised(AffinityGroup.Organisation and User).retrieve(Retrievals.credentials) { creds =>
       logger.debug("Country by Country: Generate CBCId and Store Data")
       subscriptionDataForm(
+        feConfig,
         ukPhoneNumberConstraint
       )
         .bindFromRequest()
@@ -135,7 +136,7 @@ class SubscriptionController @Inject() (
 
   def contactInfoSubscriber: Action[AnyContent] = Action.async { implicit request =>
     authorised(AffinityGroup.Organisation and User) {
-      Ok(views.contactInfoSubscriber(subscriptionDataForm(phoneNumberConstraint)))
+      Ok(views.contactInfoSubscriber(subscriptionDataForm(feConfig, phoneNumberConstraint)))
     }
   }
 
@@ -156,7 +157,7 @@ class SubscriptionController @Inject() (
           case error                  => errorRedirect(error, views.notAuthorisedIndividual, views.errorTemplate)
         },
         { case subData -> cbcId =>
-          val prepopulatedForm = subscriptionDataForm(phoneNumberConstraint)
+          val prepopulatedForm = subscriptionDataForm(feConfig, phoneNumberConstraint)
             .bind(
               Map(
                 "firstName"   -> subData.names.name1,
@@ -181,6 +182,7 @@ class SubscriptionController @Inject() (
         } yield cbcId
 
         subscriptionDataForm(
+          feConfig,
           ukPhoneNumberConstraint
         )
           .bindFromRequest()
