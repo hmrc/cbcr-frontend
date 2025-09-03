@@ -17,9 +17,12 @@ lazy val microservice = Project(appName, file("."))
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test()
   )
   .settings(
-    scalacOptions += "-Wconf:src=routes/.*:s",
-    scalacOptions += "-Wconf:cat=unused-imports&src=html/.*:s",
-    scalacOptions := Seq("-explain")
+    scalacOptions += "-Wconf:src=routes/.*:s,src=html/.*:s",
+    scalacOptions += "-Wunused:imports" ,
+    scalacOptions += "-explain",
+    scalacOptions ~= { options =>
+      options.distinct
+    }
   )
   .settings(PlayKeys.playDefaultPort := 9696)
   .settings(CodeCoverageSettings.settings*)

@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import cats.data.{EitherT, OptionT}
 import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{doThrow, never, reset, verify, when}
+import org.mockito.Mockito.{never, reset, verify, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

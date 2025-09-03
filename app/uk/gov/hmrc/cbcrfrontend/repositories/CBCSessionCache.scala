@@ -26,7 +26,7 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.mongo.cache.CacheIdType.SessionCacheId.NoSessionException
 import uk.gov.hmrc.mongo.cache.{CacheIdType, CacheItem, DataKey, MongoCacheRepository}
 import uk.gov.hmrc.mongo.{MongoComponent, TimestampSupport}
-import uk.gov.hmrc.play.http.logging.Mdc.preservingMdc
+import uk.gov.hmrc.mdc.Mdc.preservingMdc
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.FiniteDuration

@@ -28,8 +28,8 @@ import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 import uk.gov.hmrc.cbcrfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.cbcrfrontend.emailaddress.EmailAddress
-import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import uk.gov.hmrc.cbcrfrontend.model.*
+import uk.gov.hmrc.cbcrfrontend.model.DocRefIdResponses.{DoesNotExist, Invalid, Valid}
 import uk.gov.hmrc.cbcrfrontend.repositories.CBCSessionCache
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -37,10 +37,9 @@ import java.io.File
 import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.*
 import scala.language.implicitConversions
 import scala.util.chaining.scalaUtilChainingOps
-import scala.concurrent.duration._
 
 class CBCBusinessRuleValidatorSpec extends AnyWordSpec with Matchers with MockitoSugar {
 

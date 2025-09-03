@@ -585,7 +585,7 @@ class CBCBusinessRuleValidator @Inject() (
 
   /** Ensure SendingEntityIn CBCId is: 1) Not a private Beta CBCId 2) Has already been registered
     */
-  private def validateSendingEntity(x: XMLInfo, messageRefID: MessageRefID, cbcId: CBCId)(implicit
+  private def validateSendingEntity(x: XMLInfo, cbcId: CBCId)(implicit
     hc: HeaderCarrier
   ): FutureValidBusinessResult[XMLInfo] =
     subscriptionDataService
@@ -663,7 +663,7 @@ class CBCBusinessRuleValidator @Inject() (
   private def validateMessageRefIdD(x: XMLInfo, messageSpec: MessageSpec)(implicit
     hc: HeaderCarrier
   ): FutureValidBusinessResult[XMLInfo] = (
-    validateSendingEntity(x, messageSpec.messageRefID, messageSpec.sendingEntityIn),
+    validateSendingEntity(x, messageSpec.sendingEntityIn),
     isADuplicate(x, messageSpec.messageRefID),
     validateCBCId(x, messageSpec.messageRefID, messageSpec),
     validateReportingPeriodMatches(x, messageSpec.messageRefID, messageSpec)

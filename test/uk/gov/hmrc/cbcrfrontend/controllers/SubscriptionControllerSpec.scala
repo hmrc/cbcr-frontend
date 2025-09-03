@@ -19,7 +19,7 @@ package uk.gov.hmrc.cbcrfrontend.controllers
 import cats.data.{EitherT, OptionT}
 import cats.implicits.catsStdInstancesForFuture
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{never, reset, verify, verifyNoInteractions, when}
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -30,7 +30,6 @@ import play.api.http.Status
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.JsObject
 import play.api.mvc.MessagesControllerComponents
-import uk.gov.hmrc.cbcrfrontend.controllers.routes
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{await, call, contentAsString, defaultAwaitTimeout, status, writeableOf_AnyContentAsFormUrlEncoded}
 import uk.gov.hmrc.auth.core.retrieve.Credentials
