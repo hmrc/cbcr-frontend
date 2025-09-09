@@ -17,13 +17,13 @@
 package uk.gov.hmrc.cbcrfrontend.connectors.test
 
 import play.api.libs.json.{JsNull, JsValue}
-import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import java.net.{URI, URL}
+import java.net.URI
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -86,5 +86,5 @@ class TestCBCRConnector @Inject() (http: HttpClientV2, servicesConfig: ServicesC
       .execute[HttpResponse]
 
   def checkNumberOfCbcIdForUtr(utr: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    http.get(new URL(s"$url/test-only/validateNumberOfCbcIdForUtr/$utr")).execute[HttpResponse]
+    http.get(new URI(s"$url/test-only/validateNumberOfCbcIdForUtr/$utr").toURL).execute[HttpResponse]
 }
