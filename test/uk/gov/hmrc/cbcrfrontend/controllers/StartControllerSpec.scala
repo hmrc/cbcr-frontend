@@ -50,7 +50,7 @@ class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     val fakeRequest = addToken(FakeRequest("GET", "/"))
 
     "return 303 if authorised and Agent" in {
-      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(using any, any))
         .thenReturn(
           Future
             .successful(
@@ -61,7 +61,7 @@ class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     }
 
     "return 200 if authorized and registered Organisation for CBCR" in {
-      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(using any, any))
         .thenReturn(
           Future.successful(
             new ~(Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
@@ -71,7 +71,7 @@ class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
     }
 
     "return 303 if authorised Organisation but not registered for CBCR" in {
-      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(using any, any))
         .thenReturn(
           Future.successful(
             new ~(Some(AffinityGroup.Organisation), None)
@@ -82,7 +82,7 @@ class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
     "return 403 if authorised Individual" in {
       when(feConf.cbcrGuidanceUrl).thenReturn("http://localhost:9696/")
-      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(using any, any))
         .thenReturn(
           Future.successful(
             new ~(Some(AffinityGroup.Individual), None)
@@ -93,21 +93,21 @@ class StartControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPerS
 
     "return 303 if submit returns upload" in {
       val fakeRequest = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody("choice" -> "upload")
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful(()))
       val result = call(controller.submit, fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
     }
 
     "return 303 if submit returns editSubscriberInfo" in {
       val fakeRequest = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody("choice" -> "editSubscriberInfo")
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful(()))
       val result = call(controller.submit, fakeRequest)
       status(result) shouldBe Status.SEE_OTHER
     }
 
     "return 303 if submit ).thenReturn no choice" in {
       val fakeRequest = addToken(FakeRequest("POST", "/")).withFormUrlEncodedBody("choice" -> "")
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful(()))
       val result = call(controller.submit, fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
     }

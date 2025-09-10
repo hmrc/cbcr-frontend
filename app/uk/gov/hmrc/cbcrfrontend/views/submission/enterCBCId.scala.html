@@ -27,11 +27,11 @@
 )
 
 @(
-  form :Form[_],
+  form :Form[?],
   noMatch:Boolean = false,
   missMatch:Boolean = false
 )(
-  implicit request: Request[_],
+  implicit request: Request[?],
   messages: Messages
 )
 

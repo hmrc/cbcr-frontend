@@ -59,9 +59,9 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
   private val emptyCacheItem = CacheItem("", JsObject.empty, Instant.now(), Instant.now())
 
-  private def getMessages(r: FakeRequest[_]): Messages = messagesApi.preferred(r)
+  private def getMessages(r: FakeRequest[?]): Messages = messagesApi.preferred(r)
 
-  when(cache.save[Utr](any)(eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
+  when(cache.save[Utr](any)(using eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
 
   private val controller =
     new SharedController(subService, bprKF, auditC, authC, mcc, views, cache)
@@ -79,8 +79,8 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
   "GET /enter-CBCId" should {
     "return 200" in {
-      when(authC.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
-      when(cache.read[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(EitherT.right(Future.successful(id)))
+      when(authC.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful(()))
+      when(cache.read[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(EitherT.right(Future.successful(id)))
       val result = controller.enterCBCId(fakeRequestEnterCBCId)
       status(result) shouldBe Status.OK
     }
@@ -90,39 +90,42 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
   "GET /submitCBCId" should {
     "return 400 if it was not a valid CBCId" in {
-      when(authC.authorise[Option[CBCEnrolment]](any, any)(any, any))
+      when(authC.authorise[Option[CBCEnrolment]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(CBCEnrolment(id, utr))))
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> "NOTAVALIDID"))
       status(result) shouldBe Status.BAD_REQUEST
     }
 
     "return 400 if the CBCId has not been registered" in {
-      when(authC.authorise[Option[CBCEnrolment]](any, any)(any, any))
+      when(authC.authorise[Option[CBCEnrolment]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(CBCEnrolment(id, utr))))
-      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
+      when(subService.retrieveSubscriptionData(any)(using any)).thenReturn(EitherT.right(Future.successful(None)))
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.BAD_REQUEST
     }
 
     "return 400 if the CBCId has been registered but doesnt match the CBCId in the bearer token" in {
-      when(authC.authorise[Option[CBCEnrolment]](any, any)(any, any)).thenReturn(
+      when(authC.authorise[Option[CBCEnrolment]](any, any)(using any, any)).thenReturn(
         Future.successful(
           Some(CBCEnrolment(CBCId.create(99).getOrElse(fail("bad cbcid")), utr))
         )
       )
-      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
+      when(subService.retrieveSubscriptionData(any)(using any))
+        .thenReturn(EitherT.right(Future.successful(Some(subDetails))))
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.BAD_REQUEST
     }
 
     "return a redirect if successful" in {
-      when(authC.authorise[Option[CBCEnrolment]](any, any)(any, any))
+      when(authC.authorise[Option[CBCEnrolment]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(CBCEnrolment(id, utr))))
-      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
-      when(cache.save[TIN](any)(eqTo(TIN.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
-      when(cache.save[BusinessPartnerRecord](any)(eqTo(BusinessPartnerRecord.format), any, any))
+      when(subService.retrieveSubscriptionData(any)(using any))
+        .thenReturn(EitherT.right(Future.successful(Some(subDetails))))
+      when(cache.save[TIN](any)(using eqTo(TIN.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(cache.save[BusinessPartnerRecord](any)(using eqTo(BusinessPartnerRecord.format), any, any))
         .thenReturn(Future.successful(emptyCacheItem))
-      when(cache.save[CBCId](any)(eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(cache.save[CBCId](any)(using eqTo(CBCId.cbcIdFormat), any, any))
+        .thenReturn(Future.successful(emptyCacheItem))
       val result = controller.submitCBCId(fakeRequestSubmitCBCId.withFormUrlEncodedBody("cbcId" -> id.toString))
       status(result) shouldBe Status.SEE_OTHER
     }
@@ -136,7 +139,7 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       when(feConfig.cbcrFrontendHost).thenReturn("http://localhost:9696")
       when(feConfig.governmentGatewaySignOutUrl).thenReturn("http://localhost:9553")
       when(feConfig.cbcrGuidanceUrl).thenReturn(guidanceUrl)
-      when(authC.authorise[Any](any, any)(any, any)).thenReturn(Future.successful(()))
+      when(authC.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful(()))
       val result = controller.signOut(fakeRequestSignOut)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result) shouldBe Some(
@@ -147,37 +150,37 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
   "GET /known-facts-check" should {
     "return 406 if we have already subscribed" in {
-      when(authC.authorise[Option[CBCEnrolment]](any, any)(any, any))
+      when(authC.authorise[Option[CBCEnrolment]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(CBCEnrolment(id, utr))))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(Some(bpr))
       )
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(utr)))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(utr)))
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.NOT_ACCEPTABLE
     }
 
     "return 200 if we haven't already subscribed" in {
-      when(authC.authorise[Option[CBCEnrolment]](any, any)(any, any)).thenReturn(Future.successful(None))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(authC.authorise[Option[CBCEnrolment]](any, any)(using any, any)).thenReturn(Future.successful(None))
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(Some(bpr))
       )
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(utr)))
-      when(auditC.sendEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(utr)))
+      when(auditC.sendEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Success))
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsOrganisation(fakeRequestSubscribe)) shouldBe Status.OK
     }
 
     "return 200 if an Agent" in {
-      when(authC.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(authC.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(Some(bpr))
       )
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(utr)))
-      when(auditC.sendEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(utr)))
+      when(auditC.sendEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Success))
       val fakeRequestSubscribe = addToken(FakeRequest("GET", "/known-facts-check"))
       status(controller.verifyKnownFactsAgent(fakeRequestSubscribe)) shouldBe Status.OK
     }
@@ -185,25 +188,25 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
   "POST /checkKnownFacts" should {
     "return 400 when KnownFacts are missing" in {
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
       val fakeRequestSubscribe = addToken(FakeRequest("POST", "/checkKnownFacts"))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.BAD_REQUEST
     }
 
     "return 400 when the postcode is invalid" in {
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts")
           .withFormUrlEncodedBody("utr" -> "1234567890", "postCode" -> "NOTAPOSTCODE")
@@ -212,13 +215,13 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
     }
 
     "return 400 when the utr is invalid" in {
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "IAMNOTAUTR", "postCode" -> "SW4 6NR")
       )
@@ -226,18 +229,18 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
     }
 
     "return 404 when the utr and postcode are valid but the postcode doesn't match" in {
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
       )
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
-      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.none[Future, BusinessPartnerRecord])
-      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
+      when(bprKF.checkBPRKnownFacts(any)(using any)).thenReturn(OptionT.none[Future, BusinessPartnerRecord])
+      when(subService.retrieveSubscriptionData(any)(using any)).thenReturn(EitherT.right(Future.successful(None)))
       status(controller.checkKnownFacts(fakeRequestSubscribe)) shouldBe Status.NOT_FOUND
     }
 
@@ -245,25 +248,26 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
       )
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
-      when(cache.readOption[CompleteXMLInfo](eqTo(CompleteXMLInfo.format), any, any))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
+      when(cache.readOption[CompleteXMLInfo](using eqTo(CompleteXMLInfo.format), any, any))
         .thenReturn(Future.successful(None))
       val response = BusinessPartnerRecord(
         "safeid",
         Some(OrganisationResponse("My Corp")),
         EtmpAddress("line1", None, None, None, Some("SW46NR"), "GB")
       )
-      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
-      when(cache.save[BusinessPartnerRecord](any)(eqTo(BusinessPartnerRecord.format), any, any))
+      when(bprKF.checkBPRKnownFacts(any)(using any)).thenReturn(OptionT.pure[Future](response))
+      when(cache.save[BusinessPartnerRecord](any)(using eqTo(BusinessPartnerRecord.format), any, any))
         .thenReturn(Future.successful(emptyCacheItem))
-      when(cache.save[Utr](any)(eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
-      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
+      when(cache.save[Utr](any)(using eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(subService.retrieveSubscriptionData(any)(using any))
+        .thenReturn(EitherT.right(Future.successful(Some(subDetails))))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result).get should endWith("/already-subscribed")
@@ -278,19 +282,20 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
       )
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Agent)))
-      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
-      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
-      when(cache.readOption[CompleteXMLInfo](eqTo(CompleteXMLInfo.format), any, any))
+      when(subService.retrieveSubscriptionData(any)(using any))
+        .thenReturn(EitherT.right(Future.successful(Some(subDetails))))
+      when(bprKF.checkBPRKnownFacts(any)(using any)).thenReturn(OptionT.pure[Future](response))
+      when(cache.readOption[CompleteXMLInfo](using eqTo(CompleteXMLInfo.format), any, any))
         .thenReturn(Future.successful(None))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
-      when(cache.save[BusinessPartnerRecord](any)(eqTo(BusinessPartnerRecord.format), any, any))
+      when(cache.save[BusinessPartnerRecord](any)(using eqTo(BusinessPartnerRecord.format), any, any))
         .thenReturn(Future.successful(emptyCacheItem))
-      when(cache.save[Utr](any)(eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(cache.save[Utr](any)(using eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.NOT_FOUND
     }
@@ -304,17 +309,17 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
       )
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(bprKF.checkBPRKnownFacts(any)(using any)).thenReturn(OptionT.pure[Future](response))
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
-      when(cache.readOption[CompleteXMLInfo](eqTo(CompleteXMLInfo.format), any, any))
+      when(cache.readOption[CompleteXMLInfo](using eqTo(CompleteXMLInfo.format), any, any))
         .thenReturn(Future.successful(None))
-      when(cache.save[Utr](any)(eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
-      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
+      when(cache.save[Utr](any)(using eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(subService.retrieveSubscriptionData(any)(using any)).thenReturn(EitherT.right(Future.successful(None)))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result).get should endWith("/known-facts/match")
@@ -329,17 +334,17 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "")
       )
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(bprKF.checkBPRKnownFacts(any)(using any)).thenReturn(OptionT.pure[Future](response))
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
-      when(cache.readOption[CompleteXMLInfo](eqTo(CompleteXMLInfo.format), any, any))
+      when(cache.readOption[CompleteXMLInfo](using eqTo(CompleteXMLInfo.format), any, any))
         .thenReturn(Future.successful(None))
-      when(cache.save[Utr](any)(eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
-      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
+      when(cache.save[Utr](any)(using eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(subService.retrieveSubscriptionData(any)(using any)).thenReturn(EitherT.right(Future.successful(None)))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.SEE_OTHER
       header("Location", result).get should endWith("/known-facts/match")
@@ -354,20 +359,21 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val fakeRequestSubscribe = addToken(
         FakeRequest("POST", "/checkKnownFacts").withFormUrlEncodedBody("utr" -> "7000000002", "postCode" -> "SW46NR")
       )
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Agent)))
-      when(bprKF.checkBPRKnownFacts(any)(any)).thenReturn(OptionT.pure[Future](response))
-      when(subService.retrieveSubscriptionData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(subDetails))))
-      when(cache.readOption[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
+      when(bprKF.checkBPRKnownFacts(any)(using any)).thenReturn(OptionT.pure[Future](response))
+      when(subService.retrieveSubscriptionData(any)(using any))
+        .thenReturn(EitherT.right(Future.successful(Some(subDetails))))
+      when(cache.readOption[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
-      when(cache.readOption[CompleteXMLInfo](eqTo(CompleteXMLInfo.format), any, any))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any)).thenReturn(Future.successful(None))
+      when(cache.readOption[CompleteXMLInfo](using eqTo(CompleteXMLInfo.format), any, any))
         .thenReturn(Future.successful(None))
-      when(cache.save[BusinessPartnerRecord](any)(eqTo(BusinessPartnerRecord.format), any, any))
+      when(cache.save[BusinessPartnerRecord](any)(using eqTo(BusinessPartnerRecord.format), any, any))
         .thenReturn(Future.successful(emptyCacheItem))
-      when(cache.save[Utr](any)(eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(cache.save[Utr](any)(using eqTo(Utr.format), any, any)).thenReturn(Future.successful(emptyCacheItem))
       val result = controller.checkKnownFacts(fakeRequestSubscribe)
       status(result) shouldBe Status.NOT_FOUND
     }
@@ -400,7 +406,7 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
       val expectedUrl =
         "http://localhost:9553/bas-gateway/sign-out-without-state?continue=http://localhost:9514/feedback/CBCR"
       val request = addToken(FakeRequest())
-      when(authC.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
+      when(authC.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
       when(feConfig.cbcrFrontendHost).thenReturn("http://localhost:9696")
       when(feConfig.exitSurveyUrl).thenReturn("http://localhost:9553")
       when(feConfig.oneLoginSignoutUrl).thenReturn(expectedUrl)
@@ -410,7 +416,7 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
     "keepSessionAlive returns 200" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
+      when(authC.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
       val result = controller.keepSessionAlive(request)
       status(result) shouldBe Status.OK
     }
@@ -419,7 +425,7 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
   "unsupportedAffinityGroup" should {
     "return 401 for individuals" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Individual)))
       val result = controller.unsupportedAffinityGroup(request)
       status(result) shouldBe Status.UNAUTHORIZED
@@ -427,14 +433,14 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
 
     "return 500 when no affinity group found" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any)).thenReturn(Future.successful(None))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any)).thenReturn(Future.successful(None))
       val result = controller.unsupportedAffinityGroup(request)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
     "return 401 when unexpected affinity group found" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
       val result = controller.unsupportedAffinityGroup(request)
       status(result) shouldBe Status.UNAUTHORIZED
@@ -444,18 +450,19 @@ class SharedControllerSpec extends AnyWordSpec with Matchers with GuiceOneAppPer
   "knownFactsMatch" should {
     "return 500 when no affinity group found" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any)).thenReturn(Future.successful(None))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any)).thenReturn(Future.successful(None))
       val result = controller.knownFactsMatch(request)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
 
     "return 200 when affinity group found" in {
       val request = addToken(FakeRequest())
-      when(authC.authorise[Option[AffinityGroup]](any, any)(any, any))
+      when(authC.authorise[Option[AffinityGroup]](any, any)(using any, any))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(cache.read[BusinessPartnerRecord](eqTo(BusinessPartnerRecord.format), any, any))
+      when(cache.read[BusinessPartnerRecord](using eqTo(BusinessPartnerRecord.format), any, any))
         .thenReturn(EitherT.right(Future.successful(bpr)))
-      when(cache.read[Utr](eqTo(Utr.format), any, any)).thenReturn(EitherT.right(Future.successful(Utr("700000002"))))
+      when(cache.read[Utr](using eqTo(Utr.format), any, any))
+        .thenReturn(EitherT.right(Future.successful(Utr("700000002"))))
       val result = controller.knownFactsMatch(request)
       status(result) shouldBe Status.OK
     }

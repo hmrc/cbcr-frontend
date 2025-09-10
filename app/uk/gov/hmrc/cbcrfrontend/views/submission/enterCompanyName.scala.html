@@ -25,7 +25,7 @@
     govukInput: GovukInput
 )
 
-@(form:Form[_], envelopeId: String, fileId: String)(implicit request: Request[_], messages: Messages)
+@(form:Form[?], envelopeId: String, fileId: String)(implicit request: Request[?], messages: Messages)
 
 @companyNameKey = @{"companyName"}
 

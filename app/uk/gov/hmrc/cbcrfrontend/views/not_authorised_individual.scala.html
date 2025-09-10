@@ -19,7 +19,7 @@
 
 @this(layout: Layout, govukButton: GovukButton)
 
-@()(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
+@()(implicit request: Request[?], messages: Messages, config: FrontendAppConfig)
 
 @title = @{
     messages("notAuthorised.individual.title")

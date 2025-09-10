@@ -29,7 +29,7 @@ trait WithConfigFakeApplication extends BeforeAndAfterAll {
 
   private lazy val application = new GuiceApplicationBuilder()
     .loadConfig(new Configuration(ConfigFactory.load(configFile)))
-    .bindings(bindModules: _*)
+    .bindings(bindModules*)
     .build()
 
   def bindModules: Seq[GuiceableModule] = Seq()

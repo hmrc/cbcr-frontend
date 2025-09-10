@@ -62,11 +62,13 @@ package object cbcrfrontend {
   type FutureValidBusinessResult[A] = Future[ValidBusinessResult[A]]
 
   implicit def applicativeInstance(implicit ec: ExecutionContext): Applicative[FutureValidBusinessResult] =
-    Applicative[Future] compose Applicative[ValidBusinessResult]
+    Applicative[Future].compose(using Applicative[ValidBusinessResult])
+
   implicit def applicativeInstance2(implicit ec: ExecutionContext): Applicative[FutureCacheResult] =
-    Applicative[Future] compose Applicative[CacheResult]
+    Applicative[Future].compose(using Applicative[CacheResult])
+
   implicit def functorInstance(implicit ec: ExecutionContext): Functor[FutureValidBusinessResult] =
-    Functor[Future] compose Functor[ValidBusinessResult]
+    Functor[Future].compose(using Functor[ValidBusinessResult])
 
   implicit def toTheFuture[A](a: ValidBusinessResult[A]): FutureValidBusinessResult[A] = Future.successful(a)
   implicit def resultFuture(r: Result): Future[Result] = Future.successful(r)
@@ -75,7 +77,7 @@ package object cbcrfrontend {
     error: CBCErrors,
     notAuthorisedIndividual: not_authorised_individual,
     errorTemplate: error_template
-  )(implicit request: Request[_], msgs: Messages, feConfig: FrontendAppConfig): Result = {
+  )(implicit request: Request[?], msgs: Messages, feConfig: FrontendAppConfig): Result = {
     logger.error(error.show)
     error match {
       case ExpiredSession(_) => Redirect(routes.SharedController.sessionExpired)

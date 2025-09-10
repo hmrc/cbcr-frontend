@@ -23,7 +23,7 @@
         govukButton: GovukButton
 )
 
-@(envelopeId: String, fileId: String, hostName: String, hasSeen: String)(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
+@(envelopeId: String, fileId: String, hostName: String, hasSeen: String)(implicit request: Request[?], messages: Messages, config: FrontendAppConfig)
 
 @title = @{messages("fileUploadProgress.title")}
 @templateScripts = {<script src="@{controllers.routes.Assets.versioned("javascripts/file-upload-enhancements.js")}"></script>}

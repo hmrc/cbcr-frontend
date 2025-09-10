@@ -20,7 +20,7 @@
 
 @this(layout: Layout)
 
-@(cbcId:CBCId)(implicit request: Request[_], messages: Messages)
+@(cbcId:CBCId)(implicit request: Request[?], messages: Messages)
 
 @title = @{messages("regenerate.title")}
 

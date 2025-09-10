@@ -184,7 +184,7 @@ class CBCBusinessRuleValidator @Inject() (
     }
 
   private def extractReceivingCountry(in: RawMessageSpec): ValidBusinessResult[String] =
-    if (in.receivingCountry equalsIgnoreCase "GB") in.receivingCountry.validNel else ReceivingCountryError.invalidNel
+    if (in.receivingCountry `equalsIgnoreCase` "GB") in.receivingCountry.validNel else ReceivingCountryError.invalidNel
 
   private def extractReportingPeriod(in: RawMessageSpec): ValidBusinessResult[LocalDate] =
     Validated

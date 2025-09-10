@@ -29,7 +29,7 @@
         govukErrorSummary: GovukErrorSummary
 )
 
-@(fileUploadUrl: URI, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
+@(fileUploadUrl: URI, fileName: String, userType: Option[AffinityGroup])(implicit request: Request[?], messages: Messages, config: FrontendAppConfig)
 
 @title = @{messages("uploadReport.title")}
 @backLink = @{
