@@ -24,7 +24,7 @@
         govukInput: GovukInput,
         govukButton: GovukButton
 )
-@(form:Form[_])(implicit request: Request[_], messages: Messages)
+@(form:Form[?])(implicit request: Request[?], messages: Messages)
 
 @key = @{"utr"}
 @title = @{messages("utrCheck.title")}

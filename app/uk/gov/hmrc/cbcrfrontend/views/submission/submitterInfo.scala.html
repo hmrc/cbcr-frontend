@@ -27,7 +27,7 @@
         govukButton: GovukButton
 )
 
-@(form:Form[_], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
+@(form:Form[?], envelopeId: String, fileId: String, userType: Option[AffinityGroup])(implicit request: Request[?], messages: Messages)
 
 @fullNameKey = @{"fullName"}
 @contactPhoneKey = @{"contactPhone"}

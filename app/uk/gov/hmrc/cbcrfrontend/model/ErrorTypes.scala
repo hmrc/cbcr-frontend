@@ -132,7 +132,7 @@ object ValidationErrors {
 object BusinessRuleErrors {
   implicit val format: Format[BusinessRuleErrors] = new Format[BusinessRuleErrors] {
     override def writes(o: BusinessRuleErrors): JsValue = o match {
-      case m: MessageRefIDError                     => Json.toJson[MessageRefIDError](m)(MessageRefIDError.format)
+      case m: MessageRefIDError                     => Json.toJson[MessageRefIDError](m)(using MessageRefIDError.format)
       case TestDataError                            => JsString(TestDataError.productPrefix)
       case SendingEntityError                       => JsString(SendingEntityError.productPrefix)
       case SendingEntityOrganisationMatchError      => JsString(SendingEntityOrganisationMatchError.productPrefix)
@@ -194,8 +194,8 @@ object BusinessRuleErrors {
     override def reads(json: JsValue): JsResult[BusinessRuleErrors] =
       Json
         .fromJson[MessageRefIDError](json)
-        .orElse[BusinessRuleErrors](Json.fromJson(json)(FileNameError.format))
-        .orElse[BusinessRuleErrors](Json.fromJson(json)(AdditionalInfoDRINotFound.format))
+        .orElse[BusinessRuleErrors](Json.fromJson(json)(using FileNameError.format))
+        .orElse[BusinessRuleErrors](Json.fromJson(json)(using AdditionalInfoDRINotFound.format))
         .orElse[BusinessRuleErrors] {
           json.asOpt[String] match {
             case Some(ci"multiplecbcbodies")                       => JsSuccess(MultipleCbcBodies)

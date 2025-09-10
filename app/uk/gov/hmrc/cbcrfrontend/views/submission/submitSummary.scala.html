@@ -31,7 +31,7 @@
         govukButton: GovukButton
 )
 
-@(summaryData: SummaryData, userType: Option[AffinityGroup])(implicit request: Request[_], messages: Messages)
+@(summaryData: SummaryData, userType: Option[AffinityGroup])(implicit request: Request[?], messages: Messages)
 
 @title = @{messages("submitSummary.title")}
 @backLink = @{userType match {

@@ -24,7 +24,7 @@
         govukButton: GovukButton
 )
 
-@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[_], messages: Messages)
+@(submissionDateTime: String, hash: String, cbcId: String, userType: String, cacheCleared: Boolean)(implicit request: Request[?], messages: Messages)
 
 @title = @{messages("submitSuccessReceipt.submissionDateLabel.title")}
 @layout(title) {

@@ -20,7 +20,7 @@
 
 @this(layout: Layout)
 
-@(userType: AffinityGroup)(implicit request: Request[_], messages: Messages)
+@(userType: AffinityGroup)(implicit request: Request[?], messages: Messages)
 @title = @{messages("knownFactsNotFound.title")}
 @backLink =  @{
     if(userType == AffinityGroup.Organisation)

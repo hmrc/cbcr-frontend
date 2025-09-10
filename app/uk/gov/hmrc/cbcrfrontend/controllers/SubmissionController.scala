@@ -207,7 +207,7 @@ class SubmissionController @Inject() (
 
   private def createSuccessfulSubmissionAuditEvent(creds: Credentials, summaryData: SummaryData)(implicit
     hc: HeaderCarrier,
-    request: Request[_]
+    request: Request[?]
   ): Unit = {
 
     val auditEvent = Json.obj(

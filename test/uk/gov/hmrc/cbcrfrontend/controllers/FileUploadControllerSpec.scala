@@ -139,12 +139,13 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
   when(views.fileUploadProgress).thenReturn(fileUploadProgressView)
   when(views.fileUploadResult).thenReturn(fileUploadResultView)
 
-  when(unregisteredGGAccountView.apply()(any, any)).thenReturn(Html("some html content"))
-  when(chooseFileView.apply(any, any, any)(any, any, any)).thenReturn(Html("some html content"))
-  when(fileUploadErrorView.apply(any)(any, any)).thenReturn(Html("some html content"))
-  when(errorTemplateView.apply(any, any, any)(any, any)).thenReturn(Html("some html content"))
-  when(fileUploadProgressView.apply(any, any, any, any)(any, any, any)).thenReturn(Html("some html content"))
-  when(fileUploadResultView.apply(any, any, any, any, any, any)(any, any, any)).thenReturn(Html("some html content"))
+  when(unregisteredGGAccountView.apply()(using any, any)).thenReturn(Html("some html content"))
+  when(chooseFileView.apply(any, any, any)(using any, any, any)).thenReturn(Html("some html content"))
+  when(fileUploadErrorView.apply(any)(using any, any)).thenReturn(Html("some html content"))
+  when(errorTemplateView.apply(any, any, any)(using any, any)).thenReturn(Html("some html content"))
+  when(fileUploadProgressView.apply(any, any, any, any)(using any, any, any)).thenReturn(Html("some html content"))
+  when(fileUploadResultView.apply(any, any, any, any, any, any)(using any, any, any))
+    .thenReturn(Html("some html content"))
 
   private val controller = new FileUploadController(
     authConnector,
@@ -171,29 +172,29 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
     val fakeRequestChooseXMLFile = FakeRequest("GET", "/upload-report")
 
     "return 200 when the envelope is created successfully" in {
-      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(using any, any))
         .thenReturn(
           Future
             .successful(
               new ~(Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
             )
         )
-      when(fuService.createEnvelope(any)).thenReturn(EitherT.right(Future.successful(EnvelopeId("1234"))))
-      when(cache.create[EnvelopeId](any)(eqTo(EnvelopeId.format), any, any))
+      when(fuService.createEnvelope(using any)).thenReturn(EitherT.right(Future.successful(EnvelopeId("1234"))))
+      when(cache.create[EnvelopeId](any)(using eqTo(EnvelopeId.format), any, any))
         .thenReturn(OptionT.pure[Future](EnvelopeId("1234")))
-      when(cache.create[FileId](any)(eqTo(FileId.fileIdFormat), any, any))
+      when(cache.create[FileId](any)(using eqTo(FileId.fileIdFormat), any, any))
         .thenReturn(OptionT.pure[Future](FileId("abcd")))
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
 
     "displays gateway account not registered page if Organisation user is not enrolled" in {
-      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(using any, any))
         .thenReturn(
           Future
             .successful(new ~(Some(AffinityGroup.Organisation), None))
         )
-      when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(None))
+      when(cache.readOption[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(None))
 
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
@@ -201,22 +202,22 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       contentType(result) shouldBe Some("text/html")
       charset(result) shouldBe Some("utf-8")
 
-      verify(unregisteredGGAccountView).apply()(any, any)
+      verify(unregisteredGGAccountView).apply()(using any, any)
     }
 
     "allow agent to submit even when no enrolment" in {
-      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(using any, any))
         .thenReturn(
           Future
             .successful(new ~(Some(AffinityGroup.Organisation), None))
         )
-      when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(None))
+      when(cache.readOption[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(None))
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.OK
     }
 
     "redirect  when user is an individual" in {
-      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(using any, any))
         .thenReturn(
           Future
             .successful(new ~(Some(AffinityGroup.Individual), None))
@@ -226,14 +227,14 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
     }
 
     "return 500 when there is an error creating the envelope" in {
-      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(any, any))
+      when(authConnector.authorise(any, any[Retrieval[Option[AffinityGroup] ~ Option[CBCEnrolment]]])(using any, any))
         .thenReturn(
           Future
             .successful(
               new ~(Some(AffinityGroup.Organisation), Some(newCBCEnrolment))
             )
         )
-      when(fuService.createEnvelope(any))
+      when(fuService.createEnvelope(using any))
         .thenReturn(EitherT.leftT[Future, CBCErrors](UnexpectedState("server error")))
       val result = controller.chooseXMLFile(fakeRequestChooseXMLFile)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -244,19 +245,19 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
     val fakeRequestUnregisteredGGId = FakeRequest("GET", "/unregistered-gg-account")
 
     "return 200 when the envelope is created successfully" in {
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(fuService.createEnvelope(any)).thenReturn(EitherT.right(Future.successful(EnvelopeId("1234"))))
-      when(cache.create[EnvelopeId](any)(eqTo(EnvelopeId.format), any, any))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(fuService.createEnvelope(using any)).thenReturn(EitherT.right(Future.successful(EnvelopeId("1234"))))
+      when(cache.create[EnvelopeId](any)(using eqTo(EnvelopeId.format), any, any))
         .thenReturn(OptionT.pure[Future](EnvelopeId("1234")))
-      when(cache.create[FileId](any)(eqTo(FileId.fileIdFormat), any, any))
+      when(cache.create[FileId](any)(using eqTo(FileId.fileIdFormat), any, any))
         .thenReturn(OptionT.pure[Future](FileId("abcd")))
       val result = controller.unregisteredGGAccount(fakeRequestUnregisteredGGId)
       status(result) shouldBe Status.OK
     }
 
     "return 500 when there is an error creating the envelope" in {
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(fuService.createEnvelope(any))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(fuService.createEnvelope(using any))
         .thenReturn(EitherT.leftT[Future, CBCErrors](UnexpectedState("server error")))
       val result = controller.unregisteredGGAccount(fakeRequestUnregisteredGGId)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
@@ -266,8 +267,8 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
   "GET /fileUploadResponse/envelopeId/fileId" should {
     val fakeRequestGetFileUploadResponse = FakeRequest("GET", "/fileUploadResponse/envelopeId/fileId")
     "return 202 when the file is available" in {
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(fuService.getFileUploadResponse(any)(any))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(fuService.getFileUploadResponse(any)(using any))
         .thenReturn(
           EitherT.right(Future.successful(Some(FileUploadCallbackResponse("envelopeId", "fileId", "AVAILABLE", None))))
         )
@@ -277,16 +278,16 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
 
     "return 204" when {
       "the FUS hasn't updated the backend yet" in {
-        when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-        when(fuService.getFileUploadResponse(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
+        when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+        when(fuService.getFileUploadResponse(any)(using any)).thenReturn(EitherT.right(Future.successful(None)))
         val result =
           controller.fileUploadResponse("envelopeId")(fakeRequestGetFileUploadResponse)
         status(result) shouldBe Status.NO_CONTENT
       }
 
       "file is not yet available" in {
-        when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-        when(fuService.getFileUploadResponse(any)(any))
+        when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+        when(fuService.getFileUploadResponse(any)(using any))
           .thenReturn(
             EitherT.right(
               Future.successful(Some(FileUploadCallbackResponse("envelopeId", "fileId", "QUARENTEENED", None)))
@@ -299,8 +300,8 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
     }
 
     "return a 200" in {
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(cache.read[EnvelopeId](eqTo(EnvelopeId.format), any, any))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(cache.read[EnvelopeId](using eqTo(EnvelopeId.format), any, any))
         .thenReturn(EitherT.right(Future.successful(EnvelopeId("test"))))
       val request = FakeRequest("GET", "fileUploadProgress/envelopeId/fileId")
       val result = controller.fileUploadProgress("test", "test", "true")(request)
@@ -309,8 +310,8 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
     }
 
     "return a 500 if the envelopeId doesn't match with the cache" in {
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(cache.read[EnvelopeId](eqTo(EnvelopeId.format), any, any))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(cache.read[EnvelopeId](using eqTo(EnvelopeId.format), any, any))
         .thenReturn(EitherT.right(Future.successful(EnvelopeId("test"))))
       val request = FakeRequest("GET", "fileUploadProgress/envelopeId/fileId")
       val result = controller.fileUploadProgress("test2", "test", "true")(request)
@@ -322,12 +323,12 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
         val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        when(fuService.getFile(any, any)(any)).thenReturn(EitherT.right(Future.successful(validFile)))
-        when(fuService.getFileMetaData(any, any)(any)).thenReturn(EitherT.right(Future.successful(None)))
+        when(fuService.getFile(any, any)(using any)).thenReturn(EitherT.right(Future.successful(validFile)))
+        when(fuService.getFileMetaData(any, any)(using any)).thenReturn(EitherT.right(Future.successful(None)))
 
         when(
           authConnector
-            .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+            .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
         ).thenReturn(
           Future
             .successful(
@@ -340,19 +341,20 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
-        verify(fuService).getFile(any, any)(any)
-        verify(fuService).getFileMetaData(any, any)(any)
+        verify(fuService).getFile(any, any)(using any)
+        verify(fuService).getFileMetaData(any, any)(using any)
       }
 
       "the call to get the file fails" in {
         val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        when(fuService.getFile(any, any)(any)).thenReturn(EitherT.right(Future.successful(UnexpectedState("oops"))))
-        when(fuService.getFileMetaData(any, any)(any)).thenReturn(EitherT.right(Future.successful(Some(md))))
+        when(fuService.getFile(any, any)(using any))
+          .thenReturn(EitherT.right(Future.successful(UnexpectedState("oops"))))
+        when(fuService.getFileMetaData(any, any)(using any)).thenReturn(EitherT.right(Future.successful(Some(md))))
         when(
           authConnector
-            .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+            .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
         ).thenReturn(
           Future
             .successful(
@@ -365,19 +367,19 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
-        verify(fuService).getFile(any, any)(any)
+        verify(fuService).getFile(any, any)(using any)
       }
 
       "the call to cache.save fails" in {
         val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        when(fuService.getFile(any, any)(any)).thenReturn(EitherT.right(Future.successful(validFile)))
-        when(fuService.getFileMetaData(any, any)(any)).thenReturn(EitherT.right(Future.successful(Some(md))))
+        when(fuService.getFile(any, any)(using any)).thenReturn(EitherT.right(Future.successful(validFile)))
+        when(fuService.getFileMetaData(any, any)(using any)).thenReturn(EitherT.right(Future.successful(Some(md))))
 
         when(
           authConnector
-            .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+            .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
         ).thenReturn(
           Future
             .successful(
@@ -387,14 +389,14 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
               )
             )
         )
-        when(cache.save[FileMetadata](any)(eqTo(FileMetadata.fileMetadataFormat), any, any))
+        when(cache.save[FileMetadata](any)(using eqTo(FileMetadata.fileMetadataFormat), any, any))
           .thenReturn(Future.failed(new Exception("bad")))
         val result = controller.fileValidate("test", "test")(request)
         header("Location", result).get should endWith("technical-difficulties")
         status(result) shouldBe Status.SEE_OTHER
-        verify(fuService).getFile(any, any)(any)
-        verify(fuService).getFileMetaData(any, any)(any)
-        verify(cache).save[FileMetadata](any)(eqTo(FileMetadata.fileMetadataFormat), any, any)
+        verify(fuService).getFile(any, any)(using any)
+        verify(fuService).getFileMetaData(any, any)(using any)
+        verify(cache).save[FileMetadata](any)(using eqTo(FileMetadata.fileMetadataFormat), any, any)
       }
     }
 
@@ -403,11 +405,11 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      when(fuService.getFile(any, any)(any)).thenReturn(EitherT.right(Future.successful(evenMoreValidFile)))
-      when(fuService.getFileMetaData(any, any)(any)).thenReturn(EitherT.right(Future.successful(Some(md))))
+      when(fuService.getFile(any, any)(using any)).thenReturn(EitherT.right(Future.successful(evenMoreValidFile)))
+      when(fuService.getFileMetaData(any, any)(using any)).thenReturn(EitherT.right(Future.successful(Some(md))))
       when(schemaValidator.validateSchema(any)).thenReturn(new XmlErrorHandler())
-      when(cache.save(any)(any, any, any)).thenReturn(Future.successful(emptyCacheItem))
-      when(businessRulesValidator.validateBusinessRules(any, any, any, any)(any)).thenReturn(
+      when(cache.save(any)(using any, any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(businessRulesValidator.validateBusinessRules(any, any, any, any)(using any)).thenReturn(
         Future
           .successful(Valid(xmlInfo))
       )
@@ -415,7 +417,7 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
 
       when(
         authConnector
-          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
       ).thenReturn(
         Future
           .successful(
@@ -427,10 +429,10 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       )
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.OK
-      verify(fuService).getFile(any, any)(any)
-      verify(fuService).getFileMetaData(any, any)(any)
-      verify(cache, atLeastOnce()).save(any)(any, any, any)
-      verify(businessRulesValidator).validateBusinessRules(any, any, any, any)(any)
+      verify(fuService).getFile(any, any)(using any)
+      verify(fuService).getFileMetaData(any, any)(using any)
+      verify(cache, atLeastOnce()).save(any)(using any, any, any)
+      verify(businessRulesValidator).validateBusinessRules(any, any, any, any)(using any)
       verify(schemaValidator).validateSchema(any)
     }
 
@@ -443,11 +445,11 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       val e = new WstxException("error")
       xmlErrorHandler.reportProblem(new XMLValidationProblem(e.getLocation, "", XMLValidationProblem.SEVERITY_FATAL))
 
-      when(fuService.getFile(any, any)(any)).thenReturn(EitherT.right(Future.successful(evenMoreValidFile)))
-      when(fuService.getFileMetaData(any, any)(any)).thenReturn(EitherT.right(Future.successful(Some(md))))
+      when(fuService.getFile(any, any)(using any)).thenReturn(EitherT.right(Future.successful(evenMoreValidFile)))
+      when(fuService.getFileMetaData(any, any)(using any)).thenReturn(EitherT.right(Future.successful(Some(md))))
       when(schemaValidator.validateSchema(any)).thenReturn(xmlErrorHandler)
-      when(cache.save(any)(any, any, any)).thenReturn(Future.successful(emptyCacheItem))
-      when(businessRulesValidator.validateBusinessRules(any, any, any, any)(any)).thenReturn(
+      when(cache.save(any)(using any, any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(businessRulesValidator.validateBusinessRules(any, any, any, any)(using any)).thenReturn(
         Future
           .successful(Valid(xmlInfo))
       )
@@ -455,7 +457,7 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
 
       when(
         authConnector
-          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
       ).thenReturn(
         Future
           .successful(
@@ -467,9 +469,9 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       )
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.SEE_OTHER
-      verify(fuService).getFile(any, any)(any)
-      verify(fuService).getFileMetaData(any, any)(any)
-      verify(cache, atLeastOnce()).save(any)(any, any, any)
+      verify(fuService).getFile(any, any)(using any)
+      verify(fuService).getFileMetaData(any, any)(using any)
+      verify(cache, atLeastOnce()).save(any)(using any, any, any)
       verify(schemaValidator).validateSchema(any)
     }
 
@@ -479,11 +481,11 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
       val businessRuleErrors = NonEmptyList.of(TestDataError)
-      when(fuService.getFile(any, any)(any)).thenReturn(EitherT.right(Future.successful(evenMoreValidFile)))
-      when(fuService.getFileMetaData(any, any)(any)).thenReturn(EitherT.right(Future.successful(Some(md))))
+      when(fuService.getFile(any, any)(using any)).thenReturn(EitherT.right(Future.successful(evenMoreValidFile)))
+      when(fuService.getFileMetaData(any, any)(using any)).thenReturn(EitherT.right(Future.successful(Some(md))))
       when(schemaValidator.validateSchema(any)).thenReturn(new XmlErrorHandler())
-      when(cache.save(any)(any, any, any)).thenReturn(Future.successful(emptyCacheItem))
-      when(businessRulesValidator.validateBusinessRules(any, any, any, any)(any)).thenReturn(
+      when(cache.save(any)(using any, any, any)).thenReturn(Future.successful(emptyCacheItem))
+      when(businessRulesValidator.validateBusinessRules(any, any, any, any)(using any)).thenReturn(
         Future
           .successful(Invalid(businessRuleErrors))
       )
@@ -491,7 +493,7 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
 
       when(
         authConnector
-          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
       ).thenReturn(
         Future
           .successful(
@@ -503,10 +505,10 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       )
       val result = controller.fileValidate("test", "test")(request)
       status(result) shouldBe Status.SEE_OTHER
-      verify(fuService).getFile(any, any)(any)
-      verify(fuService).getFileMetaData(any, any)(any)
-      verify(cache, atLeastOnce()).save(any)(any, any, any)
-      verify(businessRulesValidator).validateBusinessRules(any, any, any, any)(any)
+      verify(fuService).getFile(any, any)(using any)
+      verify(fuService).getFileMetaData(any, any)(using any)
+      verify(cache, atLeastOnce()).save(any)(using any, any, any)
+      verify(businessRulesValidator).validateBusinessRules(any, any, any, any)(using any)
       verify(schemaValidator).validateSchema(any)
     }
 
@@ -515,15 +517,15 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
         val request = FakeRequest("GET", "fileUploadReady/envelopeId/fileId")
         val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
         val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-        when(fuService.getFile(any, any)(any)).thenReturn(EitherT.right(Future.successful(validFile)))
-        when(fuService.getFileMetaData(any, any)(any))
+        when(fuService.getFile(any, any)(using any)).thenReturn(EitherT.right(Future.successful(validFile)))
+        when(fuService.getFileMetaData(any, any)(using any))
           .thenReturn(EitherT.right(Future.successful(Some(md.copy(name = "bad.zip")))))
-        when(cache.save[FileMetadata](any)(eqTo(FileMetadata.fileMetadataFormat), any, any))
+        when(cache.save[FileMetadata](any)(using eqTo(FileMetadata.fileMetadataFormat), any, any))
           .thenReturn(Future.successful(emptyCacheItem))
 
         when(
           authConnector
-            .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+            .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
         ).thenReturn(
           Future
             .successful(
@@ -545,25 +547,26 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       val request = FakeRequest("GET", "invalid-file-type")
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      when(cache.readOption[AllBusinessRuleErrors](eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
+      when(cache.readOption[AllBusinessRuleErrors](using eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
         Future
           .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       )
-      when(cache.readOption[XMLErrors](eqTo(XMLErrors.format), any, any)).thenReturn(
+      when(cache.readOption[XMLErrors](using eqTo(XMLErrors.format), any, any)).thenReturn(
         Future.successful(
           Some(XMLErrors(List("Big xml error")))
         )
       )
-      when(cache.readOption[FileMetadata](eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
+      when(cache.readOption[FileMetadata](using eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
         Future
           .successful(Some(md))
       )
-      when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(Utr("1234567890"))))
+      when(cache.readOption[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any))
+        .thenReturn(Future.successful(Some(Utr("1234567890"))))
 
       when(
         authConnector
-          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
       ).thenReturn(
         Future
           .successful(
@@ -573,8 +576,8 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
             )
           )
       )
-      when(auditC.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
-      when(fuService.errorsToMap(any)(any)).thenReturn(Map("error" -> "error message"))
+      when(auditC.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(fuService.errorsToMap(any)(using any)).thenReturn(Map("error" -> "error message"))
       val result = controller.fileInvalid(request)
       status(result) shouldBe Status.OK
     }
@@ -584,25 +587,26 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
       val failure = AuditResult.Failure("boo hoo")
-      when(cache.readOption[AllBusinessRuleErrors](eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
+      when(cache.readOption[AllBusinessRuleErrors](using eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
         Future
           .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       )
-      when(cache.readOption[XMLErrors](eqTo(XMLErrors.format), any, any)).thenReturn(
+      when(cache.readOption[XMLErrors](using eqTo(XMLErrors.format), any, any)).thenReturn(
         Future.successful(
           Some(XMLErrors(List("Big xml error")))
         )
       )
-      when(cache.readOption[FileMetadata](eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
+      when(cache.readOption[FileMetadata](using eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
         Future
           .successful(Some(md))
       )
-      when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(Utr("1234567890"))))
+      when(cache.readOption[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any))
+        .thenReturn(Future.successful(Some(Utr("1234567890"))))
 
       when(
         authConnector
-          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
       ).thenReturn(
         Future
           .successful(
@@ -612,8 +616,8 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
             )
           )
       )
-      when(auditC.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(failure))
-      when(fuService.errorsToMap(any)(any)).thenReturn(Map("error" -> "error message"))
+      when(auditC.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(failure))
+      when(fuService.errorsToMap(any)(using any)).thenReturn(Map("error" -> "error message"))
       val result = controller.fileInvalid(request)
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
     }
@@ -624,25 +628,26 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       val request = FakeRequest("GET", "invalid-file-type")
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      when(cache.readOption[AllBusinessRuleErrors](eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
+      when(cache.readOption[AllBusinessRuleErrors](using eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
         Future
           .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       )
-      when(cache.readOption[XMLErrors](eqTo(XMLErrors.format), any, any)).thenReturn(
+      when(cache.readOption[XMLErrors](using eqTo(XMLErrors.format), any, any)).thenReturn(
         Future.successful(
           Some(XMLErrors(List("Big xml error")))
         )
       )
-      when(cache.readOption[FileMetadata](eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
+      when(cache.readOption[FileMetadata](using eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
         Future
           .successful(Some(md))
       )
-      when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(Utr("1234567890"))))
+      when(cache.readOption[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any))
+        .thenReturn(Future.successful(Some(Utr("1234567890"))))
 
       when(
         authConnector
-          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
       ).thenReturn(
         Future
           .successful(
@@ -652,8 +657,8 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
             )
           )
       )
-      when(auditC.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
-      when(fuService.errorsToMap(any)(any)).thenReturn(Map("error" -> "error message"))
+      when(auditC.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(fuService.errorsToMap(any)(using any)).thenReturn(Map("error" -> "error message"))
       val result = controller.fileTooLarge(request)
       status(result) shouldBe Status.OK
     }
@@ -664,26 +669,27 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       val request = FakeRequest("GET", "invalid-file-type")
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      when(cache.readOption[AllBusinessRuleErrors](eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
+      when(cache.readOption[AllBusinessRuleErrors](using eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
         Future
           .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       )
-      when(cache.readOption[XMLErrors](eqTo(XMLErrors.format), any, any)).thenReturn(
+      when(cache.readOption[XMLErrors](using eqTo(XMLErrors.format), any, any)).thenReturn(
         Future.successful(
           Some(XMLErrors(List("Big xml error")))
         )
       )
-      when(cache.readOption[FileMetadata](eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
+      when(cache.readOption[FileMetadata](using eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
         Future
           .successful(Some(md))
       )
 
-      when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(Utr("1234567890"))))
+      when(cache.readOption[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any))
+        .thenReturn(Future.successful(Some(Utr("1234567890"))))
 
       when(
         authConnector
-          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(any, any)
+          .authorise[~[~[Option[Credentials], Option[AffinityGroup]], Option[CBCEnrolment]]](any, any)(using any, any)
       ).thenReturn(
         Future
           .successful(
@@ -693,8 +699,8 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
             )
           )
       )
-      when(auditC.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
-      when(fuService.errorsToMap(any)(any)).thenReturn(Map("error" -> "error message"))
+      when(auditC.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(fuService.errorsToMap(any)(using any)).thenReturn(Map("error" -> "error message"))
       val result = controller.fileContainsVirus(request)
       status(result) shouldBe Status.OK
     }
@@ -703,7 +709,7 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
   "The file-upload error call back" should {
     "cause a redirect to file-too-large if the response has status-code 413" in {
       val request = FakeRequest()
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
       val result = controller.handleError(413, "no reason")(request)
       header("Location", result).get should endWith("file-too-large")
       status(result) shouldBe Status.SEE_OTHER
@@ -711,7 +717,7 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
 
     "cause a redirect to invalid-file-type if the response has status-code 415" in {
       val request = FakeRequest()
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
       val result = controller.handleError(415, "no reason")(request)
       header("Location", result).get should endWith("invalid-file-type")
       status(result) shouldBe Status.SEE_OTHER
@@ -719,7 +725,7 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
 
     "cause a redirect to upload-timed-out if maximum requests have been made" in {
       val request = FakeRequest()
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
       val result = controller.handleError(408, "timed-out")(request)
       header("Location", result).get should endWith("upload-timed-out")
       status(result) shouldBe Status.SEE_OTHER
@@ -729,21 +735,21 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
   "getBusinessRuleErrors" should {
     "return 200 if error details found in cache" in {
       val request = FakeRequest()
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(cache.readOption[AllBusinessRuleErrors](eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(cache.readOption[AllBusinessRuleErrors](using eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
         Future
           .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       )
       when(file.delete).thenReturn(true)
-      when(fuService.errorsToFile(any, any)(any)).thenReturn(validFile)
+      when(fuService.errorsToFile(any, any)(using any)).thenReturn(validFile)
       val result = controller.getBusinessRuleErrors(request)
       status(result) shouldBe Status.OK
     }
 
     "return 203 if no error content found in cache" in {
       val request = FakeRequest()
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(cache.readOption[AllBusinessRuleErrors](eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(cache.readOption[AllBusinessRuleErrors](using eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
         Future
           .successful(None)
       )
@@ -756,22 +762,22 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
   "getXmlSchemaErrors" should {
     "return 200 if error details found in cache" in {
       val request = FakeRequest()
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(cache.readOption[XMLErrors](eqTo(XMLErrors.format), any, any)).thenReturn(
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(cache.readOption[XMLErrors](using eqTo(XMLErrors.format), any, any)).thenReturn(
         Future.successful(
           Some(XMLErrors(List("Big xml error")))
         )
       )
       when(file.delete).thenReturn(true)
-      when(fuService.errorsToFile(any, any)(any)).thenReturn(validFile)
+      when(fuService.errorsToFile(any, any)(using any)).thenReturn(validFile)
       val result = controller.getXmlSchemaErrors(request)
       status(result) shouldBe Status.OK
     }
 
     "return 203 if no error content found in cache" in {
       val request = FakeRequest()
-      when(authConnector.authorise[Any](any, any)(any, any)).thenReturn(Future.successful((): Unit))
-      when(cache.readOption[XMLErrors](eqTo(XMLErrors.format), any, any)).thenReturn(Future.successful(None))
+      when(authConnector.authorise[Any](any, any)(using any, any)).thenReturn(Future.successful((): Unit))
+      when(cache.readOption[XMLErrors](using eqTo(XMLErrors.format), any, any)).thenReturn(Future.successful(None))
       when(file.delete).thenReturn(true)
       val result = controller.getXmlSchemaErrors(request)
       status(result) shouldBe Status.NO_CONTENT
@@ -782,22 +788,23 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
     "return success if audit enabled and sendExtendedEvent succeeds" in {
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
-      when(auditC.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
-      when(cache.readOption[AllBusinessRuleErrors](eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
+      when(auditC.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(cache.readOption[AllBusinessRuleErrors](using eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
         Future
           .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       )
-      when(cache.readOption[XMLErrors](eqTo(XMLErrors.format), any, any)).thenReturn(
+      when(cache.readOption[XMLErrors](using eqTo(XMLErrors.format), any, any)).thenReturn(
         Future.successful(
           Some(XMLErrors(List("Big xml error")))
         )
       )
-      when(cache.readOption[FileMetadata](eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
+      when(cache.readOption[FileMetadata](using eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
         Future
           .successful(Some(md))
       )
-      when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(Utr("1234567890"))))
+      when(cache.readOption[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any))
+        .thenReturn(Future.successful(Some(Utr("1234567890"))))
       val result = await(
         controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")
       )
@@ -806,22 +813,23 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
 
     "return success if audit disabled and sendExtendedEvent succeeds" in {
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
-      when(auditC.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Disabled))
-      when(cache.readOption[AllBusinessRuleErrors](eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
+      when(auditC.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Disabled))
+      when(cache.readOption[AllBusinessRuleErrors](using eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
         Future
           .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       )
-      when(cache.readOption[XMLErrors](eqTo(XMLErrors.format), any, any)).thenReturn(
+      when(cache.readOption[XMLErrors](using eqTo(XMLErrors.format), any, any)).thenReturn(
         Future.successful(
           Some(XMLErrors(List("Big xml error")))
         )
       )
-      when(cache.readOption[FileMetadata](eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
+      when(cache.readOption[FileMetadata](using eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
         Future
           .successful(Some(md))
       )
-      when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(Utr("1234567890"))))
+      when(cache.readOption[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any))
+        .thenReturn(Future.successful(Some(Utr("1234567890"))))
       val result =
         await(controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), None, "just because"))
       result.map(r => r shouldBe AuditResult.Success)
@@ -831,22 +839,23 @@ class FileUploadControllerSpec extends AnyWordSpec with Matchers with BeforeAndA
       val cbcId = CBCId("XLCBC0100000056").getOrElse(fail("booo"))
       val enrolment = CBCEnrolment(cbcId, Utr("7000000002"))
       val failure = AuditResult.Failure("boo hoo")
-      when(auditC.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(failure))
-      when(cache.readOption[AllBusinessRuleErrors](eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
+      when(auditC.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(failure))
+      when(cache.readOption[AllBusinessRuleErrors](using eqTo(AllBusinessRuleErrors.format), any, any)).thenReturn(
         Future
           .successful(Some(AllBusinessRuleErrors(List(TestDataError))))
       )
-      when(cache.readOption[XMLErrors](eqTo(XMLErrors.format), any, any)).thenReturn(
+      when(cache.readOption[XMLErrors](using eqTo(XMLErrors.format), any, any)).thenReturn(
         Future.successful(
           Some(XMLErrors(List("Big xml error")))
         )
       )
-      when(cache.readOption[FileMetadata](eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
+      when(cache.readOption[FileMetadata](using eqTo(FileMetadata.fileMetadataFormat), any, any)).thenReturn(
         Future
           .successful(Some(md))
       )
-      when(cache.readOption[CBCId](eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
-      when(cache.readOption[Utr](eqTo(Utr.format), any, any)).thenReturn(Future.successful(Some(Utr("1234567890"))))
+      when(cache.readOption[CBCId](using eqTo(CBCId.cbcIdFormat), any, any)).thenReturn(Future.successful(Some(cbcId)))
+      when(cache.readOption[Utr](using eqTo(Utr.format), any, any))
+        .thenReturn(Future.successful(Some(Utr("1234567890"))))
       val result = await(
         controller.auditFailedSubmission(creds, Some(AffinityGroup.Organisation), Some(enrolment), "just because")
       )

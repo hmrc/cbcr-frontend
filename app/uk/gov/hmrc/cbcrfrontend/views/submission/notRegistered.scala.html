@@ -19,7 +19,7 @@
 
 @this(layout: Layout, formHelper: FormWithCSRF, govukButton: GovukButton)
 
-@()(implicit request: Request[_], messages: Messages)
+@()(implicit request: Request[?], messages: Messages)
 
 @title = @{messages("notRegistered.title")}
 

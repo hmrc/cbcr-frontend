@@ -64,7 +64,7 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
                            |}
        """.stripMargin
 
-      when(connector.getETMPSubscriptionData(any)(any))
+      when(connector.getETMPSubscriptionData(any)(using any))
         .thenReturn(Future.successful(HttpResponse(Status.OK, desResponse)))
       val result = await(cbcidService.getETMPSubscriptionData(safeId).value)
       result should not be None
@@ -78,7 +78,7 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
 
     "return NONE if the connector returns empty string or empty json object response" in {
       List("", "{}").map { responseBody =>
-        when(connector.getETMPSubscriptionData(any)(any))
+        when(connector.getETMPSubscriptionData(any)(using any))
           .thenReturn(Future.successful(HttpResponse(Status.OK, responseBody)))
         val result = await(cbcidService.getETMPSubscriptionData(safeId).value)
         result shouldBe None
@@ -87,7 +87,7 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
 
     "not parse response body if the returned status is not a 200" in {
       val response = mock[HttpResponse]
-      when(connector.getETMPSubscriptionData(any)(any)).thenReturn(Future.successful(response))
+      when(connector.getETMPSubscriptionData(any)(using any)).thenReturn(Future.successful(response))
       when(response.status).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR)
 
       await(cbcidService.getETMPSubscriptionData(safeId).value)
@@ -95,7 +95,7 @@ class CBCIdServiceSpec extends AnyWordSpec with Matchers with GuiceOneAppPerSuit
     }
 
     "throw exception if the connector fails to responds for given request" in {
-      when(connector.getETMPSubscriptionData(any)(any)).thenReturn(
+      when(connector.getETMPSubscriptionData(any)(using any)).thenReturn(
         Future.failed(
           new HttpException("HttpException occurred", HttpStatus.SC_BAD_REQUEST)
         )

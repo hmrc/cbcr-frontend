@@ -56,8 +56,8 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
   "The BPRKnowFactsService" should {
     "return a match for a check with an exact matching post code " in {
       val result = mock[HttpResponse]
-      when(mockConnector.lookup(eqTo(kf1.utr.utr))(any)).thenReturn(Future.successful(result))
-      when(mockAudit.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(mockConnector.lookup(eqTo(kf1.utr.utr))(using any)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Success))
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact = await(bprKnownFactsService.checkBPRKnownFacts(kf1).value)
@@ -67,8 +67,8 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
 
     "return a non match for a check with an non matching post code " in {
       val result = mock[HttpResponse]
-      when(mockConnector.lookup(eqTo(kf1.utr.utr))(any)).thenReturn(Future.successful(result))
-      when(mockAudit.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(mockConnector.lookup(eqTo(kf1.utr.utr))(using any)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Success))
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact =
@@ -79,8 +79,8 @@ class BPRKnownFactsServiceSpec extends AnyWordSpec with Matchers with GuiceOneAp
 
     "return a match for a check with no space in the post code when the DES version has a space" in {
       val result = mock[HttpResponse]
-      when(mockConnector.lookup(eqTo(kf1.utr.utr))(any)).thenReturn(Future.successful(result))
-      when(mockAudit.sendExtendedEvent(any)(any, any)).thenReturn(Future.successful(AuditResult.Success))
+      when(mockConnector.lookup(eqTo(kf1.utr.utr))(using any)).thenReturn(Future.successful(result))
+      when(mockAudit.sendExtendedEvent(any)(using any, any)).thenReturn(Future.successful(AuditResult.Success))
       when(result.body).thenReturn(bodyKnownFact1)
 
       val maybeKnownFact =

@@ -29,7 +29,7 @@
         govukSummaryList: GovukSummaryList
 )
 
-@(userType: Option[AffinityGroup], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], reportingRole: Option[ReportingRole])(implicit request: Request[_], messages: Messages, config: FrontendAppConfig)
+@(userType: Option[AffinityGroup], fileName: Option[String], fileSize: Option[BigDecimal], schemaErrors: Option[Int], busErrors: Option[Int], reportingRole: Option[ReportingRole])(implicit request: Request[?], messages: Messages, config: FrontendAppConfig)
 
 @hasErrors = @{schemaErrors.isDefined || busErrors.isDefined}
 @title = @{messages(s"fileUploadResult.${if(hasErrors) "error.title" else "title.ok"}")}

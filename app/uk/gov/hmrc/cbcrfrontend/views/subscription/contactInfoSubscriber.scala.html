@@ -25,7 +25,7 @@
         govukButton: GovukButton
 )
 
-@(form:Form[_])(implicit request: Request[_], messages: Messages)
+@(form:Form[?])(implicit request: Request[?], messages: Messages)
 
 @title = @{messages("contactInfoSubscriber.title")}
 @hasErrors = @{form.hasErrors}

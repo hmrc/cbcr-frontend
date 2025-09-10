@@ -266,7 +266,7 @@ class SharedController @Inject() (
                   }((result: Future[Result]) => result)
     } yield result
 
-  private def notFoundView(userType: AffinityGroup)(implicit request: Request[_]) =
+  private def notFoundView(userType: AffinityGroup)(implicit request: Request[?]) =
     NotFound(views.knownFactsNotFound(userType))
 
   val checkKnownFacts: Action[AnyContent] = Action.async { implicit request =>

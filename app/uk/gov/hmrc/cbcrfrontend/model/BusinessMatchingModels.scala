@@ -48,7 +48,7 @@ object EtmpAddress {
         (JsPath \ "line3").readNullable[String] and
         (JsPath \ "line4").readNullable[String] and
         (JsPath \ "postalCode").readNullable[String] and
-        (JsPath \ "countryCode").read[String])(EtmpAddress.apply _)
+        (JsPath \ "countryCode").read[String])(EtmpAddress.apply)
 
     override def reads(json: JsValue): JsResult[EtmpAddress] = etmpAddressReads.reads(json)
   }

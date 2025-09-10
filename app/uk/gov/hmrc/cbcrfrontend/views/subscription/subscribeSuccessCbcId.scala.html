@@ -25,7 +25,7 @@
     govukButton: GovukButton
 )
 
-@(cbcId:CBCId, companyName:Option[String])(implicit request: Request[_], messages: Messages)
+@(cbcId:CBCId, companyName:Option[String])(implicit request: Request[?], messages: Messages)
 
 @title = @{messages("subscribeSuccessCbcId.title")}
 

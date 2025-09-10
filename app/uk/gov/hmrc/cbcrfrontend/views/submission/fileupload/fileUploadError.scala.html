@@ -19,7 +19,7 @@
 
 @this(layout: uk.gov.hmrc.cbcrfrontend.views.html.Layout, govukButton: GovukButton)
 
-@(errorType: FileUploadErrorType)(implicit request: Request[_], messages: Messages)
+@(errorType: FileUploadErrorType)(implicit request: Request[?], messages: Messages)
 
 @title = @{errorType match {
     case UploadTimedOut => messages("fileUploadResult.timedOut.title")

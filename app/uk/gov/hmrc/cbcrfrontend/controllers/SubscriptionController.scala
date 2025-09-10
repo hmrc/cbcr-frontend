@@ -256,7 +256,7 @@ class SubscriptionController @Inject() (
   private def createSuccessfulSubscriptionAuditEvent(
     credentials: Option[Credentials],
     subscriptionData: SubscriptionDetails
-  )(implicit hc: HeaderCarrier, request: Request[_]): ServiceResponse[AuditResult.Success.type] =
+  )(implicit hc: HeaderCarrier, request: Request[?]): ServiceResponse[AuditResult.Success.type] =
     for {
       result <- EitherT[Future, CBCErrors, AuditResult.Success.type](
                   audit
@@ -277,7 +277,7 @@ class SubscriptionController @Inject() (
     } yield result
 
   private def getDetailsSuccessfulSubscription(
-    request: Request[_],
+    request: Request[?],
     creds: Option[Credentials],
     subscrDetails: SubscriptionDetails
   ) =

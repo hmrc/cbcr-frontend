@@ -131,7 +131,7 @@ class SubscriptionDataService @Inject() (http: HttpClientV2, servicesConfig: Ser
       result <- cbc.fold(EitherT.rightT[Future, CBCErrors](Option.empty[String])) { id =>
                   EitherT(
                     http
-                      .delete(url"$fullUrl(id)")
+                      .delete(url"${fullUrl(id)}")
                       .execute[HttpResponse]
                       .map { response =>
                         Right(Some(response.body))

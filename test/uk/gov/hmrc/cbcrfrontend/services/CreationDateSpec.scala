@@ -117,14 +117,15 @@ class CreationDateSpec
   "The CreationDateService" should {
     "return true" when {
       "repotingEntity creationDate is Null and default date is less than 3 years ago" in {
-        when(reportingEntity.queryReportingEntityData(any)(any))
+        when(reportingEntity.queryReportingEntityData(any)(using any))
           .thenReturn(EitherT.right(Future.successful(Some(redNoCreationDate))))
         val result = await(cds.isDateValid(xmlInfo))
         result shouldBe DateCorrect
       }
 
       "repotingEntity creationDate is less than 3 years ago" in {
-        when(reportingEntity.queryReportingEntityData(any)(any)).thenReturn(EitherT.right(Future.successful(Some(red))))
+        when(reportingEntity.queryReportingEntityData(any)(using any))
+          .thenReturn(EitherT.right(Future.successful(Some(red))))
         val result = await(cds.isDateValid(xmlInfo))
         result shouldBe DateCorrect
       }
@@ -132,7 +133,7 @@ class CreationDateSpec
 
     "return false" when {
       "reportingEntity creationDate is older than 3 years ago" in {
-        when(reportingEntity.queryReportingEntityData(any)(any))
+        when(reportingEntity.queryReportingEntityData(any)(using any))
           .thenReturn(EitherT.right(Future.successful(Some(redOldCreationDate))))
         val result = await(cds.isDateValid(xmlInfo))
         result shouldBe DateOld
@@ -147,7 +148,8 @@ class CreationDateSpec
 
       "reportingEntity creationDate is missing" in {
         when(configuration.defaultCreationDate).thenReturn(LocalDate.of(2010, 12, 23))
-        when(reportingEntity.queryReportingEntityData(any)(any)).thenReturn(EitherT.right(Future.successful(None)))
+        when(reportingEntity.queryReportingEntityData(any)(using any))
+          .thenReturn(EitherT.right(Future.successful(None)))
         val cds2 = new CreationDateService(configuration, reportingEntity)
         val result = await(cds2.isDateValid(xmlInfo))
         result shouldBe DateMissing
@@ -155,7 +157,7 @@ class CreationDateSpec
 
       "There's an error retrieving reportingEntityData" in {
         when(configuration.defaultCreationDate).thenReturn(LocalDate.of(2010, 12, 23))
-        when(reportingEntity.queryReportingEntityData(any)(any)).thenReturn(
+        when(reportingEntity.queryReportingEntityData(any)(using any)).thenReturn(
           EitherT[Future, CBCErrors, Option[ReportingEntityData]](
             Future.successful(Left(UnexpectedState(s"Call to QueryReportingEntity failed")))
           )

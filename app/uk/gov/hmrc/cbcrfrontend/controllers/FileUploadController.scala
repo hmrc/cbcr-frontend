@@ -216,7 +216,7 @@ class FileUploadController @Inject() (
           metadata <- getMetaData(envelopeId, fileId)
           _        <- EitherT.right[CBCErrors](cache.save(metadata))
           _        <- EitherT.right[CBCErrors](cache.save(FileDetails(envelopeId, fileId)))
-          _ <- EitherT.cond[Future](metadata.name.toLowerCase endsWith ".xml", (), InvalidFileType(metadata.name))
+          _ <- EitherT.cond[Future](metadata.name.toLowerCase `endsWith` ".xml", (), InvalidFileType(metadata.name))
           schemaErrors = schemaValidator.validateSchema(file)
           xmlErrors = XMLErrors.errorHandlerToXmlErrors(schemaErrors)
           schemaSize = if (xmlErrors.errors.nonEmpty) Some(getErrorFileSize(List(xmlErrors))) else None
@@ -417,7 +417,7 @@ class FileUploadController @Inject() (
     affinity: Option[AffinityGroup],
     enrolment: Option[CBCEnrolment],
     reason: String
-  )(implicit hc: HeaderCarrier, request: Request[_], messages: Messages): ServiceResponse[AuditResult.Success.type] =
+  )(implicit hc: HeaderCarrier, request: Request[?], messages: Messages): ServiceResponse[AuditResult.Success.type] =
     for {
       md             <- EitherT.right[CBCErrors](cache.readOption[FileMetadata])
       businessErrors <- EitherT.right[CBCErrors](cache.readOption[AllBusinessRuleErrors])

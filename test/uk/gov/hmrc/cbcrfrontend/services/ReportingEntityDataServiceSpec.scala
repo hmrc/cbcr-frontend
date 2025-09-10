@@ -95,7 +95,7 @@ class ReportingEntityDataServiceSpec
   "ReportingEntityDataService" should {
     "provide a query service" which {
       "returns a reportingEntityData object the call to the connector returns one" in {
-        when(connector.reportingEntityDataQuery(any)(any)).thenReturn(
+        when(connector.reportingEntityDataQuery(any)(using any)).thenReturn(
           Future.successful(
             HttpResponse(Status.OK, Json.toJson(red), Map.empty[String, Seq[String]])
           )
@@ -105,7 +105,7 @@ class ReportingEntityDataServiceSpec
       }
 
       "return NONE if the connector returns a NotFoundException" in {
-        when(connector.reportingEntityDataQuery(any)(any)).thenReturn(
+        when(connector.reportingEntityDataQuery(any)(using any)).thenReturn(
           Future.successful(
             HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]])
           )
@@ -115,7 +115,7 @@ class ReportingEntityDataServiceSpec
       }
 
       "return an error if there is a serialisation error" in {
-        when(connector.reportingEntityDataQuery(any)(any)).thenReturn(
+        when(connector.reportingEntityDataQuery(any)(using any)).thenReturn(
           Future.successful(
             HttpResponse(Status.OK, JsString("Not the correct json"), Map.empty[String, Seq[String]])
           )
@@ -125,7 +125,7 @@ class ReportingEntityDataServiceSpec
       }
 
       "return an error if anything else goes wrong" in {
-        when(connector.reportingEntityDataQuery(any)(any))
+        when(connector.reportingEntityDataQuery(any)(using any))
           .thenReturn(Future.failed(new Exception("The sky is falling")))
         val result = await(reds.queryReportingEntityData(docRefId).value)
         result.isLeft shouldBe true
@@ -134,7 +134,7 @@ class ReportingEntityDataServiceSpec
 
     "provide a query service by cbc id and reporting period to prevent multiple file upload for original submission within same reporting period" which {
       "returns a reportingEntityData object the call to the connector returns one" in {
-        when(connector.reportingEntityCBCIdAndReportingPeriod(any, any)(any)).thenReturn(
+        when(connector.reportingEntityCBCIdAndReportingPeriod(any, any)(using any)).thenReturn(
           Future.successful(
             HttpResponse(Status.OK, Json.toJson(red), Map.empty[String, Seq[String]])
           )
@@ -143,7 +143,7 @@ class ReportingEntityDataServiceSpec
         result shouldBe Right(Some(red))
       }
       "return NONE if the connector returns a NotFoundException" in {
-        when(connector.reportingEntityCBCIdAndReportingPeriod(any, any)(any)).thenReturn(
+        when(connector.reportingEntityCBCIdAndReportingPeriod(any, any)(using any)).thenReturn(
           Future.successful(
             HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]])
           )
@@ -152,7 +152,7 @@ class ReportingEntityDataServiceSpec
         result shouldBe Right(None)
       }
       "return an error if there is a serialisation error" in {
-        when(connector.reportingEntityCBCIdAndReportingPeriod(any, any)(any)).thenReturn(
+        when(connector.reportingEntityCBCIdAndReportingPeriod(any, any)(using any)).thenReturn(
           Future.successful(
             HttpResponse(Status.OK, JsString("Not the correct json"), Map.empty[String, Seq[String]])
           )
@@ -161,7 +161,7 @@ class ReportingEntityDataServiceSpec
         result.isLeft shouldBe true
       }
       "return an error if anything else goes wrong" in {
-        when(connector.reportingEntityCBCIdAndReportingPeriod(any, any)(any)).thenReturn(
+        when(connector.reportingEntityCBCIdAndReportingPeriod(any, any)(using any)).thenReturn(
           Future.failed(
             new Exception("The sky is falling")
           )
@@ -174,7 +174,7 @@ class ReportingEntityDataServiceSpec
 
   "ReportingEntityDataService" should {
     "return ReportingEntityDataModel if it exists in the DB store" in {
-      when(connector.reportingEntityDataModelQuery(any)(any)).thenReturn(
+      when(connector.reportingEntityDataModelQuery(any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.OK, Json.toJson(redModel), Map.empty[String, Seq[String]])
         )
@@ -184,7 +184,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if there is a serialisation error" in {
-      when(connector.reportingEntityDataModelQuery(any)(any)).thenReturn(
+      when(connector.reportingEntityDataModelQuery(any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.OK, JsString("Not the correct json"), Map.empty[String, Seq[String]])
         )
@@ -194,7 +194,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return NONE if the connector returns a NotFoundException" in {
-      when(connector.reportingEntityDataModelQuery(any)(any)).thenReturn(
+      when(connector.reportingEntityDataModelQuery(any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]])
         )
@@ -204,7 +204,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      when(connector.reportingEntityDataModelQuery(any)(any))
+      when(connector.reportingEntityDataModelQuery(any)(using any))
         .thenReturn(Future.failed(new Exception("The sky is falling")))
       val result = await(reds.queryReportingEntityDataModel(docRefId).value)
       result.isLeft shouldBe true
@@ -213,7 +213,7 @@ class ReportingEntityDataServiceSpec
 
   "ReportingEntityDataService on a call to queryReportingEntityDataDocRefId" should {
     "return ReportingEntityData if it exists in the DB store" in {
-      when(connector.reportingEntityDocRefId(any)(any)).thenReturn(
+      when(connector.reportingEntityDocRefId(any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.OK, Json.toJson(red), Map.empty[String, Seq[String]])
         )
@@ -223,7 +223,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if there is a serialisation error while parsing for ReportingEntityData" in {
-      when(connector.reportingEntityDocRefId(any)(any)).thenReturn(
+      when(connector.reportingEntityDocRefId(any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.OK, JsString("Not the correct json"), Map.empty[String, Seq[String]])
         )
@@ -233,7 +233,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return NONE if the connector returns a NotFoundException" in {
-      when(connector.reportingEntityDocRefId(any)(any)).thenReturn(
+      when(connector.reportingEntityDocRefId(any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]])
         )
@@ -243,7 +243,8 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      when(connector.reportingEntityDocRefId(any)(any)).thenReturn(Future.failed(new Exception("The sky is falling")))
+      when(connector.reportingEntityDocRefId(any)(using any))
+        .thenReturn(Future.failed(new Exception("The sky is falling")))
       val result = await(reds.queryReportingEntityDataDocRefId(docRefId).value)
       result.isLeft shouldBe true
     }
@@ -251,7 +252,7 @@ class ReportingEntityDataServiceSpec
 
   "ReportingEntityDataService on a call to queryReportingEntityDataTin" should {
     "return ReportingEntityData if it exists in the DB store" in {
-      when(connector.reportingEntityDataQueryTin(any, any)(any)).thenReturn(
+      when(connector.reportingEntityDataQueryTin(any, any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.OK, Json.toJson(red), Map.empty[String, Seq[String]])
         )
@@ -261,7 +262,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if there is a serialisation error while parsing for ReportingEntityData" in {
-      when(connector.reportingEntityDataQueryTin(any, any)(any)).thenReturn(
+      when(connector.reportingEntityDataQueryTin(any, any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.OK, JsString("Not the correct json"), Map.empty[String, Seq[String]])
         )
@@ -271,7 +272,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return NONE if the connector returns a NotFoundException" in {
-      when(connector.reportingEntityDataQueryTin(any, any)(any)).thenReturn(
+      when(connector.reportingEntityDataQueryTin(any, any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.NOT_FOUND, JsNull, Map.empty[String, Seq[String]])
         )
@@ -281,7 +282,7 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      when(connector.reportingEntityDataQueryTin(any, any)(any))
+      when(connector.reportingEntityDataQueryTin(any, any)(using any))
         .thenReturn(Future.failed(new Exception("The sky is falling")))
       val result = await(reds.queryReportingEntityDataTin(tin.value, reportingPeriod).value)
       result.isLeft shouldBe true
@@ -290,7 +291,7 @@ class ReportingEntityDataServiceSpec
 
   "ReportingEntityDataService on a call to updateReportingEntityData" should {
     "update ReportingEntityData if it exists in the DB store" in {
-      when(connector.reportingEntityDataUpdate(any)(any)).thenReturn(
+      when(connector.reportingEntityDataUpdate(any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]])
         )
@@ -300,7 +301,8 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      when(connector.reportingEntityDataUpdate(any)(any)).thenReturn(Future.failed(new Exception("The sky is falling")))
+      when(connector.reportingEntityDataUpdate(any)(using any))
+        .thenReturn(Future.failed(new Exception("The sky is falling")))
       val result = await(reds.updateReportingEntityData(partialRed).value)
       result.isLeft shouldBe true
     }
@@ -308,7 +310,7 @@ class ReportingEntityDataServiceSpec
 
   "ReportingEntityDataService on a call to saveReportingEntityData" should {
     "save ReportingEntityData if it does not exist in the DB store" in {
-      when(connector.reportingEntityDataSave(any)(any)).thenReturn(
+      when(connector.reportingEntityDataSave(any)(using any)).thenReturn(
         Future.successful(
           HttpResponse(Status.OK, JsNull, Map.empty[String, Seq[String]])
         )
@@ -318,7 +320,8 @@ class ReportingEntityDataServiceSpec
     }
 
     "return an error if anything else goes wrong" in {
-      when(connector.reportingEntityDataSave(any)(any)).thenReturn(Future.failed(new Exception("The sky is falling")))
+      when(connector.reportingEntityDataSave(any)(using any))
+        .thenReturn(Future.failed(new Exception("The sky is falling")))
       val result = await(reds.saveReportingEntityData(red).value)
       result.isLeft shouldBe true
     }
