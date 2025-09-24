@@ -39,13 +39,15 @@ class AuthRedirectsExternalSpec extends AnyWordSpec with ScalaFutures with Match
   trait BaseUri {
     val strideService = "http://localhost:9041"
     val stridePath = "/stride/sign-in"
+    val ggLoginService: String = "http://localhost:9553"
+    val ggLoginPath: String = "/bas-gateway/sign-in"
   }
 
   trait Setup extends WithApplication with BaseUri {
 
     def mode: Mode
 
-    def extraConfig: Map[String, Any] = Map()
+    def extraConfig: Map[String, Any] = Map("accountType" -> "Organisation")
 
     trait TestRedirects extends AuthRedirectsExternal {
 
@@ -89,6 +91,22 @@ class AuthRedirectsExternalSpec extends AnyWordSpec with ScalaFutures with Match
       validate(Redirect.toStrideLogin("/success", Some("/failure")))(
         expectedLocation = s"$stridePath?successURL=%2Fsuccess&origin=app&failureURL=%2Ffailure"
       )
+    }
+  }
+
+  "AuthRedirectsExternal" when {
+    "redirecting with defaults from config" should {
+      "redirect to GG login in Dev" in new Setup with Dev {
+        validate(Redirect.toGGLogin("/continue"))(
+          expectedLocation = s"$ggLoginService$ggLoginPath?continue_url=%2Fcontinue&origin=app&accountType=Organisation"
+        )
+      }
+
+      "redirect to GG login in Prod" in new Setup with Prod {
+        validate(Redirect.toGGLogin("/continue"))(
+          expectedLocation = s"$ggLoginPath?continue_url=%2Fcontinue&origin=app&accountType=Organisation"
+        )
+      }
     }
   }
 }

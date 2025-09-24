@@ -65,12 +65,17 @@ trait AuthRedirectsExternal {
 
   def origin: String = defaultOrigin
 
+  private final lazy val accountType: String = config
+    .getOptional[String]("accountType")
+    .getOrElse("")
+
   def toGGLogin(continueUrl: String): Result =
     Redirect(
       ggLoginUrl,
       Map(
         "continue_url" -> Seq(continueUrl),
-        "origin"       -> Seq(origin)
+        "origin"       -> Seq(origin),
+        "accountType"  -> Seq(accountType)
       )
     )
 
