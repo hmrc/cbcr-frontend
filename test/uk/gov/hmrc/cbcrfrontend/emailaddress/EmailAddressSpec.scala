@@ -39,8 +39,8 @@ class EmailAddressSpec extends AnyWordSpec with GuiceOneAppPerSuite with Matcher
     val validation = new EmailAddressValidation(appConfig)
 
     "validate a correct email address" in {
-      validation.isValid("user@test.com") shouldBe true
-      validation.isValid("user@test.co.uk") shouldBe true
+      validation.isValid("user@example.com") shouldBe true
+      validation.isValid("user@example.co.uk") shouldBe true
     }
     "validate invalid email" in {
       validation.isValid("a@a") shouldBe false
